@@ -2,8 +2,8 @@ package junghyun.unit;
 
 public class Pos {
 
-    private int compuX = 0;
-    private int compuY = 0;
+    private int X = 0;
+    private int Y = 0;
 
     private char humX = 0;
     private int humY = 0;
@@ -12,11 +12,11 @@ public class Pos {
     private boolean isError = false;
 
     public Pos(int x, int y) {
-        this.compuX = x;
-        this.compuY = y;
+        this.X = x;
+        this.Y = y;
 
-        this.humX = Pos.intToEng(this.compuX);
-        this.humY = this.compuY +1;
+        this.humX = Pos.intToEng(this.X);
+        this.humY = this.Y +1;
     }
 
     public Pos(String str) {
@@ -30,7 +30,7 @@ public class Pos {
         return str-97;
     }
 
-    public static char intToEng(int inter) {
+    private static char intToEng(int inter) {
         return (char) ((char) inter+97);
     }
 
@@ -40,12 +40,12 @@ public class Pos {
 
     //데이터 출력
 
-    public int getCompuX() {
-        return this.compuX;
+    public int getX() {
+        return this.X;
     }
 
-    public int getCompuY() {
-        return this.compuY;
+    public int getY() {
+        return this.Y;
     }
 
     public char getHumX() {

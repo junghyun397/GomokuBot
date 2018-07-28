@@ -9,37 +9,12 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/Documents/Project/DiscordBot/GomokuBot/Discord4J-2.10.1.jar!/" />
+          <root url="jar://$USER_HOME$/Documents/Project/DiscordBot/GomokuBot/Discord4J-2.10.1-shaded.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
-          <root url="jar://$USER_HOME$/Documents/Project/DiscordBot/GomokuBot/jetty-server-9.4.10.v20180503.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
-          <root url="jar://$USER_HOME$/Documents/Project/DiscordBot/GomokuBot/jetty-util-9.4.10.v20180503.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
-          <root url="jar://$USER_HOME$/Documents/Project/DiscordBot/GomokuBot/slf4j-api-1.7.25.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$USER_HOME$/Documents/Project/DiscordBot/GomokuBot/Discord4J-2.10.1-shaded.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="sourceFolder" forTests="false" />

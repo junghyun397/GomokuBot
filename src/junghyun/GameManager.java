@@ -43,7 +43,7 @@ public class GameManager {
         chatGame.getGame().setPlayerColor(playerColor);
         putGame(chatGame);
 
-        Message.sendCreatedGame(user, channel);
+        Message.sendCreatedGame(chatGame.getGame(), playerColor, user, channel);
     }
 
     private static void endGame(long id) {
@@ -61,16 +61,18 @@ public class GameManager {
 
         Game game = getGame(id).getGame();
 
-        game.setStone(pos.getCompuX(), pos.getCompuY());
-        if (game.isWin(pos.getCompuX(), pos.getCompuY(), game.getPlayerColor())) {
+        if (!game.canSetStone(pos.getX(), pos.getY())) return;
+
+        game.setStone(pos.getX(), pos.getY());
+        if (game.isWin(pos.getX(), pos.getY(), game.getPlayerColor())) {
             Message.sendPlayerWin(game, pos, user, channel);
             endGame(id);
             return;
         }
 
         Pos aiPos = new AIBase(game).getAiPoint();
-        game.setStone(aiPos.getCompuX(), aiPos.getCompuY(), !game.getPlayerColor());
-        if (game.isWin(pos.getCompuX(), pos.getCompuY(), !game.getPlayerColor())) {
+        game.setStone(aiPos.getX(), aiPos.getY(), !game.getPlayerColor());
+        if (game.isWin(aiPos.getX(), aiPos.getY(), !game.getPlayerColor())) {
             Message.sendPlayerLose(game, aiPos, user, channel);
             endGame(id);
             return;

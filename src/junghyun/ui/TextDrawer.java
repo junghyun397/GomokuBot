@@ -12,7 +12,7 @@ public class TextDrawer {
     private final static String LAST_WHITE = "◆";
     private final static String LAST_BLACK = "◇";
 
-    private final static String CONER_T_L = "┌";
+    private final static String CONER_T_L = "┏";
     private final static String CONER_T_R = "┐";
     private final static String CONER_B_L = "└";
     private final static String CONER_B_R = "┘";
@@ -28,11 +28,15 @@ public class TextDrawer {
     private final static String[] FIXED_NUM = {"０", "　１", "　２", "　３", "　４", "　５", "　６", "　７", "　８", "　９", "１０", "１１", "１２", "１３", "１４", "１５"};
     private final static String[] FIXED_ENG = {"Ａ", "Ｂ", "Ｃ", "Ｄ", "Ｅ", "Ｆ", "Ｇ", "Ｈ", "Ｉ", "Ｊ", "Ｋ", "Ｌ", "Ｍ", "Ｎ", "Ｏ"};
 
+    public static String getGraphics(Game game) {
+        return getGraphics(game, new Pos(-1, -1));
+    }
+
     public static String getGraphics(Game game, Pos aiPos) {
         Stone[][] plate = game.getPlate();
         StringBuilder result = new StringBuilder();
 
-        result.append("　　");
+        result.append("┏　");
         for (int x = 0; x < 15; x++) {
             result.append(FIXED_ENG[x]);
         }
@@ -45,13 +49,13 @@ public class TextDrawer {
                 Stone pro_stone = plate[x][y];
                 if (pro_stone.isStoneAdded()) {
                     if (pro_stone.getColor()) {
-                        if ((pro_stone.getX() == aiPos.getCompuX()) && (pro_stone.getY() == aiPos.getCompuY())) {
+                        if ((pro_stone.getX() == aiPos.getX()) && (pro_stone.getY() == aiPos.getY())) {
                             result.append(LAST_BLACK);
                         } else {
                             result.append(BLACK);
                         }
                     } else {
-                        if ((pro_stone.getX() == aiPos.getCompuX()) && (pro_stone.getY() == aiPos.getCompuY())) {
+                        if ((pro_stone.getX() == aiPos.getX()) && (pro_stone.getY() == aiPos.getY())) {
                             result.append(LAST_WHITE);
                         } else {
                             result.append(WHITE);
@@ -63,6 +67,7 @@ public class TextDrawer {
             }
             result.append("\n");
         }
+        result.append("\n");
 
         return result.toString();
     }

@@ -4,10 +4,9 @@
     <root id="archive" name="GomokuBot.jar">
       <element id="directory" name="META-INF">
         <element id="file-copy" path="$USER_HOME$/Documents/Project/DiscordBot/GomokuBot/META-INF/MANIFEST.MF" />
+        <element id="file-copy" path="$USER_HOME$/Documents/Project/DiscordBot/GomokuBot/Discord4J-2.10.1-shaded.jar" />
       </element>
       <element id="module-output" name="GomokuBot" />
-      <element id="extracted-dir" path="$USER_HOME$/Documents/Project/DiscordBot/GomokuBot/Discord4J-2.10.1.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$USER_HOME$/Documents/Project/DiscordBot/GomokuBot/jetty-server-9.4.10.v20180503.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
