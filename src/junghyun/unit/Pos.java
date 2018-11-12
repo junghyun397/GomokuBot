@@ -24,8 +24,6 @@ public class Pos {
         this.errorStr = str;
     }
 
-    //기능
-
     public static int engToInt(char str) {
         return str-97;
     }
@@ -37,8 +35,6 @@ public class Pos {
     public static boolean checkSize(int x, int y) {
         return (x >= 0) && (x <= 14) && (y >= 0) && (y <= 14);
     }
-
-    //데이터 출력
 
     public int getX() {
         return this.X;

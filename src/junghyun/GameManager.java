@@ -5,29 +5,32 @@ import junghyun.ai.engin.AIBase;
 import junghyun.ui.Message;
 import junghyun.unit.ChatGame;
 import junghyun.unit.Pos;
+import junghyun.unit.Settings;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;
 
 import java.util.HashMap;
 import java.util.Random;
 
-public class GameManager {
+import static java.lang.System.currentTimeMillis;
+
+class GameManager {
 
     private static HashMap<Long, ChatGame> gameList = new HashMap<>();
 
     private static void putGame(ChatGame chatGame) {
-        gameList.put(chatGame.getLongId(), chatGame);
+        GameManager.gameList.put(chatGame.getLongId(), chatGame);
     }
 
     private static ChatGame getGame(long id) {
-        return gameList.get(id);
+        return GameManager.gameList.get(id);
     }
 
     private static void delGame(long id) {
-        gameList.remove(id);
+        GameManager.gameList.remove(id);
     }
 
-    public static void createGame(long id, IUser user, IChannel channel) {
+    static void createGame(long id, IUser user, IChannel channel) {
         if (getGame(id) != null) {
             Message.sendFailCreatedGame(user, channel);
             return;
@@ -41,7 +44,7 @@ public class GameManager {
 
         if (!playerColor) chatGame.getGame().setStone(7, 7, true);
         chatGame.getGame().setPlayerColor(playerColor);
-        putGame(chatGame);
+        GameManager.putGame(chatGame);
 
         Message.sendCreatedGame(chatGame.getGame(), playerColor, user, channel);
     }
@@ -50,18 +53,28 @@ public class GameManager {
         delGame(id);
     }
 
-    public static void surrenGame(long id, IUser user, IChannel channel) {
-        if (!checkGame(id, user, channel)) return;
-        Message.sendSurrenPlayer(getGame(id).getGame(), user, channel);
-        endGame(id);
+    private static void checkTimeOut() {
+        long currentTime = System.currentTimeMillis();
+        for (ChatGame game: (ChatGame[]) GameManager.gameList.entrySet().toArray()) {
+            if (game.getUpdateTime()+Settings.TIMEOUT < currentTime) {
+                GameManager.endGame(game.getLongId());
+            }
+        }
     }
 
-    public static void putStone(long id, Pos pos, IUser user, IChannel channel) {
-        if (!checkGame(id, user, channel)) return;
+    static void surrenGame(long id, IUser user, IChannel channel) {
+        if (checkGame(id, user, channel)) return;
+        Message.sendSurrenPlayer(getGame(id).getGame(), user, channel);
+        GameManager.endGame(id);
+    }
 
-        Game game = getGame(id).getGame();
+    static void putStone(long id, Pos pos, IUser user, IChannel channel) {
+        Game game = getGame(id).onUpdate().getGame();
 
-        if (!game.canSetStone(pos.getX(), pos.getY())) return;
+        if (!game.canSetStone(pos.getX(), pos.getY())) {
+            Message.sendAlreadyIn(user, channel);
+            return;
+        }
 
         game.setStone(pos.getX(), pos.getY());
         if (game.isWin(pos.getX(), pos.getY(), game.getPlayerColor())) {
@@ -84,9 +97,9 @@ public class GameManager {
     private static boolean checkGame(long id, IUser user, IChannel channel) {
         if (getGame(id) == null) {
             Message.notFoundGame(user, channel);
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
 }

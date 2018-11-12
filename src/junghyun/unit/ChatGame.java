@@ -23,11 +23,12 @@ public class ChatGame {
         return game;
     }
 
-    public void onUpdate() {
+    public ChatGame onUpdate() {
         this.updateTime = System.currentTimeMillis();
+        return this;
     }
 
     public long getUpdateTime() {
-        return updateTime;
+        return this.updateTime;
     }
 }

@@ -1,6 +1,6 @@
 package junghyun.ai.engin;
 
-public class AISetting {
+class AISetting {
 
     static int DEF_AI_POINT = 2; //AI 돌 근처에 부여되는 포인트
     static int DEF_PLAYER_POINT = 1; //플레이어 돌 근처에 부여되는 포인트

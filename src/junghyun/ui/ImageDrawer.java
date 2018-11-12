@@ -16,7 +16,7 @@ public class ImageDrawer {
         return getGraphics(game, new Pos(-1, -1));
     }
 
-    public static File getGraphics(Game game, Pos aiPos) {
+    private static File getGraphics(Game game, Pos aiPos) {
         BufferedImage image = new BufferedImage(600,600, BufferedImage.TYPE_INT_RGB);
         Graphics graphics = image.createGraphics();
 
@@ -27,8 +27,8 @@ public class ImageDrawer {
         ((Graphics2D) graphics).setBackground(Color.DARK_GRAY);
 
         graphics.setColor(Color.BLACK);
-//        for (int x = 0; x < 15; x++) graphics.drawLine(pieceSize*x+ pieceHalfSIze, pieceHalfSIze, pieceSize*x+ pieceHalfSIze, 600 - pieceHalfSIze);
-//        for (int y = 0; y < 15; y++) graphics.drawLine(pieceHalfSIze, pieceSize*y+ pieceHalfSIze, 600 - pieceHalfSIze, pieceSize*y+ pieceHalfSIze);
+        for (int x = 0; x < 15; x++) graphics.drawLine(pieceSize*x+ pieceHalfSIze, pieceHalfSIze, pieceSize*x+ pieceHalfSIze, 600 - pieceHalfSIze);
+        for (int y = 0; y < 15; y++) graphics.drawLine(pieceHalfSIze, pieceSize*y+ pieceHalfSIze, 600 - pieceHalfSIze, pieceSize*y+ pieceHalfSIze);
 
         for (int x = 0; x < 15; x++) {
             for (int y = 0; y < 15; y++) {

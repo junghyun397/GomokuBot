@@ -4,35 +4,35 @@ import junghyun.ai.Game;
 import junghyun.ai.Stone;
 import junghyun.unit.Pos;
 
-public class TextDrawer {
+class TextDrawer {
 
     private final static String WHITE = "●";
     private final static String BLACK = "○";
 
-    private final static String LAST_WHITE = "◆";
-    private final static String LAST_BLACK = "◇";
+    private final static String LAST_WHITE = "■";
+    private final static String LAST_BLACK = "□";
 
     private final static String CONER_T_L = "┏";
-    private final static String CONER_T_R = "┐";
-    private final static String CONER_B_L = "└";
-    private final static String CONER_B_R = "┘";
+    private final static String CONER_T_R = "┓";
+    private final static String CONER_B_L = "┗";
+    private final static String CONER_B_R = "┛";
 
-    private final static String CONER_T_U = "┬";
-    private final static String CONER_T_D = "┴";
+    private final static String CONER_T_U = "┳";
+    private final static String CONER_T_D = "┻";
 
-    private final static String CONER_L = "├";
-    private final static String CONER_R = "┤";
+    private final static String CONER_L = "┣";
+    private final static String CONER_R = "┫";
 
-    private final static String CROSS = "┼";
+    private final static String CROSS = "╋";
 
     private final static String[] FIXED_NUM = {"０", "　１", "　２", "　３", "　４", "　５", "　６", "　７", "　８", "　９", "１０", "１１", "１２", "１３", "１４", "１５"};
     private final static String[] FIXED_ENG = {"Ａ", "Ｂ", "Ｃ", "Ｄ", "Ｅ", "Ｆ", "Ｇ", "Ｈ", "Ｉ", "Ｊ", "Ｋ", "Ｌ", "Ｍ", "Ｎ", "Ｏ"};
 
-    public static String getGraphics(Game game) {
+    static String getGraphics(Game game) {
         return getGraphics(game, new Pos(-1, -1));
     }
 
-    public static String getGraphics(Game game, Pos aiPos) {
+    static String getGraphics(Game game, Pos aiPos) {
         Stone[][] plate = game.getPlate();
         StringBuilder result = new StringBuilder();
 

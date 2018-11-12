@@ -28,10 +28,6 @@ public class AIBase {
         this.sumOverlapPoint();
     }
 
-    //데이터 제어
-
-    //추출부
-
     private void sumDotPoints() {
         for (int x = 0; x < 15; x++) {
             for (int y = 0; y < 15; y++) {
@@ -103,8 +99,6 @@ public class AIBase {
         }
     }
 
-    //연산부
-
     private void addDotPoint(Stone stone, int point) {
         Stone[][] plate = game.getPlate();
         for (int in_x = 0; in_x < 3; in_x++) {
@@ -121,8 +115,6 @@ public class AIBase {
 
         game.setPlate(plate);
     }
-
-    //수 판단
 
     private Pos getMax() {
         Stone[][] plate = game.getPlate();

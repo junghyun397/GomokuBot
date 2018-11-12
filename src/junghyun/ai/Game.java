@@ -13,12 +13,6 @@ public class Game {
         this.clearPlate();
     }
 
-    public void resetAll() {
-        this.turns = 0;
-        this.turnColor = true;
-        this.clearPlate();
-    }
-
     public boolean getPlayerColor() {
         return this.playerColor;
     }
@@ -27,7 +21,7 @@ public class Game {
         this.playerColor = color;
     }
 
-    public void clearPlate() {
+    private void clearPlate() {
         for (byte x = 0; x < 15 ; x++) {
             for (byte y = 0; y < 15 ; y++) {
                 this.plate[x][y] = new Stone(x, y);
@@ -47,7 +41,7 @@ public class Game {
         return this.turns;
     }
 
-    public void setColor(boolean color) {
+    private void setColor(boolean color) {
         this.turnColor = color;
     }
 
@@ -122,7 +116,7 @@ public class Game {
     }
 
     public boolean isWin(int x, int y, boolean color) {
-        return this.getXRow(x, y).findFIve(color) || this.getYRow(x, y).findFIve(color) || this.getXYRow(x, y).findFIve(color) || this.getYXRow(x, y).findFIve(color);
+        return this.getXRow(x, y).findFive(color) || this.getYRow(x, y).findFive(color) || this.getXYRow(x, y).findFive(color) || this.getYXRow(x, y).findFive(color);
     }
 
     public void setStone(int x, int y) {
@@ -162,7 +156,7 @@ public class Game {
         this.plate[x][y] = stone;
     }
 
-    public void resetPoint(int x, int y) {
+    private void resetPoint(int x, int y) {
         Stone stone = this.plate[x][y];
         stone.resetPoint();
         this.plate[x][y] = stone;

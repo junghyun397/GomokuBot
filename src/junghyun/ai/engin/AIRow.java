@@ -6,7 +6,7 @@ import junghyun.ai.Stone;
 
 import java.util.Arrays;
 
-public class AIRow {
+class AIRow {
 
     private Game game;
 
@@ -15,7 +15,7 @@ public class AIRow {
     private boolean passAll = false;
     private boolean color;
 
-    public AIRow(Row row, boolean color, Game game) {
+    AIRow(Row row, boolean color, Game game) {
         super();
         this.row = row.get_row();
         this.length = this.row.length;
@@ -26,9 +26,7 @@ public class AIRow {
         }
     }
 
-    //검색기
-
-    public void checkPoints() {
+    void checkPoints() {
         if (passAll) {
             return;
         }
@@ -42,13 +40,6 @@ public class AIRow {
         this.checkDefensePoint();
     }
 
-    //승리-패배 연산
-
-    //5목 생성 연산
-
-    /**
-     * 상대가 한 수를 놓음으로서 5 생성 포인트
-     */
     private void checkLoseFivePoint() {
 
         Stone target_stone = null;
@@ -82,9 +73,6 @@ public class AIRow {
         }
     }
 
-    /**
-     * 한 수를 놓음으로서 5 생성 포인트
-     */
     private void checkWinFivePoint() {
 
         Stone target_stone = null;
@@ -118,11 +106,6 @@ public class AIRow {
         }
     }
 
-    //열린 4 생성 연산
-
-    /**
-     * 한 수를 놓음으로서 열린 4 생성 포인트
-     */
     private void checkWinOpenFourPoint() {
 
         Stone target_stone = null;
@@ -162,9 +145,6 @@ public class AIRow {
         }
     }
 
-    /**
-     * 상대가 수를 놓음으로서 열린 4 생성 포인트
-     */
     private void checkLoseOpenFourPoint() {
 
         Stone target_stone = null;
@@ -204,8 +184,6 @@ public class AIRow {
         }
     }
 
-    //공격 연산
-
     private void checkAttackPoint() {
         for (int stack = 0; stack < this.length -4; stack++) {
 
@@ -241,8 +219,6 @@ public class AIRow {
             }
 
             if (!is_pass) {
-
-                // 닫힌 4 공격
 
                 if (Arrays.equals(row4, AISetting.FOUR_CASE_1_L)) { //●●○○●
                     game.addPoint(row[stack+2].getX(), row[stack+2].getY(), AISetting.MAKE_CLOSE_4_POINT);
@@ -301,8 +277,6 @@ public class AIRow {
 
                     stack += 7;
                 }
-
-                // 열린 3 공격
 
                 else if (Arrays.equals(row3, AISetting.THREE_CASE_1)) { //●●○○
                     if (this.checkRiskPos(stack-2, stack+3)) {
@@ -355,8 +329,6 @@ public class AIRow {
         }
     }
 
-    //방어 연산
-
     private void checkDefensePoint() {
         for (int stack = 0; stack < this.length -4; stack++) {
 
@@ -392,8 +364,6 @@ public class AIRow {
             }
 
             if (!is_pass) {
-
-                // 닫힌 4 공격
 
                 if (Arrays.equals(row4, AISetting.FOUR_CASE_1_L)) { //●●○○●
                     game.addPoint(row[stack+2].getX(), row[stack+2].getY(), AISetting.PLAYER_MAKE_CLOSE_4_POINT);
@@ -453,8 +423,6 @@ public class AIRow {
                     stack += 7;
                 }
 
-                // 열린 3 공격
-
                 else if (Arrays.equals(row3, AISetting.THREE_CASE_1)) { //●●○○
                     if (this.checkRiskPos(stack-2, stack+3)) {
                         if ((!row[stack-2].isStoneAdded()) && (!row[stack-1].isStoneAdded())) {
@@ -505,10 +473,6 @@ public class AIRow {
             }
         }
     }
-
-    //자료 반환
-
-    //메모리 검사
 
     private boolean checkRiskPos(int start, int end) {
         return (start >= 0) && (end <= this.length);
