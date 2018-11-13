@@ -1,5 +1,6 @@
 package junghyun;
 
+import junghyun.db.SqlManager;
 import junghyun.ui.Message;
 import junghyun.unit.Pos;
 import junghyun.unit.Settings;
@@ -18,10 +19,13 @@ class GomokuBot {
         client = new ClientBuilder().setPresence(StatusType.ONLINE, ActivityType.PLAYING, "GomokuBot.github.io or ~help").withToken(Settings.TOKEN).build();
         client.getDispatcher().registerListener(new EventListener());
         client.login();
+
+        SqlManager.connectMysql();
+        GameManager.bootGameManager();
     }
 
     static void endGomokuBot() {
-        client.logout();
+        GomokuBot.client.logout();
         System.out.println("Booting... Gomoku bot, End of execution.");
     }
 

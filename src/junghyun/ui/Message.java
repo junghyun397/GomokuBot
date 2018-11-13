@@ -8,11 +8,12 @@ import sx.blah.discord.handle.obj.IUser;
 public class Message {
 
     public static void sendHelp(IUser user, IChannel channel) {
-        channel.sendMessage("여기 도움말이 있습니다! 하나씩 잘 읽어보세요. :)\n" +
+        final String message = "여기 도움말이 있습니다! 하나씩 잘 읽어보세요. :)\n" +
                 "\n**~help 도움말**, 도움말을 알려드립니다." +
                 "\n**~start 게임 시작**: 게임을 시작합니다." +
                 "\n**~rank 순위**: 자신의 순위와 다른사람들의 순위를 알려 드립니다." +
-                "\n**~resign 항복**: 현재 진행하고 있는 게임을 포기합니다.");
+                "\n**~resign 항복**: 현재 진행하고 있는 게임을 포기합니다.";
+        channel.sendMessage(message);
     }
 
     public static void sendRank(IUser user, IChannel channel) {
@@ -59,7 +60,7 @@ public class Message {
     }
 
     public static void notFoundGame(IUser user, IChannel channel) {
-        channel.sendMessage(user.getName()+ "님, 하고계신 게임을 찾지 못했어요. !start 로 게임을 시작 해주세요!");
+        channel.sendMessage(user.getName()+ "님, 하고계신 게임을 찾지 못했어요. ~start 로 게임을 시작 해주세요!");
     }
 
     public static void sendSurrenPlayer(Game game, IUser user, IChannel channel) {

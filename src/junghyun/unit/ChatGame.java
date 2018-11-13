@@ -8,11 +8,12 @@ public class ChatGame {
 
     private Game game;
 
-    private long updateTime = System.currentTimeMillis();
+    private long updateTime;
 
     public ChatGame(long longId, Game game) {
         this.longId = longId;
         this.game = game;
+        this.updateTime = System.currentTimeMillis();
     }
 
     public long getLongId() {

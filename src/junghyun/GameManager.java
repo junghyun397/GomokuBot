@@ -6,17 +6,26 @@ import junghyun.ui.Message;
 import junghyun.unit.ChatGame;
 import junghyun.unit.Pos;
 import junghyun.unit.Settings;
+
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;
 
 import java.util.HashMap;
 import java.util.Random;
-
-import static java.lang.System.currentTimeMillis;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 class GameManager {
 
     private static HashMap<Long, ChatGame> gameList = new HashMap<>();
+
+    static void bootGameManager() {
+        Runnable task = GameManager::checkTimeOut;
+
+        ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+        service.scheduleAtFixedRate(task, Settings.TIMEOUT_CYCLE, Settings.TIMEOUT_CYCLE, TimeUnit.SECONDS);
+    }
 
     private static void putGame(ChatGame chatGame) {
         GameManager.gameList.put(chatGame.getLongId(), chatGame);
@@ -50,7 +59,7 @@ class GameManager {
     }
 
     private static void endGame(long id) {
-        delGame(id);
+        GameManager.delGame(id);
     }
 
     private static void checkTimeOut() {
