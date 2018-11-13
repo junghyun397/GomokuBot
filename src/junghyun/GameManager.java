@@ -2,6 +2,7 @@ package junghyun;
 
 import junghyun.ai.Game;
 import junghyun.ai.engin.AIBase;
+import junghyun.db.DBManager;
 import junghyun.ui.Message;
 import junghyun.unit.ChatGame;
 import junghyun.unit.Pos;
@@ -58,15 +59,16 @@ class GameManager {
         Message.sendCreatedGame(chatGame.getGame(), playerColor, user, channel);
     }
 
-    private static void endGame(long id) {
-        GameManager.delGame(id);
+    private static void endGame(ChatGame game) {
+        DBManager.saveGame(game);
+        GameManager.delGame(game.getLongId());
     }
 
     private static void checkTimeOut() {
         long currentTime = System.currentTimeMillis();
         for (ChatGame game: (ChatGame[]) GameManager.gameList.entrySet().toArray()) {
             if (game.getUpdateTime()+Settings.TIMEOUT < currentTime) {
-                GameManager.endGame(game.getLongId());
+                GameManager.endGame(game);
             }
         }
     }
@@ -74,7 +76,7 @@ class GameManager {
     static void surrenGame(long id, IUser user, IChannel channel) {
         if (checkGame(id, user, channel)) return;
         Message.sendSurrenPlayer(getGame(id).getGame(), user, channel);
-        GameManager.endGame(id);
+        GameManager.endGame(getGame(id));
     }
 
     static void putStone(long id, Pos pos, IUser user, IChannel channel) {
@@ -88,7 +90,7 @@ class GameManager {
         game.setStone(pos.getX(), pos.getY());
         if (game.isWin(pos.getX(), pos.getY(), game.getPlayerColor())) {
             Message.sendPlayerWin(game, pos, user, channel);
-            endGame(id);
+            endGame(getGame(id));
             return;
         }
 
@@ -96,7 +98,7 @@ class GameManager {
         game.setStone(aiPos.getX(), aiPos.getY(), !game.getPlayerColor());
         if (game.isWin(aiPos.getX(), aiPos.getY(), !game.getPlayerColor())) {
             Message.sendPlayerLose(game, aiPos, user, channel);
-            endGame(id);
+            endGame(getGame(id));
             return;
         }
 

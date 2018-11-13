@@ -54,7 +54,7 @@ public class Message {
     }
 
     public static void sendNextTurn(Game game, Pos aiPos, IUser user, IChannel channel) {
-        String result = TextDrawer.getGraphics(game, aiPos) +
+        String result = TextDrawer.getGraphics(game, aiPos) + "#" + game.getTurns() + "턴" +
                 user.getName() + "님, " + " 전 " + aiPos.getHumX() + " " + aiPos.getHumY() + " 에 뒀어요!";
         channel.sendMessage(result);
     }

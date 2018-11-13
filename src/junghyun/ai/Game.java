@@ -1,5 +1,9 @@
 package junghyun.ai;
 
+import junghyun.unit.Pos;
+
+import java.util.ArrayList;
+
 public class Game {
 
     private boolean playerColor = true;
@@ -8,6 +12,8 @@ public class Game {
     private boolean turnColor = true;
 
     private Stone[][] plate = new Stone[15][15];
+
+    private ArrayList<Pos> log = new ArrayList<>();
 
     public Game() {
         this.clearPlate();
@@ -127,10 +133,10 @@ public class Game {
         Stone stone = this.plate[x][y];
         stone.setStone(color);
         this.plate[x][y] = stone;
-
         this.turns++;
-
         this.setColor(!color);
+
+        this.log.add(new Pos(x, y));
     }
 
     public void addThreePoint(int x, int y, boolean color) {
@@ -168,6 +174,10 @@ public class Game {
                 this.resetPoint(x, y);
             }
         }
+    }
+
+    public ArrayList<Pos> getLog() {
+        return this.log;
     }
 
     public boolean isFull() {
