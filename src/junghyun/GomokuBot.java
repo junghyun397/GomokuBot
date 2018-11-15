@@ -1,5 +1,6 @@
 package junghyun;
 
+import junghyun.db.DBManager;
 import junghyun.db.SqlManager;
 import junghyun.ui.Message;
 import junghyun.unit.Pos;
@@ -9,6 +10,8 @@ import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.ActivityType;
 import sx.blah.discord.handle.obj.StatusType;
+
+import java.util.Objects;
 
 class GomokuBot {
 
@@ -37,7 +40,7 @@ class GomokuBot {
                 Message.sendHelp(event.getAuthor(), event.getChannel());
                 break;
             case "~rank":
-                Message.sendRank(event.getAuthor(), event.getChannel());
+                Message.sendRank(event.getAuthor(), event.getChannel(), Objects.requireNonNull(DBManager.getRankingData(10)));
                 break;
             case "~start":
                 GameManager.createGame(event.getAuthor().getLongID(), event.getAuthor(), event.getChannel());

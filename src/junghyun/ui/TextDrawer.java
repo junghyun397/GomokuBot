@@ -6,11 +6,11 @@ import junghyun.unit.Pos;
 
 class TextDrawer {
 
-    private final static String WHITE = "●";
-    private final static String BLACK = "○";
+    private final static String WHITE = "●"; //TODO: 보편적인 문자열로 교체
+    private final static String BLACK = "○"; //TODO: 보편적인 문자열로 교체
 
-    private final static String LAST_WHITE = "■";
-    private final static String LAST_BLACK = "□";
+    private final static String LAST_WHITE = "■"; //TODO: 보편적인 문자열로 교체
+    private final static String LAST_BLACK = "□"; //TODO: 보편적인 문자열로 교체
 
     private final static String CONER_T_L = "┏";
     private final static String CONER_T_R = "┓";

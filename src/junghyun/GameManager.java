@@ -50,7 +50,7 @@ class GameManager {
         boolean playerColor = true;
         if (rColor > 0) playerColor = false;
 
-        ChatGame chatGame = new ChatGame(id, new Game());
+        ChatGame chatGame = new ChatGame(id, new Game(), user.getName());
 
         if (!playerColor) chatGame.getGame().setStone(7, 7, true);
         chatGame.getGame().setPlayerColor(playerColor);
@@ -67,9 +67,7 @@ class GameManager {
     private static void checkTimeOut() {
         long currentTime = System.currentTimeMillis();
         for (ChatGame game: (ChatGame[]) GameManager.gameList.entrySet().toArray()) {
-            if (game.getUpdateTime()+Settings.TIMEOUT < currentTime) {
-                GameManager.endGame(game);
-            }
+            if (game.getUpdateTime()+Settings.TIMEOUT < currentTime) GameManager.endGame(game);
         }
     }
 
@@ -90,6 +88,12 @@ class GameManager {
         game.setStone(pos.getX(), pos.getY());
         if (game.isWin(pos.getX(), pos.getY(), game.getPlayerColor())) {
             Message.sendPlayerWin(game, pos, user, channel);
+            endGame(getGame(id));
+            return;
+        }
+
+        if (game.isFull()) {
+            Message.sendFullCanvas(game, user, channel);
             endGame(getGame(id));
             return;
         }

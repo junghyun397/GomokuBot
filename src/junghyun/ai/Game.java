@@ -122,7 +122,8 @@ public class Game {
     }
 
     public boolean isWin(int x, int y, boolean color) {
-        return this.getXRow(x, y).findFive(color) || this.getYRow(x, y).findFive(color) || this.getXYRow(x, y).findFive(color) || this.getYXRow(x, y).findFive(color);
+        return this.getXRow(x, y).findFive(color) || this.getYRow(x, y).findFive(color)
+                || this.getXYRow(x, y).findFive(color) || this.getYXRow(x, y).findFive(color);
     }
 
     public void setStone(int x, int y) {
@@ -190,7 +191,7 @@ public class Game {
             }
         }
 
-        return count == 225;
+        return (count == 225) || (count == 224);
     }
 
 }

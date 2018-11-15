@@ -5,13 +5,15 @@ import junghyun.ai.Game;
 public class ChatGame {
 
     private long longId;
+    private String nameTag;
 
     private Game game;
 
     private long updateTime;
 
-    public ChatGame(long longId, Game game) {
+    public ChatGame(long longId, Game game, String nameTag) {
         this.longId = longId;
+        this.nameTag = nameTag;
         this.game = game;
         this.updateTime = System.currentTimeMillis();
     }
@@ -31,5 +33,9 @@ public class ChatGame {
 
     public long getUpdateTime() {
         return this.updateTime;
+    }
+
+    public String getNameTag() {
+        return this.nameTag;
     }
 }

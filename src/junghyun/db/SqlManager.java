@@ -16,7 +16,7 @@ public class SqlManager {
         }
     }
 
-    public static ResultSet executeQuery(String query) {
+    static ResultSet executeQuery(String query) {
         try {
             PreparedStatement pstmt = SqlManager.connect.prepareStatement(query);
             return pstmt.executeQuery(query);
@@ -26,7 +26,7 @@ public class SqlManager {
         }
     }
 
-    public static int executeUpdate(String query) {
+    static int executeUpdate(String query) {
         try {
             PreparedStatement pstmt = SqlManager.connect.prepareStatement(query);
             int result = pstmt.executeUpdate(query);
@@ -38,7 +38,7 @@ public class SqlManager {
         }
     }
 
-    public static boolean execute(String query) {
+    static boolean execute(String query) {
         try {
             PreparedStatement pstmt = SqlManager.connect.prepareStatement(query);
             boolean result = pstmt.execute(query);
