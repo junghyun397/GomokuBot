@@ -9,13 +9,20 @@ public class ChatGame {
 
     private Game game;
 
+    private boolean isWin;
+
     private long updateTime;
 
     public ChatGame(long longId, Game game, String nameTag) {
         this.longId = longId;
         this.nameTag = nameTag;
         this.game = game;
+        this.isWin = false;
         this.updateTime = System.currentTimeMillis();
+    }
+
+    public void setWin() {
+        this.isWin = true;
     }
 
     public long getLongId() {
@@ -37,5 +44,9 @@ public class ChatGame {
 
     public String getNameTag() {
         return this.nameTag;
+    }
+
+    public boolean isWin() {
+        return isWin;
     }
 }

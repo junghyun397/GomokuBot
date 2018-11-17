@@ -37,16 +37,16 @@ class GomokuBot {
 
         switch (splitText[0]) {
             case "~help":
-                Message.sendHelp(event.getAuthor(), event.getChannel());
+                Message.sendHelp(event.getChannel());
                 break;
             case "~rank":
-                Message.sendRank(event.getAuthor(), event.getChannel(), Objects.requireNonNull(DBManager.getRankingData(10)));
+                Message.sendRank(event.getAuthor(), event.getChannel(), Objects.requireNonNull(DBManager.getRankingData(Settings.RANK_COUNT)));
                 break;
             case "~start":
                 GameManager.createGame(event.getAuthor().getLongID(), event.getAuthor(), event.getChannel());
                 break;
             case "~resign":
-                GameManager.surrenGame(event.getAuthor().getLongID(), event.getAuthor(), event.getChannel());
+                GameManager.resignGame(event.getAuthor().getLongID(), event.getAuthor(), event.getChannel());
                 break;
             case "~s":
                 if ((splitText.length != 3) || (!((splitText[1].length() == 1) && ((splitText[2].length() == 1) || (splitText[2].length() == 2))))) {

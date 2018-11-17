@@ -8,7 +8,7 @@ import sx.blah.discord.handle.obj.IUser;
 
 public class Message {
 
-    public static void sendHelp(IUser user, IChannel channel) {
+    public static void sendHelp(IChannel channel) {
         final String message = "여기 도움말이 있습니다! 하나씩 잘 읽어보세요. :)\n" +
                 "\n**~help 도움말**, 도움말을 알려드립니다." +
                 "\n**~start 게임 시작**: 게임을 시작합니다." +
@@ -21,6 +21,9 @@ public class Message {
         StringBuilder result = new StringBuilder("1위~10위 순위는 다음과 같습니다. :)\n");
         for (int i = 0; i < rankData.length; i++) result.append(i).append("위: ").append(rankData[i].getName())
                 .append(" ").append(rankData[i].getWin()).append("승리").append("\n");
+
+        DBManager.UserDataSet userData = DBManager.getUserData(user.getName());
+        if (userData != null)
 
         channel.sendMessage(result.toString());
     }
@@ -68,7 +71,7 @@ public class Message {
         channel.sendMessage(user.getName()+ "님, 하고계신 게임을 찾지 못했어요. ~start 로 게임을 시작 해주세요!");
     }
 
-    public static void sendSurrenPlayer(Game game, IUser user, IChannel channel) {
+    public static void sendResignPlayer(Game game, IUser user, IChannel channel) {
         channel.sendMessage(TextDrawer.getGraphics(game) + user.getName() + "님, 항복하셨네요. 제가 이겼습니다!");
     }
 

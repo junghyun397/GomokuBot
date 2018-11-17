@@ -51,8 +51,8 @@ public class AIBase {
         AIRow[] yx_rows = new AIRow[29];
 
         for (int i = 0; i < 15; i++) {
-            x_rows[i] = new AIRow(game.getXRow(i, 0), game.getColor(), this.game);
-            y_rows[i] = new AIRow(game.getYRow(0, i), game.getColor(), this.game);
+            x_rows[i] = new AIRow(game.getXRow(i), game.getColor(), this.game);
+            y_rows[i] = new AIRow(game.getYRow(i), game.getColor(), this.game);
             xy_rows[i] = new AIRow(game.getXYRow(i, 0), game.getColor(), this.game);
             yx_rows[i] = new AIRow(game.getYXRow(i, 0), game.getColor(), this.game);
         }

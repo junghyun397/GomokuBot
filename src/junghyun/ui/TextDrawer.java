@@ -12,16 +12,16 @@ class TextDrawer {
     private final static String LAST_WHITE = "■"; //TODO: 보편적인 문자열로 교체
     private final static String LAST_BLACK = "□"; //TODO: 보편적인 문자열로 교체
 
-    private final static String CONER_T_L = "┏";
-    private final static String CONER_T_R = "┓";
-    private final static String CONER_B_L = "┗";
-    private final static String CONER_B_R = "┛";
+    private final static String CORNER_T_L = "┏";
+    private final static String CORNER_T_R = "┓";
+    private final static String CORNER_B_L = "┗";
+    private final static String CORNER_B_R = "┛";
 
-    private final static String CONER_T_U = "┳";
-    private final static String CONER_T_D = "┻";
+    private final static String CORNER_T_U = "┳";
+    private final static String CORNER_T_D = "┻";
 
-    private final static String CONER_L = "┣";
-    private final static String CONER_R = "┫";
+    private final static String CORNER_L = "┣";
+    private final static String CORNER_R = "┫";
 
     private final static String CROSS = "╋";
 
@@ -77,23 +77,23 @@ class TextDrawer {
         if (y == 0) {
             switch (x) {
                 case 0:
-                    return CONER_T_L;
+                    return CORNER_T_L;
                 case 14:
-                    return CONER_T_R;
+                    return CORNER_T_R;
             }
-            return CONER_T_U;
+            return CORNER_T_U;
         } else if (y == 14) {
             switch (x) {
                 case 0:
-                    return CONER_B_L;
+                    return CORNER_B_L;
                 case 14:
-                    return CONER_B_R;
+                    return CORNER_B_R;
             }
-            return CONER_T_D;
+            return CORNER_T_D;
         } else if (x == 0) {
-            return  CONER_L;
+            return CORNER_L;
         } else if (x == 14) {
-            return CONER_R;
+            return CORNER_R;
         }
         return CROSS;
     }

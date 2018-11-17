@@ -3,6 +3,7 @@ package junghyun;
 import junghyun.ai.Game;
 import junghyun.ai.engin.AIBase;
 import junghyun.db.DBManager;
+import junghyun.db.Logger;
 import junghyun.ui.Message;
 import junghyun.unit.ChatGame;
 import junghyun.unit.Pos;
@@ -56,12 +57,14 @@ class GameManager {
         chatGame.getGame().setPlayerColor(playerColor);
         GameManager.putGame(chatGame);
 
+        Logger.loggerInfo("Start Game: " + chatGame.getNameTag());
         Message.sendCreatedGame(chatGame.getGame(), playerColor, user, channel);
     }
 
     private static void endGame(ChatGame game) {
         DBManager.saveGame(game);
         GameManager.delGame(game.getLongId());
+        Logger.loggerInfo("End Game: " + game.getNameTag());
     }
 
     private static void checkTimeOut() {
@@ -71,14 +74,15 @@ class GameManager {
         }
     }
 
-    static void surrenGame(long id, IUser user, IChannel channel) {
+    static void resignGame(long id, IUser user, IChannel channel) {
         if (checkGame(id, user, channel)) return;
-        Message.sendSurrenPlayer(getGame(id).getGame(), user, channel);
+        Message.sendResignPlayer(getGame(id).getGame(), user, channel);
         GameManager.endGame(getGame(id));
     }
 
     static void putStone(long id, Pos pos, IUser user, IChannel channel) {
-        Game game = getGame(id).onUpdate().getGame();
+        ChatGame chatGame = GameManager.getGame(id).onUpdate();
+        Game game = chatGame.getGame();
 
         if (!game.canSetStone(pos.getX(), pos.getY())) {
             Message.sendAlreadyIn(user, channel);
@@ -87,14 +91,15 @@ class GameManager {
 
         game.setStone(pos.getX(), pos.getY());
         if (game.isWin(pos.getX(), pos.getY(), game.getPlayerColor())) {
+            chatGame.setWin();
             Message.sendPlayerWin(game, pos, user, channel);
-            endGame(getGame(id));
+            endGame(chatGame);
             return;
         }
 
         if (game.isFull()) {
             Message.sendFullCanvas(game, user, channel);
-            endGame(getGame(id));
+            endGame(chatGame);
             return;
         }
 
@@ -102,7 +107,7 @@ class GameManager {
         game.setStone(aiPos.getX(), aiPos.getY(), !game.getPlayerColor());
         if (game.isWin(aiPos.getX(), aiPos.getY(), !game.getPlayerColor())) {
             Message.sendPlayerLose(game, aiPos, user, channel);
-            endGame(getGame(id));
+            endGame(chatGame);
             return;
         }
 

@@ -9,10 +9,23 @@ public class DBManager {
 
     public static void saveGame(ChatGame game) {
         StringBuilder rs = new StringBuilder(game.getGame().getTurns()).append(":");
-        for (Pos pos: (Pos[]) game.getGame().getLog().toArray()) rs.append(pos.getX()).append(".").append(pos.getY());
+        for (Pos pos: (Pos[]) game.getGame().getLog().toArray()) rs.append(pos.getX()).append(".").append(pos.getY()).append(":");
 
-        SqlManager.execute("INSERT INTO user_info(record_data, total_count, user_name) VALUES (" +
-                "'" + rs.toString() + "', '" + game.getGame().getTurns() + "', '" + game.getNameTag() + "');");
+        SqlManager.execute("INSERT INTO game_record(record_data, total_count, user_name, date) VALUES ('"
+                + rs.toString() + "', " + game.getGame().getTurns() + ", '" + game.getNameTag() + "', " +  System.currentTimeMillis() + ");");
+
+        UserDataSet orgUser = DBManager.getUserData(game.getNameTag());
+        if (orgUser != null) {
+            if (game.isWin()) SqlManager.executeUpdate("UPDATE user_info SET win=" + (orgUser.getWin() + 1)
+                    + " WHERE name='" + orgUser.getName() + "';");
+            else SqlManager.executeUpdate("UPDATE user_info SET lose=" + (orgUser.getLose() + 1)
+                    + " WHERE name='" + orgUser.getName() + "';");
+        } else {
+            if (game.isWin()) SqlManager.execute("INSERT INTO user_info(name, id, win, lose) VALUES ('"
+                    + game.getNameTag() + "', " + game.getLongId() + ", 1, 0;");
+            else SqlManager.execute("INSERT INTO user_info(name, id, win, lose) VALUES ('"
+                    + game.getNameTag() + "', " + game.getLongId() + ", 0, 1;");
+        }
     }
 
     public static UserDataSet getUserData(String name) {
@@ -28,11 +41,10 @@ public class DBManager {
     }
 
     public static UserDataSet[] getRankingData(int count) {
-        ResultSet rs = SqlManager.executeQuery("SELECT * , (SELECT Count(*)+1 FROM user_info WHERE win > t.win ) As " +
+        ResultSet rs = SqlManager.executeQuery("SELECT * , (SELECT Count(*)+1 FROM user_info WHERE win > t.win ) AS " +
                 "temp_rank FROM user_info AS t ORDER BY temp_rank LIMIT 0, " + count + ";");
 
         UserDataSet[] rsDataSet = new UserDataSet[count];
-
         try {
             for (int i = 0; i < count; i++) {
                 assert rs != null;

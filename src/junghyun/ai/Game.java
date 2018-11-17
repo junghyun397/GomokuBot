@@ -55,11 +55,11 @@ public class Game {
         return this.turnColor;
     }
 
-    public Row getXRow(int x, int y) {
+    public Row getXRow(int x) {
         return new Row(this.plate[x]);
     }
 
-    public Row getYRow(int x, int y) {
+    public Row getYRow(int y) {
         Stone[] rows = new Stone[15];
         for (int i = 0; i < 15; i++) {
             rows[i] = this.plate[i][y];
@@ -122,7 +122,7 @@ public class Game {
     }
 
     public boolean isWin(int x, int y, boolean color) {
-        return this.getXRow(x, y).findFive(color) || this.getYRow(x, y).findFive(color)
+        return this.getXRow(x).findFive(color) || this.getYRow(y).findFive(color)
                 || this.getXYRow(x, y).findFive(color) || this.getYXRow(x, y).findFive(color);
     }
 
@@ -150,11 +150,6 @@ public class Game {
         Stone stone = this.plate[x][y];
         stone.addFourCount(color);
         this.plate[x][y] = stone;
-    }
-
-    public int getPoint(int x, int y) {
-        Stone stone = this.plate[x][y];
-        return stone.getPoint();
     }
 
     public void addPoint(int x, int y, int point) {
