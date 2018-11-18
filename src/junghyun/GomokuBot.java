@@ -18,7 +18,6 @@ class GomokuBot {
     private static IDiscordClient client;
 
     static void startGomokuBot() {
-        System.out.println("Booting... GomokuBot, Start booting..");
         client = new ClientBuilder().setPresence(StatusType.ONLINE, ActivityType.PLAYING, "GomokuBot.github.io or ~help").withToken(Settings.TOKEN).build();
         client.getDispatcher().registerListener(new EventListener());
         client.login();
@@ -29,7 +28,6 @@ class GomokuBot {
 
     static void endGomokuBot() {
         GomokuBot.client.logout();
-        System.out.println("Booting... Gomoku bot, End of execution.");
     }
 
     static void processCommand(MessageReceivedEvent event) {

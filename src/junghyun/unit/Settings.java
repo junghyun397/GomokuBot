@@ -2,7 +2,7 @@ package junghyun.unit;
 
 public class Settings {
 
-    public static final String TOKEN = "TOOOKEN";
+    public static final String TOKEN = "";
 
     public static final char PREFIX = '~';
 

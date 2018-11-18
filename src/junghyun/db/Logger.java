@@ -3,6 +3,7 @@ package junghyun.db;
 import junghyun.unit.Settings;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -19,37 +20,37 @@ public class Logger {
 
         ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
         service.scheduleAtFixedRate(task, Settings.LOGGER_SAVE, Settings.LOGGER_SAVE, TimeUnit.SECONDS);
-
-        System.out.println("Booting... Ready logger");
     }
 
     public static void loggerInfo(String text) {
-        System.out.print("[" + getDateTime() + "] [INFO] " + text);
-        Logger.logBuffer += text+"\n";
+        text = "[" + getDateTime() + "] [INFO] " + text + "\n";
+        System.out.print(text);
+        Logger.logBuffer += text;
     }
 
     public static void loggerWarning(String text) {
-        System.out.print("[" + getDateTime() + "] [WARNING] " + text);
-        Logger.logBuffer += text+"\n";
+        text = "[" + getDateTime() + "] [WARNING] " + text + "\n";
+        System.out.print(text);
+        Logger.logBuffer += text;
     }
 
     public static void saveLogs() {
+
         try {
-            FileWriter fw = new FileWriter(Logger.getDateTime() + ".txt");
-            BufferedWriter bw = new BufferedWriter(fw);
-            String str = logBuffer;
-            bw.write(str);
-            bw.newLine();
-            bw.close();
-            Logger.logBuffer = "\n";
+            File tempFile = new File(Logger.class.getResource("/").getPath() + "/" +  Logger.getDateTime() + ".txt");
+            FileWriter fw = new FileWriter(tempFile);
+            fw.flush();
+            fw.close();
+            Logger.logBuffer = "";
         } catch (Exception e) {
+            e.printStackTrace();
             Logger.loggerWarning(e.getMessage());
         }
     }
 
     private static String getDateTime() {
         long time = System.currentTimeMillis();
-        SimpleDateFormat dayTime = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+        SimpleDateFormat dayTime = new SimpleDateFormat("yyyy-MM-dd_hh:mm:ss");
         return dayTime.format(new Date(time));
     }
 

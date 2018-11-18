@@ -10,8 +10,10 @@ public class SqlManager {
 
     public static void connectMysql() {
         try {
+            Class.forName("com.mysql.jdbc.Driver");
             SqlManager.connect = DriverManager.getConnection(Settings.SQL_URL, Settings.SQL_USER, Settings.SQL_PWD);
-        } catch (SQLException e) {
+            Logger.loggerInfo("Mysql connected!");
+        } catch (Exception e) {
             Logger.loggerWarning(e.getMessage());
         }
     }
@@ -26,27 +28,23 @@ public class SqlManager {
         }
     }
 
-    static int executeUpdate(String query) {
+    static void executeUpdate(String query) {
         try {
             PreparedStatement pstmt = SqlManager.connect.prepareStatement(query);
-            int result = pstmt.executeUpdate(query);
+            pstmt.executeUpdate(query);
             pstmt.close();
-            return result;
         } catch (SQLException e) {
             Logger.loggerWarning(e.getMessage());
-            return 0;
         }
     }
 
-    static boolean execute(String query) {
+    static void execute(String query) {
         try {
             PreparedStatement pstmt = SqlManager.connect.prepareStatement(query);
-            boolean result = pstmt.execute(query);
+            pstmt.execute(query);
             pstmt.close();
-            return result;
         } catch (SQLException e) {
             Logger.loggerWarning(e.getMessage());
-            return false;
         }
     }
 

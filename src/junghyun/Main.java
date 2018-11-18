@@ -15,19 +15,16 @@ public class Main {
         Logger.startLogger();
         onRunning = true;
         startServerCommand();
-        Logger.loggerInfo("Start working now!");
     }
 
     private static void stopServer() {
         GomokuBot.endGomokuBot();
         Logger.saveLogs();
         onRunning = false;
-        Logger.loggerInfo("It is finished now!");
     }
 
     private static void startServerCommand() {
         scanner = new Scanner(System.in);
-        System.out.println("Booting... Ready for listen command");
         scanCommand();
     }
 
