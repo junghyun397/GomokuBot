@@ -39,6 +39,7 @@ public class Logger {
         try {
             File tempFile = new File(Logger.class.getResource("/").getPath() + "/" +  Logger.getDateTime() + ".txt");
             FileWriter fw = new FileWriter(tempFile);
+            fw.write(logBuffer);
             fw.flush();
             fw.close();
             Logger.logBuffer = "";

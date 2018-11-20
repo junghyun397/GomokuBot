@@ -8,11 +8,13 @@ import java.sql.ResultSet;
 public class DBManager {
 
     public static void saveGame(ChatGame game) {
-        StringBuilder rs = new StringBuilder(game.getGame().getTurns()).append(":");
+        StringBuilder rs = new StringBuilder().append(game.getGame().getTurns()).append(":");
         for (Pos pos: game.getGame().getLog().toArray(new Pos[0])) rs.append(pos.getX()).append(".").append(pos.getY()).append(":");
+        rs.append("0000");
 
-        SqlManager.execute("INSERT INTO game_record(record_data, total_count, user_name, date) VALUES ('"
-                + rs.toString() + "', " + game.getGame().getTurns() + ", '" + game.getNameTag() + "', " +  System.currentTimeMillis() + ");");
+        SqlManager.execute("INSERT INTO game_record(record_data, total_count, user_name, date, reason) VALUES ('"
+                + rs.toString() + "', " + game.getGame().getTurns() + ", '" + game.getNameTag() + "', " +  (int) System.currentTimeMillis()/100 + ", '"
+                + game.getState().toString() + "');");
 
         UserDataSet orgUser = DBManager.getUserData(game.getNameTag());
         if (orgUser != null) {

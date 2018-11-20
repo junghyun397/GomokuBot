@@ -1,6 +1,10 @@
 package junghyun.unit;
 
 import junghyun.ai.Game;
+import sx.blah.discord.handle.obj.IMessage;
+
+import java.util.LinkedList;
+import java.util.List;
 
 public class ChatGame {
 
@@ -9,20 +13,23 @@ public class ChatGame {
 
     private Game game;
 
-    private boolean isWin;
+    public enum STATE {INP, WIN, RESIGN, FULL, LOSE, TIMEOUT}
+    private STATE state;
 
+    private List<IMessage> msgList;
     private long updateTime;
 
     public ChatGame(long longId, Game game, String nameTag) {
         this.longId = longId;
         this.nameTag = nameTag;
         this.game = game;
-        this.isWin = false;
+        this.state = STATE.INP;
+        this.msgList = new LinkedList<>();
         this.updateTime = System.currentTimeMillis();
     }
 
-    public void setWin() {
-        this.isWin = true;
+    public void setState(STATE state) {
+        this.state = state;
     }
 
     public long getLongId() {
@@ -31,6 +38,10 @@ public class ChatGame {
 
     public Game getGame() {
         return game;
+    }
+
+    public void addMessage(IMessage iMessage) {
+        this.msgList.add(iMessage);
     }
 
     public ChatGame onUpdate() {
@@ -47,6 +58,14 @@ public class ChatGame {
     }
 
     public boolean isWin() {
-        return isWin;
+        return this.state == STATE.WIN;
+    }
+
+    public STATE getState() {
+        return this.state;
+    }
+
+    public List<IMessage> getMessageList() {
+        return this.msgList;
     }
 }

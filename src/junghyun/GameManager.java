@@ -70,14 +70,19 @@ class GameManager {
     private static void checkTimeOut() {
         long currentTime = System.currentTimeMillis();
         for (ChatGame game: (ChatGame[]) GameManager.gameList.entrySet().toArray()) {
-            if (game.getUpdateTime()+Settings.TIMEOUT < currentTime) GameManager.endGame(game);
+            if (game.getUpdateTime()+Settings.TIMEOUT < currentTime) {
+                game.setState(ChatGame.STATE.TIMEOUT);
+                GameManager.endGame(game);
+            }
         }
     }
 
     static void resignGame(long id, IUser user, IChannel channel) {
         if (checkGame(id, user, channel)) return;
-        Message.sendResignPlayer(getGame(id).getGame(), user, channel);
-        GameManager.endGame(getGame(id));
+        ChatGame chatGame = GameManager.getGame(id);
+        chatGame.setState(ChatGame.STATE.RESIGN);
+        Message.sendResignPlayer(chatGame, user, channel);
+        GameManager.endGame(chatGame);
     }
 
     static void putStone(long id, Pos pos, IUser user, IChannel channel) {
@@ -91,14 +96,15 @@ class GameManager {
 
         game.setStone(pos.getX(), pos.getY());
         if (game.isWin(pos.getX(), pos.getY(), game.getPlayerColor())) {
-            chatGame.setWin();
-            Message.sendPlayerWin(game, pos, user, channel);
+            chatGame.setState(ChatGame.STATE.WIN);
+            Message.sendPlayerWin(chatGame, pos, user, channel);
             endGame(chatGame);
             return;
         }
 
         if (game.isFull()) {
-            Message.sendFullCanvas(game, user, channel);
+            chatGame.setState(ChatGame.STATE.FULL);
+            Message.sendFullCanvas(chatGame, user, channel);
             endGame(chatGame);
             return;
         }
@@ -106,12 +112,13 @@ class GameManager {
         Pos aiPos = new AIBase(game).getAiPoint();
         game.setStone(aiPos.getX(), aiPos.getY(), !game.getPlayerColor());
         if (game.isWin(aiPos.getX(), aiPos.getY(), !game.getPlayerColor())) {
-            Message.sendPlayerLose(game, aiPos, user, channel);
+            chatGame.setState(ChatGame.STATE.LOSE);
+            Message.sendPlayerLose(chatGame, aiPos, user, channel);
             endGame(chatGame);
             return;
         }
 
-        Message.sendNextTurn(game, aiPos, user, channel);
+        Message.sendNextTurn(chatGame, aiPos, user, channel);
     }
 
     private static boolean checkGame(long id, IUser user, IChannel channel) {

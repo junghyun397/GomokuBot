@@ -2,6 +2,7 @@ package junghyun.ui;
 
 import junghyun.ai.Game;
 import junghyun.db.DBManager;
+import junghyun.unit.ChatGame;
 import junghyun.unit.Pos;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;
@@ -20,7 +21,7 @@ public class Message {
     public static void sendRank(IUser user, IChannel channel, DBManager.UserDataSet[] rankData) {
         StringBuilder result = new StringBuilder("1위~10위 순위는 다음과 같습니다. :)\n");
         for (int i = 0; i < rankData.length; i++) result.append(i).append("위: ").append(rankData[i].getName())
-                .append(" ").append(rankData[i].getWin()).append("승리").append("\n");
+                .append(" W/L ").append(rankData[i].getWin()).append("/").append(rankData[i].getLose()).append("\n");
 
         DBManager.UserDataSet userData = DBManager.getUserData(user.getName());
         if (userData != null)
@@ -52,31 +53,35 @@ public class Message {
         channel.sendMessage(user.getName()+ "님, 그곳에는 이미 돌이 놓여 있어요.");
     }
 
-    public static void sendPlayerWin(Game game, Pos playerPos, IUser user, IChannel channel) {
-        channel.sendMessage(TextDrawer.getGraphics(game, playerPos) + user.getName() + "님, "
+    public static void sendPlayerWin(ChatGame game, Pos playerPos, IUser user, IChannel channel) {
+        channel.bulkDelete(game.getMessageList());
+        channel.sendMessage(TextDrawer.getGraphics(game.getGame(), playerPos) + user.getName() + "님, "
                 + playerPos.getHumX() + " " + playerPos.getHumY() + " 에 둠으로서 이기셨어요. 축하드립니다. XD");
     }
 
-    public static void sendPlayerLose(Game game, Pos aiPos, IUser user, IChannel channel) {
-        channel.sendMessage(TextDrawer.getGraphics(game, aiPos) + user.getName() + "님, "
+    public static void sendPlayerLose(ChatGame game, Pos aiPos, IUser user, IChannel channel) {
+        channel.bulkDelete(game.getMessageList());
+        channel.sendMessage(TextDrawer.getGraphics(game.getGame(), aiPos) + user.getName() + "님, "
                 + " 제가 " + aiPos.getHumX() + " " + aiPos.getHumY() + " 에 둠으로서 지졌습니다. :/");
     }
 
-    public static void sendNextTurn(Game game, Pos aiPos, IUser user, IChannel channel) {
-        channel.sendMessage(TextDrawer.getGraphics(game, aiPos) + "#" + game.getTurns() + "턴: " +
-                user.getName() + "님, " + " 전 " + aiPos.getHumX() + " " + aiPos.getHumY() + " 에 뒀어요!");
+    public static void sendNextTurn(ChatGame chatGame, Pos aiPos, IUser user, IChannel channel) {
+        chatGame.addMessage(channel.sendMessage(TextDrawer.getGraphics(chatGame.getGame(), aiPos) + "#" + chatGame.getGame().getTurns() + "턴: " +
+                user.getName() + "님, " + " 전 " + aiPos.getHumX() + " " + aiPos.getHumY() + " 에 뒀어요!"));
     }
 
     public static void notFoundGame(IUser user, IChannel channel) {
         channel.sendMessage(user.getName()+ "님, 하고계신 게임을 찾지 못했어요. ~start 로 게임을 시작 해주세요!");
     }
 
-    public static void sendResignPlayer(Game game, IUser user, IChannel channel) {
-        channel.sendMessage(TextDrawer.getGraphics(game) + user.getName() + "님, 항복하셨네요. 제가 이겼습니다!");
+    public static void sendResignPlayer(ChatGame game, IUser user, IChannel channel) {
+        channel.bulkDelete(game.getMessageList());
+        channel.sendMessage(TextDrawer.getGraphics(game.getGame()) + user.getName() + "님, 항복하셨네요. 제가 이겼습니다!");
     }
 
-    public static void sendFullCanvas(Game game, IUser user, IChannel channel) {
-        channel.sendMessage(TextDrawer.getGraphics(game) + user.getName() + "님, "
+    public static void sendFullCanvas(ChatGame game, IUser user, IChannel channel) {
+        channel.bulkDelete(game.getMessageList());
+        channel.sendMessage(TextDrawer.getGraphics(game.getGame()) + user.getName() + "님, "
                 + "더이상 놓을 수 있는 자리가 없으므로 지셨습니다. :/");
     }
 
