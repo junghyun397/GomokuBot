@@ -12,30 +12,30 @@ public class DBManager {
         for (Pos pos: game.getGame().getLog().toArray(new Pos[0])) rs.append(pos.getX()).append(".").append(pos.getY()).append(":");
         rs.append("0000");
 
-        SqlManager.execute("INSERT INTO game_record(record_data, total_count, user_name, date, reason) VALUES ('"
-                + rs.toString() + "', " + game.getGame().getTurns() + ", '" + game.getNameTag() + "', " +  (int) System.currentTimeMillis()/100 + ", '"
+        SqlManager.execute("INSERT INTO game_record(record_data, total_count, user_id, date, reason) VALUES ('"
+                + rs.toString() + "', " + game.getGame().getTurns() + ", " + game.getLongId() + ", " + System.currentTimeMillis() + ", '"
                 + game.getState().toString() + "');");
 
-        UserDataSet orgUser = DBManager.getUserData(game.getNameTag());
+        UserDataSet orgUser = DBManager.getUserData(game.getLongId());
         if (orgUser != null) {
             if (game.isWin()) SqlManager.executeUpdate("UPDATE user_info SET win=" + (orgUser.getWin() + 1)
-                    + " WHERE name='" + orgUser.getName() + "';");
+                    + " WHERE user_id=" + orgUser.getLongId() + ";");
             else SqlManager.executeUpdate("UPDATE user_info SET lose=" + (orgUser.getLose() + 1)
-                    + " WHERE name='" + orgUser.getName() + "';");
+                    + " WHERE user_id=" + orgUser.getLongId() + ";");
         } else {
-            if (game.isWin()) SqlManager.execute("INSERT INTO user_info(name, id, win, lose) VALUES ('"
-                    + game.getNameTag() + "', " + game.getLongId() + ", 1, 0;");
-            else SqlManager.execute("INSERT INTO user_info(name, id, win, lose) VALUES ('"
-                    + game.getNameTag() + "', " + game.getLongId() + ", 0, 1;");
+            if (game.isWin()) SqlManager.execute("INSERT INTO user_info(user_id, name_tag, win, lose) VALUES ("
+                    + game.getLongId() + ", '" + game.getNameTag() + "', 1, 0);");
+            else SqlManager.execute("INSERT INTO user_info(user_id, name_tag, win, lose) VALUES ("
+                    + game.getLongId() + ", '" + game.getNameTag() + "', 0, 1);");
         }
     }
 
-    public static UserDataSet getUserData(String name) {
-        ResultSet rs = SqlManager.executeQuery("SELECT * FROM user_info WHERE name = '" + name + "';");
+    public static UserDataSet getUserData(long id) {
+        ResultSet rs = SqlManager.executeQuery("SELECT * FROM user_info WHERE user_id = '" + id + "';");
         try {
             assert rs != null;
             if (!rs.next()) return null;
-            return new UserDataSet(name, rs.getInt("win"), rs.getInt("lose"));
+            return new UserDataSet(id, rs.getString("name_tag"), rs.getInt("win"), rs.getInt("lose"));
         } catch (Exception e) {
             Logger.loggerWarning(e.getMessage());
             return null;
@@ -51,7 +51,7 @@ public class DBManager {
             for (int i = 0; i < count; i++) {
                 assert rs != null;
                 rs.next();
-                rsDataSet[i] = new UserDataSet(rs.getString("name"),
+                rsDataSet[i] = new UserDataSet(rs.getLong("user_id"), rs.getString("name_tag"),
                         rs.getInt("win"), rs.getInt("lose"));
             }
             return rsDataSet;
@@ -63,12 +63,14 @@ public class DBManager {
 
     public static class UserDataSet {
 
+        private long longId;
         private String name;
 
         private int win;
         private int lose;
 
-        private UserDataSet(String name, int win, int lose) {
+        private UserDataSet(long id, String name, int win, int lose) {
+            this.longId = id;
             this.name = name;
             this.win = win;
             this.lose = lose;
@@ -84,6 +86,10 @@ public class DBManager {
 
         public int getLose() {
             return lose;
+        }
+
+        public long getLongId() {
+            return this.longId;
         }
     }
 }

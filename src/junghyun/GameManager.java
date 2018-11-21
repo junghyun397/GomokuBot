@@ -69,8 +69,8 @@ class GameManager {
 
     private static void checkTimeOut() {
         long currentTime = System.currentTimeMillis();
-        for (ChatGame game: (ChatGame[]) GameManager.gameList.entrySet().toArray()) {
-            if (game.getUpdateTime()+Settings.TIMEOUT < currentTime) {
+        for (ChatGame game: GameManager.gameList.values().toArray(new ChatGame[0])) {
+            if (game.getUpdateTime() + Settings.TIMEOUT < currentTime) {
                 game.setState(ChatGame.STATE.TIMEOUT);
                 GameManager.endGame(game);
             }

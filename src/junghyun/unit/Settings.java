@@ -8,13 +8,13 @@ public class Settings {
 
     public static final int LOGGER_SAVE = 43200;
 
-    public static final int TIMEOUT_CYCLE = 3600;
-    public static final int TIMEOUT = 360000;
+    public static final int TIMEOUT_CYCLE = 1800;
+    public static final int TIMEOUT = TIMEOUT_CYCLE*1000;
 
     public static final String SQL_URL = PrivateSettings.SQL_URL;
     public static final String SQL_USER = PrivateSettings.SQL_USER;
     public static final String SQL_PWD = PrivateSettings.SQL_PWD;
 
-    public static final int RANK_COUNT = 3;
+    public static final int RANK_COUNT = 2;
 
 }

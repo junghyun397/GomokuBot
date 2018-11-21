@@ -5,7 +5,10 @@ import junghyun.db.DBManager;
 import junghyun.unit.ChatGame;
 import junghyun.unit.Pos;
 import sx.blah.discord.handle.obj.IChannel;
+import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IUser;
+
+import java.util.List;
 
 public class Message {
 
@@ -23,7 +26,7 @@ public class Message {
         for (int i = 0; i < rankData.length; i++) result.append(i).append("위: ").append(rankData[i].getName())
                 .append(" W/L ").append(rankData[i].getWin()).append("/").append(rankData[i].getLose()).append("\n");
 
-        DBManager.UserDataSet userData = DBManager.getUserData(user.getName());
+        DBManager.UserDataSet userData = DBManager.getUserData(user.getLongID());
         if (userData != null)
 
         channel.sendMessage(result.toString());
@@ -54,13 +57,13 @@ public class Message {
     }
 
     public static void sendPlayerWin(ChatGame game, Pos playerPos, IUser user, IChannel channel) {
-        channel.bulkDelete(game.getMessageList());
+        if (game.getMessageList().size() > 0) channel.bulkDelete(game.getMessageList());
         channel.sendMessage(TextDrawer.getGraphics(game.getGame(), playerPos) + user.getName() + "님, "
                 + playerPos.getHumX() + " " + playerPos.getHumY() + " 에 둠으로서 이기셨어요. 축하드립니다. XD");
     }
 
     public static void sendPlayerLose(ChatGame game, Pos aiPos, IUser user, IChannel channel) {
-        channel.bulkDelete(game.getMessageList());
+        if (game.getMessageList().size() > 0) channel.bulkDelete(game.getMessageList());
         channel.sendMessage(TextDrawer.getGraphics(game.getGame(), aiPos) + user.getName() + "님, "
                 + " 제가 " + aiPos.getHumX() + " " + aiPos.getHumY() + " 에 둠으로서 지졌습니다. :/");
     }
@@ -75,14 +78,13 @@ public class Message {
     }
 
     public static void sendResignPlayer(ChatGame game, IUser user, IChannel channel) {
-        channel.bulkDelete(game.getMessageList());
+        if (game.getMessageList().size() > 0) channel.bulkDelete(game.getMessageList());
         channel.sendMessage(TextDrawer.getGraphics(game.getGame()) + user.getName() + "님, 항복하셨네요. 제가 이겼습니다!");
     }
 
     public static void sendFullCanvas(ChatGame game, IUser user, IChannel channel) {
-        channel.bulkDelete(game.getMessageList());
-        channel.sendMessage(TextDrawer.getGraphics(game.getGame()) + user.getName() + "님, "
-                + "더이상 놓을 수 있는 자리가 없으므로 지셨습니다. :/");
+        if (game.getMessageList().size() > 0) channel.bulkDelete(game.getMessageList());
+        channel.sendMessage(TextDrawer.getGraphics(game.getGame()) + user.getName() + "님, 더이상 놓을 수 있는 자리가 없으므로 지셨습니다. :/");
     }
 
 }

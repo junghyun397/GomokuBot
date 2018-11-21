@@ -11,9 +11,12 @@ public class Main {
     private static boolean onRunning = false;
 
     public static void main(String[] args) {
-        GomokuBot.startGomokuBot();
         Logger.startLogger();
+        GomokuBot.startGomokuBot();
         onRunning = true;
+        Logger.loggerInfo("----------------------------------");
+        Logger.loggerInfo("Boot Done!");
+        Logger.loggerInfo("----------------------------------");
         startServerCommand();
     }
 

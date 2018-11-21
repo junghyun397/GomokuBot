@@ -3,7 +3,6 @@ package junghyun.db;
 import junghyun.unit.Settings;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -35,16 +34,13 @@ public class Logger {
     }
 
     public static void saveLogs() {
-
         try {
-            File tempFile = new File(Logger.class.getResource("/").getPath() + "/" +  Logger.getDateTime() + ".txt");
-            FileWriter fw = new FileWriter(tempFile);
-            fw.write(logBuffer);
+            BufferedWriter fw = new BufferedWriter(new FileWriter(Logger.getDateTime() + ".txt"));
+            fw.write(Logger.logBuffer);
             fw.flush();
             fw.close();
             Logger.logBuffer = "";
         } catch (Exception e) {
-            e.printStackTrace();
             Logger.loggerWarning(e.getMessage());
         }
     }
