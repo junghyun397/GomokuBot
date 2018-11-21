@@ -37,9 +37,10 @@ public class Main {
         String command = scanner.nextLine();
         switch (command) {
             case "stop":
-                stopServer();
+                Main.stopServer();
                 break;
             case "count":
+                Logger.loggerInfo("Count: " + GameManager.getGameListSize());
                 break;
         }
         scanCommand();

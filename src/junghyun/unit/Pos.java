@@ -8,20 +8,12 @@ public class Pos {
     private char humX = 0;
     private int humY = 0;
 
-    private String errorStr = null;
-    private boolean isError = false;
-
     public Pos(int x, int y) {
         this.X = x;
         this.Y = y;
 
         this.humX = Pos.intToEng(this.X);
         this.humY = this.Y +1;
-    }
-
-    public Pos(String str) {
-        this.isError = true;
-        this.errorStr = str;
     }
 
     public static int engToInt(char str) {
@@ -44,20 +36,8 @@ public class Pos {
         return this.Y;
     }
 
-    public char getHumX() {
-        return this.humX;
-    }
-
-    public int getHumY() {
-        return this.humY;
-    }
-
-    public boolean isError() {
-        return this.isError;
-    }
-
-    public String getErrorStr() {
-        return this.errorStr;
+    public String getHumText() {
+        return "[ " + Character.toUpperCase(this.humX) + " " + this.humY + " ]";
     }
 
 }

@@ -58,7 +58,7 @@ class GameManager {
         GameManager.putGame(chatGame);
 
         Logger.loggerInfo("Start Game: " + chatGame.getNameTag());
-        Message.sendCreatedGame(chatGame.getGame(), playerColor, user, channel);
+        Message.sendCreatedGame(chatGame, playerColor, user, channel);
     }
 
     private static void endGame(ChatGame game) {
@@ -90,7 +90,7 @@ class GameManager {
         Game game = chatGame.getGame();
 
         if (!game.canSetStone(pos.getX(), pos.getY())) {
-            Message.sendAlreadyIn(user, channel);
+            Message.sendAlreadyIn(chatGame, user, channel);
             return;
         }
 
@@ -119,6 +119,10 @@ class GameManager {
         }
 
         Message.sendNextTurn(chatGame, aiPos, user, channel);
+    }
+
+    static int getGameListSize() {
+        return GameManager.gameList.size();
     }
 
     private static boolean checkGame(long id, IUser user, IChannel channel) {

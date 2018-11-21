@@ -15,6 +15,6 @@ public class Settings {
     public static final String SQL_USER = PrivateSettings.SQL_USER;
     public static final String SQL_PWD = PrivateSettings.SQL_PWD;
 
-    public static final int RANK_COUNT = 2;
+    public static final int RANK_COUNT = 10;
 
 }
