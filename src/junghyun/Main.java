@@ -13,28 +13,28 @@ public class Main {
     public static void main(String[] args) {
         Logger.startLogger();
         GomokuBot.startGomokuBot();
-        onRunning = true;
+        Main.onRunning = true;
         Logger.loggerInfo("----------------------------------");
         Logger.loggerInfo("Boot Done!");
         Logger.loggerInfo("----------------------------------");
-        startServerCommand();
+        Main.startServerCommand();
     }
 
     private static void stopServer() {
         GomokuBot.endGomokuBot();
         Logger.saveLogs();
-        onRunning = false;
+        Main.onRunning = false;
     }
 
     private static void startServerCommand() {
-        scanner = new Scanner(System.in);
-        scanCommand();
+        Main.scanner = new Scanner(System.in);
+        Main.scanCommand();
     }
 
     private static void scanCommand() {
-        if (!onRunning) return;
+        if (!Main.onRunning) return;
 
-        String command = scanner.nextLine();
+        String command = Main.scanner.nextLine();
         switch (command) {
             case "stop":
                 Main.stopServer();
@@ -43,7 +43,7 @@ public class Main {
                 Logger.loggerInfo("Count: " + GameManager.getGameListSize());
                 break;
         }
-        scanCommand();
+        Main.scanCommand();
     }
 
 }

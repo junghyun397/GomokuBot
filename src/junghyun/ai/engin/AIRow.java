@@ -21,7 +21,7 @@ class AIRow {
         this.length = this.row.length;
         this.color = color;
         this.game = game;
-        if (length <= 4) {
+        if (length < 5) {
             this.passAll = true;
         }
     }
@@ -44,7 +44,7 @@ class AIRow {
 
         Stone target_stone = null;
 
-        for (int stack = 0; stack < this.length -4; stack++) {
+        for (int stack = 0; stack < this.length - 4; stack++) {
             int stone_count = 0;
             int blank_count = 0;
 
@@ -77,7 +77,7 @@ class AIRow {
 
         Stone target_stone = null;
 
-        for (int stack = 0; stack < this.length -4; stack++) {
+        for (int stack = 0; stack < this.length - 4; stack++) {
             int stone_count = 0;
             int blank_count = 0;
 
@@ -110,7 +110,7 @@ class AIRow {
 
         Stone target_stone = null;
 
-        for (int stack = 0; stack < this.length -5; stack++) {
+        for (int stack = 0; stack < this.length - 5; stack++) {
             int stone_count = 0;
             int blank_count = 0;
 
@@ -475,7 +475,7 @@ class AIRow {
     }
 
     private boolean checkRiskPos(int start, int end) {
-        return (start >= 0) && (end <= this.length);
+        return (start > -1) && (end <= this.length);
     }
 
 

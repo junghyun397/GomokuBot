@@ -10,8 +10,8 @@ public class EventListener {
     @EventSubscriber
     public void onMessageReceivedEvent(MessageReceivedEvent event) {
         if ((event.getMessage().getType() != IMessage.Type.CHANEL_PINNED_MESSAGE)
-                && (event.getMessage().getContent().toCharArray()[0] != Settings.PREFIX)
-                && (event.getMessage().getContent().length() < 2)) return;
+                && (event.getMessage().getContent().length() < 2)
+                && (event.getMessage().getContent().toCharArray()[0] != Settings.PREFIX)) return;
         GomokuBot.processCommand(event);
     }
 

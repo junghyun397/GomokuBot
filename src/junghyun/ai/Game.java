@@ -71,14 +71,14 @@ public class Game {
         int tempLength = y-x;
         int rowx, rowy, length;
 
-        if (tempLength >= 0) { //양수
+        if (tempLength > -1) { //양수
             rowx = 0;
             rowy = tempLength;
-            length = 14-rowy+1;
+            length = 15-rowy;
         } else { //음수
             rowx = Math.abs(y-x);
             rowy = 0;
-            length = 14-rowx+1;
+            length = 15-rowx;
         }
 
         Stone[] row = new Stone[length];
@@ -95,14 +95,14 @@ public class Game {
         int tempLength = y+x;
         int rowx, rowy, length;
 
-        if (tempLength <= 14) {
+        if (tempLength < 15) {
             rowx = tempLength;
             rowy = 0;
             length = Math.abs(tempLength)+1;
         } else {
             rowx = 14;
             rowy = Math.abs(tempLength-14);
-            length = 14-rowy+1;
+            length = 15-rowy;
         }
 
         Stone[] row = new Stone[length];
@@ -116,7 +116,7 @@ public class Game {
     }
 
     public boolean canSetStone(int x, int y) {
-        if (!((x >= 0) && (x <= 14) && (y >= 0) && (y <= 14))) {
+        if (!((x > -1) && (x < 15) && (y > -1) && (y < 15))) {
             return false;
         } else return !this.plate[x][y].isStoneAdded();
     }

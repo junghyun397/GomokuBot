@@ -13,7 +13,7 @@ public class Message {
         final String message = "여기 도움말이 있습니다! 하나씩 잘 읽어보세요. :grinning: \n" +
                 "\n`~help` 도움말: 도움말을 알려드립니다." +
                 "\n`~start` 게임 시작: 게임을 시작합니다." +
-                "\n`~rank` 순위: 자신의 순위와 다른사람들의 순위를 알려 드립니다." +
+                "\n`~rank` 순위: 순위를 알려 드립니다." +
                 "\n`~resign` 항복: 현재 진행하고 있는 게임을 포기합니다.";
         channel.sendMessage(message);
     }
@@ -24,9 +24,7 @@ public class Message {
                 .append(" `W/L ").append(rankData[i].getWin()).append("/").append(rankData[i].getLose()).append("`\n");
 
         DBManager.UserDataSet userData = DBManager.getUserData(user.getLongID());
-        if (userData != null)
-
-        channel.sendMessage(result.toString());
+        if (userData != null) channel.sendMessage(result.toString());
     }
 
     public static void sendCreatedGame(ChatGame chatGame, boolean playerColor, IUser user, IChannel channel) {

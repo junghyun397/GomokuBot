@@ -2,11 +2,11 @@ package junghyun.unit;
 
 public class Pos {
 
-    private int X = 0;
-    private int Y = 0;
+    private int X;
+    private int Y;
 
-    private char humX = 0;
-    private int humY = 0;
+    private char humX;
+    private int humY;
 
     public Pos(int x, int y) {
         this.X = x;
