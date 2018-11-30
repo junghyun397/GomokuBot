@@ -16,6 +16,8 @@ class AISetting {
     static int PLAYER_MAKE_4_3_POINT = 100; //상대가 4-3을 만들수 있는 포인트
     static int PLAYER_MAKE_4_4_POINT = 1000; //상대가 4-4을 만들수 있는 포인트
 
+    static int MAKE_VT_POINT = 1000;
+
     static int MAKE_OPEN_4_POINT = 4000; //열린 4를 만들수 있는 포인트
     static int MAKE_CLOSE_4_POINT = 70; //닫힌 4를 만들수 있는 포인트
     static int MAKE_OPEN_3_POINT = 80; //열린 3을 만들수 있는 포인트

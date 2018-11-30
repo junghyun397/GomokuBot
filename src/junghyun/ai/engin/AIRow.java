@@ -27,11 +27,20 @@ class AIRow {
     }
 
     void checkPoints() {
-        if (passAll) {
-            return;
-        }
+        if (passAll) return;
+
         this.checkLoseFivePoint();
         this.checkWinFivePoint();
+
+        this.checkWinOpenFourPoint();
+        this.checkLoseOpenFourPoint();
+
+        this.checkAttackPoint();
+        this.checkDefensePoint();
+    }
+
+    void checkADPoints() {
+        if (passAll) return;
 
         this.checkWinOpenFourPoint();
         this.checkLoseOpenFourPoint();
@@ -51,9 +60,7 @@ class AIRow {
             for (int stack5 = 0; stack5 < 5; stack5++) {
                 int root = stack+stack5;
 
-                if (root > this.length) {
-                    return;
-                }
+                if (root > this.length) return;
 
                 Stone stone = this.row[root];
 
@@ -67,6 +74,7 @@ class AIRow {
                 }
 
                 if ((stone_count == 4) && (blank_count == 1)) {
+                    game.addFivePoint(target_stone.getX(), target_stone.getY(), game.getPlayerColor());
                     game.addPoint(target_stone.getX(), target_stone.getY(), AISetting.LOSE_5_POINT);
                 }
             }
@@ -84,9 +92,7 @@ class AIRow {
             for (int stack5 = 0; stack5 < 5; stack5++) {
                 int root = stack+stack5;
 
-                if (root > this.length) {
-                    return;
-                }
+                if (root > this.length) return;
 
                 Stone stone = this.row[root];
 
@@ -100,6 +106,7 @@ class AIRow {
                 }
 
                 if ((stone_count == 4) && (blank_count == 1)) {
+                    game.addFivePoint(target_stone.getX(), target_stone.getY(), !game.getPlayerColor());
                     game.addPoint(target_stone.getX(), target_stone.getY(), AISetting.WIN_5_POINT);
                 }
             }

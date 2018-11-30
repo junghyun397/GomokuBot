@@ -1,6 +1,7 @@
 package junghyun.unit;
 
 import junghyun.ai.Game;
+import junghyun.ai.engin.AIBase;
 import sx.blah.discord.handle.obj.IMessage;
 
 import java.util.LinkedList;
@@ -12,6 +13,7 @@ public class ChatGame {
     private String nameTag;
 
     private Game game;
+    private AIBase.DIFF diff;
 
     public enum STATE {INP, WIN, RESIGN, FULL, LOSE, TIMEOUT}
     private STATE state;
@@ -19,10 +21,11 @@ public class ChatGame {
     private List<IMessage> msgList;
     private long updateTime;
 
-    public ChatGame(long longId, Game game, String nameTag) {
+    public ChatGame(long longId, Game game, String nameTag, AIBase.DIFF diff) {
         this.longId = longId;
         this.nameTag = nameTag;
         this.game = game;
+        this.diff = diff;
         this.state = STATE.INP;
         this.msgList = new LinkedList<>();
         this.updateTime = System.currentTimeMillis();
@@ -38,6 +41,10 @@ public class ChatGame {
 
     public Game getGame() {
         return game;
+    }
+
+    public AIBase.DIFF getDiff() {
+        return diff;
     }
 
     public void addMessage(IMessage iMessage) {

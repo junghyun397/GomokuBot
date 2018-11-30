@@ -1,6 +1,6 @@
 package junghyun.ai;
 
-public class Stone {
+public class Stone implements Cloneable {
 
     private int x;
     private int y;
@@ -9,20 +9,20 @@ public class Stone {
 
     private boolean isStoneAdded = false;
 
-    private boolean color = true; //true = 검정
+    private boolean color = true;
 
     private int blackThreeCount = 0;
     private int blackFourCount = 0;
+    private int blackFiveCount = 0;
 
     private int whiteThreeCount = 0;
     private int whiteFourCount = 0;
+    private int whiteFiveCount = 0;
 
     public Stone(int x, int y) {
         this.x = x;
         this.y = y;
     }
-
-    //착수
 
     public boolean isStoneAdded() {
         return this.isStoneAdded;
@@ -37,8 +37,6 @@ public class Stone {
         return this.color;
     }
 
-    //좌표
-
     public int getX() {
         return this.x;
     }
@@ -46,8 +44,6 @@ public class Stone {
     public int getY() {
         return this.y;
     }
-
-    //3, 4연산
 
     public void addThreeCount(boolean color) {
         if (color) this.blackThreeCount++;
@@ -69,14 +65,18 @@ public class Stone {
         else return this.whiteFourCount;
     }
 
-    //평가
+    public void addFiveCount(boolean color) {
+        if (color) this.blackFiveCount++;
+        else this.whiteFiveCount++;
+    }
+
+    public int getFiveCount(boolean color) {
+        if (color) return this.blackFiveCount;
+        else return this.whiteFiveCount;
+    }
 
     public void addPoint(int point) {
         this.point += point;
-    }
-
-    public void delPoint(int point) {
-        this.point -= point;
     }
 
     public void resetPoint() {
@@ -90,6 +90,10 @@ public class Stone {
 
     public int getPoint() {
         return this.point;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 
 }

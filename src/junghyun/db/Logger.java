@@ -35,7 +35,7 @@ public class Logger {
 
     public static void saveLogs() {
         try {
-            BufferedWriter fw = new BufferedWriter(new FileWriter(Logger.getDateTime() + ".txt"));
+            BufferedWriter fw = new BufferedWriter(new FileWriter("log.txt", true));
             fw.write(Logger.logBuffer);
             fw.flush();
             fw.close();

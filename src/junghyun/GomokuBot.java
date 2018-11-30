@@ -1,5 +1,6 @@
 package junghyun;
 
+import junghyun.ai.engin.AIBase;
 import junghyun.db.DBManager;
 import junghyun.db.SqlManager;
 import junghyun.ui.Message;
@@ -18,7 +19,8 @@ class GomokuBot {
     private static IDiscordClient client;
 
     static void startGomokuBot() {
-        client = new ClientBuilder().setPresence(StatusType.ONLINE, ActivityType.PLAYING, "GomokuBot.github.io or ~help").withToken(Settings.TOKEN).build();
+        client = new ClientBuilder().setPresence(StatusType.ONLINE, ActivityType.PLAYING, "GomokuBot.github.io or ~help")
+                .withToken(Settings.TOKEN).build();
         client.getDispatcher().registerListener(new EventListener());
         client.login();
 
@@ -41,7 +43,9 @@ class GomokuBot {
                 Message.sendRank(event.getAuthor(), event.getChannel(), Objects.requireNonNull(DBManager.getRankingData(Settings.RANK_COUNT)));
                 break;
             case "~start":
-                GameManager.createGame(event.getAuthor().getLongID(), event.getAuthor(), event.getChannel());
+                AIBase.DIFF diff = AIBase.DIFF.MID;
+                if (event.getMessage().getContent().equals("~start taiwan_no_1")) diff = AIBase.DIFF.EXT;
+                GameManager.createGame(event.getAuthor().getLongID(), event.getAuthor(), event.getChannel(), diff);
                 break;
             case "~resign":
                 GameManager.resignGame(event.getAuthor().getLongID(), event.getAuthor(), event.getChannel());

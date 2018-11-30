@@ -41,7 +41,7 @@ class GameManager {
         GameManager.gameList.remove(id);
     }
 
-    static void createGame(long id, IUser user, IChannel channel) {
+    static void createGame(long id, IUser user, IChannel channel, AIBase.DIFF diff) {
         if (getGame(id) != null) {
             Message.sendFailCreatedGame(user, channel);
             return;
@@ -51,7 +51,7 @@ class GameManager {
         boolean playerColor = true;
         if (rColor > 0) playerColor = false;
 
-        ChatGame chatGame = new ChatGame(id, new Game(), user.getName());
+        ChatGame chatGame = new ChatGame(id, new Game(), user.getName(), diff);
 
         if (!playerColor) chatGame.getGame().setStone(7, 7, true);
         chatGame.getGame().setPlayerColor(playerColor);
@@ -109,7 +109,7 @@ class GameManager {
             return;
         }
 
-        Pos aiPos = new AIBase(game).getAiPoint();
+        Pos aiPos = new AIBase(game, chatGame.getDiff()).getAiPoint();
         game.setStone(aiPos.getX(), aiPos.getY(), !game.getPlayerColor());
         if (game.isWin(aiPos.getX(), aiPos.getY(), !game.getPlayerColor())) {
             chatGame.setState(ChatGame.STATE.LOSE);

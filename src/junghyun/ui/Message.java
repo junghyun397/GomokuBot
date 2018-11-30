@@ -1,5 +1,6 @@
 package junghyun.ui;
 
+import junghyun.ai.engin.AIBase;
 import junghyun.db.DBManager;
 import junghyun.unit.ChatGame;
 import junghyun.unit.Pos;
@@ -30,6 +31,7 @@ public class Message {
     public static void sendCreatedGame(ChatGame chatGame, boolean playerColor, IUser user, IChannel channel) {
         Message.sendCanvasMessage(chatGame, user, channel);
         StringBuilder result = new StringBuilder();
+        if (chatGame.getDiff() == AIBase.DIFF.EXT) result.append(":fire:극한 난이도로 진행합니다!:fire:\n");
         result.append(user.getName()).append("님, 게임이 시작되었습니다. ");
 
         if (playerColor) result.append(user.getName()).append("님이 선공 이시네요!");

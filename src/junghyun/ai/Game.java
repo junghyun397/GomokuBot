@@ -4,11 +4,11 @@ import junghyun.unit.Pos;
 
 import java.util.ArrayList;
 
-public class Game {
+public class Game implements Cloneable {
 
     private boolean playerColor = true;
 
-    private int turns = 1;
+    private int turns = 0;
     private boolean turnColor = true;
 
     private Stone[][] plate = new Stone[15][15];
@@ -133,7 +133,6 @@ public class Game {
     public void setStone(int x, int y, boolean color) {
         Stone stone = this.plate[x][y];
         stone.setStone(color);
-        this.plate[x][y] = stone;
         this.turns++;
         this.setColor(!color);
 
@@ -143,25 +142,26 @@ public class Game {
     public void addThreePoint(int x, int y, boolean color) {
         Stone stone = this.plate[x][y];
         stone.addThreeCount(color);
-        this.plate[x][y] = stone;
     }
 
     public void addFourPoint(int x, int y, boolean color) {
         Stone stone = this.plate[x][y];
         stone.addFourCount(color);
-        this.plate[x][y] = stone;
+    }
+
+    public void addFivePoint(int x, int y, boolean color) {
+        Stone stone = this.plate[x][y];
+        stone.addFiveCount(color);
     }
 
     public void addPoint(int x, int y, int point) {
         Stone stone = this.plate[x][y];
         stone.addPoint(point);
-        this.plate[x][y] = stone;
     }
 
     private void resetPoint(int x, int y) {
         Stone stone = this.plate[x][y];
         stone.resetPoint();
-        this.plate[x][y] = stone;
     }
 
     public void resetAllPoint() {
@@ -187,6 +187,14 @@ public class Game {
         }
 
         return (count == 225) || (count == 224);
+    }
+
+    public Game clone() throws CloneNotSupportedException {
+        Game nGame = (Game) super.clone();
+        for (int x = 0; x < 15; x++)
+            for (int y = 0; y < 15; y++)
+                nGame.getPlate()[x][y] = (Stone) nGame.getPlate()[x][y].clone();
+        return nGame;
     }
 
 }

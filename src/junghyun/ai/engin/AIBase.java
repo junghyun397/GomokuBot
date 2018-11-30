@@ -10,10 +10,14 @@ import java.util.Random;
 
 public class AIBase {
 
+    public enum DIFF {EAS, MID, EXT}
+    private DIFF diff;
+
     private Game game;
 
-    public AIBase(Game game) {
+    public AIBase(Game game, DIFF diff) {
         this.game = game;
+        this.diff = diff;
     }
 
     public Pos getAiPoint() {
@@ -23,9 +27,12 @@ public class AIBase {
 
     private void sumPoint() {
         game.resetAllPoint();
+
         this.sumDotPoints();
         this.sumRowPoints();
-        this.sumOverlapPoint();
+
+        if ((this.diff == DIFF.MID) || (this.diff == DIFF.EXT)) this.sumOverlapPoint();
+        if (this.diff == DIFF.EXT) new VTChecker(game).sumVTPos();
     }
 
     private void sumDotPoints() {
