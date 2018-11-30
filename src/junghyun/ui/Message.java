@@ -4,28 +4,59 @@ import junghyun.ai.engin.AIBase;
 import junghyun.db.DBManager;
 import junghyun.unit.ChatGame;
 import junghyun.unit.Pos;
+import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.EmbedBuilder;
 
 public class Message {
 
+    private static EmbedObject helpEmbed;
+
+    public static void buildMessage() {
+        EmbedBuilder builder = new EmbedBuilder();
+
+        builder.withAuthorName("GomokuBot / 도움말");
+        builder.withColor(0,145,234);
+        builder.withDesc("withDesc");
+        builder.withDescription("GomokuBot 은 Discord 에서 PvE 오목을 즐길 수 있게 해주는 오픈소스 Discord Bot 입니다. " +
+                "수집된 기보 데이터는 강화학습 모델 훈련에 사용됩니다. :)");
+        builder.withThumbnail("https://i.imgur.com/HAGBBT6.jpg");
+
+        builder.appendField("개발자", "junghyun397#6725", true);
+        builder.appendField("Git 저장소", "[github.com/GomokuBot](https://github.com/junghyun397/GomokuBot)", true);
+        builder.appendField("판올림", "alpha v2.0", true);
+        builder.appendField("지원 채널", "[discord.gg/rnFQBC](https://discord.gg/rnFQBC)", true);
+
+        builder.appendField("~help", "도움말을 알려 드립니다.", false);
+        builder.appendField("~rank", "전체 TOP 10 순위를 알려 드립니다.", false);
+        builder.appendField("~start", "게임을 시작합니다.", false);
+        builder.appendField("~resign", "현재 진행하고 있는 게임을 포기합니다.", false);
+
+        Message.helpEmbed = builder.build();
+    }
+
     public static void sendHelp(IChannel channel) {
-        final String message = "여기 도움말이 있습니다! 하나씩 잘 읽어보세요. :grinning: \n" +
-                "\n`~help` 도움말: 도움말을 알려드립니다." +
-                "\n`~start` 게임 시작: 게임을 시작합니다." +
-                "\n`~rank` 순위: 순위를 알려 드립니다." +
-                "\n`~resign` 항복: 현재 진행하고 있는 게임을 포기합니다.";
-        channel.sendMessage(message);
+        channel.sendMessage(Message.helpEmbed);
     }
 
     public static void sendRank(IUser user, IChannel channel, DBManager.UserDataSet[] rankData) {
-        StringBuilder result = new StringBuilder("1위~10위는 다음과 같습니다.\n");
-        for (int i = 0; i < rankData.length; i++) result.append("#").append(i+1).append(": ").append(rankData[i].getName())
-                .append(" `W/L ").append(rankData[i].getWin()).append("/").append(rankData[i].getLose()).append("`\n");
+        EmbedBuilder builder = new EmbedBuilder();
+
+        builder.withAuthorName("GomokuBot / 순위");
+        builder.withColor(0,145,234);
+        builder.withDesc("withDesc");
+        builder.withDescription("1위부터 10위까지의 순위 입니다. :D");
+
+        for (int i = 0; i < rankData.length; i++)
+            builder.appendField("#" + (i + 1) + ": " + rankData[i].getName(), "승리: `" + rankData[i].getWin() +
+                    "` W/L: `" + Math.round(rankData[i].getWin()/rankData[i].getLose()*1000)/1000.0 + "`", true);
 
         DBManager.UserDataSet userData = DBManager.getUserData(user.getLongID());
-        if (userData != null) channel.sendMessage(result.toString());
+        if (userData != null) builder.appendField("#??: " + userData.getName(), "승리: `" + userData.getWin() +
+                "` W/L: `" + Math.round(userData.getWin()/userData.getLose()*1000)/1000.0 + "`", true);
+
+        channel.sendMessage(builder.build());
     }
 
     public static void sendCreatedGame(ChatGame chatGame, boolean playerColor, IUser user, IChannel channel) {

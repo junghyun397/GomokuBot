@@ -19,13 +19,14 @@ class GomokuBot {
     private static IDiscordClient client;
 
     static void startGomokuBot() {
-        client = new ClientBuilder().setPresence(StatusType.ONLINE, ActivityType.PLAYING, "GomokuBot.github.io or ~help")
+        client = new ClientBuilder().setPresence(StatusType.ONLINE, ActivityType.PLAYING, "~help 명령어로 도움말 확인!")
                 .withToken(Settings.TOKEN).build();
         client.getDispatcher().registerListener(new EventListener());
         client.login();
 
         SqlManager.connectMysql();
         GameManager.bootGameManager();
+        Message.buildMessage();
     }
 
     static void endGomokuBot() {
