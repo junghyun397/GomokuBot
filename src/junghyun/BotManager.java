@@ -14,7 +14,7 @@ import sx.blah.discord.handle.obj.StatusType;
 
 import java.util.Objects;
 
-class GomokuBot {
+class BotManager {
 
     private static IDiscordClient client;
 
@@ -30,7 +30,7 @@ class GomokuBot {
     }
 
     static void endGomokuBot() {
-        GomokuBot.client.logout();
+        BotManager.client.logout();
     }
 
     static void processCommand(MessageReceivedEvent event) {
@@ -66,6 +66,10 @@ class GomokuBot {
                 GameManager.putStone(event.getAuthor().getLongID(), pos, event.getAuthor(), event.getChannel());
                 break;
         }
+    }
+
+    static IDiscordClient getClient() {
+        return BotManager.client;
     }
 
 }

@@ -12,7 +12,7 @@ public class Main {
 
     public static void main(String[] args) {
         Logger.startLogger();
-        GomokuBot.startGomokuBot();
+        BotManager.startGomokuBot();
         Main.onRunning = true;
         Logger.loggerInfo("----------------------------------");
         Logger.loggerInfo("Boot Done!");
@@ -21,7 +21,7 @@ public class Main {
     }
 
     private static void stopServer() {
-        GomokuBot.endGomokuBot();
+        BotManager.endGomokuBot();
         Logger.saveLogs();
         Main.onRunning = false;
     }
@@ -39,8 +39,13 @@ public class Main {
             case "stop":
                 Main.stopServer();
                 break;
-            case "count":
-                Logger.loggerInfo("Count: " + GameManager.getGameListSize());
+            case "save_log":
+                Logger.saveLogs();
+            case "game_count":
+                Logger.loggerInfo("Game count : " + GameManager.getGameListSize());
+                break;
+            case "server_count":
+                Logger.loggerInfo("Server count : " + BotManager.getClient().getGuilds().size());
                 break;
         }
         Main.scanCommand();

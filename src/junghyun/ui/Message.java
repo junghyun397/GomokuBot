@@ -2,8 +2,10 @@ package junghyun.ui;
 
 import junghyun.ai.engin.AIBase;
 import junghyun.db.DBManager;
+import junghyun.db.Logger;
 import junghyun.unit.ChatGame;
 import junghyun.unit.Pos;
+import junghyun.unit.Settings;
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;
@@ -25,13 +27,13 @@ public class Message {
 
         builder.appendField("개발자", "junghyun397#6725", true);
         builder.appendField("Git 저장소", "[github.com/GomokuBot](https://github.com/junghyun397/GomokuBot)", true);
-        builder.appendField("판올림", "alpha v2.0", true);
-        builder.appendField("지원 채널", "[discord.gg/rnFQBC](https://discord.gg/rnFQBC)", true);
+        builder.appendField("판올림", Settings.VERSION, true);
+        builder.appendField("지원 채널", "[discord.gg/VkfMY6R](https://discord.gg/VkfMY6R)", true);
 
-        builder.appendField("~help", "도움말을 알려 드립니다.", false);
-        builder.appendField("~rank", "전체 TOP 10 순위를 알려 드립니다.", false);
-        builder.appendField("~start", "게임을 시작합니다.", false);
-        builder.appendField("~resign", "현재 진행하고 있는 게임을 포기합니다.", false);
+        builder.appendField("명령어 안내", "**~help** 도움말을 알려 드립니다.\n\n" +
+                "**~rank** 전체 TOP 10 순위를 알려 드립니다.\n\n" +
+                "**~start** 게임을 시작합니다.\n\n" +
+                "**~resign** 현재 진행하고 있는 게임을 포기합니다.", false);
 
         Message.helpEmbed = builder.build();
     }
@@ -50,11 +52,11 @@ public class Message {
 
         for (int i = 0; i < rankData.length; i++)
             builder.appendField("#" + (i + 1) + ": " + rankData[i].getName(), "승리: `" + rankData[i].getWin() +
-                    "` W/L: `" + Math.round(rankData[i].getWin()/rankData[i].getLose()*1000)/1000.0 + "`", true);
+                    "` 패배: `" + rankData[i].getLose() + "`", true);
 
         DBManager.UserDataSet userData = DBManager.getUserData(user.getLongID());
         if (userData != null) builder.appendField("#??: " + userData.getName(), "승리: `" + userData.getWin() +
-                "` W/L: `" + Math.round(userData.getWin()/userData.getLose()*1000)/1000.0 + "`", true);
+                "` 패배: `" + userData.getLose() + "`", true);
 
         channel.sendMessage(builder.build());
     }
@@ -87,15 +89,15 @@ public class Message {
     }
 
     public static void sendPlayerWin(ChatGame chatGame, Pos playerPos, IUser user, IChannel channel) {
-        if (chatGame.getMessageList().size() > 0) channel.bulkDelete(chatGame.getMessageList());
         Message.sendCanvasMessage(chatGame, user, channel);
         channel.sendMessage(user.getName() + "님, `" + playerPos.getHumText() + "` 에 둠으로서 이기셨어요. 축하드립니다! :grinning: ");
+        Message.deleteCanvasMessage(chatGame, channel);
     }
 
     public static void sendPlayerLose(ChatGame chatGame, Pos aiPos, IUser user, IChannel channel) {
-        if (chatGame.getMessageList().size() > 0) channel.bulkDelete(chatGame.getMessageList());
         Message.sendCanvasMessage(chatGame, user, channel);
         channel.sendMessage(user.getName() + "님, " + " 제가 `" + aiPos.getHumText() + "` 에 둠으로서 지졌습니다. :sunglasses: ");
+        Message.deleteCanvasMessage(chatGame, channel);
     }
 
     public static void sendNextTurn(ChatGame chatGame, Pos aiPos, IUser user, IChannel channel) {
@@ -108,15 +110,23 @@ public class Message {
     }
 
     public static void sendResignPlayer(ChatGame chatGame, IUser user, IChannel channel) {
-        if (chatGame.getMessageList().size() > 0) channel.bulkDelete(chatGame.getMessageList());
         Message.sendCanvasMessage(chatGame, user, channel);
         channel.sendMessage(user.getName() + "님, 항복하셨네요. 제가 이겼습니다! :joy: ");
+        Message.deleteCanvasMessage(chatGame, channel);
     }
 
     public static void sendFullCanvas(ChatGame chatGame, IUser user, IChannel channel) {
-        if (chatGame.getMessageList().size() > 0) channel.bulkDelete(chatGame.getMessageList());
         Message.sendCanvasMessage(chatGame, user, channel);
         channel.sendMessage(TextDrawer.getGraphics(chatGame.getGame()) + user.getName() + "님, 더이상 놓을 수 있는 자리가 없으므로 지셨습니다. :confused: ");
+        Message.deleteCanvasMessage(chatGame, channel);
+    }
+
+    private static void deleteCanvasMessage(ChatGame chatGame, IChannel channel) {
+        try {
+            if (chatGame.getMessageList().size() > 0) channel.bulkDelete(chatGame.getMessageList());
+        } catch (Exception e) {
+            Logger.loggerWarning("Miss PERMISSION : " + channel.getGuild().getName());
+        }
     }
 
     private static void sendCanvasMessage(ChatGame chatGame, IUser user, IChannel channel) {

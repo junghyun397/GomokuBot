@@ -4,7 +4,7 @@ import junghyun.ai.Game;
 import junghyun.ai.Stone;
 import junghyun.unit.Pos;
 
-class TextDrawer {
+public class TextDrawer {
 
     private final static String WHITE = "●"; //TODO: 보편적인 문자열로 교체
     private final static String BLACK = "○"; //TODO: 보편적인 문자열로 교체
@@ -25,14 +25,24 @@ class TextDrawer {
 
     private final static String CROSS = "╋";
 
+    private final static String BLANK = "　";
+
     private final static String[] FIXED_NUM = {"０", "　１", "　２", "　３", "　４", "　５", "　６", "　７", "　８", "　９", "１０", "１１", "１２", "１３", "１４", "１５"};
     private final static String[] FIXED_ENG = {"Ａ", "Ｂ", "Ｃ", "Ｄ", "Ｅ", "Ｆ", "Ｇ", "Ｈ", "Ｉ", "Ｊ", "Ｋ", "Ｌ", "Ｍ", "Ｎ", "Ｏ"};
 
-    static String getGraphics(Game game) {
-        return getGraphics(game, new Pos(-1, -1));
+    public static String getGraphics(Game game) {
+        return getGraphics(game, new Pos(-1, -1), true);
     }
 
-    static String getGraphics(Game game, Pos aiPos) {
+    public static String getGraphics(Game game, boolean useGrid) {
+        return getGraphics(game, new Pos(-1, -1), useGrid);
+    }
+
+    public static String getGraphics(Game game, Pos aiPos) {
+        return getGraphics(game, aiPos, true);
+    }
+
+    public static String getGraphics(Game game, Pos aiPos, boolean useGrid) {
         Stone[][] plate = game.getPlate();
         StringBuilder result = new StringBuilder();
 
@@ -62,12 +72,12 @@ class TextDrawer {
                         }
                     }
                 } else {
-                    result.append(getEmptyCode(x, y));
+                    if (useGrid) result.append(getEmptyCode(x, y));
+                    else result.append(BLANK);
                 }
             }
             result.append("\n");
         }
-        result.append("\n");
 
         return result.toString();
     }

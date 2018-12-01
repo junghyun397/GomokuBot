@@ -5,6 +5,7 @@ import junghyun.ai.engin.AIBase;
 import junghyun.db.DBManager;
 import junghyun.db.Logger;
 import junghyun.ui.Message;
+import junghyun.ui.TextDrawer;
 import junghyun.unit.ChatGame;
 import junghyun.unit.Pos;
 import junghyun.unit.Settings;
@@ -57,14 +58,16 @@ class GameManager {
         chatGame.getGame().setPlayerColor(playerColor);
         GameManager.putGame(chatGame);
 
-        Logger.loggerInfo("Start Game: " + chatGame.getNameTag());
+        Logger.loggerInfo("Start Game: " + chatGame.getNameTag() + " " + chatGame.getDiff().toString());
         Message.sendCreatedGame(chatGame, playerColor, user, channel);
     }
 
     private static void endGame(ChatGame game) {
         DBManager.saveGame(game);
         GameManager.delGame(game.getLongId());
-        Logger.loggerInfo("End Game: " + game.getNameTag());
+        Logger.loggerInfo("End Game: " + game.getNameTag() + " " + game.getGame().getTurns() +
+                " " + game.getState().toString());
+        Logger.loggerInfo("Canvas info ------\n" + TextDrawer.getGraphics(game.getGame(), false));
     }
 
     private static void checkTimeOut() {

@@ -40,6 +40,7 @@ public class Logger {
             fw.flush();
             fw.close();
             Logger.logBuffer = "";
+            Logger.loggerInfo("Log saved!");
         } catch (Exception e) {
             Logger.loggerWarning(e.getMessage());
         }
