@@ -1,9 +1,11 @@
 package junghyun;
 
+import com.sun.org.apache.bcel.internal.generic.LNEG;
 import junghyun.ai.engin.AIBase;
 import junghyun.db.DBManager;
 import junghyun.db.SqlManager;
-import junghyun.ui.Message;
+import junghyun.ui.MessageBase;
+import junghyun.unit.ChatGame;
 import junghyun.unit.Pos;
 import junghyun.unit.Settings;
 import sx.blah.discord.api.ClientBuilder;
@@ -26,7 +28,7 @@ class BotManager {
 
         SqlManager.connectMysql();
         GameManager.bootGameManager();
-        Message.buildMessage();
+        MessageBase.loadMessage();
     }
 
     static void endGomokuBot() {
@@ -38,28 +40,34 @@ class BotManager {
 
         switch (splitText[0]) {
             case "~help":
-                Message.sendHelp(event.getChannel());
+                MessageBase.sendHelp(event.getChannel());
+                break;
+            case "~lang":
+                if (splitText.length != 2) break;
+                MessageBase.LANG lang = MessageBase.getLangByString(splitText[1]);
+                if (lang != MessageBase.LANG.ERR) MessageBase.setLanguage(event.getGuild().getLongID(), lang);
+                MessageBase.sendLanguageChange(event.getChannel(), lang);
                 break;
             case "~rank":
-                Message.sendRank(event.getAuthor(), event.getChannel(), Objects.requireNonNull(DBManager.getRankingData(Settings.RANK_COUNT)));
+                MessageBase.sendRank(event.getAuthor(), event.getChannel(), Objects.requireNonNull(DBManager.getRankingData(Settings.RANK_COUNT)));
                 break;
             case "~start":
                 AIBase.DIFF diff = AIBase.DIFF.MID;
                 if (event.getMessage().getContent().equals("~start taiwan_no_1")) diff = AIBase.DIFF.EXT;
-                GameManager.createGame(event.getAuthor().getLongID(), event.getAuthor(), event.getChannel(), diff);
+                GameManager.createGame(event.getAuthor().getLongID(), event.getAuthor(), event.getChannel(), diff, ChatGame.GAMETYPE.PVE);
                 break;
             case "~resign":
                 GameManager.resignGame(event.getAuthor().getLongID(), event.getAuthor(), event.getChannel());
                 break;
             case "~s":
                 if ((splitText.length != 3) || (!((splitText[1].length() == 1) && ((splitText[2].length() == 1) || (splitText[2].length() == 2))))) {
-                    Message.sendErrorGrammarSet(event.getAuthor(), event.getChannel());
+                    MessageBase.sendErrorGrammarSet(event.getAuthor(), event.getChannel());
                     break;
                 }
 
                 Pos pos = new Pos(Pos.engToInt(splitText[1].toLowerCase().toCharArray()[0]), Integer.valueOf(splitText[2].toLowerCase())-1);
                 if (!Pos.checkSize(pos.getX(), pos.getY())) {
-                    Message.sendErrorGrammarSet(event.getAuthor(), event.getChannel());
+                    MessageBase.sendErrorGrammarSet(event.getAuthor(), event.getChannel());
                     break;
                 }
 

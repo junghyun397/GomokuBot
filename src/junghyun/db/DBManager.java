@@ -1,5 +1,6 @@
 package junghyun.db;
 
+import junghyun.ui.MessageBase;
 import junghyun.unit.ChatGame;
 import junghyun.unit.Pos;
 
@@ -61,6 +62,19 @@ public class DBManager {
         }
     }
 
+    public static GuildDataSet getGuildData(long id) {
+        ResultSet rs = SqlManager.executeQuery("SELECT * FROM guild_info WHERE guild_id = '" + id + "';");
+        try {
+            assert rs != null;
+            if (!rs.next()) return null;
+            MessageBase.LANG lang = MessageBase.getLangByString(rs.getString("lang"));
+            return new GuildDataSet(rs.getLong("guild_id"), lang);
+        } catch (Exception e) {
+            Logger.loggerWarning(e.getMessage());
+            return null;
+        }
+    }
+
     public static class UserDataSet {
 
         private long longId;
@@ -90,6 +104,26 @@ public class DBManager {
 
         public long getLongId() {
             return this.longId;
+        }
+    }
+
+    public static class GuildDataSet {
+
+        private long longId;
+
+        private MessageBase.LANG lang;
+
+        private GuildDataSet(long id, MessageBase.LANG lang) {
+            this.longId = id;
+            this.lang = lang;
+        }
+
+        public long getLongId() {
+            return longId;
+        }
+
+        public MessageBase.LANG getLang() {
+            return lang;
         }
     }
 }

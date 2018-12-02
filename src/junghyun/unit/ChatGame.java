@@ -15,19 +15,27 @@ public class ChatGame {
     private Game game;
     private AIBase.DIFF diff;
 
+    public enum GAMETYPE {PVP, PVE}
+    private GAMETYPE gameType;
+
     public enum STATE {INP, WIN, RESIGN, FULL, LOSE, TIMEOUT}
     private STATE state;
 
     private List<IMessage> msgList;
     private long updateTime;
 
-    public ChatGame(long longId, Game game, String nameTag, AIBase.DIFF diff) {
+    public ChatGame(long longId, Game game, String nameTag, AIBase.DIFF diff, GAMETYPE gameType) {
         this.longId = longId;
         this.nameTag = nameTag;
         this.game = game;
+
         this.diff = diff;
+        this.gameType = gameType;
+
         this.state = STATE.INP;
+
         this.msgList = new LinkedList<>();
+
         this.updateTime = System.currentTimeMillis();
     }
 
@@ -70,6 +78,10 @@ public class ChatGame {
 
     public STATE getState() {
         return this.state;
+    }
+
+    public GAMETYPE getGameType() {
+        return this.gameType;
     }
 
     public List<IMessage> getMessageList() {

@@ -4,7 +4,7 @@ import junghyun.ai.Game;
 import junghyun.ai.engin.AIBase;
 import junghyun.db.DBManager;
 import junghyun.db.Logger;
-import junghyun.ui.Message;
+import junghyun.ui.MessageBase;
 import junghyun.ui.TextDrawer;
 import junghyun.unit.ChatGame;
 import junghyun.unit.Pos;
@@ -42,9 +42,9 @@ class GameManager {
         GameManager.gameList.remove(id);
     }
 
-    static void createGame(long id, IUser user, IChannel channel, AIBase.DIFF diff) {
+    static void createGame(long id, IUser user, IChannel channel, AIBase.DIFF diff, ChatGame.GAMETYPE gameType) {
         if (getGame(id) != null) {
-            Message.sendFailCreatedGame(user, channel);
+            MessageBase.sendFailCreatedGame(user, channel);
             return;
         }
 
@@ -52,14 +52,14 @@ class GameManager {
         boolean playerColor = true;
         if (rColor > 0) playerColor = false;
 
-        ChatGame chatGame = new ChatGame(id, new Game(), user.getName(), diff);
+        ChatGame chatGame = new ChatGame(id, new Game(), user.getName(), diff, gameType);
 
         if (!playerColor) chatGame.getGame().setStone(7, 7, true);
         chatGame.getGame().setPlayerColor(playerColor);
         GameManager.putGame(chatGame);
 
         Logger.loggerInfo("Start Game: " + chatGame.getNameTag() + " " + chatGame.getDiff().toString());
-        Message.sendCreatedGame(chatGame, playerColor, user, channel);
+        MessageBase.sendCreatedGame(chatGame, playerColor, user, channel);
     }
 
     private static void endGame(ChatGame game) {
@@ -84,7 +84,7 @@ class GameManager {
         if (checkGame(id, user, channel)) return;
         ChatGame chatGame = GameManager.getGame(id);
         chatGame.setState(ChatGame.STATE.RESIGN);
-        Message.sendResignPlayer(chatGame, user, channel);
+        MessageBase.sendResignPlayer(chatGame, user, channel);
         GameManager.endGame(chatGame);
     }
 
@@ -93,21 +93,21 @@ class GameManager {
         Game game = chatGame.getGame();
 
         if (!game.canSetStone(pos.getX(), pos.getY())) {
-            Message.sendAlreadyIn(chatGame, user, channel);
+            MessageBase.sendAlreadyIn(chatGame, user, channel);
             return;
         }
 
         game.setStone(pos.getX(), pos.getY());
         if (game.isWin(pos.getX(), pos.getY(), game.getPlayerColor())) {
             chatGame.setState(ChatGame.STATE.WIN);
-            Message.sendPlayerWin(chatGame, pos, user, channel);
+            MessageBase.sendPlayerWin(chatGame, pos, user, channel);
             endGame(chatGame);
             return;
         }
 
         if (game.isFull()) {
             chatGame.setState(ChatGame.STATE.FULL);
-            Message.sendFullCanvas(chatGame, user, channel);
+            MessageBase.sendFullCanvas(chatGame, user, channel);
             endGame(chatGame);
             return;
         }
@@ -116,12 +116,12 @@ class GameManager {
         game.setStone(aiPos.getX(), aiPos.getY(), !game.getPlayerColor());
         if (game.isWin(aiPos.getX(), aiPos.getY(), !game.getPlayerColor())) {
             chatGame.setState(ChatGame.STATE.LOSE);
-            Message.sendPlayerLose(chatGame, aiPos, user, channel);
+            MessageBase.sendPlayerLose(chatGame, aiPos, user, channel);
             endGame(chatGame);
             return;
         }
 
-        Message.sendNextTurn(chatGame, aiPos, user, channel);
+        MessageBase.sendNextTurn(chatGame, aiPos, user, channel);
     }
 
     static int getGameListSize() {
@@ -130,7 +130,7 @@ class GameManager {
 
     private static boolean checkGame(long id, IUser user, IChannel channel) {
         if (getGame(id) == null) {
-            Message.notFoundGame(user, channel);
+            MessageBase.notFoundGame(user, channel);
             return true;
         }
         return false;
