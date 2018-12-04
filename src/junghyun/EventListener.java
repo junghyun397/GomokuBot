@@ -1,12 +1,11 @@
 package junghyun;
 
-import junghyun.db.DBManager;
 import junghyun.db.Logger;
 import junghyun.ui.MessageManager;
 import junghyun.unit.Settings;
 import sx.blah.discord.api.events.EventSubscriber;
-import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.impl.events.guild.GuildCreateEvent;
+import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IMessage;
 
 public class EventListener {

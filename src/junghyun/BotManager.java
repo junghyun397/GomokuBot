@@ -40,9 +40,13 @@ class BotManager {
                 MessageManager.getInstance(event.getGuild()).sendHelp(event.getChannel());
                 break;
             case "~lang":
-                if (splitText.length != 2) break;
+                if (splitText.length != 2) {
+                    MessageManager.getInstance(event.getGuild()).sendLanguageChange(event.getChannel(), MessageManager.LANG.ERR);
+                    break;
+                }
                 MessageManager.LANG lang = MessageManager.getLangByString(splitText[1]);
                 if (lang != MessageManager.LANG.ERR) MessageManager.setLanguage(event.getGuild().getLongID(), lang);
+
                 MessageManager.getInstance(event.getGuild()).sendLanguageChange(event.getChannel(), lang);
                 break;
             case "~rank":
