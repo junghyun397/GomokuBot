@@ -1,6 +1,6 @@
 package junghyun.db;
 
-import junghyun.ui.MessageBase;
+import junghyun.ui.MessageManager;
 import junghyun.unit.ChatGame;
 import junghyun.unit.Pos;
 
@@ -62,15 +62,23 @@ public class DBManager {
         }
     }
 
+    public static void setGuildLanguage(long id, MessageManager.LANG lang) {
+        GuildDataSet orgGuild = DBManager.getGuildData(id);
+        if (orgGuild != null) {
+            SqlManager.executeUpdate("UPDATE guild_info SET lang='" + lang.toString() + "' WHERE guild_id=" + id + ";");
+        } else {
+            SqlManager.execute("INSERT INTO guild_info(guild_id, lang) VALUES (" + id + ", '" + lang.toString() + "');");
+        }
+    }
+
     public static GuildDataSet getGuildData(long id) {
         ResultSet rs = SqlManager.executeQuery("SELECT * FROM guild_info WHERE guild_id = '" + id + "';");
         try {
             assert rs != null;
             if (!rs.next()) return null;
-            MessageBase.LANG lang = MessageBase.getLangByString(rs.getString("lang"));
-            return new GuildDataSet(rs.getLong("guild_id"), lang);
+            return new GuildDataSet(rs.getLong("guild_id"), MessageManager.getLangByString(rs.getString("lang")));
         } catch (Exception e) {
-            Logger.loggerWarning(e.getMessage());
+            e.printStackTrace();
             return null;
         }
     }
@@ -111,9 +119,9 @@ public class DBManager {
 
         private long longId;
 
-        private MessageBase.LANG lang;
+        private MessageManager.LANG lang;
 
-        private GuildDataSet(long id, MessageBase.LANG lang) {
+        private GuildDataSet(long id, MessageManager.LANG lang) {
             this.longId = id;
             this.lang = lang;
         }
@@ -122,7 +130,7 @@ public class DBManager {
             return longId;
         }
 
-        public MessageBase.LANG getLang() {
+        public MessageManager.LANG getLang() {
             return lang;
         }
     }

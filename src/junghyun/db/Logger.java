@@ -21,6 +21,11 @@ public class Logger {
         service.scheduleAtFixedRate(task, Settings.LOGGER_SAVE, Settings.LOGGER_SAVE, TimeUnit.SECONDS);
     }
 
+    public static void loggerDev(String text) {
+        text = "[" + getDateTime() + "] [Dev] " + text + "\n";
+        System.out.print(text);
+    }
+
     public static void loggerInfo(String text) {
         text = "[" + getDateTime() + "] [INFO] " + text + "\n";
         System.out.print(text);

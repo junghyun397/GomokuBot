@@ -1,7 +1,8 @@
 package junghyun;
 
+import junghyun.db.DBManager;
 import junghyun.db.Logger;
-import junghyun.ui.MessageBase;
+import junghyun.ui.MessageManager;
 import junghyun.unit.Settings;
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
@@ -21,8 +22,8 @@ public class EventListener {
     @EventSubscriber
     public void onGuildCreateEvent(GuildCreateEvent event) {
         try {
-            MessageBase.sendHelp(event.getGuild().getSystemChannel());
-            MessageBase.sendLanguageChangeInfo(event.getGuild().getSystemChannel());
+            MessageManager.getInstance(event.getGuild()).sendHelp(event.getGuild().getSystemChannel());
+            MessageManager.getInstance(event.getGuild()).sendLanguageChangeInfo(event.getGuild().getSystemChannel());
             Logger.loggerInfo("Join server : " + event.getGuild().getName());
         } catch (Exception e) {
             Logger.loggerInfo("Load server : " + event.getGuild().getName());

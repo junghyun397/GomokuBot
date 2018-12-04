@@ -42,10 +42,10 @@ public class Main {
             case "save_log":
                 Logger.saveLogs();
             case "game_count":
-                Logger.loggerInfo("Game count : " + GameManager.getGameListSize());
+                Logger.loggerDev("Game count : " + GameManager.getGameListSize());
                 break;
             case "server_count":
-                Logger.loggerInfo("Server count : " + BotManager.getClient().getGuilds().size());
+                Logger.loggerDev("Server count : " + BotManager.getClient().getGuilds().size());
                 break;
         }
         Main.scanCommand();

@@ -20,6 +20,6 @@ public class Settings {
 
     public static final int RANK_COUNT = 10;
 
-    public static final String VERSION = "alpha v3.0.0";
+    public static final String VERSION = "alpha v2.5.0";
 
 }
