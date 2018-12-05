@@ -13,7 +13,7 @@ import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.EmbedBuilder;
 
-public class MessageChn extends MessageEng {
+public class MessageCHN extends MessageENG {
 
     private static EmbedObject helpEmbed;
     private static EmbedObject commandEmbed;

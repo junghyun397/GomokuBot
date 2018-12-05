@@ -13,7 +13,7 @@ import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.EmbedBuilder;
 
-public class MessagePrk extends MessageEng {
+public class MessageENG {
 
     private static EmbedObject helpEmbed;
     private static EmbedObject commandEmbed;
@@ -21,17 +21,17 @@ public class MessagePrk extends MessageEng {
     public static void buildMessage() {
         EmbedBuilder helpBuilder = new EmbedBuilder();
 
-        helpBuilder.withAuthorName("GomokuBot / 도움말");
+        helpBuilder.withAuthorName("GomokuBot / Information");
         helpBuilder.withColor(0,145,234);
         helpBuilder.withDesc("withDesc");
-        helpBuilder.withDescription("GomokuBot 은 디스코드 에서 인민과 인공지능의 오목을 즐길 수 있게 해주는 열린 내용 디스코드 로보트 입네다. " +
-                "수집된 기보 내용물은 강화학습 형상 훈련에 사용됩네다. :)");
+        helpBuilder.withDescription("GomokuBot is an Open Source Discord Bot that allows you to enjoy PvE Gomoku at Discord. " +
+                "The Collected data are used for training the Reinforcement Learning model. :)");
         helpBuilder.withThumbnail("https://i.imgur.com/HAGBBT6.jpg");
 
-        helpBuilder.appendField("개발자", "junghyun397#6725", true);
-        helpBuilder.appendField("공공 저장소", "[github.com/GomokuBot](https://github.com/junghyun397/GomokuBot)", true);
-        helpBuilder.appendField("판올림", Settings.VERSION, true);
-        helpBuilder.appendField("지원 창구", "[discord.gg/VkfMY6R](https://discord.gg/VkfMY6R)", true);
+        helpBuilder.appendField("Developer", "junghyun397#6725", true);
+        helpBuilder.appendField("Git Repository", "[github.com/GomokuBot](https://github.com/junghyun397/GomokuBot)", true);
+        helpBuilder.appendField("Version", Settings.VERSION, true);
+        helpBuilder.appendField("Support Channel", "[discord.gg/VkfMY6R](https://discord.gg/VkfMY6R)", true);
 
         helpEmbed = helpBuilder.build();
 
@@ -39,14 +39,14 @@ public class MessagePrk extends MessageEng {
 
         EmbedBuilder commandBuilder = new EmbedBuilder();
 
-        commandBuilder.withAuthorName("GomokuBot / 명령문");
+        commandBuilder.withAuthorName("GomokuBot / Command");
         commandBuilder.withColor(0,145,234);
 
-        commandBuilder.appendField("~help", "`~help` 도움말을 알려 드립네다.", false);
+        commandBuilder.appendField("~help", "`~help` Help is available.", false);
         commandBuilder.appendField("~lang", "`~lang` " + MessageManager.LANGUAGE_LIST +
-                " 이 봉사기에서 사용되는 언어 설정을 바꿉네다. Ex) `~lang` `ENG`", false);
-        commandBuilder.appendField("~start", "`~start` 인공지능 와의 놀음을 시작합네다.", false);
-        commandBuilder.appendField("~resign", "`~resign` 지금 진행하고 있는 놀음을 포기합네다.", false);
+                " Replace the language settings used by this Server. Ex) `~lang` `ENG`", false);
+        commandBuilder.appendField("~start", "`~start` Start the game with A.I.", false);
+        commandBuilder.appendField("~resign", "`~resign` Resign an ongoing Game", false);
 
         commandEmbed = commandBuilder.build();
     }
@@ -61,18 +61,18 @@ public class MessagePrk extends MessageEng {
     public void sendRank(IUser user, IChannel channel, DBManager.UserDataSet[] rankData) {
         EmbedBuilder builder = new EmbedBuilder();
 
-        builder.withAuthorName("GomokuBot / 순위");
+        builder.withAuthorName("GomokuBot / Ranking");
         builder.withColor(0,145,234);
         builder.withDesc("withDesc");
-        builder.withDescription("1위부터 10위까지의 순위 입네다. :D");
+        builder.withDescription("It's ranked from 1st to 10th. :D");
 
         for (int i = 0; i < rankData.length; i++)
-            builder.appendField("#" + (i + 1) + ": " + rankData[i].getName(), "쏘련: `" + rankData[i].getWin() +
-                    "` 미제: `" + rankData[i].getLose() + "`", false);
+            builder.appendField("#" + (i + 1) + ": " + rankData[i].getName(), "Victory: `" + rankData[i].getWin() +
+                    "` Defeat: `" + rankData[i].getLose() + "`", false);
 
         DBManager.UserDataSet userData = DBManager.getUserData(user.getLongID());
-        if (userData != null) builder.appendField("#??: " + userData.getName(), "쏘련: `" + userData.getWin() +
-                "` 미제: `" + userData.getLose() + "`", false);
+        if (userData != null) builder.appendField("#??: " + userData.getName(), "Victory: `" + userData.getWin() +
+                "` Defeat: `" + userData.getLose() + "`", false);
 
         channel.sendMessage(builder.build());
     }
@@ -83,15 +83,11 @@ public class MessagePrk extends MessageEng {
         channel.sendMessage(MessageManager.langEmbed);
     }
 
-    private void sendLanguageInfo(IChannel channel) {
-        channel.sendMessage("`~lang` `바꿀 언어` 형식으로 적어 주시오. 현재 " + MessageManager.LANGUAGE_LIST + " 만을 지원 합네다.");
-    }
-
     public void sendLanguageChange(IChannel channel, MessageManager.LANG lang) {
         if (lang == MessageManager.LANG.ERR) {
-            channel.sendMessage("언어 지정에 오유가 있습네다!");
-            sendLanguageInfo(channel);
-        } else channel.sendMessage("언어 설정이 조선어:flag_kp:로 바뀌었습네다!");
+            channel.sendMessage("There is an error in the language specification!");
+            sendLanguageChangeInfo(channel);
+        } else channel.sendMessage("Language setting has been changed to English:flag_us:!");
     }
 
     // Game Create/End Information
@@ -101,49 +97,49 @@ public class MessagePrk extends MessageEng {
     public void sendCreatedGame(ChatGame chatGame, boolean playerColor, IUser user, IChannel channel) {
         this.sendCanvasMessage(chatGame, user, channel);
         StringBuilder result = new StringBuilder();
-        if (chatGame.getDiff() == AIBase.DIFF.EAS) result.append(":turtle:쉬움 난이도로 진행합네다!:turtle:\n");
-        if (chatGame.getDiff() == AIBase.DIFF.EXT) result.append(":fire:극한 난이도로 진행합네다!:fire:\n");
-        result.append(user.getName()).append("동무, 놀음이 시작되었습네다. ");
+        if (chatGame.getDiff() == AIBase.DIFF.EAS) result.append(":turtle:Easy difficult!:turtle:\n");
+        if (chatGame.getDiff() == AIBase.DIFF.EXT) result.append(":fire:Extreme difficulty!:fire:\n");
+        result.append(user.getName()).append(", the game has started. ");
 
-        if (playerColor) result.append(user.getName()).append("동무가 선공 이시라요!");
-        else result.append("제가 선공입네다!");
+        if (playerColor) result.append(user.getName()).append("is the first attack!");
+        else result.append("I'm a first attack!");
 
-        result.append(" `~s 알파벳 숫자` 형식으로 돌을 놓아주시라요.");
+        result.append(" Place the stone in the form of `~s` `Alphabet` `Number`.");
 
         channel.sendMessage(result.toString());
     }
 
     public void sendFailCreatedGame(IUser user, IChannel channel) {
-        channel.sendMessage(user.getName() + "동무, 놀음 생성에 실패 했습네다. 즐기고 있는 놀음을 마무리 해주시라요. :thinking: ");
+        channel.sendMessage(user.getName() + " failed to create the game. Please wrap up the game you're enjoying. :thinking: ");
     }
 
     public void sendErrorGrammarSet(IUser user, IChannel channel) {
-        channel.sendMessage(user.getName()+ "동무, 그건 잘못된 명령문입네다. `~s 알파벳 숫자` 형식으로 적어주시라요. :thinking: ");
+        channel.sendMessage(user.getName()+ ", that is a wrong order. Please write it in the form of `~s` `Alphabet` `Number`. :thinking: ");
     }
 
     // End Game
 
     public void sendPlayerWin(ChatGame chatGame, Pos playerPos, IUser user, IChannel channel) {
         this.sendCanvasMessage(chatGame, user, channel);
-        channel.sendMessage(user.getName() + "동무, `" + playerPos.getHumText() + "` 에 둠으로서 이기셨어요. 축하드립네다! :grinning: ");
+        channel.sendMessage(user.getName() + ", you won by throwing it in `" + playerPos.getHumText() + "`. Congratulations! :grinning: ");
         this.deleteCanvasMessage(chatGame, channel);
     }
 
     public void sendPlayerLose(ChatGame chatGame, Pos aiPos, IUser user, IChannel channel) {
         this.sendCanvasMessage(chatGame, user, channel);
-        channel.sendMessage(user.getName() + "동무, " + " 제가 `" + aiPos.getHumText() + "` 에 둠으로서 지셨습네다. :sunglasses: ");
+        channel.sendMessage(user.getName() + ", you were dead as I was throwing at `" + aiPos.getHumText() + "`! :sunglasses: ");
         this.deleteCanvasMessage(chatGame, channel);
     }
 
     public void sendResignPlayer(ChatGame chatGame, IUser user, IChannel channel) {
         this.sendCanvasMessage(chatGame, user, channel);
-        channel.sendMessage(user.getName() + "동무, 항복하셨습네다. 제가 이겼습네다! :joy: ");
+        channel.sendMessage(user.getName() + ", You surrendered. I won!:joy: ");
         this.deleteCanvasMessage(chatGame, channel);
     }
 
     public void sendFullCanvas(ChatGame chatGame, IUser user, IChannel channel) {
         this.sendCanvasMessage(chatGame, user, channel);
-        channel.sendMessage(TextDrawer.getGraphics(chatGame.getGame()) + user.getName() + "동무, 더이상 놓을 수 있는 위치가 없으므로 지셨습네다. :confused: ");
+        channel.sendMessage(TextDrawer.getGraphics(chatGame.getGame()) + user.getName() + ", you lost because there are no more places to put. :confused: ");
         this.deleteCanvasMessage(chatGame, channel);
     }
 
@@ -151,18 +147,18 @@ public class MessagePrk extends MessageEng {
 
     public void sendAlreadyIn(ChatGame chatGame, IUser user, IChannel channel) {
         this.sendCanvasMessage(chatGame, user, channel);
-        channel.sendMessage(user.getName()+ "동무, 그곳에는 이미 돌이 놓여 있습네다. :thinking: ");
+        channel.sendMessage(user.getName()+ ", there is already a stone there. :thinking: ");
     }
 
     public void sendNextTurn(ChatGame chatGame, Pos aiPos, IUser user, IChannel channel) {
         this.sendCanvasMessage(chatGame, aiPos, user, channel);
-        chatGame.addMessage(channel.sendMessage(user.getName() + "동무, 다음 수를 놓아 주시라요!"));
+        chatGame.addMessage(channel.sendMessage(user.getName() + ", Please let us have the next move!"));
     }
 
     // Error Game
 
     public void notFoundGame(IUser user, IChannel channel) {
-        channel.sendMessage(user.getName()+ "동무, 하고계신 놀음을 찾지 못했습네다. ~start 로 놀음을 시작 해주사라요!");
+        channel.sendMessage(user.getName()+ ", can not find the game you're playing. Start the game with `~ start`!");
     }
 
     // Private Function
@@ -181,8 +177,8 @@ public class MessagePrk extends MessageEng {
 
     private void sendCanvasMessage(ChatGame chatGame, Pos aiPos, IUser user, IChannel channel) {
         String statMsg;
-        if (chatGame.getState() == ChatGame.STATE.INP) statMsg = "진행중";
-        else statMsg = "종료됨";
+        if (chatGame.getState() == ChatGame.STATE.INP) statMsg = "Proceeding";
+        else statMsg = "Finished";
 
         EmbedBuilder builder = new EmbedBuilder();
 
@@ -194,8 +190,8 @@ public class MessagePrk extends MessageEng {
         builder.withDesc("withDesc");
         builder.withDescription(TextDrawer.getGraphics(chatGame.getGame(), aiPos));
 
-        builder.appendField("차례 진행도", "#" + chatGame.getGame().getTurns() + "턴", true);
-        builder.appendField("로보트 착수 위치", aiPos.getHumText(), true);
+        builder.appendField("Turn progress", "#" + chatGame.getGame().getTurns() + "Turns", true);
+        builder.appendField("AI launch location", aiPos.getHumText(), true);
 
         if ((chatGame.getState() == ChatGame.STATE.INP) && (chatGame.getGame().getTurns() > 2)) chatGame.addMessage(channel.sendMessage(builder.build()));
         else channel.sendMessage(builder.build());

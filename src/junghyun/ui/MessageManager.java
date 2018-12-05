@@ -1,9 +1,10 @@
 package junghyun.ui;
 
 import junghyun.db.DBManager;
-import junghyun.ui.languages.MessageEng;
-import junghyun.ui.languages.MessageKor;
-import junghyun.ui.languages.MessagePrk;
+import junghyun.ui.languages.MessageCHN;
+import junghyun.ui.languages.MessageENG;
+import junghyun.ui.languages.MessageKOR;
+import junghyun.ui.languages.MessagePRK;
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.util.EmbedBuilder;
@@ -12,17 +13,19 @@ import java.util.HashMap;
 
 public class MessageManager {
 
-    public enum LANG {ERR, ENG, KOR, PRK}
-    private static HashMap<Long, MessageEng> langList;
+    public enum LANG {ERR, ENG, KOR, PRK, CHN}
+    private static HashMap<Long, MessageENG> langList;
 
-    public static final String LANGUAGE_LIST = "`ENG`, `KOR`, `PRK`";
+    public static final String LANGUAGE_LIST = "`ENG`, `KOR`, `PRK`, `CHN`";
     public static EmbedObject langEmbed;
 
     public static void loadMessage() {
         MessageManager.langList = new HashMap<>();
-        MessageEng.buildMessage();
-        MessageKor.buildMessage();
-        MessagePrk.buildMessage();
+
+        MessageENG.buildMessage();
+        MessageKOR.buildMessage();
+        MessagePRK.buildMessage();
+        MessageCHN.buildMessage();
 
         EmbedBuilder langBuilder = new EmbedBuilder();
 
@@ -33,7 +36,8 @@ public class MessageManager {
 
         langBuilder.appendField("English:flag_us:", "Please use the command `~lang` `ENG`", false);
         langBuilder.appendField("한국어:flag_kr:", "`~lang` `KOR` 명령어를 사용 해주세요.", false);
-        langBuilder.appendField("조선어:flag_kp:", "`~lang` `PRK` 명령어를 사용하라우.", false);
+        langBuilder.appendField("조선어:flag_kp:", "`~lang` `PRK` 명령문를 사용하라우.", false);
+        langBuilder.appendField("汉语:flag_cn: `@kawaii-cirno`", "请使用 `~lang` `CHN` 命令", false);
 
         MessageManager.langEmbed = langBuilder.build();
     }
@@ -50,25 +54,31 @@ public class MessageManager {
             case "prk":
                 lang = LANG.PRK;
                 break;
+            case "chn":
+                lang = LANG.CHN;
+                break;
         }
         return lang;
     }
 
-    private static MessageEng getLanguageInstance(LANG lang) {
-        MessageEng rsMessage = new MessageEng();
+    private static MessageENG getLanguageInstance(LANG lang) {
+        MessageENG rsMessage = new MessageENG();
         switch (lang) {
             case KOR:
-                rsMessage = new MessageKor();
+                rsMessage = new MessageKOR();
                 break;
             case PRK:
-                rsMessage = new MessagePrk();
+                rsMessage = new MessagePRK();
+                break;
+            case CHN:
+                rsMessage = new MessageCHN();
                 break;
         }
         return rsMessage;
     }
 
-    public static MessageEng getInstance(IGuild guild) {
-        MessageEng msgInstance = MessageManager.langList.get(guild.getLongID());
+    public static MessageENG getInstance(IGuild guild) {
+        MessageENG msgInstance = MessageManager.langList.get(guild.getLongID());
         if (msgInstance == null) {
             DBManager.GuildDataSet guildDataSet = DBManager.getGuildData(guild.getLongID());
             if (guildDataSet != null)
