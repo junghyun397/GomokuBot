@@ -13,10 +13,12 @@ public class Stone implements Cloneable {
 
     private int blackThreeCount = 0;
     private int blackFourCount = 0;
+    private int blackOpenFourCount = 0;
     private int blackFiveCount = 0;
 
     private int whiteThreeCount = 0;
     private int whiteFourCount = 0;
+    private int whiteOpenFourCount = 0;
     private int whiteFiveCount = 0;
 
     public Stone(int x, int y) {
@@ -63,6 +65,16 @@ public class Stone implements Cloneable {
     public int getFourCount(boolean color) {
         if (color) return this.blackFourCount;
         else return this.whiteFourCount;
+    }
+
+    public void addOpenFourCount(boolean color) {
+        if (color) this.blackOpenFourCount++;
+        else this.whiteOpenFourCount++;
+    }
+
+    public int getOpenFourCount(boolean color) {
+        if (color) return this.blackOpenFourCount;
+        else return this.whiteOpenFourCount;
     }
 
     public void addFiveCount(boolean color) {

@@ -149,6 +149,11 @@ public class Game implements Cloneable {
         stone.addFourCount(color);
     }
 
+    public void addOpenFourPoint(int x, int y, boolean color) {
+        Stone stone = this.plate[x][y];
+        stone.addOpenFourCount(color);
+    }
+
     public void addFivePoint(int x, int y, boolean color) {
         Stone stone = this.plate[x][y];
         stone.addFiveCount(color);
@@ -191,10 +196,15 @@ public class Game implements Cloneable {
 
     public Game clone() throws CloneNotSupportedException {
         Game nGame = (Game) super.clone();
+        nGame.clonePlate();
         for (int x = 0; x < 15; x++)
             for (int y = 0; y < 15; y++)
-                nGame.getPlate()[x][y] = (Stone) nGame.getPlate()[x][y].clone();
+                nGame.getPlate()[x][y] = (Stone) this.getPlate()[x][y].clone();
         return nGame;
+    }
+
+    private void clonePlate() {
+        this.plate = new Stone[15][15];
     }
 
 }
