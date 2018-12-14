@@ -1,4 +1,4 @@
-package junghyun.unit;
+package junghyun.discord.unit;
 
 public class Settings {
 

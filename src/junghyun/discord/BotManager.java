@@ -1,23 +1,23 @@
-package junghyun;
+package junghyun.discord;
 
 import junghyun.ai.engin.AIBase;
-import junghyun.db.DBManager;
-import junghyun.db.SqlManager;
-import junghyun.ui.MessageManager;
-import junghyun.unit.ChatGame;
-import junghyun.unit.Pos;
-import junghyun.unit.Settings;
+import junghyun.discord.db.DBManager;
+import junghyun.discord.db.SqlManager;
+import junghyun.discord.ui.MessageManager;
+import junghyun.discord.unit.ChatGame;
+import junghyun.ai.Pos;
+import junghyun.discord.unit.Settings;
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.ActivityType;
 import sx.blah.discord.handle.obj.StatusType;
 
-class BotManager {
+public class BotManager {
 
     private static IDiscordClient client;
 
-    static void startGomokuBot() {
+    public static void startGomokuBot() {
         client = new ClientBuilder().setPresence(StatusType.ONLINE, ActivityType.WATCHING, "~help")
                 .withToken(Settings.TOKEN).build();
         client.getDispatcher().registerListener(new EventListener());
@@ -28,7 +28,7 @@ class BotManager {
         MessageManager.loadMessage();
     }
 
-    static void endGomokuBot() {
+    public static void endGomokuBot() {
         BotManager.client.logout();
     }
 
@@ -77,7 +77,7 @@ class BotManager {
         }
     }
 
-    static IDiscordClient getClient() {
+    public static IDiscordClient getClient() {
         return BotManager.client;
     }
 

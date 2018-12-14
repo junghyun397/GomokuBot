@@ -1,7 +1,7 @@
 package junghyun.ai.engin;
 
 import junghyun.ai.Game;
-import junghyun.unit.Pos;
+import junghyun.ai.Pos;
 import junghyun.ai.Stone;
 
 import java.util.ArrayList;

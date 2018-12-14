@@ -1,13 +1,13 @@
-package junghyun.ui.languages;
+package junghyun.discord.ui.languages;
 
 import junghyun.ai.engin.AIBase;
-import junghyun.db.DBManager;
-import junghyun.db.Logger;
-import junghyun.ui.MessageManager;
-import junghyun.ui.TextDrawer;
-import junghyun.unit.ChatGame;
-import junghyun.unit.Pos;
-import junghyun.unit.Settings;
+import junghyun.discord.db.DBManager;
+import junghyun.discord.db.Logger;
+import junghyun.discord.ui.MessageManager;
+import junghyun.discord.ui.TextDrawer;
+import junghyun.discord.unit.ChatGame;
+import junghyun.ai.Pos;
+import junghyun.discord.unit.Settings;
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;

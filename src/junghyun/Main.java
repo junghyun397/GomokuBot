@@ -1,6 +1,8 @@
 package junghyun;
 
-import junghyun.db.Logger;
+import junghyun.discord.BotManager;
+import junghyun.discord.GameManager;
+import junghyun.discord.db.Logger;
 
 import java.util.Scanner;
 

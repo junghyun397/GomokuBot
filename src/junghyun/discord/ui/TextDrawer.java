@@ -1,8 +1,8 @@
-package junghyun.ui;
+package junghyun.discord.ui;
 
 import junghyun.ai.Game;
 import junghyun.ai.Stone;
-import junghyun.unit.Pos;
+import junghyun.ai.Pos;
 
 public class TextDrawer {
 
@@ -46,7 +46,7 @@ public class TextDrawer {
         Stone[][] plate = game.getPlate();
         StringBuilder result = new StringBuilder();
 
-        result.append("┏　");
+        result.append("　　");
         for (int x = 0; x < 15; x++) {
             result.append(FIXED_ENG[x]);
         }

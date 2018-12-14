@@ -1,4 +1,4 @@
-package junghyun.unit;
+package junghyun.ai;
 
 public class Pos {
 

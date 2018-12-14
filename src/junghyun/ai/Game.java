@@ -1,7 +1,5 @@
 package junghyun.ai;
 
-import junghyun.unit.Pos;
-
 import java.util.ArrayList;
 
 public class Game implements Cloneable {

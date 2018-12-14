@@ -1,8 +1,8 @@
-package junghyun.db;
+package junghyun.discord.db;
 
-import junghyun.ui.MessageManager;
-import junghyun.unit.ChatGame;
-import junghyun.unit.Pos;
+import junghyun.discord.ui.MessageManager;
+import junghyun.discord.unit.ChatGame;
+import junghyun.ai.Pos;
 
 import java.sql.ResultSet;
 

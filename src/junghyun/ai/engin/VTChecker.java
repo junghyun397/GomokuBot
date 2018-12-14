@@ -1,9 +1,10 @@
 package junghyun.ai.engin;
 
 import junghyun.ai.Game;
-import junghyun.db.Logger;
-import junghyun.ui.TextDrawer;
-import junghyun.unit.Pos;
+import junghyun.ai.Stone;
+import junghyun.discord.db.Logger;
+import junghyun.discord.ui.TextDrawer;
+import junghyun.ai.Pos;
 
 class VTChecker {
 
@@ -36,9 +37,10 @@ class VTChecker {
 
         for (int x = 0; x < 15; x++) {
             for (int y = 0; y < 15; y++) {
-                if (nGame.getPlate()[x][y].isStoneAdded()) continue;
-                if ((nGame.getPlate()[x][y].getFourCount(!nGame.getPlayerColor()) > 0) ||
-                        (nGame.getPlate()[x][y].getThreeCount(!nGame.getPlayerColor()) > 0)) {
+                Stone targetStone = nGame.getPlate()[x][y];
+                if (targetStone.isStoneAdded()) continue;
+                if ((targetStone.getFourCount(!nGame.getPlayerColor()) > 0) ||
+                        (targetStone.getThreeCount(!nGame.getPlayerColor()) > 0)) {
                     Game cGame = nGame.clone();
                     cGame.setStone(x, y);
                     this.findDefendPoint(new Pos(x, y), cGame);
@@ -57,18 +59,18 @@ class VTChecker {
         for (int x = 0; x < 15; x++) {
             for (int y = 0; y < 15; y++) {
                 if (this.isFind) return;
-                if (nGame.getPlate()[x][y].isStoneAdded()) continue;
-                if (((nGame.getPlate()[x][y].getFourCount(!nGame.getPlayerColor()) > 0) &&
-                        (nGame.getPlate()[x][y].getThreeCount(!nGame.getPlayerColor()) > 0)) ||
-                        (nGame.getPlate()[x][y].getFourCount(!nGame.getPlayerColor()) > 1)) {
+                Stone targetStone = nGame.getPlate()[x][y];
+                if (targetStone.isStoneAdded()) continue;
+                if (((targetStone.getFourCount(!nGame.getPlayerColor()) > 0) &&
+                        (targetStone.getThreeCount(!nGame.getPlayerColor()) > 0)) ||
+                        (targetStone.getFourCount(!nGame.getPlayerColor()) > 1)) {
                     this.isFind = true;
                     this.vtPos = topNode;
                     nGame.setStone(x, y);
-                    Logger.loggerDev(TextDrawer.getGraphics(nGame));
                     return;
-                } else if ((nGame.getPlate()[x][y].getFourCount(!nGame.getPlayerColor()) > 0) ||
-                        (nGame.getPlate()[x][y].getThreeCount(!nGame.getPlayerColor()) > 0)) {
-                    if (!((nGame.getPlate()[x][y].getFourCount(!nGame.getPlayerColor()) == 0)
+                } else if ((targetStone.getFourCount(!nGame.getPlayerColor()) > 0) ||
+                        (targetStone.getThreeCount(!nGame.getPlayerColor()) > 0)) {
+                    if (!((targetStone.getFourCount(!nGame.getPlayerColor()) == 0)
                             && attackThree)) {
                         Game cGame = nGame.clone();
                         cGame.setStone(x, y);
@@ -89,12 +91,13 @@ class VTChecker {
         for (int x = 0; x < 15; x++) {
             for (int y = 0; y < 15; y++) {
                 if (this.isFind) return;
-                if (nGame.getPlate()[x][y].isStoneAdded()) continue;
-                if (((nGame.getPlate()[x][y].getFiveCount(!nGame.getPlayerColor()) > 0) ||
-                        (nGame.getPlate()[x][y].getOpenFourCount(!nGame.getPlayerColor()) > 0)) &&
-                        !((nGame.getPlate()[x][y].getFourCount(nGame.getPlayerColor()) > 0)) ||
-                        (nGame.getPlate()[x][y].getOpenFourCount(nGame.getPlayerColor()) > 0)) {
-                    isThree = nGame.getPlate()[x][y].getThreeCount(nGame.getPlayerColor()) > 0;
+                Stone targetStone = nGame.getPlate()[x][y];
+                if (targetStone.isStoneAdded()) continue;
+                if (((targetStone.getFiveCount(!nGame.getPlayerColor()) > 0) ||
+                        (targetStone.getOpenFourCount(!nGame.getPlayerColor()) > 0)) &&
+                        !((targetStone.getFourCount(nGame.getPlayerColor()) > 0)) ||
+                        (targetStone.getOpenFourCount(nGame.getPlayerColor()) > 0)) {
+                    isThree = targetStone.getThreeCount(nGame.getPlayerColor()) > 0;
                     Game cGame = nGame.clone();
                     cGame.setStone(x, y);
                     this.findAttackPoint(topNode, cGame, isThree);

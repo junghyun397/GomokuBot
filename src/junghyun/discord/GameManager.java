@@ -1,14 +1,14 @@
-package junghyun;
+package junghyun.discord;
 
 import junghyun.ai.Game;
 import junghyun.ai.engin.AIBase;
-import junghyun.db.DBManager;
-import junghyun.db.Logger;
-import junghyun.ui.MessageManager;
-import junghyun.ui.TextDrawer;
-import junghyun.unit.ChatGame;
-import junghyun.unit.Pos;
-import junghyun.unit.Settings;
+import junghyun.discord.db.DBManager;
+import junghyun.discord.db.Logger;
+import junghyun.discord.ui.MessageManager;
+import junghyun.discord.ui.TextDrawer;
+import junghyun.discord.unit.ChatGame;
+import junghyun.ai.Pos;
+import junghyun.discord.unit.Settings;
 
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;
@@ -19,7 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-class GameManager {
+public class GameManager {
 
     private static HashMap<Long, ChatGame> gameList = new HashMap<>();
 
@@ -124,7 +124,7 @@ class GameManager {
         MessageManager.getInstance(channel.getGuild()).sendNextTurn(chatGame, aiPos, user, channel);
     }
 
-    static int getGameListSize() {
+    public static int getGameListSize() {
         return GameManager.gameList.size();
     }
 
