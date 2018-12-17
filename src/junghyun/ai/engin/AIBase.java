@@ -15,9 +15,18 @@ public class AIBase {
 
     private Game game;
 
+    private Random random;
+
     public AIBase(Game game, DIFF diff) {
         this.game = game;
         this.diff = diff;
+        this.random = new Random();
+    }
+
+    public AIBase(Game game, DIFF diff, int seed) {
+        this.game = game;
+        this.diff = diff;
+        this.random = new Random(seed);
     }
 
     public Pos getAiPoint() {
@@ -132,7 +141,7 @@ public class AIBase {
         for (int x = 0; x < 15; x++) {
             for (int y = 0; y < 15; y++) {
                 Stone stone = plate[x][y];
-                if (!stone.isStoneAdded())
+                if (!stone.isStoneAdded()) {
                     if (stone.getPoint() > score_max) {
                         score_max = stone.getPoint();
                         max_stones.clear();
@@ -140,6 +149,7 @@ public class AIBase {
                     } else if (stone.getPoint() == score_max) {
                         max_stones.add(stone);
                     }
+                }
             }
         }
 
@@ -147,7 +157,7 @@ public class AIBase {
         if (max_stones.size() == 1) {
             rs_stone = max_stones.get(0);
         } else {
-            int rand = new Random().nextInt(max_stones.size());
+            int rand = random.nextInt(max_stones.size());
             rs_stone = max_stones.get(rand);
         }
         return new Pos(rs_stone.getX(), rs_stone.getY());

@@ -34,23 +34,22 @@ public class Main {
     }
 
     private static void scanCommand() {
-        if (!Main.onRunning) return;
-
-        String command = Main.scanner.nextLine();
-        switch (command) {
-            case "stop":
-                Main.stopServer();
-                break;
-            case "save_log":
-                Logger.saveLogs();
-            case "game_count":
-                Logger.loggerDev("Game count : " + GameManager.getGameListSize());
-                break;
-            case "server_count":
-                Logger.loggerDev("Server count : " + BotManager.getClient().getGuilds().size());
-                break;
+        while (Main.onRunning) {
+            String command = Main.scanner.nextLine();
+            switch (command) {
+                case "stop":
+                    Main.stopServer();
+                    break;
+                case "save_log":
+                    Logger.saveLogs();
+                case "game_count":
+                    Logger.loggerDev("Game count : " + GameManager.getGameListSize());
+                    break;
+                case "server_count":
+                    Logger.loggerDev("Server count : " + BotManager.getClient().getGuilds().size());
+                    break;
+            }
         }
-        Main.scanCommand();
     }
 
 }

@@ -2,7 +2,7 @@ package junghyun.ai;
 
 import java.util.ArrayList;
 
-public class Game implements Cloneable {
+public class Game {
 
     private boolean playerColor = true;
 
@@ -15,6 +15,17 @@ public class Game implements Cloneable {
 
     public Game() {
         this.clearPlate();
+    }
+
+    public Game deepCopy() {
+        Game game = new Game();
+        game.getLog().clone();
+        for (int x = 0; x < 15; x++) {
+            for (int y = 0; y < 15; y++) {
+                game.getPlate()[x][y] = this.plate[x][y].deepCopy();
+            }
+        }
+        return game;
     }
 
     public boolean getPlayerColor() {
@@ -163,8 +174,7 @@ public class Game implements Cloneable {
     }
 
     private void resetPoint(int x, int y) {
-        Stone stone = this.plate[x][y];
-        stone.resetPoint();
+        this.plate[x][y].resetPoint();
     }
 
     public void resetAllPoint() {
@@ -190,19 +200,6 @@ public class Game implements Cloneable {
         }
 
         return (count == 225) || (count == 224);
-    }
-
-    public Game clone() throws CloneNotSupportedException {
-        Game nGame = (Game) super.clone();
-        nGame.clonePlate();
-        for (int x = 0; x < 15; x++)
-            for (int y = 0; y < 15; y++)
-                nGame.getPlate()[x][y] = (Stone) this.getPlate()[x][y].clone();
-        return nGame;
-    }
-
-    private void clonePlate() {
-        this.plate = new Stone[15][15];
     }
 
 }

@@ -44,6 +44,6 @@ class AISetting {
 
     final static int[] FOUR_CASE_4 = {1, 0, 1, 0, 1}; //●○●○●
 
-    final static int MAX_VT_PATH = 1000;
+    final static int MAX_VT_PATH = 10;
 
 }

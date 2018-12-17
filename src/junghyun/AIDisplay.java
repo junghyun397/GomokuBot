@@ -72,11 +72,9 @@ public class AIDisplay {
         if (color == 0) AIDisplay.game.setPlayerColor(true);
         else AIDisplay.game.setPlayerColor(false);
 
-        if (!AIDisplay.game.getPlayerColor()) {
-            AIDisplay.game.setStone(7, 7);
-            AIDisplay.printState();
-        }
+        if (!AIDisplay.game.getPlayerColor()) AIDisplay.game.setStone(7, 7);
 
+        AIDisplay.printState();
         AIDisplay.loopPlayer();
     }
 
@@ -95,7 +93,7 @@ public class AIDisplay {
                 AIDisplay.game.setStone(aiPos.getX(), aiPos.getY());
 //                AIDisplay.printState(aiPos);
 
-                if (AIDisplay.game.isWin(aiPos.getX(), aiPos.getY(), !AIDisplay.game.getPlayerColor())) {
+                if (AIDisplay.game.isWin(aiPos.getX(), aiPos.getY(), AIDisplay.game.getPlayerColor())) {
                     String rsColor = "BLACK";
                     if (AIDisplay.game.getPlayerColor()) {
                         rsColor = "WHITE";
@@ -121,8 +119,26 @@ public class AIDisplay {
 
     private static void loopPlayer() {
         while (true) {
-            String[] str = AIDisplay.scanner.nextLine().split(" ");
-            Pos pos = new Pos(Pos.engToInt(str[0].toCharArray()[0]), Integer.valueOf(str[1]) - 1);
+            String[] str;
+            Pos pos;
+
+            try {
+                str = AIDisplay.scanner.nextLine().split(" ");
+                if (str[0].equals("flip")) {
+                    AIDisplay.game.setPlayerColor(!AIDisplay.game.getPlayerColor());
+                    Pos aiPos = new AIBase(AIDisplay.game, AIDisplay.diff).getAiPoint();
+                    AIDisplay.game.setStone(aiPos.getX(), aiPos.getY(), !AIDisplay.game.getPlayerColor());
+                    AIDisplay.printState(aiPos);
+                    AIDisplay.loopPlayer();
+                    return;
+                }
+
+                pos = new Pos(Pos.engToInt(str[0].toCharArray()[0]), Integer.valueOf(str[1]) - 1);
+            } catch (Exception e) {
+                System.out.print("Error. \n");
+                AIDisplay.loopPlayer();
+                return;
+            }
 
             if (!AIDisplay.game.canSetStone(pos.getX(), pos.getY())) {
                 System.out.print("Error. \n");
@@ -131,7 +147,7 @@ public class AIDisplay {
             }
 
             AIDisplay.game.setStone(pos.getX(), pos.getY());
-            if (AIDisplay.game.isWin(pos.getX(), pos.getY(), AIDisplay.game.getPlayerColor())) {
+            if (AIDisplay.game.isWin(pos.getX(), pos.getY(), !AIDisplay.game.getPlayerColor())) {
                 System.out.print("Player Win. \n");
                 AIDisplay.selectGameType();
                 return;
@@ -160,7 +176,7 @@ public class AIDisplay {
     }
 
     private static void printState(Pos aiPos) {
-        System.out.print(AIDisplay.clearText + TextDrawer.getGraphics(AIDisplay.game, aiPos, AIDisplay.useGrid) + "\n");
+        System.out.print(TextDrawer.getGraphics(AIDisplay.game, aiPos, AIDisplay.useGrid) + "\n");
     }
 
 }

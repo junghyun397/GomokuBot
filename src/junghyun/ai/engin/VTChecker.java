@@ -1,10 +1,8 @@
 package junghyun.ai.engin;
 
 import junghyun.ai.Game;
-import junghyun.ai.Stone;
-import junghyun.discord.db.Logger;
-import junghyun.discord.ui.TextDrawer;
 import junghyun.ai.Pos;
+import junghyun.ai.Stone;
 
 class VTChecker {
 
@@ -32,75 +30,65 @@ class VTChecker {
     }
 
     private void bootVTChecker() throws CloneNotSupportedException {
-        Game nGame = this.game.clone();
-        this.sumRowPoints(nGame);
-
         for (int x = 0; x < 15; x++) {
             for (int y = 0; y < 15; y++) {
-                Stone targetStone = nGame.getPlate()[x][y];
-                if (targetStone.isStoneAdded()) continue;
-                if ((targetStone.getFourCount(!nGame.getPlayerColor()) > 0) ||
-                        (targetStone.getThreeCount(!nGame.getPlayerColor()) > 0)) {
-                    Game cGame = nGame.clone();
-                    cGame.setStone(x, y);
-                    this.findDefendPoint(new Pos(x, y), cGame);
-                }
-            }
-        }
-    }
-
-    private void findAttackPoint(Pos topNode, Game nGame, boolean attackThree) throws CloneNotSupportedException {
-        this.countPath++;
-        if ((this.isFind) || (this.countPath > AISetting.MAX_VT_PATH)) return;
-
-        nGame.resetAllPoint();
-        this.sumRowPoints(nGame);
-
-        for (int x = 0; x < 15; x++) {
-            for (int y = 0; y < 15; y++) {
-                if (this.isFind) return;
-                Stone targetStone = nGame.getPlate()[x][y];
-                if (targetStone.isStoneAdded()) continue;
-                if (((targetStone.getFourCount(!nGame.getPlayerColor()) > 0) &&
-                        (targetStone.getThreeCount(!nGame.getPlayerColor()) > 0)) ||
-                        (targetStone.getFourCount(!nGame.getPlayerColor()) > 1)) {
-                    this.isFind = true;
-                    this.vtPos = topNode;
+                Stone targetStone = this.game.getPlate()[x][y];
+                if ((targetStone.getThreeCount(!this.game.getPlayerColor()) > 0)
+                        || (targetStone.getFourCount(!this.game.getPlayerColor()) > 0)) {
+                    Game nGame = this.game.deepCopy();
                     nGame.setStone(x, y);
-                    return;
-                } else if ((targetStone.getFourCount(!nGame.getPlayerColor()) > 0) ||
-                        (targetStone.getThreeCount(!nGame.getPlayerColor()) > 0)) {
-                    if (!((targetStone.getFourCount(!nGame.getPlayerColor()) == 0)
-                            && attackThree)) {
-                        Game cGame = nGame.clone();
-                        cGame.setStone(x, y);
-                        this.findDefendPoint(topNode, cGame);
-                    }
+                    this.findDefensePoint(x, y, nGame, false);
                 }
             }
         }
     }
 
-    private void findDefendPoint(Pos topNode, Game nGame) throws CloneNotSupportedException {
-        if (this.isFind) return;
+    private void findDefensePoint(int topX, int topY, Game bGame, boolean hasThree) throws CloneNotSupportedException {
+        this.countPath++;
+        if (this.isFind || this.countPath > AISetting.MAX_VT_PATH) return;
+        bGame.resetAllPoint();
+        this.sumRowPoints(bGame);
 
-        nGame.resetAllPoint();
-        this.sumRowPoints(nGame);
-
-        boolean isThree;
         for (int x = 0; x < 15; x++) {
             for (int y = 0; y < 15; y++) {
-                if (this.isFind) return;
-                Stone targetStone = nGame.getPlate()[x][y];
-                if (targetStone.isStoneAdded()) continue;
-                if (((targetStone.getFiveCount(!nGame.getPlayerColor()) > 0) ||
-                        (targetStone.getOpenFourCount(!nGame.getPlayerColor()) > 0)) &&
-                        !((targetStone.getFourCount(nGame.getPlayerColor()) > 0)) ||
-                        (targetStone.getOpenFourCount(nGame.getPlayerColor()) > 0)) {
-                    isThree = targetStone.getThreeCount(nGame.getPlayerColor()) > 0;
-                    Game cGame = nGame.clone();
-                    cGame.setStone(x, y);
-                    this.findAttackPoint(topNode, cGame, isThree);
+                Stone targetStone = this.game.getPlate()[x][y];
+                if ((targetStone.getFiveCount(!this.game.getPlayerColor()) > 0)
+                    || (targetStone.getOpenFourCount(!this.game.getPlayerColor()) > 0)) {
+                    if (targetStone.getFourCount(this.game.getPlayerColor()) > 0) return;
+                    else if (targetStone.getThreeCount(this.game.getPlayerColor()) > 0) hasThree = true;
+
+                    Game nGame = bGame.deepCopy();
+                    nGame.setStone(x, y);
+                    this.findAttackPoint(topX, topY, nGame, hasThree);
+                }
+            }
+        }
+    }
+
+    private void findAttackPoint(int topX, int topY, Game bGame, boolean hasThree) throws CloneNotSupportedException {
+        this.countPath++;
+        if (this.isFind || this.countPath > AISetting.MAX_VT_PATH) return;
+        bGame.resetAllPoint();
+        this.sumRowPoints(bGame);
+        this.countPath++;
+
+        for (int x = 0; x < 15; x++) {
+            for (int y = 0; y < 15; y++) {
+                Stone targetStone = this.game.getPlate()[x][y];
+
+                int countThree = targetStone.getThreeCount(!this.game.getPlayerColor());
+                int countFour = targetStone.getFourCount(!this.game.getPlayerColor());
+                if (hasThree) countThree = 0;
+
+                if (countThree + countFour > 1) {
+                    this.vtPos = new Pos(topX, topY);
+                    this.isFind = true;
+                    System.out.print("Found!");
+                    return;
+                } else if (countThree + countFour > 0) {
+                    Game nGame = bGame.deepCopy();
+                    nGame.setStone(x, y);
+                    this.findDefensePoint(topX, topY, nGame, hasThree);
                 }
             }
         }
