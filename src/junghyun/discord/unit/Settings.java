@@ -11,6 +11,8 @@ public class Settings {
     public static final int TIMEOUT_CYCLE = 1800;
     public static final int TIMEOUT = TIMEOUT_CYCLE*1000;
 
+    public static final int LOADING_TIME = 60;
+
     public static final String SQL_URL = PrivateSettings.SQL_URL +
             "?autoReconnect=true" +
             "&useUnicode=true" +

@@ -13,6 +13,10 @@ import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedE
 import sx.blah.discord.handle.obj.ActivityType;
 import sx.blah.discord.handle.obj.StatusType;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 public class BotManager {
 
     private static IDiscordClient client;
@@ -22,6 +26,11 @@ public class BotManager {
                 .withToken(Settings.TOKEN).build();
         client.getDispatcher().registerListener(new EventListener());
         client.login();
+
+        Runnable task = EventListener::onEndLoadGuilds;
+
+        ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+        service.schedule(task, Settings.LOADING_TIME, TimeUnit.SECONDS);
 
         SqlManager.connectMysql();
         GameManager.bootGameManager();
