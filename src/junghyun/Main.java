@@ -3,6 +3,7 @@ package junghyun;
 import junghyun.discord.BotManager;
 import junghyun.discord.GameManager;
 import junghyun.discord.db.Logger;
+import sx.blah.discord.handle.obj.IGuild;
 
 import java.util.Scanner;
 
@@ -47,6 +48,11 @@ public class Main {
                     break;
                 case "server_count":
                     Logger.loggerDev("Server count : " + BotManager.getClient().getGuilds().size());
+                    break;
+                case "broadcast_all":
+                    String text = command.split("broadcast_all")[0];
+                    for (IGuild guild: BotManager.getClient().getGuilds()) guild.getSystemChannel().sendMessage(text);
+                    Logger.loggerDev("Send Broadcast : " + text);
                     break;
             }
         }
