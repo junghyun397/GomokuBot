@@ -1,21 +1,17 @@
 package junghyun.discord;
 
+import junghyun.ai.Pos;
 import junghyun.ai.engin.AIBase;
 import junghyun.discord.db.DBManager;
 import junghyun.discord.db.SqlManager;
 import junghyun.discord.ui.MessageManager;
 import junghyun.discord.unit.ChatGame;
-import junghyun.ai.Pos;
 import junghyun.discord.unit.Settings;
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.ActivityType;
 import sx.blah.discord.handle.obj.StatusType;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class BotManager {
 
@@ -27,10 +23,7 @@ public class BotManager {
         client.getDispatcher().registerListener(new EventListener());
         client.login();
 
-        Runnable task = EventListener::onEndLoadGuilds;
-
-        ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
-        service.schedule(task, Settings.LOADING_TIME, TimeUnit.SECONDS);
+        EventListener.onStartLoadGuilds();
 
         SqlManager.connectMysql();
         GameManager.bootGameManager();
@@ -75,7 +68,13 @@ public class BotManager {
                     break;
                 }
 
-                Pos pos = new Pos(Pos.engToInt(splitText[1].toLowerCase().toCharArray()[0]), Integer.valueOf(splitText[2].toLowerCase())-1);
+                Pos pos;
+                try {
+                    pos = new Pos(Pos.engToInt(splitText[1].toLowerCase().toCharArray()[0]), Integer.valueOf(splitText[2].toLowerCase()) - 1);
+                } catch (Exception e) {
+                    MessageManager.getInstance(event.getGuild()).sendErrorGrammarSet(event.getAuthor(), event.getChannel());
+                    break;
+                }
                 if (!Pos.checkSize(pos.getX(), pos.getY())) {
                     MessageManager.getInstance(event.getGuild()).sendErrorGrammarSet(event.getAuthor(), event.getChannel());
                     break;

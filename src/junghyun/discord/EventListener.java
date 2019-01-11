@@ -6,14 +6,33 @@ import junghyun.discord.unit.Settings;
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.guild.GuildCreateEvent;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
+import sx.blah.discord.handle.impl.events.shard.DisconnectedEvent;
 import sx.blah.discord.handle.obj.IMessage;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class EventListener {
 
     private static boolean isEndLoadGuilds = false;
 
-    public static void onEndLoadGuilds() {
+    public static void onStartLoadGuilds() {
+        EventListener.isEndLoadGuilds = false;
+
+        Runnable task = EventListener::onEndLoadGuilds;
+
+        ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+        service.schedule(task, Settings.LOADING_TIME, TimeUnit.SECONDS);
+    }
+
+    private static void onEndLoadGuilds() {
         EventListener.isEndLoadGuilds = true;
+    }
+
+    @EventSubscriber
+    public void DisconnectedEvent(DisconnectedEvent event) {
+        EventListener.onStartLoadGuilds();
     }
 
     @EventSubscriber
