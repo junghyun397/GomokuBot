@@ -11,6 +11,7 @@ import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.ActivityType;
+import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.handle.obj.StatusType;
 
 public class BotManager {
@@ -55,12 +56,12 @@ public class BotManager {
                 MessageManager.getInstance(event.getGuild()).sendRank(event.getAuthor(), event.getChannel(), DBManager.getRankingData(Settings.RANK_COUNT));
                 break;
             case "~start":
-                AIBase.DIFF diff = AIBase.DIFF.MID;
-                if (event.getMessage().getContent().equals("~start taiwan_no_1")) diff = AIBase.DIFF.EXT;
-                GameManager.createGame(event.getAuthor().getLongID(), event.getAuthor(), event.getChannel(), diff, ChatGame.GAMETYPE.PVE);
+                IUser targetUser = null;
+                if (event.getMessage().getMentions().size() > 0) targetUser = event.getMessage().getMentions().get(0);
+                GameManager.createGame(event.getAuthor(), event.getChannel(), targetUser);
                 break;
             case "~resign":
-                GameManager.resignGame(event.getAuthor().getLongID(), event.getAuthor(), event.getChannel());
+                GameManager.resignGame(event.getAuthor(), event.getChannel());
                 break;
             case "~s":
                 if ((splitText.length != 3) || (!((splitText[1].length() == 1) && ((splitText[2].length() == 1) || (splitText[2].length() == 2))))) {

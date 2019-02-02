@@ -6,9 +6,8 @@ import junghyun.discord.db.DBManager;
 import junghyun.discord.db.Logger;
 import junghyun.discord.ui.MessageManager;
 import junghyun.discord.ui.TextDrawer;
-import junghyun.discord.unit.ChatGame;
+import junghyun.discord.unit.*;
 import junghyun.ai.Pos;
-import junghyun.discord.unit.Settings;
 
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;
@@ -23,11 +22,25 @@ public class GameManager {
 
     private static HashMap<Long, ChatGame> gameList = new HashMap<>();
 
-    static void bootGameManager() {
+    public static void bootGameManager() {
         Runnable task = GameManager::checkTimeOut;
 
         ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
         service.scheduleAtFixedRate(task, Settings.TIMEOUT_CYCLE, Settings.TIMEOUT_CYCLE, TimeUnit.SECONDS);
+    }
+
+    private static void checkTimeOut() {
+        long currentTime = System.currentTimeMillis();
+        for (ChatGame game: GameManager.gameList.values().toArray(new ChatGame[0])) {
+            if (game.getUpdateTime() + Settings.TIMEOUT < currentTime) {
+                game.setState(ChatGame.STATE.TIMEOUT);
+                GameManager.endGame(game);
+            }
+        }
+    }
+
+    private static boolean checkGame(long id) {
+        return GameManager.getGame(id) == null;
     }
 
     private static void putGame(ChatGame chatGame) {
@@ -42,55 +55,65 @@ public class GameManager {
         GameManager.gameList.remove(id);
     }
 
-    static void createGame(long id, IUser user, IChannel channel, AIBase.DIFF diff, ChatGame.GAMETYPE gameType) {
-        if (getGame(id) != null) {
+    public static void createGame(IUser user, IChannel channel, IUser targetUser) {
+        if (GameManager.checkGame(user.getLongID())) {
             MessageManager.getInstance(channel.getGuild()).sendFailCreatedGame(user, channel);
             return;
         }
 
+        ChatGame chatGame;
+        if (targetUser == null) chatGame = GameManager.createPVEGame(user.getLongID(), user);
+        else chatGame = GameManager.createPVPGame(user.getLongID(), user, targetUser);
+
+        GameManager.putGame(chatGame);
+        Logger.loggerInfo("Start Game: " + chatGame.getNameTag() + " v. " + chatGame.getOppPlayer().getNameTag());
+    }
+
+    private static ChatGame createPVEGame(long id, IUser user) {
+        Game game = new Game();
         int rColor = new Random().nextInt(3);
         boolean playerColor = true;
         if (rColor > 0) playerColor = false;
 
-        ChatGame chatGame = new ChatGame(id, new Game(), user.getName(), diff, gameType);
+        OppPlayer AIPlayer = new AIPlayer(game, AIBase.DIFF.MID);
+        ChatGame chatGame = new ChatGame(id, game, user.getName(), AIPlayer);
 
         if (!playerColor) chatGame.getGame().setStone(7, 7, true);
         chatGame.getGame().setPlayerColor(playerColor);
-        GameManager.putGame(chatGame);
 
-        Logger.loggerInfo("Start Game: " + chatGame.getNameTag() + " " + chatGame.getDiff().toString());
-        MessageManager.getInstance(channel.getGuild()).sendCreatedGame(chatGame, playerColor, user, channel);
+        return chatGame;
     }
 
-    private static void endGame(ChatGame game) {
-        DBManager.saveGame(game);
-        GameManager.delGame(game.getLongId());
-        Logger.loggerInfo("End Game: " + game.getNameTag() + " " + game.getGame().getTurns() +
-                " " + game.getState().toString());
-        Logger.loggerInfo("Canvas info ------\n" + TextDrawer.getGraphics(game.getGame(), false));
+    private static ChatGame createPVPGame(long id, IUser user, IUser targetUser) {
+        Game game = new Game();
+        boolean rColor = new Random().nextBoolean();
+
+        OppPlayer HumanPlayer = new HumanPlayer(targetUser.getLongID(), targetUser.getName());
+
+        return new ChatGame(id, game, user.getName(), HumanPlayer);
     }
 
-    private static void checkTimeOut() {
-        long currentTime = System.currentTimeMillis();
-        for (ChatGame game: GameManager.gameList.values().toArray(new ChatGame[0])) {
-            if (game.getUpdateTime() + Settings.TIMEOUT < currentTime) {
-                game.setState(ChatGame.STATE.TIMEOUT);
-                GameManager.endGame(game);
-            }
-        }
+    private static void endGame(ChatGame chatGame) {
+        if (chatGame.getOppPlayer().getPlayerType() == OppPlayer.PLAYER_TYPE.AI) DBManager.saveGame(chatGame);
+        GameManager.delGame(chatGame.getLongId());
+        Logger.loggerInfo("End Game: " +  chatGame.getNameTag() + " v. " + chatGame.getOppPlayer().getNameTag() +
+                " " + chatGame.getGame().getTurns() + " " + chatGame.getState().toString());
+        Logger.loggerInfo("Canvas info ================================\n" +
+                TextDrawer.getGraphics(chatGame.getGame(), false));
     }
 
-    static void resignGame(long id, IUser user, IChannel channel) {
-        if (checkGame(id, user, channel)) return;
-        ChatGame chatGame = GameManager.getGame(id);
+    static void resignGame(IUser user, IChannel channel) {
+        if (GameManager.checkGame(user.getLongID())) return;
+        ChatGame chatGame = GameManager.getGame(user.getLongID());
         chatGame.setState(ChatGame.STATE.RESIGN);
         MessageManager.getInstance(channel.getGuild()).sendResignPlayer(chatGame, user, channel);
         GameManager.endGame(chatGame);
     }
 
     static void putStone(long id, Pos pos, IUser user, IChannel channel) {
-        ChatGame chatGame = GameManager.getGame(id).onUpdate();
-        Game game = chatGame.getGame();
+        ChatGame chatGame = GameManager.getGame(id);
+        if (chatGame == null) return;
+        Game game = chatGame.onUpdate().getGame();
 
         if (!game.canSetStone(pos.getX(), pos.getY())) {
             MessageManager.getInstance(channel.getGuild()).sendAlreadyIn(chatGame, user, channel);
@@ -112,7 +135,7 @@ public class GameManager {
             return;
         }
 
-        Pos aiPos = new AIBase(game, chatGame.getDiff()).getAiPoint();
+        Pos aiPos = new AIBase(game, AIBase.DIFF.MID).getAiPoint();
         game.setStone(aiPos.getX(), aiPos.getY(), !game.getPlayerColor());
         if (game.isWin(aiPos.getX(), aiPos.getY(), !game.getPlayerColor())) {
             chatGame.setState(ChatGame.STATE.LOSE);
@@ -126,14 +149,6 @@ public class GameManager {
 
     public static int getGameListSize() {
         return GameManager.gameList.size();
-    }
-
-    private static boolean checkGame(long id, IUser user, IChannel channel) {
-        if (getGame(id) == null) {
-            MessageManager.getInstance(channel.getGuild()).notFoundGame(user, channel);
-            return true;
-        }
-        return false;
     }
 
 }

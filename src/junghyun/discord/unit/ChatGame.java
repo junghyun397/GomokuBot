@@ -1,6 +1,7 @@
 package junghyun.discord.unit;
 
 import junghyun.ai.Game;
+import junghyun.ai.Pos;
 import junghyun.ai.engin.AIBase;
 import sx.blah.discord.handle.obj.IMessage;
 
@@ -13,10 +14,8 @@ public class ChatGame {
     private String nameTag;
 
     private Game game;
-    private AIBase.DIFF diff;
 
-    public enum GAMETYPE {PVP, PVE}
-    private GAMETYPE gameType;
+    private OppPlayer oppPlayer;
 
     public enum STATE {INP, WIN, RESIGN, FULL, LOSE, TIMEOUT}
     private STATE state;
@@ -24,13 +23,12 @@ public class ChatGame {
     private List<IMessage> msgList;
     private long updateTime;
 
-    public ChatGame(long longId, Game game, String nameTag, AIBase.DIFF diff, GAMETYPE gameType) {
+    public ChatGame(long longId, Game game, String nameTag, OppPlayer oppPlayer) {
         this.longId = longId;
-        this.nameTag = nameTag;
         this.game = game;
+        this.nameTag = nameTag;
 
-        this.diff = diff;
-        this.gameType = gameType;
+        this.oppPlayer = oppPlayer;
 
         this.state = STATE.INP;
 
@@ -51,8 +49,8 @@ public class ChatGame {
         return game;
     }
 
-    public AIBase.DIFF getDiff() {
-        return diff;
+    public OppPlayer getOppPlayer() {
+        return this.oppPlayer;
     }
 
     public void addMessage(IMessage iMessage) {
@@ -78,10 +76,6 @@ public class ChatGame {
 
     public STATE getState() {
         return this.state;
-    }
-
-    public GAMETYPE getGameType() {
-        return this.gameType;
     }
 
     public List<IMessage> getMessageList() {
