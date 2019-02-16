@@ -24,6 +24,7 @@ public interface LanguageInterface {
     String LANG_CHANGE_ERROR();
     String LANG_SUCCESS();
 
+    String GAME_NOT_FOUND(String nameTag);
     String GAME_CREATE_FAIL(String nameTag);
     String GAME_SYNTAX_FAIL(String nameTag);
     String GAME_ALREADY_IN(String nameTag);
@@ -40,7 +41,6 @@ public interface LanguageInterface {
     String GAME_PVE_WIN(String lastPos);
     String GAME_PVE_LOSE(String lastPos);
     String GAME_PVE_RESIGN();
-
     String GAME_PVE_INFO(String playerName, int winCount, int loseCount, int rank);
 
     String GAME_FULL();

@@ -6,10 +6,12 @@ public class OppPlayer {
     private PLAYER_TYPE playerType;
 
     private String nameTag;
+    private long longId;
 
-    public OppPlayer(PLAYER_TYPE playerType, String nameTag) {
+    public OppPlayer(PLAYER_TYPE playerType, String nameTag, long longId) {
         this.playerType = playerType;
         this.nameTag = nameTag;
+        this.longId = longId;
     }
 
     public PLAYER_TYPE getPlayerType() {
@@ -18,6 +20,10 @@ public class OppPlayer {
 
     public String getNameTag() {
         return this.nameTag;
+    }
+
+    public long getLongId() {
+        return this.longId;
     }
 
 }

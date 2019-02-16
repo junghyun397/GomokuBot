@@ -67,16 +67,16 @@ public class MessageManager {
         MessageAgent rsMessage;
         switch (lang) {
             case KOR:
-                rsMessage = messageAgentKOR;
+                rsMessage = MessageManager.messageAgentKOR;
                 break;
             case PRK:
-                rsMessage = messageAgentPRK;
+                rsMessage = MessageManager.messageAgentPRK;
                 break;
             case CHN:
-                rsMessage = messageAgentCHN;
+                rsMessage = MessageManager.messageAgentCHN;
                 break;
             default:
-                rsMessage = messageAgentENG;
+                rsMessage = MessageManager.messageAgentENG;
                 break;
         }
         return rsMessage;

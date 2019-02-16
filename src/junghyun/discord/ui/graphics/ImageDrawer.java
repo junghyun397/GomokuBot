@@ -1,4 +1,4 @@
-package junghyun.discord.ui;
+package junghyun.discord.ui.graphics;
 
 import junghyun.ai.Game;
 import junghyun.ai.Stone;

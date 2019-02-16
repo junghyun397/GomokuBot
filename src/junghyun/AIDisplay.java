@@ -3,7 +3,7 @@ package junghyun;
 import junghyun.ai.Game;
 import junghyun.ai.Pos;
 import junghyun.ai.engin.AIBase;
-import junghyun.discord.ui.TextDrawer;
+import junghyun.discord.ui.graphics.TextDrawer;
 
 import java.util.Scanner;
 

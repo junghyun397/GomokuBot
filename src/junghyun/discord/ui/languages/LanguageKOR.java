@@ -79,6 +79,10 @@ public class LanguageKOR implements LanguageInterface {
     }
 
     @Override
+    public String GAME_NOT_FOUND(String nameTag) {
+        return nameTag + "님, 진행중인 게임을 찾을 수 없습니다. `~ start`명령어로 게임을 시작 해주세요!";
+    }
+    @Override
     public String GAME_CREATE_FAIL(String nameTag) {
         return nameTag + "님, 게임 생성에 실패 했습니다. 즐기고 계신 게임을 마무리 해주세요. :thinking:";
     }

@@ -3,6 +3,7 @@ package junghyun.discord.ui;
 import junghyun.ai.Pos;
 import junghyun.discord.db.DBManager;
 import junghyun.discord.db.Logger;
+import junghyun.discord.ui.graphics.TextDrawer;
 import junghyun.discord.ui.languages.LanguageKOR;
 import junghyun.discord.game.ChatGame;
 import junghyun.discord.unit.Settings;
@@ -93,7 +94,7 @@ public class MessageAgent {
 
     // Game Create/End Information
 
-    // Error
+    // Game Error
 
     public void sendFailCreatedGame(IUser user, IChannel channel) {
         channel.sendMessage(languageContainer.GAME_CREATE_FAIL(user.getName()));
@@ -104,87 +105,94 @@ public class MessageAgent {
     }
 
     public void sendAlreadyIn(ChatGame chatGame, IUser user, IChannel channel) {
-        this.sendCanvasMessage(chatGame, user, channel);
+        this.sendCanvasMessage(chatGame, channel);
         channel.sendMessage(languageContainer.GAME_ALREADY_IN(user.getName()));
     }
 
     // Create Game
 
-    public void sendCreatedGame(ChatGame chatGame, boolean playerColor, IUser user, IChannel channel) {
-        this.sendCanvasMessage(chatGame, user, channel);
-        StringBuilder result = new StringBuilder();
-        result.append(user.getName()).append(", the game has started. ");
+    public void sendCreatedGame(ChatGame chatGame, String targetPlayer, String fPlayer, IChannel channel) {
+        this.sendCanvasMessage(chatGame, channel);
 
-        if (playerColor) result.append(user.getName()).append("is the first attack!");
-        else result.append("I'm a first attack!");
-
-        result.append(languageContainer.GAME_CMD_INFO());
-
-        channel.sendMessage(result.toString());
+        String result = languageContainer.GAME_CREATE_INFO(chatGame.getNameTag(), targetPlayer, fPlayer) +
+                languageContainer.GAME_CMD_INFO();
+        channel.sendMessage(result);
     }
 
     // Progress Game
 
-    public void sendNextTurn(ChatGame chatGame, Pos aiPos, IUser user, IChannel channel) {
-        this.sendCanvasMessage(chatGame, aiPos, user, channel);
-        chatGame.addMessage(channel.sendMessage(user.getName() + ", Please let us have the next move!"));
+    public void sendNextTurn(ChatGame chatGame, Pos aiPos, IUser curUser, String prvPlayer, IChannel channel) {
+        this.sendCanvasMessage(chatGame, aiPos, channel);
+        chatGame.addMessage(channel.sendMessage(languageContainer.GAME_NEXT_TURN(curUser.getName(), prvPlayer, aiPos.getHumText())));
     }
 
-    // End Game
+    // End PvP Game
 
-    public void sendPlayerWin(ChatGame chatGame, Pos playerPos, IUser user, IChannel channel) {
-        this.sendCanvasMessage(chatGame, user, channel);
-        channel.sendMessage(user.getName() + ", you won by throwing it in `" + playerPos.getHumText() + "`. Congratulations! :grinning: ");
+    public void sendPvPWin(ChatGame chatGame, Pos lastPos, String winPlayer, String losePlayer, IChannel channel) {
+        this.sendCanvasMessage(chatGame, channel);
+        channel.sendMessage(languageContainer.GAME_PVP_WIN(winPlayer, losePlayer, lastPos.getHumText()));
         this.deleteCanvasMessage(chatGame, channel);
     }
 
-    public void sendPlayerLose(ChatGame chatGame, Pos aiPos, IUser user, IChannel channel) {
-        this.sendCanvasMessage(chatGame, user, channel);
-        channel.sendMessage(user.getName() + ", you were dead as I was throwing at `" + aiPos.getHumText() + "`! :sunglasses: ");
+    public void sendPvPResign(ChatGame chatGame, String winPlayer, String losePlayer, IChannel channel) {
+        this.sendCanvasMessage(chatGame, channel);
+        channel.sendMessage(languageContainer.GAME_PVP_RESIGN(winPlayer, losePlayer));
         this.deleteCanvasMessage(chatGame, channel);
     }
 
-    public void sendResignPlayer(ChatGame chatGame, IUser user, IChannel channel) {
-        this.sendCanvasMessage(chatGame, user, channel);
-        channel.sendMessage(user.getName() + ", You surrendered. I won!:joy: ");
+    public void sendPvPInfo(String winName, String loseName, int winCount, int loseCount, IChannel channel) {
+        channel.sendMessage(languageContainer.GAME_PVP_INFO(winName, loseName, winCount, loseCount));
+    }
+
+    // End PvE Game
+
+    public void sendPvEWin(ChatGame chatGame, Pos playerPos, IChannel channel) {
+        this.sendCanvasMessage(chatGame, channel);
+        channel.sendMessage(languageContainer.GAME_PVE_WIN(playerPos.getHumText()));
         this.deleteCanvasMessage(chatGame, channel);
+    }
+
+    public void sendPvELose(ChatGame chatGame, Pos aiPos, IChannel channel) {
+        this.sendCanvasMessage(chatGame, channel);
+        channel.sendMessage(languageContainer.GAME_PVE_LOSE(aiPos.getHumText()));
+        this.deleteCanvasMessage(chatGame, channel);
+    }
+
+    public void sendPvEResign(ChatGame chatGame, IChannel channel) {
+        this.sendCanvasMessage(chatGame, channel);
+        channel.sendMessage(languageContainer.GAME_PVE_RESIGN());
+        this.deleteCanvasMessage(chatGame, channel);
+    }
+
+    public void sendPvEInfo(String playerName, int winCount, int loseCount, int rank, IChannel channel) {
+        channel.sendMessage(languageContainer.GAME_PVE_INFO(playerName, winCount, loseCount, rank));
     }
 
     // Error Game
 
     public void notFoundGame(IUser user, IChannel channel) {
-        channel.sendMessage(user.getName()+ ", can not find the game you're playing. Start the game with `~ start`!");
+        channel.sendMessage(languageContainer.GAME_NOT_FOUND(user.getName()));
     }
 
-    public void sendFullCanvas(ChatGame chatGame, IUser user, IChannel channel) {
-        this.sendCanvasMessage(chatGame, user, channel);
+    public void sendFullCanvas(ChatGame chatGame, IChannel channel) {
+        this.sendCanvasMessage(chatGame, channel);
         channel.sendMessage(languageContainer.GAME_FULL());
         this.deleteCanvasMessage(chatGame, channel);
     }
 
-    // Private Function
-
-    private void deleteCanvasMessage(ChatGame chatGame, IChannel channel) {
-        try {
-            if (chatGame.getMessageList().size() > 0) channel.bulkDelete(chatGame.getMessageList());
-        } catch (Exception e) {
-            Logger.loggerWarning("Miss PERMISSION : " + channel.getGuild().getName());
-        }
+    private void sendCanvasMessage(ChatGame chatGame, IChannel channel) {
+        this.sendCanvasMessage(chatGame, new Pos(-1, -1), channel);
     }
 
-    private void sendCanvasMessage(ChatGame chatGame, IUser user, IChannel channel) {
-        this.sendCanvasMessage(chatGame, new Pos(-1, -1), user, channel);
-    }
-
-    private void sendCanvasMessage(ChatGame chatGame, Pos aiPos, IUser user, IChannel channel) {
+    private void sendCanvasMessage(ChatGame chatGame, Pos aiPos, IChannel channel) {
         String statMsg;
         if (chatGame.getState() == ChatGame.STATE.INP) statMsg = languageContainer.BOARD_INP();
         else statMsg = languageContainer.BOARD_FINISH();
 
         EmbedBuilder builder = new EmbedBuilder();
 
-        builder.withAuthorName(user.getName() + "#" + user.getDiscriminator() + ", " + statMsg);
-        builder.withAuthorIcon(user.getAvatarURL());
+        builder.withAuthorName(chatGame.getNameTag() + "#" + chatGame.getOppPlayer().getNameTag() + ", " + statMsg);
+        builder.withAuthorIcon(chatGame.getNameTag());
         if (chatGame.getState() == ChatGame.STATE.INP) builder.withColor(0,200,83);
         else builder.withColor(213,0,0);
 
@@ -196,6 +204,16 @@ public class MessageAgent {
 
         if ((chatGame.getState() == ChatGame.STATE.INP) && (chatGame.getGame().getTurns() > 2)) chatGame.addMessage(channel.sendMessage(builder.build()));
         else channel.sendMessage(builder.build());
+    }
+
+    // Private Function
+
+    private void deleteCanvasMessage(ChatGame chatGame, IChannel channel) {
+        try {
+            if (chatGame.getMessageList().size() > 0) channel.bulkDelete(chatGame.getMessageList());
+        } catch (Exception e) {
+            Logger.loggerWarning("Miss PERMISSION : " + channel.getGuild().getName());
+        }
     }
 
 }

@@ -4,12 +4,10 @@ import junghyun.ai.Game;
 import junghyun.ai.engin.AIBase;
 import junghyun.discord.db.DBManager;
 import junghyun.discord.db.Logger;
-import junghyun.discord.game.AIPlayer;
 import junghyun.discord.game.ChatGame;
-import junghyun.discord.game.HumanPlayer;
 import junghyun.discord.game.OppPlayer;
 import junghyun.discord.ui.MessageManager;
-import junghyun.discord.ui.TextDrawer;
+import junghyun.discord.ui.graphics.TextDrawer;
 import junghyun.discord.unit.*;
 import junghyun.ai.Pos;
 
@@ -110,7 +108,7 @@ public class GameManager {
         if (GameManager.checkGame(user.getLongID())) return;
         ChatGame chatGame = GameManager.getGame(user.getLongID());
         chatGame.setState(ChatGame.STATE.RESIGN);
-        MessageManager.getInstance(channel.getGuild()).sendResignPlayer(chatGame, user, channel);
+        MessageManager.getInstance(channel.getGuild()).sendPvEResign(chatGame, channel);
         GameManager.endGame(chatGame);
     }
 
@@ -127,14 +125,14 @@ public class GameManager {
         game.setStone(pos.getX(), pos.getY());
         if (game.isWin(pos.getX(), pos.getY(), game.getPlayerColor())) {
             chatGame.setState(ChatGame.STATE.WIN);
-            MessageManager.getInstance(channel.getGuild()).sendPlayerWin(chatGame, pos, user, channel);
+            MessageManager.getInstance(channel.getGuild()).sendPvEWin(chatGame, pos, channel);
             endGame(chatGame);
             return;
         }
 
         if (game.isFull()) {
             chatGame.setState(ChatGame.STATE.FULL);
-            MessageManager.getInstance(channel.getGuild()).sendFullCanvas(chatGame, user, channel);
+            MessageManager.getInstance(channel.getGuild()).sendFullCanvas(chatGame, channel);
             endGame(chatGame);
             return;
         }
@@ -143,7 +141,7 @@ public class GameManager {
         game.setStone(aiPos.getX(), aiPos.getY(), !game.getPlayerColor());
         if (game.isWin(aiPos.getX(), aiPos.getY(), !game.getPlayerColor())) {
             chatGame.setState(ChatGame.STATE.LOSE);
-            MessageManager.getInstance(channel.getGuild()).sendPlayerLose(chatGame, aiPos, user, channel);
+            MessageManager.getInstance(channel.getGuild()).sendPvELose(chatGame, aiPos, channel);
             endGame(chatGame);
             return;
         }
