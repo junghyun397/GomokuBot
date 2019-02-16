@@ -192,7 +192,7 @@ public class MessageAgent {
         EmbedBuilder builder = new EmbedBuilder();
 
         builder.withAuthorName(chatGame.getNameTag() + "#" + chatGame.getOppPlayer().getNameTag() + ", " + statMsg);
-        builder.withAuthorIcon(chatGame.getNameTag());
+        builder.withAuthorIcon(chatGame.getIconURL());
         if (chatGame.getState() == ChatGame.STATE.INP) builder.withColor(0,200,83);
         else builder.withColor(213,0,0);
 

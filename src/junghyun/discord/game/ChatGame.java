@@ -21,12 +21,14 @@ public class ChatGame {
     private List<IMessage> msgList;
     private long updateTime;
 
-    public ChatGame(long longId, Game game, String nameTag, OppPlayer oppPlayer) {
+    private String iconURL;
+
+    public ChatGame(long longId, Game game, String nameTag, OppPlayer oppPlayer, String iconURL) {
         this.longId = longId;
         this.game = game;
         this.nameTag = nameTag;
-
         this.oppPlayer = oppPlayer;
+        this.iconURL = iconURL;
 
         this.state = STATE.INP;
 
@@ -78,5 +80,9 @@ public class ChatGame {
 
     public List<IMessage> getMessageList() {
         return this.msgList;
+    }
+
+    public String getIconURL() {
+        return this.iconURL;
     }
 }

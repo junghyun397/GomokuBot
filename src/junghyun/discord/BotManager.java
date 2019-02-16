@@ -74,12 +74,13 @@ public class BotManager {
                     MessageManager.getInstance(event.getGuild()).sendErrorGrammarSet(event.getAuthor(), event.getChannel());
                     break;
                 }
+
                 if (!Pos.checkSize(pos.getX(), pos.getY())) {
                     MessageManager.getInstance(event.getGuild()).sendErrorGrammarSet(event.getAuthor(), event.getChannel());
                     break;
                 }
 
-                GameManager.putStone(event.getAuthor().getLongID(), pos, event.getAuthor(), event.getChannel());
+                GameManager.putStone(pos, event.getAuthor(), event.getChannel());
                 break;
         }
     }
