@@ -1,7 +1,4 @@
-package junghyun.discord.unit;
-
-import junghyun.ai.Pos;
-import junghyun.ai.engin.AIBase;
+package junghyun.discord.game;
 
 public class HumanPlayer extends OppPlayer {
 

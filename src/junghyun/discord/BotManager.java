@@ -1,11 +1,9 @@
 package junghyun.discord;
 
 import junghyun.ai.Pos;
-import junghyun.ai.engin.AIBase;
 import junghyun.discord.db.DBManager;
 import junghyun.discord.db.SqlManager;
 import junghyun.discord.ui.MessageManager;
-import junghyun.discord.unit.ChatGame;
 import junghyun.discord.unit.Settings;
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;

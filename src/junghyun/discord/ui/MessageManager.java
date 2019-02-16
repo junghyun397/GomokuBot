@@ -1,10 +1,7 @@
 package junghyun.discord.ui;
 
 import junghyun.discord.db.DBManager;
-import junghyun.discord.ui.languages.MessageCHN;
-import junghyun.discord.ui.languages.MessageENG;
-import junghyun.discord.ui.languages.MessageKOR;
-import junghyun.discord.ui.languages.MessagePRK;
+import junghyun.discord.ui.languages.LanguageKOR;
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.util.EmbedBuilder;
@@ -14,18 +11,23 @@ import java.util.HashMap;
 public class MessageManager {
 
     public enum LANG {ERR, ENG, KOR, PRK, CHN}
-    private static HashMap<Long, MessageENG> langList;
+    private static HashMap<Long, MessageAgent> langList;
 
     public static final String LANGUAGE_LIST = "`ENG`, `KOR`, `PRK`, `CHN`";
     public static EmbedObject langEmbed;
 
+    private static MessageAgent messageAgentENG;
+    private static MessageAgent messageAgentKOR;
+    private static MessageAgent messageAgentPRK;
+    private static MessageAgent messageAgentCHN;
+
     public static void loadMessage() {
         MessageManager.langList = new HashMap<>();
 
-        MessageENG.buildMessage();
-        MessageKOR.buildMessage();
-        MessagePRK.buildMessage();
-        MessageCHN.buildMessage();
+        MessageManager.messageAgentENG = new MessageAgent(new LanguageKOR());
+        MessageManager.messageAgentKOR = new MessageAgent(new LanguageKOR());
+        MessageManager.messageAgentPRK = new MessageAgent(new LanguageKOR());
+        MessageManager.messageAgentCHN = new MessageAgent(new LanguageKOR());
 
         EmbedBuilder langBuilder = new EmbedBuilder();
 
@@ -61,24 +63,27 @@ public class MessageManager {
         return lang;
     }
 
-    private static MessageENG getLanguageInstance(LANG lang) {
-        MessageENG rsMessage = new MessageENG();
+    private static MessageAgent getLanguageInstance(LANG lang) {
+        MessageAgent rsMessage;
         switch (lang) {
             case KOR:
-                rsMessage = new MessageKOR();
+                rsMessage = messageAgentKOR;
                 break;
             case PRK:
-                rsMessage = new MessagePRK();
+                rsMessage = messageAgentPRK;
                 break;
             case CHN:
-                rsMessage = new MessageCHN();
+                rsMessage = messageAgentCHN;
+                break;
+            default:
+                rsMessage = messageAgentENG;
                 break;
         }
         return rsMessage;
     }
 
-    public static MessageENG getInstance(IGuild guild) {
-        MessageENG msgInstance = MessageManager.langList.get(guild.getLongID());
+    public static MessageAgent getInstance(IGuild guild) {
+        MessageAgent msgInstance = MessageManager.langList.get(guild.getLongID());
         if (msgInstance == null) {
             DBManager.GuildDataSet guildDataSet = DBManager.getGuildData(guild.getLongID());
             if (guildDataSet != null)

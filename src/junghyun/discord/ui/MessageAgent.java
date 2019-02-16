@@ -1,78 +1,79 @@
-package junghyun.discord.ui.languages;
+package junghyun.discord.ui;
 
-import junghyun.ai.engin.AIBase;
+import junghyun.ai.Pos;
 import junghyun.discord.db.DBManager;
 import junghyun.discord.db.Logger;
-import junghyun.discord.ui.MessageManager;
-import junghyun.discord.ui.TextDrawer;
-import junghyun.discord.unit.ChatGame;
-import junghyun.ai.Pos;
+import junghyun.discord.ui.languages.LanguageKOR;
+import junghyun.discord.game.ChatGame;
 import junghyun.discord.unit.Settings;
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.EmbedBuilder;
 
-public class MessageENG {
+public class MessageAgent {
 
-    private static EmbedObject helpEmbed;
-    private static EmbedObject commandEmbed;
+    private EmbedObject helpEmbed;
+    private EmbedObject commandEmbed;
 
-    public static void buildMessage() {
+    private LanguageKOR languageContainer;
+
+    public MessageAgent(LanguageKOR languageContainer) {
+        this.languageContainer = languageContainer;
+
         EmbedBuilder helpBuilder = new EmbedBuilder();
 
-        helpBuilder.withAuthorName("GomokuBot / Information");
+        helpBuilder.withAuthorName(languageContainer.HELP_INFO());
         helpBuilder.withColor(0,145,234);
         helpBuilder.withDesc("withDesc");
-        helpBuilder.withDescription("GomokuBot is an Open Source Discord Bot that allows you to enjoy PvE Gomoku at Discord. " +
-                "The Collected data are used for training the Reinforcement Learning model. :)");
+        helpBuilder.withDescription(languageContainer.HELP_DESCRIPTION());
         helpBuilder.withThumbnail("https://i.imgur.com/HAGBBT6.jpg");
 
-        helpBuilder.appendField("Developer", "junghyun397#6725", true);
-        helpBuilder.appendField("Git Repository", "[github.com/GomokuBot](https://github.com/junghyun397/GomokuBot)", true);
-        helpBuilder.appendField("Version", Settings.VERSION, true);
-        helpBuilder.appendField("Support Channel", "[discord.gg/VkfMY6R](https://discord.gg/VkfMY6R)", true);
+        helpBuilder.appendField(languageContainer.HELP_DEV(), "junghyun397#6725", true);
+        helpBuilder.appendField(languageContainer.HELP_GIT(), "[github.com/GomokuBot](https://github.com/junghyun397/GomokuBot)", true);
+        helpBuilder.appendField(languageContainer.HELP_VERSION(), Settings.VERSION, true);
+        helpBuilder.appendField(languageContainer.HELP_SUPPORT(), "[discord.gg/VkfMY6R](https://discord.gg/VkfMY6R)", true);
 
-        helpEmbed = helpBuilder.build();
+        this.helpEmbed = helpBuilder.build();
 
         //------------------------------------------------------------------------------------------------------------
 
         EmbedBuilder commandBuilder = new EmbedBuilder();
 
-        commandBuilder.withAuthorName("GomokuBot / Command");
+        commandBuilder.withAuthorName(languageContainer.HELP_CMD_INFO());
         commandBuilder.withColor(0,145,234);
 
-        commandBuilder.appendField("~help", "`~help` Help is available.", false);
-        commandBuilder.appendField("~lang", "`~lang` " + MessageManager.LANGUAGE_LIST +
-                " Replace the language settings used by this Server. Ex) `~lang` `ENG`", false);
-        commandBuilder.appendField("~start", "`~start` Start the game with A.I.", false);
-        commandBuilder.appendField("~resign", "`~resign` Resign an ongoing Game", false);
+        commandBuilder.appendField("~help", languageContainer.HELP_CMD_HELP(), false);
+        commandBuilder.appendField("~lang", languageContainer.HELP_CMD_LANG(MessageManager.LANGUAGE_LIST), false);
+        commandBuilder.appendField("~start", languageContainer.HELP_CMD_PVE(), false);
+        commandBuilder.appendField("~start @mention", languageContainer.HELP_CMD_PVP(), false);
+        commandBuilder.appendField("~resign", languageContainer.HELP_CMD_RESIGN(), false);
 
-        commandEmbed = commandBuilder.build();
+        this.commandEmbed = commandBuilder.build();
     }
 
     // Basic Information
 
     public void sendHelp(IChannel channel) {
-        channel.sendMessage(helpEmbed);
-        channel.sendMessage(commandEmbed);
+        channel.sendMessage(this.helpEmbed);
+        channel.sendMessage(this.commandEmbed);
     }
 
     public void sendRank(IUser user, IChannel channel, DBManager.UserDataSet[] rankData) {
         EmbedBuilder builder = new EmbedBuilder();
 
-        builder.withAuthorName("GomokuBot / Ranking");
+        builder.withAuthorName(languageContainer.RANK_INFO());
         builder.withColor(0,145,234);
         builder.withDesc("withDesc");
-        builder.withDescription("It's ranked from 1st to 10th. :D");
+        builder.withDescription(languageContainer.RANK_DESCRIPTION());
 
         for (int i = 0; i < rankData.length; i++)
-            builder.appendField("#" + (i + 1) + ": " + rankData[i].getName(), "Victory: `" + rankData[i].getWin() +
-                    "` Defeat: `" + rankData[i].getLose() + "`", false);
+            builder.appendField("#" + (i + 1) + ": " + rankData[i].getName(), languageContainer.RANK_WIN() + ": `" + rankData[i].getWin() +
+                    "` " + languageContainer.RANK_LOSE() + ": `" + rankData[i].getLose() + "`", false);
 
         DBManager.UserDataSet userData = DBManager.getUserData(user.getLongID());
-        if (userData != null) builder.appendField("#??: " + userData.getName(), "Victory: `" + userData.getWin() +
-                "` Defeat: `" + userData.getLose() + "`", false);
+        if (userData != null) builder.appendField("#??: " + userData.getName(), languageContainer.RANK_WIN() + ": `" + userData.getWin() +
+                "` " + languageContainer.RANK_LOSE() + ": `" + userData.getLose() + "`", false);
 
         channel.sendMessage(builder.build());
     }
@@ -85,36 +86,48 @@ public class MessageENG {
 
     public void sendLanguageChange(IChannel channel, MessageManager.LANG lang) {
         if (lang == MessageManager.LANG.ERR) {
-            channel.sendMessage("There is an error in the language specification!");
+            channel.sendMessage(languageContainer.LANG_CHANGE_ERROR());
             sendLanguageChangeInfo(channel);
-        } else channel.sendMessage("Language setting has been changed to English:flag_us:!");
+        } else channel.sendMessage(languageContainer.LANG_SUCCESS());
     }
 
     // Game Create/End Information
+
+    // Error
+
+    public void sendFailCreatedGame(IUser user, IChannel channel) {
+        channel.sendMessage(languageContainer.GAME_CREATE_FAIL(user.getName()));
+    }
+
+    public void sendErrorGrammarSet(IUser user, IChannel channel) {
+        channel.sendMessage(languageContainer.GAME_SYNTAX_FAIL(user.getName()));
+    }
+
+    public void sendAlreadyIn(ChatGame chatGame, IUser user, IChannel channel) {
+        this.sendCanvasMessage(chatGame, user, channel);
+        channel.sendMessage(languageContainer.GAME_ALREADY_IN(user.getName()));
+    }
 
     // Create Game
 
     public void sendCreatedGame(ChatGame chatGame, boolean playerColor, IUser user, IChannel channel) {
         this.sendCanvasMessage(chatGame, user, channel);
         StringBuilder result = new StringBuilder();
-        if (chatGame.getDiff() == AIBase.DIFF.EAS) result.append(":turtle:Easy difficult!:turtle:\n");
-        if (chatGame.getDiff() == AIBase.DIFF.EXT) result.append(":fire:Extreme difficulty!:fire:\n");
         result.append(user.getName()).append(", the game has started. ");
 
         if (playerColor) result.append(user.getName()).append("is the first attack!");
         else result.append("I'm a first attack!");
 
-        result.append(" Place the stone in the form of `~s` `Alphabet` `Number`.");
+        result.append(languageContainer.GAME_CMD_INFO());
 
         channel.sendMessage(result.toString());
     }
 
-    public void sendFailCreatedGame(IUser user, IChannel channel) {
-        channel.sendMessage(user.getName() + " failed to create the game. Please wrap up the game you're enjoying. :thinking: ");
-    }
+    // Progress Game
 
-    public void sendErrorGrammarSet(IUser user, IChannel channel) {
-        channel.sendMessage(user.getName()+ ", that is a wrong order. Please write it in the form of `~s` `Alphabet` `Number`. :thinking: ");
+    public void sendNextTurn(ChatGame chatGame, Pos aiPos, IUser user, IChannel channel) {
+        this.sendCanvasMessage(chatGame, aiPos, user, channel);
+        chatGame.addMessage(channel.sendMessage(user.getName() + ", Please let us have the next move!"));
     }
 
     // End Game
@@ -137,28 +150,16 @@ public class MessageENG {
         this.deleteCanvasMessage(chatGame, channel);
     }
 
-    public void sendFullCanvas(ChatGame chatGame, IUser user, IChannel channel) {
-        this.sendCanvasMessage(chatGame, user, channel);
-        channel.sendMessage(TextDrawer.getGraphics(chatGame.getGame()) + user.getName() + ", you lost because there are no more places to put. :confused: ");
-        this.deleteCanvasMessage(chatGame, channel);
-    }
-
-    // Progress Game
-
-    public void sendAlreadyIn(ChatGame chatGame, IUser user, IChannel channel) {
-        this.sendCanvasMessage(chatGame, user, channel);
-        channel.sendMessage(user.getName()+ ", there is already a stone there. :thinking: ");
-    }
-
-    public void sendNextTurn(ChatGame chatGame, Pos aiPos, IUser user, IChannel channel) {
-        this.sendCanvasMessage(chatGame, aiPos, user, channel);
-        chatGame.addMessage(channel.sendMessage(user.getName() + ", Please let us have the next move!"));
-    }
-
     // Error Game
 
     public void notFoundGame(IUser user, IChannel channel) {
         channel.sendMessage(user.getName()+ ", can not find the game you're playing. Start the game with `~ start`!");
+    }
+
+    public void sendFullCanvas(ChatGame chatGame, IUser user, IChannel channel) {
+        this.sendCanvasMessage(chatGame, user, channel);
+        channel.sendMessage(languageContainer.GAME_FULL());
+        this.deleteCanvasMessage(chatGame, channel);
     }
 
     // Private Function
@@ -177,8 +178,8 @@ public class MessageENG {
 
     private void sendCanvasMessage(ChatGame chatGame, Pos aiPos, IUser user, IChannel channel) {
         String statMsg;
-        if (chatGame.getState() == ChatGame.STATE.INP) statMsg = "Proceeding";
-        else statMsg = "Finished";
+        if (chatGame.getState() == ChatGame.STATE.INP) statMsg = languageContainer.BOARD_INP();
+        else statMsg = languageContainer.BOARD_FINISH();
 
         EmbedBuilder builder = new EmbedBuilder();
 
@@ -190,8 +191,8 @@ public class MessageENG {
         builder.withDesc("withDesc");
         builder.withDescription(TextDrawer.getGraphics(chatGame.getGame(), aiPos));
 
-        builder.appendField("Turn progress", "#" + chatGame.getGame().getTurns() + "Turns", true);
-        builder.appendField("AI launch location", aiPos.getHumText(), true);
+        builder.appendField(languageContainer.BOARD_TURNS(), "#" + chatGame.getGame().getTurns() + languageContainer.BOARD_TURN(), true);
+        builder.appendField(languageContainer.BOARD_LOCATION(), aiPos.getHumText(), true);
 
         if ((chatGame.getState() == ChatGame.STATE.INP) && (chatGame.getGame().getTurns() > 2)) chatGame.addMessage(channel.sendMessage(builder.build()));
         else channel.sendMessage(builder.build());
