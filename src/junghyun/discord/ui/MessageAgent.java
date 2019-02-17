@@ -6,7 +6,7 @@ import junghyun.discord.db.Logger;
 import junghyun.discord.ui.graphics.TextDrawer;
 import junghyun.discord.ui.languages.LanguageKOR;
 import junghyun.discord.game.ChatGame;
-import junghyun.discord.unit.Settings;
+import junghyun.discord.Settings;
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;
@@ -104,26 +104,26 @@ public class MessageAgent {
         channel.sendMessage(languageContainer.GAME_SYNTAX_FAIL(user.getName()));
     }
 
-    public void sendAlreadyIn(ChatGame chatGame, IUser user, IChannel channel) {
+    public void sendAlreadyIn(ChatGame chatGame, IChannel channel) {
         this.sendCanvasMessage(chatGame, channel);
-        channel.sendMessage(languageContainer.GAME_ALREADY_IN(user.getName()));
+        channel.sendMessage(languageContainer.GAME_ALREADY_IN(chatGame.getNameTag()));
     }
 
     // Create Game
 
-    public void sendCreatedGame(ChatGame chatGame, String targetPlayer, String fPlayer, IChannel channel) {
+    public void sendCreatedGame(ChatGame chatGame, String fPlayer, IChannel channel) {
         this.sendCanvasMessage(chatGame, channel);
 
-        String result = languageContainer.GAME_CREATE_INFO(chatGame.getNameTag(), targetPlayer, fPlayer) +
+        String result = languageContainer.GAME_CREATE_INFO(chatGame.getNameTag(), chatGame.getOppPlayer().getNameTag(), fPlayer) +
                 languageContainer.GAME_CMD_INFO();
         channel.sendMessage(result);
     }
 
     // Progress Game
 
-    public void sendNextTurn(ChatGame chatGame, Pos aiPos, IUser curUser, String prvPlayer, IChannel channel) {
-        this.sendCanvasMessage(chatGame, aiPos, channel);
-        chatGame.addMessage(channel.sendMessage(languageContainer.GAME_NEXT_TURN(curUser.getName(), prvPlayer, aiPos.getHumText())));
+    public void sendNextTurn(ChatGame chatGame, Pos lastPos, String curPlayer, String prvPlayer, IChannel channel) {
+        this.sendCanvasMessage(chatGame, lastPos, channel);
+        chatGame.addMessage(channel.sendMessage(languageContainer.GAME_NEXT_TURN(curPlayer, prvPlayer, lastPos.getHumText())));
     }
 
     // End PvP Game

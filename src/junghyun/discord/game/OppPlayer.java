@@ -8,6 +8,8 @@ public class OppPlayer {
     private String nameTag;
     private long longId;
 
+    private boolean isWin;
+
     public OppPlayer(PLAYER_TYPE playerType, String nameTag, long longId) {
         this.playerType = playerType;
         this.nameTag = nameTag;
@@ -24,6 +26,14 @@ public class OppPlayer {
 
     public long getLongId() {
         return this.longId;
+    }
+
+    public void setWin() {
+        this.isWin = true;
+    }
+
+    public boolean getIsWin() {
+        return this.isWin;
     }
 
 }

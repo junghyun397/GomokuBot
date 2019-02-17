@@ -2,7 +2,6 @@ package junghyun.discord;
 
 import junghyun.discord.db.Logger;
 import junghyun.discord.ui.MessageManager;
-import junghyun.discord.unit.Settings;
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.guild.GuildCreateEvent;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;

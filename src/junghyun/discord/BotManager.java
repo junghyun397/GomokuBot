@@ -4,7 +4,6 @@ import junghyun.ai.Pos;
 import junghyun.discord.db.DBManager;
 import junghyun.discord.db.SqlManager;
 import junghyun.discord.ui.MessageManager;
-import junghyun.discord.unit.Settings;
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;

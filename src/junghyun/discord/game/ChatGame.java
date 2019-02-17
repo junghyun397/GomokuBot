@@ -15,7 +15,7 @@ public class ChatGame {
 
     private OppPlayer oppPlayer;
 
-    public enum STATE {INP, WIN, RESIGN, FULL, LOSE, TIMEOUT}
+    public enum STATE {INP, WIN, PVPWIN, RESIGN, FULL, LOSE, TIMEOUT}
     private STATE state;
 
     private List<IMessage> msgList;

@@ -9,6 +9,8 @@ import junghyun.discord.ui.MessageManager;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;
 
+import java.util.Random;
+
 public class PVEGameAgent implements GameAgent {
 
     private ChatGame chatGame;
@@ -18,11 +20,27 @@ public class PVEGameAgent implements GameAgent {
     }
 
     @Override
+    public void startGame(IChannel channel) {
+        int rColor = new Random().nextInt(3);
+        boolean playerColor = true;
+        if (rColor > 0) playerColor = false;
+
+        String textFAttack = chatGame.getNameTag();
+        if (!playerColor) {
+            textFAttack = "AI";
+            chatGame.getGame().setStone(7, 7, true);
+        }
+        chatGame.getGame().setPlayerColor(playerColor);
+
+        MessageManager.getInstance(channel.getGuild()).sendCreatedGame(chatGame, textFAttack, channel);
+    }
+
+    @Override
     public void putStone(IUser user, Pos pos, IChannel channel) {
         Game game = chatGame.onUpdate().getGame();
 
         if (!game.canSetStone(pos.getX(), pos.getY())) {
-            MessageManager.getInstance(channel.getGuild()).sendAlreadyIn(chatGame, user, channel);
+            MessageManager.getInstance(channel.getGuild()).sendAlreadyIn(chatGame, channel);
             return;
         }
 
@@ -50,7 +68,7 @@ public class PVEGameAgent implements GameAgent {
             return;
         }
 
-        MessageManager.getInstance(channel.getGuild()).sendNextTurn(chatGame, aiPos, user, chatGame.getNameTag(), channel);
+        MessageManager.getInstance(channel.getGuild()).sendNextTurn(chatGame, aiPos, chatGame.getNameTag(), "AI", channel);
     }
 
     @Override

@@ -1,6 +1,6 @@
 package junghyun.discord.db;
 
-import junghyun.discord.unit.Settings;
+import junghyun.discord.Settings;
 
 import java.sql.*;
 

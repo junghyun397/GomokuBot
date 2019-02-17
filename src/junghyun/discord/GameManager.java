@@ -7,8 +7,9 @@ import junghyun.discord.game.ChatGame;
 import junghyun.discord.game.OppPlayer;
 import junghyun.discord.game.agent.GameAgent;
 import junghyun.discord.game.agent.PVEGameAgent;
+import junghyun.discord.game.agent.PVPGameAgent;
+import junghyun.discord.ui.MessageManager;
 import junghyun.discord.ui.graphics.TextDrawer;
-import junghyun.discord.unit.*;
 import junghyun.ai.Pos;
 
 import sx.blah.discord.handle.obj.IChannel;
@@ -57,40 +58,53 @@ public class GameManager {
     }
 
     public static void createGame(IUser user, IChannel channel, IUser targetUser) {
-        if (!GameManager.isHasGame(user.getLongID())) return;
+        if (!GameManager.isHasGame(user.getLongID())) {
+            MessageManager.getInstance(channel.getGuild()).sendFailCreatedGame(user, channel);
+            return;
+        }
 
         ChatGame chatGame;
-        if (targetUser == null) chatGame = GameManager.createPVEGame(user);
-        else chatGame = GameManager.createPVPGame(user, targetUser);
+        if (targetUser == null) chatGame = GameManager.createPVEGame(user, channel);
+        else chatGame = GameManager.createPVPGame(user, targetUser, channel);
 
         Logger.loggerInfo("Start Game: " + chatGame.getNameTag() + " v. " + chatGame.getOppPlayer().getNameTag() + " : " + channel.getGuild().getName());
     }
 
-    private static ChatGame createPVEGame(IUser user) {
+    private static ChatGame createPVEGame(IUser user, IChannel channel) {
         OppPlayer oppPlayer = new OppPlayer(OppPlayer.PLAYER_TYPE.AI, "AI", -1);
         ChatGame chatGame = new ChatGame(user.getLongID(), new Game(), user.getName(), oppPlayer, user.getAvatarURL());
         GameAgent gameAgent = new PVEGameAgent(chatGame);
         GameManager.putGame(user.getLongID(), gameAgent);
+
+        gameAgent.startGame(channel);
         return chatGame;
     }
 
-    private static ChatGame createPVPGame(IUser user, IUser targetUser) {
+    private static ChatGame createPVPGame(IUser user, IUser targetUser, IChannel channel) {
         OppPlayer oppPlayer = new OppPlayer(OppPlayer.PLAYER_TYPE.HUMAN, targetUser.getName(), targetUser.getLongID());
         ChatGame chatGame = new ChatGame(user.getLongID(), new Game(), user.getName(), oppPlayer, user.getAvatarURL());
-        GameAgent gameAgent = new PVEGameAgent(chatGame);
+        GameAgent gameAgent = new PVPGameAgent(chatGame);
         GameManager.putGame(user.getLongID(), gameAgent);
         GameManager.putGame(targetUser.getLongID(), gameAgent);
+
+        gameAgent.startGame(channel);
         return chatGame;
     }
 
-    static void resignGame(IUser user, IChannel channel) {
-        if (isHasGame(user.getLongID())) return;
-        getGame(user.getLongID()).resignGame(user, channel);
+    public static void putStone(Pos pos, IUser user, IChannel channel) {
+        if (isHasGame(user.getLongID())) {
+            MessageManager.getInstance(channel.getGuild()).sendErrorGrammarSet(user, channel);
+            return;
+        }
+        GameManager.getGame(user.getLongID()).putStone(user, pos, channel);
     }
 
-    static void putStone(Pos pos, IUser user, IChannel channel) {
-        if (isHasGame(user.getLongID())) return;
-        getGame(user.getLongID()).putStone(user, pos, channel);
+    public static void resignGame(IUser user, IChannel channel) {
+        if (isHasGame(user.getLongID())) {
+            MessageManager.getInstance(channel.getGuild()).sendErrorGrammarSet(user, channel);
+            return;
+        }
+        GameManager.getGame(user.getLongID()).resignGame(user, channel);
     }
 
     public static void endGame(ChatGame chatGame) {
