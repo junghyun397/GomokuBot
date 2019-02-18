@@ -1,6 +1,7 @@
 package junghyun.discord.ui;
 
 import junghyun.discord.db.DBManager;
+import junghyun.discord.ui.languages.LanguageENG;
 import junghyun.discord.ui.languages.LanguageInterface;
 import junghyun.discord.ui.languages.LanguageKOR;
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
@@ -32,6 +33,7 @@ public class MessageManager {
         langBuilder.withDesc("withDesc");
         langBuilder.withDescription("Please select the appropriate language for this server!");
 
+        MessageManager.registerLanguage(new LanguageENG());
         MessageManager.registerLanguage(new LanguageKOR());
 
         MessageManager.langEmbed = langBuilder.build();
