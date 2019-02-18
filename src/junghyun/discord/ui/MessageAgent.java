@@ -1,12 +1,12 @@
 package junghyun.discord.ui;
 
 import junghyun.ai.Pos;
+import junghyun.discord.Settings;
 import junghyun.discord.db.DBManager;
 import junghyun.discord.db.Logger;
-import junghyun.discord.ui.graphics.TextDrawer;
-import junghyun.discord.ui.languages.LanguageKOR;
 import junghyun.discord.game.ChatGame;
-import junghyun.discord.Settings;
+import junghyun.discord.ui.graphics.TextDrawer;
+import junghyun.discord.ui.languages.LanguageInterface;
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;
@@ -17,9 +17,9 @@ public class MessageAgent {
     private EmbedObject helpEmbed;
     private EmbedObject commandEmbed;
 
-    private LanguageKOR languageContainer;
+    private LanguageInterface languageContainer;
 
-    public MessageAgent(LanguageKOR languageContainer) {
+    public MessageAgent(LanguageInterface languageContainer) {
         this.languageContainer = languageContainer;
 
         EmbedBuilder helpBuilder = new EmbedBuilder();
@@ -45,7 +45,7 @@ public class MessageAgent {
         commandBuilder.withColor(0,145,234);
 
         commandBuilder.appendField("~help", languageContainer.HELP_CMD_HELP(), false);
-        commandBuilder.appendField("~lang", languageContainer.HELP_CMD_LANG(MessageManager.LANGUAGE_LIST), false);
+        commandBuilder.appendField("~lang", languageContainer.HELP_CMD_LANG(MessageManager.LanguageList), false);
         commandBuilder.appendField("~start", languageContainer.HELP_CMD_PVE(), false);
         commandBuilder.appendField("~start @mention", languageContainer.HELP_CMD_PVP(), false);
         commandBuilder.appendField("~resign", languageContainer.HELP_CMD_RESIGN(), false);
@@ -85,8 +85,8 @@ public class MessageAgent {
         channel.sendMessage(MessageManager.langEmbed);
     }
 
-    public void sendLanguageChange(IChannel channel, MessageManager.LANG lang) {
-        if (lang == MessageManager.LANG.ERR) {
+    public void sendLanguageChange(IChannel channel, String lang) {
+        if (lang == null) {
             channel.sendMessage(languageContainer.LANG_CHANGE_ERROR());
             sendLanguageChangeInfo(channel);
         } else channel.sendMessage(languageContainer.LANG_SUCCESS());

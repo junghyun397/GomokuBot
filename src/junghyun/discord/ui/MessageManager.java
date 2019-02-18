@@ -1,6 +1,7 @@
 package junghyun.discord.ui;
 
 import junghyun.discord.db.DBManager;
+import junghyun.discord.ui.languages.LanguageInterface;
 import junghyun.discord.ui.languages.LanguageKOR;
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.obj.IGuild;
@@ -10,76 +11,44 @@ import java.util.HashMap;
 
 public class MessageManager {
 
-    public enum LANG {ERR, ENG, KOR, PRK, CHN}
+    private static HashMap<String, MessageAgent> agentList;
     private static HashMap<Long, MessageAgent> langList;
 
-    public static final String LANGUAGE_LIST = "`ENG`, `KOR`, `PRK`, `CHN`";
+    public static String baseLanguage = "ENG";
+
+    public static String LanguageList = "";
     public static EmbedObject langEmbed;
 
-    private static MessageAgent messageAgentENG;
-    private static MessageAgent messageAgentKOR;
-    private static MessageAgent messageAgentPRK;
-    private static MessageAgent messageAgentCHN;
+    private static EmbedBuilder langBuilder;
 
     public static void loadMessage() {
+        MessageManager.agentList = new HashMap<>();
         MessageManager.langList = new HashMap<>();
 
-        MessageManager.messageAgentENG = new MessageAgent(new LanguageKOR());
-        MessageManager.messageAgentKOR = new MessageAgent(new LanguageKOR());
-        MessageManager.messageAgentPRK = new MessageAgent(new LanguageKOR());
-        MessageManager.messageAgentCHN = new MessageAgent(new LanguageKOR());
-
-        EmbedBuilder langBuilder = new EmbedBuilder();
+        MessageManager.langBuilder = new EmbedBuilder();
 
         langBuilder.withAuthorName("Language guide");
         langBuilder.withColor(0,145,234);
         langBuilder.withDesc("withDesc");
         langBuilder.withDescription("Please select the appropriate language for this server!");
 
-        langBuilder.appendField("English:flag_us:", "Please use the command `~lang` `ENG`", false);
-        langBuilder.appendField("한국어:flag_kr:", "`~lang` `KOR` 명령어를 사용 해주세요.", false);
-        langBuilder.appendField("조선어:flag_kp:", "`~lang` `PRK` 명령문를 사용하라우.", false);
-        langBuilder.appendField("汉语:flag_cn: `@kawaii-cirno`", "请使用 `~lang` `CHN` 命令", false);
+        MessageManager.registerLanguage(new LanguageKOR());
 
         MessageManager.langEmbed = langBuilder.build();
     }
 
-    public static LANG getLangByString(String str) {
-        LANG lang = LANG.ERR;
-        switch (str.toLowerCase()) {
-            case "eng":
-                lang = LANG.ENG;
-                break;
-            case "kor":
-                lang = LANG.KOR;
-                break;
-            case "prk":
-                lang = LANG.PRK;
-                break;
-            case "chn":
-                lang = LANG.CHN;
-                break;
-        }
-        return lang;
+    private static void registerLanguage(LanguageInterface languageContainer) {
+        MessageManager.agentList.put(languageContainer.LANGUAGE_CODE(), new MessageAgent(languageContainer));
+        MessageManager.LanguageList += "`" + languageContainer.LANGUAGE_CODE() + "` ";
+        MessageManager.langBuilder.appendField(languageContainer.LANGUAGE_NAME(), languageContainer.LANGUAGE_DESCRIPTION(), false);
     }
 
-    private static MessageAgent getLanguageInstance(LANG lang) {
-        MessageAgent rsMessage;
-        switch (lang) {
-            case KOR:
-                rsMessage = MessageManager.messageAgentKOR;
-                break;
-            case PRK:
-                rsMessage = MessageManager.messageAgentPRK;
-                break;
-            case CHN:
-                rsMessage = MessageManager.messageAgentCHN;
-                break;
-            default:
-                rsMessage = MessageManager.messageAgentENG;
-                break;
-        }
-        return rsMessage;
+    public static boolean checkLanguage(String language) {
+        return MessageManager.getLanguageInstance(language) != null;
+    }
+
+    private static MessageAgent getLanguageInstance(String langText) {
+        return MessageManager.agentList.get(langText);
     }
 
     public static MessageAgent getInstance(IGuild guild) {
@@ -88,14 +57,14 @@ public class MessageManager {
             DBManager.GuildDataSet guildDataSet = DBManager.getGuildData(guild.getLongID());
             if (guildDataSet != null)
                 MessageManager.langList.put(guild.getLongID(), MessageManager.getLanguageInstance(guildDataSet.getLang()));
-            else MessageManager.langList.put(guild.getLongID(), MessageManager.getLanguageInstance(LANG.ERR));
+            else MessageManager.langList.put(guild.getLongID(), MessageManager.getLanguageInstance(MessageManager.baseLanguage));
 
             return MessageManager.langList.get(guild.getLongID());
         }
         return msgInstance;
     }
 
-    public static void setLanguage(long id, LANG lang) {
+    public static void setLanguage(long id, String lang) {
         MessageManager.langList.put(id, MessageManager.getLanguageInstance(lang));
         DBManager.setGuildLanguage(id, lang);
     }

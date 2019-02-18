@@ -3,6 +3,20 @@ package junghyun.discord.ui.languages;
 public class LanguageKOR implements LanguageInterface {
 
     @Override
+    public String LANGUAGE_CODE() {
+        return "KOR";
+    }
+
+    @Override
+    public String LANGUAGE_NAME() {
+        return "한국어:flag_kr:";
+    }
+    @Override
+    public String LANGUAGE_DESCRIPTION() {
+        return "`~lang` `KOR` 명령어를 사용 해주세요.";
+    }
+
+    @Override
     public String HELP_INFO() {
         return "GomokuBot / 도움말";
     }

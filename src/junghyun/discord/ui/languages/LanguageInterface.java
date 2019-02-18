@@ -2,6 +2,11 @@ package junghyun.discord.ui.languages;
 
 public interface LanguageInterface {
 
+    String LANGUAGE_CODE();
+
+    String LANGUAGE_NAME();
+    String LANGUAGE_DESCRIPTION();
+
     String HELP_INFO();
     String HELP_DESCRIPTION();
     String HELP_DEV();
