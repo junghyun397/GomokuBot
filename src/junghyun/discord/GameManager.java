@@ -42,7 +42,7 @@ public class GameManager {
     }
 
     private static boolean isHasGame(long id) {
-        return GameManager.getGame(id) != null;
+        return GameManager.getGame(id) == null;
     }
 
     private static void putGame(long id, GameAgent game) {
@@ -93,7 +93,7 @@ public class GameManager {
 
     public static void putStone(Pos pos, IUser user, IChannel channel) {
         if (isHasGame(user.getLongID())) {
-            MessageManager.getInstance(channel.getGuild()).sendErrorGrammarSet(user, channel);
+            MessageManager.getInstance(channel.getGuild()).notFoundGame(user, channel);
             return;
         }
         GameManager.getGame(user.getLongID()).putStone(user, pos, channel);
@@ -101,7 +101,7 @@ public class GameManager {
 
     public static void resignGame(IUser user, IChannel channel) {
         if (isHasGame(user.getLongID())) {
-            MessageManager.getInstance(channel.getGuild()).sendErrorGrammarSet(user, channel);
+            MessageManager.getInstance(channel.getGuild()).notFoundGame(user, channel);
             return;
         }
         GameManager.getGame(user.getLongID()).resignGame(user, channel);

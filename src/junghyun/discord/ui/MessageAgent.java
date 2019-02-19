@@ -33,7 +33,7 @@ public class MessageAgent {
         helpBuilder.appendField(languageContainer.HELP_DEV(), "junghyun397#6725", true);
         helpBuilder.appendField(languageContainer.HELP_GIT(), "[github.com/GomokuBot](https://github.com/junghyun397/GomokuBot)", true);
         helpBuilder.appendField(languageContainer.HELP_VERSION(), Settings.VERSION, true);
-        helpBuilder.appendField(languageContainer.HELP_SUPPORT(), "[discord.gg/VkfMY6R](https://discord.gg/VkfMY6R)", true);
+        helpBuilder.appendField(languageContainer.HELP_SUPPORT(), "[discord.gg/vq8pkfF](https://discord.gg/vq8pkfF)", true);
 
         this.helpEmbed = helpBuilder.build();
 
@@ -203,7 +203,7 @@ public class MessageAgent {
         builder.withDesc("withDesc");
         builder.withDescription(TextDrawer.getGraphics(chatGame.getGame(), aiPos));
 
-        builder.appendField(languageContainer.BOARD_TURNS(), "#" + chatGame.getGame().getTurns() + languageContainer.BOARD_TURN(), true);
+        builder.appendField(languageContainer.BOARD_TURNS(), " VS." + chatGame.getGame().getTurns() + languageContainer.BOARD_TURN(), true);
         builder.appendField(languageContainer.BOARD_LOCATION(), aiPos.getHumText(), true);
 
         if ((chatGame.getState() == ChatGame.STATE.INP) && (chatGame.getGame().getTurns() > 2)) chatGame.addMessage(channel.sendMessage(builder.build()));

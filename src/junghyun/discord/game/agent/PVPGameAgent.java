@@ -69,9 +69,24 @@ public class PVPGameAgent implements GameAgent {
             GameManager.endGame(chatGame);
             return;
         }
-        this.turnColor = !this.turnColor;
 
-        MessageManager.getInstance(channel.getGuild()).sendNextTurn(chatGame, pos, chatGame.getNameTag(), "AI", channel);
+        if (game.isFull()) {
+            chatGame.setState(ChatGame.STATE.FULL);
+            MessageManager.getInstance(channel.getGuild()).sendFullCanvas(chatGame, channel);
+            GameManager.endGame(chatGame);
+            return;
+        }
+
+        String nowName = chatGame.getNameTag();
+        String prvName = chatGame.getNameTag();
+        if (nowPlayer != chatGame.getLongId()) {
+            prvName = chatGame.getOppPlayer().getNameTag();
+        } else {
+            nowName = chatGame.getOppPlayer().getNameTag();
+        }
+
+        MessageManager.getInstance(channel.getGuild()).sendNextTurn(chatGame, pos, nowName, prvName, channel);
+        this.turnColor = !this.turnColor;
     }
 
     @Override

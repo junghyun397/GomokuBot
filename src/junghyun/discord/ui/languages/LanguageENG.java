@@ -9,7 +9,7 @@ public class LanguageENG implements LanguageInterface {
 
     @Override
     public String LANGUAGE_NAME() {
-        return "English:flag_uk:";
+        return "English:flag_gb:";
     }
     @Override
     public String LANGUAGE_DESCRIPTION() {
@@ -89,12 +89,12 @@ public class LanguageENG implements LanguageInterface {
     }
     @Override
     public String LANG_SUCCESS() {
-        return "Language setting has been changed to English:flag_uk:!";
+        return "Language setting has been changed to English:flag_gb:!";
     }
 
     @Override
     public String GAME_NOT_FOUND(String nameTag) {
-        return nameTag + ", could not find any games in progress Please start the game with `~ start` command!";
+        return nameTag + ", could not find any games in progress Please start the game with `~start` command!";
     }
     @Override
     public String GAME_CREATE_FAIL(String nameTag) {
@@ -111,34 +111,34 @@ public class LanguageENG implements LanguageInterface {
 
     @Override
     public String GAME_CREATE_INFO(String playerName, String targetName, String fAttack) {
-        return "The match between" + playerName + " and " + targetName + " has begun! The First Attacker is " + fAttack + ".";
+        return "The match between`" + playerName + "` and `" + targetName + "` has begun! The First Attacker is `" + fAttack + "`.";
     }
     @Override
     public String GAME_CMD_INFO() {
-        return "Please release the stone by `~s` `alphabet` `number` format. Ex) `~ s`` h` `8`";
+        return "Please release the stone by `~s` `alphabet` `number` format. Ex) `~s`` h` `8`";
     }
 
     @Override
     public String GAME_NEXT_TURN(String curName, String prvName, String lastPos) {
-        return curName + ", please release the next Stone. " + prvName + " was placed on " + lastPos;
+        return curName + ", please release the next Stone. `" + prvName + "` was placed on " + lastPos;
     }
 
     @Override
     public String GAME_PVP_TURN(String turnName) {
-        return "It is now "+ turnName + "s turn. Please wait for the next Stone of "+ turnName +". :thinking:";
+        return "It is now `"+ turnName + "`s turn. Please wait for the next Stone of `"+ turnName +"`. :thinking:";
     }
     @Override
     public String GAME_PVP_WIN(String winName, String loseName, String lastPos) {
-        return winName + " won " + loseName + " by  putting it on " + lastPos + "!";
+        return "`" + winName + "` wins by `" + loseName + "`  putting it on " + lastPos + "!";
     }
     @Override
     public String GAME_PVP_RESIGN(String winName, String loseName) {
-        return loseName + " wins by " + winName + " declaring surrender!";
+        return "`" + winName + "` wins by `" + loseName + "` declaring surrender!";
     }
 
     @Override
     public String GAME_PVP_INFO(String winName, String loseName, int winCount, int loseCount) {
-        return winName + " and " + loseName + " have been updated to `" + winCount + " : " + loseCount + "`.";
+        return "`" + winName + "` and `" + loseName + "` have been updated to `" + winCount + " : " + loseCount + "`.";
     }
 
     @Override
@@ -178,7 +178,7 @@ public class LanguageENG implements LanguageInterface {
     }
     @Override
     public String BOARD_TURN() {
-        return "Turns";
+        return "turns";
     }
     @Override
     public String BOARD_LOCATION() {

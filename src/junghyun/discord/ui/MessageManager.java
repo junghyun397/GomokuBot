@@ -4,6 +4,7 @@ import junghyun.discord.db.DBManager;
 import junghyun.discord.ui.languages.LanguageENG;
 import junghyun.discord.ui.languages.LanguageInterface;
 import junghyun.discord.ui.languages.LanguageKOR;
+import junghyun.discord.ui.languages.LanguagePRK;
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.util.EmbedBuilder;
@@ -35,6 +36,7 @@ public class MessageManager {
 
         MessageManager.registerLanguage(new LanguageENG());
         MessageManager.registerLanguage(new LanguageKOR());
+        MessageManager.registerLanguage(new LanguagePRK());
 
         MessageManager.langEmbed = langBuilder.build();
     }

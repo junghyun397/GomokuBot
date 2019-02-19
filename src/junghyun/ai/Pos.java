@@ -37,7 +37,7 @@ public class Pos {
     }
 
     public String getHumText() {
-        return "[ " + Character.toUpperCase(this.humX) + " " + this.humY + " ]";
+        return "[ `" + Character.toUpperCase(this.humX) + "` `" + this.humY + "` ]";
     }
 
 }

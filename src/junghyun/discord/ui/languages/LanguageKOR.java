@@ -94,7 +94,7 @@ public class LanguageKOR implements LanguageInterface {
 
     @Override
     public String GAME_NOT_FOUND(String nameTag) {
-        return nameTag + "님, 진행중인 게임을 찾을 수 없습니다. `~ start`명령어로 게임을 시작 해주세요!";
+        return nameTag + "님, 진행중인 게임을 찾을 수 없습니다. `~start`명령어로 게임을 시작 해주세요!";
     }
     @Override
     public String GAME_CREATE_FAIL(String nameTag) {
@@ -111,7 +111,7 @@ public class LanguageKOR implements LanguageInterface {
 
     @Override
     public String GAME_CREATE_INFO(String playerName, String targetName, String fAttack) {
-        return playerName + "님과 " + targetName + "님과의 대결이 시작 되었습니다! 선공은 " + fAttack + "님 입니다.";
+        return "`" + playerName + "`님과 `" + targetName + "`님과의 대결이 시작 되었습니다! 선공은 `" + fAttack + "`님 입니다.";
     }
     @Override
     public String GAME_CMD_INFO() {
@@ -120,20 +120,20 @@ public class LanguageKOR implements LanguageInterface {
 
     @Override
     public String GAME_NEXT_TURN(String curName, String prvName, String lastPos) {
-        return curName + "님, 다음 수를 놓아주세요. " + prvName + "는 " + lastPos + "에 놓았습니다.";
+        return curName + "님, 다음 수를 놓아주세요. `" + prvName + "`는 " + lastPos + "에 놓았습니다.";
     }
 
     @Override
     public String GAME_PVP_TURN(String turnName) {
-        return "지금은 " + turnName + "님 의 차례입니다. " + turnName + "님의 다음 수를 기다려 주세요. :thinking:";
+        return "지금은 `" + turnName + "`님 의 차례입니다. `" + turnName + "`님의 다음 수를 기다려 주세요. :thinking:";
     }
     @Override
     public String GAME_PVP_WIN(String winName, String loseName, String lastPos) {
-        return winName + "님이 " + lastPos + "에 놓음으로서 " + loseName + "님에게 승리 하였습니다!";
+        return "`" + winName + "`님이 " + lastPos + "에 놓음으로서 `" + loseName + "`님에게 승리 하였습니다!";
     }
     @Override
     public String GAME_PVP_RESIGN(String winName, String loseName) {
-        return loseName + "님이 항복을 선언 함으로서 " + winName + "님이 승리 하였습니다!";
+        return "`" + loseName + "`님이 항복을 선언 함으로서 `" + winName + "`님이 승리 하였습니다!";
     }
 
     @Override

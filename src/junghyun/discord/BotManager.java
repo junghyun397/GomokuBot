@@ -47,6 +47,7 @@ public class BotManager {
                 String lang = splitText[1].toUpperCase();
 
                 if (MessageManager.checkLanguage(lang)) MessageManager.setLanguage(event.getGuild().getLongID(), lang);
+                else lang = null;
 
                 MessageManager.getInstance(event.getGuild()).sendLanguageChange(event.getChannel(), lang);
                 break;
