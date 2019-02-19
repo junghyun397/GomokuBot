@@ -121,6 +121,10 @@ public class MessageAgent {
 
     // Progress Game
 
+    public void sendNotPlayerTurn(String tPlayer, IChannel channel) {
+        channel.sendMessage(languageContainer.GAME_PVP_TURN(tPlayer));
+    }
+
     public void sendNextTurn(ChatGame chatGame, Pos lastPos, String curPlayer, String prvPlayer, IChannel channel) {
         this.sendCanvasMessage(chatGame, lastPos, channel);
         chatGame.addMessage(channel.sendMessage(languageContainer.GAME_NEXT_TURN(curPlayer, prvPlayer, lastPos.getHumText())));

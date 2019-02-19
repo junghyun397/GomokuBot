@@ -124,6 +124,10 @@ public class LanguageENG implements LanguageInterface {
     }
 
     @Override
+    public String GAME_PVP_TURN(String turnName) {
+        return "It is now "+ turnName + "s turn. Please wait for the next Stone of "+ turnName +". :thinking:";
+    }
+    @Override
     public String GAME_PVP_WIN(String winName, String loseName, String lastPos) {
         return winName + " won " + loseName + " by  putting it on " + lastPos + "!";
     }

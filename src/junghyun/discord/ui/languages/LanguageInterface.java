@@ -39,6 +39,7 @@ public interface LanguageInterface {
 
     String GAME_NEXT_TURN(String curName, String prvName, String lastPos);
 
+    String GAME_PVP_TURN(String turnName);
     String GAME_PVP_WIN(String winName, String loseName, String lastPos);
     String GAME_PVP_RESIGN(String winName, String loseName);
     String GAME_PVP_INFO(String winName, String loseName, int winCount, int loseCount);

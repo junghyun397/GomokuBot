@@ -124,6 +124,10 @@ public class LanguageKOR implements LanguageInterface {
     }
 
     @Override
+    public String GAME_PVP_TURN(String turnName) {
+        return "지금은 " + turnName + "님 의 차례입니다. " + turnName + "님의 다음 수를 기다려 주세요. :thinking:";
+    }
+    @Override
     public String GAME_PVP_WIN(String winName, String loseName, String lastPos) {
         return winName + "님이 " + lastPos + "에 놓음으로서 " + loseName + "님에게 승리 하였습니다!";
     }
