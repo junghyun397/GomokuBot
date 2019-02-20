@@ -59,7 +59,7 @@ public class GameManager {
 
     public static void createGame(IUser user, IChannel channel, IUser targetUser) {
         if (!GameManager.isHasGame(user.getLongID())) {
-            MessageManager.getInstance(channel.getGuild()).sendFailCreatedGame(user, channel);
+            MessageManager.getInstance(channel.getGuild()).sendCreatGameFail(user, channel);
             return;
         }
 
@@ -93,7 +93,7 @@ public class GameManager {
 
     public static void putStone(Pos pos, IUser user, IChannel channel) {
         if (isHasGame(user.getLongID())) {
-            MessageManager.getInstance(channel.getGuild()).notFoundGame(user, channel);
+            MessageManager.getInstance(channel.getGuild()).sendNotFoundGame(user, channel);
             return;
         }
         GameManager.getGame(user.getLongID()).putStone(user, pos, channel);
@@ -101,7 +101,7 @@ public class GameManager {
 
     public static void resignGame(IUser user, IChannel channel) {
         if (isHasGame(user.getLongID())) {
-            MessageManager.getInstance(channel.getGuild()).notFoundGame(user, channel);
+            MessageManager.getInstance(channel.getGuild()).sendNotFoundGame(user, channel);
             return;
         }
         GameManager.getGame(user.getLongID()).resignGame(user, channel);

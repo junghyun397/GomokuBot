@@ -47,7 +47,7 @@ public class EventListener {
         try {
             if (EventListener.isEndLoadGuilds) {
                 MessageManager.getInstance(event.getGuild()).sendHelp(event.getGuild().getSystemChannel());
-                MessageManager.getInstance(event.getGuild()).sendLanguageChangeInfo(event.getGuild().getSystemChannel());
+                MessageManager.getInstance(event.getGuild()).sendLanguageInfo(event.getGuild().getSystemChannel());
                 Logger.loggerInfo("Join server : " + event.getGuild().getName());
             }
         } catch (Exception e) {

@@ -81,14 +81,14 @@ public class MessageAgent {
 
     // Language Information
 
-    public void sendLanguageChangeInfo(IChannel channel) {
+    public void sendLanguageInfo(IChannel channel) {
         channel.sendMessage(MessageManager.langEmbed);
     }
 
     public void sendLanguageChange(IChannel channel, String lang) {
         if (lang == null) {
             channel.sendMessage(languageContainer.LANG_CHANGE_ERROR());
-            sendLanguageChangeInfo(channel);
+            sendLanguageInfo(channel);
         } else channel.sendMessage(languageContainer.LANG_SUCCESS());
     }
 
@@ -96,22 +96,22 @@ public class MessageAgent {
 
     // Game Error
 
-    public void sendFailCreatedGame(IUser user, IChannel channel) {
+    public void sendCreatGameFail(IUser user, IChannel channel) {
         channel.sendMessage(languageContainer.GAME_CREATE_FAIL(user.getName()));
     }
 
-    public void sendErrorGrammarSet(IUser user, IChannel channel) {
+    public void sendSyntaxError(IUser user, IChannel channel) {
         channel.sendMessage(languageContainer.GAME_SYNTAX_FAIL(user.getName()));
     }
 
-    public void sendAlreadyIn(ChatGame chatGame, IChannel channel) {
+    public void sendStoneAlreadyIn(ChatGame chatGame, IChannel channel) {
         this.sendCanvasMessage(chatGame, channel);
         channel.sendMessage(languageContainer.GAME_ALREADY_IN(chatGame.getNameTag()));
     }
 
     // Create Game
 
-    public void sendCreatedGame(ChatGame chatGame, String fPlayer, IChannel channel) {
+    public void sendCreateGameSuccess(ChatGame chatGame, String fPlayer, IChannel channel) {
         this.sendCanvasMessage(chatGame, channel);
 
         String result = languageContainer.GAME_CREATE_INFO(chatGame.getNameTag(), chatGame.getOppPlayer().getNameTag(), fPlayer) +
@@ -174,7 +174,7 @@ public class MessageAgent {
 
     // Error Game
 
-    public void notFoundGame(IUser user, IChannel channel) {
+    public void sendNotFoundGame(IUser user, IChannel channel) {
         channel.sendMessage(languageContainer.GAME_NOT_FOUND(user.getName()));
     }
 
@@ -195,7 +195,7 @@ public class MessageAgent {
 
         EmbedBuilder builder = new EmbedBuilder();
 
-        builder.withAuthorName(chatGame.getNameTag() + "#" + chatGame.getOppPlayer().getNameTag() + ", " + statMsg);
+        builder.withAuthorName(chatGame.getNameTag() + "@" + chatGame.getOppPlayer().getNameTag() + ", " + statMsg);
         builder.withAuthorIcon(chatGame.getIconURL());
         if (chatGame.getState() == ChatGame.STATE.INP) builder.withColor(0,200,83);
         else builder.withColor(213,0,0);
@@ -203,7 +203,7 @@ public class MessageAgent {
         builder.withDesc("withDesc");
         builder.withDescription(TextDrawer.getGraphics(chatGame.getGame(), aiPos));
 
-        builder.appendField(languageContainer.BOARD_TURNS(), " VS." + chatGame.getGame().getTurns() + languageContainer.BOARD_TURN(), true);
+        builder.appendField(languageContainer.BOARD_TURNS(), " " + chatGame.getGame().getTurns() + languageContainer.BOARD_TURN(), true);
         builder.appendField(languageContainer.BOARD_LOCATION(), aiPos.getHumText(), true);
 
         if ((chatGame.getState() == ChatGame.STATE.INP) && (chatGame.getGame().getTurns() > 2)) chatGame.addMessage(channel.sendMessage(builder.build()));

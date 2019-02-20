@@ -64,7 +64,7 @@ public class BotManager {
                 break;
             case "~s":
                 if ((splitText.length != 3) || (!((splitText[1].length() == 1) && ((splitText[2].length() == 1) || (splitText[2].length() == 2))))) {
-                    MessageManager.getInstance(event.getGuild()).sendErrorGrammarSet(event.getAuthor(), event.getChannel());
+                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getChannel());
                     break;
                 }
 
@@ -72,12 +72,12 @@ public class BotManager {
                 try {
                     pos = new Pos(Pos.engToInt(splitText[1].toLowerCase().toCharArray()[0]), Integer.valueOf(splitText[2].toLowerCase()) - 1);
                 } catch (Exception e) {
-                    MessageManager.getInstance(event.getGuild()).sendErrorGrammarSet(event.getAuthor(), event.getChannel());
+                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getChannel());
                     break;
                 }
 
                 if (!Pos.checkSize(pos.getX(), pos.getY())) {
-                    MessageManager.getInstance(event.getGuild()).sendErrorGrammarSet(event.getAuthor(), event.getChannel());
+                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getChannel());
                     break;
                 }
 

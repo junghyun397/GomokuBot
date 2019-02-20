@@ -13,7 +13,7 @@ public class LanguageENG implements LanguageInterface {
     }
     @Override
     public String LANGUAGE_DESCRIPTION() {
-        return "Please use the `~lang` `ENG` command!";
+        return "Please use the `~lang` `ENG` command.";
     }
 
     @Override

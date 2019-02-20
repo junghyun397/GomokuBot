@@ -32,7 +32,7 @@ public class PVEGameAgent implements GameAgent {
         }
         chatGame.getGame().setPlayerColor(playerColor);
 
-        MessageManager.getInstance(channel.getGuild()).sendCreatedGame(chatGame, textFAttack, channel);
+        MessageManager.getInstance(channel.getGuild()).sendCreateGameSuccess(chatGame, textFAttack, channel);
     }
 
     @Override
@@ -40,7 +40,7 @@ public class PVEGameAgent implements GameAgent {
         Game game = chatGame.onUpdate().getGame();
 
         if (!game.canSetStone(pos.getX(), pos.getY())) {
-            MessageManager.getInstance(channel.getGuild()).sendAlreadyIn(chatGame, channel);
+            MessageManager.getInstance(channel.getGuild()).sendStoneAlreadyIn(chatGame, channel);
             return;
         }
 

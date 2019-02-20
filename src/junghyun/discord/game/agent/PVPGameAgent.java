@@ -29,7 +29,7 @@ public class PVPGameAgent implements GameAgent {
         if (!this.ownerColor) textFAttack = chatGame.getOppPlayer().getNameTag();
         chatGame.getGame().setPlayerColor(this.ownerColor);
 
-        MessageManager.getInstance(channel.getGuild()).sendCreatedGame(chatGame, textFAttack, channel);
+        MessageManager.getInstance(channel.getGuild()).sendCreateGameSuccess(chatGame, textFAttack, channel);
     }
 
     @Override
@@ -49,7 +49,7 @@ public class PVPGameAgent implements GameAgent {
         }
 
         if (!game.canSetStone(pos.getX(), pos.getY())) {
-            MessageManager.getInstance(channel.getGuild()).sendAlreadyIn(chatGame, channel);
+            MessageManager.getInstance(channel.getGuild()).sendStoneAlreadyIn(chatGame, channel);
             return;
         }
 

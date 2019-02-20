@@ -22,15 +22,15 @@ public class LanguagePRK implements LanguageInterface {
     }
     @Override
     public String HELP_DESCRIPTION() {
-        return "GomokuBot은 불협화음에서 오목 오락을 즐길 수 있게 하는 열린내용 Discord Bot 이라우. 모아진 기보 내용은 강화학습  형태 훈련에 사용됩네다.";
+        return "GomokuBot은 불협화음에서 오목 오락을 즐길 수 있게 하는 열린문서 Discord Bot 이라우. 모아진 기보 내용은 강화학습 형태 훈련에 사용됩네다.";
     }
     @Override
     public String HELP_DEV() {
-        return "개발자";
+        return "주체자";
     }
     @Override
     public String HELP_GIT() {
-        return "Git 저장소";
+        return "직결 저장소";
     }
     @Override
     public String HELP_VERSION() {
@@ -51,7 +51,7 @@ public class LanguagePRK implements LanguageInterface {
     }
     @Override
     public String HELP_CMD_LANG(String langList) {
-        return "`~lang` " + langList + "이 봉사기에서 사용되는 언어 설정을 바꿉네다. Ex) `~lang` `PRK`";
+        return "`~lang` " + langList + "이 봉사기에서 사용되는 말씨 설정을 바꿉네다. Ex) `~lang` `PRK`";
     }
     @Override
     public String HELP_CMD_PVE() {
@@ -94,15 +94,15 @@ public class LanguagePRK implements LanguageInterface {
 
     @Override
     public String GAME_NOT_FOUND(String nameTag) {
-        return nameTag + "동무, 진행중인 게임을 찾을 수 없습니다. `~start`명령어로 게임을 시작 해주시오!";
+        return nameTag + "동무, 진행중인 놀음을 찾을 수 없습니다. `~start`시킴말로 놀음을 시작 해주시오!";
     }
     @Override
     public String GAME_CREATE_FAIL(String nameTag) {
-        return nameTag + "동무, 게임 생성에 실패 했습니다. 즐기고 계신 놀음을 마무리 해주시우. :thinking:";
+        return nameTag + "동무, 놀음 만들기에 실패 했습네다. 즐기고 있던 놀음을 마무리 해주시우. :thinking:";
     }
     @Override
     public String GAME_SYNTAX_FAIL(String nameTag) {
-        return nameTag + "동무, 그건 잘못된 시킴말 입네다. `~s 알파벳 숫자` 형식으로 적어주세우. :thinking:";
+        return nameTag + "동무, 그건 잘못된 시킴말 입네다. `~s 미국말 숫자` 형식으로 적어주시우. :thinking:";
     }
     @Override
     public String GAME_ALREADY_IN(String nameTag) {
@@ -111,16 +111,16 @@ public class LanguagePRK implements LanguageInterface {
 
     @Override
     public String GAME_CREATE_INFO(String playerName, String targetName, String fAttack) {
-        return "`" + playerName + "`동무과 `" + targetName + "`동무과의 대결이 시작 되었습네다! 선공은 `" + fAttack + "`동무 입네다.";
+        return "`" + playerName + "`동무과 `" + targetName + "`동무과의 싸움이 시작 되었습네다! 선공은 `" + fAttack + "`동무 입네다.";
     }
     @Override
     public String GAME_CMD_INFO() {
-        return " `~s` `알파벳` `숫자` 형식으로 돌을 놓아주시우. Ex) `~s` `h` `8`";
+        return " `~s` `미국말` `숫자` 형식으로 돌을 놓아주시우. Ex) `~s` `h` `8`";
     }
 
     @Override
     public String GAME_NEXT_TURN(String curName, String prvName, String lastPos) {
-        return curName + "동무, 다음 수를 놓아주세요. `" + prvName + "`동무는 " + lastPos + "에 놓았습네다.";
+        return curName + "동무, 다음 수를 놓아주시우. `" + prvName + "`동무는 " + lastPos + "에 놓았습네다.";
     }
 
     @Override
@@ -138,7 +138,7 @@ public class LanguagePRK implements LanguageInterface {
 
     @Override
     public String GAME_PVP_INFO(String winName, String loseName, int winCount, int loseCount) {
-        return winName + "동무과 " + loseName + "동무의 전적이 `" + winCount + " : " + loseCount + "`로 업데이트 되었습네다.";
+        return winName + "동무과 " + loseName + "동무의 전적이 `" + winCount + " : " + loseCount + "`로 바뀜질 되었습네다.";
     }
 
     @Override
@@ -156,7 +156,7 @@ public class LanguagePRK implements LanguageInterface {
 
     @Override
     public String GAME_PVE_INFO(String playerName, int winCount, int loseCount, int rank) {
-        return "콤퓨타 상대 전적이 `" + winCount + " : " + loseCount + "`로 업데이트 되었습네다. 현재 " + playerName + "동무의 순위는 " + rank + "위 입네다.";
+        return "콤퓨타 상대 전적이 `" + winCount + " : " + loseCount + "`로 바뀜질 되었습네다. 현재 " + playerName + "동무의 순위는 " + rank + "위 입네다.";
     }
 
     @Override
@@ -182,7 +182,7 @@ public class LanguagePRK implements LanguageInterface {
     }
     @Override
     public String BOARD_LOCATION() {
-        return "마지막 내려놓은 위치";
+        return "마지막 위치";
     }
 
 }
