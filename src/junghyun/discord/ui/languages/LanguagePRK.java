@@ -120,7 +120,7 @@ public class LanguagePRK implements LanguageInterface {
 
     @Override
     public String GAME_NEXT_TURN(String curName, String prvName, String lastPos) {
-        return curName + "동무, 다음 수를 놓아주시우. `" + prvName + "`동무는 " + lastPos + "에 놓았습네다.";
+        return "`" + curName + "`동무, 다음 수를 놓아주시우. `" + prvName + "`동무는 " + lastPos + "에 놓았습네다.";
     }
 
     @Override

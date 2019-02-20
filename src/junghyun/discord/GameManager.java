@@ -64,7 +64,7 @@ public class GameManager {
         }
 
         ChatGame chatGame;
-        if (targetUser == null) chatGame = GameManager.createPVEGame(user, channel);
+        if (targetUser == null || targetUser.isBot()) chatGame = GameManager.createPVEGame(user, channel);
         else chatGame = GameManager.createPVPGame(user, targetUser, channel);
 
         Logger.loggerInfo("Start Game: " + chatGame.getNameTag() + " v. " + chatGame.getOppPlayer().getNameTag() + " : " + channel.getGuild().getName());

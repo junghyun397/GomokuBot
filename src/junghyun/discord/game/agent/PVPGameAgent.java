@@ -54,7 +54,7 @@ public class PVPGameAgent implements GameAgent {
         }
 
         game.setStone(pos.getX(), pos.getY());
-        if (game.isWin(pos.getX(), pos.getY(), game.getPlayerColor())) {
+        if (game.isWin(pos.getX(), pos.getY(), !game.getColor())) {
             chatGame.setState(ChatGame.STATE.PVPWIN);
 
             String winPlayer = chatGame.getNameTag();

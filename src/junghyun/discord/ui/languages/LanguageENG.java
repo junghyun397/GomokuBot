@@ -22,7 +22,7 @@ public class LanguageENG implements LanguageInterface {
     }
     @Override
     public String HELP_DESCRIPTION() {
-        return "GomokuBot is an open source Discord Bot that allows you to enjoy Gomoku in Discord. Collected game data is used for reinforcement learning model training. :)";
+        return "GomokuBot is an Open-Source Discord Bot that allows you to enjoy Gomoku/Omok in Discord. Collected game data is used for Reinforcement Learning Model training. :)";
     }
     @Override
     public String HELP_DEV() {
@@ -115,12 +115,12 @@ public class LanguageENG implements LanguageInterface {
     }
     @Override
     public String GAME_CMD_INFO() {
-        return "Please release the stone by `~s` `alphabet` `number` format. Ex) `~s`` h` `8`";
+        return "Please release the stone by `~s` `alphabet` `number` format. Ex) `~s` h` `8`";
     }
 
     @Override
     public String GAME_NEXT_TURN(String curName, String prvName, String lastPos) {
-        return curName + ", please release the next Stone. `" + prvName + "` was placed on " + lastPos;
+        return "`" + curName + "`, please release the next Stone. `" + prvName + "` was placed on " + lastPos;
     }
 
     @Override
@@ -178,7 +178,7 @@ public class LanguageENG implements LanguageInterface {
     }
     @Override
     public String BOARD_TURN() {
-        return "turns";
+        return "Turns";
     }
     @Override
     public String BOARD_LOCATION() {

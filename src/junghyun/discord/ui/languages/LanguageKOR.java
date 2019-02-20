@@ -120,7 +120,7 @@ public class LanguageKOR implements LanguageInterface {
 
     @Override
     public String GAME_NEXT_TURN(String curName, String prvName, String lastPos) {
-        return curName + "님, 다음 수를 놓아주세요. `" + prvName + "`는 " + lastPos + "에 놓았습니다.";
+        return "`" + curName + "`님, 다음 수를 놓아주세요. `" + prvName + "`는 " + lastPos + "에 놓았습니다.";
     }
 
     @Override

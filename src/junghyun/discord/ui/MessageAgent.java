@@ -144,7 +144,8 @@ public class MessageAgent {
         this.deleteCanvasMessage(chatGame, channel);
     }
 
-    public void sendPvPInfo(String winName, String loseName, int winCount, int loseCount, IChannel channel) {
+    public void sendPvPInfo(String winName, String loseName, IChannel channel) {
+        int winCount = 0, loseCount = 0;
         channel.sendMessage(languageContainer.GAME_PVP_INFO(winName, loseName, winCount, loseCount));
     }
 
@@ -168,7 +169,8 @@ public class MessageAgent {
         this.deleteCanvasMessage(chatGame, channel);
     }
 
-    public void sendPvEInfo(String playerName, int winCount, int loseCount, int rank, IChannel channel) {
+    public void sendPvEInfo(String playerName, IChannel channel) {
+        int winCount = 0, loseCount = 0, rank = 0;
         channel.sendMessage(languageContainer.GAME_PVE_INFO(playerName, winCount, loseCount, rank));
     }
 

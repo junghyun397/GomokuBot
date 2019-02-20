@@ -2,6 +2,7 @@ package junghyun.discord.db;
 
 import junghyun.ai.Pos;
 import junghyun.discord.game.ChatGame;
+import junghyun.discord.game.OppPlayer;
 
 import java.sql.ResultSet;
 
@@ -15,6 +16,8 @@ public class DBManager {
         SqlManager.execute("INSERT INTO game_record(record_data, total_count, user_id, date, reason) VALUES ('"
                 + rs.toString() + "', " + game.getGame().getTurns() + ", " + game.getLongId() + ", " + System.currentTimeMillis() + ", '"
                 + game.getState().toString() + "');");
+
+        if (game.getOppPlayer().getPlayerType() == OppPlayer.PLAYER_TYPE.HUMAN) return;
 
         UserDataSet orgUser = DBManager.getUserData(game.getLongId());
         if (orgUser != null) {
