@@ -39,16 +39,6 @@ class AIRow {
         this.checkDefensePoint();
     }
 
-    void checkADPoints() {
-        if (passAll) return;
-
-        this.checkWinOpenFourPoint();
-        this.checkLoseOpenFourPoint();
-
-        this.checkAttackPoint();
-        this.checkDefensePoint();
-    }
-
     private void checkLoseFivePoint() {
 
         Stone target_stone = null;
@@ -146,6 +136,7 @@ class AIRow {
 
                 if ((stone_count == 3) && (blank_count == 3)) {
                     assert target_stone != null;
+                    game.addOpenFourPoint(target_stone.getX(), target_stone.getY(), !game.getPlayerColor());
                     game.addPoint(target_stone.getX(), target_stone.getY(), AISetting.MAKE_OPEN_4_POINT);
                 }
             }
@@ -185,6 +176,7 @@ class AIRow {
 
                 if ((stone_count == 3) && (blank_count == 3)) {
                     assert target_stone != null;
+                    game.addOpenFourPoint(target_stone.getX(), target_stone.getY(), game.getPlayerColor());
                     game.addPoint(target_stone.getX(), target_stone.getY(), AISetting.PLAYER_MAKE_OPEN_4_POINT);
                 }
             }

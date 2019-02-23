@@ -1,6 +1,9 @@
 package junghyun;
 
-import junghyun.db.Logger;
+import junghyun.discord.BotManager;
+import junghyun.discord.GameManager;
+import junghyun.discord.db.Logger;
+import sx.blah.discord.handle.obj.IGuild;
 
 import java.util.Scanner;
 
@@ -32,23 +35,27 @@ public class Main {
     }
 
     private static void scanCommand() {
-        if (!Main.onRunning) return;
-
-        String command = Main.scanner.nextLine();
-        switch (command) {
-            case "stop":
-                Main.stopServer();
-                break;
-            case "save_log":
-                Logger.saveLogs();
-            case "game_count":
-                Logger.loggerDev("Game count : " + GameManager.getGameListSize());
-                break;
-            case "server_count":
-                Logger.loggerDev("Server count : " + BotManager.getClient().getGuilds().size());
-                break;
+        while (Main.onRunning) {
+            String command = Main.scanner.nextLine();
+            switch (command) {
+                case "stop":
+                    Main.stopServer();
+                    break;
+                case "save_log":
+                    Logger.saveLogs();
+                case "game_count":
+                    Logger.loggerDev("Game count : " + GameManager.getGameListSize());
+                    break;
+                case "server_count":
+                    Logger.loggerDev("Server count : " + BotManager.getClient().getGuilds().size());
+                    break;
+                case "broadcast_all":
+                    String text = command.split("broadcast_all")[0];
+                    for (IGuild guild: BotManager.getClient().getGuilds()) guild.getSystemChannel().sendMessage(text);
+                    Logger.loggerDev("Send Broadcast : " + text);
+                    break;
+            }
         }
-        Main.scanCommand();
     }
 
 }

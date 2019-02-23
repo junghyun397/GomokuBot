@@ -1,8 +1,8 @@
-package junghyun.ui;
+package junghyun.discord.ui.graphics;
 
 import junghyun.ai.Game;
 import junghyun.ai.Stone;
-import junghyun.unit.Pos;
+import junghyun.ai.Pos;
 
 public class TextDrawer {
 
@@ -59,17 +59,11 @@ public class TextDrawer {
                 Stone pro_stone = plate[x][y];
                 if (pro_stone.isStoneAdded()) {
                     if (pro_stone.getColor()) {
-                        if ((pro_stone.getX() == aiPos.getX()) && (pro_stone.getY() == aiPos.getY())) {
-                            result.append(LAST_BLACK);
-                        } else {
-                            result.append(BLACK);
-                        }
+                        if ((pro_stone.getX() == aiPos.getX()) && (pro_stone.getY() == aiPos.getY())) result.append(LAST_BLACK);
+                        else result.append(BLACK);
                     } else {
-                        if ((pro_stone.getX() == aiPos.getX()) && (pro_stone.getY() == aiPos.getY())) {
-                            result.append(LAST_WHITE);
-                        } else {
-                            result.append(WHITE);
-                        }
+                        if ((pro_stone.getX() == aiPos.getX()) && (pro_stone.getY() == aiPos.getY())) result.append(LAST_WHITE);
+                        else result.append(WHITE);
                     }
                 } else {
                     if (useGrid) result.append(getEmptyCode(x, y));

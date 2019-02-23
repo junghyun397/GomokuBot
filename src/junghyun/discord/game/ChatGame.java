@@ -1,7 +1,6 @@
-package junghyun.unit;
+package junghyun.discord.game;
 
 import junghyun.ai.Game;
-import junghyun.ai.engin.AIBase;
 import sx.blah.discord.handle.obj.IMessage;
 
 import java.util.LinkedList;
@@ -13,24 +12,23 @@ public class ChatGame {
     private String nameTag;
 
     private Game game;
-    private AIBase.DIFF diff;
 
-    public enum GAMETYPE {PVP, PVE}
-    private GAMETYPE gameType;
+    private OppPlayer oppPlayer;
 
-    public enum STATE {INP, WIN, RESIGN, FULL, LOSE, TIMEOUT}
+    public enum STATE {INP, WIN, PVPWIN, RESIGN, FULL, LOSE, TIMEOUT}
     private STATE state;
 
     private List<IMessage> msgList;
     private long updateTime;
 
-    public ChatGame(long longId, Game game, String nameTag, AIBase.DIFF diff, GAMETYPE gameType) {
-        this.longId = longId;
-        this.nameTag = nameTag;
-        this.game = game;
+    private String iconURL;
 
-        this.diff = diff;
-        this.gameType = gameType;
+    public ChatGame(long longId, Game game, String nameTag, OppPlayer oppPlayer, String iconURL) {
+        this.longId = longId;
+        this.game = game;
+        this.nameTag = nameTag;
+        this.oppPlayer = oppPlayer;
+        this.iconURL = iconURL;
 
         this.state = STATE.INP;
 
@@ -51,8 +49,8 @@ public class ChatGame {
         return game;
     }
 
-    public AIBase.DIFF getDiff() {
-        return diff;
+    public OppPlayer getOppPlayer() {
+        return this.oppPlayer;
     }
 
     public void addMessage(IMessage iMessage) {
@@ -80,11 +78,11 @@ public class ChatGame {
         return this.state;
     }
 
-    public GAMETYPE getGameType() {
-        return this.gameType;
-    }
-
     public List<IMessage> getMessageList() {
         return this.msgList;
+    }
+
+    public String getIconURL() {
+        return this.iconURL;
     }
 }

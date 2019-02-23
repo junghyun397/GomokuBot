@@ -1,6 +1,6 @@
 package junghyun.ai;
 
-public class Stone implements Cloneable {
+public class Stone {
 
     private int x;
     private int y;
@@ -13,15 +13,24 @@ public class Stone implements Cloneable {
 
     private int blackThreeCount = 0;
     private int blackFourCount = 0;
+    private int blackOpenFourCount = 0;
     private int blackFiveCount = 0;
 
     private int whiteThreeCount = 0;
     private int whiteFourCount = 0;
+    private int whiteOpenFourCount = 0;
     private int whiteFiveCount = 0;
 
     public Stone(int x, int y) {
         this.x = x;
         this.y = y;
+    }
+
+    public Stone deepCopy() {
+        Stone stone = new Stone(this.x, this.y);
+        stone.isStoneAdded = this.isStoneAdded;
+        stone.color = this.color;
+        return stone;
     }
 
     public boolean isStoneAdded() {
@@ -65,6 +74,16 @@ public class Stone implements Cloneable {
         else return this.whiteFourCount;
     }
 
+    public void addOpenFourCount(boolean color) {
+        if (color) this.blackOpenFourCount++;
+        else this.whiteOpenFourCount++;
+    }
+
+    public int getOpenFourCount(boolean color) {
+        if (color) return this.blackOpenFourCount;
+        else return this.whiteOpenFourCount;
+    }
+
     public void addFiveCount(boolean color) {
         if (color) this.blackFiveCount++;
         else this.whiteFiveCount++;
@@ -82,18 +101,19 @@ public class Stone implements Cloneable {
     public void resetPoint() {
         this.blackThreeCount = 0;
         this.blackFourCount = 0;
+        this.blackOpenFourCount = 0;
+        this.blackFiveCount = 0;
+
         this.whiteThreeCount = 0;
         this.whiteFourCount = 0;
+        this.whiteOpenFourCount = 0;
+        this.whiteFiveCount = 0;
 
         this.point = 0;
     }
 
     public int getPoint() {
         return this.point;
-    }
-
-    public Object clone() throws CloneNotSupportedException {
-        return super.clone();
     }
 
 }

@@ -1,8 +1,8 @@
-package junghyun.db;
+package junghyun.discord.db;
 
-import junghyun.ui.MessageManager;
-import junghyun.unit.ChatGame;
-import junghyun.unit.Pos;
+import junghyun.ai.Pos;
+import junghyun.discord.game.ChatGame;
+import junghyun.discord.game.OppPlayer;
 
 import java.sql.ResultSet;
 
@@ -16,6 +16,8 @@ public class DBManager {
         SqlManager.execute("INSERT INTO game_record(record_data, total_count, user_id, date, reason) VALUES ('"
                 + rs.toString() + "', " + game.getGame().getTurns() + ", " + game.getLongId() + ", " + System.currentTimeMillis() + ", '"
                 + game.getState().toString() + "');");
+
+        if (game.getOppPlayer().getPlayerType() == OppPlayer.PLAYER_TYPE.HUMAN) return;
 
         UserDataSet orgUser = DBManager.getUserData(game.getLongId());
         if (orgUser != null) {
@@ -62,12 +64,12 @@ public class DBManager {
         }
     }
 
-    public static void setGuildLanguage(long id, MessageManager.LANG lang) {
+    public static void setGuildLanguage(long id, String lang) {
         GuildDataSet orgGuild = DBManager.getGuildData(id);
         if (orgGuild != null) {
-            SqlManager.executeUpdate("UPDATE guild_info SET lang='" + lang.toString() + "' WHERE guild_id=" + id + ";");
+            SqlManager.executeUpdate("UPDATE guild_info SET lang='" + lang + "' WHERE guild_id=" + id + ";");
         } else {
-            SqlManager.execute("INSERT INTO guild_info(guild_id, lang) VALUES (" + id + ", '" + lang.toString() + "');");
+            SqlManager.execute("INSERT INTO guild_info(guild_id, lang) VALUES (" + id + ", '" + lang + "');");
         }
     }
 
@@ -76,7 +78,7 @@ public class DBManager {
         try {
             assert rs != null;
             if (!rs.next()) return null;
-            return new GuildDataSet(rs.getLong("guild_id"), MessageManager.getLangByString(rs.getString("lang")));
+            return new GuildDataSet(rs.getLong("guild_id"), rs.getString("lang"));
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -119,9 +121,9 @@ public class DBManager {
 
         private long longId;
 
-        private MessageManager.LANG lang;
+        private String lang;
 
-        private GuildDataSet(long id, MessageManager.LANG lang) {
+        private GuildDataSet(long id, String lang) {
             this.longId = id;
             this.lang = lang;
         }
@@ -130,7 +132,7 @@ public class DBManager {
             return longId;
         }
 
-        public MessageManager.LANG getLang() {
+        public String getLang() {
             return lang;
         }
     }

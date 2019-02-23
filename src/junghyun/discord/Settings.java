@@ -1,4 +1,4 @@
-package junghyun.unit;
+package junghyun.discord;
 
 public class Settings {
 
@@ -11,6 +11,8 @@ public class Settings {
     public static final int TIMEOUT_CYCLE = 1800;
     public static final int TIMEOUT = TIMEOUT_CYCLE*1000;
 
+    public static final int LOADING_TIME = 60;
+
     public static final String SQL_URL = PrivateSettings.SQL_URL +
             "?autoReconnect=true" +
             "&useUnicode=true" +
@@ -20,6 +22,6 @@ public class Settings {
 
     public static final int RANK_COUNT = 10;
 
-    public static final String VERSION = "alpha v2.5.0";
+    public static final String VERSION = "alpha v3.0.0";
 
 }

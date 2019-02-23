@@ -1,8 +1,8 @@
-package junghyun.ui;
+package junghyun.discord.ui.graphics;
 
 import junghyun.ai.Game;
 import junghyun.ai.Stone;
-import junghyun.unit.Pos;
+import junghyun.ai.Pos;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
