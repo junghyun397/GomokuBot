@@ -1,11 +1,7 @@
 package junghyun.discord.ui;
 
 import junghyun.discord.db.DBManager;
-import junghyun.discord.ui.languages.LanguageENG;
-import junghyun.discord.ui.languages.LanguageInterface;
-import junghyun.discord.ui.languages.LanguageKOR;
-import junghyun.discord.ui.languages.LanguagePRK;
-import junghyun.discord.ui.languages.LanguageJPN;
+import junghyun.discord.ui.languages.*;
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.util.EmbedBuilder;
