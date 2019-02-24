@@ -1,4 +1,4 @@
-﻿package junghyun.discord.ui.languages;
+package junghyun.discord.ui.languages;
 
 public class LanguageCHN implements LanguageInterface {
 
@@ -89,7 +89,7 @@ public class LanguageCHN implements LanguageInterface {
     }
     @Override
     public String LANG_SUCCESS() {
-        return "改变语言设置为简体中文:flag_cn:！";
+        return "改变语言设置为简体中文:flag_cn:！\n`Translated by`: `1,2,3,4-TetraMethylBenzene(Kawaii-cirno)`";
     }
 
     @Override
@@ -102,7 +102,7 @@ public class LanguageCHN implements LanguageInterface {
     }
     @Override
     public String GAME_SYNTAX_FAIL(String nameTag) {
-        return nameTag + "，您输入了错误的命令。请按照 `~s 字母 数字` 形式输入。:thinking:;
+        return nameTag + "，您输入了错误的命令。请按照 `~s 字母 数字` 形式输入。:thinking:";
     }
     @Override
     public String GAME_ALREADY_IN(String nameTag) {
@@ -143,7 +143,7 @@ public class LanguageCHN implements LanguageInterface {
 
     @Override
     public String GAME_PVE_WIN(String lastPos) {
-        return “您以落子在” + lastPos + "取得与人工智能的胜利！";
+        return "您以落子在" + lastPos + "取得与人工智能的胜利！";
     }
     @Override
     public String GAME_PVE_LOSE(String lastPos) {

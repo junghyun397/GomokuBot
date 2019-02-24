@@ -89,7 +89,7 @@ public class LanguageJPN implements LanguageInterface {
     }
     @Override
     public String LANG_SUCCESS() {
-        return "言語設定を日本語:flag_jp:に変更しました";
+        return "言語設定を日本語:flag_jp:に変更しました\n`Translated by`: `S1RO`";
     }
 
     @Override

@@ -34,7 +34,7 @@ public class GameManager {
     private static void checkTimeOut() {
         long currentTime = System.currentTimeMillis();
         for (GameAgent game: GameManager.gameList.values().toArray(new GameAgent[0])) {
-            if (game.getChatGame().getUpdateTime() + Settings.TIMEOUT < currentTime) {
+            if ((game.getChatGame().getUpdateTime() + Settings.TIMEOUT < currentTime) && (game.getChatGame().getState() != ChatGame.STATE.TIMEOUT)) {
                 game.getChatGame().setState(ChatGame.STATE.TIMEOUT);
                 game.killGame();
             }

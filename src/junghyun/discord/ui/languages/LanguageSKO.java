@@ -1,4 +1,4 @@
-﻿package junghyun.discord.ui.languages;
+package junghyun.discord.ui.languages;
 
 public class LanguageSKO implements LanguageInterface {
 
@@ -89,7 +89,7 @@ public class LanguageSKO implements LanguageInterface {
     }
     @Override
     public String LANG_SUCCESS() {
-        return "言語設定이韓國語:flag_kr:로改變했습니다!";
+        return "言語設定이韓國語:flag_kr:로改變했습니다!\n`Translated by`: `1,2,3,4-TetraMethylBenzene(Kawaii-cirno)`";
     }
 
     @Override

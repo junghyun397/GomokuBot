@@ -31,12 +31,16 @@ public class MessageManager {
         langBuilder.withDesc("withDesc");
         langBuilder.withDescription("Please select the appropriate language for this server!");
 
+        // Register Language HERE ↓↓
+
         MessageManager.registerLanguage(new LanguageENG());
         MessageManager.registerLanguage(new LanguageKOR());
         MessageManager.registerLanguage(new LanguagePRK());
         MessageManager.registerLanguage(new LanguageJPN());
         MessageManager.registerLanguage(new LanguageCHN());
         MessageManager.registerLanguage(new LanguageSKO());
+
+        // ----------------------
 
         MessageManager.langEmbed = langBuilder.build();
     }
