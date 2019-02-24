@@ -35,6 +35,8 @@ public class MessageManager {
         MessageManager.registerLanguage(new LanguageKOR());
         MessageManager.registerLanguage(new LanguagePRK());
         MessageManager.registerLanguage(new LanguageJPN());
+        MessageManager.registerLanguage(new LanguageCHN());
+        MessageManager.registerLanguage(new LanguageSKO());
 
         MessageManager.langEmbed = langBuilder.build();
     }
