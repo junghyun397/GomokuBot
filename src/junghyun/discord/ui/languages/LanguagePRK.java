@@ -22,7 +22,7 @@ public class LanguagePRK implements LanguageInterface {
     }
     @Override
     public String HELP_DESCRIPTION() {
-        return "GomokuBot은 불협화음에서 오목 오락을 즐길 수 있게 하는 열린문서 Discord Bot 이라우. 모아진 기보 내용은 강화학습 형태 훈련에 사용됩네다.";
+        return "GomokuBot은 불협화음에서 오목 오락을 즐길 수 있게 하는 열린문서 Discord Bot 이라우. 모아진 기보 내용은 강화학습 형태 훈련에 사용된다우.";
     }
     @Override
     public String HELP_DEV() {
@@ -38,7 +38,7 @@ public class LanguagePRK implements LanguageInterface {
     }
     @Override
     public String HELP_SUPPORT() {
-        return "지원 채널";
+        return "련락 공간";
     }
 
     @Override
@@ -51,7 +51,7 @@ public class LanguagePRK implements LanguageInterface {
     }
     @Override
     public String HELP_CMD_LANG(String langList) {
-        return "`~lang` " + langList + "이 봉사기에서 사용되는 말씨 설정을 바꿉네다. Ex) `~lang` `PRK`";
+        return "`~lang` " + langList + "이 봉사기에서 사용되는 말씨 설정을 바꾼다우. Ex) `~lang` `PRK`";
     }
     @Override
     public String HELP_CMD_PVE() {
@@ -76,20 +76,20 @@ public class LanguagePRK implements LanguageInterface {
     }
     @Override
     public String RANK_WIN() {
-        return "공산";
+        return "평양";
     }
     @Override
     public String RANK_LOSE() {
-        return "자본";
+        return "아오지";
     }
 
     @Override
     public String LANG_CHANGE_ERROR() {
-        return "언어 지정에 문제가 있습네다.";
+        return "말씨 지정에 문제가 있습네다.";
     }
     @Override
     public String LANG_SUCCESS() {
-        return "언어 설정이 조선말:flag_kp:로 바뀌었습네다!";
+        return "말씨 설정이 조선말:flag_kp:로 바뀌었습네다!";
     }
 
     @Override
@@ -111,7 +111,7 @@ public class LanguagePRK implements LanguageInterface {
 
     @Override
     public String GAME_CREATE_INFO(String playerName, String targetName, String fAttack) {
-        return "`" + playerName + "`동무과 `" + targetName + "`동무과의 싸움이 시작 되었습네다! 선공은 `" + fAttack + "`동무 입네다.";
+        return "`" + playerName + "`동무와 `" + targetName + "`동무과의 쌈박질이 시작 되었습네다! 선공은 `" + fAttack + "`동무 입네다.";
     }
     @Override
     public String GAME_CMD_INFO() {
@@ -120,7 +120,7 @@ public class LanguagePRK implements LanguageInterface {
 
     @Override
     public String GAME_NEXT_TURN(String curName, String prvName, String lastPos) {
-        return "`" + curName + "`동무, 다음 수를 놓아주시우. `" + prvName + "`동무는 " + lastPos + "에 놓았습네다.";
+        return "`" + curName + "`동무, 다음 돌을 놓아주시우. `" + prvName + "`동무는 " + lastPos + "에 놓았습네다.";
     }
 
     @Override
@@ -129,16 +129,16 @@ public class LanguagePRK implements LanguageInterface {
     }
     @Override
     public String GAME_PVP_WIN(String winName, String loseName, String lastPos) {
-        return "`" + winName + "`동무가 " + lastPos + "에 놓음으로서 `" + loseName + "`동무에게 승리 하였습네다!";
+        return "`" + winName + "`동무가 " + lastPos + "에 놓음으로서 `" + loseName + "`동무에게 이겼습네다!";
     }
     @Override
     public String GAME_PVP_RESIGN(String winName, String loseName) {
-        return "`" + loseName + "`동무가 항복을 선언 함으로서 `" + winName + "`동무가 승리 하였습네다!";
+        return "`" + loseName + "`동무가 항복을 선언 함으로서 `" + winName + "`동무가 이겼습네다!";
     }
 
     @Override
     public String GAME_PVP_INFO(String winName, String loseName, int winCount, int loseCount) {
-        return winName + "동무과 " + loseName + "동무의 전적이 `" + winCount + " : " + loseCount + "`로 바뀜질 되었습네다.";
+        return winName + "동무와 " + loseName + "동무의 쌈박질이 `" + winCount + " : " + loseCount + "`로 바뀜질 되었습네다.";
     }
 
     @Override
@@ -147,11 +147,11 @@ public class LanguagePRK implements LanguageInterface {
     }
     @Override
     public String GAME_PVE_LOSE(String lastPos) {
-        return "AI 가 " + lastPos + "에 놓음으로서 패배 하였습네다.";
+        return "콤퓨타가 " + lastPos + "에 놓음으로서 콤퓨타에게 패배 하였습네다.";
     }
     @Override
     public String GAME_PVE_RESIGN() {
-        return "항복을 선언 함으로서 콤퓨타에게 패배 하였습네다.";
+        return "항복을 외침으로써 콤퓨타에게 패배 하였습네다.";
     }
 
     @Override
@@ -166,11 +166,11 @@ public class LanguagePRK implements LanguageInterface {
 
     @Override
     public String BOARD_INP() {
-        return "진행중";
+        return "쌈박질중";
     }
     @Override
     public String BOARD_FINISH() {
-        return "종료됨";
+        return "초토화됨";
     }
     @Override
     public String BOARD_TURNS() {
@@ -182,7 +182,7 @@ public class LanguagePRK implements LanguageInterface {
     }
     @Override
     public String BOARD_LOCATION() {
-        return "마지막 위치";
+        return "마지막 자리";
     }
 
 }

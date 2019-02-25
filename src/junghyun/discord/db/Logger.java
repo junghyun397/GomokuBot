@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 public class Logger {
 
     private static String logBuffer = "\n";
+    private static String commandBuffer = "\n";
 
     public static void startLogger() {
         Runnable task = Logger::saveLogs;
@@ -38,13 +39,25 @@ public class Logger {
         Logger.logBuffer += text;
     }
 
+    public static void loggerCommand(String text) {
+        text = "[" + getDateTime() + "] [COMMAND] " + text + "\n";
+        Logger.commandBuffer += text;
+    }
+
     public static void saveLogs() {
         try {
-            BufferedWriter fw = new BufferedWriter(new FileWriter("log.txt", true));
-            fw.write(Logger.logBuffer);
-            fw.flush();
-            fw.close();
+            BufferedWriter fwLog = new BufferedWriter(new FileWriter("log.txt", true));
+            fwLog.write(Logger.logBuffer);
+            fwLog.flush();
+            fwLog.close();
             Logger.logBuffer = "";
+
+            BufferedWriter fwCmd = new BufferedWriter(new FileWriter("log_cmd.txt", true));
+            fwCmd.write(Logger.commandBuffer);
+            fwCmd.flush();
+            fwCmd.close();
+            Logger.commandBuffer = "";
+
             Logger.loggerInfo("Log saved!");
         } catch (Exception e) {
             Logger.loggerWarning(e.getMessage());

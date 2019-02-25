@@ -2,6 +2,7 @@ package junghyun.discord;
 
 import junghyun.ai.Pos;
 import junghyun.discord.db.DBManager;
+import junghyun.discord.db.Logger;
 import junghyun.discord.db.SqlManager;
 import junghyun.discord.ui.MessageManager;
 import sx.blah.discord.api.ClientBuilder;
@@ -34,6 +35,7 @@ public class BotManager {
 
     static void processCommand(MessageReceivedEvent event) {
         String[] splitText = event.getMessage().getContent().toLowerCase().split(" ");
+        Logger.loggerCommand(event.getAuthor().getName() + " : " + event.getGuild().getName() + " / " + event.getMessage().getContent());
 
         switch (splitText[0]) {
             case "~help":
