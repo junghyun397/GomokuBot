@@ -26,6 +26,7 @@ public class EventListener {
     }
 
     private static void onEndLoadGuilds() {
+        BotManager.setOfficialChannel(BotManager.getClient().getGuildByID(Settings.OFFICIAL_GUILD_ID).getChannelByID(Settings.RESULT_CHANNEL_ID));
         EventListener.isEndLoadGuilds = true;
     }
 

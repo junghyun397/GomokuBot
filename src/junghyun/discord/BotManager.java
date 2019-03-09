@@ -24,8 +24,6 @@ public class BotManager {
         client.getDispatcher().registerListener(new EventListener());
         client.login();
 
-        BotManager.officialChannel = client.getGuildByID(Settings.OFFICIAL_GUILD_ID).getChannelByID(Settings.RESULT_CHANNEL_ID);
-
         EventListener.onStartLoadGuilds();
 
         SqlManager.connectMysql();
@@ -90,6 +88,10 @@ public class BotManager {
                 GameManager.putStone(pos, event.getAuthor(), event.getChannel());
                 break;
         }
+    }
+
+    public static void setOfficialChannel(IChannel channel) {
+        BotManager.officialChannel = channel;
     }
 
     public static IDiscordClient getClient() {

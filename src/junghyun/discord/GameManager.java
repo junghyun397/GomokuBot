@@ -118,7 +118,7 @@ public class GameManager {
     }
 
     private static void postGame(ChatGame chatGame) {
-        if (chatGame.getState() != ChatGame.STATE.TIMEOUT && chatGame.getGame().getTurns() == 25) {
+        if (chatGame.getState() != ChatGame.STATE.TIMEOUT && chatGame.getGame().getTurns() > 20) {
             MessageAgent.postResultOfficialChannel(chatGame, BotManager.getOfficialChannel());
         }
     }
