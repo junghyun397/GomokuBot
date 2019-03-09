@@ -9,18 +9,22 @@ import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.ActivityType;
+import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.handle.obj.StatusType;
 
 public class BotManager {
 
     private static IDiscordClient client;
+    private static IChannel officialChannel;
 
     public static void startGomokuBot() {
         client = new ClientBuilder().setPresence(StatusType.ONLINE, ActivityType.WATCHING, "~help")
                 .withToken(Settings.TOKEN).build();
         client.getDispatcher().registerListener(new EventListener());
         client.login();
+
+        BotManager.officialChannel = client.getGuildByID(Settings.OFFICIAL_GUILD_ID).getChannelByID(Settings.RESULT_CHANNEL_ID);
 
         EventListener.onStartLoadGuilds();
 
@@ -90,6 +94,10 @@ public class BotManager {
 
     public static IDiscordClient getClient() {
         return BotManager.client;
+    }
+
+    public static IChannel getOfficialChannel() {
+        return BotManager.officialChannel;
     }
 
 }

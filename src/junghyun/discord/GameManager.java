@@ -8,6 +8,7 @@ import junghyun.discord.game.OppPlayer;
 import junghyun.discord.game.agent.GameAgent;
 import junghyun.discord.game.agent.PVEGameAgent;
 import junghyun.discord.game.agent.PVPGameAgent;
+import junghyun.discord.ui.MessageAgent;
 import junghyun.discord.ui.MessageManager;
 import junghyun.discord.ui.graphics.TextDrawer;
 import junghyun.ai.Pos;
@@ -110,9 +111,16 @@ public class GameManager {
     public static void endGame(ChatGame chatGame) {
         DBManager.saveGame(chatGame);
         GameManager.delGame(chatGame.getLongId());
+        GameManager.postGame(chatGame);
         Logger.loggerInfo("End Game: " +  chatGame.getNameTag() + " v. " + chatGame.getOppPlayer().getNameTag() +
                 " " + chatGame.getGame().getTurns() + " " + chatGame.getState().toString());
         Logger.loggerInfo("Canvas info ================================\n" + TextDrawer.getGraphics(chatGame.getGame(), false));
+    }
+
+    private static void postGame(ChatGame chatGame) {
+        if (chatGame.getState() != ChatGame.STATE.TIMEOUT && chatGame.getGame().getTurns() == 25) {
+            MessageAgent.postResultOfficialChannel(chatGame, BotManager.getOfficialChannel());
+        }
     }
 
     public static int getGameListSize() {

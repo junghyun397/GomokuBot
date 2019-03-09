@@ -212,6 +212,26 @@ public class MessageAgent {
         else channel.sendMessage(builder.build());
     }
 
+    // Official Post Function
+
+    public static void postResultOfficialChannel(ChatGame chatGame, IChannel channel) {
+        EmbedBuilder builder = new EmbedBuilder();
+        builder.withAuthorName(chatGame.getNameTag() + "@" + chatGame.getOppPlayer().getNameTag() + ", END");
+        builder.withAuthorIcon(chatGame.getIconURL());
+        builder.withColor(0,145,234);
+
+        builder.withDesc("withDesc");
+        builder.withDescription(TextDrawer.getGraphics(chatGame.getGame(), new Pos(-1, -1)));
+
+        String winner = chatGame.getNameTag();
+        if (chatGame.getOppPlayer().getIsWin()) winner = chatGame.getOppPlayer().getNameTag();
+
+        builder.appendField("Winner", winner, true);
+        builder.appendField("Turns", String.valueOf(chatGame.getGame().getTurns()), true);
+
+        channel.sendMessage(builder.build());
+    }
+
     // Private Function
 
     private void deleteCanvasMessage(ChatGame chatGame, IChannel channel) {
