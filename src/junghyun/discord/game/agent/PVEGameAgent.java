@@ -54,6 +54,7 @@ public class PVEGameAgent implements GameAgent {
 
         if (game.isFull()) {
             chatGame.setState(ChatGame.STATE.FULL);
+            chatGame.getOppPlayer().setWin();
             MessageManager.getInstance(channel.getGuild()).sendFullCanvas(chatGame, channel);
             GameManager.endGame(chatGame);
             return;
@@ -63,6 +64,7 @@ public class PVEGameAgent implements GameAgent {
         game.setStone(aiPos.getX(), aiPos.getY(), !game.getPlayerColor());
         if (game.isWin(aiPos.getX(), aiPos.getY(), !game.getPlayerColor())) {
             chatGame.setState(ChatGame.STATE.LOSE);
+            chatGame.getOppPlayer().setWin();
             MessageManager.getInstance(channel.getGuild()).sendPvELose(chatGame, aiPos, channel);
             GameManager.endGame(chatGame);
             return;
