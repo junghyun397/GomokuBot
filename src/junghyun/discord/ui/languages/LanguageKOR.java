@@ -1,6 +1,6 @@
 package junghyun.discord.ui.languages;
 
-public class LanguageKOR implements LanguageInterface {
+public class LanguageKOR extends LanguageENG {
 
     @Override
     public String LANGUAGE_CODE() {
