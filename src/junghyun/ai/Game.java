@@ -80,11 +80,11 @@ public class Game {
         int tempLength = y-x;
         int rowx, rowy, length;
 
-        if (tempLength > -1) { //양수
+        if (tempLength > -1) {
             rowx = 0;
             rowy = tempLength;
             length = 15-rowy;
-        } else { //음수
+        } else {
             rowx = Math.abs(y-x);
             rowy = 0;
             length = 15-rowx;
@@ -148,39 +148,10 @@ public class Game {
         this.log.add(new Pos(x, y));
     }
 
-    public void addThreePoint(int x, int y, boolean color) {
-        Stone stone = this.plate[x][y];
-        stone.addThreeCount(color);
-    }
-
-    public void addFourPoint(int x, int y, boolean color) {
-        Stone stone = this.plate[x][y];
-        stone.addFourCount(color);
-    }
-
-    public void addOpenFourPoint(int x, int y, boolean color) {
-        Stone stone = this.plate[x][y];
-        stone.addOpenFourCount(color);
-    }
-
-    public void addFivePoint(int x, int y, boolean color) {
-        Stone stone = this.plate[x][y];
-        stone.addFiveCount(color);
-    }
-
-    public void addPoint(int x, int y, int point) {
-        Stone stone = this.plate[x][y];
-        stone.addPoint(point);
-    }
-
-    private void resetPoint(int x, int y) {
-        this.plate[x][y].resetPoint();
-    }
-
     public void resetAllPoint() {
         for (byte x = 0; x < 15 ; x++) {
             for (byte y = 0; y < 15 ; y++) {
-                this.resetPoint(x, y);
+                this.plate[x][y].resetPoint();
             }
         }
     }

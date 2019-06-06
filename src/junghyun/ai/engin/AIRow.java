@@ -54,18 +54,18 @@ class AIRow {
 
                 Stone stone = this.row[root];
 
-                if (stone.isStoneAdded() && (stone.getColor() == !this.color)) { //상대의 돌
+                if (stone.isStoneAdded() && (stone.getColor() == !this.color)) {
                     stone_count++;
-                } else if (stone.isStoneAdded() && (stone.getColor() == this.color)) { //자신의 돌
+                } else if (stone.isStoneAdded() && (stone.getColor() == this.color)) {
                     stack5 = 10;
-                } else if (!stone.isStoneAdded()) { //돌이 존재하지 않음
+                } else if (!stone.isStoneAdded()) {
                     blank_count++;
                     target_stone = stone;
                 }
 
                 if ((stone_count == 4) && (blank_count == 1)) {
-                    game.addFivePoint(target_stone.getX(), target_stone.getY(), game.getPlayerColor());
-                    game.addPoint(target_stone.getX(), target_stone.getY(), AISetting.LOSE_5_POINT);
+                    game.getPlate()[target_stone.getX()][target_stone.getY()].addFiveCount(game.getPlayerColor());
+                    game.getPlate()[target_stone.getX()][target_stone.getY()].addPoint(AISetting.LOSE_5_POINT);
                 }
             }
         }
@@ -86,18 +86,18 @@ class AIRow {
 
                 Stone stone = this.row[root];
 
-                if (stone.isStoneAdded() && (stone.getColor() == this.color)) { //자신의 돌
+                if (stone.isStoneAdded() && (stone.getColor() == this.color)) {
                     stone_count++;
-                } else if (stone.isStoneAdded() && (stone.getColor() != this.color)) { //상대의 돌
+                } else if (stone.isStoneAdded() && (stone.getColor() != this.color)) {
                     stack5 = 10;
-                } else if (!stone.isStoneAdded()) { //돌이 존재하지 않음
+                } else if (!stone.isStoneAdded()) {
                     blank_count++;
                     target_stone = stone;
                 }
 
                 if ((stone_count == 4) && (blank_count == 1)) {
-                    game.addFivePoint(target_stone.getX(), target_stone.getY(), !game.getPlayerColor());
-                    game.addPoint(target_stone.getX(), target_stone.getY(), AISetting.WIN_5_POINT);
+                    game.getPlate()[target_stone.getX()][target_stone.getY()].addFiveCount(!game.getPlayerColor());
+                    game.getPlate()[target_stone.getX()][target_stone.getY()].addPoint(AISetting.WIN_5_POINT);
                 }
             }
         }
@@ -120,15 +120,15 @@ class AIRow {
 
                 Stone stone = this.row[root];
 
-                if (stone.isStoneAdded() && (stone.getColor() == this.color)) { //자신의 돌
-                    if ((stack6 == 0) || (stack6 == 5)) { //첫번째나 마지막이 공백이 아님
+                if (stone.isStoneAdded() && (stone.getColor() == this.color)) {
+                    if ((stack6 == 0) || (stack6 == 5)) {
                         stack6 = 10;
                     }
                     stone_count++;
-                } else if (stone.isStoneAdded() && (stone.getColor() != this.color)) { //상대의 돌
+                } else if (stone.isStoneAdded() && (stone.getColor() != this.color)) {
                     stack6 = 10;
-                } else if (!stone.isStoneAdded()) { //돌이 존재하지 않음
-                    if (!((stack6 == 0) || (stack6 == 5))) { //첫번째나 마지막이 아님
+                } else if (!stone.isStoneAdded()) {
+                    if (!((stack6 == 0) || (stack6 == 5))) {
                         target_stone = stone;
                     }
                     blank_count++;
@@ -136,8 +136,8 @@ class AIRow {
 
                 if ((stone_count == 3) && (blank_count == 3)) {
                     assert target_stone != null;
-                    game.addOpenFourPoint(target_stone.getX(), target_stone.getY(), !game.getPlayerColor());
-                    game.addPoint(target_stone.getX(), target_stone.getY(), AISetting.MAKE_OPEN_4_POINT);
+                    game.getPlate()[target_stone.getX()][target_stone.getY()].addOpenFourCount(!game.getPlayerColor());
+                    game.getPlate()[target_stone.getX()][target_stone.getY()].addPoint(AISetting.MAKE_OPEN_4_POINT);
                 }
             }
         }
@@ -160,15 +160,15 @@ class AIRow {
 
                 Stone stone = this.row[root];
 
-                if (stone.isStoneAdded() && (stone.getColor() != this.color)) { //상대의 돌
-                    if ((stack6 == 0) || (stack6 == 5)) { //첫번째나 마지막이 공백이 아님
+                if (stone.isStoneAdded() && (stone.getColor() != this.color)) {
+                    if ((stack6 == 0) || (stack6 == 5)) {
                         stack6 = 10;
                     }
                     stone_count++;
-                } else if (stone.isStoneAdded() && (stone.getColor() == this.color)) { //자신의 돌
+                } else if (stone.isStoneAdded() && (stone.getColor() == this.color)) {
                     stack6 = 10;
-                } else if (!stone.isStoneAdded()) { //돌이 존재하지 않음
-                    if (!((stack6 == 0) || (stack6 == 5))) { //첫번째나 마지막이 아님
+                } else if (!stone.isStoneAdded()) {
+                    if (!((stack6 == 0) || (stack6 == 5))) {
                         target_stone = stone;
                     }
                     blank_count++;
@@ -176,8 +176,8 @@ class AIRow {
 
                 if ((stone_count == 3) && (blank_count == 3)) {
                     assert target_stone != null;
-                    game.addOpenFourPoint(target_stone.getX(), target_stone.getY(), game.getPlayerColor());
-                    game.addPoint(target_stone.getX(), target_stone.getY(), AISetting.PLAYER_MAKE_OPEN_4_POINT);
+                    game.getPlate()[target_stone.getX()][target_stone.getY()].addOpenFourCount(game.getPlayerColor());
+                    game.getPlate()[target_stone.getX()][target_stone.getY()].addPoint(AISetting.PLAYER_MAKE_OPEN_4_POINT);
                 }
             }
         }
@@ -201,15 +201,15 @@ class AIRow {
 
                 Stone stone = this.row[root];
 
-                if (stone.isStoneAdded() && (stone.getColor() != this.color)) { //상대의 돌
+                if (stone.isStoneAdded() && (stone.getColor() != this.color)) {
                     stack5 = 10;
                     is_pass = true;
-                } else if (stone.isStoneAdded() && (stone.getColor() == this.color)) { //자신의 돌
+                } else if (stone.isStoneAdded() && (stone.getColor() == this.color)) {
                     if (stack5 < 4) {
                         row3[stack5] = 1;
                     }
                     row4[stack5] = 1;
-                } else if (!stone.isStoneAdded()) { //돌이 존재하지 않음
+                } else if (!stone.isStoneAdded()) {
                     if (stack5 < 4) {
                         row3[stack5] = 0;
                     }
@@ -220,59 +220,59 @@ class AIRow {
             if (!is_pass) {
 
                 if (Arrays.equals(row4, AISetting.FOUR_CASE_1_L)) { //●●○○●
-                    game.addPoint(row[stack+2].getX(), row[stack+2].getY(), AISetting.MAKE_CLOSE_4_POINT);
-                    game.addPoint(row[stack+3].getX(), row[stack+3].getY(), AISetting.MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addPoint(AISetting.MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addPoint(AISetting.MAKE_CLOSE_4_POINT);
 
-                    game.addFourPoint(row[stack+2].getX(), row[stack+2].getY(), !this.game.getPlayerColor());
-                    game.addFourPoint(row[stack+3].getX(), row[stack+3].getY(), !this.game.getPlayerColor());
+                    game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addFourCount(!this.game.getPlayerColor());
+                    game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addFourCount(!this.game.getPlayerColor());
 
                     stack += 7;
                 } else if (Arrays.equals(row4, AISetting.FOUR_CASE_1_R)) { //●○○●●
-                    game.addPoint(row[stack+1].getX(), row[stack+1].getY(), AISetting.MAKE_CLOSE_4_POINT);
-                    game.addPoint(row[stack+2].getX(), row[stack+2].getY(), AISetting.MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addPoint(AISetting.MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addPoint(AISetting.MAKE_CLOSE_4_POINT);
 
-                    game.addFourPoint(row[stack+1].getX(), row[stack+1].getY(), !this.game.getPlayerColor());
-                    game.addFourPoint(row[stack+2].getX(), row[stack+2].getY(), !this.game.getPlayerColor());
+                    game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addFourCount(!this.game.getPlayerColor());
+                    game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addFourCount(!this.game.getPlayerColor());
 
                     stack += 7;
                 } else if (Arrays.equals(row4, AISetting.FOUR_CASE_2_L)) { //●●○●○
-                    game.addPoint(row[stack+2].getX(), row[stack+2].getY(), AISetting.MAKE_CLOSE_4_POINT);
-                    game.addPoint(row[stack+4].getX(), row[stack+4].getY(), AISetting.MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addPoint(AISetting.MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+4].getX()][row[stack+4].getY()].addPoint(AISetting.MAKE_CLOSE_4_POINT);
 
-                    game.addFourPoint(row[stack+2].getX(), row[stack+2].getY(), !this.game.getPlayerColor());
-                    game.addFourPoint(row[stack+4].getX(), row[stack+4].getY(), !this.game.getPlayerColor());
+                    game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addFourCount(!this.game.getPlayerColor());
+                    game.getPlate()[row[stack+4].getX()][row[stack+4].getY()].addFourCount(!this.game.getPlayerColor());
 
                     stack += 7;
                 } else if (Arrays.equals(row4, AISetting.FOUR_CASE_2_R)) { //○●○●●
-                    game.addPoint(row[stack].getX(), row[stack].getY(), AISetting.MAKE_CLOSE_4_POINT);
-                    game.addPoint(row[stack+2].getX(), row[stack+2].getY(), AISetting.MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack].getX()][row[stack].getY()].addPoint(AISetting.MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addPoint(AISetting.MAKE_CLOSE_4_POINT);
 
-                    game.addFourPoint(row[stack].getX(), row[stack].getY(), !this.game.getPlayerColor());
-                    game.addFourPoint(row[stack+2].getX(), row[stack+2].getY(), !this.game.getPlayerColor());
+                    game.getPlate()[row[stack].getX()][row[stack].getY()].addFourCount(!this.game.getPlayerColor());
+                    game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addFourCount(!this.game.getPlayerColor());
 
                     stack += 7;
                 } else if (Arrays.equals(row4, AISetting.FOUR_CASE_3_L)) { //●●●○○
-                    game.addPoint(row[stack+3].getX(), row[stack+3].getY(), AISetting.MAKE_CLOSE_4_POINT);
-                    game.addPoint(row[stack+4].getX(), row[stack+4].getY(), AISetting.MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addPoint(AISetting.MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+4].getX()][row[stack+4].getY()].addPoint(AISetting.MAKE_CLOSE_4_POINT);
 
-                    game.addFourPoint(row[stack+3].getX(), row[stack+3].getY(), !this.game.getPlayerColor());
-                    game.addFourPoint(row[stack+4].getX(), row[stack+4].getY(), !this.game.getPlayerColor());
+                    game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addFourCount(!this.game.getPlayerColor());
+                    game.getPlate()[row[stack+4].getX()][row[stack+4].getY()].addFourCount(!this.game.getPlayerColor());
 
                     stack += 7;
                 } else if (Arrays.equals(row4, AISetting.FOUR_CASE_3_R)) { //○○●●●
-                    game.addPoint(row[stack].getX(), row[stack].getY(), AISetting.MAKE_CLOSE_4_POINT);
-                    game.addPoint(row[stack+1].getX(), row[stack+1].getY(), AISetting.MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack].getX()][row[stack].getY()].addPoint(AISetting.MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addPoint(AISetting.MAKE_CLOSE_4_POINT);
 
-                    game.addFourPoint(row[stack].getX(), row[stack].getY(), !this.game.getPlayerColor());
-                    game.addFourPoint(row[stack+1].getX(), row[stack+1].getY(), !this.game.getPlayerColor());
+                    game.getPlate()[row[stack].getX()][row[stack].getY()].addFourCount(!this.game.getPlayerColor());
+                    game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addFourCount(!this.game.getPlayerColor());
 
                     stack += 7;
                 } else if (Arrays.equals(row4, AISetting.FOUR_CASE_4)) { //●○●○●
-                    game.addPoint(row[stack+1].getX(), row[stack+1].getY(), AISetting.MAKE_CLOSE_4_POINT);
-                    game.addPoint(row[stack+3].getX(), row[stack+3].getY(), AISetting.MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addPoint(AISetting.MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addPoint(AISetting.MAKE_CLOSE_4_POINT);
 
-                    game.addFourPoint(row[stack+1].getX(), row[stack+1].getY(), !this.game.getPlayerColor());
-                    game.addFourPoint(row[stack+3].getX(), row[stack+3].getY(), !this.game.getPlayerColor());
+                    game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addFourCount(!this.game.getPlayerColor());
+                    game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addFourCount(!this.game.getPlayerColor());
 
                     stack += 7;
                 }
@@ -280,17 +280,17 @@ class AIRow {
                 else if (Arrays.equals(row3, AISetting.THREE_CASE_1)) { //●●○○
                     if (this.checkRiskPos(stack-2, stack+3)) {
                         if ((!row[stack-2].isStoneAdded()) && (!row[stack-1].isStoneAdded())) {
-                            game.addPoint(row[stack-2].getX(), row[stack-2].getY(), AISetting.MAKE_OPEN_3_POINT);
-                            game.addPoint(row[stack-1].getX(), row[stack-1].getY(), AISetting.MAKE_OPEN_3_POINT);
+                            game.getPlate()[row[stack-2].getX()][row[stack-2].getY()].addPoint(AISetting.MAKE_OPEN_3_POINT);
+                            game.getPlate()[row[stack-1].getX()][row[stack-1].getY()].addPoint(AISetting.MAKE_OPEN_3_POINT);
 
-                            game.addPoint(row[stack+2].getX(), row[stack+2].getY(), AISetting.MAKE_OPEN_3_POINT);
-                            game.addPoint(row[stack+3].getX(), row[stack+3].getY(), AISetting.MAKE_OPEN_3_POINT);
+                            game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addPoint(AISetting.MAKE_OPEN_3_POINT);
+                            game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addPoint(AISetting.MAKE_OPEN_3_POINT);
 
-                            game.addThreePoint(row[stack-2].getX(), row[stack-2].getY(), !this.game.getPlayerColor());
-                            game.addThreePoint(row[stack-1].getX(), row[stack-1].getY(), !this.game.getPlayerColor());
+                            game.getPlate()[row[stack-2].getX()][row[stack-2].getY()].addThreeCount(!this.game.getPlayerColor());
+                            game.getPlate()[row[stack-1].getX()][row[stack-1].getY()].addThreeCount(!this.game.getPlayerColor());
 
-                            game.addThreePoint(row[stack+2].getX(), row[stack+2].getY(), !this.game.getPlayerColor());
-                            game.addThreePoint(row[stack+3].getX(), row[stack+3].getY(), !this.game.getPlayerColor());
+                            game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addThreeCount(!this.game.getPlayerColor());
+                            game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addThreeCount(!this.game.getPlayerColor());
 
                             stack += 5;
                         }
@@ -299,13 +299,13 @@ class AIRow {
                     if (this.checkRiskPos(stack-2, stack+3)) {
                         if (!row[stack-1].isStoneAdded()) {
                             if ((!row[stack-2].isStoneAdded()) || (!row[stack+4].isStoneAdded())) {
-                                game.addPoint(row[stack-1].getX(), row[stack-1].getY(), AISetting.MAKE_OPEN_3_POINT);
-                                game.addPoint(row[stack+1].getX(), row[stack+1].getY(), AISetting.MAKE_OPEN_3_POINT);
-                                game.addPoint(row[stack+3].getX(), row[stack+3].getY(), AISetting.MAKE_OPEN_3_POINT);
+                                game.getPlate()[row[stack-1].getX()][row[stack-1].getY()].addPoint(AISetting.MAKE_OPEN_3_POINT);
+                                game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addPoint(AISetting.MAKE_OPEN_3_POINT);
+                                game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addPoint(AISetting.MAKE_OPEN_3_POINT);
 
-                                game.addThreePoint(row[stack-1].getX(), row[stack-1].getY(), !this.game.getPlayerColor());
-                                game.addThreePoint(row[stack+1].getX(), row[stack+1].getY(), !this.game.getPlayerColor());
-                                game.addThreePoint(row[stack+3].getX(), row[stack+3].getY(), !this.game.getPlayerColor());
+                                game.getPlate()[row[stack-1].getX()][row[stack-1].getY()].addThreeCount(!this.game.getPlayerColor());
+                                game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addThreeCount(!this.game.getPlayerColor());
+                                game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addThreeCount(!this.game.getPlayerColor());
 
                                 stack += 6;
                             }
@@ -314,11 +314,11 @@ class AIRow {
                 } else if (Arrays.equals(row3, AISetting.THREE_CASE_3)) { //●○○●
                     if (this.checkRiskPos(stack-1, stack+4)) {
                         if ((!row[stack-1].isStoneAdded()) && (!row[stack+4].isStoneAdded())) {
-                            game.addPoint(row[stack+1].getX(), row[stack+1].getY(), AISetting.MAKE_OPEN_3_POINT);
-                            game.addPoint(row[stack+2].getX(), row[stack+2].getY(), AISetting.MAKE_OPEN_3_POINT);
+                            game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addPoint(AISetting.MAKE_OPEN_3_POINT);
+                            game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addPoint(AISetting.MAKE_OPEN_3_POINT);
 
-                            game.addThreePoint(row[stack+1].getX(), row[stack+1].getY(), !this.game.getPlayerColor());
-                            game.addThreePoint(row[stack+2].getX(), row[stack+2].getY(), !this.game.getPlayerColor());
+                            game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addThreeCount(!this.game.getPlayerColor());
+                            game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addThreeCount(!this.game.getPlayerColor());
 
                             stack += 7;
                         }
@@ -346,15 +346,15 @@ class AIRow {
 
                 Stone stone = this.row[root];
 
-                if (stone.isStoneAdded() && (stone.getColor() == this.color)) { //자신의 돌
+                if (stone.isStoneAdded() && (stone.getColor() == this.color)) {
                     stack5 = 10;
                     is_pass = true;
-                } else if (stone.isStoneAdded() && (stone.getColor() != this.color)) { //상대의 돌
+                } else if (stone.isStoneAdded() && (stone.getColor() != this.color)) {
                     if (stack5 < 4) {
                         row3[stack5] = 1;
                     }
                     row4[stack5] = 1;
-                } else if (!stone.isStoneAdded()) { //돌이 존재하지 않음
+                } else if (!stone.isStoneAdded()) {
                     if (stack5 < 4) {
                         row3[stack5] = 0;
                     }
@@ -365,59 +365,59 @@ class AIRow {
             if (!is_pass) {
 
                 if (Arrays.equals(row4, AISetting.FOUR_CASE_1_L)) { //●●○○●
-                    game.addPoint(row[stack+2].getX(), row[stack+2].getY(), AISetting.PLAYER_MAKE_CLOSE_4_POINT);
-                    game.addPoint(row[stack+3].getX(), row[stack+3].getY(), AISetting.PLAYER_MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addPoint(AISetting.PLAYER_MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addPoint(AISetting.PLAYER_MAKE_CLOSE_4_POINT);
 
-                    game.addFourPoint(row[stack+2].getX(), row[stack+2].getY(), this.game.getPlayerColor());
-                    game.addFourPoint(row[stack+3].getX(), row[stack+3].getY(), this.game.getPlayerColor());
+                    game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addFourCount(this.game.getPlayerColor());
+                    game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addFourCount(this.game.getPlayerColor());
 
                     stack += 7;
                 } else if (Arrays.equals(row4, AISetting.FOUR_CASE_1_R)) { //●○○●●
-                    game.addPoint(row[stack+1].getX(), row[stack+1].getY(), AISetting.PLAYER_MAKE_CLOSE_4_POINT);
-                    game.addPoint(row[stack+2].getX(), row[stack+2].getY(), AISetting.PLAYER_MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addPoint(AISetting.PLAYER_MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addPoint(AISetting.PLAYER_MAKE_CLOSE_4_POINT);
 
-                    game.addFourPoint(row[stack+1].getX(), row[stack+1].getY(), this.game.getPlayerColor());
-                    game.addFourPoint(row[stack+2].getX(), row[stack+2].getY(), this.game.getPlayerColor());
+                    game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addFourCount(this.game.getPlayerColor());
+                    game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addFourCount(this.game.getPlayerColor());
 
                     stack += 7;
                 } else if (Arrays.equals(row4, AISetting.FOUR_CASE_2_L)) { //●●○●○
-                    game.addPoint(row[stack+2].getX(), row[stack+2].getY(), AISetting.PLAYER_MAKE_CLOSE_4_POINT);
-                    game.addPoint(row[stack+4].getX(), row[stack+4].getY(), AISetting.PLAYER_MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addPoint(AISetting.PLAYER_MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+4].getX()][row[stack+4].getY()].addPoint(AISetting.PLAYER_MAKE_CLOSE_4_POINT);
 
-                    game.addFourPoint(row[stack+2].getX(), row[stack+2].getY(), this.game.getPlayerColor());
-                    game.addFourPoint(row[stack+4].getX(), row[stack+4].getY(), this.game.getPlayerColor());
+                    game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addFourCount(this.game.getPlayerColor());
+                    game.getPlate()[row[stack+4].getX()][row[stack+4].getY()].addFourCount(this.game.getPlayerColor());
 
                     stack += 7;
                 } else if (Arrays.equals(row4, AISetting.FOUR_CASE_2_R)) { //○●○●●
-                    game.addPoint(row[stack].getX(), row[stack].getY(), AISetting.PLAYER_MAKE_CLOSE_4_POINT);
-                    game.addPoint(row[stack+2].getX(), row[stack+2].getY(), AISetting.PLAYER_MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack].getX()][row[stack].getY()].addPoint(AISetting.PLAYER_MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addPoint(AISetting.PLAYER_MAKE_CLOSE_4_POINT);
 
-                    game.addFourPoint(row[stack].getX(), row[stack].getY(), this.game.getPlayerColor());
-                    game.addFourPoint(row[stack+2].getX(), row[stack+2].getY(), this.game.getPlayerColor());
+                    game.getPlate()[row[stack].getX()][row[stack].getY()].addFourCount(this.game.getPlayerColor());
+                    game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addFourCount(this.game.getPlayerColor());
 
                     stack += 7;
                 } else if (Arrays.equals(row4, AISetting.FOUR_CASE_3_L)) { //●●●○○
-                    game.addPoint(row[stack+3].getX(), row[stack+3].getY(), AISetting.PLAYER_MAKE_CLOSE_4_POINT);
-                    game.addPoint(row[stack+4].getX(), row[stack+4].getY(), AISetting.PLAYER_MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addPoint(AISetting.PLAYER_MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+4].getX()][row[stack+4].getY()].addPoint(AISetting.PLAYER_MAKE_CLOSE_4_POINT);
 
-                    game.addFourPoint(row[stack+3].getX(), row[stack+3].getY(), this.game.getPlayerColor());
-                    game.addFourPoint(row[stack+4].getX(), row[stack+4].getY(), this.game.getPlayerColor());
+                    game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addFourCount(this.game.getPlayerColor());
+                    game.getPlate()[row[stack+4].getX()][row[stack+4].getY()].addFourCount(this.game.getPlayerColor());
 
                     stack += 7;
                 } else if (Arrays.equals(row4, AISetting.FOUR_CASE_3_R)) { //○○●●●
-                    game.addPoint(row[stack].getX(), row[stack].getY(), AISetting.PLAYER_MAKE_CLOSE_4_POINT);
-                    game.addPoint(row[stack+1].getX(), row[stack+1].getY(), AISetting.PLAYER_MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack].getX()][row[stack].getY()].addPoint(AISetting.PLAYER_MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addPoint(AISetting.PLAYER_MAKE_CLOSE_4_POINT);
 
-                    game.addFourPoint(row[stack].getX(), row[stack].getY(), this.game.getPlayerColor());
-                    game.addFourPoint(row[stack+1].getX(), row[stack+1].getY(), this.game.getPlayerColor());
+                    game.getPlate()[row[stack].getX()][row[stack].getY()].addFourCount(this.game.getPlayerColor());
+                    game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addFourCount(this.game.getPlayerColor());
 
                     stack += 7;
                 } else if (Arrays.equals(row4, AISetting.FOUR_CASE_4)) { //●○●○●
-                    game.addPoint(row[stack+1].getX(), row[stack+1].getY(), AISetting.PLAYER_MAKE_CLOSE_4_POINT);
-                    game.addPoint(row[stack+3].getX(), row[stack+3].getY(), AISetting.PLAYER_MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addPoint(AISetting.PLAYER_MAKE_CLOSE_4_POINT);
+                    game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addPoint(AISetting.PLAYER_MAKE_CLOSE_4_POINT);
 
-                    game.addFourPoint(row[stack+1].getX(), row[stack+1].getY(), this.game.getPlayerColor());
-                    game.addFourPoint(row[stack+3].getX(), row[stack+3].getY(), this.game.getPlayerColor());
+                    game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addFourCount(this.game.getPlayerColor());
+                    game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addFourCount(this.game.getPlayerColor());
 
                     stack += 7;
                 }
@@ -425,17 +425,17 @@ class AIRow {
                 else if (Arrays.equals(row3, AISetting.THREE_CASE_1)) { //●●○○
                     if (this.checkRiskPos(stack-2, stack+3)) {
                         if ((!row[stack-2].isStoneAdded()) && (!row[stack-1].isStoneAdded())) {
-                            game.addPoint(row[stack-2].getX(), row[stack-2].getY(), AISetting.PLAYER_MAKE_OPEN_3_POINT);
-                            game.addPoint(row[stack-1].getX(), row[stack-1].getY(), AISetting.PLAYER_MAKE_OPEN_3_POINT);
+                            game.getPlate()[row[stack-2].getX()][row[stack-2].getY()].addPoint(AISetting.PLAYER_MAKE_OPEN_3_POINT);
+                            game.getPlate()[row[stack-1].getX()][row[stack-1].getY()].addPoint(AISetting.PLAYER_MAKE_OPEN_3_POINT);
 
-                            game.addPoint(row[stack+2].getX(), row[stack+2].getY(), AISetting.PLAYER_MAKE_OPEN_3_POINT);
-                            game.addPoint(row[stack+3].getX(), row[stack+3].getY(), AISetting.PLAYER_MAKE_OPEN_3_POINT);
+                            game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addPoint(AISetting.PLAYER_MAKE_OPEN_3_POINT);
+                            game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addPoint(AISetting.PLAYER_MAKE_OPEN_3_POINT);
 
-                            game.addThreePoint(row[stack-2].getX(), row[stack-2].getY(), this.game.getPlayerColor());
-                            game.addThreePoint(row[stack-1].getX(), row[stack-1].getY(), this.game.getPlayerColor());
+                            game.getPlate()[row[stack-2].getX()][row[stack-2].getY()].addThreeCount(this.game.getPlayerColor());
+                            game.getPlate()[row[stack-1].getX()][row[stack-1].getY()].addThreeCount(this.game.getPlayerColor());
 
-                            game.addThreePoint(row[stack+2].getX(), row[stack+2].getY(), this.game.getPlayerColor());
-                            game.addThreePoint(row[stack+3].getX(), row[stack+3].getY(), this.game.getPlayerColor());
+                            game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addThreeCount(this.game.getPlayerColor());
+                            game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addThreeCount(this.game.getPlayerColor());
 
                             stack += 5;
                         }
@@ -444,13 +444,13 @@ class AIRow {
                     if (this.checkRiskPos(stack-2, stack+3)) {
                         if (!row[stack-1].isStoneAdded()) {
                             if ((!row[stack-2].isStoneAdded()) || (!row[stack+4].isStoneAdded())) {
-                                game.addPoint(row[stack-1].getX(), row[stack-1].getY(), AISetting.PLAYER_MAKE_OPEN_3_POINT);
-                                game.addPoint(row[stack+1].getX(), row[stack+1].getY(), AISetting.PLAYER_MAKE_OPEN_3_POINT);
-                                game.addPoint(row[stack+3].getX(), row[stack+3].getY(), AISetting.PLAYER_MAKE_OPEN_3_POINT);
+                                game.getPlate()[row[stack-1].getX()][row[stack-1].getY()].addPoint(AISetting.PLAYER_MAKE_OPEN_3_POINT);
+                                game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addPoint(AISetting.PLAYER_MAKE_OPEN_3_POINT);
+                                game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addPoint(AISetting.PLAYER_MAKE_OPEN_3_POINT);
 
-                                game.addThreePoint(row[stack-1].getX(), row[stack-1].getY(), this.game.getPlayerColor());
-                                game.addThreePoint(row[stack+1].getX(), row[stack+1].getY(), this.game.getPlayerColor());
-                                game.addThreePoint(row[stack+3].getX(), row[stack+3].getY(), this.game.getPlayerColor());
+                                game.getPlate()[row[stack-1].getX()][row[stack-1].getY()].addThreeCount(this.game.getPlayerColor());
+                                game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addThreeCount(this.game.getPlayerColor());
+                                game.getPlate()[row[stack+3].getX()][row[stack+3].getY()].addThreeCount(this.game.getPlayerColor());
 
                                 stack += 6;
                             }
@@ -459,11 +459,11 @@ class AIRow {
                 } else if (Arrays.equals(row3, AISetting.THREE_CASE_3)) { //●○○●
                     if (this.checkRiskPos(stack-1, stack+4)) {
                         if ((!row[stack-1].isStoneAdded()) && (!row[stack+4].isStoneAdded())) {
-                            game.addPoint(row[stack+1].getX(), row[stack+1].getY(), AISetting.PLAYER_MAKE_OPEN_3_POINT);
-                            game.addPoint(row[stack+2].getX(), row[stack+2].getY(), AISetting.PLAYER_MAKE_OPEN_3_POINT);
+                            game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addPoint(AISetting.PLAYER_MAKE_OPEN_3_POINT);
+                            game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addPoint(AISetting.PLAYER_MAKE_OPEN_3_POINT);
 
-                            game.addThreePoint(row[stack+1].getX(), row[stack+1].getY(), this.game.getPlayerColor());
-                            game.addThreePoint(row[stack+2].getX(), row[stack+2].getY(), this.game.getPlayerColor());
+                            game.getPlate()[row[stack+1].getX()][row[stack+1].getY()].addThreeCount(this.game.getPlayerColor());
+                            game.getPlate()[row[stack+2].getX()][row[stack+2].getY()].addThreeCount(this.game.getPlayerColor());
 
                             stack += 7;
                         }

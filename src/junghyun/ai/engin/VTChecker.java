@@ -26,7 +26,7 @@ class VTChecker {
         } catch (CloneNotSupportedException e) {
             e.printStackTrace();
         }
-        if (vtPos != null) this.game.addPoint(this.vtPos.getX(), this.vtPos.getY(), AISetting.MAKE_VT_POINT);
+        if (vtPos != null) this.game.getPlate()[this.vtPos.getX()][this.vtPos.getY()].addPoint(AISetting.MAKE_VT_POINT);
     }
 
     private void bootVTChecker() throws CloneNotSupportedException {

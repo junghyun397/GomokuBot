@@ -49,9 +49,9 @@ public class AIBase {
             for (int y = 0; y < 15; y++) {
                 Stone stone = game.getPlate()[x][y];
                 if (stone.isStoneAdded()) {
-                    if (stone.getColor() == game.getColor()) { //자신의 돌
+                    if (stone.getColor() == game.getColor()) {
                         this.addDotPoint(stone, AISetting.DEF_AI_POINT);
-                    } else if (stone.getColor() != game.getColor()) { //상대의 돌
+                    } else if (stone.getColor() != game.getColor()) {
                         this.addDotPoint(stone, AISetting.DEF_PLAYER_POINT);
                     }
                 }
@@ -59,6 +59,7 @@ public class AIBase {
         }
     }
 
+    @SuppressWarnings("Duplicates")
     private void sumRowPoints() {
         AIRow[] x_rows = new AIRow[15];
         AIRow[] y_rows = new AIRow[15];
@@ -98,17 +99,17 @@ public class AIBase {
         for (int x = 0; x < 15; x++) {
             for (int y = 0; y < 15; y++) {
                 Stone stone = plate[x][y];
-                if (stone.getColor() == this.game.getPlayerColor()) { //플레이어
+                if (stone.getColor() == this.game.getPlayerColor()) {
                     if ((stone.getFourCount(this.game.getPlayerColor()) > 0) && (stone.getThreeCount(this.game.getPlayerColor()) > 0)) { //4-3
-                        game.addPoint(stone.getX(), stone.getY(), AISetting.PLAYER_MAKE_4_3_POINT);
+                        this.game.getPlate()[x][y].addPoint(AISetting.PLAYER_MAKE_4_3_POINT);
                     } else if (stone.getFourCount(this.game.getPlayerColor()) > 1) { //4-4
-                        game.addPoint(stone.getX(), stone.getY(), AISetting.PLAYER_MAKE_4_4_POINT);
+                        this.game.getPlate()[x][y].addPoint(AISetting.PLAYER_MAKE_4_4_POINT);
                     }
-                } else { //인공지능
+                } else {
                     if ((stone.getFourCount(!this.game.getPlayerColor()) > 0) && (stone.getThreeCount(!this.game.getPlayerColor()) > 0)) { //4-3
-                        game.addPoint(stone.getX(), stone.getY(), AISetting.MAKE_4_3_POINT);
+                        this.game.getPlate()[x][y].addPoint(AISetting.MAKE_4_3_POINT);
                     } else if (stone.getFourCount(!this.game.getPlayerColor()) > 1) { //4-4
-                        game.addPoint(stone.getX(), stone.getY(), AISetting.MAKE_4_4_POINT);
+                        this.game.getPlate()[x][y].addPoint(AISetting.MAKE_4_4_POINT);
                     }
                 }
             }
