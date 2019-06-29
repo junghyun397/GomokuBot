@@ -17,6 +17,7 @@ public class AIDisplay {
 
     private static AIBase.DIFF diff = AIBase.DIFF.MID;
     private static boolean useGrid = true;
+    private static boolean usePrintStep = true;
 
     public static void main(String[] args) {
         AIDisplay.scanner = new Scanner(System.in);
@@ -36,6 +37,12 @@ public class AIDisplay {
         System.out.print("Select use Grid: ");
         int grid = Integer.valueOf(AIDisplay.scanner.nextLine());
         if (grid == 1) AIDisplay.useGrid = false;
+        System.out.print("\n");
+
+        System.out.print("0: Print EVE step 1: Do not print EVE step\n");
+        System.out.print("Select use print EVE step: ");
+        int printStep = Integer.valueOf(AIDisplay.scanner.nextLine());
+        if (printStep == 1) AIDisplay.usePrintStep = false;
         System.out.print("\n");
 
         AIDisplay.selectGameType();
@@ -91,7 +98,7 @@ public class AIDisplay {
                 AIDisplay.game.setPlayerColor(!AIDisplay.game.getPlayerColor());
                 Pos aiPos = new AIBase(AIDisplay.game, AIDisplay.diff).getAiPoint();
                 AIDisplay.game.setStone(aiPos.getX(), aiPos.getY());
-//                AIDisplay.printState(aiPos);
+                if (AIDisplay.usePrintStep) AIDisplay.printState(aiPos);
 
                 if (AIDisplay.game.isWin(aiPos.getX(), aiPos.getY(), AIDisplay.game.getPlayerColor())) {
                     String rsColor = "BLACK";
@@ -101,14 +108,14 @@ public class AIDisplay {
                     } else winBlack++;
 
                     AIDisplay.printState(aiPos);
-                    System.out.print("#" + (i + 1) + " " + rsColor + " Victory, " + "End. \n");
+                    System.out.print("#" + (i + 1) + " " + rsColor + " Victory, " + "End. \n\n");
                     break;
                 }
 
                 if (AIDisplay.game.isFull()) {
                     fullCount++;
                     AIDisplay.printState(aiPos);
-                    System.out.print("#" + (i + 1) + " Full. \n");
+                    System.out.print("#" + (i + 1) + " Full. \n\n");
                     break;
                 }
             }
