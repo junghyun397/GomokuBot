@@ -13,7 +13,7 @@ public class MessageManager {
     private static HashMap<String, MessageAgent> agentList;
     private static HashMap<Long, MessageAgent> langList;
 
-    public static String baseLanguage = "ENG";
+    private static String baseLanguage = "ENG";
 
     public static String LanguageList = "";
     public static EmbedObject langEmbed;

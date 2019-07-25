@@ -1,0 +1,24 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+sourceSets.main.java.srcDirs = ['src']
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.discord4j:Discord4J:2.10.1'
+    compile 'mysql:mysql-connector-java:5.1.34'
+    compile 'org.tritonus:tritonus-dsp:0.3.6'
+}
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'GomokuBot',
+                'Implementation-Version': 3.6,
+                'Main-Class': 'junghyun.Main'
+    }
+}
+
+mainClassName = 'junghyun.Main'
