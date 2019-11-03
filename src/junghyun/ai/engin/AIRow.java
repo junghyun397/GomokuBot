@@ -17,7 +17,7 @@ class AIRow {
 
     AIRow(Row row, boolean color, Game game) {
         super();
-        this.row = row.get_row();
+        this.row = row.getRow();
         this.length = this.row.length;
         this.color = color;
         this.game = game;

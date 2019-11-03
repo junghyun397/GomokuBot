@@ -29,7 +29,7 @@ public class Row {
         return false;
     }
 
-    public Stone[] get_row() {
+    public Stone[] getRow() {
         return this.row;
     }
 

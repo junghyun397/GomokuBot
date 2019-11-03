@@ -8,9 +8,8 @@ repositories {
 }
 
 dependencies {
-    compile 'com.discord4j:Discord4J:2.10.1'
-    compile 'mysql:mysql-connector-java:5.1.34'
-    compile 'org.tritonus:tritonus-dsp:0.3.6'
+    implementation 'com.discord4j:discord4j-core:3.0.10'
+    implementation 'mysql:mysql-connector-java:8.0.18'
 }
 
 jar {

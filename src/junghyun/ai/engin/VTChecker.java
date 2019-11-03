@@ -83,7 +83,6 @@ class VTChecker {
                 if (countThree + countFour > 1) {
                     this.vtPos = new Pos(topX, topY);
                     this.isFind = true;
-                    System.out.print("Found!");
                     return;
                 } else if (countThree + countFour > 0) {
                     Game nGame = bGame.deepCopy();

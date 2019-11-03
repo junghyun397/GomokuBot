@@ -8,31 +8,60 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class AIBase {
+public class AIAgent {
 
     public enum DIFF {EAS, MID, EXT}
-    private DIFF diff;
 
     private Game game;
-
+    private DIFF diff;
     private Random random;
 
-    public AIBase(Game game, DIFF diff) {
+    private AIRow[] xRows = new AIRow[15];
+    private AIRow[] yRows = new AIRow[15];
+    private AIRow[] xyRows = new AIRow[29];
+    private AIRow[] yxRows = new AIRow[29];
+
+    public AIAgent(Game game, DIFF diff) {
         this.game = game;
         this.diff = diff;
         this.random = new Random();
-    }
 
-    public AIBase(Game game, DIFF diff, int seed) {
-        this.game = game;
-        this.diff = diff;
-        this.random = new Random(seed);
+        this.initAIRows();
     }
 
     public Pos getAiPoint() {
         this.sumPoint();
         return this.getMax();
     }
+
+    private void initAIRows() {
+        for (int i = 0; i < 15; i++) {
+            xRows[i] = new AIRow(game.getXRow(i), game.getColor(), this.game);
+            yRows[i] = new AIRow(game.getYRow(i), game.getColor(), this.game);
+            xyRows[i] = new AIRow(game.getXYRow(i, 0), game.getColor(), this.game);
+            yxRows[i] = new AIRow(game.getYXRow(i, 0), game.getColor(), this.game);
+        }
+
+        for (int i = 14; i < 29; i++) {
+            xyRows[i] = new AIRow(game.getXYRow(0, i), game.getColor(), this.game);
+            yxRows[i] = new AIRow(game.getYXRow(14, i), game.getColor(), this.game);
+        }
+    }
+
+    private void sumRowPoints() {
+        for (int i = 0; i < 15; i++) {
+            xRows[i].checkPoints();
+            yRows[i].checkPoints();
+            xyRows[i].checkPoints();
+            yxRows[i].checkPoints();
+        }
+
+        for (int i = 16; i < 29; i++) {
+            xyRows[i].checkPoints();
+            yxRows[i].checkPoints();
+        }
+    }
+
 
     private void sumPoint() {
         game.resetAllPoint();
@@ -59,54 +88,21 @@ public class AIBase {
         }
     }
 
-    @SuppressWarnings("Duplicates")
-    private void sumRowPoints() {
-        AIRow[] x_rows = new AIRow[15];
-        AIRow[] y_rows = new AIRow[15];
-
-        AIRow[] xy_rows = new AIRow[29];
-        AIRow[] yx_rows = new AIRow[29];
-
-        for (int i = 0; i < 15; i++) {
-            x_rows[i] = new AIRow(game.getXRow(i), game.getColor(), this.game);
-            y_rows[i] = new AIRow(game.getYRow(i), game.getColor(), this.game);
-            xy_rows[i] = new AIRow(game.getXYRow(i, 0), game.getColor(), this.game);
-            yx_rows[i] = new AIRow(game.getYXRow(i, 0), game.getColor(), this.game);
-        }
-
-        int row_index = 14;
-        for (int i = 0; i < 14; i++) {
-            row_index++;
-            xy_rows[row_index] = new AIRow(game.getXYRow(0, i), game.getColor(), this.game);
-            yx_rows[row_index] = new AIRow(game.getYXRow(14, i), game.getColor(), this.game);
-        }
-
-        for (int i = 0; i < 15; i++) {
-            x_rows[i].checkPoints();
-            y_rows[i].checkPoints();
-            xy_rows[i].checkPoints();
-            yx_rows[i].checkPoints();
-        }
-
-        for (int i = 16; i < 29; i++) {
-            xy_rows[i].checkPoints();
-            yx_rows[i].checkPoints();
-        }
-    }
-
     private void sumOverlapPoint() {
         Stone[][] plate = game.getPlate();
         for (int x = 0; x < 15; x++) {
             for (int y = 0; y < 15; y++) {
                 Stone stone = plate[x][y];
                 if (stone.getColor() == this.game.getPlayerColor()) {
-                    if ((stone.getFourCount(this.game.getPlayerColor()) > 0) && (stone.getThreeCount(this.game.getPlayerColor()) > 0)) { //4-3
+                    if ((stone.getFourCount(this.game.getPlayerColor()) > 0)
+                            && (stone.getThreeCount(this.game.getPlayerColor()) > 0)) { //4-3
                         this.game.getPlate()[x][y].addPoint(AISetting.PLAYER_MAKE_4_3_POINT);
                     } else if (stone.getFourCount(this.game.getPlayerColor()) > 1) { //4-4
                         this.game.getPlate()[x][y].addPoint(AISetting.PLAYER_MAKE_4_4_POINT);
                     }
                 } else {
-                    if ((stone.getFourCount(!this.game.getPlayerColor()) > 0) && (stone.getThreeCount(!this.game.getPlayerColor()) > 0)) { //4-3
+                    if ((stone.getFourCount(!this.game.getPlayerColor()) > 0)
+                            && (stone.getThreeCount(!this.game.getPlayerColor()) > 0)) { //4-3
                         this.game.getPlate()[x][y].addPoint(AISetting.MAKE_4_3_POINT);
                     } else if (stone.getFourCount(!this.game.getPlayerColor()) > 1) { //4-4
                         this.game.getPlate()[x][y].addPoint(AISetting.MAKE_4_4_POINT);
