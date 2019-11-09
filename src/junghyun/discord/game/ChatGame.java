@@ -1,27 +1,27 @@
 package junghyun.discord.game;
 
 import junghyun.ai.Game;
-import sx.blah.discord.handle.obj.IMessage;
+import net.dv8tion.jda.api.entities.Message;
 
 import java.util.LinkedList;
 import java.util.List;
 
 public class ChatGame {
 
-    private long longId;
-    private String nameTag;
+    final private long longId;
+    final private String nameTag;
 
-    private Game game;
+    final private Game game;
 
-    private OppPlayer oppPlayer;
+    final private OppPlayer oppPlayer;
+
+    final private String iconURL;
 
     public enum STATE {INP, WIN, PVPWIN, RESIGN, FULL, LOSE, TIMEOUT}
     private STATE state;
 
-    private List<IMessage> msgList;
+    private List<Message> msgList;
     private long updateTime;
-
-    private String iconURL;
 
     public ChatGame(long longId, Game game, String nameTag, OppPlayer oppPlayer, String iconURL) {
         this.longId = longId;
@@ -53,7 +53,7 @@ public class ChatGame {
         return this.oppPlayer;
     }
 
-    public void addMessage(IMessage iMessage) {
+    public void addMessage(Message iMessage) {
         this.msgList.add(iMessage);
     }
 
@@ -78,7 +78,7 @@ public class ChatGame {
         return this.state;
     }
 
-    public List<IMessage> getMessageList() {
+    public List<Message> getMessageList() {
         return this.msgList;
     }
 

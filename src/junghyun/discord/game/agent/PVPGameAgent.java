@@ -5,14 +5,14 @@ import junghyun.ai.Pos;
 import junghyun.discord.GameManager;
 import junghyun.discord.game.ChatGame;
 import junghyun.discord.ui.MessageManager;
-import sx.blah.discord.handle.obj.IChannel;
-import sx.blah.discord.handle.obj.IUser;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
 
 import java.util.Random;
 
 public class PVPGameAgent implements GameAgent {
 
-    private ChatGame chatGame;
+    final private ChatGame chatGame;
 
     private boolean ownerColor;
     private boolean turnColor = true;
@@ -22,7 +22,7 @@ public class PVPGameAgent implements GameAgent {
     }
 
     @Override
-    public void startGame(IChannel channel) {
+    public void startGame(TextChannel channel) {
         this.ownerColor = new Random().nextBoolean();
 
         String textFAttack = chatGame.getNameTag();
@@ -33,13 +33,13 @@ public class PVPGameAgent implements GameAgent {
     }
 
     @Override
-    public void putStone(IUser user, Pos pos, IChannel channel) {
+    public void putStone(User user, Pos pos, TextChannel channel) {
         Game game = chatGame.onUpdate().getGame();
 
         long nowPlayer = chatGame.getLongId();
         if (this.turnColor != this.ownerColor) nowPlayer = chatGame.getOppPlayer().getLongId();
 
-        if (nowPlayer != user.getLongID()) {
+        if (nowPlayer != user.getIdLong()) {
             String turnName = chatGame.getNameTag();
             if (nowPlayer == chatGame.getOppPlayer().getLongId()) {
                 turnName = chatGame.getOppPlayer().getNameTag();
@@ -59,7 +59,7 @@ public class PVPGameAgent implements GameAgent {
 
             String winPlayer = chatGame.getNameTag();
             String losePlayer = chatGame.getNameTag();
-            if (user.getLongID() == chatGame.getOppPlayer().getLongId()) {
+            if (user.getIdLong() == chatGame.getOppPlayer().getLongId()) {
                 chatGame.getOppPlayer().setWin();
                 winPlayer = chatGame.getOppPlayer().getNameTag();
             } else {
@@ -90,13 +90,13 @@ public class PVPGameAgent implements GameAgent {
     }
 
     @Override
-    public void resignGame(IUser user, IChannel channel) {
+    public void resignGame(User user, TextChannel channel) {
         chatGame.setState(ChatGame.STATE.RESIGN);
 
         String winPlayer = chatGame.getNameTag();
         String losePlayer = chatGame.getNameTag();
 
-        if (user.getLongID() == chatGame.getLongId()) winPlayer = chatGame.getOppPlayer().getNameTag();
+        if (user.getIdLong() == chatGame.getLongId()) winPlayer = chatGame.getOppPlayer().getNameTag();
         else losePlayer = chatGame.getOppPlayer().getNameTag();
 
         MessageManager.getInstance(channel.getGuild()).sendPvPResign(chatGame, winPlayer, losePlayer, channel);

@@ -2,25 +2,27 @@ package junghyun.discord.game.agent;
 
 import junghyun.ai.Game;
 import junghyun.ai.Pos;
-import junghyun.ai.engin.AIBase;
+import junghyun.ai.engin.AIAgent;
 import junghyun.discord.GameManager;
 import junghyun.discord.game.ChatGame;
 import junghyun.discord.ui.MessageManager;
-import sx.blah.discord.handle.obj.IChannel;
-import sx.blah.discord.handle.obj.IUser;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
 
 import java.util.Random;
 
 public class PVEGameAgent implements GameAgent {
 
-    private ChatGame chatGame;
+    final private ChatGame chatGame;
+    final private AIAgent aiAgent;
 
     public PVEGameAgent(ChatGame chatGame) {
         this.chatGame = chatGame;
+        this.aiAgent = new AIAgent(chatGame.getGame(), AIAgent.DIFF.MID);
     }
 
     @Override
-    public void startGame(IChannel channel) {
+    public void startGame(TextChannel channel) {
         int rColor = new Random().nextInt(3);
         boolean playerColor = true;
         if (rColor > 0) playerColor = false;
@@ -36,8 +38,8 @@ public class PVEGameAgent implements GameAgent {
     }
 
     @Override
-    public void putStone(IUser user, Pos pos, IChannel channel) {
-        Game game = chatGame.onUpdate().getGame();
+    public void putStone(User user, Pos pos, TextChannel channel) {
+        Game game = chatGame.getGame();
 
         if (!game.canSetStone(pos.getX(), pos.getY())) {
             MessageManager.getInstance(channel.getGuild()).sendStoneAlreadyIn(chatGame, channel);
@@ -60,7 +62,7 @@ public class PVEGameAgent implements GameAgent {
             return;
         }
 
-        Pos aiPos = new AIBase(game, AIBase.DIFF.MID).getAiPoint();
+        Pos aiPos = this.aiAgent.getAiPoint();
         game.setStone(aiPos.getX(), aiPos.getY(), !game.getPlayerColor());
         if (game.isWin(aiPos.getX(), aiPos.getY(), !game.getPlayerColor())) {
             chatGame.setState(ChatGame.STATE.LOSE);
@@ -74,7 +76,7 @@ public class PVEGameAgent implements GameAgent {
     }
 
     @Override
-    public void resignGame(IUser user, IChannel channel) {
+    public void resignGame(User user, TextChannel channel) {
         chatGame.setState(ChatGame.STATE.RESIGN);
         MessageManager.getInstance(channel.getGuild()).sendPvEResign(chatGame, channel);
         GameManager.endGame(chatGame);

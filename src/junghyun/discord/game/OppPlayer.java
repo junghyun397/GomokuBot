@@ -3,10 +3,10 @@ package junghyun.discord.game;
 public class OppPlayer {
 
     public enum PLAYER_TYPE {HUMAN, AI}
-    private PLAYER_TYPE playerType;
+    final private PLAYER_TYPE playerType;
 
-    private String nameTag;
-    private long longId;
+    final private String nameTag;
+    final private long longId;
 
     private boolean isWin;
 

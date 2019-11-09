@@ -5,26 +5,33 @@ import junghyun.discord.db.DBManager;
 import junghyun.discord.db.Logger;
 import junghyun.discord.db.SqlManager;
 import junghyun.discord.ui.MessageManager;
-import sx.blah.discord.api.ClientBuilder;
-import sx.blah.discord.api.IDiscordClient;
-import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
-import sx.blah.discord.handle.obj.ActivityType;
-import sx.blah.discord.handle.obj.IChannel;
-import sx.blah.discord.handle.obj.IUser;
-import sx.blah.discord.handle.obj.StatusType;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
+
+import javax.security.auth.login.LoginException;
+import java.util.EnumSet;
+import java.util.Objects;
 
 public class BotManager {
 
-    private static IDiscordClient client;
-    private static IChannel officialChannel;
+    private static JDA client;
+    private static TextChannel officialChannel;
 
-    public static void startGomokuBot() {
-        client = new ClientBuilder().setPresence(StatusType.ONLINE, ActivityType.WATCHING, "~help")
-                .withToken(Settings.TOKEN).build();
-        client.getDispatcher().registerListener(new EventListener());
-        client.login();
+    public static void startGomokuBot() throws LoginException, InterruptedException {
+        JDABuilder builder = new JDABuilder(Settings.TOKEN);
+        builder.setDisabledCacheFlags(EnumSet.of(CacheFlag.ACTIVITY, CacheFlag.VOICE_STATE));
+        builder.setBulkDeleteSplittingEnabled(false);
+        builder.setActivity(Activity.watching("~help"));
 
-        EventListener.onStartLoadGuilds();
+        builder.addEventListeners(new EventListener());
+
+        client = builder.build();
+        client.awaitReady();
 
         SqlManager.connectMysql();
         GameManager.bootGameManager();
@@ -32,73 +39,83 @@ public class BotManager {
     }
 
     public static void endGomokuBot() {
-        BotManager.client.logout();
+        BotManager.client.shutdown();
     }
 
     static void processCommand(MessageReceivedEvent event) {
-        String[] splitText = event.getMessage().getContent().toLowerCase().split(" ");
-        Logger.loggerCommand(event.getAuthor().getName() + " : " + event.getGuild().getName() + " / " + event.getMessage().getContent());
+        if (event.getMessage().getContentDisplay().isEmpty() || event.getAuthor().isFake()) return;
+
+        String[] splitText = event.getMessage().getContentDisplay().toLowerCase().split(" ");
+        Logger.loggerCommand(event.getAuthor().getName() + " : " + event.getAuthor().getName()
+                + " / " + event.getMessage().getContentDisplay());
 
         switch (splitText[0]) {
             case "~help":
-                MessageManager.getInstance(event.getGuild()).sendHelp(event.getChannel());
+                MessageManager.getInstance(event.getGuild()).sendHelp(event.getTextChannel());
                 break;
             case "~lang":
                 if (splitText.length != 2) {
-                    MessageManager.getInstance(event.getGuild()).sendLanguageChange(event.getChannel(), null);
+                    MessageManager.getInstance(event.getGuild()).sendLanguageChange(event.getTextChannel(), null);
                     break;
                 }
                 String lang = splitText[1].toUpperCase();
 
-                if (MessageManager.checkLanguage(lang)) MessageManager.setLanguage(event.getGuild().getLongID(), lang);
+                if (MessageManager.checkLanguage(lang)) MessageManager.setLanguage(event.getGuild().getIdLong(), lang);
                 else lang = null;
 
-                MessageManager.getInstance(event.getGuild()).sendLanguageChange(event.getChannel(), lang);
+                MessageManager.getInstance(event.getGuild()).sendLanguageChange(event.getTextChannel(), lang);
                 break;
             case "~rank":
-                MessageManager.getInstance(event.getGuild()).sendRank(event.getAuthor(), event.getChannel(), DBManager.getRankingData(Settings.RANK_COUNT));
+                MessageManager.getInstance(event.getGuild())
+                        .sendRank(event.getAuthor(),
+                                event.getTextChannel(),
+                                Objects.requireNonNull(DBManager.getRankingData(Settings.RANK_COUNT)));
                 break;
             case "~start":
-                IUser targetUser = null;
-                if (event.getMessage().getMentions().size() > 0) targetUser = event.getMessage().getMentions().get(0);
-                GameManager.createGame(event.getAuthor(), event.getChannel(), targetUser);
+                User targetUser = null;
+                if (event.getMessage().getMentions().size() > 0)
+                    targetUser = event.getMessage().getMentionedUsers().get(0);
+                GameManager.createGame(event.getAuthor(), event.getTextChannel(), targetUser);
                 break;
             case "~resign":
-                GameManager.resignGame(event.getAuthor(), event.getChannel());
+                GameManager.resignGame(event.getAuthor(), event.getTextChannel());
                 break;
             case "~s":
-                if ((splitText.length != 3) || (!((splitText[1].length() == 1) && ((splitText[2].length() == 1) || (splitText[2].length() == 2))))) {
-                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getChannel());
+                if ((splitText.length != 3)
+                        || (!((splitText[1].length() == 1) && ((splitText[2].length() == 1)
+                        || (splitText[2].length() == 2))))) {
+                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
                     break;
                 }
 
                 Pos pos;
                 try {
-                    pos = new Pos(Pos.engToInt(splitText[1].toLowerCase().toCharArray()[0]), Integer.valueOf(splitText[2].toLowerCase()) - 1);
+                    pos = new Pos(Pos.engToInt(splitText[1].toLowerCase().toCharArray()[0]),
+                            Integer.parseInt(splitText[2].toLowerCase()) - 1);
                 } catch (Exception e) {
-                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getChannel());
+                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
                     break;
                 }
 
                 if (!Pos.checkSize(pos.getX(), pos.getY())) {
-                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getChannel());
+                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
                     break;
                 }
 
-                GameManager.putStone(pos, event.getAuthor(), event.getChannel());
+                GameManager.putStone(pos, event.getAuthor(), event.getTextChannel());
                 break;
         }
     }
 
-    public static void setOfficialChannel(IChannel channel) {
+    public static void setOfficialChannel(TextChannel channel) {
         BotManager.officialChannel = channel;
     }
 
-    public static IDiscordClient getClient() {
+    public static JDA getClient() {
         return BotManager.client;
     }
 
-    public static IChannel getOfficialChannel() {
+    public static TextChannel getOfficialChannel() {
         return BotManager.officialChannel;
     }
 

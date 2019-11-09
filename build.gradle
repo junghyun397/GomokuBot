@@ -1,15 +1,19 @@
+
 apply plugin: 'java'
 apply plugin: 'application'
 
 sourceSets.main.java.srcDirs = ['src']
 
 repositories {
+    jcenter()
     mavenCentral()
 }
 
 dependencies {
-    implementation 'com.discord4j:discord4j-core:3.0.10'
-    implementation 'mysql:mysql-connector-java:8.0.18'
+    compile ('net.dv8tion:JDA:4.0.0_56') {
+        exclude module: 'opus-java'
+    }
+    compile "mysql:mysql-connector-java:8.0.18"
 }
 
 jar {
@@ -17,6 +21,12 @@ jar {
         attributes 'Implementation-Title': 'GomokuBot',
                 'Implementation-Version': 3.6,
                 'Main-Class': 'junghyun.Main'
+    }
+
+    from {
+        configurations.compile.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
     }
 }
 

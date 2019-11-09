@@ -2,7 +2,7 @@ package junghyun;
 
 import junghyun.ai.Game;
 import junghyun.ai.Pos;
-import junghyun.ai.engin.AIBase;
+import junghyun.ai.engin.AIAgent;
 import junghyun.discord.ui.graphics.TextDrawer;
 
 import java.util.Scanner;
@@ -15,7 +15,7 @@ public class AIDisplay {
 
     private static final String clearText = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
 
-    private static AIBase.DIFF diff = AIBase.DIFF.MID;
+    private static AIAgent.DIFF diff = AIAgent.DIFF.MID;
     private static boolean useGrid = true;
     private static boolean usePrintStep = true;
 
@@ -27,21 +27,21 @@ public class AIDisplay {
     private static void setupSettings() {
         System.out.print("0: Easy 1: Normal 2: Extreme\n");
         System.out.print("Select Difficulty: ");
-        int diff = Integer.valueOf(AIDisplay.scanner.nextLine());
-        if (diff == 0) AIDisplay.diff = AIBase.DIFF.EAS;
-        else if (diff == 2) AIDisplay.diff = AIBase.DIFF.EXT;
-        else AIDisplay.diff = AIBase.DIFF.MID;
+        int diff = Integer.parseInt(AIDisplay.scanner.nextLine());
+        if (diff == 0) AIDisplay.diff = AIAgent.DIFF.EAS;
+        else if (diff == 2) AIDisplay.diff = AIAgent.DIFF.EXT;
+        else AIDisplay.diff = AIAgent.DIFF.MID;
         System.out.print("\n");
 
         System.out.print("0: Use grid 1: Do not use grid\n");
         System.out.print("Select use Grid: ");
-        int grid = Integer.valueOf(AIDisplay.scanner.nextLine());
+        int grid = Integer.parseInt(AIDisplay.scanner.nextLine());
         if (grid == 1) AIDisplay.useGrid = false;
         System.out.print("\n");
 
         System.out.print("0: Print EVE step 1: Do not print EVE step\n");
         System.out.print("Select use print EVE step: ");
-        int printStep = Integer.valueOf(AIDisplay.scanner.nextLine());
+        int printStep = Integer.parseInt(AIDisplay.scanner.nextLine());
         if (printStep == 1) AIDisplay.usePrintStep = false;
         System.out.print("\n");
 
@@ -51,7 +51,7 @@ public class AIDisplay {
     private static void selectGameType() {
         System.out.print("0: PvE 1: EvE\n");
         System.out.print("Select Type: ");
-        int type = Integer.valueOf(AIDisplay.scanner.nextLine());
+        int type = Integer.parseInt(AIDisplay.scanner.nextLine());
         System.out.print("\n");
 
         if (type == 0) AIDisplay.startPlayerGame();
@@ -62,7 +62,7 @@ public class AIDisplay {
         AIDisplay.game = new Game();
 
         System.out.print("Count Loops: ");
-        int loops = Integer.valueOf(AIDisplay.scanner.nextLine());
+        int loops = Integer.parseInt(AIDisplay.scanner.nextLine());
         System.out.print("\n");
 
         AIDisplay.loopAIGame(loops);
@@ -73,7 +73,7 @@ public class AIDisplay {
 
         System.out.print("0: Black 1: White\n");
         System.out.print("Select Color: ");
-        int color = Integer.valueOf(AIDisplay.scanner.nextLine());
+        int color = Integer.parseInt(AIDisplay.scanner.nextLine());
         System.out.print("\n");
 
         if (color == 0) AIDisplay.game.setPlayerColor(true);
@@ -96,7 +96,7 @@ public class AIDisplay {
 
             while (true) {
                 AIDisplay.game.setPlayerColor(!AIDisplay.game.getPlayerColor());
-                Pos aiPos = new AIBase(AIDisplay.game, AIDisplay.diff).getAiPoint();
+                Pos aiPos = new AIAgent(AIDisplay.game, AIDisplay.diff).getAiPoint();
                 AIDisplay.game.setStone(aiPos.getX(), aiPos.getY());
                 if (AIDisplay.usePrintStep) AIDisplay.printState(aiPos);
 
@@ -133,14 +133,14 @@ public class AIDisplay {
                 str = AIDisplay.scanner.nextLine().split(" ");
                 if (str[0].equals("flip")) {
                     AIDisplay.game.setPlayerColor(!AIDisplay.game.getPlayerColor());
-                    Pos aiPos = new AIBase(AIDisplay.game, AIDisplay.diff).getAiPoint();
+                    Pos aiPos = new AIAgent(AIDisplay.game, AIDisplay.diff).getAiPoint();
                     AIDisplay.game.setStone(aiPos.getX(), aiPos.getY(), !AIDisplay.game.getPlayerColor());
                     AIDisplay.printState(aiPos);
                     AIDisplay.loopPlayer();
                     return;
                 }
 
-                pos = new Pos(Pos.engToInt(str[0].toCharArray()[0]), Integer.valueOf(str[1]) - 1);
+                pos = new Pos(Pos.engToInt(str[0].toCharArray()[0]), Integer.parseInt(str[1]) - 1);
             } catch (Exception e) {
                 System.out.print("Error. \n");
                 AIDisplay.loopPlayer();
@@ -166,7 +166,7 @@ public class AIDisplay {
                 return;
             }
 
-            Pos aiPos = new AIBase(AIDisplay.game, AIDisplay.diff).getAiPoint();
+            Pos aiPos = new AIAgent(AIDisplay.game, AIDisplay.diff).getAiPoint();
             AIDisplay.game.setStone(aiPos.getX(), aiPos.getY(), !AIDisplay.game.getPlayerColor());
             if (AIDisplay.game.isWin(aiPos.getX(), aiPos.getY(), !AIDisplay.game.getPlayerColor())) {
                 System.out.print("AI Win. \n");

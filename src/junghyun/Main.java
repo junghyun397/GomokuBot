@@ -3,8 +3,10 @@ package junghyun;
 import junghyun.discord.BotManager;
 import junghyun.discord.GameManager;
 import junghyun.discord.db.Logger;
-import sx.blah.discord.handle.obj.IGuild;
+import net.dv8tion.jda.api.entities.Guild;
 
+import javax.security.auth.login.LoginException;
+import java.util.Objects;
 import java.util.Scanner;
 
 public class Main {
@@ -13,13 +15,11 @@ public class Main {
 
     private static boolean onRunning = false;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws LoginException, InterruptedException {
         Logger.startLogger();
         BotManager.startGomokuBot();
         Main.onRunning = true;
-        Logger.loggerInfo("----------------------------------");
-        Logger.loggerInfo("Boot Done!");
-        Logger.loggerInfo("----------------------------------");
+        Logger.loggerInfo("booting succeed!");
         Main.startServerCommand();
     }
 
@@ -41,18 +41,19 @@ public class Main {
                 case "stop":
                     Main.stopServer();
                     break;
-                case "save_log":
+                case "save-log":
                     Logger.saveLogs();
-                case "game_count":
-                    Logger.loggerDev("Game count : " + GameManager.getGameListSize());
+                case "count-game":
+                    Logger.loggerDev("game count : " + GameManager.getGameListSize());
                     break;
-                case "server_count":
-                    Logger.loggerDev("Server count : " + BotManager.getClient().getGuilds().size());
+                case "count-server":
+                    Logger.loggerDev("server count : " + BotManager.getClient().getGuilds().size());
                     break;
-                case "broadcast_all":
-                    String text = command.split("broadcast_all")[0];
-                    for (IGuild guild: BotManager.getClient().getGuilds()) guild.getSystemChannel().sendMessage(text);
-                    Logger.loggerDev("Send Broadcast : " + text);
+                case "broadcast-all":
+                    String text = command.split("broadcast-all")[0];
+                    for (Guild guild: BotManager.getClient().getGuilds())
+                        Objects.requireNonNull(guild.getSystemChannel()).sendMessage(text).complete();
+                    Logger.loggerDev("send Broadcast : " + text);
                     break;
             }
         }

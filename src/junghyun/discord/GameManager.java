@@ -12,9 +12,8 @@ import junghyun.discord.ui.MessageAgent;
 import junghyun.discord.ui.MessageManager;
 import junghyun.discord.ui.graphics.TextDrawer;
 import junghyun.ai.Pos;
-
-import sx.blah.discord.handle.obj.IChannel;
-import sx.blah.discord.handle.obj.IUser;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
 
 import java.util.HashMap;
 import java.util.concurrent.Executors;
@@ -23,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 public class GameManager {
 
-    private static HashMap<Long, GameAgent> gameList = new HashMap<>();
+    final private static HashMap<Long, GameAgent> gameList = new HashMap<>();
 
     public static void bootGameManager() {
         Runnable task = GameManager::checkTimeOut;
@@ -35,7 +34,8 @@ public class GameManager {
     private static void checkTimeOut() {
         long currentTime = System.currentTimeMillis();
         for (GameAgent game: GameManager.gameList.values().toArray(new GameAgent[0])) {
-            if ((game.getChatGame().getUpdateTime() + Settings.TIMEOUT < currentTime) && (game.getChatGame().getState() != ChatGame.STATE.TIMEOUT)) {
+            if ((game.getChatGame().getUpdateTime() + Settings.TIMEOUT < currentTime)
+                    && (game.getChatGame().getState() != ChatGame.STATE.TIMEOUT)) {
                 game.getChatGame().setState(ChatGame.STATE.TIMEOUT);
                 game.killGame();
             }
@@ -58,8 +58,8 @@ public class GameManager {
         GameManager.gameList.remove(id);
     }
 
-    public static void createGame(IUser user, IChannel channel, IUser targetUser) {
-        if (!GameManager.isHasGame(user.getLongID())) {
+    public static void createGame(User user, TextChannel channel, User targetUser) {
+        if (!GameManager.isHasGame(user.getIdLong())) {
             MessageManager.getInstance(channel.getGuild()).sendCreatGameFail(user, channel);
             return;
         }
@@ -68,53 +68,55 @@ public class GameManager {
         if (targetUser == null || targetUser.isBot()) chatGame = GameManager.createPVEGame(user, channel);
         else chatGame = GameManager.createPVPGame(user, targetUser, channel);
 
-        Logger.loggerInfo("Start Game: " + chatGame.getNameTag() + " v. " + chatGame.getOppPlayer().getNameTag() + " : " + channel.getGuild().getName());
+        Logger.loggerInfo("start game: " + chatGame.getNameTag()
+                + " v. " + chatGame.getOppPlayer().getNameTag() + " : " + channel.getGuild().getName());
     }
 
-    private static ChatGame createPVEGame(IUser user, IChannel channel) {
+    private static ChatGame createPVEGame(User user, TextChannel channel) {
         OppPlayer oppPlayer = new OppPlayer(OppPlayer.PLAYER_TYPE.AI, "AI", -1);
-        ChatGame chatGame = new ChatGame(user.getLongID(), new Game(), user.getName(), oppPlayer, user.getAvatarURL());
+        ChatGame chatGame = new ChatGame(user.getIdLong(), new Game(), user.getName(), oppPlayer, user.getAvatarUrl());
         GameAgent gameAgent = new PVEGameAgent(chatGame);
-        GameManager.putGame(user.getLongID(), gameAgent);
+        GameManager.putGame(user.getIdLong(), gameAgent);
 
         gameAgent.startGame(channel);
         return chatGame;
     }
 
-    private static ChatGame createPVPGame(IUser user, IUser targetUser, IChannel channel) {
-        OppPlayer oppPlayer = new OppPlayer(OppPlayer.PLAYER_TYPE.HUMAN, targetUser.getName(), targetUser.getLongID());
-        ChatGame chatGame = new ChatGame(user.getLongID(), new Game(), user.getName(), oppPlayer, user.getAvatarURL());
+    private static ChatGame createPVPGame(User user, User targetUser, TextChannel channel) {
+        OppPlayer oppPlayer = new OppPlayer(OppPlayer.PLAYER_TYPE.HUMAN, targetUser.getName(), targetUser.getIdLong());
+        ChatGame chatGame = new ChatGame(user.getIdLong(), new Game(), user.getName(), oppPlayer, user.getAvatarUrl());
         GameAgent gameAgent = new PVPGameAgent(chatGame);
-        GameManager.putGame(user.getLongID(), gameAgent);
-        GameManager.putGame(targetUser.getLongID(), gameAgent);
+        GameManager.putGame(user.getIdLong(), gameAgent);
+        GameManager.putGame(targetUser.getIdLong(), gameAgent);
 
         gameAgent.startGame(channel);
         return chatGame;
     }
 
-    public static void putStone(Pos pos, IUser user, IChannel channel) {
-        if (isHasGame(user.getLongID())) {
+    public static void putStone(Pos pos, User user, TextChannel channel) {
+        if (isHasGame(user.getIdLong())) {
             MessageManager.getInstance(channel.getGuild()).sendNotFoundGame(user, channel);
             return;
         }
-        GameManager.getGame(user.getLongID()).putStone(user, pos, channel);
+        GameManager.getGame(user.getIdLong()).putStone(user, pos, channel);
     }
 
-    public static void resignGame(IUser user, IChannel channel) {
-        if (isHasGame(user.getLongID())) {
+    public static void resignGame(User user, TextChannel channel) {
+        if (isHasGame(user.getIdLong())) {
             MessageManager.getInstance(channel.getGuild()).sendNotFoundGame(user, channel);
             return;
         }
-        GameManager.getGame(user.getLongID()).resignGame(user, channel);
+        GameManager.getGame(user.getIdLong()).resignGame(user, channel);
     }
 
     public static void endGame(ChatGame chatGame) {
         DBManager.saveGame(chatGame);
         GameManager.delGame(chatGame.getLongId());
         GameManager.postGame(chatGame);
-        Logger.loggerInfo("End Game: " +  chatGame.getNameTag() + " v. " + chatGame.getOppPlayer().getNameTag() +
-                " " + chatGame.getGame().getTurns() + " " + chatGame.getState().toString());
-        Logger.loggerInfo("Canvas info ================================\n" + TextDrawer.getGraphics(chatGame.getGame(), false));
+        Logger.loggerInfo("end game: " +  chatGame.getNameTag() + " v. " + chatGame.getOppPlayer().getNameTag()
+                + " " + chatGame.getGame().getTurns() + " " + chatGame.getState().toString());
+        Logger.loggerInfo("canvas info\n"
+                + TextDrawer.getGraphics(chatGame.getGame(), false));
     }
 
     private static void postGame(ChatGame chatGame) {

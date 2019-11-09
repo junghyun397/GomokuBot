@@ -2,16 +2,16 @@ package junghyun.discord.game.agent;
 
 import junghyun.ai.Pos;
 import junghyun.discord.game.ChatGame;
-import sx.blah.discord.handle.obj.IChannel;
-import sx.blah.discord.handle.obj.IUser;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
 
 public interface GameAgent {
 
-    void startGame(IChannel channel);
+    void startGame(TextChannel channel);
 
-    void putStone(IUser user, Pos pos, IChannel channel);
+    void putStone(User user, Pos pos, TextChannel channel);
 
-    void resignGame(IUser user, IChannel channel);
+    void resignGame(User user, TextChannel channel);
 
     void killGame();
 

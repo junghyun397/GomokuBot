@@ -7,15 +7,18 @@ import junghyun.discord.db.Logger;
 import junghyun.discord.game.ChatGame;
 import junghyun.discord.ui.graphics.TextDrawer;
 import junghyun.discord.ui.languages.LanguageInterface;
-import sx.blah.discord.api.internal.json.objects.EmbedObject;
-import sx.blah.discord.handle.obj.IChannel;
-import sx.blah.discord.handle.obj.IUser;
-import sx.blah.discord.util.EmbedBuilder;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.User;
 
+import java.awt.*;
+
+@SuppressWarnings("unused")
 public class MessageAgent {
 
-    private EmbedObject helpEmbed;
-    private EmbedObject commandEmbed;
+    private MessageEmbed helpEmbed;
+    private MessageEmbed commandEmbed;
 
     private LanguageInterface languageContainer;
 
@@ -24,16 +27,15 @@ public class MessageAgent {
 
         EmbedBuilder helpBuilder = new EmbedBuilder();
 
-        helpBuilder.withAuthorName(languageContainer.HELP_INFO());
-        helpBuilder.withColor(0,145,234);
-        helpBuilder.withDesc("withDesc");
-        helpBuilder.withDescription(languageContainer.HELP_DESCRIPTION());
-        helpBuilder.withThumbnail("https://i.imgur.com/HAGBBT6.jpg");
+        helpBuilder.setAuthor(languageContainer.HELP_INFO());
+        helpBuilder.setColor(new Color(0,145,234));
+        helpBuilder.setDescription(languageContainer.HELP_DESCRIPTION());
+        helpBuilder.setThumbnail("https://i.imgur.com/HAGBBT6.jpg");
 
-        helpBuilder.appendField(languageContainer.HELP_DEV(), "junghyun397#6725", true);
-        helpBuilder.appendField(languageContainer.HELP_GIT(), "[github.com/GomokuBot](https://github.com/junghyun397/GomokuBot)", true);
-        helpBuilder.appendField(languageContainer.HELP_VERSION(), Settings.VERSION, true);
-        helpBuilder.appendField(languageContainer.HELP_SUPPORT(), "[discord.gg/vq8pkfF](https://discord.gg/vq8pkfF)", true);
+        helpBuilder.addField(languageContainer.HELP_DEV(), "junghyun397#6725", true);
+        helpBuilder.addField(languageContainer.HELP_GIT(), "[github.com/GomokuBot](https://github.com/junghyun397/GomokuBot)", true);
+        helpBuilder.addField(languageContainer.HELP_VERSION(), Settings.VERSION, true);
+        helpBuilder.addField(languageContainer.HELP_SUPPORT(), "[discord.gg/vq8pkfF](https://discord.gg/vq8pkfF)", true);
 
         this.helpEmbed = helpBuilder.build();
 
@@ -41,204 +43,203 @@ public class MessageAgent {
 
         EmbedBuilder commandBuilder = new EmbedBuilder();
 
-        commandBuilder.withAuthorName(languageContainer.HELP_CMD_INFO());
-        commandBuilder.withColor(0,145,234);
+        commandBuilder.setAuthor(languageContainer.HELP_CMD_INFO());
+        commandBuilder.setColor(new Color(0,145,234));
 
-        commandBuilder.appendField("~help", languageContainer.HELP_CMD_HELP(), false);
-        commandBuilder.appendField("~lang", languageContainer.HELP_CMD_LANG(MessageManager.LanguageList), false);
-        commandBuilder.appendField("~start", languageContainer.HELP_CMD_PVE(), false);
-        commandBuilder.appendField("~start @mention", languageContainer.HELP_CMD_PVP(), false);
-        commandBuilder.appendField("~resign", languageContainer.HELP_CMD_RESIGN(), false);
+        commandBuilder.addField("~help", languageContainer.HELP_CMD_HELP(), false);
+        commandBuilder.addField("~lang", languageContainer.HELP_CMD_LANG(MessageManager.LanguageList), false);
+        commandBuilder.addField("~start", languageContainer.HELP_CMD_PVE(), false);
+        commandBuilder.addField("~start @mention", languageContainer.HELP_CMD_PVP(), false);
+        commandBuilder.addField("~resign", languageContainer.HELP_CMD_RESIGN(), false);
 
         this.commandEmbed = commandBuilder.build();
     }
 
     // Basic Information
 
-    public void sendHelp(IChannel channel) {
-        channel.sendMessage(this.helpEmbed);
-        channel.sendMessage(this.commandEmbed);
+    public void sendHelp(TextChannel channel) {
+        channel.sendMessage(this.helpEmbed).complete();
+        channel.sendMessage(this.commandEmbed).complete();
     }
 
-    public void sendRank(IUser user, IChannel channel, DBManager.UserDataSet[] rankData) {
+    public void sendRank(User user, TextChannel channel, DBManager.UserDataSet[] rankData) {
         EmbedBuilder builder = new EmbedBuilder();
 
-        builder.withAuthorName(languageContainer.RANK_INFO());
-        builder.withColor(0,145,234);
-        builder.withDesc("withDesc");
-        builder.withDescription(languageContainer.RANK_DESCRIPTION());
+        builder.setAuthor(languageContainer.RANK_INFO());
+        builder.setColor(new Color(0,145,234));
+        builder.setDescription(languageContainer.RANK_DESCRIPTION());
 
         for (int i = 0; i < rankData.length; i++)
-            builder.appendField("#" + (i + 1) + ": " + rankData[i].getName(), languageContainer.RANK_WIN() + ": `" + rankData[i].getWin() +
+            builder.addField("#" + (i + 1) + ": " + rankData[i].getName(), languageContainer.RANK_WIN() + ": `" + rankData[i].getWin() +
                     "` " + languageContainer.RANK_LOSE() + ": `" + rankData[i].getLose() + "`", false);
 
-        DBManager.UserDataSet userData = DBManager.getUserData(user.getLongID());
-        if (userData != null) builder.appendField("#??: " + userData.getName(), languageContainer.RANK_WIN() + ": `" + userData.getWin() +
+        DBManager.UserDataSet userData = DBManager.getUserData(user.getIdLong());
+        if (userData != null) builder.addField("#??: " + userData.getName(), languageContainer.RANK_WIN() + ": `" + userData.getWin() +
                 "` " + languageContainer.RANK_LOSE() + ": `" + userData.getLose() + "`", false);
 
-        channel.sendMessage(builder.build());
+        channel.sendMessage(builder.build()).complete();
     }
 
     // Language Information
 
-    public void sendLanguageInfo(IChannel channel) {
-        channel.sendMessage(MessageManager.langEmbed);
+    public void sendLanguageInfo(TextChannel channel) {
+        channel.sendMessage(MessageManager.langEmbed).complete();
     }
 
-    public void sendLanguageChange(IChannel channel, String lang) {
+    public void sendLanguageChange(TextChannel channel, String lang) {
         if (lang == null) {
-            channel.sendMessage(languageContainer.LANG_CHANGE_ERROR());
+            channel.sendMessage(languageContainer.LANG_CHANGE_ERROR()).complete();
             sendLanguageInfo(channel);
-        } else channel.sendMessage(languageContainer.LANG_SUCCESS());
+        } else channel.sendMessage(languageContainer.LANG_SUCCESS()).complete();
     }
 
     // Game Create/End Information
 
     // Game Error
 
-    public void sendCreatGameFail(IUser user, IChannel channel) {
-        channel.sendMessage(languageContainer.GAME_CREATE_FAIL(user.getName()));
+    public void sendCreatGameFail(User user, TextChannel channel) {
+        channel.sendMessage(languageContainer.GAME_CREATE_FAIL(user.getName())).complete();
     }
 
-    public void sendSyntaxError(IUser user, IChannel channel) {
-        channel.sendMessage(languageContainer.GAME_SYNTAX_FAIL(user.getName()));
+    public void sendSyntaxError(User user, TextChannel channel) {
+        channel.sendMessage(languageContainer.GAME_SYNTAX_FAIL(user.getName())).complete();
     }
 
-    public void sendStoneAlreadyIn(ChatGame chatGame, IChannel channel) {
+    public void sendStoneAlreadyIn(ChatGame chatGame, TextChannel channel) {
         this.sendCanvasMessage(chatGame, channel);
-        channel.sendMessage(languageContainer.GAME_ALREADY_IN(chatGame.getNameTag()));
+        channel.sendMessage(languageContainer.GAME_ALREADY_IN(chatGame.getNameTag())).complete();
     }
 
     // Create Game
 
-    public void sendCreateGameSuccess(ChatGame chatGame, String fPlayer, IChannel channel) {
+    public void sendCreateGameSuccess(ChatGame chatGame, String fPlayer, TextChannel channel) {
         this.sendCanvasMessage(chatGame, channel);
 
         String result = languageContainer.GAME_CREATE_INFO(chatGame.getNameTag(), chatGame.getOppPlayer().getNameTag(), fPlayer) +
                 languageContainer.GAME_CMD_INFO();
-        channel.sendMessage(result);
+        channel.sendMessage(result).complete();
     }
 
     // Progress Game
 
-    public void sendNotPlayerTurn(String tPlayer, IChannel channel) {
-        channel.sendMessage(languageContainer.GAME_PVP_TURN(tPlayer));
+    public void sendNotPlayerTurn(String tPlayer, TextChannel channel) {
+        channel.sendMessage(languageContainer.GAME_PVP_TURN(tPlayer)).complete();
     }
 
-    public void sendNextTurn(ChatGame chatGame, Pos lastPos, String curPlayer, String prvPlayer, IChannel channel) {
+    public void sendNextTurn(ChatGame chatGame, Pos lastPos, String curPlayer, String prvPlayer, TextChannel channel) {
         this.sendCanvasMessage(chatGame, lastPos, channel);
-        chatGame.addMessage(channel.sendMessage(languageContainer.GAME_NEXT_TURN(curPlayer, prvPlayer, lastPos.getHumText())));
+        chatGame.addMessage(channel.sendMessage(languageContainer.GAME_NEXT_TURN(curPlayer, prvPlayer, lastPos.getHumText())).complete());
     }
 
     // End PvP Game
 
-    public void sendPvPWin(ChatGame chatGame, Pos lastPos, String winPlayer, String losePlayer, IChannel channel) {
+    public void sendPvPWin(ChatGame chatGame, Pos lastPos, String winPlayer, String losePlayer, TextChannel channel) {
         this.sendCanvasMessage(chatGame, channel);
-        channel.sendMessage(languageContainer.GAME_PVP_WIN(winPlayer, losePlayer, lastPos.getHumText()));
+        channel.sendMessage(languageContainer.GAME_PVP_WIN(winPlayer, losePlayer, lastPos.getHumText())).complete();
         this.deleteCanvasMessage(chatGame, channel);
     }
 
-    public void sendPvPResign(ChatGame chatGame, String winPlayer, String losePlayer, IChannel channel) {
+    public void sendPvPResign(ChatGame chatGame, String winPlayer, String losePlayer, TextChannel channel) {
         this.sendCanvasMessage(chatGame, channel);
-        channel.sendMessage(languageContainer.GAME_PVP_RESIGN(winPlayer, losePlayer));
+        channel.sendMessage(languageContainer.GAME_PVP_RESIGN(winPlayer, losePlayer)).complete();
         this.deleteCanvasMessage(chatGame, channel);
     }
 
-    public void sendPvPInfo(String winName, String loseName, IChannel channel) {
+    public void sendPvPInfo(String winName, String loseName, TextChannel channel) {
         int winCount = 0, loseCount = 0;
-        channel.sendMessage(languageContainer.GAME_PVP_INFO(winName, loseName, winCount, loseCount));
+        channel.sendMessage(languageContainer.GAME_PVP_INFO(winName, loseName, winCount, loseCount)).complete();
     }
 
     // End PvE Game
 
-    public void sendPvEWin(ChatGame chatGame, Pos playerPos, IChannel channel) {
+    public void sendPvEWin(ChatGame chatGame, Pos playerPos, TextChannel channel) {
         this.sendCanvasMessage(chatGame, channel);
-        channel.sendMessage(languageContainer.GAME_PVE_WIN(playerPos.getHumText()));
+        channel.sendMessage(languageContainer.GAME_PVE_WIN(playerPos.getHumText())).complete();
         this.deleteCanvasMessage(chatGame, channel);
     }
 
-    public void sendPvELose(ChatGame chatGame, Pos aiPos, IChannel channel) {
+    public void sendPvELose(ChatGame chatGame, Pos aiPos, TextChannel channel) {
         this.sendCanvasMessage(chatGame, channel);
-        channel.sendMessage(languageContainer.GAME_PVE_LOSE(aiPos.getHumText()));
+        channel.sendMessage(languageContainer.GAME_PVE_LOSE(aiPos.getHumText())).complete();
         this.deleteCanvasMessage(chatGame, channel);
     }
 
-    public void sendPvEResign(ChatGame chatGame, IChannel channel) {
+    public void sendPvEResign(ChatGame chatGame, TextChannel channel) {
         this.sendCanvasMessage(chatGame, channel);
-        channel.sendMessage(languageContainer.GAME_PVE_RESIGN());
+        channel.sendMessage(languageContainer.GAME_PVE_RESIGN()).complete();
         this.deleteCanvasMessage(chatGame, channel);
     }
 
-    public void sendPvEInfo(String playerName, IChannel channel) {
+    public void sendPvEInfo(String playerName, TextChannel channel) {
         int winCount = 0, loseCount = 0, rank = 0;
-        channel.sendMessage(languageContainer.GAME_PVE_INFO(playerName, winCount, loseCount, rank));
+        channel.sendMessage(languageContainer.GAME_PVE_INFO(playerName, winCount, loseCount, rank)).complete();
     }
 
     // Error Game
 
-    public void sendNotFoundGame(IUser user, IChannel channel) {
-        channel.sendMessage(languageContainer.GAME_NOT_FOUND(user.getName()));
+    public void sendNotFoundGame(User user, TextChannel channel) {
+        channel.sendMessage(languageContainer.GAME_NOT_FOUND(user.getName())).complete();
     }
 
-    public void sendFullCanvas(ChatGame chatGame, IChannel channel) {
+    public void sendFullCanvas(ChatGame chatGame, TextChannel channel) {
         this.sendCanvasMessage(chatGame, channel);
-        channel.sendMessage(languageContainer.GAME_FULL());
+        channel.sendMessage(languageContainer.GAME_FULL()).complete();
         this.deleteCanvasMessage(chatGame, channel);
     }
 
-    private void sendCanvasMessage(ChatGame chatGame, IChannel channel) {
+    private void sendCanvasMessage(ChatGame chatGame, TextChannel channel) {
         this.sendCanvasMessage(chatGame, new Pos(-1, -1), channel);
     }
 
-    private void sendCanvasMessage(ChatGame chatGame, Pos aiPos, IChannel channel) {
+    private void sendCanvasMessage(ChatGame chatGame, Pos aiPos, TextChannel channel) {
         String statMsg;
         if (chatGame.getState() == ChatGame.STATE.INP) statMsg = languageContainer.BOARD_INP();
         else statMsg = languageContainer.BOARD_FINISH();
 
         EmbedBuilder builder = new EmbedBuilder();
 
-        builder.withAuthorName(chatGame.getNameTag() + "@" + chatGame.getOppPlayer().getNameTag() + ", " + statMsg);
-        builder.withAuthorIcon(chatGame.getIconURL());
-        if (chatGame.getState() == ChatGame.STATE.INP) builder.withColor(0,200,83);
-        else builder.withColor(213,0,0);
+        builder.setAuthor(chatGame.getNameTag() + "@" + chatGame.getOppPlayer().getNameTag() + ", " + statMsg,
+                "http://do1ph.in", chatGame.getIconURL());
+        if (chatGame.getState() == ChatGame.STATE.INP) builder.setColor(new Color(0,200,83));
+        else builder.setColor(new Color(213,0,0));
 
-        builder.withDesc("withDesc");
-        builder.withDescription(TextDrawer.getGraphics(chatGame.getGame(), aiPos));
+        builder.setDescription(TextDrawer.getGraphics(chatGame.getGame(), aiPos));
 
-        builder.appendField(languageContainer.BOARD_TURNS(), " " + chatGame.getGame().getTurns() + languageContainer.BOARD_TURN(), true);
-        builder.appendField(languageContainer.BOARD_LOCATION(), aiPos.getHumText(), true);
+        builder.addField(languageContainer.BOARD_TURNS(), " " + chatGame.getGame().getTurns() + languageContainer.BOARD_TURN(), true);
+        builder.addField(languageContainer.BOARD_LOCATION(), aiPos.getHumText(), true);
 
-        if ((chatGame.getState() == ChatGame.STATE.INP) && (chatGame.getGame().getTurns() > 2)) chatGame.addMessage(channel.sendMessage(builder.build()));
-        else channel.sendMessage(builder.build());
+        if ((chatGame.getState() == ChatGame.STATE.INP) && (chatGame.getGame().getTurns() > 2))
+            chatGame.addMessage(channel.sendMessage(builder.build()).complete());
+        else channel.sendMessage(builder.build()).complete();
     }
 
     // Official Post Function
 
-    public static void postResultOfficialChannel(ChatGame chatGame, IChannel channel) {
+    public static void postResultOfficialChannel(ChatGame chatGame, TextChannel channel) {
         EmbedBuilder builder = new EmbedBuilder();
-        builder.withAuthorName(chatGame.getNameTag() + "@" + chatGame.getOppPlayer().getNameTag() + ", END");
-        builder.withAuthorIcon(chatGame.getIconURL());
-        builder.withColor(0,145,234);
+        builder.setAuthor(chatGame.getNameTag() + "@" + chatGame.getOppPlayer().getNameTag() + ", END",
+                "", chatGame.getIconURL());
+        builder.setColor(new Color(0,145,234));
 
-        builder.withDesc("withDesc");
-        builder.withDescription(TextDrawer.getGraphics(chatGame.getGame(), new Pos(-1, -1)));
+        builder.setDescription(TextDrawer.getGraphics(chatGame.getGame(), new Pos(-1, -1)));
 
         String winner = chatGame.getNameTag();
         if (chatGame.getOppPlayer().getIsWin()) winner = chatGame.getOppPlayer().getNameTag();
 
-        builder.appendField("Winner", winner, true);
-        builder.appendField("Turns", String.valueOf(chatGame.getGame().getTurns()), true);
+        builder.addField("WINNER", winner, true);
+        builder.addField("TURNS", String.valueOf(chatGame.getGame().getTurns()), true);
 
-        channel.sendMessage(builder.build());
+        channel.sendMessage(builder.build()).complete();
     }
 
     // Private Function
 
-    private void deleteCanvasMessage(ChatGame chatGame, IChannel channel) {
+    private void deleteCanvasMessage(ChatGame chatGame, TextChannel channel) {
         try {
-            if (chatGame.getMessageList().size() > 0) channel.bulkDelete(chatGame.getMessageList());
+            if (chatGame.getMessageList().size() > 0) chatGame.getMessageList()
+                    .forEach(msg -> channel.deleteMessageById(msg.getIdLong()).complete());
         } catch (Exception e) {
-            Logger.loggerWarning("Miss PERMISSION : " + channel.getGuild().getName());
+            Logger.loggerWarning("miss permission : " + channel.getName());
         }
     }
 
