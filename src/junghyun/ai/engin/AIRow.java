@@ -8,12 +8,13 @@ import java.util.Arrays;
 
 class AIRow {
 
-    private Game game;
+    final private Game game;
 
-    private Stone[] row;
-    private int length;
+    final private Stone[] row;
+    final private int length;
+    final private boolean color;
+
     private boolean passAll = false;
-    private boolean color;
 
     AIRow(Row row, boolean color, Game game) {
         super();

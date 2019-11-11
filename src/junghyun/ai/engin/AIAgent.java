@@ -10,16 +10,17 @@ import java.util.Random;
 
 public class AIAgent {
 
+    final private Game game;
+
     public enum DIFF {EAS, MID, EXT}
+    final private DIFF diff;
 
-    private Game game;
-    private DIFF diff;
-    private Random random;
+    final private Random random;
 
-    private AIRow[] xRows = new AIRow[15];
-    private AIRow[] yRows = new AIRow[15];
-    private AIRow[] xyRows = new AIRow[29];
-    private AIRow[] yxRows = new AIRow[29];
+    final private AIRow[] xRows = new AIRow[15];
+    final private AIRow[] yRows = new AIRow[15];
+    final private AIRow[] xyRows = new AIRow[29];
+    final private AIRow[] yxRows = new AIRow[29];
 
     public AIAgent(Game game, DIFF diff) {
         this.game = game;
@@ -42,9 +43,9 @@ public class AIAgent {
             yxRows[i] = new AIRow(game.getYXRow(i, 0), game.getColor(), this.game);
         }
 
-        for (int i = 14; i < 29; i++) {
-            xyRows[i] = new AIRow(game.getXYRow(0, i), game.getColor(), this.game);
-            yxRows[i] = new AIRow(game.getYXRow(14, i), game.getColor(), this.game);
+        for (int i = 0; i < 14; i++) {
+            xyRows[i+15] = new AIRow(game.getXYRow(0, i), game.getColor(), this.game);
+            yxRows[i+15] = new AIRow(game.getYXRow(14, i), game.getColor(), this.game);
         }
     }
 
