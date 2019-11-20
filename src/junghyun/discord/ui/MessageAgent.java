@@ -199,7 +199,7 @@ public class MessageAgent {
         EmbedBuilder builder = new EmbedBuilder();
 
         builder.setAuthor(chatGame.getNameTag() + "@" + chatGame.getOppPlayer().getNameTag() + ", " + statMsg,
-                "http://do1ph.in", chatGame.getIconURL());
+                null, chatGame.getIconURL());
         if (chatGame.getState() == ChatGame.STATE.INP) builder.setColor(new Color(0,200,83));
         else builder.setColor(new Color(213,0,0));
 
@@ -218,7 +218,7 @@ public class MessageAgent {
     public static void postResultOfficialChannel(ChatGame chatGame, TextChannel channel) {
         EmbedBuilder builder = new EmbedBuilder();
         builder.setAuthor(chatGame.getNameTag() + "@" + chatGame.getOppPlayer().getNameTag() + ", END",
-                "", chatGame.getIconURL());
+                null, chatGame.getIconURL());
         builder.setColor(new Color(0,145,234));
 
         builder.setDescription(TextDrawer.getGraphics(chatGame.getGame(), new Pos(-1, -1)));

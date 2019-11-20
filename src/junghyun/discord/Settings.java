@@ -12,9 +12,10 @@ public class Settings {
     public static final int TIMEOUT = TIMEOUT_CYCLE*1000;
 
     public static final String SQL_URL = PrivateSettings.SQL_URL +
-            "?autoReconnect=true" +
+            "?autoReconnection=true" +
             "&useUnicode=true" +
-            "&characterEncoding=UTF-8";
+            "&characterEncoding=UTF-8" +
+            "&serverTimezone=Asia/Seoul";
     public static final String SQL_USER = PrivateSettings.SQL_USER;
     public static final String SQL_PWD = PrivateSettings.SQL_PWD;
 
