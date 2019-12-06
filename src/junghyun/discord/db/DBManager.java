@@ -45,17 +45,23 @@ public class DBManager {
         }
     }
 
-    public static UserDataSet[] getRankingData(int count) {
-        ResultSet rs = SqlManager.executeQuery("SELECT * , (SELECT Count(*)+1 FROM user_info WHERE win > t.win ) AS " +
-                "temp_rank FROM user_info AS t ORDER BY temp_rank LIMIT 0, " + count + ";");
+    public static UserDataSet[] getRankingData(int count, long targetID) {
+        ResultSet rs = SqlManager.executeQuery("SELECT *, (@rank := @rank + 0) AS rank FROM user_info AS a, " +
+                "(SELECT @rank := 0) AS b ORDER BY a.win DESC");
 
-        UserDataSet[] rsDataSet = new UserDataSet[count];
+        UserDataSet[] rsDataSet = new UserDataSet[count + 1];
         try {
-            for (int i = 0; i < count; i++) {
-                assert rs != null;
-                rs.next();
-                rsDataSet[i] = new UserDataSet(rs.getLong("user_id"), rs.getString("name_tag"),
-                        rs.getInt("win"), rs.getInt("lose"));
+            int idx = 1;
+            assert rs != null;
+            while (rs.next()) {
+                if (idx < count + 1)
+                    rsDataSet[idx] = new UserDataSet(rs.getLong("user_id"), rs.getString("name_tag"),
+                            rs.getInt("win"), rs.getInt("lose"));
+                idx++;
+
+                if (rs.getLong("user_id") == targetID)
+                    rsDataSet[0] = new UserDataSet(idx - 1, rs.getString("name_tag"),
+                            rs.getInt("win"), rs.getInt("lose"));
             }
             return rsDataSet;
         } catch (Exception e) {

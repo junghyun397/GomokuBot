@@ -50,6 +50,10 @@ public class LanguageENG implements LanguageInterface {
         return "`~help` Get help";
     }
     @Override
+    public String HELP_CMD_RANK() {
+        return "`~rank` Show the ranking from 1st to 10th";
+    }
+    @Override
     public String HELP_CMD_LANG(String langList) {
         return "`~lang` " + langList + " Change the language setting used on this server. Ex) `~lang` `ENG`";
     }

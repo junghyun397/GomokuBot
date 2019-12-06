@@ -24,24 +24,24 @@ public class Logger {
     }
 
     public static void loggerDev(String text) {
-        text = "[*] " + getDateTime() + " DEV: " + text + "\n";
+        text = "[ ] " + getDateTime() + text + "\n";
         System.out.print(text);
     }
 
     public static void loggerInfo(String text) {
-        text = "[*] " + getDateTime() + " INFO: " + text + "\n";
+        text = "[+] " + getDateTime() + text + "\n";
         System.out.print(text);
         Logger.logBuffer.append(text);
     }
 
     public static void loggerWarning(String text) {
-        text = "[*] " + getDateTime() + " WARNING: " + text + "\n";
+        text = "[!] " + getDateTime() + text + "\n";
         System.out.print(text);
         Logger.logBuffer.append(text);
     }
 
     public static void loggerCommand(String text) {
-        Logger.logBuffer.append(getDateTime()).append(" COMMAND: ").append(text).append("\n");
+        Logger.commandBuffer.append(getDateTime()).append(" COMMAND: ").append(text).append("\n");
     }
 
     public static void saveLogs() {
@@ -57,7 +57,7 @@ public class Logger {
 
     private static String getDateTime() {
         long time = System.currentTimeMillis();
-        SimpleDateFormat dayTime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        SimpleDateFormat dayTime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss >> ");
         return dayTime.format(new Date(time));
     }
 

@@ -10,7 +10,7 @@ public class SqlManager {
 
     public static void connectMysql() {
         try {
-            Class.forName("com.mysql.jdbc.Driver");
+            Class.forName("com.mysql.cj.jdbc.Driver");
             SqlManager.connect = DriverManager.getConnection(Settings.SQL_URL, Settings.SQL_USER, Settings.SQL_PWD);
             Logger.loggerInfo("Mysql connected!");
         } catch (Exception e) {

@@ -69,7 +69,7 @@ public class BotManager {
                 MessageManager.getInstance(event.getGuild())
                         .sendRank(event.getAuthor(),
                                 event.getTextChannel(),
-                                Objects.requireNonNull(DBManager.getRankingData(Settings.RANK_COUNT)));
+                                Objects.requireNonNull(DBManager.getRankingData(Settings.RANK_COUNT, event.getAuthor().getIdLong())));
                 break;
             case "~start":
                 User targetUser = null;

@@ -48,6 +48,7 @@ public class MessageAgent {
 
         commandBuilder.addField("~help", languageContainer.HELP_CMD_HELP(), false);
         commandBuilder.addField("~lang", languageContainer.HELP_CMD_LANG(MessageManager.LanguageList), false);
+        commandBuilder.addField("~rank", languageContainer.HELP_CMD_RANK(), false);
         commandBuilder.addField("~start", languageContainer.HELP_CMD_PVE(), false);
         commandBuilder.addField("~start @mention", languageContainer.HELP_CMD_PVP(), false);
         commandBuilder.addField("~resign", languageContainer.HELP_CMD_RESIGN(), false);
@@ -69,12 +70,12 @@ public class MessageAgent {
         builder.setColor(new Color(0,145,234));
         builder.setDescription(languageContainer.RANK_DESCRIPTION());
 
-        for (int i = 0; i < rankData.length; i++)
-            builder.addField("#" + (i + 1) + ": " + rankData[i].getName(), languageContainer.RANK_WIN() + ": `" + rankData[i].getWin() +
+        for (int i = 1; i < rankData.length; i++)
+            builder.addField("#" + i + ": " + rankData[i].getName(), languageContainer.RANK_WIN() + ": `" + rankData[i].getWin() +
                     "` " + languageContainer.RANK_LOSE() + ": `" + rankData[i].getLose() + "`", false);
 
         DBManager.UserDataSet userData = DBManager.getUserData(user.getIdLong());
-        if (userData != null) builder.addField("#??: " + userData.getName(), languageContainer.RANK_WIN() + ": `" + userData.getWin() +
+        if (userData != null) builder.addField("#" + rankData[0].getLongId() + ": " + userData.getName(), languageContainer.RANK_WIN() + ": `" + userData.getWin() +
                 "` " + languageContainer.RANK_LOSE() + ": `" + userData.getLose() + "`", false);
 
         channel.sendMessage(builder.build()).complete();
