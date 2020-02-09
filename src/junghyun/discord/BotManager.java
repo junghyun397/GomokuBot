@@ -90,8 +90,7 @@ public class BotManager {
 
                 Pos pos;
                 try {
-                    pos = new Pos(Pos.engToInt(splitText[1].toLowerCase().toCharArray()[0]),
-                            Integer.parseInt(splitText[2].toLowerCase()) - 1);
+                    pos = new Pos(Pos.engToInt(splitText[1].toLowerCase().toCharArray()[0]), Integer.parseInt(splitText[2].toLowerCase()) - 1);
                 } catch (Exception e) {
                     MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
                     break;

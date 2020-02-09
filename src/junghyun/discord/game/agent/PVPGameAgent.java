@@ -66,14 +66,14 @@ public class PVPGameAgent implements GameAgent {
                 losePlayer = chatGame.getOppPlayer().getNameTag();
             }
             MessageManager.getInstance(channel.getGuild()).sendPvPWin(chatGame, pos, winPlayer, losePlayer, channel);
-            GameManager.endGame(chatGame);
+            GameManager.endGame(chatGame, channel);
             return;
         }
 
         if (game.isFull()) {
             chatGame.setState(ChatGame.STATE.FULL);
             MessageManager.getInstance(channel.getGuild()).sendFullCanvas(chatGame, channel);
-            GameManager.endGame(chatGame);
+            GameManager.endGame(chatGame, channel);
             return;
         }
 
@@ -100,12 +100,12 @@ public class PVPGameAgent implements GameAgent {
         else losePlayer = chatGame.getOppPlayer().getNameTag();
 
         MessageManager.getInstance(channel.getGuild()).sendPvPResign(chatGame, winPlayer, losePlayer, channel);
-        GameManager.endGame(chatGame);
+        GameManager.endGame(chatGame, channel);
     }
 
     @Override
     public void killGame() {
-        GameManager.endGame(chatGame);
+        GameManager.endGame(chatGame, null);
         GameManager.delGame(chatGame.getOppPlayer().getLongId());
     }
 

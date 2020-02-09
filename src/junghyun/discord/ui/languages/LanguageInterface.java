@@ -13,6 +13,7 @@ public interface LanguageInterface {
     String HELP_GIT();
     String HELP_VERSION();
     String HELP_SUPPORT();
+    String HELP_INVITE_LINK();
 
     String HELP_CMD_INFO();
     String HELP_CMD_HELP();
@@ -51,6 +52,8 @@ public interface LanguageInterface {
     String GAME_PVE_INFO(String playerName, int winCount, int loseCount, int rank);
 
     String GAME_FULL();
+
+    String GAME_ARCHIVED(String messageLink);
 
     String BOARD_INP();
     String BOARD_FINISH();

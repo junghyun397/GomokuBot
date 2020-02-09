@@ -1,6 +1,7 @@
 package junghyun.discord.ui;
 
 import junghyun.ai.Pos;
+import junghyun.discord.BotManager;
 import junghyun.discord.Settings;
 import junghyun.discord.db.DBManager;
 import junghyun.discord.db.Logger;
@@ -36,6 +37,7 @@ public class MessageAgent {
         helpBuilder.addField(languageContainer.HELP_GIT(), "[github.com/GomokuBot](https://github.com/junghyun397/GomokuBot)", true);
         helpBuilder.addField(languageContainer.HELP_VERSION(), Settings.VERSION, true);
         helpBuilder.addField(languageContainer.HELP_SUPPORT(), "[discord.gg/vq8pkfF](https://discord.gg/vq8pkfF)", true);
+        helpBuilder.addField(languageContainer.HELP_INVITE_LINK(), "[goo.gl/y4ctBE](https://goo.gl/y4ctBE)", true);
 
         this.helpEmbed = helpBuilder.build();
 
@@ -98,7 +100,7 @@ public class MessageAgent {
 
     // Game Error
 
-    public void sendCreatGameFail(User user, TextChannel channel) {
+    public void sendCreateGameFail(User user, TextChannel channel) {
         channel.sendMessage(languageContainer.GAME_CREATE_FAIL(user.getName())).complete();
     }
 
@@ -176,6 +178,17 @@ public class MessageAgent {
         channel.sendMessage(languageContainer.GAME_PVE_INFO(playerName, winCount, loseCount, rank)).complete();
     }
 
+    // End Game
+
+    public void sendPerfectGameArchived(String playerName, TextChannel channel, long messageId) {
+        channel.sendMessage(languageContainer.GAME_ARCHIVED(
+                "https://discordapp.com/channels/"
+                + BotManager.getOfficialChannel().getGuild().getId() + "/"
+                + BotManager.getOfficialChannel().getId() + "/"
+                + messageId)
+        ).complete();
+    }
+
     // Error Game
 
     public void sendNotFoundGame(User user, TextChannel channel) {
@@ -216,7 +229,7 @@ public class MessageAgent {
 
     // Official Post Function
 
-    public static void postResultOfficialChannel(ChatGame chatGame, TextChannel channel) {
+    public static long postResultOfficialChannel(ChatGame chatGame, TextChannel channel) {
         EmbedBuilder builder = new EmbedBuilder();
         builder.setAuthor(chatGame.getNameTag() + "@" + chatGame.getOppPlayer().getNameTag() + ", END",
                 null, chatGame.getIconURL());
@@ -230,7 +243,7 @@ public class MessageAgent {
         builder.addField("WINNER", winner, true);
         builder.addField("TURNS", String.valueOf(chatGame.getGame().getTurns()), true);
 
-        channel.sendMessage(builder.build()).complete();
+        return channel.sendMessage(builder.build()).complete().getIdLong();
     }
 
     // Private Function

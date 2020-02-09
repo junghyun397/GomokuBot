@@ -40,6 +40,10 @@ public class LanguageENG implements LanguageInterface {
     public String HELP_SUPPORT() {
         return "Support Channel";
     }
+    @Override
+    public String HELP_INVITE_LINK() {
+        return "Invite Link";
+    }
 
     @Override
     public String HELP_CMD_INFO() {
@@ -133,7 +137,7 @@ public class LanguageENG implements LanguageInterface {
     }
     @Override
     public String GAME_PVP_WIN(String winName, String loseName, String lastPos) {
-        return "`" + winName + "` wins by `" + loseName + "`  putting it on " + lastPos + "!";
+        return "`" + winName + "` wins by `" + loseName + "` putting it on " + lastPos + "!";
     }
     @Override
     public String GAME_PVP_RESIGN(String winName, String loseName) {
@@ -166,6 +170,11 @@ public class LanguageENG implements LanguageInterface {
     @Override
     public String GAME_FULL() {
         return "There was no more room for the stones, so it was a draw.";
+    }
+
+    @Override
+    public String GAME_ARCHIVED(String messageLink) {
+        return ":tada: You showed a great game! The game played has been shared to the official channel. - Click link to check it out.\n"+messageLink;
     }
 
     @Override

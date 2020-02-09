@@ -40,6 +40,10 @@ public class LanguageKOR extends LanguageENG {
     public String HELP_SUPPORT() {
         return "지원 채널";
     }
+    @Override
+    public String HELP_INVITE_LINK() {
+        return "초대 링크";
+    }
 
     @Override
     public String HELP_CMD_INFO() {
@@ -162,6 +166,11 @@ public class LanguageKOR extends LanguageENG {
     @Override
     public String GAME_FULL() {
         return "더이상 돌을 넣을 자리가 없어 무승부 처리 되었습니다.";
+    }
+
+    @Override
+    public String GAME_ARCHIVED(String messageLink) {
+        return ":tada: 멋진 게임을 보여 주셨네요! 게임 결과가 공식 채널에 공유 되었습니다. - 링크를 클릭 해서 확인 해보세요."+messageLink;
     }
 
     @Override

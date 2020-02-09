@@ -60,7 +60,7 @@ public class GameManager {
 
     public static void createGame(User user, TextChannel channel, User targetUser) {
         if (!GameManager.isHasGame(user.getIdLong())) {
-            MessageManager.getInstance(channel.getGuild()).sendCreatGameFail(user, channel);
+            MessageManager.getInstance(channel.getGuild()).sendCreateGameFail(user, channel);
             return;
         }
 
@@ -109,19 +109,20 @@ public class GameManager {
         GameManager.getGame(user.getIdLong()).resignGame(user, channel);
     }
 
-    public static void endGame(ChatGame chatGame) {
+    public static void endGame(ChatGame chatGame, TextChannel channel) {
         DBManager.saveGame(chatGame);
         GameManager.delGame(chatGame.getLongId());
-        GameManager.postGame(chatGame);
+        GameManager.postGame(chatGame, channel);
         Logger.loggerInfo("end game: " +  chatGame.getNameTag() + " v. " + chatGame.getOppPlayer().getNameTag()
                 + " " + chatGame.getGame().getTurns() + " " + chatGame.getState().toString());
         Logger.loggerInfo("canvas info\n"
                 + TextDrawer.getGraphics(chatGame.getGame(), false));
     }
 
-    private static void postGame(ChatGame chatGame) {
+    private static void postGame(ChatGame chatGame, TextChannel channel) {
         if (chatGame.getState() != ChatGame.STATE.TIMEOUT && chatGame.getGame().getTurns() > 20) {
-            MessageAgent.postResultOfficialChannel(chatGame, BotManager.getOfficialChannel());
+            long id = MessageAgent.postResultOfficialChannel(chatGame, BotManager.getOfficialChannel());
+            if (channel != null) MessageManager.getInstance(channel.getGuild()).sendPerfectGameArchived(chatGame.getNameTag(), channel, id);
         }
     }
 

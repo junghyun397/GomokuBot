@@ -50,7 +50,7 @@ public class PVEGameAgent implements GameAgent {
         if (game.isWin(pos.getX(), pos.getY(), game.getPlayerColor())) {
             chatGame.setState(ChatGame.STATE.WIN);
             MessageManager.getInstance(channel.getGuild()).sendPvEWin(chatGame, pos, channel);
-            GameManager.endGame(chatGame);
+            GameManager.endGame(chatGame, channel);
             return;
         }
 
@@ -58,7 +58,7 @@ public class PVEGameAgent implements GameAgent {
             chatGame.setState(ChatGame.STATE.FULL);
             chatGame.getOppPlayer().setWin();
             MessageManager.getInstance(channel.getGuild()).sendFullCanvas(chatGame, channel);
-            GameManager.endGame(chatGame);
+            GameManager.endGame(chatGame, channel);
             return;
         }
 
@@ -68,7 +68,7 @@ public class PVEGameAgent implements GameAgent {
             chatGame.setState(ChatGame.STATE.LOSE);
             chatGame.getOppPlayer().setWin();
             MessageManager.getInstance(channel.getGuild()).sendPvELose(chatGame, aiPos, channel);
-            GameManager.endGame(chatGame);
+            GameManager.endGame(chatGame, channel);
             return;
         }
 
@@ -79,12 +79,12 @@ public class PVEGameAgent implements GameAgent {
     public void resignGame(User user, TextChannel channel) {
         chatGame.setState(ChatGame.STATE.RESIGN);
         MessageManager.getInstance(channel.getGuild()).sendPvEResign(chatGame, channel);
-        GameManager.endGame(chatGame);
+        GameManager.endGame(chatGame, channel);
     }
 
     @Override
     public void killGame() {
-        GameManager.endGame(chatGame);
+        GameManager.endGame(chatGame, null);
     }
 
     @Override

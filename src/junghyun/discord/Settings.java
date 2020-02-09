@@ -21,7 +21,7 @@ public class Settings {
 
     public static final int RANK_COUNT = 10;
 
-    public static final String VERSION = "v4.0.0";
+    public static final String VERSION = "v4.1.0";
 
     public static final long OFFICIAL_GUILD_ID = PrivateSettings.OFFICIAL_GUILD_ID;
     public static final long RESULT_CHANNEL_ID = PrivateSettings.RESULT_CHANNEL_ID;
