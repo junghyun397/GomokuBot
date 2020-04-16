@@ -122,7 +122,7 @@ public class GameManager {
     private static void postGame(ChatGame chatGame, TextChannel channel) {
         if (chatGame.getState() != ChatGame.STATE.TIMEOUT && chatGame.getGame().getTurns() > 20) {
             long id = MessageAgent.postResultOfficialChannel(chatGame, BotManager.getOfficialChannel());
-            if (channel != null) MessageManager.getInstance(channel.getGuild()).sendPerfectGameArchived(chatGame.getNameTag(), channel, id);
+            // if (channel != null) MessageManager.getInstance(channel.getGuild()).sendPerfectGameArchived(chatGame.getNameTag(), channel, id);
         }
     }
 

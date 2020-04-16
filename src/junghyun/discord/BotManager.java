@@ -20,7 +20,6 @@ import java.util.Objects;
 public class BotManager {
 
     private static JDA client;
-    private static TextChannel officialChannel;
 
     public static void startGomokuBot() throws LoginException, InterruptedException {
         JDABuilder builder = new JDABuilder(Settings.TOKEN);
@@ -106,16 +105,14 @@ public class BotManager {
         }
     }
 
-    public static void setOfficialChannel(TextChannel channel) {
-        BotManager.officialChannel = channel;
-    }
-
     public static JDA getClient() {
         return BotManager.client;
     }
 
     public static TextChannel getOfficialChannel() {
-        return BotManager.officialChannel;
+        return Objects.requireNonNull(BotManager.getClient()
+                .getGuildById(Settings.OFFICIAL_GUILD_ID))
+                .getTextChannelById(Settings.RESULT_CHANNEL_ID);
     }
 
 }
