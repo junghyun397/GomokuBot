@@ -8,12 +8,14 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 
 import java.awt.*;
 import java.util.HashMap;
+import java.util.Map;
 
 public class MessageManager {
 
     final private static HashMap<String, MessageAgent> agentList = new HashMap<>();
     final private static HashMap<Long, MessageAgent> langList = new HashMap<>();
 
+    final private static Map<String, String> languageMap = new HashMap<>();
     final private static String baseLanguage = "ENG";
 
     public static String LanguageList = "";
@@ -26,7 +28,7 @@ public class MessageManager {
 
         langBuilder.setAuthor("Language guide");
         langBuilder.setColor(new Color(0, 145, 234));
-        langBuilder.setDescription("Please select the appropriate language for this server!");
+        langBuilder.setDescription("The default language has been set as the server region for this channel. Please select the proper language for this server!");
 
         // Register Language HERE ↓↓
 
@@ -43,13 +45,16 @@ public class MessageManager {
     }
 
     private static void registerLanguage(LanguageInterface languageContainer) {
+        for (String targetRegion: languageContainer.TARGET_REGION())
+            if (!MessageManager.languageMap.containsKey(targetRegion))
+                MessageManager.languageMap.put(targetRegion, languageContainer.LANGUAGE_CODE());
         MessageManager.agentList.put(languageContainer.LANGUAGE_CODE(), new MessageAgent(languageContainer));
         MessageManager.LanguageList += "`" + languageContainer.LANGUAGE_CODE() + "` ";
         MessageManager.langBuilder.addField(languageContainer.LANGUAGE_NAME(), languageContainer.LANGUAGE_DESCRIPTION(), false);
     }
 
     public static boolean checkLanguage(String language) {
-        return MessageManager.getLanguageInstance(language) != null;
+        return MessageManager.agentList.containsKey(language);
     }
 
     private static MessageAgent getLanguageInstance(String langText) {
@@ -61,8 +66,17 @@ public class MessageManager {
         if (msgInstance == null) {
             DBManager.GuildDataSet guildDataSet = DBManager.getGuildData(guild.getIdLong());
             if (guildDataSet != null)
-                MessageManager.langList.put(guild.getIdLong(), MessageManager.getLanguageInstance(guildDataSet.getLang()));
-            else MessageManager.langList.put(guild.getIdLong(), MessageManager.getLanguageInstance(MessageManager.baseLanguage));
+                MessageManager.langList.put(
+                        guild.getIdLong(),
+                        MessageManager.getLanguageInstance(guildDataSet.getLang())
+                );
+            else
+                MessageManager.langList.put(
+                        guild.getIdLong(),
+                        MessageManager.getLanguageInstance(
+                                MessageManager.languageMap.getOrDefault(guild.getRegionRaw(), MessageManager.baseLanguage)
+                        )
+                );
 
             return MessageManager.langList.get(guild.getIdLong());
         }

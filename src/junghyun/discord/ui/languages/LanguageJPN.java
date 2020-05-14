@@ -3,6 +3,14 @@ package junghyun.discord.ui.languages;
 public class LanguageJPN extends LanguageENG{
 
     @Override
+    public String[] TARGET_REGION() {
+        return new String[]{
+                "japan",
+                "vip-japan"
+        };
+    }
+
+    @Override
     public String LANGUAGE_CODE() {
         return "JPN";
     }

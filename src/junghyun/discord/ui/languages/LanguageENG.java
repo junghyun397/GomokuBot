@@ -3,6 +3,11 @@ package junghyun.discord.ui.languages;
 public class LanguageENG implements LanguageInterface {
 
     @Override
+    public String[] TARGET_REGION() {
+        return new String[]{};
+    }
+
+    @Override
     public String LANGUAGE_CODE() {
         return "ENG";
     }
@@ -22,7 +27,7 @@ public class LanguageENG implements LanguageInterface {
     }
     @Override
     public String HELP_DESCRIPTION() {
-        return "GomokuBot is an Open-Source Discord Bot that allows you to enjoy Gomoku/Omok in Discord. Collected game data is used for Reinforcement Learning Model training. :)";
+        return "GomokuBot is an Open-Source Discord Bot that allows you to enjoy Gomoku/Omok in Discord. Collected game data is used for Reinforcement Learning Model training.";
     }
     @Override
     public String HELP_DEV() {

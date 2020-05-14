@@ -3,6 +3,14 @@ package junghyun.discord.ui.languages;
 public class LanguageKOR extends LanguageENG {
 
     @Override
+    public String[] TARGET_REGION() {
+        return new String[]{
+                "south-korea",
+                "vip-south-korea"
+        };
+    }
+
+    @Override
     public String LANGUAGE_CODE() {
         return "KOR";
     }
@@ -22,7 +30,7 @@ public class LanguageKOR extends LanguageENG {
     }
     @Override
     public String HELP_DESCRIPTION() {
-        return "GomokuBot 은 Discord 에서 오목을 즐길 수 있게 해주는 오픈소스 Discord Bot 입니다. 수집된 기보 데이터는 강화학습 모델 훈련에 사용됩니다. :)";
+        return "GomokuBot 은 Discord 에서 오목을 즐길 수 있게 해주는 오픈소스 Discord Bot 입니다. 수집된 기보 데이터는 강화학습 모델 훈련에 사용됩니다.";
     }
     @Override
     public String HELP_DEV() {
