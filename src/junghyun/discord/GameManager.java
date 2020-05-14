@@ -116,7 +116,7 @@ public class GameManager {
         Logger.loggerInfo("end game: " +  chatGame.getNameTag() + " v. " + chatGame.getOppPlayer().getNameTag()
                 + " " + chatGame.getGame().getTurns() + " " + chatGame.getState().toString());
         Logger.loggerInfo("canvas info\n"
-                + TextDrawer.getGraphics(chatGame.getGame(), false));
+                + TextDrawer.getConsoleGraphics(chatGame.getGame(), true));
     }
 
     private static void postGame(ChatGame chatGame, TextChannel channel) {

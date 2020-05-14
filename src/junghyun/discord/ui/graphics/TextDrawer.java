@@ -44,12 +44,9 @@ public class TextDrawer {
 
     public static String getGraphics(Game game, Pos aiPos, boolean useGrid) {
         Stone[][] plate = game.getPlate();
-        StringBuilder result = new StringBuilder();
+        StringBuilder result = new StringBuilder("┏　");
 
-        result.append("┏　");
-        for (int x = 0; x < 15; x++) {
-            result.append(FIXED_ENG[x]);
-        }
+        for (int x = 0; x < 15; x++) result.append(FIXED_ENG[x]);
 
         result.append("\n");
 
@@ -68,6 +65,42 @@ public class TextDrawer {
                 } else {
                     if (useGrid) result.append(getEmptyCode(x, y));
                     else result.append(BLANK);
+                }
+            }
+            result.append("\n");
+        }
+
+        return result.toString();
+    }
+
+    public static String getConsoleGraphics(Game game, boolean useGrid) {
+        return getConsoleGraphics(game, null, useGrid);
+    }
+
+    public static String getConsoleGraphics(Game game, Pos aiPos, boolean useGrid) {
+        Stone[][] plate = game.getPlate();
+        StringBuilder result = new StringBuilder("   ");
+
+        for (int x = 0; x < 15; x++) result.append((char) (65 + x)).append(" ");
+
+        result.append("\n");
+
+        for (int y = 0; y < 15; y++) {
+            if (y < 9) result.append(" ").append((y + 1)).append(" ");
+            else result.append(y + 1).append(" ");
+            for (int x = 0; x < 15; x++) {
+                Stone pro_stone = plate[x][y];
+                if (pro_stone.isStoneAdded()) {
+                    if (pro_stone.getColor()) {
+                        if ((pro_stone.getX() == aiPos.getX()) && (pro_stone.getY() == aiPos.getY())) result.append("Q ");
+                        else result.append("O ");
+                    } else {
+                        if ((pro_stone.getX() == aiPos.getX()) && (pro_stone.getY() == aiPos.getY())) result.append("% ");
+                        else result.append("# ");
+                    }
+                } else {
+                    if (useGrid) result.append("+ ");
+                    else result.append("  ");
                 }
             }
             result.append("\n");

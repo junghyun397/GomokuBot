@@ -101,11 +101,11 @@ public class AIDisplay {
                 if (AIDisplay.usePrintStep) AIDisplay.printState(aiPos);
 
                 if (AIDisplay.game.isWin(aiPos.getX(), aiPos.getY(), AIDisplay.game.getPlayerColor())) {
-                    String rsColor = "BLACK";
+                    String rsColor = "WHITE";
                     if (AIDisplay.game.getPlayerColor()) {
-                        rsColor = "WHITE";
-                        winWhite++;
-                    } else winBlack++;
+                        rsColor = "BLACK";
+                        winBlack++;
+                    } else winWhite++;
 
                     AIDisplay.printState(aiPos);
                     System.out.print("#" + (i + 1) + " " + rsColor + " Victory, " + "End. \n\n");
@@ -179,11 +179,11 @@ public class AIDisplay {
     }
 
     private static void printState() {
-        System.out.print(AIDisplay.clearText + TextDrawer.getGraphics(AIDisplay.game, AIDisplay.useGrid) + "\n");
+        System.out.print(AIDisplay.clearText + TextDrawer.getConsoleGraphics(AIDisplay.game, AIDisplay.useGrid) + "\n");
     }
 
     private static void printState(Pos aiPos) {
-        System.out.print(TextDrawer.getGraphics(AIDisplay.game, aiPos, AIDisplay.useGrid) + "\n");
+        System.out.print(TextDrawer.getConsoleGraphics(AIDisplay.game, aiPos, AIDisplay.useGrid) + "\n");
     }
 
 }
