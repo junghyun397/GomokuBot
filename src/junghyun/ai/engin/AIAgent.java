@@ -71,7 +71,6 @@ public class AIAgent {
         this.sumRowPoints();
 
         if ((this.diff == DIFF.MID) || (this.diff == DIFF.EXT)) this.sumOverlapPoint();
-        if (this.diff == DIFF.EXT) new VTChecker(game).sumVTPos();
     }
 
     private void sumDotPoints() {
