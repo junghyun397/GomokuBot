@@ -55,17 +55,9 @@ public class TextDrawer {
             for (int x = 0; x < 15; x++) {
                 Stone pro_stone = plate[x][y];
                 if (pro_stone.isStoneAdded()) {
-                    if (pro_stone.getColor()) {
-                        if ((pro_stone.getX() == aiPos.getX()) && (pro_stone.getY() == aiPos.getY())) result.append(LAST_BLACK);
-                        else result.append(BLACK);
-                    } else {
-                        if ((pro_stone.getX() == aiPos.getX()) && (pro_stone.getY() == aiPos.getY())) result.append(LAST_WHITE);
-                        else result.append(WHITE);
-                    }
-                } else {
-                    if (useGrid) result.append(getEmptyCode(x, y));
-                    else result.append(BLANK);
-                }
+                    if (pro_stone.getColor()) result.append((pro_stone.getX() == aiPos.getX()) && (pro_stone.getY() == aiPos.getY()) ? LAST_BLACK : BLACK);
+                    else result.append((pro_stone.getX() == aiPos.getX()) && (pro_stone.getY() == aiPos.getY()) ? LAST_WHITE : WHITE);
+                } else result.append(useGrid ? getEmptyCode(x, y) : BLANK);
             }
             result.append("\n");
         }
@@ -74,7 +66,7 @@ public class TextDrawer {
     }
 
     public static String getConsoleGraphics(Game game, boolean useGrid) {
-        return getConsoleGraphics(game, null, useGrid);
+        return getConsoleGraphics(game, new Pos(-1, -1), useGrid);
     }
 
     public static String getConsoleGraphics(Game game, Pos aiPos, boolean useGrid) {
@@ -86,22 +78,14 @@ public class TextDrawer {
         result.append("\n");
 
         for (int y = 0; y < 15; y++) {
-            if (y < 9) result.append(" ").append((y + 1)).append(" ");
+            if (y < 9) result.append(" ").append(y + 1).append(" ");
             else result.append(y + 1).append(" ");
             for (int x = 0; x < 15; x++) {
                 Stone pro_stone = plate[x][y];
                 if (pro_stone.isStoneAdded()) {
-                    if (pro_stone.getColor()) {
-                        if ((pro_stone.getX() == aiPos.getX()) && (pro_stone.getY() == aiPos.getY())) result.append("Q ");
-                        else result.append("O ");
-                    } else {
-                        if ((pro_stone.getX() == aiPos.getX()) && (pro_stone.getY() == aiPos.getY())) result.append("% ");
-                        else result.append("# ");
-                    }
-                } else {
-                    if (useGrid) result.append("+ ");
-                    else result.append("  ");
-                }
+                    if (pro_stone.getColor()) result.append((pro_stone.getX() == aiPos.getX()) && (pro_stone.getY() == aiPos.getY()) ? "Q ": "O ");
+                    else result.append((pro_stone.getX() == aiPos.getX()) && (pro_stone.getY() == aiPos.getY()) ? "% " : "# ");
+                } else result.append(useGrid ? "+ " : "  ");
             }
             result.append("\n");
         }
@@ -110,28 +94,26 @@ public class TextDrawer {
     }
 
     private static String getEmptyCode(int x, int y) {
-
         if (y == 0) {
             switch (x) {
                 case 0:
                     return CORNER_T_L;
                 case 14:
                     return CORNER_T_R;
+                default:
+                    return CORNER_T_U;
             }
-            return CORNER_T_U;
         } else if (y == 14) {
             switch (x) {
                 case 0:
                     return CORNER_B_L;
                 case 14:
                     return CORNER_B_R;
+                default:
+                    return CORNER_T_D;
             }
-            return CORNER_T_D;
-        } else if (x == 0) {
-            return CORNER_L;
-        } else if (x == 14) {
-            return CORNER_R;
-        }
-        return CROSS;
+        } else if (x == 0) return CORNER_L;
+        else if (x == 14) return CORNER_R;
+        else return CROSS;
     }
 }

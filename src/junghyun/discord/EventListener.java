@@ -15,16 +15,17 @@ public class EventListener extends ListenerAdapter {
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
         if (!event.isFromType(ChannelType.TEXT)
-                || (event.getMessage().getContentDisplay().length() < 2)
+                || (event.getMessage().getContentDisplay().length() < 4)
                 || (event.getMessage().getContentDisplay().toCharArray()[0] != Settings.PREFIX)) return;
         BotManager.processCommand(event);
     }
 
     @Override
     public void onGuildJoin(@NotNull GuildJoinEvent event) {
-        MessageManager.getInstance(event.getGuild())
-                .sendHelp(Objects.requireNonNull(event.getGuild().getSystemChannel()));
-        MessageManager.getInstance(event.getGuild()).sendLanguageInfo(event.getGuild().getSystemChannel());
+        if (event.getGuild().getSystemChannel() == null) {
+            MessageManager.getInstance(event.getGuild()).sendHelp(Objects.requireNonNull(event.getGuild().getSystemChannel()));
+            MessageManager.getInstance(event.getGuild()).sendLanguageInfo(event.getGuild().getSystemChannel());
+        }
         Logger.loggerInfo("join server : " + event.getGuild().getName());
     }
 
