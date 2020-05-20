@@ -72,8 +72,7 @@ public class BotManager {
                 break;
             case "~start":
                 User targetUser = null;
-                if (event.getMessage().getMentions().size() > 0)
-                    targetUser = event.getMessage().getMentionedUsers().get(0);
+                if (event.getMessage().getMentionedUsers().size() > 0) targetUser = event.getMessage().getMentionedUsers().get(0);
                 GameManager.createGame(event.getAuthor(), event.getTextChannel(), targetUser);
                 break;
             case "~resign":

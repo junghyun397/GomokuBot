@@ -22,7 +22,7 @@ public class EventListener extends ListenerAdapter {
 
     @Override
     public void onGuildJoin(@NotNull GuildJoinEvent event) {
-        if (event.getGuild().getSystemChannel() == null) {
+        if (event.getGuild().getSystemChannel() != null) {
             MessageManager.getInstance(event.getGuild()).sendHelp(Objects.requireNonNull(event.getGuild().getSystemChannel()));
             MessageManager.getInstance(event.getGuild()).sendLanguageInfo(event.getGuild().getSystemChannel());
         }
