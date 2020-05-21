@@ -13,8 +13,8 @@ import java.util.concurrent.TimeUnit;
 
 public class Logger {
 
-    private static StringBuffer logBuffer = new StringBuffer("\n");
-    private static StringBuffer commandBuffer = new StringBuffer("\n");
+    private static final StringBuffer logBuffer = new StringBuffer("\n");
+    private static final StringBuffer commandBuffer = new StringBuffer("\n");
 
     public static void startLogger() {
         Runnable task = Logger::saveLogs;
@@ -24,20 +24,27 @@ public class Logger {
     }
 
     public static void loggerDev(String text) {
-        text = "[ ] " + getDateTime() + text + "\n";
-        System.out.print(text);
+        System.out.print("[ ] " + getDateTime() + text + "\n");
     }
 
     public static void loggerInfo(String text) {
-        text = "[+] " + getDateTime() + text + "\n";
-        System.out.print(text);
-        Logger.logBuffer.append(text);
+        final StringBuilder loggerBuffer = new StringBuilder(" ");
+        loggerBuffer.append("[+] ").append(getDateTime()).append(text).append("\n");
+
+        System.out.print(loggerBuffer.toString());
+        Logger.logBuffer.append(loggerBuffer.toString());
+
+        loggerBuffer.setLength(0);
     }
 
     public static void loggerWarning(String text) {
-        text = "[!] " + getDateTime() + text + "\n";
-        System.out.print(text);
-        Logger.logBuffer.append(text);
+        final StringBuilder loggerBuffer = new StringBuilder(" ");
+        loggerBuffer.append("[!] ").append(getDateTime()).append(text).append("\n");
+
+        System.out.print(loggerBuffer.toString());
+        Logger.logBuffer.append(loggerBuffer.toString());
+
+        loggerBuffer.setLength(0);
     }
 
     public static void loggerCommand(String text) {
@@ -56,8 +63,8 @@ public class Logger {
     }
 
     private static String getDateTime() {
-        long time = System.currentTimeMillis();
-        SimpleDateFormat dayTime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss >> ");
+        long time = System.currentTimeMillis() + Settings.LOGGER_TIMEZONE_OFFSET;
+        final SimpleDateFormat dayTime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss >> ");
         return dayTime.format(new Date(time));
     }
 
