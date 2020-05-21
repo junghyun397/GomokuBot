@@ -4,13 +4,13 @@ import junghyun.ai.Pos;
 import junghyun.discord.BotManager;
 import junghyun.discord.Settings;
 import junghyun.discord.db.DBManager;
-import junghyun.discord.db.Logger;
 import junghyun.discord.game.ChatGame;
 import junghyun.discord.ui.graphics.TextDrawer;
 import junghyun.discord.ui.languages.LanguageInterface;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
 
 import java.awt.*;
@@ -249,12 +249,9 @@ public class MessageAgent {
     // Private Function
 
     private void deleteCanvasMessage(ChatGame chatGame, TextChannel channel) {
-        try {
-            if (chatGame.getMessageList().size() > 0) chatGame.getMessageList()
-                    .forEach(msg -> channel.deleteMessageById(msg.getIdLong()).complete());
-        } catch (Exception e) {
-            Logger.loggerWarning("miss permission : " + channel.getName());
-        }
+        if (chatGame.getMessageList().size() > 0
+                && channel.getGuild().getSelfMember().getPermissions().contains(Permission.MESSAGE_MANAGE))
+            chatGame.getMessageList().forEach(msg -> channel.deleteMessageById(msg.getIdLong()).complete());
     }
 
 }

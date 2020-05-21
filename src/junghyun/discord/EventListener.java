@@ -22,10 +22,12 @@ public class EventListener extends ListenerAdapter {
 
     @Override
     public void onGuildJoin(@NotNull GuildJoinEvent event) {
-        if (event.getGuild().getSystemChannel() != null) {
+        if (event.getGuild().getSystemChannel() != null
+                && event.getGuild().getSystemChannel().canTalk()) {
             MessageManager.getInstance(event.getGuild()).sendHelp(Objects.requireNonNull(event.getGuild().getSystemChannel()));
             MessageManager.getInstance(event.getGuild()).sendLanguageInfo(event.getGuild().getSystemChannel());
         }
+
         Logger.loggerInfo("join server : " + event.getGuild().getName());
     }
 

@@ -42,7 +42,10 @@ public class BotManager {
     }
 
     static void processCommand(MessageReceivedEvent event) {
-        if (event.getMessage().getContentDisplay().isEmpty() || event.getAuthor().isFake()) return;
+        if (event.getMessage().getContentDisplay().isEmpty()
+                || event.getAuthor().isFake()
+                || !event.getTextChannel().canTalk())
+            return;
 
         String[] splitText = event.getMessage().getContentDisplay().toLowerCase().split(" ");
         Logger.loggerCommand(event.getAuthor().getName() + " : " + event.getAuthor().getName()
@@ -63,6 +66,7 @@ public class BotManager {
                 else lang = null;
 
                 MessageManager.getInstance(event.getGuild()).sendLanguageChange(event.getTextChannel(), lang);
+                MessageManager.getInstance(event.getGuild()).sendHelp(event.getTextChannel());
                 break;
             case "~rank":
                 MessageManager.getInstance(event.getGuild())
