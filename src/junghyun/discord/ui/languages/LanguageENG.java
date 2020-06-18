@@ -27,7 +27,7 @@ public class LanguageENG implements LanguageInterface {
     }
     @Override
     public String HELP_DESCRIPTION() {
-        return "GomokuBot is an Open-Source Discord Bot that allows you to enjoy Gomoku/Omok in Discord. Collected game data is used for Reinforcement Learning Model training.";
+        return "GomokuBot is an open source Discord Bot that allows players to enjoy Gomoku on Discord. The collected game result data is used to train Reinforcement-Learning models.";
     }
     @Override
     public String HELP_DEV() {
@@ -76,7 +76,7 @@ public class LanguageENG implements LanguageInterface {
     }
     @Override
     public String HELP_CMD_RESIGN() {
-        return "`~resign` Surrenders the current game.";
+        return "`~resign` Surrender the current game.";
     }
 
     @Override
@@ -85,7 +85,7 @@ public class LanguageENG implements LanguageInterface {
     }
     @Override
     public String RANK_DESCRIPTION() {
-        return "It is ranked from 1 to 10. :D";
+        return "Ranked 1st to 10th.";
     }
     @Override
     public String RANK_WIN() {
@@ -107,19 +107,19 @@ public class LanguageENG implements LanguageInterface {
 
     @Override
     public String GAME_NOT_FOUND(String nameTag) {
-        return nameTag + ", could not find any games in progress Please start the game with `~start` command!";
+        return nameTag + ", could not find any games in progress. Please start the game with `~start` command!";
     }
     @Override
     public String GAME_CREATE_FAIL(String nameTag) {
-        return nameTag + ", Game creation failed. Please finish the game you are enjoying. :thinking:";
+        return nameTag + ", Game creation failed. Please finish the game in progress. :thinking:";
     }
     @Override
     public String GAME_SYNTAX_FAIL(String nameTag) {
-        return nameTag + ", that's an invalid command. Please write in the format of . `~s` `alphabet` `number` :thinking:";
+        return nameTag + ", that's invalid command. Please write in the format of . `~s` `alphabet` `number` :thinking:";
     }
     @Override
     public String GAME_ALREADY_IN(String nameTag) {
-        return nameTag + ", there are stones already there. :thinking:";
+        return nameTag + ", there are Stone already there. :thinking:";
     }
 
     @Override
@@ -128,7 +128,7 @@ public class LanguageENG implements LanguageInterface {
     }
     @Override
     public String GAME_CMD_INFO() {
-        return "Please release the stone by `~s` `alphabet` `number` format. Ex) `~s` h` `8`";
+        return "Please release the Stone by `~s` `alphabet` `number` format. Ex) `~s` h` `8`";
     }
 
     @Override
@@ -142,7 +142,7 @@ public class LanguageENG implements LanguageInterface {
     }
     @Override
     public String GAME_PVP_WIN(String winName, String loseName, String lastPos) {
-        return "`" + winName + "` wins by `" + loseName + "` putting it on " + lastPos + "!";
+        return "`" + winName + "` wins by `" + loseName + "` putting Stone on " + lastPos + "!";
     }
     @Override
     public String GAME_PVP_RESIGN(String winName, String loseName) {
@@ -156,7 +156,7 @@ public class LanguageENG implements LanguageInterface {
 
     @Override
     public String GAME_PVE_WIN(String lastPos) {
-        return "You won the AI by putting it on " + lastPos + ". Congratulations!";
+        return "You won the AI by putting Stone on " + lastPos + ". Congratulations! :tada:";
     }
     @Override
     public String GAME_PVE_LOSE(String lastPos) {
@@ -174,12 +174,12 @@ public class LanguageENG implements LanguageInterface {
 
     @Override
     public String GAME_FULL() {
-        return "There was no more room for the stones, so it was a draw.";
+        return "There was no more space for the stones, so it was a draw.";
     }
 
     @Override
     public String GAME_ARCHIVED(String messageLink) {
-        return ":tada: You showed a great game! The game played has been shared to the official channel. - Click link to check it out.\n"+messageLink;
+        return ":tada: You showed a great game! The game record has been shared to the official channel. - Click link to check it out.\n"+messageLink;
     }
 
     @Override
