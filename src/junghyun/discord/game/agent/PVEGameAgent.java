@@ -38,12 +38,12 @@ public class PVEGameAgent implements GameAgent {
     }
 
     @Override
-    public void putStone(User user, Pos pos, TextChannel channel) {
+    public boolean putStone(User user, Pos pos, TextChannel channel) {
         Game game = chatGame.getGame();
 
         if (!game.canSetStone(pos.getX(), pos.getY())) {
             MessageManager.getInstance(channel.getGuild()).sendStoneAlreadyIn(chatGame, channel);
-            return;
+            return false;
         }
 
         game.setStone(pos.getX(), pos.getY());
@@ -51,7 +51,7 @@ public class PVEGameAgent implements GameAgent {
             chatGame.setState(ChatGame.STATE.WIN);
             MessageManager.getInstance(channel.getGuild()).sendPvEWin(chatGame, pos, channel);
             GameManager.endGame(chatGame, channel);
-            return;
+            return true;
         }
 
         if (game.isFull()) {
@@ -59,7 +59,7 @@ public class PVEGameAgent implements GameAgent {
             chatGame.getOppPlayer().setWin();
             MessageManager.getInstance(channel.getGuild()).sendFullCanvas(chatGame, channel);
             GameManager.endGame(chatGame, channel);
-            return;
+            return true;
         }
 
         Pos aiPos = this.aiAgent.getAiPoint();
@@ -69,10 +69,11 @@ public class PVEGameAgent implements GameAgent {
             chatGame.getOppPlayer().setWin();
             MessageManager.getInstance(channel.getGuild()).sendPvELose(chatGame, aiPos, channel);
             GameManager.endGame(chatGame, channel);
-            return;
+            return true;
         }
 
         MessageManager.getInstance(channel.getGuild()).sendNextTurn(chatGame, aiPos, chatGame.getNameTag(), "AI", channel);
+        return true;
     }
 
     @Override

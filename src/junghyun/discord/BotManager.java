@@ -8,6 +8,7 @@ import junghyun.discord.ui.MessageManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -41,7 +42,16 @@ public class BotManager {
         BotManager.client.shutdown();
     }
 
+    private static void addReactionCheck(Message message) {
+        message.addReaction("U+2611").complete();
+    }
+
+    private static void addReactionCrossMark(Message message) {
+        message.addReaction("U+274C").complete();
+    }
+
     static void processCommand(MessageReceivedEvent event) {
+
         if (event.getMessage().getContentDisplay().isEmpty()
                 || event.getAuthor().isFake()
                 || !event.getTextChannel().canTalk())
@@ -54,10 +64,12 @@ public class BotManager {
         switch (splitText[0]) {
             case "~help":
                 MessageManager.getInstance(event.getGuild()).sendHelp(event.getTextChannel());
+                addReactionCheck(event.getMessage());
                 break;
             case "~lang":
                 if (splitText.length != 2) {
                     MessageManager.getInstance(event.getGuild()).sendLanguageChange(event.getTextChannel(), null);
+                    addReactionCrossMark(event.getMessage());
                     break;
                 }
                 String lang = splitText[1].toUpperCase();
@@ -67,26 +79,32 @@ public class BotManager {
 
                 MessageManager.getInstance(event.getGuild()).sendLanguageChange(event.getTextChannel(), lang);
                 MessageManager.getInstance(event.getGuild()).sendHelp(event.getTextChannel());
+                addReactionCheck(event.getMessage());
                 break;
             case "~rank":
                 MessageManager.getInstance(event.getGuild())
                         .sendRank(event.getAuthor(),
                                 event.getTextChannel(),
                                 Objects.requireNonNull(DBManager.getRankingData(Settings.RANK_COUNT, event.getAuthor().getIdLong())));
+                addReactionCheck(event.getMessage());
                 break;
             case "~start":
                 User targetUser = null;
                 if (event.getMessage().getMentionedUsers().size() > 0) targetUser = event.getMessage().getMentionedUsers().get(0);
-                GameManager.createGame(event.getAuthor(), event.getTextChannel(), targetUser);
+
+                if (GameManager.createGame(event.getAuthor(), event.getTextChannel(), targetUser)) addReactionCheck(event.getMessage());
+                else addReactionCrossMark(event.getMessage());
                 break;
             case "~resign":
-                GameManager.resignGame(event.getAuthor(), event.getTextChannel());
+                if (GameManager.resignGame(event.getAuthor(), event.getTextChannel())) addReactionCheck(event.getMessage());
+                else addReactionCrossMark(event.getMessage());
                 break;
             case "~s":
                 if ((splitText.length != 3)
                         || (!((splitText[1].length() == 1) && ((splitText[2].length() == 1)
                         || (splitText[2].length() == 2))))) {
                     MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
+                    addReactionCrossMark(event.getMessage());
                     break;
                 }
 
@@ -95,15 +113,18 @@ public class BotManager {
                     pos = new Pos(Pos.engToInt(splitText[1].toLowerCase().toCharArray()[0]), Integer.parseInt(splitText[2].toLowerCase()) - 1);
                 } catch (Exception e) {
                     MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
+                    addReactionCrossMark(event.getMessage());
                     break;
                 }
 
                 if (!Pos.checkSize(pos.getX(), pos.getY())) {
                     MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
+                    addReactionCrossMark(event.getMessage());
                     break;
                 }
 
-                GameManager.putStone(pos, event.getAuthor(), event.getTextChannel());
+                if (GameManager.putStone(pos, event.getAuthor(), event.getTextChannel())) addReactionCheck(event.getMessage());
+                else addReactionCrossMark(event.getMessage());
                 break;
         }
     }
@@ -113,9 +134,7 @@ public class BotManager {
     }
 
     public static TextChannel getOfficialChannel() {
-        return Objects.requireNonNull(BotManager.getClient()
-                .getGuildById(Settings.OFFICIAL_GUILD_ID))
-                .getTextChannelById(Settings.RESULT_CHANNEL_ID);
+        return Objects.requireNonNull(BotManager.getClient().getGuildById(Settings.OFFICIAL_GUILD_ID)).getTextChannelById(Settings.RESULT_CHANNEL_ID);
     }
 
 }

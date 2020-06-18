@@ -9,7 +9,7 @@ public interface GameAgent {
 
     void startGame(TextChannel channel);
 
-    void putStone(User user, Pos pos, TextChannel channel);
+    boolean putStone(User user, Pos pos, TextChannel channel);
 
     void resignGame(User user, TextChannel channel);
 

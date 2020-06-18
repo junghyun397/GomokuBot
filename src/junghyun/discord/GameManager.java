@@ -58,10 +58,10 @@ public class GameManager {
         GameManager.gameList.remove(id);
     }
 
-    public static void createGame(User user, TextChannel channel, User targetUser) {
+    public static boolean createGame(User user, TextChannel channel, User targetUser) {
         if (!GameManager.isHasGame(user.getIdLong())) {
             MessageManager.getInstance(channel.getGuild()).sendCreateGameFail(user, channel);
-            return;
+            return false;
         }
 
         ChatGame chatGame;
@@ -70,6 +70,8 @@ public class GameManager {
 
         Logger.loggerInfo("start game: " + chatGame.getNameTag()
                 + " v. " + chatGame.getOppPlayer().getNameTag() + " : " + channel.getGuild().getName());
+
+        return true;
     }
 
     private static ChatGame createPVEGame(User user, TextChannel channel) {
@@ -93,20 +95,24 @@ public class GameManager {
         return chatGame;
     }
 
-    public static void putStone(Pos pos, User user, TextChannel channel) {
+    public static boolean putStone(Pos pos, User user, TextChannel channel) {
         if (isHasGame(user.getIdLong())) {
             MessageManager.getInstance(channel.getGuild()).sendNotFoundGame(user, channel);
-            return;
+            return false;
         }
-        GameManager.getGame(user.getIdLong()).putStone(user, pos, channel);
+
+        return GameManager.getGame(user.getIdLong()).putStone(user, pos, channel);
     }
 
-    public static void resignGame(User user, TextChannel channel) {
+    public static boolean resignGame(User user, TextChannel channel) {
         if (isHasGame(user.getIdLong())) {
             MessageManager.getInstance(channel.getGuild()).sendNotFoundGame(user, channel);
-            return;
+            return false;
         }
+
         GameManager.getGame(user.getIdLong()).resignGame(user, channel);
+
+        return true;
     }
 
     public static void endGame(ChatGame chatGame, TextChannel channel) {

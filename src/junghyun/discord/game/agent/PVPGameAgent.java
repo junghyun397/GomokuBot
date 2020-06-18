@@ -33,7 +33,7 @@ public class PVPGameAgent implements GameAgent {
     }
 
     @Override
-    public void putStone(User user, Pos pos, TextChannel channel) {
+    public boolean putStone(User user, Pos pos, TextChannel channel) {
         Game game = chatGame.onUpdate().getGame();
 
         long nowPlayer = chatGame.getLongId();
@@ -45,12 +45,12 @@ public class PVPGameAgent implements GameAgent {
                 turnName = chatGame.getOppPlayer().getNameTag();
             }
             MessageManager.getInstance(channel.getGuild()).sendNotPlayerTurn(turnName,channel);
-            return;
+            return false;
         }
 
         if (!game.canSetStone(pos.getX(), pos.getY())) {
             MessageManager.getInstance(channel.getGuild()).sendStoneAlreadyIn(chatGame, channel);
-            return;
+            return false;
         }
 
         game.setStone(pos.getX(), pos.getY());
@@ -67,14 +67,14 @@ public class PVPGameAgent implements GameAgent {
             }
             MessageManager.getInstance(channel.getGuild()).sendPvPWin(chatGame, pos, winPlayer, losePlayer, channel);
             GameManager.endGame(chatGame, channel);
-            return;
+            return true;
         }
 
         if (game.isFull()) {
             chatGame.setState(ChatGame.STATE.FULL);
             MessageManager.getInstance(channel.getGuild()).sendFullCanvas(chatGame, channel);
             GameManager.endGame(chatGame, channel);
-            return;
+            return true;
         }
 
         String nowName = chatGame.getNameTag();
@@ -87,6 +87,8 @@ public class PVPGameAgent implements GameAgent {
 
         MessageManager.getInstance(channel.getGuild()).sendNextTurn(chatGame, pos, nowName, prvName, channel);
         this.turnColor = !this.turnColor;
+
+        return true;
     }
 
     @Override
