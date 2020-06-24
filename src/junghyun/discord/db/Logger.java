@@ -28,7 +28,7 @@ public class Logger {
     }
 
     public static void loggerInfo(String text) {
-        final StringBuilder loggerBuffer = new StringBuilder(" ");
+        final StringBuilder loggerBuffer = new StringBuilder();
         loggerBuffer.append("[+] ").append(getDateTime()).append(text).append("\n");
 
         System.out.print(loggerBuffer.toString());
@@ -38,7 +38,7 @@ public class Logger {
     }
 
     public static void loggerWarning(String text) {
-        final StringBuilder loggerBuffer = new StringBuilder(" ");
+        final StringBuilder loggerBuffer = new StringBuilder();
         loggerBuffer.append("[!] ").append(getDateTime()).append(text).append("\n");
 
         System.out.print(loggerBuffer.toString());
