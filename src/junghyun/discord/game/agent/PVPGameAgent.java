@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
 
 import java.util.Random;
+import java.util.function.Consumer;
 
 public class PVPGameAgent implements GameAgent {
 
@@ -33,7 +34,7 @@ public class PVPGameAgent implements GameAgent {
     }
 
     @Override
-    public boolean putStone(User user, Pos pos, TextChannel channel) {
+    public void putStone(User user, Pos pos, TextChannel channel, Consumer<Boolean> then) {
         Game game = chatGame.onUpdate().getGame();
 
         long nowPlayer = chatGame.getLongId();
@@ -41,16 +42,17 @@ public class PVPGameAgent implements GameAgent {
 
         if (nowPlayer != user.getIdLong()) {
             String turnName = chatGame.getNameTag();
-            if (nowPlayer == chatGame.getOppPlayer().getLongId()) {
-                turnName = chatGame.getOppPlayer().getNameTag();
-            }
+            if (nowPlayer == chatGame.getOppPlayer().getLongId()) turnName = chatGame.getOppPlayer().getNameTag();
+
+            then.accept(false);
             MessageManager.getInstance(channel.getGuild()).sendNotPlayerTurn(turnName,channel);
-            return false;
+            return;
         }
 
         if (!game.canSetStone(pos.getX(), pos.getY())) {
+            then.accept(false);
             MessageManager.getInstance(channel.getGuild()).sendStoneAlreadyIn(chatGame, channel);
-            return false;
+            return;
         }
 
         game.setStone(pos.getX(), pos.getY());
@@ -62,33 +64,31 @@ public class PVPGameAgent implements GameAgent {
             if (user.getIdLong() == chatGame.getOppPlayer().getLongId()) {
                 chatGame.getOppPlayer().setWin();
                 winPlayer = chatGame.getOppPlayer().getNameTag();
-            } else {
-                losePlayer = chatGame.getOppPlayer().getNameTag();
-            }
-            MessageManager.getInstance(channel.getGuild()).sendPvPWin(chatGame, pos, winPlayer, losePlayer, channel);
+            } else losePlayer = chatGame.getOppPlayer().getNameTag();
             GameManager.endGame(chatGame, channel);
-            return true;
+
+            then.accept(true);
+            MessageManager.getInstance(channel.getGuild()).sendPvPWin(chatGame, pos, winPlayer, losePlayer, channel);
+            return;
         }
 
         if (game.isFull()) {
             chatGame.setState(ChatGame.STATE.FULL);
-            MessageManager.getInstance(channel.getGuild()).sendFullCanvas(chatGame, channel);
             GameManager.endGame(chatGame, channel);
-            return true;
+
+            then.accept(true);
+            MessageManager.getInstance(channel.getGuild()).sendFullCanvas(chatGame, channel);
+            return;
         }
 
         String nowName = chatGame.getNameTag();
         String prvName = chatGame.getNameTag();
-        if (nowPlayer != chatGame.getLongId()) {
-            prvName = chatGame.getOppPlayer().getNameTag();
-        } else {
-            nowName = chatGame.getOppPlayer().getNameTag();
-        }
-
-        MessageManager.getInstance(channel.getGuild()).sendNextTurn(chatGame, pos, nowName, prvName, channel);
+        if (nowPlayer != chatGame.getLongId()) prvName = chatGame.getOppPlayer().getNameTag();
+        else nowName = chatGame.getOppPlayer().getNameTag();
         this.turnColor = !this.turnColor;
 
-        return true;
+        then.accept(true);
+        MessageManager.getInstance(channel.getGuild()).sendNextTurn(chatGame, pos, nowName, prvName, channel);
     }
 
     @Override

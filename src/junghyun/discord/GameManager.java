@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public class GameManager {
 
@@ -58,11 +59,14 @@ public class GameManager {
         GameManager.gameList.remove(id);
     }
 
-    public static boolean createGame(User user, TextChannel channel, User targetUser) {
+    public static void createGame(User user, TextChannel channel, User targetUser, Consumer<Boolean> then) {
         if (!GameManager.isHasGame(user.getIdLong())) {
+            then.accept(false);
             MessageManager.getInstance(channel.getGuild()).sendCreateGameFail(user, channel);
-            return false;
+            return;
         }
+
+        then.accept(true);
 
         ChatGame chatGame;
         if (targetUser == null || targetUser.isBot()) chatGame = GameManager.createPVEGame(user, channel);
@@ -70,8 +74,6 @@ public class GameManager {
 
         Logger.loggerInfo("start game: " + chatGame.getNameTag()
                 + " v. " + chatGame.getOppPlayer().getNameTag() + " : " + channel.getGuild().getName());
-
-        return true;
     }
 
     private static ChatGame createPVEGame(User user, TextChannel channel) {
@@ -95,24 +97,25 @@ public class GameManager {
         return chatGame;
     }
 
-    public static boolean putStone(Pos pos, User user, TextChannel channel) {
+    public static void putStone(Pos pos, User user, TextChannel channel, Consumer<Boolean> then) {
         if (isHasGame(user.getIdLong())) {
+            then.accept(false);
             MessageManager.getInstance(channel.getGuild()).sendNotFoundGame(user, channel);
-            return false;
+            return;
         }
 
-        return GameManager.getGame(user.getIdLong()).putStone(user, pos, channel);
+        GameManager.getGame(user.getIdLong()).putStone(user, pos, channel, then);
     }
 
-    public static boolean resignGame(User user, TextChannel channel) {
+    public static void resignGame(User user, TextChannel channel, Consumer<Boolean> then) {
         if (isHasGame(user.getIdLong())) {
+            then.accept(false);
             MessageManager.getInstance(channel.getGuild()).sendNotFoundGame(user, channel);
-            return false;
+            return;
         }
 
+        then.accept(true);
         GameManager.getGame(user.getIdLong()).resignGame(user, channel);
-
-        return true;
     }
 
     public static void endGame(ChatGame chatGame, TextChannel channel) {

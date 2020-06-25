@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
 
 import java.util.Random;
+import java.util.function.Consumer;
 
 public class PVEGameAgent implements GameAgent {
 
@@ -38,28 +39,33 @@ public class PVEGameAgent implements GameAgent {
     }
 
     @Override
-    public boolean putStone(User user, Pos pos, TextChannel channel) {
+    public void putStone(User user, Pos pos, TextChannel channel, Consumer<Boolean> then) {
         Game game = chatGame.getGame();
 
         if (!game.canSetStone(pos.getX(), pos.getY())) {
+            then.accept(false);
             MessageManager.getInstance(channel.getGuild()).sendStoneAlreadyIn(chatGame, channel);
-            return false;
+            return;
         }
 
         game.setStone(pos.getX(), pos.getY());
         if (game.isWin(pos.getX(), pos.getY(), game.getPlayerColor())) {
             chatGame.setState(ChatGame.STATE.WIN);
-            MessageManager.getInstance(channel.getGuild()).sendPvEWin(chatGame, pos, channel);
             GameManager.endGame(chatGame, channel);
-            return true;
+
+            then.accept(true);
+            MessageManager.getInstance(channel.getGuild()).sendPvEWin(chatGame, pos, channel);
+            return;
         }
 
         if (game.isFull()) {
             chatGame.setState(ChatGame.STATE.FULL);
             chatGame.getOppPlayer().setWin();
-            MessageManager.getInstance(channel.getGuild()).sendFullCanvas(chatGame, channel);
             GameManager.endGame(chatGame, channel);
-            return true;
+
+            then.accept(true);
+            MessageManager.getInstance(channel.getGuild()).sendFullCanvas(chatGame, channel);
+            return;
         }
 
         Pos aiPos = this.aiAgent.getAiPoint();
@@ -67,13 +73,15 @@ public class PVEGameAgent implements GameAgent {
         if (game.isWin(aiPos.getX(), aiPos.getY(), !game.getPlayerColor())) {
             chatGame.setState(ChatGame.STATE.LOSE);
             chatGame.getOppPlayer().setWin();
-            MessageManager.getInstance(channel.getGuild()).sendPvELose(chatGame, aiPos, channel);
             GameManager.endGame(chatGame, channel);
-            return true;
+
+            then.accept(true);
+            MessageManager.getInstance(channel.getGuild()).sendPvELose(chatGame, aiPos, channel);
+            return;
         }
 
+        then.accept(true);
         MessageManager.getInstance(channel.getGuild()).sendNextTurn(chatGame, aiPos, chatGame.getNameTag(), "AI", channel);
-        return true;
     }
 
     @Override

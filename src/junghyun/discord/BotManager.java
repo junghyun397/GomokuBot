@@ -17,6 +17,7 @@ import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import javax.security.auth.login.LoginException;
 import java.util.EnumSet;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class BotManager {
 
@@ -43,14 +44,18 @@ public class BotManager {
     }
 
     private static void addReactionCheck(Message message) {
-        message.addReaction("U+2611").complete();
+        message.addReaction("\u2611\uFE0F").queue();
     }
 
     private static void addReactionCrossMark(Message message) {
-        message.addReaction("U+274C").complete();
+        message.addReaction("\u274C").queue();
     }
 
     static void processCommand(MessageReceivedEvent event) {
+        final Consumer<Boolean> reactionAgent = (result) -> {
+            if (result) event.getMessage().addReaction("\u2611\uFE0F").queue();
+            else event.getMessage().addReaction("\u274C").queue();
+        };
 
         if (event.getMessage().getContentDisplay().isEmpty()
                 || event.getAuthor().isFake()
@@ -63,13 +68,13 @@ public class BotManager {
 
         switch (splitText[0]) {
             case "~help":
-                MessageManager.getInstance(event.getGuild()).sendHelp(event.getTextChannel());
                 addReactionCheck(event.getMessage());
+                MessageManager.getInstance(event.getGuild()).sendHelp(event.getTextChannel());
                 break;
             case "~lang":
                 if (splitText.length != 2) {
-                    MessageManager.getInstance(event.getGuild()).sendLanguageChange(event.getTextChannel(), null);
                     addReactionCrossMark(event.getMessage());
+                    MessageManager.getInstance(event.getGuild()).sendLanguageChange(event.getTextChannel(), null);
                     break;
                 }
                 String lang = splitText[1].toUpperCase();
@@ -77,34 +82,30 @@ public class BotManager {
                 if (MessageManager.checkLanguage(lang)) MessageManager.setLanguage(event.getGuild().getIdLong(), lang);
                 else lang = null;
 
+                if (lang != null) addReactionCheck(event.getMessage());
+                else addReactionCrossMark(event.getMessage());
                 MessageManager.getInstance(event.getGuild()).sendLanguageChange(event.getTextChannel(), lang);
-                MessageManager.getInstance(event.getGuild()).sendHelp(event.getTextChannel());
-                addReactionCheck(event.getMessage());
                 break;
             case "~rank":
-                MessageManager.getInstance(event.getGuild())
-                        .sendRank(event.getAuthor(),
-                                event.getTextChannel(),
-                                Objects.requireNonNull(DBManager.getRankingData(Settings.RANK_COUNT, event.getAuthor().getIdLong())));
                 addReactionCheck(event.getMessage());
+                MessageManager.getInstance(event.getGuild()).sendRank(event.getAuthor(), event.getTextChannel(),
+                        Objects.requireNonNull(DBManager.getRankingData(Settings.RANK_COUNT, event.getAuthor().getIdLong())));
                 break;
             case "~start":
                 User targetUser = null;
                 if (event.getMessage().getMentionedUsers().size() > 0) targetUser = event.getMessage().getMentionedUsers().get(0);
 
-                if (GameManager.createGame(event.getAuthor(), event.getTextChannel(), targetUser)) addReactionCheck(event.getMessage());
-                else addReactionCrossMark(event.getMessage());
+                GameManager.createGame(event.getAuthor(), event.getTextChannel(), targetUser, reactionAgent);
                 break;
             case "~resign":
-                if (GameManager.resignGame(event.getAuthor(), event.getTextChannel())) addReactionCheck(event.getMessage());
-                else addReactionCrossMark(event.getMessage());
+                GameManager.resignGame(event.getAuthor(), event.getTextChannel(), reactionAgent);
                 break;
             case "~s":
                 if ((splitText.length != 3)
                         || (!((splitText[1].length() == 1) && ((splitText[2].length() == 1)
                         || (splitText[2].length() == 2))))) {
-                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
                     addReactionCrossMark(event.getMessage());
+                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
                     break;
                 }
 
@@ -112,19 +113,18 @@ public class BotManager {
                 try {
                     pos = new Pos(Pos.engToInt(splitText[1].toLowerCase().toCharArray()[0]), Integer.parseInt(splitText[2].toLowerCase()) - 1);
                 } catch (Exception e) {
-                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
                     addReactionCrossMark(event.getMessage());
+                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
                     break;
                 }
 
                 if (!Pos.checkSize(pos.getX(), pos.getY())) {
-                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
                     addReactionCrossMark(event.getMessage());
+                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
                     break;
                 }
 
-                if (GameManager.putStone(pos, event.getAuthor(), event.getTextChannel())) addReactionCheck(event.getMessage());
-                else addReactionCrossMark(event.getMessage());
+                GameManager.putStone(pos, event.getAuthor(), event.getTextChannel(), reactionAgent);
                 break;
         }
     }

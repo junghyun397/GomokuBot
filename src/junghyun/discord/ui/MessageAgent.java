@@ -18,10 +18,10 @@ import java.awt.*;
 @SuppressWarnings("unused")
 public class MessageAgent {
 
-    private MessageEmbed helpEmbed;
-    private MessageEmbed commandEmbed;
+    private final MessageEmbed helpEmbed;
+    private final MessageEmbed commandEmbed;
 
-    private LanguageInterface languageContainer;
+    private final LanguageInterface languageContainer;
 
     public MessageAgent(LanguageInterface languageContainer) {
         this.languageContainer = languageContainer;
@@ -93,7 +93,10 @@ public class MessageAgent {
         if (lang == null) {
             channel.sendMessage(languageContainer.LANG_CHANGE_ERROR()).complete();
             sendLanguageInfo(channel);
-        } else channel.sendMessage(languageContainer.LANG_SUCCESS()).complete();
+        } else {
+            channel.sendMessage(languageContainer.LANG_SUCCESS()).complete();
+            sendHelp(channel);
+        }
     }
 
     // Game Create/End Information
