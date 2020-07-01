@@ -87,6 +87,7 @@ public class PVEGameAgent implements GameAgent {
     @Override
     public void resignGame(User user, TextChannel channel) {
         chatGame.setState(ChatGame.STATE.RESIGN);
+        chatGame.getOppPlayer().setWin();
         MessageManager.getInstance(channel.getGuild()).sendPvEResign(chatGame, channel);
         GameManager.endGame(chatGame, channel);
     }
