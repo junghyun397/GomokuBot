@@ -20,6 +20,7 @@ public class MessageAgent {
 
     private final MessageEmbed helpEmbed;
     private final MessageEmbed commandEmbed;
+    private final MessageEmbed skinEmbed;
 
     private final LanguageInterface languageContainer;
 
@@ -50,12 +51,43 @@ public class MessageAgent {
 
         commandBuilder.addField("~help", languageContainer.HELP_CMD_HELP(), false);
         commandBuilder.addField("~lang", languageContainer.HELP_CMD_LANG(MessageManager.LanguageList), false);
+        commandBuilder.addField("~skin ``A``", languageContainer.HELP_CMD_SKIN(), false);
         commandBuilder.addField("~rank", languageContainer.HELP_CMD_RANK(), false);
         commandBuilder.addField("~start", languageContainer.HELP_CMD_PVE(), false);
         commandBuilder.addField("~start @mention", languageContainer.HELP_CMD_PVP(), false);
         commandBuilder.addField("~resign", languageContainer.HELP_CMD_RESIGN(), false);
 
         this.commandEmbed = commandBuilder.build();
+
+        //------------------------------------------------------------------------------------------------------------
+
+        EmbedBuilder skinBuilder = new EmbedBuilder();
+
+        skinBuilder.setAuthor(languageContainer.SKIN_INFO());
+        skinBuilder.setColor(new Color(0,145,234));
+
+        skinBuilder.setDescription(languageContainer.SKIN_DESCRIPTION());
+
+        skinBuilder.addField("Style ``A``",  "\n" +
+                "　ＡＢＣＤ\n" +
+                "１┏┳○┓\n" +
+                "２┣●╋●\n" +
+                "３┣○●┫\n" +
+                "４┗┻○┛\n" + languageContainer.SKIN_CMD_INFO("A"), false);
+        skinBuilder.addField("Style ``B``", "```\n" +
+                "   A B C D\n" +
+                " 1 + + O +\n" +
+                " 2 + # + #\n" +
+                " 3 + O # +\n" +
+                " 4 + + O +\n```\n" + languageContainer.SKIN_CMD_INFO("B"), false);
+        skinBuilder.addField("Style ``C``", "```\n" +
+                "   A B C D\n" +
+                " 1     O  \n" +
+                " 2   #   #\n" +
+                " 3   O #  \n" +
+                " 4     O  \n```\n" + languageContainer.SKIN_CMD_INFO("C"), false);
+
+        this.skinEmbed = skinBuilder.build();
     }
 
     // Basic Information
@@ -96,6 +128,21 @@ public class MessageAgent {
         } else {
             channel.sendMessage(languageContainer.LANG_SUCCESS()).complete();
             sendHelp(channel);
+        }
+    }
+
+    // Style Information
+
+    public void sendSkinInfo(TextChannel channel) {
+        channel.sendMessage(this.skinEmbed).complete();
+    }
+
+    public void sendSkinChange(TextChannel channel, String skin) {
+        if (skin == null) {
+            channel.sendMessage(languageContainer.SKIN_CHANGE_ERROR()).complete();
+            sendSkinInfo(channel);
+        } else {
+            channel.sendMessage(languageContainer.SKIN_CHANGE_SUCCESS(skin)).complete();
         }
     }
 
@@ -220,10 +267,18 @@ public class MessageAgent {
         if (chatGame.getState() == ChatGame.STATE.INP) builder.setColor(new Color(0,200,83));
         else builder.setColor(new Color(213,0,0));
 
-        builder.setDescription(TextDrawer.getGraphics(chatGame.getGame(), aiPos));
+        String skin = MessageManager.getSkin(channel.getGuild());
+
+        if (skin.equals("A"))
+            builder.setDescription(TextDrawer.getGraphics(chatGame.getGame(), aiPos, true));
+        else if (skin.equals("B"))
+            builder.setDescription("```\n"+TextDrawer.getConsoleGraphics(chatGame.getGame(), aiPos, true)+"\n```");
+        else
+            builder.setDescription("```\n"+TextDrawer.getConsoleGraphics(chatGame.getGame(), aiPos, false)+"\n```");
 
         builder.addField(languageContainer.BOARD_TURNS(), " " + chatGame.getGame().getTurns() + languageContainer.BOARD_TURN(), true);
-        builder.addField(languageContainer.BOARD_LOCATION(), aiPos.getHumText(), true);
+        if (aiPos != null && aiPos.getX() != -1) builder.addField(languageContainer.BOARD_LOCATION(), aiPos.getHumText(), true);
+        else builder.addField(languageContainer.BOARD_LOCATION(), "[``NONE``]", true);
 
         if ((chatGame.getState() == ChatGame.STATE.INP) && (chatGame.getGame().getTurns() > 2))
             chatGame.addMessage(channel.sendMessage(builder.build()).complete());
@@ -234,8 +289,7 @@ public class MessageAgent {
 
     public static long postResultOfficialChannel(ChatGame chatGame, TextChannel channel) {
         EmbedBuilder builder = new EmbedBuilder();
-        builder.setAuthor(chatGame.getNameTag() + "@" + chatGame.getOppPlayer().getNameTag() + ", END",
-                null, chatGame.getIconURL());
+        builder.setAuthor(chatGame.getNameTag() + "@" + chatGame.getOppPlayer().getNameTag() + ", END", null, chatGame.getIconURL());
         builder.setColor(new Color(0,145,234));
 
         builder.setDescription(TextDrawer.getGraphics(chatGame.getGame(), new Pos(-1, -1)));

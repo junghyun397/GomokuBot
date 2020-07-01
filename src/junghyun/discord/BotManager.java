@@ -43,15 +43,19 @@ public class BotManager {
         BotManager.client.shutdown();
     }
 
-    private static void addReactionCheck(Message message) {
-        message.addReaction("\u2611\uFE0F").queue();
-    }
-
-    private static void addReactionCrossMark(Message message) {
-        message.addReaction("\u274C").queue();
-    }
-
     static void processCommand(MessageReceivedEvent event) {
+        final Consumer<Message> addReactionCheck = (message) -> {
+            try {
+                message.addReaction("\u2611\uFE0F").queue();
+            } catch (Exception ignored) {}
+        };
+
+        final Consumer<Message> addReactionCrossMark = (message) -> {
+            try {
+                message.addReaction("\u274C").queue();
+            } catch (Exception ignored) {}
+        };
+
         final Consumer<Boolean> reactionAgent = (result) -> {
             if (result) event.getMessage().addReaction("\u2611\uFE0F").queue();
             else event.getMessage().addReaction("\u274C").queue();
@@ -68,12 +72,12 @@ public class BotManager {
 
         switch (splitText[0]) {
             case "~help":
-                addReactionCheck(event.getMessage());
+                addReactionCheck.accept(event.getMessage());
                 MessageManager.getInstance(event.getGuild()).sendHelp(event.getTextChannel());
                 break;
             case "~lang":
                 if (splitText.length != 2) {
-                    addReactionCrossMark(event.getMessage());
+                    addReactionCrossMark.accept(event.getMessage());
                     MessageManager.getInstance(event.getGuild()).sendLanguageChange(event.getTextChannel(), null);
                     break;
                 }
@@ -82,12 +86,27 @@ public class BotManager {
                 if (MessageManager.checkLanguage(lang)) MessageManager.setLanguage(event.getGuild().getIdLong(), lang);
                 else lang = null;
 
-                if (lang != null) addReactionCheck(event.getMessage());
-                else addReactionCrossMark(event.getMessage());
+                if (lang != null) addReactionCheck.accept(event.getMessage());
+                else addReactionCrossMark.accept(event.getMessage());
                 MessageManager.getInstance(event.getGuild()).sendLanguageChange(event.getTextChannel(), lang);
                 break;
+            case "~skin":
+                if (splitText.length != 2) {
+                    addReactionCrossMark.accept(event.getMessage());
+                    MessageManager.getInstance(event.getGuild()).sendSkinChange(event.getTextChannel(), null);
+                    break;
+                }
+                String skin = splitText[1].toUpperCase();
+
+                if (MessageManager.checkSkin(skin)) MessageManager.setSkin(event.getGuild().getIdLong(), skin);
+                else skin = null;
+
+                if (skin != null) addReactionCheck.accept(event.getMessage());
+                else addReactionCrossMark.accept(event.getMessage());
+                MessageManager.getInstance(event.getGuild()).sendSkinChange(event.getTextChannel(), skin);
+                break;
             case "~rank":
-                addReactionCheck(event.getMessage());
+                addReactionCheck.accept(event.getMessage());
                 MessageManager.getInstance(event.getGuild()).sendRank(event.getAuthor(), event.getTextChannel(),
                         Objects.requireNonNull(DBManager.getRankingData(Settings.RANK_COUNT, event.getAuthor().getIdLong())));
                 break;
@@ -104,7 +123,7 @@ public class BotManager {
                 if ((splitText.length != 3)
                         || (!((splitText[1].length() == 1) && ((splitText[2].length() == 1)
                         || (splitText[2].length() == 2))))) {
-                    addReactionCrossMark(event.getMessage());
+                    addReactionCrossMark.accept(event.getMessage());
                     MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
                     break;
                 }
@@ -113,13 +132,13 @@ public class BotManager {
                 try {
                     pos = new Pos(Pos.engToInt(splitText[1].toLowerCase().toCharArray()[0]), Integer.parseInt(splitText[2].toLowerCase()) - 1);
                 } catch (Exception e) {
-                    addReactionCrossMark(event.getMessage());
+                    addReactionCrossMark.accept(event.getMessage());
                     MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
                     break;
                 }
 
                 if (!Pos.checkSize(pos.getX(), pos.getY())) {
-                    addReactionCrossMark(event.getMessage());
+                    addReactionCrossMark.accept(event.getMessage());
                     MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
                     break;
                 }

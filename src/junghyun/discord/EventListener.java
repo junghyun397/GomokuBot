@@ -25,6 +25,7 @@ public class EventListener extends ListenerAdapter {
         if (event.getGuild().getSystemChannel() != null
                 && event.getGuild().getSystemChannel().canTalk()) {
             MessageManager.getInstance(event.getGuild()).sendHelp(Objects.requireNonNull(event.getGuild().getSystemChannel()));
+            MessageManager.getInstance(event.getGuild()).sendSkinInfo(event.getGuild().getSystemChannel());
             MessageManager.getInstance(event.getGuild()).sendLanguageInfo(event.getGuild().getSystemChannel());
         }
 

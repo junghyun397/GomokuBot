@@ -79,12 +79,21 @@ public class DBManager {
         }
     }
 
+    public static void setGuildSkin(long id, String skin) {
+        GuildDataSet orgGuild = DBManager.getGuildData(id);
+        if (orgGuild != null) {
+            SqlManager.executeUpdate("UPDATE guild_info SET skin='" + skin + "' WHERE guild_id=" + id + ";");
+        } else {
+            SqlManager.execute("INSERT INTO guild_info(guild_id, skin) VALUES (" + id + ", '" + skin + "');");
+        }
+    }
+
     public static GuildDataSet getGuildData(long id) {
         ResultSet rs = SqlManager.executeQuery("SELECT * FROM guild_info WHERE guild_id = '" + id + "';");
         try {
             assert rs != null;
             if (!rs.next()) return null;
-            return new GuildDataSet(rs.getLong("guild_id"), rs.getString("lang"));
+            return new GuildDataSet(rs.getLong("guild_id"), rs.getString("lang"), rs.getString("skin"));
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -93,11 +102,11 @@ public class DBManager {
 
     public static class UserDataSet {
 
-        private long longId;
-        private String name;
+        private final long longId;
+        private final String name;
 
-        private int win;
-        private int lose;
+        private final int win;
+        private final int lose;
 
         private UserDataSet(long id, String name, int win, int lose) {
             this.longId = id;
@@ -125,13 +134,16 @@ public class DBManager {
 
     public static class GuildDataSet {
 
-        private long longId;
+        private final long longId;
 
-        private String lang;
+        private final String lang;
 
-        private GuildDataSet(long id, String lang) {
+        private final String skin;
+
+        private GuildDataSet(long id, String lang, String skin) {
             this.longId = id;
             this.lang = lang;
+            this.skin = skin;
         }
 
         public long getLongId() {
@@ -140,6 +152,10 @@ public class DBManager {
 
         public String getLang() {
             return lang;
+        }
+
+        public String getSkin() {
+            return skin;
         }
     }
 }

@@ -20,10 +20,17 @@ public interface LanguageInterface {
     String HELP_CMD_INFO();
     String HELP_CMD_HELP();
     String HELP_CMD_LANG(String langList);
+    String HELP_CMD_SKIN();
     String HELP_CMD_RANK();
     String HELP_CMD_PVE();
     String HELP_CMD_PVP();
     String HELP_CMD_RESIGN();
+
+    String SKIN_INFO();
+    String SKIN_DESCRIPTION();
+    String SKIN_CMD_INFO(String style);
+    String SKIN_CHANGE_ERROR();
+    String SKIN_CHANGE_SUCCESS(String style);
 
     String RANK_INFO();
     String RANK_DESCRIPTION();

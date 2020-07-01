@@ -67,6 +67,10 @@ public class LanguageENG implements LanguageInterface {
         return "`~lang` " + langList + " Change the language setting used on this server. Ex) `~lang` `ENG`";
     }
     @Override
+    public String HELP_CMD_SKIN() {
+        return "`~skin` `A` `B` `C` Change the Gomoku-canvas style setting used on this server. Ex) `~skin` `A`";
+    }
+    @Override
     public String HELP_CMD_PVE() {
         return "`~start` Start the game with A.I.";
     }
@@ -77,6 +81,27 @@ public class LanguageENG implements LanguageInterface {
     @Override
     public String HELP_CMD_RESIGN() {
         return "`~resign` Surrender the current game.";
+    }
+
+    @Override
+    public String SKIN_INFO() {
+        return "GomokuBot / Style";
+    }
+    @Override
+    public String SKIN_DESCRIPTION() {
+        return "The default Gomoku canvas (Style A) may not display properly. Choose one of the three styles available and set the style to use on this server.";
+    }
+    @Override
+    public String SKIN_CMD_INFO(String style) {
+        return "Enter ``~skin`` ``" + style + "`` to use this style.";
+    }
+    @Override
+    public String SKIN_CHANGE_ERROR() {
+        return "There is an error in the style specification.";
+    }
+    @Override
+    public String SKIN_CHANGE_SUCCESS(String style) {
+        return "Style setting has been change to ``" + style + "`` !";
     }
 
     @Override
@@ -128,7 +153,7 @@ public class LanguageENG implements LanguageInterface {
     }
     @Override
     public String GAME_CMD_INFO() {
-        return "Please release the Stone by `~s` `alphabet` `number` format. Ex) `~s` h` `8`";
+        return "Please release the Stone by `~s` `alphabet` `number` format. Ex) `~s` `h` `8`";
     }
 
     @Override

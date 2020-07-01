@@ -14,6 +14,7 @@ public class MessageManager {
 
     final private static HashMap<String, MessageAgent> agentList = new HashMap<>();
     final private static HashMap<Long, MessageAgent> langList = new HashMap<>();
+    final private static HashMap<Long, String> skinList = new HashMap<>();
 
     final private static Map<String, String> languageMap = new HashMap<>();
     final private static String baseLanguage = "ENG";
@@ -57,6 +58,10 @@ public class MessageManager {
         return MessageManager.agentList.containsKey(language);
     }
 
+    public static boolean checkSkin(String skin) {
+        return (skin.equals("A") || skin.equals("B") || skin.equals("C"));
+    }
+
     private static MessageAgent getLanguageInstance(String langText) {
         return MessageManager.agentList.get(langText);
     }
@@ -65,27 +70,36 @@ public class MessageManager {
         final MessageAgent msgInstance = MessageManager.langList.get(guild.getIdLong());
         if (msgInstance == null) {
             DBManager.GuildDataSet guildDataSet = DBManager.getGuildData(guild.getIdLong());
-            if (guildDataSet != null)
-                MessageManager.langList.put(
-                        guild.getIdLong(),
-                        MessageManager.getLanguageInstance(guildDataSet.getLang())
-                );
+            if (guildDataSet != null && guildDataSet.getLang() != null)
+                MessageManager.langList.put(guild.getIdLong(), MessageManager.getLanguageInstance(guildDataSet.getLang()));
             else
-                MessageManager.langList.put(
-                        guild.getIdLong(),
-                        MessageManager.getLanguageInstance(
-                                MessageManager.languageMap.getOrDefault(guild.getRegionRaw(), MessageManager.baseLanguage)
-                        )
-                );
+                MessageManager.langList.put(guild.getIdLong(), MessageManager.getLanguageInstance(MessageManager.languageMap.getOrDefault(guild.getRegionRaw(), MessageManager.baseLanguage)));
 
             return MessageManager.langList.get(guild.getIdLong());
         }
         return msgInstance;
     }
 
+    public static String getSkin(Guild guild) {
+        final String skin = MessageManager.skinList.get(guild.getIdLong());
+        if (skin == null) {
+            DBManager.GuildDataSet guildDataSet = DBManager.getGuildData(guild.getIdLong());
+            if (guildDataSet != null && guildDataSet.getSkin() != null) MessageManager.skinList.put(guild.getIdLong(), guildDataSet.getSkin());
+            else MessageManager.skinList.put(guild.getIdLong(), "A");
+
+            return MessageManager.skinList.get(guild.getIdLong());
+        }
+        return skin;
+    }
+
     public static void setLanguage(long id, String lang) {
         MessageManager.langList.put(id, MessageManager.getLanguageInstance(lang));
         DBManager.setGuildLanguage(id, lang);
+    }
+
+    public static void setSkin(long id, String skin) {
+        MessageManager.skinList.put(id, skin);
+        DBManager.setGuildSkin(id, skin);
     }
 
 }

@@ -66,6 +66,10 @@ public class LanguageKOR extends LanguageENG {
         return "`~lang` " + langList + "이 서버에서 사용되는 언어 설정을 바꿉니다. Ex) `~lang` `ENG`";
     }
     @Override
+    public String HELP_CMD_SKIN() {
+        return "`~skin` `A` `B` `C` 이 서버에서 사용되는 오목판의 스타일 설정을 바꿉니다. Ex) `~skin` `A`";
+    }
+    @Override
     public String HELP_CMD_PVE() {
         return "`~start` A.I 와의 게임을 시작합니다.";
     }
@@ -76,6 +80,27 @@ public class LanguageKOR extends LanguageENG {
     @Override
     public String HELP_CMD_RESIGN() {
         return "`~resign` 현재 진행하고 있는 게임을 포기합니다.";
+    }
+
+    @Override
+    public String SKIN_INFO() {
+        return "GomokuBot / 스타일";
+    }
+    @Override
+    public String SKIN_DESCRIPTION() {
+        return "GomokuBot에서 제공하는 기본 오목판(``Style A``)이 제대로 표시되지 않을 수 있습니다. 준비된 세 가지 스타일 중 하나를 선택해 이 서버에서 사용할 스타일을 설정해 주세요.";
+    }
+    @Override
+    public String SKIN_CMD_INFO(String style) {
+        return "이 스타일을 사용 하려면 ``~skin`` ``" + style + "`` 명령어를 입력해주세요.";
+    }
+    @Override
+    public String SKIN_CHANGE_ERROR() {
+        return "스타일 지정에 오류가 있습니다.";
+    }
+    @Override
+    public String SKIN_CHANGE_SUCCESS(String style) {
+        return "스타일 설정이 스타일 ``" + style + "``로 바뀌었습니다!";
     }
 
     @Override
