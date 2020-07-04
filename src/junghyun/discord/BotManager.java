@@ -7,6 +7,7 @@ import junghyun.discord.db.SqlManager;
 import junghyun.discord.ui.MessageManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
@@ -45,20 +46,22 @@ public class BotManager {
 
     static void processCommand(MessageReceivedEvent event) {
         final Consumer<Message> addReactionCheck = (message) -> {
+            if (!event.getGuild().getSelfMember().getPermissions().contains(Permission.MESSAGE_ADD_REACTION)) return;
             try {
                 message.addReaction("\u2611\uFE0F").queue();
             } catch (Exception ignored) {}
         };
 
         final Consumer<Message> addReactionCrossMark = (message) -> {
+            if (!event.getGuild().getSelfMember().getPermissions().contains(Permission.MESSAGE_ADD_REACTION)) return;
             try {
                 message.addReaction("\u274C").queue();
             } catch (Exception ignored) {}
         };
 
         final Consumer<Boolean> reactionAgent = (result) -> {
-            if (result) event.getMessage().addReaction("\u2611\uFE0F").queue();
-            else event.getMessage().addReaction("\u274C").queue();
+            if (result) addReactionCheck.accept(event.getMessage());
+            else addReactionCrossMark.accept(event.getMessage());
         };
 
         if (event.getMessage().getContentDisplay().isEmpty()

@@ -51,7 +51,7 @@ public class MessageAgent {
 
         commandBuilder.addField("~help", languageContainer.HELP_CMD_HELP(), false);
         commandBuilder.addField("~lang", languageContainer.HELP_CMD_LANG(MessageManager.LanguageList), false);
-        commandBuilder.addField("~skin ``A``", languageContainer.HELP_CMD_SKIN(), false);
+        commandBuilder.addField("~skin", languageContainer.HELP_CMD_SKIN(), false);
         commandBuilder.addField("~rank", languageContainer.HELP_CMD_RANK(), false);
         commandBuilder.addField("~start", languageContainer.HELP_CMD_PVE(), false);
         commandBuilder.addField("~start @mention", languageContainer.HELP_CMD_PVP(), false);
@@ -69,23 +69,23 @@ public class MessageAgent {
         skinBuilder.setDescription(languageContainer.SKIN_DESCRIPTION());
 
         skinBuilder.addField("Style ``A``",  "\n" +
-                "　ＡＢＣＤ\n" +
+                "┏ＡＢＣＤ\n" +
                 "１┏┳○┓\n" +
                 "２┣●╋●\n" +
                 "３┣○●┫\n" +
-                "４┗┻○┛\n" + languageContainer.SKIN_CMD_INFO("A"), false);
+                "４○┻○┛\n" + languageContainer.SKIN_CMD_INFO("A"), false);
         skinBuilder.addField("Style ``B``", "```\n" +
                 "   A B C D\n" +
                 " 1 + + O +\n" +
                 " 2 + # + #\n" +
                 " 3 + O # +\n" +
-                " 4 + + O +\n```\n" + languageContainer.SKIN_CMD_INFO("B"), false);
+                " 4 # + O +\n```\n" + languageContainer.SKIN_CMD_INFO("B"), false);
         skinBuilder.addField("Style ``C``", "```\n" +
                 "   A B C D\n" +
                 " 1     O  \n" +
                 " 2   #   #\n" +
                 " 3   O #  \n" +
-                " 4     O  \n```\n" + languageContainer.SKIN_CMD_INFO("C"), false);
+                " 4 #   O  \n```\n" + languageContainer.SKIN_CMD_INFO("C"), false);
 
         this.skinEmbed = skinBuilder.build();
     }
