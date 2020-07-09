@@ -49,12 +49,12 @@ public class Main {
                 case "count-server":
                     Logger.loggerDev("server count : " + BotManager.getClient().getGuilds().size());
                     break;
-                case "broadcast-all":
-                    String text = command.split("broadcast-all")[0];
-                    for (Guild guild: BotManager.getClient().getGuilds())
-                        Objects.requireNonNull(guild.getSystemChannel()).sendMessage(text).complete();
-                    Logger.loggerDev("send Broadcast : " + text);
-                    break;
+//                case "broadcast-all":
+//                    String text = command.split("broadcast-all")[0];
+//                    for (Guild guild: BotManager.getClient().getGuilds())
+//                        Objects.requireNonNull(guild.getSystemChannel()).sendMessage(text).complete();
+//                    Logger.loggerDev("send Broadcast : " + text);
+//                    break;
             }
         }
     }
