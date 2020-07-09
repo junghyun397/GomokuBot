@@ -46,17 +46,11 @@ public class BotManager {
 
     static void processCommand(MessageReceivedEvent event) {
         final Consumer<Message> addReactionCheck = (message) -> {
-            if (!event.getGuild().getSelfMember().getPermissions().contains(Permission.MESSAGE_ADD_REACTION)) return;
-            try {
-                message.addReaction("\u2611\uFE0F").queue();
-            } catch (Exception ignored) {}
+            if (event.getGuild().getSelfMember().getPermissions().contains(Permission.MESSAGE_ADD_REACTION)) message.addReaction("\u2611\uFE0F").queue();
         };
 
         final Consumer<Message> addReactionCrossMark = (message) -> {
-            if (!event.getGuild().getSelfMember().getPermissions().contains(Permission.MESSAGE_ADD_REACTION)) return;
-            try {
-                message.addReaction("\u274C").queue();
-            } catch (Exception ignored) {}
+            if (event.getGuild().getSelfMember().getPermissions().contains(Permission.MESSAGE_ADD_REACTION)) message.addReaction("\u274C").queue();
         };
 
         final Consumer<Boolean> reactionAgent = (result) -> {

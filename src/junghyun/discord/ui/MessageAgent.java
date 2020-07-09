@@ -12,6 +12,7 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 
 import java.awt.*;
 
@@ -73,7 +74,7 @@ public class MessageAgent {
                 "１┏┳○┓\n" +
                 "２┣●╋●\n" +
                 "３┣○●┫\n" +
-                "４○┻○┛\n" + languageContainer.SKIN_CMD_INFO("A"), false);
+                "４○┻○┛\n\n" + languageContainer.SKIN_CMD_INFO("A"), false);
         skinBuilder.addField("Style ``B``", "```\n" +
                 "   A B C D\n" +
                 " 1 + + O +\n" +
@@ -308,7 +309,11 @@ public class MessageAgent {
     private void deleteCanvasMessage(ChatGame chatGame, TextChannel channel) {
         if (chatGame.getMessageList().size() > 0
                 && channel.getGuild().getSelfMember().getPermissions().contains(Permission.MESSAGE_MANAGE))
-            chatGame.getMessageList().forEach(msg -> channel.deleteMessageById(msg.getIdLong()).complete());
+            chatGame.getMessageList().forEach(msg -> {
+                try {
+                    channel.deleteMessageById(msg.getIdLong()).complete();
+                } catch (ErrorResponseException ignored) {}
+            });
     }
 
 }
