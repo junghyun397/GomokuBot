@@ -20,7 +20,7 @@ public class ChatGame {
     public enum STATE {INP, WIN, PVPWIN, RESIGN, FULL, LOSE, TIMEOUT}
     private STATE state;
 
-    private List<Message> msgList;
+    private final List<String> msgList;
     private long updateTime;
 
     public ChatGame(long longId, Game game, String nameTag, OppPlayer oppPlayer, String iconURL) {
@@ -54,7 +54,7 @@ public class ChatGame {
     }
 
     public void addMessage(Message iMessage) {
-        this.msgList.add(iMessage);
+        this.msgList.add(iMessage.getId());
     }
 
     public ChatGame onUpdate() {
@@ -78,7 +78,7 @@ public class ChatGame {
         return this.state;
     }
 
-    public List<Message> getMessageList() {
+    public List<String> getMessageIdList() {
         return this.msgList;
     }
 

@@ -12,11 +12,9 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 
 import java.awt.*;
 
-@SuppressWarnings("unused")
 public class MessageAgent {
 
     private final MessageEmbed helpEmbed;
@@ -307,13 +305,9 @@ public class MessageAgent {
     // Private Function
 
     private void deleteCanvasMessage(ChatGame chatGame, TextChannel channel) {
-        if (chatGame.getMessageList().size() > 0
+        if (chatGame.getMessageIdList().size() > 1
                 && channel.getGuild().getSelfMember().getPermissions().contains(Permission.MESSAGE_MANAGE))
-            chatGame.getMessageList().forEach(msg -> {
-                try {
-                    channel.deleteMessageById(msg.getIdLong()).complete();
-                } catch (ErrorResponseException ignored) {}
-            });
+            channel.deleteMessagesByIds(chatGame.getMessageIdList()).complete();
     }
 
 }
