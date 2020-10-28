@@ -10,9 +10,7 @@ repositories {
 }
 
 dependencies {
-    compile ('net.dv8tion:JDA:4.1.1_165') {
-        exclude module: 'opus-java'
-    }
+    compile "net.dv8tion:JDA:4.2.0_212"
     compile "mysql:mysql-connector-java:8.0.18"
 }
 

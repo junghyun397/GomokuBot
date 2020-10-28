@@ -13,10 +13,8 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 import javax.security.auth.login.LoginException;
-import java.util.EnumSet;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -25,8 +23,7 @@ public class BotManager {
     private static JDA client;
 
     public static void startGomokuBot() throws LoginException, InterruptedException {
-        JDABuilder builder = new JDABuilder(Settings.TOKEN);
-        builder.setDisabledCacheFlags(EnumSet.of(CacheFlag.ACTIVITY, CacheFlag.VOICE_STATE));
+        JDABuilder builder = JDABuilder.createDefault(Settings.TOKEN);
         builder.setBulkDeleteSplittingEnabled(false);
         builder.setActivity(Activity.watching("~help"));
 
@@ -58,10 +55,7 @@ public class BotManager {
             else addReactionCrossMark.accept(event.getMessage());
         };
 
-        if (event.getMessage().getContentDisplay().isEmpty()
-                || event.getAuthor().isFake()
-                || !event.getTextChannel().canTalk())
-            return;
+        if (event.getMessage().getContentDisplay().isEmpty() || !event.getTextChannel().canTalk()) return;
 
         String[] splitText = event.getMessage().getContentDisplay().toLowerCase().split(" ");
         Logger.loggerCommand(event.getAuthor().getName() + " : " + event.getAuthor().getName()
