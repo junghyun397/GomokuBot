@@ -3,6 +3,9 @@ package junghyun.discord.db;
 import junghyun.discord.Settings;
 
 import java.sql.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class SqlManager {
 
@@ -12,54 +15,44 @@ public class SqlManager {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             SqlManager.connect = DriverManager.getConnection(Settings.SQL_URL, Settings.SQL_USER, Settings.SQL_PWD);
+
+            Runnable task = SqlManager::validationMysql;
+            ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+            service.scheduleAtFixedRate(task, 1, 1, TimeUnit.MINUTES);
+
             Logger.loggerInfo("mysql connected.");
         } catch (Exception e) {
             Logger.loggerWarning(e.getMessage());
         }
     }
 
-    @SuppressWarnings({"SqlDialectInspection", "SqlNoDataSourceInspection"})
-    private static void validationMysql() {
+    public static Statement getStatement() {
         try {
-            PreparedStatement pstmt = SqlManager.connect.prepareStatement("select 1");
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) return;
-        } catch (SQLException ignored) {}
-        Logger.loggerInfo("mysql-session disconnect detected, start reconnect mysql...");
-        SqlManager.connectMysql();
-    }
-
-    static ResultSet executeQuery(String query) {
-        try {
-            SqlManager.validationMysql();
-            PreparedStatement pstmt = SqlManager.connect.prepareStatement(query);
-            return pstmt.executeQuery();
+            return SqlManager.connect.createStatement();
         } catch (SQLException e) {
-            Logger.loggerWarning(e.getMessage());
+            Logger.loggerWarning(e.getLocalizedMessage());
             return null;
         }
     }
 
-    static void executeUpdate(String query) {
+    public static PreparedStatement getPreparedStatement(String query) {
         try {
-            SqlManager.validationMysql();
-            PreparedStatement pstmt = SqlManager.connect.prepareStatement(query);
-            pstmt.executeUpdate();
-            pstmt.close();
+            return SqlManager.connect.prepareStatement(query);
         } catch (SQLException e) {
-            Logger.loggerWarning(e.getMessage());
+            Logger.loggerWarning(e.getLocalizedMessage());
+            return null;
         }
     }
 
-    static void execute(String query) {
+    @SuppressWarnings({"SqlDialectInspection", "SqlNoDataSourceInspection"})
+    private static void validationMysql() {
         try {
-            SqlManager.validationMysql();
-            PreparedStatement pstmt = SqlManager.connect.prepareStatement(query);
-            pstmt.execute();
-            pstmt.close();
-        } catch (SQLException e) {
-            Logger.loggerWarning(e.getMessage());
-        }
+            Statement stmt = SqlManager.connect.createStatement();
+            ResultSet rs = stmt.executeQuery("select 1");
+            if (rs.next()) return;
+        } catch (SQLException ignored) {}
+        Logger.loggerInfo("mysql-session disconnect detected, start reconnect mysql...");
+        SqlManager.connectMysql();
     }
 
 }

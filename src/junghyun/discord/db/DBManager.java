@@ -4,7 +4,10 @@ import junghyun.ai.Pos;
 import junghyun.discord.game.ChatGame;
 import junghyun.discord.game.OppPlayer;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 public class DBManager {
 
@@ -13,58 +16,114 @@ public class DBManager {
         for (Pos pos: game.getGame().getLog().toArray(new Pos[0])) rs.append(pos.getX()).append(".").append(pos.getY()).append(":");
         rs.append("0000");
 
-        SqlManager.execute("INSERT INTO game_record(record_data, total_count, user_id, date, reason) VALUES ('"
-                + rs.toString() + "', " + game.getGame().getTurns() + ", " + game.getLongId() + ", " + System.currentTimeMillis() + ", '"
-                + game.getState().toString() + "');");
+        try {
+            final PreparedStatement gpstmt = SqlManager.getPreparedStatement(
+                    "INSERT INTO game_record(record_data, total_count, user_id, date, reason) VALUES (?, ?, ?, ?, ?);");
+            assert gpstmt != null;
 
-        if (game.getOppPlayer().getPlayerType() == OppPlayer.PLAYER_TYPE.HUMAN) return;
+            gpstmt.setString(1, rs.toString());
+            gpstmt.setInt(2, game.getGame().getTurns());
+            gpstmt.setLong(3, game.getLongId());
+            gpstmt.setLong(4, System.currentTimeMillis());
+            gpstmt.setString(5, game.getState().toString());
 
-        UserDataSet orgUser = DBManager.getUserData(game.getLongId());
-        if (orgUser != null) {
-            if (game.isWin()) SqlManager.executeUpdate("UPDATE user_info SET win=" + (orgUser.getWin() + 1)
-                    + " WHERE user_id=" + orgUser.getLongId() + ";");
-            else SqlManager.executeUpdate("UPDATE user_info SET lose=" + (orgUser.getLose() + 1)
-                    + " WHERE user_id=" + orgUser.getLongId() + ";");
-        } else {
-            if (game.isWin()) SqlManager.execute("INSERT INTO user_info(user_id, name_tag, win, lose) VALUES ("
-                    + game.getLongId() + ", '" + game.getNameTag() + "', 1, 0);");
-            else SqlManager.execute("INSERT INTO user_info(user_id, name_tag, win, lose) VALUES ("
-                    + game.getLongId() + ", '" + game.getNameTag() + "', 0, 1);");
+            gpstmt.execute();
+            gpstmt.clearParameters();
+
+            if (game.getOppPlayer().getPlayerType() == OppPlayer.PLAYER_TYPE.HUMAN) return;
+
+            UserDataSet orgUser = DBManager.getUserData(game.getLongId());
+            if (orgUser != null) {
+                if (game.isWin()) {
+                    final PreparedStatement pstmt = SqlManager.getPreparedStatement(
+                            "UPDATE user_info SET win=? WHERE user_id=?;");
+                    assert pstmt != null;
+
+                    pstmt.setInt(1, orgUser.getWin() + 1);
+                    pstmt.setLong(2, orgUser.getLongId());
+
+                    pstmt.execute();
+                    pstmt.clearParameters();
+                } else {
+                    final PreparedStatement pstmt =
+                            SqlManager.getPreparedStatement(
+                                    "UPDATE user_info SET lose=? WHERE user_id=?;");
+                    assert pstmt != null;
+
+                    pstmt.setInt(1, orgUser.getLose() + 1);
+                    pstmt.setLong(2, orgUser.getLongId());
+
+                    pstmt.execute();
+                    pstmt.clearParameters();
+                }
+            } else {
+                if (game.isWin()) {
+                    final PreparedStatement pstmt = SqlManager.getPreparedStatement(
+                            "INSERT INTO user_info(user_id, name_tag, win, lose) VALUES (?, ?, 1, 0);");
+                    assert pstmt != null;
+
+                    pstmt.setLong(1, game.getLongId());
+                    pstmt.setString(2, game.getNameTag());
+
+                    pstmt.execute();
+                    pstmt.clearParameters();
+                } else {
+                    final PreparedStatement pstmt = SqlManager.getPreparedStatement(
+                            "INSERT INTO user_info(user_id, name_tag, win, lose) VALUES (?, ?, 0, 1);");
+                    assert pstmt != null;
+
+                    pstmt.setLong(1, game.getLongId());
+                    pstmt.setString(2, game.getNameTag());
+
+                    pstmt.execute();
+                    pstmt.clearParameters();
+                }
+            }
+        } catch (SQLException e) {
+            Logger.loggerWarning(e.getMessage());
         }
     }
 
     public static UserDataSet getUserData(long id) {
-        ResultSet rs = SqlManager.executeQuery("SELECT * FROM user_info WHERE user_id = '" + id + "';");
         try {
+            final PreparedStatement pstmt = SqlManager.getPreparedStatement(
+                    "SELECT * FROM user_info WHERE user_id=?;");
+            assert pstmt != null;
+
+            pstmt.setLong(1, id);
+
+            ResultSet rs = pstmt.executeQuery();
             assert rs != null;
+
             if (!rs.next()) return null;
             return new UserDataSet(id, rs.getString("name_tag"), rs.getInt("win"), rs.getInt("lose"));
-        } catch (Exception e) {
+        } catch (SQLException e) {
             Logger.loggerWarning(e.getMessage());
             return null;
         }
     }
 
     public static UserDataSet[] getRankingData(int count, long targetID) {
-        ResultSet rs = SqlManager.executeQuery("SELECT *, (@rank := @rank + 0) AS rank FROM user_info AS a, " +
-                "(SELECT @rank := 0) AS b ORDER BY a.win DESC");
-
-        UserDataSet[] rsDataSet = new UserDataSet[count + 1];
         try {
-            int idx = 1;
+            final Statement stmt = SqlManager.getStatement();
+            assert stmt != null;
+            ResultSet rs = stmt.executeQuery("SELECT *, (@rank := @rank + 0) AS rank FROM user_info AS a, " +
+                    "(SELECT @rank := 0) AS b ORDER BY a.win DESC");
             assert rs != null;
+
+            UserDataSet[] rsDataSet = new UserDataSet[count + 1];
+
+            int idx = 1;
             while (rs.next()) {
                 if (idx < count + 1)
-                    rsDataSet[idx] = new UserDataSet(rs.getLong("user_id"), rs.getString("name_tag"),
-                            rs.getInt("win"), rs.getInt("lose"));
+                    rsDataSet[idx] = new UserDataSet(rs.getLong("user_id"), rs.getString("name_tag"), rs.getInt("win"), rs.getInt("lose"));
                 idx++;
 
                 if (rs.getLong("user_id") == targetID)
-                    rsDataSet[0] = new UserDataSet(idx - 1, rs.getString("name_tag"),
-                            rs.getInt("win"), rs.getInt("lose"));
+                    rsDataSet[0] = new UserDataSet(idx - 1, rs.getString("name_tag"), rs.getInt("win"), rs.getInt("lose"));
             }
             return rsDataSet;
-        } catch (Exception e) {
+        } catch (SQLException e) {
             Logger.loggerWarning(e.getMessage());
             return null;
         }
@@ -72,30 +131,72 @@ public class DBManager {
 
     public static void setGuildLanguage(long id, String lang) {
         GuildDataSet orgGuild = DBManager.getGuildData(id);
-        if (orgGuild != null) {
-            SqlManager.executeUpdate("UPDATE guild_info SET lang='" + lang + "' WHERE guild_id=" + id + ";");
-        } else {
-            SqlManager.execute("INSERT INTO guild_info(guild_id, lang) VALUES (" + id + ", '" + lang + "');");
+        try {
+            if (orgGuild != null) {
+                final PreparedStatement upstmt = SqlManager.getPreparedStatement(
+                        "UPDATE guild_info SET lang=? WHERE guild_id=?;");
+                assert upstmt != null;
+
+                upstmt.setString(1, lang);
+                upstmt.setLong(2, id);
+
+                upstmt.executeUpdate();
+                upstmt.clearParameters();
+            } else {
+                final PreparedStatement ipstmt = SqlManager.getPreparedStatement(
+                        "INSERT INTO guild_info(guild_id, lang) VALUES (?, ?);");
+                assert ipstmt != null;
+
+                ipstmt.setLong(1, id);
+                ipstmt.setString(2, lang);
+
+                ipstmt.execute();
+                ipstmt.clearParameters();
+            }
+        } catch (SQLException e) {
+            Logger.loggerWarning(e.getMessage());
         }
     }
 
     public static void setGuildSkin(long id, String skin) {
         GuildDataSet orgGuild = DBManager.getGuildData(id);
-        if (orgGuild != null) {
-            SqlManager.executeUpdate("UPDATE guild_info SET skin='" + skin + "' WHERE guild_id=" + id + ";");
-        } else {
-            SqlManager.execute("INSERT INTO guild_info(guild_id, skin) VALUES (" + id + ", '" + skin + "');");
+        try {
+            if (orgGuild != null) {
+                final PreparedStatement upstmt = SqlManager.getPreparedStatement(
+                        "UPDATE guild_info SET skin=? WHERE guild_id=?;");
+                assert upstmt != null;
+
+                upstmt.setString(1, skin);
+                upstmt.setLong(2, id);
+
+                upstmt.executeUpdate();
+                upstmt.clearParameters();
+            } else {
+                final PreparedStatement ipstmt = SqlManager.getPreparedStatement(
+                        "INSERT INTO guild_info(guild_id, skin) VALUES (?, ?);");
+                assert ipstmt != null;
+
+                ipstmt.setLong(1, id);
+                ipstmt.setString(1, skin);
+
+                ipstmt.execute();
+                ipstmt.clearParameters();
+            }
+        } catch (SQLException e) {
+            Logger.loggerWarning(e.getMessage());
         }
     }
 
     public static GuildDataSet getGuildData(long id) {
-        ResultSet rs = SqlManager.executeQuery("SELECT * FROM guild_info WHERE guild_id = '" + id + "';");
         try {
-            assert rs != null;
+            final Statement stmt = SqlManager.getStatement();
+            assert stmt != null;
+            ResultSet rs = stmt.executeQuery("SELECT * FROM guild_info WHERE guild_id = '" + id + "';");
+
             if (!rs.next()) return null;
             return new GuildDataSet(rs.getLong("guild_id"), rs.getString("lang"), rs.getString("skin"));
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.loggerWarning(e.getMessage());
             return null;
         }
     }
