@@ -43,6 +43,7 @@ public class MessageManager {
         MessageManager.registerLanguage(new LanguageJPN());
         MessageManager.registerLanguage(new LanguageCHN());
         MessageManager.registerLanguage(new LanguageSKO());
+        MessageManager.registerLanguage(new LanguageVNM());
 
         // ----------------------
 
