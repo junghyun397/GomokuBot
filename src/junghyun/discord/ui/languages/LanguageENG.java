@@ -27,7 +27,7 @@ public class LanguageENG implements LanguageInterface {
     }
     @Override
     public String HELP_DESCRIPTION() {
-        return "GomokuBot is an open source Discord Bot that allows players to enjoy Gomoku on Discord. The collected game result data is used to train Reinforcement-Learning models.";
+        return "GomokuBot is an open-source artificial intelligence Discord Bot that provides Gomoku(Omok) feature in Discord. The collected data is used for training reinforcement learning models.";
     }
     @Override
     public String HELP_DEV() {
@@ -144,30 +144,30 @@ public class LanguageENG implements LanguageInterface {
     }
     @Override
     public String GAME_ALREADY_IN(String nameTag) {
-        return nameTag + ", there are Stone already there. :thinking:";
+        return nameTag + ", there is already a stone. :thinking:";
     }
 
     @Override
     public String GAME_CREATE_INFO(String playerName, String targetName, String fAttack) {
-        return "The match between`" + playerName + "` and `" + targetName + "` has begun! The First Attacker is `" + fAttack + "`.";
+        return "The match between`" + playerName + "` vs `" + targetName + "` has begun! Attack first is `" + fAttack + "`.";
     }
     @Override
     public String GAME_CMD_INFO() {
-        return "Please release the Stone by `~s` `alphabet` `number` format. Ex) `~s` `h` `8`";
+        return "Please place the Stone by `~s` `alphabet` `number` format. Ex) `~s` `h` `8`";
     }
 
     @Override
     public String GAME_NEXT_TURN(String curName, String prvName, String lastPos) {
-        return "`" + curName + "`, please release the next Stone. `" + prvName + "` was placed on " + lastPos;
+        return "`" + curName + "`, please place the next Stone. `" + prvName + "` was placed on " + lastPos;
     }
 
     @Override
     public String GAME_PVP_TURN(String turnName) {
-        return "It is now `"+ turnName + "`s turn. Please wait for the next Stone of `"+ turnName +"`. :thinking:";
+        return "It's `"+ turnName + "`s turn now. Please wait for `"+ turnName +"`'s next stone. :thinking:";
     }
     @Override
     public String GAME_PVP_WIN(String winName, String loseName, String lastPos) {
-        return "`" + winName + "` wins by `" + loseName + "` putting Stone on " + lastPos + "!";
+        return "`" + winName + "` wins by `" + loseName + "` placing Stone on " + lastPos + "!";
     }
     @Override
     public String GAME_PVP_RESIGN(String winName, String loseName) {
@@ -176,16 +176,16 @@ public class LanguageENG implements LanguageInterface {
 
     @Override
     public String GAME_PVP_INFO(String winName, String loseName, int winCount, int loseCount) {
-        return "`" + winName + "` and `" + loseName + "` have been updated to `" + winCount + " : " + loseCount + "`.";
+        return "`" + winName + "` vs `" + loseName + "` have been updated to `" + winCount + " : " + loseCount + "`.";
     }
 
     @Override
     public String GAME_PVE_WIN(String lastPos) {
-        return "You won the AI by putting Stone on " + lastPos + ". Congratulations! :tada:";
+        return "You beat AI by placing Stone on " + lastPos + ". Congratulations! :tada:";
     }
     @Override
     public String GAME_PVE_LOSE(String lastPos) {
-        return "You have been defeated by placing AI on " + lastPos + ".";
+        return "You have been defeated by AI placing on " + lastPos + ".";
     }
     @Override
     public String GAME_PVE_RESIGN() {
