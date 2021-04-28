@@ -13,12 +13,17 @@ import java.util.function.Consumer;
 
 public class PVPGameAgent implements GameAgent {
 
-    final private ChatGame chatGame;
+    private final GameManager gameManager;
+    private final MessageManager messageManager;
+
+    private final ChatGame chatGame;
 
     private boolean ownerColor;
     private boolean turnColor = true;
 
-    public PVPGameAgent(ChatGame chatGame) {
+    public PVPGameAgent(GameManager gameManager, MessageManager messageManager, ChatGame chatGame) {
+        this.gameManager = gameManager;
+        this.messageManager = messageManager;
         this.chatGame = chatGame;
     }
 
@@ -30,7 +35,7 @@ public class PVPGameAgent implements GameAgent {
         if (!this.ownerColor) textFAttack = chatGame.getOppPlayer().getNameTag();
         chatGame.getGame().setPlayerColor(this.ownerColor);
 
-        MessageManager.getInstance(channel.getGuild()).sendCreateGameSuccess(chatGame, textFAttack, channel);
+        this.messageManager.getAgent(channel.getGuild()).sendCreateGameSuccess(chatGame, textFAttack, channel);
     }
 
     @Override
@@ -45,13 +50,13 @@ public class PVPGameAgent implements GameAgent {
             if (nowPlayer == chatGame.getOppPlayer().getLongId()) turnName = chatGame.getOppPlayer().getNameTag();
 
             then.accept(false);
-            MessageManager.getInstance(channel.getGuild()).sendNotPlayerTurn(turnName,channel);
+            this.messageManager.getAgent(channel.getGuild()).sendNotPlayerTurn(turnName,channel);
             return;
         }
 
         if (!game.canSetStone(pos.getX(), pos.getY())) {
             then.accept(false);
-            MessageManager.getInstance(channel.getGuild()).sendStoneAlreadyIn(chatGame, channel);
+            this.messageManager.getAgent(channel.getGuild()).sendStoneAlreadyIn(chatGame, channel);
             return;
         }
 
@@ -65,19 +70,19 @@ public class PVPGameAgent implements GameAgent {
                 chatGame.getOppPlayer().setWin();
                 winPlayer = chatGame.getOppPlayer().getNameTag();
             } else losePlayer = chatGame.getOppPlayer().getNameTag();
-            GameManager.endGame(chatGame, channel);
+            this.gameManager.endGame(chatGame, channel);
 
             then.accept(true);
-            MessageManager.getInstance(channel.getGuild()).sendPvPWin(chatGame, pos, winPlayer, losePlayer, channel);
+            this.messageManager.getAgent(channel.getGuild()).sendPvPWin(chatGame, pos, winPlayer, losePlayer, channel);
             return;
         }
 
         if (game.isFull()) {
             chatGame.setState(ChatGame.STATE.FULL);
-            GameManager.endGame(chatGame, channel);
+            this.gameManager.endGame(chatGame, channel);
 
             then.accept(true);
-            MessageManager.getInstance(channel.getGuild()).sendFullCanvas(chatGame, channel);
+            this.messageManager.getAgent(channel.getGuild()).sendFullCanvas(chatGame, channel);
             return;
         }
 
@@ -88,7 +93,7 @@ public class PVPGameAgent implements GameAgent {
         this.turnColor = !this.turnColor;
 
         then.accept(true);
-        MessageManager.getInstance(channel.getGuild()).sendNextTurn(chatGame, pos, nowName, prvName, channel);
+        this.messageManager.getAgent(channel.getGuild()).sendNextTurn(chatGame, pos, nowName, prvName, channel);
     }
 
     @Override
@@ -101,14 +106,14 @@ public class PVPGameAgent implements GameAgent {
         if (user.getIdLong() == chatGame.getLongId()) winPlayer = chatGame.getOppPlayer().getNameTag();
         else losePlayer = chatGame.getOppPlayer().getNameTag();
 
-        MessageManager.getInstance(channel.getGuild()).sendPvPResign(chatGame, winPlayer, losePlayer, channel);
-        GameManager.endGame(chatGame, channel);
+        this.messageManager.getAgent(channel.getGuild()).sendPvPResign(chatGame, winPlayer, losePlayer, channel);
+        this.gameManager.endGame(chatGame, channel);
     }
 
     @Override
     public void killGame() {
-        GameManager.endGame(chatGame, null);
-        GameManager.delGame(chatGame.getOppPlayer().getLongId());
+        this.gameManager.endGame(chatGame, null);
+        this.gameManager.delGame(chatGame.getOppPlayer().getLongId());
     }
 
     @Override

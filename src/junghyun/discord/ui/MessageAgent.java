@@ -15,7 +15,12 @@ import net.dv8tion.jda.api.entities.User;
 
 import java.awt.*;
 
+@SuppressWarnings("unused")
 public class MessageAgent {
+
+    private final MessageManager messageManager;
+    private final BotManager botManager;
+    private final DBManager dbManager;
 
     private final MessageEmbed helpEmbed;
     private final MessageEmbed commandEmbed;
@@ -23,7 +28,11 @@ public class MessageAgent {
 
     private final LanguageInterface languageContainer;
 
-    public MessageAgent(LanguageInterface languageContainer) {
+    public MessageAgent(MessageManager messageManager, BotManager botManager, DBManager dbManager, LanguageInterface languageContainer) {
+        this.messageManager = messageManager;
+        this.botManager = botManager;
+        this.dbManager = dbManager;
+
         this.languageContainer = languageContainer;
 
         EmbedBuilder helpBuilder = new EmbedBuilder();
@@ -49,7 +58,7 @@ public class MessageAgent {
         commandBuilder.setColor(new Color(0,145,234));
 
         commandBuilder.addField("~help", languageContainer.HELP_CMD_HELP(), false);
-        commandBuilder.addField("~lang", languageContainer.HELP_CMD_LANG(MessageManager.LanguageList), false);
+        commandBuilder.addField("~lang", languageContainer.HELP_CMD_LANG(this.messageManager.LanguageList), false);
         commandBuilder.addField("~skin", languageContainer.HELP_CMD_SKIN(), false);
         commandBuilder.addField("~rank", languageContainer.HELP_CMD_RANK(), false);
         commandBuilder.addField("~start", languageContainer.HELP_CMD_PVE(), false);
@@ -107,7 +116,7 @@ public class MessageAgent {
             builder.addField("#" + i + ": " + rankData[i].getName(), languageContainer.RANK_WIN() + ": `" + rankData[i].getWin() +
                     "` " + languageContainer.RANK_LOSE() + ": `" + rankData[i].getLose() + "`", false);
 
-        DBManager.UserDataSet userData = DBManager.getUserData(user.getIdLong());
+        DBManager.UserDataSet userData = this.dbManager.getUserData(user.getIdLong());
         if (userData != null) builder.addField("#" + rankData[0].getLongId() + ": " + userData.getName(), languageContainer.RANK_WIN() + ": `" + userData.getWin() +
                 "` " + languageContainer.RANK_LOSE() + ": `" + userData.getLose() + "`", false);
 
@@ -117,7 +126,7 @@ public class MessageAgent {
     // Language Information
 
     public void sendLanguageInfo(TextChannel channel) {
-        channel.sendMessage(MessageManager.langEmbed).complete();
+        channel.sendMessage(this.messageManager.langEmbed).complete();
     }
 
     public void sendLanguageChange(TextChannel channel, String lang) {
@@ -232,8 +241,8 @@ public class MessageAgent {
     public void sendPerfectGameArchived(String playerName, TextChannel channel, long messageId) {
         channel.sendMessage(languageContainer.GAME_ARCHIVED(
                 "https://discordapp.com/channels/"
-                + BotManager.getOfficialChannel().getGuild().getId() + "/"
-                + BotManager.getOfficialChannel().getId() + "/"
+                + this.botManager.getOfficialChannel().getGuild().getId() + "/"
+                + this.botManager.getOfficialChannel().getId() + "/"
                 + messageId)
         ).complete();
     }
@@ -266,7 +275,7 @@ public class MessageAgent {
         if (chatGame.getState() == ChatGame.STATE.INP) builder.setColor(new Color(0,200,83));
         else builder.setColor(new Color(213,0,0));
 
-        String skin = MessageManager.getSkin(channel.getGuild());
+        String skin = this.messageManager.getSkin(channel.getGuild());
 
         if (skin.equals("A"))
             builder.setDescription(TextDrawer.getGraphics(chatGame.getGame(), aiPos, true));

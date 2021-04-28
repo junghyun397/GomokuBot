@@ -1,5 +1,6 @@
 package junghyun.discord.ui;
 
+import junghyun.discord.BotManager;
 import junghyun.discord.db.DBManager;
 import junghyun.discord.ui.languages.*;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -12,24 +13,33 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("FieldCanBeLocal")
 public class MessageManager {
 
-    final private static HashMap<String, MessageAgent> agentList = new HashMap<>();
-    final private static HashMap<Long, MessageAgent> langList = new HashMap<>();
+    private final BotManager botManager;
+    private final DBManager dbManager;
 
-    final private static List<String> styleList = Arrays.asList("A", "B", "C");
-    final private static HashMap<Long, String> skinList = new HashMap<>();
+    private final HashMap<String, MessageAgent> agentList = new HashMap<>();
+    private final HashMap<Long, MessageAgent> langList = new HashMap<>();
 
-    final private static Map<String, String> languageMap = new HashMap<>();
-    final private static String baseLanguage = "ENG";
+    private final List<String> styleList = Arrays.asList("A", "B", "C");
+    private final HashMap<Long, String> skinList = new HashMap<>();
 
-    public static String LanguageList = "";
-    public static MessageEmbed langEmbed;
+    private final Map<String, String> languageMap = new HashMap<>();
+    private final String baseLanguage = "ENG";
 
-    private static EmbedBuilder langBuilder;
+    public String LanguageList = "";
+    public MessageEmbed langEmbed;
 
-    public static void loadMessage() {
-        MessageManager.langBuilder = new EmbedBuilder();
+    private EmbedBuilder langBuilder;
+
+    public MessageManager(BotManager botManager, DBManager dbManager) {
+        this.botManager = botManager;
+        this.dbManager = dbManager;
+    }
+
+    public void loadMessages() {
+        this.langBuilder = new EmbedBuilder();
 
         langBuilder.setAuthor("Language guide");
         langBuilder.setColor(new Color(0, 145, 234));
@@ -37,72 +47,72 @@ public class MessageManager {
 
         // Register Language HERE ↓↓
 
-        MessageManager.registerLanguage(new LanguageENG());
-        MessageManager.registerLanguage(new LanguageKOR());
-        MessageManager.registerLanguage(new LanguagePRK());
-        MessageManager.registerLanguage(new LanguageJPN());
-        MessageManager.registerLanguage(new LanguageCHN());
-        MessageManager.registerLanguage(new LanguageSKO());
-        MessageManager.registerLanguage(new LanguageVNM());
+        this.registerLanguage(new LanguageENG());
+        this.registerLanguage(new LanguageKOR());
+        this.registerLanguage(new LanguagePRK());
+        this.registerLanguage(new LanguageJPN());
+        this.registerLanguage(new LanguageCHN());
+        this.registerLanguage(new LanguageSKO());
+        this.registerLanguage(new LanguageVNM());
 
         // ----------------------
 
-        MessageManager.langEmbed = langBuilder.build();
+        this.langEmbed = langBuilder.build();
     }
 
-    private static void registerLanguage(LanguageInterface languageContainer) {
+    private void registerLanguage(LanguageInterface languageContainer) {
         for (String targetRegion: languageContainer.TARGET_REGION())
-            if (!MessageManager.languageMap.containsKey(targetRegion))
-                MessageManager.languageMap.put(targetRegion, languageContainer.LANGUAGE_CODE());
-        MessageManager.agentList.put(languageContainer.LANGUAGE_CODE(), new MessageAgent(languageContainer));
-        MessageManager.LanguageList += "`" + languageContainer.LANGUAGE_CODE() + "` ";
-        MessageManager.langBuilder.addField(languageContainer.LANGUAGE_NAME(), languageContainer.LANGUAGE_DESCRIPTION(), false);
+            if (!this.languageMap.containsKey(targetRegion))
+                this.languageMap.put(targetRegion, languageContainer.LANGUAGE_CODE());
+        this.agentList.put(languageContainer.LANGUAGE_CODE(), new MessageAgent(this, botManager, dbManager, languageContainer));
+        this.LanguageList += "`" + languageContainer.LANGUAGE_CODE() + "` ";
+        this.langBuilder.addField(languageContainer.LANGUAGE_NAME(), languageContainer.LANGUAGE_DESCRIPTION(), false);
     }
 
-    public static boolean checkLanguage(String language) {
-        return MessageManager.agentList.containsKey(language);
+    public boolean checkLanguage(String language) {
+        return this.agentList.containsKey(language);
     }
 
-    public static boolean checkSkin(String skin) {
-        return MessageManager.styleList.contains(skin);
+    public boolean checkSkin(String skin) {
+        return this.styleList.contains(skin);
     }
 
-    private static MessageAgent getLanguageInstance(String langText) {
-        return MessageManager.agentList.get(langText);
+    private MessageAgent getLanguageInstance(String langText) {
+        return this.agentList.get(langText);
     }
 
-    public static MessageAgent getInstance(Guild guild) {
-        if (MessageManager.langList.containsKey(guild.getIdLong())) return MessageManager.langList.get(guild.getIdLong());
+    public MessageAgent getAgent(Guild guild) {
+        if (this.langList.containsKey(guild.getIdLong())) return this.langList.get(guild.getIdLong());
 
-        DBManager.GuildDataSet guildDataSet = DBManager.getGuildData(guild.getIdLong());
+        DBManager.GuildDataSet guildDataSet = this.dbManager.getGuildData(guild.getIdLong());
         if (guildDataSet != null && guildDataSet.getLang() != null)
-            MessageManager.langList.put(guild.getIdLong(), MessageManager.getLanguageInstance(guildDataSet.getLang()));
+            this.langList.put(guild.getIdLong(), this.getLanguageInstance(guildDataSet.getLang()));
         else
-            MessageManager.langList.put(guild.getIdLong(), MessageManager.getLanguageInstance(MessageManager.languageMap.getOrDefault(guild.getRegionRaw(), MessageManager.baseLanguage)));
+            this.langList.put(guild.getIdLong(), this.getLanguageInstance(this.languageMap.getOrDefault(guild.getRegionRaw(), this.baseLanguage)));
 
-        return MessageManager.langList.get(guild.getIdLong());
+        return this.langList.get(guild.getIdLong());
     }
 
-    public static String getSkin(Guild guild) {
-        if (MessageManager.skinList.containsKey(guild.getIdLong())) return MessageManager.skinList.get(guild.getIdLong());
+    public String getSkin(Guild guild) {
+        if (this.skinList.containsKey(guild.getIdLong())) return this.skinList.get(guild.getIdLong());
 
-        DBManager.GuildDataSet guildDataSet = DBManager.getGuildData(guild.getIdLong());
+        DBManager.GuildDataSet guildDataSet = this.dbManager.getGuildData(guild.getIdLong());
         if (guildDataSet != null && guildDataSet.getSkin() != null)
-            MessageManager.skinList.put(guild.getIdLong(), guildDataSet.getSkin());
+            this.skinList.put(guild.getIdLong(), guildDataSet.getSkin());
         else
-            MessageManager.skinList.put(guild.getIdLong(), "A");
+            this.skinList.put(guild.getIdLong(), "A");
 
-        return MessageManager.skinList.get(guild.getIdLong());
+        return this.skinList.get(guild.getIdLong());
     }
 
-    public static void setLanguage(long id, String lang) {
-        MessageManager.langList.put(id, MessageManager.getLanguageInstance(lang));
-        DBManager.setGuildLanguage(id, lang);
+    public void setLanguage(long id, String lang) {
+        this.langList.put(id, this.getLanguageInstance(lang));
+        this.dbManager.setGuildLanguage(id, lang);
     }
 
-    public static void setSkin(long id, String skin) {
-        MessageManager.skinList.put(id, skin);
-        DBManager.setGuildSkin(id, skin);
+    public void setSkin(long id, String skin) {
+        this.skinList.put(id, skin);
+        this.dbManager.setGuildSkin(id, skin);
     }
 
 }

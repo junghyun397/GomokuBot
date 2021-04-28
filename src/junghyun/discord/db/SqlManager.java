@@ -9,50 +9,58 @@ import java.util.concurrent.TimeUnit;
 
 public class SqlManager {
 
-    private static Connection connect;
+    private final Logger logger;
 
-    public static void connectMysql() {
+    private Connection connect;
+
+    public SqlManager(Logger logger) {
+        this.logger = logger;
+
+        this.connectMysql();
+    }
+
+    public void connectMysql() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            SqlManager.connect = DriverManager.getConnection(Settings.SQL_URL, Settings.SQL_USER, Settings.SQL_PWD);
+            this.connect = DriverManager.getConnection(Settings.SQL_URL, Settings.SQL_USER, Settings.SQL_PWD);
 
-            Runnable task = SqlManager::validationMysql;
+            Runnable task = this::validationMysql;
             ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
             service.scheduleAtFixedRate(task, 1, 1, TimeUnit.MINUTES);
 
-            Logger.loggerInfo("mysql connected.");
+            this.logger.loggerInfo("mysql connected.");
         } catch (Exception e) {
-            Logger.loggerWarning(e.getMessage());
+            this.logger.loggerWarning(e.getMessage());
         }
     }
 
-    public static Statement getStatement() {
+    public Statement getStatement() {
         try {
-            return SqlManager.connect.createStatement();
+            return this.connect.createStatement();
         } catch (SQLException e) {
-            Logger.loggerWarning(e.getLocalizedMessage());
+            this.logger.loggerWarning(e.getLocalizedMessage());
             return null;
         }
     }
 
-    public static PreparedStatement getPreparedStatement(String query) {
+    public PreparedStatement getPreparedStatement(String query) {
         try {
-            return SqlManager.connect.prepareStatement(query);
+            return this.connect.prepareStatement(query);
         } catch (SQLException e) {
-            Logger.loggerWarning(e.getLocalizedMessage());
+            this.logger.loggerWarning(e.getLocalizedMessage());
             return null;
         }
     }
 
     @SuppressWarnings({"SqlDialectInspection", "SqlNoDataSourceInspection"})
-    private static void validationMysql() {
+    private void validationMysql() {
         try {
-            Statement stmt = SqlManager.connect.createStatement();
+            Statement stmt = this.connect.createStatement();
             ResultSet rs = stmt.executeQuery("select 1");
             if (rs.next()) return;
         } catch (SQLException ignored) {}
-        Logger.loggerInfo("mysql-session disconnect detected, start reconnect mysql...");
-        SqlManager.connectMysql();
+        this.logger.loggerInfo("mysql-session disconnect detected, start reconnect mysql...");
+        this.connectMysql();
     }
 
 }

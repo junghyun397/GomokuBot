@@ -14,19 +14,24 @@ import java.util.function.Consumer;
 
 public class PVEGameAgent implements GameAgent {
 
-    final private ChatGame chatGame;
-    final private AIAgent aiAgent;
+    private final GameManager gameManager;
+    private final MessageManager messageManager;
 
-    public PVEGameAgent(ChatGame chatGame) {
+    private final ChatGame chatGame;
+    private final AIAgent aiAgent;
+
+    public PVEGameAgent(GameManager gameManager, MessageManager messageManager, ChatGame chatGame) {
+        this.gameManager = gameManager;
+        this.messageManager = messageManager;
         this.chatGame = chatGame;
+
         this.aiAgent = new AIAgent(chatGame.getGame(), AIAgent.DIFF.MID);
     }
 
     @Override
     public void startGame(TextChannel channel) {
         int rColor = new Random().nextInt(3);
-        boolean playerColor = true;
-        if (rColor > 0) playerColor = false;
+        boolean playerColor = rColor <= 0;
 
         String textFAttack = chatGame.getNameTag();
         if (!playerColor) {
@@ -35,7 +40,7 @@ public class PVEGameAgent implements GameAgent {
         }
         chatGame.getGame().setPlayerColor(playerColor);
 
-        MessageManager.getInstance(channel.getGuild()).sendCreateGameSuccess(chatGame, textFAttack, channel);
+        this.messageManager.getAgent(channel.getGuild()).sendCreateGameSuccess(chatGame, textFAttack, channel);
     }
 
     @Override
@@ -44,27 +49,27 @@ public class PVEGameAgent implements GameAgent {
 
         if (!game.canSetStone(pos.getX(), pos.getY())) {
             then.accept(false);
-            MessageManager.getInstance(channel.getGuild()).sendStoneAlreadyIn(chatGame, channel);
+            this.messageManager.getAgent(channel.getGuild()).sendStoneAlreadyIn(chatGame, channel);
             return;
         }
 
         game.setStone(pos.getX(), pos.getY());
         if (game.isWin(pos.getX(), pos.getY(), game.getPlayerColor())) {
             chatGame.setState(ChatGame.STATE.WIN);
-            GameManager.endGame(chatGame, channel);
+            this.gameManager.endGame(chatGame, channel);
 
             then.accept(true);
-            MessageManager.getInstance(channel.getGuild()).sendPvEWin(chatGame, pos, channel);
+            this.messageManager.getAgent(channel.getGuild()).sendPvEWin(chatGame, pos, channel);
             return;
         }
 
         if (game.isFull()) {
             chatGame.setState(ChatGame.STATE.FULL);
             chatGame.getOppPlayer().setWin();
-            GameManager.endGame(chatGame, channel);
+            this.gameManager.endGame(chatGame, channel);
 
             then.accept(true);
-            MessageManager.getInstance(channel.getGuild()).sendFullCanvas(chatGame, channel);
+            this.messageManager.getAgent(channel.getGuild()).sendFullCanvas(chatGame, channel);
             return;
         }
 
@@ -73,28 +78,28 @@ public class PVEGameAgent implements GameAgent {
         if (game.isWin(aiPos.getX(), aiPos.getY(), !game.getPlayerColor())) {
             chatGame.setState(ChatGame.STATE.LOSE);
             chatGame.getOppPlayer().setWin();
-            GameManager.endGame(chatGame, channel);
+            this.gameManager.endGame(chatGame, channel);
 
             then.accept(true);
-            MessageManager.getInstance(channel.getGuild()).sendPvELose(chatGame, aiPos, channel);
+            this.messageManager.getAgent(channel.getGuild()).sendPvELose(chatGame, aiPos, channel);
             return;
         }
 
         then.accept(true);
-        MessageManager.getInstance(channel.getGuild()).sendNextTurn(chatGame, aiPos, chatGame.getNameTag(), "AI", channel);
+        this.messageManager.getAgent(channel.getGuild()).sendNextTurn(chatGame, aiPos, chatGame.getNameTag(), "AI", channel);
     }
 
     @Override
     public void resignGame(User user, TextChannel channel) {
         chatGame.setState(ChatGame.STATE.RESIGN);
         chatGame.getOppPlayer().setWin();
-        MessageManager.getInstance(channel.getGuild()).sendPvEResign(chatGame, channel);
-        GameManager.endGame(chatGame, channel);
+        this.messageManager.getAgent(channel.getGuild()).sendPvEResign(chatGame, channel);
+        this.gameManager.endGame(chatGame, channel);
     }
 
     @Override
     public void killGame() {
-        GameManager.endGame(chatGame, null);
+        this.gameManager.endGame(chatGame, null);
     }
 
     @Override

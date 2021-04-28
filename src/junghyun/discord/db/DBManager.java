@@ -11,13 +11,21 @@ import java.sql.Statement;
 
 public class DBManager {
 
-    public static void saveGame(ChatGame game) {
+    private final Logger logger;
+    private final SqlManager sqlManager;
+
+    public DBManager(Logger logger, SqlManager sqlManager) {
+        this.logger = logger;
+        this.sqlManager = sqlManager;
+    }
+
+    public void saveGame(ChatGame game) {
         StringBuilder rs = new StringBuilder().append(game.getGame().getTurns()).append(":");
         for (Pos pos: game.getGame().getLog().toArray(new Pos[0])) rs.append(pos.getX()).append(".").append(pos.getY()).append(":");
         rs.append("0000");
 
         try {
-            final PreparedStatement gpstmt = SqlManager.getPreparedStatement(
+            PreparedStatement gpstmt = this.sqlManager.getPreparedStatement(
                     "INSERT INTO game_record(record_data, total_count, user_id, date, reason) VALUES (?, ?, ?, ?, ?);");
             assert gpstmt != null;
 
@@ -32,10 +40,10 @@ public class DBManager {
 
             if (game.getOppPlayer().getPlayerType() == OppPlayer.PLAYER_TYPE.HUMAN) return;
 
-            UserDataSet orgUser = DBManager.getUserData(game.getLongId());
+            UserDataSet orgUser = this.getUserData(game.getLongId());
             if (orgUser != null) {
                 if (game.isWin()) {
-                    final PreparedStatement pstmt = SqlManager.getPreparedStatement(
+                    PreparedStatement pstmt = this.sqlManager.getPreparedStatement(
                             "UPDATE user_info SET win=? WHERE user_id=?;");
                     assert pstmt != null;
 
@@ -45,8 +53,8 @@ public class DBManager {
                     pstmt.execute();
                     pstmt.clearParameters();
                 } else {
-                    final PreparedStatement pstmt =
-                            SqlManager.getPreparedStatement(
+                    PreparedStatement pstmt =
+                            this.sqlManager.getPreparedStatement(
                                     "UPDATE user_info SET lose=? WHERE user_id=?;");
                     assert pstmt != null;
 
@@ -58,7 +66,7 @@ public class DBManager {
                 }
             } else {
                 if (game.isWin()) {
-                    final PreparedStatement pstmt = SqlManager.getPreparedStatement(
+                    PreparedStatement pstmt = this.sqlManager.getPreparedStatement(
                             "INSERT INTO user_info(user_id, name_tag, win, lose) VALUES (?, ?, 1, 0);");
                     assert pstmt != null;
 
@@ -68,7 +76,7 @@ public class DBManager {
                     pstmt.execute();
                     pstmt.clearParameters();
                 } else {
-                    final PreparedStatement pstmt = SqlManager.getPreparedStatement(
+                    PreparedStatement pstmt = this.sqlManager.getPreparedStatement(
                             "INSERT INTO user_info(user_id, name_tag, win, lose) VALUES (?, ?, 0, 1);");
                     assert pstmt != null;
 
@@ -80,13 +88,13 @@ public class DBManager {
                 }
             }
         } catch (SQLException e) {
-            Logger.loggerWarning(e.getMessage());
+            this.logger.loggerWarning(e.getMessage());
         }
     }
 
-    public static UserDataSet getUserData(long id) {
+    public UserDataSet getUserData(long id) {
         try {
-            final PreparedStatement pstmt = SqlManager.getPreparedStatement(
+            PreparedStatement pstmt = this.sqlManager.getPreparedStatement(
                     "SELECT * FROM user_info WHERE user_id=?;");
             assert pstmt != null;
 
@@ -98,14 +106,14 @@ public class DBManager {
             if (!rs.next()) return null;
             return new UserDataSet(id, rs.getString("name_tag"), rs.getInt("win"), rs.getInt("lose"));
         } catch (SQLException e) {
-            Logger.loggerWarning(e.getMessage());
+            this.logger.loggerWarning(e.getMessage());
             return null;
         }
     }
 
-    public static UserDataSet[] getRankingData(int count, long targetID) {
+    public UserDataSet[] getRankingData(int count, long targetID) {
         try {
-            final Statement stmt = SqlManager.getStatement();
+            Statement stmt = this.sqlManager.getStatement();
             assert stmt != null;
             ResultSet rs = stmt.executeQuery("SELECT *, (@rank := @rank + 0) AS rank FROM user_info AS a, " +
                     "(SELECT @rank := 0) AS b ORDER BY a.win DESC");
@@ -124,16 +132,16 @@ public class DBManager {
             }
             return rsDataSet;
         } catch (SQLException e) {
-            Logger.loggerWarning(e.getMessage());
+            this.logger.loggerWarning(e.getMessage());
             return null;
         }
     }
 
-    public static void setGuildLanguage(long id, String lang) {
-        GuildDataSet orgGuild = DBManager.getGuildData(id);
+    public void setGuildLanguage(long id, String lang) {
+        GuildDataSet orgGuild = this.getGuildData(id);
         try {
             if (orgGuild != null) {
-                final PreparedStatement upstmt = SqlManager.getPreparedStatement(
+                PreparedStatement upstmt = this.sqlManager.getPreparedStatement(
                         "UPDATE guild_info SET lang=? WHERE guild_id=?;");
                 assert upstmt != null;
 
@@ -143,7 +151,7 @@ public class DBManager {
                 upstmt.executeUpdate();
                 upstmt.clearParameters();
             } else {
-                final PreparedStatement ipstmt = SqlManager.getPreparedStatement(
+                PreparedStatement ipstmt = this.sqlManager.getPreparedStatement(
                         "INSERT INTO guild_info(guild_id, lang) VALUES (?, ?);");
                 assert ipstmt != null;
 
@@ -154,15 +162,15 @@ public class DBManager {
                 ipstmt.clearParameters();
             }
         } catch (SQLException e) {
-            Logger.loggerWarning(e.getMessage());
+            this.logger.loggerWarning(e.getMessage());
         }
     }
 
-    public static void setGuildSkin(long id, String skin) {
-        GuildDataSet orgGuild = DBManager.getGuildData(id);
+    public void setGuildSkin(long id, String skin) {
+        GuildDataSet orgGuild = this.getGuildData(id);
         try {
             if (orgGuild != null) {
-                final PreparedStatement upstmt = SqlManager.getPreparedStatement(
+                PreparedStatement upstmt = this.sqlManager.getPreparedStatement(
                         "UPDATE guild_info SET skin=? WHERE guild_id=?;");
                 assert upstmt != null;
 
@@ -172,7 +180,7 @@ public class DBManager {
                 upstmt.executeUpdate();
                 upstmt.clearParameters();
             } else {
-                final PreparedStatement ipstmt = SqlManager.getPreparedStatement(
+                PreparedStatement ipstmt = this.sqlManager.getPreparedStatement(
                         "INSERT INTO guild_info(guild_id, skin) VALUES (?, ?);");
                 assert ipstmt != null;
 
@@ -183,20 +191,23 @@ public class DBManager {
                 ipstmt.clearParameters();
             }
         } catch (SQLException e) {
-            Logger.loggerWarning(e.getMessage());
+            this.logger.loggerWarning(e.getMessage());
         }
     }
 
-    public static GuildDataSet getGuildData(long id) {
+    public GuildDataSet getGuildData(long id) {
         try {
-            final Statement stmt = SqlManager.getStatement();
-            assert stmt != null;
-            ResultSet rs = stmt.executeQuery("SELECT * FROM guild_info WHERE guild_id = '" + id + "';");
+            PreparedStatement pstmt = this.sqlManager.getPreparedStatement("SELECT * FROM guild_info WHERE guild_id = ?;");
+            assert pstmt != null;
+
+            pstmt.setLong(1, id);
+
+            ResultSet rs = pstmt.executeQuery();
 
             if (!rs.next()) return null;
             return new GuildDataSet(rs.getLong("guild_id"), rs.getString("lang"), rs.getString("skin"));
         } catch (Exception e) {
-            Logger.loggerWarning(e.getMessage());
+            this.logger.loggerWarning(e.getMessage());
             return null;
         }
     }
@@ -233,6 +244,7 @@ public class DBManager {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class GuildDataSet {
 
         private final long longId;

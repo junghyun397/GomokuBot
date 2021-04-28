@@ -20,28 +20,42 @@ import java.util.function.Consumer;
 
 public class BotManager {
 
-    private static JDA client;
+    private final Logger logger;
+    private final SqlManager sqlManager;
+    private final DBManager dbManager;
+    private final MessageManager messageManager;
+    private final GameManager gameManager;
 
-    public static void startGomokuBot() throws LoginException, InterruptedException {
+    private JDA client;
+
+    public BotManager(Logger logger, SqlManager sqlManager, DBManager dbManager) {
+        this.logger = logger;
+        this.sqlManager = sqlManager;
+        this.dbManager = dbManager;
+        this.messageManager = new MessageManager(this, dbManager);
+        this.gameManager = new GameManager(this, dbManager, logger, messageManager);
+    }
+
+    public void startBotManager() throws LoginException, InterruptedException {
         JDABuilder builder = JDABuilder.createDefault(Settings.TOKEN);
         builder.setBulkDeleteSplittingEnabled(false);
         builder.setActivity(Activity.watching("~help"));
 
-        builder.addEventListeners(new EventListener());
+        builder.addEventListeners(new EventListener(this, logger, messageManager));
 
         client = builder.build();
         client.awaitReady();
 
-        SqlManager.connectMysql();
-        GameManager.bootGameManager();
-        MessageManager.loadMessage();
+        this.sqlManager.connectMysql();
+        this.gameManager.startGameManager();
+        this.messageManager.loadMessages();
     }
 
-    public static void endGomokuBot() {
-        BotManager.client.shutdown();
+    public void endGomokuBot() {
+        this.client.shutdown();
     }
 
-    static void processCommand(MessageReceivedEvent event) {
+    void processCommand(MessageReceivedEvent event) {
         final Consumer<Message> addReactionCheck = (message) -> {
             if (event.getGuild().getSelfMember().getPermissions().contains(Permission.MESSAGE_ADD_REACTION)) message.addReaction("\u2611\uFE0F").queue();
         };
@@ -58,64 +72,64 @@ public class BotManager {
         if (event.getMessage().getContentDisplay().isEmpty() || !event.getTextChannel().canTalk()) return;
 
         String[] splitText = event.getMessage().getContentDisplay().toLowerCase().split(" ");
-        Logger.loggerCommand(event.getAuthor().getName() + " : " + event.getAuthor().getName()
+        this.logger.loggerCommand(event.getAuthor().getName() + " : " + event.getAuthor().getName()
                 + " / " + event.getMessage().getContentDisplay());
 
         switch (splitText[0]) {
             case "~help":
                 addReactionCheck.accept(event.getMessage());
-                MessageManager.getInstance(event.getGuild()).sendHelp(event.getTextChannel());
+                this.messageManager.getAgent(event.getGuild()).sendHelp(event.getTextChannel());
                 break;
             case "~lang":
                 if (splitText.length != 2) {
                     addReactionCrossMark.accept(event.getMessage());
-                    MessageManager.getInstance(event.getGuild()).sendLanguageChange(event.getTextChannel(), null);
+                    this.messageManager.getAgent(event.getGuild()).sendLanguageChange(event.getTextChannel(), null);
                     break;
                 }
                 String lang = splitText[1].toUpperCase();
 
-                if (MessageManager.checkLanguage(lang)) MessageManager.setLanguage(event.getGuild().getIdLong(), lang);
+                if (this.messageManager.checkLanguage(lang)) this.messageManager.setLanguage(event.getGuild().getIdLong(), lang);
                 else lang = null;
 
                 if (lang != null) addReactionCheck.accept(event.getMessage());
                 else addReactionCrossMark.accept(event.getMessage());
-                MessageManager.getInstance(event.getGuild()).sendLanguageChange(event.getTextChannel(), lang);
+                this.messageManager.getAgent(event.getGuild()).sendLanguageChange(event.getTextChannel(), lang);
                 break;
             case "~skin":
                 if (splitText.length != 2) {
                     addReactionCrossMark.accept(event.getMessage());
-                    MessageManager.getInstance(event.getGuild()).sendSkinChange(event.getTextChannel(), null);
+                    this.messageManager.getAgent(event.getGuild()).sendSkinChange(event.getTextChannel(), null);
                     break;
                 }
                 String skin = splitText[1].toUpperCase();
 
-                if (MessageManager.checkSkin(skin)) MessageManager.setSkin(event.getGuild().getIdLong(), skin);
+                if (this.messageManager.checkSkin(skin)) this.messageManager.setSkin(event.getGuild().getIdLong(), skin);
                 else skin = null;
 
                 if (skin != null) addReactionCheck.accept(event.getMessage());
                 else addReactionCrossMark.accept(event.getMessage());
-                MessageManager.getInstance(event.getGuild()).sendSkinChange(event.getTextChannel(), skin);
+                this.messageManager.getAgent(event.getGuild()).sendSkinChange(event.getTextChannel(), skin);
                 break;
             case "~rank":
                 addReactionCheck.accept(event.getMessage());
-                MessageManager.getInstance(event.getGuild()).sendRank(event.getAuthor(), event.getTextChannel(),
-                        Objects.requireNonNull(DBManager.getRankingData(Settings.RANK_COUNT, event.getAuthor().getIdLong())));
+                this.messageManager.getAgent(event.getGuild()).sendRank(event.getAuthor(), event.getTextChannel(),
+                        Objects.requireNonNull(this.dbManager.getRankingData(Settings.RANK_COUNT, event.getAuthor().getIdLong())));
                 break;
             case "~start":
                 User targetUser = null;
                 if (event.getMessage().getMentionedUsers().size() > 0) targetUser = event.getMessage().getMentionedUsers().get(0);
 
-                GameManager.createGame(event.getAuthor(), event.getTextChannel(), targetUser, reactionAgent);
+                this.gameManager.createGame(event.getAuthor(), event.getTextChannel(), targetUser, reactionAgent);
                 break;
             case "~resign":
-                GameManager.resignGame(event.getAuthor(), event.getTextChannel(), reactionAgent);
+                this.gameManager.resignGame(event.getAuthor(), event.getTextChannel(), reactionAgent);
                 break;
             case "~s":
                 if ((splitText.length != 3)
                         || (!((splitText[1].length() == 1) && ((splitText[2].length() == 1)
                         || (splitText[2].length() == 2))))) {
                     addReactionCrossMark.accept(event.getMessage());
-                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
+                    this.messageManager.getAgent(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
                     break;
                 }
 
@@ -124,27 +138,31 @@ public class BotManager {
                     pos = new Pos(Pos.engToInt(splitText[1].toLowerCase().toCharArray()[0]), Integer.parseInt(splitText[2].toLowerCase()) - 1);
                 } catch (Exception e) {
                     addReactionCrossMark.accept(event.getMessage());
-                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
+                    this.messageManager.getAgent(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
                     break;
                 }
 
                 if (!Pos.checkSize(pos.getX(), pos.getY())) {
                     addReactionCrossMark.accept(event.getMessage());
-                    MessageManager.getInstance(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
+                    this.messageManager.getAgent(event.getGuild()).sendSyntaxError(event.getAuthor(), event.getTextChannel());
                     break;
                 }
 
-                GameManager.putStone(pos, event.getAuthor(), event.getTextChannel(), reactionAgent);
+                this.gameManager.putStone(pos, event.getAuthor(), event.getTextChannel(), reactionAgent);
                 break;
         }
     }
 
-    public static JDA getClient() {
-        return BotManager.client;
+    public JDA getClient() {
+        return this.client;
     }
 
-    public static TextChannel getOfficialChannel() {
-        return Objects.requireNonNull(BotManager.getClient().getGuildById(Settings.OFFICIAL_GUILD_ID)).getTextChannelById(Settings.RESULT_CHANNEL_ID);
+    public GameManager getGameManager() {
+        return this.gameManager;
+    }
+
+    public TextChannel getOfficialChannel() {
+        return Objects.requireNonNull(this.getClient().getGuildById(Settings.OFFICIAL_GUILD_ID)).getTextChannelById(Settings.RESULT_CHANNEL_ID);
     }
 
 }

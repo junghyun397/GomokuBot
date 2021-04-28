@@ -12,24 +12,34 @@ import java.util.Objects;
 
 public class EventListener extends ListenerAdapter {
 
+    private final BotManager botManager;
+    private final Logger logger;
+    private final MessageManager messageManager;
+
+    public EventListener(BotManager botManager, Logger logger, MessageManager messageManager) {
+        this.botManager = botManager;
+        this.logger = logger;
+        this.messageManager = messageManager;
+    }
+
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
         if (!event.isFromType(ChannelType.TEXT)
                 || (event.getMessage().getContentDisplay().length() < 4)
                 || (event.getMessage().getContentDisplay().toCharArray()[0] != Settings.PREFIX)) return;
-        BotManager.processCommand(event);
+        this.botManager.processCommand(event);
     }
 
     @Override
     public void onGuildJoin(@NotNull GuildJoinEvent event) {
         if (event.getGuild().getSystemChannel() != null
                 && event.getGuild().getSystemChannel().canTalk()) {
-            MessageManager.getInstance(event.getGuild()).sendHelp(Objects.requireNonNull(event.getGuild().getSystemChannel()));
-            MessageManager.getInstance(event.getGuild()).sendSkinInfo(event.getGuild().getSystemChannel());
-            MessageManager.getInstance(event.getGuild()).sendLanguageInfo(event.getGuild().getSystemChannel());
+            this.messageManager.getAgent(event.getGuild()).sendHelp(Objects.requireNonNull(event.getGuild().getSystemChannel()));
+            this.messageManager.getAgent(event.getGuild()).sendSkinInfo(event.getGuild().getSystemChannel());
+            this.messageManager.getAgent(event.getGuild()).sendLanguageInfo(event.getGuild().getSystemChannel());
         }
 
-        Logger.loggerInfo("join server : " + event.getGuild().getName());
+        this.logger.loggerInfo("join server : " + event.getGuild().getName());
     }
 
 }
