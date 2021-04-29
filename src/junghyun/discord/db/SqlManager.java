@@ -15,8 +15,6 @@ public class SqlManager {
 
     public SqlManager(Logger logger) {
         this.logger = logger;
-
-        this.connectMysql();
     }
 
     public void connectMysql() {

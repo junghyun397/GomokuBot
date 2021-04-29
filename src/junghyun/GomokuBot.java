@@ -27,7 +27,7 @@ public class GomokuBot {
         SqlManager sqlManager = new SqlManager(logger);
         DBManager dbManager = new DBManager(logger, sqlManager);
 
-        BotManager botManager = new BotManager(logger, sqlManager, dbManager);
+        BotManager botManager = new BotManager(logger, dbManager);
 
         GomokuBot.logger = logger;
         GomokuBot.botManager = botManager;

@@ -21,16 +21,14 @@ import java.util.function.Consumer;
 public class BotManager {
 
     private final Logger logger;
-    private final SqlManager sqlManager;
     private final DBManager dbManager;
     private final MessageManager messageManager;
     private final GameManager gameManager;
 
     private JDA client;
 
-    public BotManager(Logger logger, SqlManager sqlManager, DBManager dbManager) {
+    public BotManager(Logger logger, DBManager dbManager) {
         this.logger = logger;
-        this.sqlManager = sqlManager;
         this.dbManager = dbManager;
         this.messageManager = new MessageManager(this, dbManager);
         this.gameManager = new GameManager(this, dbManager, logger, messageManager);
@@ -46,7 +44,6 @@ public class BotManager {
         client = builder.build();
         client.awaitReady();
 
-        this.sqlManager.connectMysql();
         this.gameManager.startGameManager();
         this.messageManager.loadMessages();
     }
