@@ -8,7 +8,7 @@ import junghyun.discord.db.SqlManager;
 import javax.security.auth.login.LoginException;
 import java.util.Scanner;
 
-public class Main {
+public class GomokuBot {
 
     private static Scanner scanner;
 
@@ -18,7 +18,7 @@ public class Main {
     private static BotManager botManager;
 
     public static void main(String[] args) {
-        Main.startServer();
+        GomokuBot.startServer();
     }
 
     private static void startServer() {
@@ -29,49 +29,49 @@ public class Main {
 
         BotManager botManager = new BotManager(logger, sqlManager, dbManager);
 
-        Main.logger = logger;
-        Main.botManager = botManager;
+        GomokuBot.logger = logger;
+        GomokuBot.botManager = botManager;
 
         logger.startLogger();
         sqlManager.connectMysql();
 
         try {
             botManager.startBotManager();
-            Main.onRunning = true;
+            GomokuBot.onRunning = true;
             logger.loggerInfo("booting succeed!");
-            Main.startServerCommand();
+            GomokuBot.startScanCommand();
         } catch (LoginException | InterruptedException e) {
             logger.loggerWarning(e.getMessage());
         }
     }
 
     private static void stopServer() {
-        Main.botManager.endGomokuBot();
+        GomokuBot.botManager.endGomokuBot();
 
-        Main.logger.saveLogs();
-        Main.onRunning = false;
+        GomokuBot.logger.saveLogs();
+        GomokuBot.onRunning = false;
     }
 
-    private static void startServerCommand() {
-        Main.scanner = new Scanner(System.in);
-        Main.scanCommand();
+    private static void startScanCommand() {
+        GomokuBot.scanner = new Scanner(System.in);
+        GomokuBot.scanCommand();
     }
 
     private static void scanCommand() {
-        while (Main.onRunning) {
-            String command = Main.scanner.nextLine();
+        while (GomokuBot.onRunning) {
+            String command = GomokuBot.scanner.nextLine();
             switch (command) {
                 case "stop":
-                    Main.stopServer();
+                    GomokuBot.stopServer();
                     break;
                 case "restart":
-                    Main.stopServer();
-                    Main.startServer();
+                    GomokuBot.stopServer();
+                    GomokuBot.startServer();
                 case "save":
-                    Main.logger.saveLogs();
+                    GomokuBot.logger.saveLogs();
                 case "status":
-                    Main.logger.loggerDev("game count : " + Main.botManager.getGameManager().getGameListSize());
-                    Main.logger.loggerDev("server count : " + Main.botManager.getClient().getGuilds().size());
+                    GomokuBot.logger.loggerDev("game count : " + GomokuBot.botManager.getGameManager().getGameListSize());
+                    GomokuBot.logger.loggerDev("server count : " + GomokuBot.botManager.getClient().getGuilds().size());
                     break;
 //              case "broadcast-all":
 //                  String text = command.split("broadcast-all")[0];
