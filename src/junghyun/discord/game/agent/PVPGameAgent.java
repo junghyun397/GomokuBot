@@ -108,6 +108,7 @@ public class PVPGameAgent implements GameAgent {
 
         this.messageManager.getAgent(channel.getGuild()).sendPvPResign(chatGame, winPlayer, losePlayer, channel);
         this.gameManager.endGame(chatGame, channel);
+        this.gameManager.delGame(chatGame.getOppPlayer().getLongId());
     }
 
     @Override
