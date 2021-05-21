@@ -30,7 +30,7 @@ public class LanguageKOR extends LanguageENG {
     }
     @Override
     public String HELP_DESCRIPTION() {
-        return "GomokuBot 은 Discord에서 오목을 즐길 수 있게 해주는 오픈소스 Discord Bot입니다. 수집된 기보 데이터는 강화학습 모델 훈련에 사용됩니다.";
+        return "GomokuBot 은 디스코드에서 오목 기능을 제공하는 오픈소스 디스코드 봇 입니다. 수집된 기보 데이터는 강화학습 모델 훈련에 사용됩니다.";
     }
     @Override
     public String HELP_DEV() {
@@ -71,7 +71,7 @@ public class LanguageKOR extends LanguageENG {
     }
     @Override
     public String HELP_CMD_PVE() {
-        return "`~start` A.I 와의 게임을 시작합니다.";
+        return "`~start` 인공지능과의 게임을 시작합니다.";
     }
     @Override
     public String HELP_CMD_PVP() {
@@ -79,7 +79,7 @@ public class LanguageKOR extends LanguageENG {
     }
     @Override
     public String HELP_CMD_RESIGN() {
-        return "`~resign` 현재 진행하고 있는 게임을 포기합니다.";
+        return "`~resign` 현재 진행되고 있는 게임을 포기합니다.";
     }
 
     @Override
@@ -106,6 +106,10 @@ public class LanguageKOR extends LanguageENG {
     @Override
     public String RANK_INFO() {
         return "GomokuBot / 순위";
+    }
+    @Override
+    public String HELP_CMD_RANK() {
+        return "`~rank` 1위부터 10위까지의 순위를 출력합니다.";
     }
     @Override
     public String RANK_DESCRIPTION() {
@@ -139,7 +143,7 @@ public class LanguageKOR extends LanguageENG {
     }
     @Override
     public String GAME_SYNTAX_FAIL(String nameTag) {
-        return nameTag + "님, 그건 잘못된 명령어입니다. `~s 알파벳 숫자` 형식으로 적어주세요. :thinking:";
+        return nameTag + "님, 그것은 잘못된 명령어입니다. `~s 알파벳 숫자` 형식으로 적어주세요. :thinking:";
     }
     @Override
     public String GAME_ALREADY_IN(String nameTag) {
@@ -180,30 +184,30 @@ public class LanguageKOR extends LanguageENG {
 
     @Override
     public String GAME_PVE_WIN(String lastPos) {
-        return lastPos + "에 놓음으로써 AI에게 승리하셨습니다. 축하합니다!";
+        return lastPos + "에 놓음으로써 A.I.에게 승리하셨습니다. 축하합니다!";
     }
     @Override
     public String GAME_PVE_LOSE(String lastPos) {
-        return "AI 가 " + lastPos + "에 놓음으로써 패배하셨습니다.";
+        return "A.I. 가 " + lastPos + "에 놓음으로써 패배하셨습니다.";
     }
     @Override
     public String GAME_PVE_RESIGN() {
-        return "항복을 선언 함으로써 AI에게 패배하였습니다.";
+        return "항복을 선언 함으로써 A.I.에게 패배하였습니다.";
     }
 
     @Override
     public String GAME_PVE_INFO(String playerName, int winCount, int loseCount, int rank) {
-        return "AI 상대 전적이 `" + winCount + " : " + loseCount + "`로 업데이트되었습니다. 현재 " + playerName + "님의 순위는 " + rank + "위입니다.";
+        return "A.I. 상대 전적이 `" + winCount + " : " + loseCount + "`로 업데이트되었습니다. 현재 " + playerName + "님의 순위는 " + rank + "위입니다.";
     }
 
     @Override
     public String GAME_FULL() {
-        return "더는 돌을 넣을 자리가 없어 무승부 처리되었습니다.";
+        return "더는 돌을 놓을 자리가 없어 무승부 처리되었습니다.";
     }
 
     @Override
     public String GAME_ARCHIVED(String messageLink) {
-        return ":tada: 멋진 게임을 보여 주셨네요! 게임 결과가 공식 채널에 공유되었습니다. - 링크를 클릭해서 확인해보세요."+messageLink;
+        return ":tada: 멋진 게임을 보여 주셨습니다! 게임 결과가 공식 채널에 공유되었습니다. - 링크를 클릭해서 확인해보세요."+messageLink;
     }
 
     @Override

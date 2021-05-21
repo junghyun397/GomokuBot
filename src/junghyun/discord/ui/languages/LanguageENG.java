@@ -60,7 +60,7 @@ public class LanguageENG implements LanguageInterface {
     }
     @Override
     public String HELP_CMD_RANK() {
-        return "`~rank` Show the ranking from 1st to 10th";
+        return "`~rank` Show ranking from 1st to 10th";
     }
     @Override
     public String HELP_CMD_LANG(String langList) {
@@ -181,11 +181,11 @@ public class LanguageENG implements LanguageInterface {
 
     @Override
     public String GAME_PVE_WIN(String lastPos) {
-        return "You beat AI by placing Stone on " + lastPos + ". Congratulations! :tada:";
+        return "You beat A.I. by placing Stone on " + lastPos + ". Congratulations! :tada:";
     }
     @Override
     public String GAME_PVE_LOSE(String lastPos) {
-        return "You have been defeated by AI placing on " + lastPos + ".";
+        return "You have been defeated by A.I. placing on " + lastPos + ".";
     }
     @Override
     public String GAME_PVE_RESIGN() {
@@ -194,7 +194,7 @@ public class LanguageENG implements LanguageInterface {
 
     @Override
     public String GAME_PVE_INFO(String playerName, int winCount, int loseCount, int rank) {
-        return "Your entire AI has been updated to `" + winCount + " : " + loseCount + "`. " + playerName + " is currently ranked " + rank + " above.";
+        return "Your entire A.I. has been updated to `" + winCount + " : " + loseCount + "`. " + playerName + " is currently ranked " + rank + " above.";
     }
 
     @Override
