@@ -7,12 +7,12 @@ import com.google.protobuf.gradle.plugins
 import com.google.protobuf.gradle.protobuf
 import com.google.protobuf.gradle.protoc
 
-val group = "me.junghyun397"
+val group = "do1phin"
 val version = "1.0-SNAPSHOT"
 
-val grpcVersion = "1.42.1"
-val grpcKotlinVersion = "1.2.0"
-val protobufVersion = "3.19.1"
+val grpcVersion = "1.44.1"
+val grpcKotlinVersion = "1.2.1"
+val protobufVersion = "3.19.4"
 
 plugins {
     application
@@ -29,12 +29,15 @@ repositories {
 }
 
 dependencies {
+    implementation("dev.miku:r2dbc-mysql:0.8.2.RELEASE")
+
     implementation("io.grpc:grpc-kotlin-stub:$grpcKotlinVersion")
     implementation("io.grpc:grpc-protobuf:$grpcVersion")
     implementation("com.google.protobuf:protobuf-kotlin:$protobufVersion")
 
-    implementation("net.dv8tion:JDA:4.3.0_346")
-    implementation("com.github.minndevelopment:jda-ktx:1223d5cbb8a8caac6d28799a36001f1844d7aa7d")
+    implementation("net.dv8tion:JDA:5.0.0-alpha.9")
+    implementation("com.github.minndevelopment:jda-ktx:652775540cf5832ef03e5f25e80c4448390b4fa1")
+    implementation("com.github.minndevelopment:jda-reactor:1.5.0")
 }
 
 protobuf {
@@ -63,9 +66,9 @@ protobuf {
 }
 
 application {
-    mainClass.set("MainKt")
+    mainClass.set("AppKt")
 }
 
-tasks.withType<KotlinCompile>() {
-    kotlinOptions.jvmTarget = "1.8"
+tasks.withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = "11"
 }

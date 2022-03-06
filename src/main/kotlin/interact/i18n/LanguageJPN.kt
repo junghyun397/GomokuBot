@@ -1,4 +1,4 @@
-package i18n
+package interact.i18n
 
 class LanguageJPN : LanguageENG() {
 
@@ -10,18 +10,18 @@ class LanguageJPN : LanguageENG() {
     override fun helpInfo(): String = "GomokuBot / ヘルプ"
     override fun helpDescription(): String =
         "GomokuBotはDiscordで五目を楽しませてくれるオープンソースDiscord Botです。収集される基本データは強化学習モデル訓練に使われます。"
-    override fun helpDev(): String = "ディベロッパー"
-    override fun helpRepo(): String = "Git 貯蔵所"
+    override fun helpDeveloper(): String = "ディベロッパー"
+    override fun helpRepository(): String = "Git 貯蔵所"
     override fun helpVersion(): String = "バージョン"
     override fun helpSupport(): String = "サポートチャンネル"
 
-    override fun helpCmdInfo(): String = "GomokuBot / コマンド"
-    override fun helpCmdHelp(): String = "`~help` ヘルプを案内します。"
-    override fun helpCmdLang(langList: String): String =
+    override fun helpCommandInfo(): String = "GomokuBot / コマンド"
+    override fun helpCommandHelp(): String = "`~help` ヘルプを案内します。"
+    override fun helpCommandLang(langList: String): String =
         "`~lang` $langList このサーバーで使われる言語設定を変更します。Ex) `~lang` `ENG`"
-    override fun helpCmdPVE(): String = "`~start` A.Iとゲームを開始します。"
-    override fun helpCmdPVP(): String = "`~start` `@言及` 言及されたプレーヤーとゲームを開始します。 Ex) `~start` `@player`"
-    override fun helpCmdResign(): String = "`~resign` 現在進行中のゲームを諦めます。"
+    override fun helpCommandPVE(): String = "`~start` A.Iとゲームを開始します。"
+    override fun helpCommandPVP(): String = "`~start` `@言及` 言及されたプレーヤーとゲームを開始します。 Ex) `~start` `@player`"
+    override fun helpCommandResign(): String = "`~resign` 現在進行中のゲームを諦めます。"
 
     override fun rankInfo(): String = "GomokuBot / ランキング"
     override fun rankDescription(): String = "1位から10位までのランキングです。"
@@ -33,24 +33,24 @@ class LanguageJPN : LanguageENG() {
 
     override fun gameNotFound(nameTag: String): String =
         "$nameTag さん, 進行中のゲームがありません。`~start`でゲームを開始してください。"
-    override fun gameCreationFail(nameTag: String): String =
+    override fun gameAlreadyInProgress(nameTag: String): String =
         "$nameTag さん, ゲーム生成に失敗しました。今のゲームを終了してください。 :thinking:"
     override fun gameSyntaxFail(nameTag: String): String =
         "$nameTag さん, 間違いコマンドです。`~s アルファベット 数字` 形式に書いてください。 :thinking:"
-    override fun gameAlreadyInProgress(nameTag: String): String = "$nameTag さん, そこにはすでに碁石があります。 :thinking:"
+    override fun gameAlreadyExits(nameTag: String): String = "$nameTag さん, そこにはすでに碁石があります。 :thinking:"
 
-    override fun gameCreateInfo(playerName: String, targetName: String, fAttack: String): String =
+    override fun gameCreatedInfo(playerName: String, targetName: String, fAttack: String): String =
         "`$playerName`と `$targetName`のマッチが開始しました。先攻は `$fAttack`です。"
-    override fun gameCmdInfo(): String = " `~s` `アルファベット` `数字` 形式に碁石を置いてください。 Ex) `~s` `h` `8`"
+    override fun gameCommandInfo(): String = " `~s` `アルファベット` `数字` 形式に碁石を置いてください。 Ex) `~s` `h` `8`"
 
     override fun gameNextTurn(curName: String, prvName: String, lastPos: String): String =
         "`$curName`さん, 次の手を置いてください。 `$prvName`は $lastPos に置きました。"
 
-    override fun gamePVPNextTurn(turnName: String): String =
+    override fun gamePVPPleaseWait(turnName: String): String =
         "今は`$turnName`'さんの番です。`$turnName`さんの次の番を待ってください。 :thinking:"
     override fun gamePVPWin(winName: String, loseName: String, lastPos: String): String =
         "`$winName`さんが $lastPos に置いて`$loseName`さんに勝ちました。"
-    override fun gamePVPResign(winName: String, loseName: String): String =
+    override fun gamePVPWinCausedByResign(winName: String, loseName: String): String =
         "`$loseName`さんが降伏を宣言して`$winName`さんが勝ちました。"
 
     override fun gamePVPInfo(winName: String, loseName: String, winCount: Int, loseCount: Int): String =
@@ -63,7 +63,7 @@ class LanguageJPN : LanguageENG() {
     override fun gamePVEInfo(playerName: String, winCount: Int, loseCount: Int, rank: Int): String =
         "AI相手の戦績が`$winCount : $loseCount`にアップデートされました。現在$playerName さんのランキングは$rank 位です。"
 
-    override fun gameFull(): String = "もう碁石を置く所が無くて無勝負に処理されました。"
+    override fun gameTieCausedByFull(): String = "もう碁石を置く所が無くて無勝負に処理されました。"
 
     override fun boardInProgress(): String = "進行中"
     override fun boardFinish(): String = "終了"
