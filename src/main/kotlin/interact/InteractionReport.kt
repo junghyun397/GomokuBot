@@ -1,0 +1,5 @@
+package interact
+
+interface InteractionReport {
+
+}

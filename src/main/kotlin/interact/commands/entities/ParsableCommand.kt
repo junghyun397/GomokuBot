@@ -1,9 +1,9 @@
-package interact.commands
+package interact.commands.entities
 
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 
-interface CommandParser {
+interface ParsableCommand {
 
     fun parse(event: SlashCommandInteractionEvent): Result<Command>
 

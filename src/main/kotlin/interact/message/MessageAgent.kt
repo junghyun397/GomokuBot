@@ -1,21 +1,17 @@
 package interact.message
 
-import interact.i18n.LanguageContainer
-import net.dv8tion.jda.api.entities.Channel
+import utility.MessagePublisher
 
 object MessageAgent {
 
-    private val guildMap: HashMap<Long, LanguageContainer> = hashMapOf()
+    fun sendHelpAbout(messagePublisher: MessagePublisher): Unit = TODO()
 
-    fun updateGuildLang(guildId: Long, languageContainer: LanguageContainer) =
-        guildMap.putIfAbsent(guildId, languageContainer)
+    fun sendHelpCommand(messagePublisher: MessagePublisher): Unit = TODO()
 
-    fun sendHelpAbout(channel: Channel): Unit = TODO()
+    fun sendHelpSkin(messagePublisher: MessagePublisher): Unit = TODO()
 
-    fun sendHelpCommand(channel: Channel): Unit = TODO()
+    fun sendHelpLanguage(messagePublisher: MessagePublisher): Unit = TODO()
 
-    fun sendHelpSkin(channel: Channel): Unit = TODO()
-
-    fun sendHelpLanguage(channel: Channel): Unit = TODO()
+    fun sendGameNotFound(messagePublisher: MessagePublisher, nameTag: String): Unit = TODO()
 
 }

@@ -12,7 +12,7 @@ message Request {
     int64 turns = 2;
   }
 
-  State state = 3;
+  State state = 2;
 }
 
 enum Method {
@@ -26,7 +26,7 @@ message Response {
   Method method = 2;
 
   message Solution {
-
+    int64 turns = 1;
   }
 
   Solution solution = 3;
