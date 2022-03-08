@@ -1,7 +1,9 @@
-package interact.commands.entities
+package interact.commands
 
-import interact.commands.CommandReport
+import BotContext
 import interact.i18n.LanguageContainer
+import interact.message.MessageAgent
+import interact.reports.CommandReport
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -14,9 +16,15 @@ class HelpCommand(override val name: String = "help") : Command {
     override fun buildCommandData(languageContainer: LanguageContainer): CommandData =
         slash(languageContainer.helpCommand(), languageContainer.helpCommandDescription())
 
-    override suspend fun execute(user: User, messagePublisher: MessagePublisher): Result<CommandReport> {
-        TODO("Not yet implemented")
-    }
+    override suspend fun execute(botContext: BotContext, user: User, messagePublisher: MessagePublisher): Result<CommandReport> =
+        runCatching {
+            MessageAgent.sendHelpAbout(messagePublisher)
+            MessageAgent.sendHelpCommand(messagePublisher)
+            MessageAgent.sendHelpSkin(messagePublisher)
+            MessageAgent.sendHelpLanguage(messagePublisher)
+
+            TODO()
+        }
 
     companion object : ParsableCommand {
 

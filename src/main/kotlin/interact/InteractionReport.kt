@@ -1,5 +1,0 @@
-package interact
-
-interface InteractionReport {
-
-}

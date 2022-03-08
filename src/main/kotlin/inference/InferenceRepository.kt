@@ -1,0 +1,3 @@
+package inference
+
+class InferenceRepository()

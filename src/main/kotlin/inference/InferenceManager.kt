@@ -1,0 +1,4 @@
+package inference
+
+object InferenceManager {
+}

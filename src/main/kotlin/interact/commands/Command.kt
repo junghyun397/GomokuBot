@@ -1,6 +1,7 @@
-package interact.commands.entities
+package interact.commands
 
-import interact.commands.CommandReport
+import BotContext
+import interact.reports.CommandReport
 import interact.i18n.LanguageContainer
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
@@ -12,6 +13,6 @@ interface Command {
 
     fun buildCommandData(languageContainer: LanguageContainer): CommandData
 
-    suspend fun execute(user: User, messagePublisher: MessagePublisher): Result<CommandReport>
+    suspend fun execute(botContext: BotContext, user: User, messagePublisher: MessagePublisher): Result<CommandReport>
 
 }

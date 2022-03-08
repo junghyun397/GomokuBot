@@ -1,4 +1,4 @@
-package interact.commands.entities
+package interact.commands
 
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
