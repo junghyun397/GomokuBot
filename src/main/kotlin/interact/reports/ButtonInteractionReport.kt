@@ -1,3 +1,5 @@
 package interact.reports
 
-class ButtonInteractionReport(override val guildId: Long, override val guildName: String) : InteractionReport
+import utility.LinuxTime
+
+class ButtonInteractionReport(override val terminationTime: LinuxTime) : InteractionReport

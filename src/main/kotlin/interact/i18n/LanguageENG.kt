@@ -9,10 +9,42 @@ open class LanguageENG : LanguageContainer {
     override fun languageName(): String = "English:flag_gb:"
     override fun languageDescription(): String = "Please use the `~lang` `ENG` command."
 
+    // TOKENS
+
     override fun user(): String = "User"
+
+    // COMMANDS
 
     override fun helpCommand(): String = "help"
     override fun helpCommandDescription(): String = "Get help"
+
+    override fun langCommand(): String = TODO("Not yet implemented")
+    override fun langCommandDescription(): String = TODO("Not yet implemented")
+    override fun languageCommandOptionCode(): String = TODO("Not yet implemented")
+    override fun languageCommandOptionCodeDescription(): String = TODO("Not yet implemented")
+
+    override fun skinCommand(): String = "skin"
+    override fun skinCommandDescription(): String = "Change Gomoku-board style setting used on this server."
+    override fun skinCommandOptionCode(): String = TODO("Not yet implemented")
+    override fun skinCommandOptionCodeDescription(): String = TODO("Not yet implemented")
+
+    override fun rankCommand(): String = "rank"
+    override fun rankCommandDescription(): String = "Show ranking from 1st to 10th"
+
+    override fun ratingCommand(): String = TODO("Not yet implemented")
+    override fun ratingCommandDescription(): String = TODO("Not yet implemented")
+    override fun ratingCommandOptionUser(): String = TODO("Not yet implemented")
+    override fun ratingCommandOptionUserDescription(): String = TODO("Not yet implemented")
+
+    override fun startCommand(): String = "start"
+    override fun startCommandDescription(): String = TODO("Not yet implemented")
+    override fun startCommandOptionOpponent(): String = TODO("Not yet implemented")
+    override fun startCommandOptionOpponentDescription(): String = TODO("Not yet implemented")
+
+    override fun resignCommand(): String = TODO("Not yet implemented")
+    override fun resignCommandDescription(): String = TODO("Not yet implemented")
+
+    // HELP
 
     override fun helpInfo(): String = "GomokuBot / Help"
     override fun helpDescription(): String =
@@ -36,9 +68,6 @@ open class LanguageENG : LanguageContainer {
         "`~start` `@mention` Start the game with the mentioned player. Ex) `~start` `@player`"
     override fun helpCommandResign(): String = "`~resign` Surrender the current game."
 
-    override fun skinCommand(): String = "skin"
-    override fun skinCommandDescription(): String = "Change Gomoku-board style setting used on this server."
-
     override fun skinInformation(): String = "GomokuBot / Style"
     override fun skinDescription(): String =
         "The default Gomoku canvas (Style A) may not display properly. " +
@@ -46,9 +75,6 @@ open class LanguageENG : LanguageContainer {
     override fun skinCommandInfo(style: String): String = "Enter ``~skin`` ``$style`` to use this style."
     override fun skinUpdateError(): String = "There is an error in the style specification."
     override fun skinUpdateSuccess(style: String): String = "Style setting has been change to ``$style`` !"
-
-    override fun rankCommand(): String = "rank"
-    override fun rankCommandDescription(): String = "Show ranking from 1st to 10th"
 
     override fun rankInfo(): String = "GomokuBot / Ranking"
     override fun rankDescription(): String = "Ranked 1st to 10th."

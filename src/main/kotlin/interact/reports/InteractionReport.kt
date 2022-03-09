@@ -1,9 +1,9 @@
 package interact.reports
 
+import utility.LinuxTime
+
 interface InteractionReport {
 
-    val guildId: Long
-
-    val guildName: String
+    val terminationTime: LinuxTime
 
 }

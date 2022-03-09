@@ -2,6 +2,7 @@ import club.minnced.jda.reactor.ReactiveEventManager
 import club.minnced.jda.reactor.on
 import database.DatabaseConnection
 import inference.InferenceRepository
+import interact.reports.InteractionReport
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.entities.Activity
@@ -48,26 +49,34 @@ fun main() {
     val botContext = BotContext(databaseConnection, sessionRepository, inferenceRepository)
 
     val logger = getLogger<ReactiveEventManager>()
+    val processLog: (Result<InteractionReport>) -> Unit = {
+        it.onSuccess { report -> logger.info(report.toString()) }
+        it.onFailure { error -> logger.error(error.message) }
+    }
 
     val eventManager = ReactiveEventManager()
 
     eventManager.on<SlashCommandInteractionEvent>()
         .filter { !it.user.isBot }
         .flatMap(buildSlashCommandHandler(botContext))
+        .doOnNext(processLog)
         .subscribe()
 
     eventManager.on<MessageReceivedEvent>()
         .filter { !it.author.isBot && it.message.contentRaw.startsWith(COMMAND_PREFIX) }
         .flatMap(buildTextCommandHandler(botContext))
+        .doOnNext(processLog)
         .subscribe()
 
     eventManager.on<ButtonInteractionEvent>()
         .filter { !it.user.isBot }
-        .flatMap(buildButtonInteractionHandler((botContext)))
+        .flatMap(buildButtonInteractionHandler(botContext))
+        .doOnNext(processLog)
         .subscribe()
 
     eventManager.on<GuildJoinEvent>()
         .flatMap(buildGuildJoinHandler(botContext))
+        .doOnNext(processLog)
         .subscribe()
 
     eventManager.on<ShutdownEvent>()

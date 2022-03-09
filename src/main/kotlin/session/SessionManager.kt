@@ -11,7 +11,7 @@ object SessionManager {
 
     private suspend fun retrieveGuildSession(repo: SessionRepository, guildId: GuildId): GuildSession =
         repo.sessions.getOrElse(guildId.id) {
-            TODO()
+            GuildSession() // TODO()
         }
 
     private suspend fun updateGuildSession(repo: SessionRepository, guildId: GuildId, block: (GuildSession) -> GuildSession): Unit =

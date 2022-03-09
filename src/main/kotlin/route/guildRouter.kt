@@ -1,32 +1,43 @@
 package route
 
 import BotContext
+import interact.commands.BuildableCommand
+import interact.commands.entities.HelpCommand
+import interact.commands.entities.StartCommand
 import interact.message.MessageAgent
 import interact.reports.GuildJoinReport
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import net.dv8tion.jda.api.entities.Message
+import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import session.SessionManager
 import utility.GuildId
+import utility.MessageActionRestActionAdaptor
 import utility.MessagePublisher
 
-fun buildGuildJoinHandler(botContext: BotContext): (GuildJoinEvent) -> Mono<GuildJoinReport> =
+private val commands: Collection<BuildableCommand> =
+    listOf(HelpCommand, StartCommand)
+
+fun buildGuildJoinHandler(botContext: BotContext): (GuildJoinEvent) -> Mono<Result<GuildJoinReport>> =
     { event ->
         Mono.zip(event.toMono(), botContext.toMono())
-            .doOnNext { combined -> runBlocking { launch {
+            .flatMap { combined -> mono {
                 SessionManager.retrieveLanguageContainer(combined.t2.sessionRepository, GuildId(combined.t1.guild.idLong)).let {
-                    val messagePublisher: MessagePublisher =
-                        { msg: Message -> combined.t1.guild.defaultChannel?.sendMessage(msg) }
+                    commands.forEach { command -> combined.t1.guild.upsertCommand(command.buildCommandData(it)) }
 
-                    MessageAgent.sendHelpAbout(messagePublisher)
-                    MessageAgent.sendHelpCommand(messagePublisher)
-                    MessageAgent.sendHelpSkin(messagePublisher)
-                    MessageAgent.sendHelpLanguage(messagePublisher)
+                    combined.t1.guild.defaultChannel?.let { channel ->
+                        val messagePublisher: MessagePublisher =
+                            { msg -> MessageActionRestActionAdaptor(channel.sendMessage(msg)) }
+
+                        MessageAgent.sendHelpAbout(messagePublisher, it)
+                        MessageAgent.sendHelpCommand(messagePublisher, it)
+                        MessageAgent.sendHelpSkin(messagePublisher, it)
+                        MessageAgent.sendHelpLanguage(messagePublisher, it)
+
+                        return@mono Result.success(GuildJoinReport())
                     }
-                } }
-            }
-            .flatMap { GuildJoinReport(it.t1.guild.idLong, it.t1.guild.name).toMono() }
+
+                    return@mono Result.success(GuildJoinReport(helpSent = false))
+                }
+            } }
     }

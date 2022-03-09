@@ -1,3 +1,9 @@
 package interact.reports
 
-class GuildJoinReport(override val guildId: Long, override val guildName: String) : InteractionReport
+import utility.LinuxTime
+
+class GuildJoinReport(
+    override val terminationTime: LinuxTime = LinuxTime(System.currentTimeMillis()),
+    val commandInserted: Boolean = true,
+    val helpSent: Boolean = true
+) : InteractionReport

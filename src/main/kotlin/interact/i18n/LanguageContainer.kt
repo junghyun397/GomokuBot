@@ -9,10 +9,42 @@ interface LanguageContainer {
     fun languageName(): String
     fun languageDescription(): String
 
+    // TOKENS
+
     fun user(): String
+
+    // COMMANDS
 
     fun helpCommand(): String
     fun helpCommandDescription(): String
+
+    fun langCommand(): String
+    fun langCommandDescription(): String
+    fun languageCommandOptionCode(): String
+    fun languageCommandOptionCodeDescription(): String
+
+    fun skinCommand(): String
+    fun skinCommandDescription(): String
+    fun skinCommandOptionCode(): String
+    fun skinCommandOptionCodeDescription(): String
+
+    fun rankCommand(): String
+    fun rankCommandDescription(): String
+
+    fun ratingCommand(): String
+    fun ratingCommandDescription(): String
+    fun ratingCommandOptionUser(): String
+    fun ratingCommandOptionUserDescription(): String
+
+    fun startCommand(): String
+    fun startCommandDescription(): String
+    fun startCommandOptionOpponent(): String
+    fun startCommandOptionOpponentDescription(): String
+
+    fun resignCommand(): String
+    fun resignCommandDescription(): String
+
+    // HELP
 
     fun helpInfo(): String
     fun helpDescription(): String
@@ -31,8 +63,7 @@ interface LanguageContainer {
     fun helpCommandPVP(): String
     fun helpCommandResign(): String
 
-    fun skinCommand(): String
-    fun skinCommandDescription(): String
+    // SKIN
 
     fun skinInformation(): String
     fun skinDescription(): String
@@ -40,15 +71,19 @@ interface LanguageContainer {
     fun skinUpdateError(): String
     fun skinUpdateSuccess(style: String): String
 
-    fun rankCommand(): String
-    fun rankCommandDescription(): String
+    // RANK
 
     fun rankInfo(): String
     fun rankDescription(): String
     fun rankWin(): String
     fun rankLose(): String
+
+    // LANG
     
     fun langUpdateSuccess(): String
+    fun langUpdateError(): String
+
+    // GAME
 
     fun gameNotFound(nameTag: String): String
     fun gameAlreadyInProgress(nameTag: String): String
@@ -76,7 +111,7 @@ interface LanguageContainer {
     fun ratingUpdate(nameTag: String, prvRating: Float, rating: Float): String
     fun rating(): String
 
-    fun langUpdateError(): String
+    // BOARD
 
     fun boardInProgress(): String
     fun boardFinish(): String
