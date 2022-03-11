@@ -1,6 +1,5 @@
 package interact.commands.entities
 
-import BotContext
 import interact.commands.BuildableCommand
 import interact.commands.ParsableCommand
 import interact.i18n.LanguageContainer
@@ -10,6 +9,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.build.Commands.slash
+import route.BotContext
 import utility.GuildId
 import utility.MessagePublisher
 import utility.UserId

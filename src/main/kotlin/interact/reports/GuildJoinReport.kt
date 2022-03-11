@@ -4,6 +4,10 @@ import utility.LinuxTime
 
 class GuildJoinReport(
     override val terminationTime: LinuxTime = LinuxTime(System.currentTimeMillis()),
-    val commandInserted: Boolean = true,
-    val helpSent: Boolean = true
-) : InteractionReport
+    private val commandInserted: Boolean = true,
+    private val helpSent: Boolean = true
+) : InteractionReport {
+
+    override fun toString(): String = "commandInserted = $commandInserted helpSent = $helpSent"
+
+}

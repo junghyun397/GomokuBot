@@ -14,7 +14,7 @@ value class UserId(val id: Long)
 
 typealias MessagePublisher = (Message) -> RestActionAdaptor
 
-interface RestActionAdaptor {
+sealed interface RestActionAdaptor {
     fun addFile(file: File): RestActionAdaptor
     fun addActionRow(vararg actionRows: ActionRow): RestActionAdaptor
     fun queue()

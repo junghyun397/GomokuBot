@@ -1,9 +1,8 @@
 package interact.commands.entities
 
-import BotContext
 import interact.i18n.LanguageContainer
 import interact.reports.CommandReport
-import net.dv8tion.jda.api.entities.User
+import route.BotContext
 import utility.GuildId
 import utility.MessagePublisher
 import utility.UserId

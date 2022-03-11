@@ -4,6 +4,8 @@ import reactor.kotlin.core.publisher.toFlux
 
 val testFlux = (1..10).map { "Num$it" }.toFlux()
 
+inline fun <reified T> complex(s: String) = ""
+
 fun testFlux() {
     testFlux
         .flatMap { mono {

@@ -1,13 +1,11 @@
 package route
 
-import BotContext
 import interact.reports.ButtonInteractionReport
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.toMono
+import reactor.util.function.Tuple2
 
-fun buildButtonInteractionHandler(botContext: BotContext): (ButtonInteractionEvent) -> Mono<Result<ButtonInteractionReport>> =
-    { event ->
-        Mono.zip(event.toMono(), botContext.toMono())
-            .flatMap { TODO() }
+fun buildButtonInteractionHandler(): (InteractionContext<ButtonInteractionEvent>) -> Mono<Tuple2<InteractionContext<ButtonInteractionEvent>, Result<ButtonInteractionReport>>> =
+    { context ->
+        TODO()
     }
