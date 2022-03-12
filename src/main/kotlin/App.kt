@@ -42,53 +42,54 @@ data class MySQLConfig(val serverURL: String, val serverUname: String, val serve
     }
 }
 
-const val COMMAND_PREFIX: Char = 126.toChar() // "~"
-
-inline fun <reified E : Event, reified R : InteractionReport> processLog(combined: Tuple2<InteractionContext<E>, Result<R>>) =
+inline fun <reified E : Event, reified R : InteractionReport> leaveLog(combined: Tuple2<InteractionContext<E>, Result<R>>) =
     getLogger<R>().let { logger ->
         combined.t2.onSuccess {
-            logger.info("${combined.t1.guildName}/${combined.t1.guildId}" +
+            logger.info("${E::class.simpleName}@${combined.t1.guildName}/${combined.t1.guildId}" +
                     "T${(it.terminationTime.timestamp - combined.t1.emittenTime.timestamp)/1000}ms => $it")
         }
-        combined.t2.onFailure { logger.error(it.message) }
+        combined.t2.onFailure {
+            logger.error("${E::class.simpleName}@${combined.t1.guildName}/${combined.t1.guildId} " +
+                    "=> ${it.stackTraceToString()}")
+        }
     }
 
 fun main() {
+    val logger = getLogger<ReactiveEventManager>()
+
     val databaseConnection = DatabaseConnection()
     val sessionRepository = SessionRepository(databaseConnection = databaseConnection)
     val inferenceRepository = InferenceRepository()
 
     val botContext = BotContext(databaseConnection, sessionRepository, inferenceRepository)
 
-    val logger = getLogger<ReactiveEventManager>()
-
     val eventManager = ReactiveEventManager()
 
     eventManager.on<SlashCommandInteractionEvent>()
-        .filter { it.isFromGuild && !it.user.isBot }
+        .filter { it.isFromGuild && !it.user.isBot && it.isAcknowledged }
         .map { InteractionContext.of(botContext, it, it.guild!!) }
-        .flatMap(buildSlashCommandHandler())
-        .doOnNext { processLog(it) }
+        .flatMap(slashCommandHandler)
+        .doOnNext { leaveLog(it) }
         .subscribe()
 
     eventManager.on<MessageReceivedEvent>()
         .filter { it.isFromGuild && !it.author.isBot && it.message.contentRaw.startsWith(COMMAND_PREFIX) }
         .map { InteractionContext.of(botContext, it, it.guild) }
-        .flatMap(buildTextCommandHandler())
-        .doOnNext { processLog(it) }
+        .flatMap(textCommandHandler)
+        .doOnNext { leaveLog(it) }
         .subscribe()
 
     eventManager.on<ButtonInteractionEvent>()
         .filter { it.isFromGuild && !it.user.isBot }
         .map { InteractionContext.of(botContext, it, it.guild!!) }
-        .flatMap(buildButtonInteractionHandler())
-        .doOnNext { processLog(it) }
+        .flatMap(buttonInteractionHandler)
+        .doOnNext { leaveLog(it) }
         .subscribe()
 
     eventManager.on<GuildJoinEvent>()
         .map { InteractionContext.of(botContext, it, it.guild) }
-        .flatMap(buildGuildJoinHandler())
-        .doOnNext { processLog(it) }
+        .flatMap(guildJoinHandler)
+        .doOnNext { leaveLog(it) }
         .subscribe()
 
     eventManager.on<ShutdownEvent>()

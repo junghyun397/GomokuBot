@@ -32,20 +32,20 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.6.0")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions:1.1.5")
 
-    implementation("org.apache.logging.log4j:log4j-core:2.17.2")
-
-    implementation("dev.miku:r2dbc-mysql:0.8.2.RELEASE")
-
-    implementation("io.grpc:grpc-stub:1.40.1")
-    implementation("io.grpc:grpc-kotlin-stub:$grpcKotlinVersion")
-    implementation("io.grpc:grpc-protobuf:$grpcVersion")
-    implementation("com.google.protobuf:protobuf-kotlin:$protobufVersion")
-
     implementation("net.dv8tion:JDA:5.0.0-alpha.9")
     implementation("com.github.minndevelopment:jda-ktx:652775540cf5832ef03e5f25e80c4448390b4fa1")
     implementation("com.github.minndevelopment:jda-reactor:1.5.0")
 
-    testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
+    implementation("dev.miku:r2dbc-mysql:0.8.2.RELEASE")
+
+    implementation("io.grpc:grpc-stub:1.44.1")
+    implementation("io.grpc:grpc-kotlin-stub:$grpcKotlinVersion")
+    implementation("io.grpc:grpc-protobuf:$grpcVersion")
+    implementation("com.google.protobuf:protobuf-kotlin:$protobufVersion")
+
+    implementation("ch.qos.logback:logback-classic:1.2.11")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
 }
 
 tasks.test {

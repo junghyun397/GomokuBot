@@ -18,7 +18,7 @@ import utility.MessagePublisher
 private val commands: Collection<BuildableCommand> =
     listOf(HelpCommand, StartCommand)
 
-fun buildGuildJoinHandler(): (InteractionContext<GuildJoinEvent>) -> Mono<Tuple2<InteractionContext<GuildJoinEvent>, Result<GuildJoinReport>>> =
+val guildJoinHandler: (InteractionContext<GuildJoinEvent>) -> Mono<Tuple2<InteractionContext<GuildJoinEvent>, Result<GuildJoinReport>>> =
     { context ->
         Mono.zip(context.toMono(), mono {
             SessionManager.retrieveLanguageContainer(context.botContext.sessionRepository, GuildId(context.event.guild.idLong)).let {

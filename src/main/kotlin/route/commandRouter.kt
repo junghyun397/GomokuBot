@@ -25,7 +25,7 @@ private fun matchCommand(command: String, languageContainer: LanguageContainer):
         else -> Result.failure(Exception("Command mismatch: $command"))
     }
 
-fun buildSlashCommandHandler(): (InteractionContext<SlashCommandInteractionEvent>) -> Mono<Tuple2<InteractionContext<SlashCommandInteractionEvent>, Result<CommandReport>>> =
+val slashCommandHandler: (InteractionContext<SlashCommandInteractionEvent>) -> Mono<Tuple2<InteractionContext<SlashCommandInteractionEvent>, Result<CommandReport>>> =
     { context ->
         Mono.zip(context.toMono(), mono {
             SessionManager.retrieveLanguageContainer(context.botContext.sessionRepository, GuildId(context.event.guild!!.idLong))
@@ -54,10 +54,12 @@ fun buildSlashCommandHandler(): (InteractionContext<SlashCommandInteractionEvent
             }.toMono()) }
     }
 
-const val EMOJI_CHECK = "\u2611\uFE0F" // ☑
-const val EMOJI_CROSS = "\u274C" //
+const val COMMAND_PREFIX = 126.toChar() // "~"
 
-fun buildTextCommandHandler(): (InteractionContext<MessageReceivedEvent>) -> Mono<Tuple2<InteractionContext<MessageReceivedEvent>, Result<CommandReport>>> =
+const val EMOJI_CHECK = "\u2611\uFE0F" // ☑
+const val EMOJI_CROSS = "\u274C" // ❌
+
+val textCommandHandler: (InteractionContext<MessageReceivedEvent>) -> Mono<Tuple2<InteractionContext<MessageReceivedEvent>, Result<CommandReport>>> =
     { context ->
         Mono.zip(context.toMono() , mono {
             SessionManager.retrieveLanguageContainer(context.botContext.sessionRepository, GuildId(context.event.guild.idLong))

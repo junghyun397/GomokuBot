@@ -10,7 +10,7 @@ data class InteractionContext<T : Event>(
     val event: T,
     val guildId: GuildId,
     val guildName: String,
-    val emittenTime: LinuxTime = LinuxTime(System.currentTimeMillis())
+    val emittenTime: LinuxTime
 ) {
 
     companion object {
@@ -19,7 +19,8 @@ data class InteractionContext<T : Event>(
             botContext,
             event,
             GuildId(guild.idLong),
-            guild.name
+            guild.name,
+            LinuxTime(System.currentTimeMillis())
         )
 
     }

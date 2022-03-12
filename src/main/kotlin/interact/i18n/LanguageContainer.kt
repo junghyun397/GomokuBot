@@ -1,50 +1,76 @@
 package interact.i18n
 
+import java.util.*
+
 interface LanguageContainer {
 
-    fun targetRegion(): Array<String>
+    fun targetRegion(): Array<Locale>
 
     fun languageCode(): String
 
     fun languageName(): String
-    fun languageDescription(): String
+    fun languageSuggestion(): String
 
-    // TOKENS
+    // # TOKENS
 
     fun user(): String
 
-    // COMMANDS
+    // ## BOARD
+
+    fun inProgress(): String
+    fun finish(): String
+    fun progress(): String
+    fun turns(): String
+    fun move(): String
+
+    // # COMMANDS
+
+    // ## HELP
 
     fun helpCommand(): String
     fun helpCommandDescription(): String
+
+    // ## LANG
 
     fun langCommand(): String
     fun langCommandDescription(): String
     fun languageCommandOptionCode(): String
     fun languageCommandOptionCodeDescription(): String
 
-    fun skinCommand(): String
-    fun skinCommandDescription(): String
-    fun skinCommandOptionCode(): String
-    fun skinCommandOptionCodeDescription(): String
+    // ## STYLE
+
+    fun styleCommand(): String
+    fun styleCommandDescription(): String
+    fun styleCommandOptionCode(): String
+    fun styleCommandOptionCodeDescription(): String
+
+    // ## RANK
 
     fun rankCommand(): String
     fun rankCommandDescription(): String
+
+    // ## RATING
 
     fun ratingCommand(): String
     fun ratingCommandDescription(): String
     fun ratingCommandOptionUser(): String
     fun ratingCommandOptionUserDescription(): String
 
+    // ## START
+
     fun startCommand(): String
     fun startCommandDescription(): String
     fun startCommandOptionOpponent(): String
     fun startCommandOptionOpponentDescription(): String
 
+    // ## RESIGN
+
     fun resignCommand(): String
     fun resignCommandDescription(): String
 
-    // HELP
+    // # HELP
+
+    // ## ABOUT
 
     fun helpInfo(): String
     fun helpDescription(): String
@@ -53,6 +79,8 @@ interface LanguageContainer {
     fun helpVersion(): String
     fun helpSupport(): String
     fun helpInvite(): String
+
+    // ## COMMAND
 
     fun helpCommandInfo(): String
     fun helpCommandHelp(): String
@@ -63,60 +91,65 @@ interface LanguageContainer {
     fun helpCommandPVP(): String
     fun helpCommandResign(): String
 
-    // SKIN
+    // # STYLE
 
-    fun skinInformation(): String
-    fun skinDescription(): String
-    fun skinCommandInfo(style: String): String
-    fun skinUpdateError(): String
-    fun skinUpdateSuccess(style: String): String
+    fun styleInformation(): String
+    fun styleDescription(): String
+    fun styleCommandInfo(style: String): String
+    fun styleUpdateError(): String
+    fun styleUpdateSuccess(style: String): String
 
-    // RANK
+    // # RANK
 
     fun rankInfo(): String
     fun rankDescription(): String
     fun rankWin(): String
     fun rankLose(): String
 
-    // LANG
-    
-    fun langUpdateSuccess(): String
-    fun langUpdateError(): String
-
-    // GAME
-
-    fun gameNotFound(nameTag: String): String
-    fun gameAlreadyInProgress(nameTag: String): String
-    fun gameSyntaxFail(nameTag: String): String
-    fun gameAlreadyExits(nameTag: String): String
-
-    fun gameCreatedInfo(playerName: String, targetName: String, fAttack: String): String
-    fun gameCommandInfo(): String
-
-    fun gameNextTurn(curName: String, prvName: String, lastPos: String): String
-    fun gameTieCausedByFull(): String
-
-    fun gamePVPPleaseWait(turnName: String): String
-    fun gamePVPWin(winName: String, loseName: String, lastPos: String): String
-    fun gamePVPWinCausedByResign(winName: String, loseName: String): String
-    fun gamePVPInfo(winName: String, loseName: String, winCount: Int, loseCount: Int): String
-
-    fun gamePVEWin(lastPos: String): String
-    fun gamePVELose(lastPos: String): String
-    fun gamePVEResign(): String
-    fun gamePVEInfo(playerName: String, winCount: Int, loseCount: Int, rank: Int): String
+    // # RATING
 
     fun ratingInfo(): String
     fun ratingDescription(): String
     fun ratingUpdate(nameTag: String, prvRating: Float, rating: Float): String
     fun rating(): String
 
-    // BOARD
+    // # LANG
+    
+    fun langUpdateSuccess(): String
+    fun langUpdateError(): String
 
-    fun boardInProgress(): String
-    fun boardFinish(): String
-    fun boardProgress(): String
-    fun boardTurns(): String
-    fun boardLocation(): String
+    // # GAME
+
+    // ## CREATION
+
+    fun gameNotFound(nameTag: String): String
+    fun gameAlreadyInProgress(nameTag: String): String
+    fun gameSyntaxFail(nameTag: String): String
+
+    // ## CREATED
+
+    fun gameCreatedInfo(playerName: String, targetName: String, fAttack: String): String
+    fun gameCommandInfo(): String
+
+    // ## PROCESS
+
+    fun gameNextTurn(curName: String, prvName: String, lastPos: String): String
+    fun gameInvalidMoveAlreadyExits(nameTag: String): String
+    fun gameInvalidMoveForbidden(nameTag: String): String
+    fun gameTieCausedByFull(): String
+
+    // ## PVP
+
+    fun gamePVPPleaseWait(turnName: String): String
+    fun gamePVPWin(winName: String, loseName: String, lastPos: String): String
+    fun gamePVPWinCausedByResign(winName: String, loseName: String): String
+    fun gamePVPInfo(winName: String, loseName: String, winCount: Int, loseCount: Int): String
+
+    // ## PVE
+
+    fun gamePVEWin(lastPos: String): String
+    fun gamePVELose(lastPos: String): String
+    fun gamePVEResign(): String
+    fun gamePVEInfo(playerName: String, winCount: Int, loseCount: Int, rank: Int): String
 
 }
