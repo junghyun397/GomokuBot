@@ -1,3 +1,0 @@
-package inference
-
-class InferenceRepository()

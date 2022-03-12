@@ -49,7 +49,6 @@ val slashCommandHandler: (InteractionContext<SlashCommandInteractionEvent>) -> M
                     botContext = it.t1.botContext,
                     languageContainer = it.t2,
                     user = UserId(it.t1.event.user.idLong),
-                    guild = GuildId(it.t1.event.guild!!.idLong)
                 ) { msg -> WebHookRestActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
             }.toMono()) }
     }
@@ -87,7 +86,6 @@ val textCommandHandler: (InteractionContext<MessageReceivedEvent>) -> Mono<Tuple
                     botContext = it.t1.botContext,
                     languageContainer = it.t2,
                     user = UserId(it.t1.event.author.idLong),
-                    guild = GuildId(it.t1.event.guild.idLong)
                 ) { msg -> MessageActionRestActionAdaptor(it.t1.event.message.reply(msg)) }
             }) }
             .map { Tuples.of(it.t1, it.t3) }

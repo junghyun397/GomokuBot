@@ -20,7 +20,6 @@ class HelpCommand(override val name: String = "help") : Command {
         botContext: BotContext,
         languageContainer: LanguageContainer,
         user: UserId,
-        guild: GuildId,
         messagePublisher: MessagePublisher,
     ): Result<CommandReport> =
         runCatching {

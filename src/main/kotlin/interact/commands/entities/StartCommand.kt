@@ -20,7 +20,6 @@ class StartCommand(override val name: String = "start", val opponent: UserId?) :
         botContext: BotContext,
         languageContainer: LanguageContainer,
         user: UserId,
-        guild: GuildId,
         messagePublisher: MessagePublisher
     ): Result<CommandReport> = TODO("Not yet implemented")
 
