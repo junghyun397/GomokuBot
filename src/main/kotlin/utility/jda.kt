@@ -20,14 +20,14 @@ sealed interface RestActionAdaptor {
     fun queue()
 }
 
-data class WebHookRestActionAdaptor(private val original: WebhookMessageAction<Message>) : RestActionAdaptor {
-    override fun addFile(file: File) = this.copy(original = original.addFile(file))
-    override fun addActionRow(vararg actionRows: ActionRow) = this.copy(original = original.addActionRows(*actionRows))
+class WebHookRestActionAdaptor(private val original: WebhookMessageAction<Message>) : RestActionAdaptor {
+    override fun addFile(file: File) = WebHookRestActionAdaptor(original.addFile(file))
+    override fun addActionRow(vararg actionRows: ActionRow) = WebHookRestActionAdaptor(original.addActionRows(*actionRows))
     override fun queue() = original.queue()
 }
 
-data class MessageActionRestActionAdaptor(private val original: MessageAction) : RestActionAdaptor {
-    override fun addFile(file: File) = this.copy(original = original.addFile(file))
-    override fun addActionRow(vararg actionRows: ActionRow) = this.copy(original = original.setActionRows(*actionRows))
+class MessageActionRestActionAdaptor(private val original: MessageAction) : RestActionAdaptor {
+    override fun addFile(file: File) = MessageActionRestActionAdaptor(original.addFile(file))
+    override fun addActionRow(vararg actionRows: ActionRow) = MessageActionRestActionAdaptor(original.setActionRows(*actionRows))
     override fun queue() = original.queue()
 }

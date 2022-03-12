@@ -7,12 +7,12 @@ import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.events.Event
+import net.dv8tion.jda.api.events.ReadyEvent
 import net.dv8tion.jda.api.events.ShutdownEvent
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
-import org.slf4j.Logger
 import reactor.util.function.Tuple2
 import route.*
 import session.SessionRepository
@@ -58,17 +58,19 @@ inline fun <reified E : Event, reified R : InteractionReport> leaveLog(combined:
 
 object App {
 
-    fun launch(logger: Logger) {
+    fun launch() {
+        val logger = getLogger<App>()
+
         val mySQLConfig = MySQLConfig.fromEnv()
         val b3nzeneConfig = B3nzeneConfig.fromEnv()
 
         val databaseConnection = DatabaseConnection
             .connectionFrom(mySQLConfig.serverURL, mySQLConfig.serverUname, mySQLConfig.serverPassword)
-        logger.info("")
+        logger.info("mysql database connected")
 
         val b3nzeneConnection = B3nzeneConnection
             .connectionFrom(b3nzeneConfig.serverAddress, b3nzeneConfig.serverPort)
-        logger.info("")
+        logger.info("b3nzene inference service connected")
 
         val sessionRepository = SessionRepository(databaseConnection = databaseConnection)
 
@@ -103,10 +105,15 @@ object App {
             .doOnNext { leaveLog(it) }
             .subscribe()
 
-        eventManager.on<ShutdownEvent>()
+        eventManager.on<ReadyEvent>()
+            .doOnNext { logger.info("jda ready, complete loading") }
             .subscribe()
 
-        logger.info("")
+        eventManager.on<ShutdownEvent>()
+            .doOnNext { logger.info("jda shutdown") }
+            .subscribe()
+
+        logger.info("reactive event manager ready")
 
         JDABuilder
             .createLight(Token.fromEnv().token)
@@ -115,14 +122,13 @@ object App {
             .setStatus(OnlineStatus.ONLINE)
             .build()
     }
-
 }
 
 fun main() {
     val logger = getLogger<App>()
     logger.info(asciiLogo)
 
-    val launchResult = runCatching { App.launch(logger) }
+    val launchResult = runCatching { App.launch() }
 
     launchResult.onSuccess { logger.info("succeed") }
     launchResult.onFailure { logger.error(it.stackTraceToString()) }

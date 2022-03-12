@@ -1,11 +1,10 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 import com.google.protobuf.gradle.generateProtoTasks
 import com.google.protobuf.gradle.id
 import com.google.protobuf.gradle.ofSourceSet
 import com.google.protobuf.gradle.plugins
 import com.google.protobuf.gradle.protobuf
 import com.google.protobuf.gradle.protoc
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val group = "do1phin"
 val version = "1.0-SNAPSHOT"
@@ -18,7 +17,8 @@ plugins {
     application
     kotlin("jvm") version "1.5.10"
     id("com.google.protobuf") version "0.8.16"
-    id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
+    // id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
 repositories {
@@ -83,4 +83,12 @@ application {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
+}
+
+tasks.jar {
+    manifest {
+        attributes(
+            "Main-Class" to "AppKt"
+        )
+    }
 }
