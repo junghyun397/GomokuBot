@@ -25,68 +25,64 @@ private fun matchCommand(command: String, languageContainer: LanguageContainer):
         else -> Result.failure(Exception("Command mismatch: $command"))
     }
 
-val slashCommandHandler: (InteractionContext<SlashCommandInteractionEvent>) -> Mono<Tuple2<InteractionContext<SlashCommandInteractionEvent>, Result<CommandReport>>> =
-    { context ->
-        Mono.zip(context.toMono(), mono {
-            SessionManager.retrieveLanguageContainer(context.botContext.sessionRepository, GuildId(context.event.guild!!.idLong))
-        })
-            .flatMap { Mono.zip(it.t1.toMono(), it.t2.toMono(),
-                matchCommand(
-                    command = it.t1.event.name,
-                    languageContainer = it.t2
-                ).toMono()
-            ) }
-            .filter { it.t3.isSuccess }
-            .doOnNext { it.t1.event
-                .deferReply().queue()
-            }
-            .flatMap { Mono.zip(it.t1.toMono(), it.t2.toMono(), it.t3.getOrThrow()
-                .parse(event = it.t1.event, languageContainer = it.t2).toMono()
-            ) }
-            .filter { it.t3.isSuccess }
-            .flatMap { Mono.zip(it.t1.toMono(), mono { it.t3.getOrThrow()
-                .execute(
-                    botContext = it.t1.botContext,
-                    languageContainer = it.t2,
-                    user = UserId(it.t1.event.user.idLong),
-                ) { msg -> WebHookRestActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
-            }.toMono()) }
-    }
+fun slashCommandHandler(context: InteractionContext<SlashCommandInteractionEvent>): Mono<Tuple2<InteractionContext<SlashCommandInteractionEvent>, Result<CommandReport>>> =
+    Mono.zip(context.toMono(), mono {
+        SessionManager.retrieveLanguageContainer(context.botContext.sessionRepository, GuildId(context.event.guild!!.idLong))
+    })
+        .flatMap { Mono.zip(it.t1.toMono(), it.t2.toMono(),
+            matchCommand(
+                command = it.t1.event.name,
+                languageContainer = it.t2
+            ).toMono()
+        ) }
+        .filter { it.t3.isSuccess }
+        .doOnNext { it.t1.event
+            .deferReply().queue()
+        }
+        .flatMap { Mono.zip(it.t1.toMono(), it.t2.toMono(), it.t3.getOrThrow()
+            .parse(event = it.t1.event, languageContainer = it.t2).toMono()
+        ) }
+        .filter { it.t3.isSuccess }
+        .flatMap { Mono.zip(it.t1.toMono(), mono { it.t3.getOrThrow()
+            .execute(
+                botContext = it.t1.botContext,
+                languageContainer = it.t2,
+                user = UserId(it.t1.event.user.idLong),
+            ) { msg -> WebHookRestActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
+        }.toMono()) }
 
 const val COMMAND_PREFIX = 126.toChar() // "~"
 
 const val EMOJI_CHECK = "\u2611\uFE0F" // ☑
 const val EMOJI_CROSS = "\u274C" // ❌
 
-val textCommandHandler: (InteractionContext<MessageReceivedEvent>) -> Mono<Tuple2<InteractionContext<MessageReceivedEvent>, Result<CommandReport>>> =
-    { context ->
-        Mono.zip(context.toMono() , mono {
-            SessionManager.retrieveLanguageContainer(context.botContext.sessionRepository, GuildId(context.event.guild.idLong))
-        })
-            .flatMap { Mono.zip(it.t1.toMono(), it.t2.toMono(),
-                matchCommand(
-                    command = it.t1.event.message.contentRaw.split(" ")[0].substring(1),
-                    languageContainer = it.t2
-                ).toMono()
-            ) }
-            .doOnNext {
-                if (it.t3.isFailure) it.t1.event.message.addReaction(EMOJI_CROSS).queue()
-            }
-            .filter { it.t3.isSuccess }
-            .flatMap { Mono.zip(it.t1.toMono(), it.t2.toMono(), it.t3.getOrThrow()
-                .parse(event = it.t1.event, languageContainer = it.t2).toMono()
-            ) }
-            .doOnNext {
-                if (it.t3.isSuccess) it.t1.event.message.addReaction(EMOJI_CHECK).queue()
-                else it.t1.event.message.addReaction(EMOJI_CROSS).queue()
-            }
-            .filter { it.t3.isSuccess }
-            .flatMap { Mono.zip(it.t1.toMono(), it.t2.toMono(), mono { it.t3.getOrThrow()
-                .execute(
-                    botContext = it.t1.botContext,
-                    languageContainer = it.t2,
-                    user = UserId(it.t1.event.author.idLong),
-                ) { msg -> MessageActionRestActionAdaptor(it.t1.event.message.reply(msg)) }
-            }) }
-            .map { Tuples.of(it.t1, it.t3) }
-    }
+fun textCommandHandler(context: InteractionContext<MessageReceivedEvent>): Mono<Tuple2<InteractionContext<MessageReceivedEvent>, Result<CommandReport>>> =
+    Mono.zip(context.toMono() , mono {
+        SessionManager.retrieveLanguageContainer(context.botContext.sessionRepository, GuildId(context.event.guild.idLong))
+    })
+        .flatMap { Mono.zip(it.t1.toMono(), it.t2.toMono(),
+            matchCommand(
+                command = it.t1.event.message.contentRaw.split(" ")[0].substring(1),
+                languageContainer = it.t2
+            ).toMono()
+        ) }
+        .doOnNext {
+            if (it.t3.isFailure) it.t1.event.message.addReaction(EMOJI_CROSS).queue()
+        }
+        .filter { it.t3.isSuccess }
+        .flatMap { Mono.zip(it.t1.toMono(), it.t2.toMono(), it.t3.getOrThrow()
+            .parse(event = it.t1.event, languageContainer = it.t2).toMono()
+        ) }
+        .doOnNext {
+            if (it.t3.isSuccess) it.t1.event.message.addReaction(EMOJI_CHECK).queue()
+            else it.t1.event.message.addReaction(EMOJI_CROSS).queue()
+        }
+        .filter { it.t3.isSuccess }
+        .flatMap { Mono.zip(it.t1.toMono(), it.t2.toMono(), mono { it.t3.getOrThrow()
+            .execute(
+                botContext = it.t1.botContext,
+                languageContainer = it.t2,
+                user = UserId(it.t1.event.author.idLong),
+            ) { msg -> MessageActionRestActionAdaptor(it.t1.event.message.reply(msg)) }
+        }) }
+        .map { Tuples.of(it.t1, it.t3) }

@@ -81,27 +81,27 @@ object App {
         eventManager.on<SlashCommandInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
             .map { InteractionContext.of(botContext, it, it.guild!!) }
-            .flatMap(slashCommandHandler)
+            .flatMap(::slashCommandHandler)
             .doOnNext { leaveLog(it) }
             .subscribe()
 
         eventManager.on<MessageReceivedEvent>()
             .filter { it.isFromGuild && !it.author.isBot && it.message.contentRaw.startsWith(COMMAND_PREFIX) }
             .map { InteractionContext.of(botContext, it, it.guild) }
-            .flatMap(textCommandHandler)
+            .flatMap(::textCommandHandler)
             .doOnNext { leaveLog(it) }
             .subscribe()
 
         eventManager.on<ButtonInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
             .map { InteractionContext.of(botContext, it, it.guild!!) }
-            .flatMap(buttonInteractionHandler)
+            .flatMap(::buttonInteractionHandler)
             .doOnNext { leaveLog(it) }
             .subscribe()
 
         eventManager.on<GuildJoinEvent>()
             .map { InteractionContext.of(botContext, it, it.guild) }
-            .flatMap(guildJoinHandler)
+            .flatMap(::guildJoinHandler)
             .doOnNext { leaveLog(it) }
             .subscribe()
 

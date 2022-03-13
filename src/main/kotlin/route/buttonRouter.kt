@@ -5,7 +5,5 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import reactor.core.publisher.Mono
 import reactor.util.function.Tuple2
 
-val buttonInteractionHandler: (InteractionContext<ButtonInteractionEvent>) -> Mono<Tuple2<InteractionContext<ButtonInteractionEvent>, Result<ButtonInteractionReport>>> =
-    { context ->
-        TODO()
-    }
+fun buttonInteractionHandler(context: InteractionContext<ButtonInteractionEvent>): Mono<Tuple2<InteractionContext<ButtonInteractionEvent>, Result<ButtonInteractionReport>>> =
+    TODO()
