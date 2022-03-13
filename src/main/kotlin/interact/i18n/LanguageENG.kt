@@ -59,9 +59,9 @@ open class LanguageENG : LanguageContainer {
     // ## START
 
     override fun startCommand() = "start"
-    override fun startCommandDescription() = TODO("Not yet implemented")
-    override fun startCommandOptionOpponent() = TODO("Not yet implemented")
-    override fun startCommandOptionOpponentDescription() = TODO("Not yet implemented")
+    override fun startCommandDescription() = "Start a new game"
+    override fun startCommandOptionOpponent() = "opponent"
+    override fun startCommandOptionOpponentDescription() = "Specific the opponent"
 
     // ## RESIGN
 
@@ -72,24 +72,25 @@ open class LanguageENG : LanguageContainer {
 
     // ## ABOUT
 
-    override fun helpInfo() = "GomokuBot / Help"
-    override fun helpDescription() =
+    override fun helpAboutInfo() = "GomokuBot / Help"
+    override fun helpAboutDescription() =
         "GomokuBot is an open-source artificial intelligence Discord Bot that provides Gomoku(Omok) feature in Discord. " +
                 "The collected data is used for training reinforcement learning models."
-    override fun helpDeveloper() = "Developer"
-    override fun helpRepository() = "Git Repository"
-    override fun helpVersion() = "Version"
-    override fun helpSupport() = "Support Channel"
-    override fun helpInvite() = "Invite Link"
+    override fun helpAboutDeveloper() = "Developer"
+    override fun helpAboutRepository() = "Git Repository"
+    override fun helpAboutVersion() = "Version"
+    override fun helpAboutSupport() = "Support Channel"
+    override fun helpAboutInvite() = "Invite Link"
 
     // ## COMMAND
 
     override fun helpCommandInfo() = "GomokuBot / Command"
     override fun helpCommandHelp() = "`~help` Get help"
     override fun helpCommandRank() = "`~rank` Show ranking from 1st to 10th"
+    override fun helpCommandRating() = "`~rating`"
     override fun helpCommandLang(langList: String) =
         "`~lang` $langList Change the language setting used on this server. Ex) `~lang` `ENG`"
-    override fun helpCommandSkin() =
+    override fun helpCommandStyle() =
         "`~skin` `A` `B` `C` Change the Gomoku-canvas style setting used on this server. Ex) `~skin` `A`"
     override fun helpCommandPVE() = "`~start` Start the game with A.I."
     override fun helpCommandPVP() =

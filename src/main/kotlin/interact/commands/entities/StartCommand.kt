@@ -10,7 +10,6 @@ import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.build.Commands.slash
 import route.BotContext
-import utility.GuildId
 import utility.MessagePublisher
 import utility.UserId
 
@@ -21,7 +20,9 @@ class StartCommand(override val name: String = "start", val opponent: UserId?) :
         languageContainer: LanguageContainer,
         user: UserId,
         messagePublisher: MessagePublisher
-    ): Result<CommandReport> = TODO("Not yet implemented")
+    ): Result<CommandReport> = runCatching {
+        CommandReport.ofCommand(this, "$user request to $opponent")
+    }
 
     companion object : ParsableCommand, BuildableCommand {
 
@@ -37,7 +38,7 @@ class StartCommand(override val name: String = "start", val opponent: UserId?) :
         override fun parse(event: MessageReceivedEvent, languageContainer: LanguageContainer) = Result.runCatching {
             StartCommand(
                 opponent = event.message.mentionedUsers.let {
-                    if (it.isEmpty() || it[0].isBot) null
+                    if (it.isEmpty() || it[0].isBot || it[0].idLong == event.author.idLong) null
                     else UserId(it[0].idLong)
                 }
             )

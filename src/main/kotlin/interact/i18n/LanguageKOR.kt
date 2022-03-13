@@ -17,20 +17,20 @@ open class LanguageKOR : LanguageENG() {
 
     // HELP
 
-    override fun helpInfo() = "GomokuBot / 도움말"
-    override fun helpDescription() =
+    override fun helpAboutInfo() = "GomokuBot / 도움말"
+    override fun helpAboutDescription() =
         "GomokuBot 은 디스코드에서 오목 기능을 제공하는 오픈소스 디스코드 봇 입니다. 수집된 기보 데이터는 강화학습 모델 훈련에 사용됩니다."
-    override fun helpDeveloper() = "개발자"
-    override fun helpRepository() = "Git 저장소"
-    override fun helpVersion() = "판올림"
-    override fun helpSupport() = "지원 채널"
-    override fun helpInvite() = "초대 링크"
+    override fun helpAboutDeveloper() = "개발자"
+    override fun helpAboutRepository() = "Git 저장소"
+    override fun helpAboutVersion() = "판올림"
+    override fun helpAboutSupport() = "지원 채널"
+    override fun helpAboutInvite() = "초대 링크"
 
     override fun helpCommandInfo() = "GomokuBot / 명령어"
 
     override fun helpCommandLang(langList: String) =
         "`~lang` $langList 이 서버에서 사용되는 언어 설정을 바꿉니다. Ex) `~lang` `ENG`"
-    override fun helpCommandSkin() = "`~skin` `A` `B` `C` 이 서버에서 사용되는 오목판의 스타일 설정을 바꿉니다. Ex) `~skin` `A`"
+    override fun helpCommandStyle() = "`~skin` `A` `B` `C` 이 서버에서 사용되는 오목판의 스타일 설정을 바꿉니다. Ex) `~skin` `A`"
     override fun helpCommandPVE() = "`~start` 인공지능과의 게임을 시작합니다."
     override fun helpCommandPVP() = "`~start` `@언급` 언급된 플레이어와의 게임을 시작합니다. Ex) `~start` `@player`"
     override fun helpCommandResign() = "`~resign` 현재 진행되고 있는 게임을 포기합니다."

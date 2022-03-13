@@ -11,21 +11,21 @@ class LanguageVNM : LanguageENG() {
     override fun languageName() = "Tiếng Việt:flag_vn:"
     override fun languageSuggestion() = "Vui lòng sử dụng lệnh `~lang` `VNM`"
 
-    override fun helpInfo() = "GomokuBot / Trợ giúp"
-    override fun helpDescription() =
+    override fun helpAboutInfo() = "GomokuBot / Trợ giúp"
+    override fun helpAboutDescription() =
         "GomokuBot là một con bot Discord mã nguồn mở cho phép bạn chơi ca-rô trên Discord. Mọi dữ liệu trò chơi được dùng để nâng cao tính chính xác của máy khi chơi ca-rô"
-    override fun helpDeveloper() = "Nhà phát triển"
-    override fun helpRepository() = "Xem mã nguồn trên GitHub"
-    override fun helpVersion() = "Phiên bản"
-    override fun helpSupport() = "Kênh hỗ trợ"
-    override fun helpInvite() = "Link mời"
+    override fun helpAboutDeveloper() = "Nhà phát triển"
+    override fun helpAboutRepository() = "Xem mã nguồn trên GitHub"
+    override fun helpAboutVersion() = "Phiên bản"
+    override fun helpAboutSupport() = "Kênh hỗ trợ"
+    override fun helpAboutInvite() = "Link mời"
 
     override fun helpCommandInfo() = "GomokuBot / Dòng lệnh"
     override fun helpCommandHelp() = "`~help` Xin trợ giúp"
     override fun helpCommandRank() = "`~rank` Hiện bảng xếp hạng TOP 10 người chơi xuất sắc"
     override fun helpCommandLang(langList: String) =
         "`~lang` $langList Thay đổi ngôn ngữ khi giao tiếp với bot. VD) `~lang` `ENG`"
-    override fun helpCommandSkin() = "`~skin` `A` `B` `C` Thay đổi skin của bot khi đánh. VD) `~skin` `A`"
+    override fun helpCommandStyle() = "`~skin` `A` `B` `C` Thay đổi skin của bot khi đánh. VD) `~skin` `A`"
     override fun helpCommandPVE() = "`~start` Đánh với máy."
     override fun helpCommandPVP() = "`~start` `@mention` Hai người chơi. VD) `~start` `@player`"
     override fun helpCommandResign() = "`~resign` Dừng ván đang chơi."

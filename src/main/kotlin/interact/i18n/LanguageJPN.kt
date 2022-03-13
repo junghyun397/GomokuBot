@@ -11,13 +11,13 @@ class LanguageJPN : LanguageENG() {
     override fun languageName() = "日本語:flag_jp:"
     override fun languageSuggestion() = "`~lang` `JPN` コマンドを使ってください。"
 
-    override fun helpInfo() = "GomokuBot / ヘルプ"
-    override fun helpDescription() =
+    override fun helpAboutInfo() = "GomokuBot / ヘルプ"
+    override fun helpAboutDescription() =
         "GomokuBotはDiscordで五目を楽しませてくれるオープンソースDiscord Botです。収集される基本データは強化学習モデル訓練に使われます。"
-    override fun helpDeveloper() = "ディベロッパー"
-    override fun helpRepository() = "Git 貯蔵所"
-    override fun helpVersion() = "バージョン"
-    override fun helpSupport() = "サポートチャンネル"
+    override fun helpAboutDeveloper() = "ディベロッパー"
+    override fun helpAboutRepository() = "Git 貯蔵所"
+    override fun helpAboutVersion() = "バージョン"
+    override fun helpAboutSupport() = "サポートチャンネル"
 
     override fun helpCommandInfo() = "GomokuBot / コマンド"
     override fun helpCommandHelp() = "`~help` ヘルプを案内します。"

@@ -1,8 +1,6 @@
 package route
 
-import interact.commands.BuildableCommand
-import interact.commands.entities.HelpCommand
-import interact.commands.entities.StartCommand
+import interact.commands.buildableCommand
 import interact.message.MessageAgent
 import interact.reports.GuildJoinReport
 import kotlinx.coroutines.reactor.mono
@@ -15,29 +13,28 @@ import utility.GuildId
 import utility.MessageActionRestActionAdaptor
 import utility.MessagePublisher
 
-private val commands: Collection<BuildableCommand> =
-    listOf(HelpCommand, StartCommand)
-
 val guildJoinHandler: (InteractionContext<GuildJoinEvent>) -> Mono<Tuple2<InteractionContext<GuildJoinEvent>, Result<GuildJoinReport>>> =
     { context ->
         Mono.zip(context.toMono(), mono {
             SessionManager.retrieveLanguageContainer(context.botContext.sessionRepository, GuildId(context.event.guild.idLong)).let {
-                // return@mono Result.success(GuildJoinReport(commandInserted = false)) // TODO()
-                commands.forEach { command -> context.event.guild.upsertCommand(command.buildCommandData(it)) }
+                runCatching {
+                    // return@mono Result.success(GuildJoinReport(commandInserted = false)) // TODO()
+                    buildableCommand.forEach { command -> context.event.guild.upsertCommand(command.buildCommandData(it)).queue() }
 
-                context.event.guild.defaultChannel?.let { channel ->
-                    val messagePublisher: MessagePublisher =
-                        { msg -> MessageActionRestActionAdaptor(channel.sendMessage(msg)) }
+                    context.event.guild.defaultChannel?.let { channel ->
+                        val messagePublisher: MessagePublisher =
+                            { msg -> MessageActionRestActionAdaptor(channel.sendMessage(msg)) }
 
-                    MessageAgent.sendHelpAbout(messagePublisher, it)
-                    MessageAgent.sendHelpCommand(messagePublisher, it)
-                    MessageAgent.sendHelpSkin(messagePublisher, it)
-                    MessageAgent.sendHelpLanguage(messagePublisher, it)
+                        MessageAgent.sendHelpAbout(messagePublisher, it)
+                        MessageAgent.sendHelpCommand(messagePublisher, it)
+                        MessageAgent.sendHelpSkin(messagePublisher, it)
+                        MessageAgent.sendHelpLanguage(messagePublisher, it)
 
-                    return@mono Result.success(GuildJoinReport())
+                        return@mono Result.success(GuildJoinReport())
+                    }
+
+                    return@mono Result.success(GuildJoinReport(helpSent = false))
                 }
-
-                return@mono Result.success(GuildJoinReport(helpSent = false))
             }
         })
     }

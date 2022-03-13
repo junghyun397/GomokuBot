@@ -32,13 +32,13 @@ val slashCommandHandler: (InteractionContext<SlashCommandInteractionEvent>) -> M
         })
             .flatMap { Mono.zip(it.t1.toMono(), it.t2.toMono(),
                 matchCommand(
-                    command = it.t1.event.commandString,
+                    command = it.t1.event.name,
                     languageContainer = it.t2
                 ).toMono()
             ) }
             .filter { it.t3.isSuccess }
             .doOnNext { it.t1.event
-                .deferReply()
+                .deferReply().queue()
             }
             .flatMap { Mono.zip(it.t1.toMono(), it.t2.toMono(), it.t3.getOrThrow()
                 .parse(event = it.t1.event, languageContainer = it.t2).toMono()

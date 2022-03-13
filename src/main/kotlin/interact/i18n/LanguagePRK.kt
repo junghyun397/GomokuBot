@@ -11,14 +11,14 @@ class LanguagePRK : LanguageKOR() {
     override fun languageName() = "조선말:flag_kp:"
     override fun languageSuggestion() = "`~lang` `PRK` 시킴말을 사용 하라우."
 
-    override fun helpInfo() = "GomokuBot / 도움말"
-    override fun helpDescription() =
+    override fun helpAboutInfo() = "GomokuBot / 도움말"
+    override fun helpAboutDescription() =
         "GomokuBot은 불협화음에서 오목 오락을 즐길 수 있게 하는 열린문서 Discord Bot 이라우. 모아진 기보 내용은 강화학습 형태 훈련에 사용된다우."
 
-    override fun helpDeveloper() = "주체자"
-    override fun helpRepository() = "직결 저장소"
-    override fun helpVersion() = "판올림"
-    override fun helpSupport() = "련락 공간"
+    override fun helpAboutDeveloper() = "주체자"
+    override fun helpAboutRepository() = "직결 저장소"
+    override fun helpAboutVersion() = "판올림"
+    override fun helpAboutSupport() = "련락 공간"
 
     override fun helpCommandInfo() = "GomokuBot / 시킴말"
     override fun helpCommandHelp() = "`~help` 시킴말을 알려 드리겠소."

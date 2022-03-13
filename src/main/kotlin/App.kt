@@ -47,11 +47,11 @@ data class MySQLConfig(val serverURL: String, val serverUname: String, val serve
 inline fun <reified E : Event, reified R : InteractionReport> leaveLog(combined: Tuple2<InteractionContext<E>, Result<R>>) =
     getLogger<R>().let { logger ->
         combined.t2.onSuccess {
-            logger.info("${E::class.simpleName} ${combined.t1.guildName}/${combined.t1.guildId} " +
+            logger.info("${E::class.simpleName} ${combined.t1.guildName}/${combined.t1.guildId.id} " +
                     "T${(it.terminationTime.timestamp - combined.t1.emittenTime.timestamp)/1000}ms => $it")
         }
         combined.t2.onFailure {
-            logger.error("${E::class.simpleName} ${combined.t1.guildName}/${combined.t1.guildId} " +
+            logger.error("${E::class.simpleName} ${combined.t1.guildName}/${combined.t1.guildId.id} " +
                     "T${(System.currentTimeMillis() - combined.t1.emittenTime.timestamp)/1000}ms => ${it.stackTraceToString()}")
         }
     }
@@ -66,11 +66,11 @@ object App {
 
         val databaseConnection = DatabaseConnection
             .connectionFrom(mySQLConfig.serverURL, mySQLConfig.serverUname, mySQLConfig.serverPassword)
-        logger.info("mysql database connected")
+        logger.info("mysql database connected.")
 
         val b3nzeneConnection = B3nzeneConnection
             .connectionFrom(b3nzeneConfig.serverAddress, b3nzeneConfig.serverPort)
-        logger.info("b3nzene inference service connected")
+        logger.info("b3nzene inference service connected.")
 
         val sessionRepository = SessionRepository(databaseConnection = databaseConnection)
 
@@ -79,7 +79,7 @@ object App {
         val eventManager = ReactiveEventManager()
 
         eventManager.on<SlashCommandInteractionEvent>()
-            .filter { it.isFromGuild && !it.user.isBot && it.isAcknowledged }
+            .filter { it.isFromGuild && !it.user.isBot }
             .map { InteractionContext.of(botContext, it, it.guild!!) }
             .flatMap(slashCommandHandler)
             .doOnNext { leaveLog(it) }
@@ -106,14 +106,14 @@ object App {
             .subscribe()
 
         eventManager.on<ReadyEvent>()
-            .doOnNext { logger.info("jda ready, complete loading") }
+            .doOnNext { logger.info("jda ready, complete loading.") }
             .subscribe()
 
         eventManager.on<ShutdownEvent>()
-            .doOnNext { logger.info("jda shutdown") }
+            .doOnNext { logger.info("jda shutdown.") }
             .subscribe()
 
-        logger.info("reactive event manager ready")
+        logger.info("reactive event manager ready.")
 
         JDABuilder
             .createLight(Token.fromEnv().token)
@@ -130,6 +130,6 @@ fun main() {
 
     val launchResult = runCatching { App.launch() }
 
-    launchResult.onSuccess { logger.info("succeed") }
+    launchResult.onSuccess { logger.info("gomokubot ready.") }
     launchResult.onFailure { logger.error(it.stackTraceToString()) }
 }

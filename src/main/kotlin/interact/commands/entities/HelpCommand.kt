@@ -10,7 +10,6 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.build.Commands.slash
 import route.BotContext
-import utility.GuildId
 import utility.MessagePublisher
 import utility.UserId
 
@@ -28,7 +27,7 @@ class HelpCommand(override val name: String = "help") : Command {
             MessageAgent.sendHelpSkin(messagePublisher, languageContainer)
             MessageAgent.sendHelpLanguage(messagePublisher, languageContainer)
 
-            CommandReport()
+            CommandReport.ofCommand(this, "succeed")
         }
 
     companion object : ParsableCommand, BuildableCommand {

@@ -11,13 +11,13 @@ class LanguageSKO : LanguageKOR() {
     override fun languageName() = "國漢文混用體:flag_kr:"
     override fun languageSuggestion() = "`~lang` `SKO` 命令語를使用해주세요."
 
-    override fun helpInfo() = "GomokuBot / 助言"
-    override fun helpDescription() =
+    override fun helpAboutInfo() = "GomokuBot / 助言"
+    override fun helpAboutDescription() =
         "GomokuBot은Discord에서五目을滿喫할수있게해주는資料開放DiscordBot입니다. 收集된棋譜資料는强化學習模型訓鍊에使用됩니다. :)"
-    override fun helpDeveloper() = "開發者"
-    override fun helpRepository() = "Git 貯藏所"
-    override fun helpVersion() = "版"
-    override fun helpSupport() = "支援手段"
+    override fun helpAboutDeveloper() = "開發者"
+    override fun helpAboutRepository() = "Git 貯藏所"
+    override fun helpAboutVersion() = "版"
+    override fun helpAboutSupport() = "支援手段"
 
     override fun helpCommandInfo() = "GomokuBot / 命令語"
     override fun helpCommandHelp() = "`~help` 助言을告知해드립니다."

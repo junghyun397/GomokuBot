@@ -2,6 +2,8 @@ package interact.i18n
 
 import java.util.*
 
+val languages = arrayOf(LanguageENG(), LanguageKOR(), LanguageJPN(), LanguageVNM(), LanguagePRK(), LanguageSKO())
+
 interface LanguageContainer {
 
     fun targetRegion(): Array<Locale>
@@ -72,21 +74,22 @@ interface LanguageContainer {
 
     // ## ABOUT
 
-    fun helpInfo(): String
-    fun helpDescription(): String
-    fun helpDeveloper(): String
-    fun helpRepository(): String
-    fun helpVersion(): String
-    fun helpSupport(): String
-    fun helpInvite(): String
+    fun helpAboutInfo(): String
+    fun helpAboutDescription(): String
+    fun helpAboutDeveloper(): String
+    fun helpAboutRepository(): String
+    fun helpAboutVersion(): String
+    fun helpAboutSupport(): String
+    fun helpAboutInvite(): String
 
     // ## COMMAND
 
     fun helpCommandInfo(): String
     fun helpCommandHelp(): String
     fun helpCommandLang(langList: String): String
-    fun helpCommandSkin(): String
+    fun helpCommandStyle(): String
     fun helpCommandRank(): String
+    fun helpCommandRating(): String
     fun helpCommandPVE(): String
     fun helpCommandPVP(): String
     fun helpCommandResign(): String
