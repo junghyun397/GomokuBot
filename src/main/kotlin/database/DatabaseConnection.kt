@@ -1,9 +1,19 @@
 package database
 
-data class DatabaseConnection(val unit: Unit) {
+import io.r2dbc.spi.Connection
+import io.r2dbc.spi.ConnectionFactories
+import kotlinx.coroutines.reactive.awaitSingle
+
+data class DatabaseConnection(val connection: Connection) {
     companion object {
 
-        fun connectionFrom(serverURL: String, serverUname: String, serverPassword: String): DatabaseConnection = DatabaseConnection(Unit)
+        suspend fun connectionFrom(serverURL: String): DatabaseConnection =
+            DatabaseConnection(
+                connection = ConnectionFactories
+                    .get(serverURL)
+                    .create()
+                    .awaitSingle()
+            )
 
     }
 }

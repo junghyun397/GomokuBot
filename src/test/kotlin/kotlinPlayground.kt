@@ -20,4 +20,5 @@ fun main() {
         getLogger<TestClass>().info("an info")
         getLogger<TestClass>().warn("an warn")
     }
+    println("${getLogger<C>()} ${getLogger<C>()}")
 }

@@ -11,12 +11,12 @@ import utility.UserId
 
 object SessionManager {
 
-    private suspend fun retrieveGuildSession(repo: SessionRepository, guildId: GuildId): GuildSession =
-        repo.sessions.getOrElse(guildId.id) {
+    private suspend inline fun retrieveGuildSession(repo: SessionRepository, guildId: GuildId): GuildSession =
+        repo.sessions.getOrPut(guildId.id) {
             GuildSession() // TODO()
         }
 
-    private suspend fun mapGuildSession(repo: SessionRepository, guildId: GuildId, mapper: (GuildSession) -> GuildSession): Unit =
+    private suspend inline fun mapGuildSession(repo: SessionRepository, guildId: GuildId, mapper: (GuildSession) -> GuildSession): Unit =
         this.retrieveGuildSession(repo, guildId).let {
             repo.sessionsMutex.withLock {
                 repo.sessions[guildId.id] = mapper(it)
@@ -45,9 +45,7 @@ object SessionManager {
         }
 
     suspend fun retrieveRequestSessionByOwner(repo: SessionRepository, guildId: GuildId, ownerId: UserId): RequestSession? =
-        this.retrieveGuildSession(repo, guildId).requestSessions
-            .values
-            .firstOrNull { it.ownerId == ownerId }
+        this.retrieveGuildSession(repo, guildId).requestSessions[ownerId]
 
     suspend fun retrieveRequestSessionByOpponent(repo: SessionRepository, guildId: GuildId, opponentId: UserId): RequestSession? =
         this.retrieveGuildSession(repo, guildId).requestSessions

@@ -3,9 +3,12 @@ import club.minnced.jda.reactor.on
 import database.DatabaseConnection
 import inference.B3nzeneConnection
 import interact.reports.InteractionReport
+import kotlinx.coroutines.reactor.mono
+import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.entities.Activity
+import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.ReadyEvent
 import net.dv8tion.jda.api.events.ShutdownEvent
@@ -15,17 +18,20 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import reactor.util.function.Tuple2
 import route.*
+import session.SessionManager
 import session.SessionRepository
+import utility.GuildId
+import utility.LinuxTime
 import utility.asciiLogo
 import utility.getLogger
 
-data class Token(val token: String) {
+private data class Token(val token: String) {
     companion object {
         fun fromEnv() = Token(token = System.getenv("GOMOKUBOT_DISCORD_TOKEN"))
     }
 }
 
-data class B3nzeneConfig(val serverAddress: String, val serverPort: Int) {
+private data class B3nzeneConfig(val serverAddress: String, val serverPort: Int) {
     companion object {
         fun fromEnv() = B3nzeneConfig(
             serverAddress = System.getenv("GOMOKUBOT_B3NZENE_ADDRESS"),
@@ -34,27 +40,37 @@ data class B3nzeneConfig(val serverAddress: String, val serverPort: Int) {
     }
 }
 
-data class MySQLConfig(val serverURL: String, val serverUname: String, val serverPassword: String) {
+private data class MySQLConfig(val serverURL: String) {
     companion object {
         fun fromEnv() = MySQLConfig(
             serverURL = System.getenv("GOMOKUBOT_DB_URL"),
-            serverUname = System.getenv("GOMOKUBOT_DB_UNAME"),
-            serverPassword = System.getenv("GOMOKUBOT_DB_PASSWORD")
         )
     }
 }
 
-inline fun <reified E : Event, reified R : InteractionReport> leaveLog(combined: Tuple2<InteractionContext<E>, Result<R>>) =
+private inline fun <reified E : Event, reified R : InteractionReport> leaveLog(combined: Tuple2<InteractionContext<E>, Result<R>>) =
     getLogger<R>().let { logger ->
         combined.t2.onSuccess {
-            logger.info("${E::class.simpleName} ${combined.t1.guildName}/${combined.t1.guildId.id} " +
+            logger.info("${E::class.simpleName} ${combined.t1.guildName}/${combined.t1.guild.id} " +
                     "T${(it.terminationTime.timestamp - combined.t1.emittenTime.timestamp)/1000}ms => $it")
         }
         combined.t2.onFailure {
-            logger.error("${E::class.simpleName} ${combined.t1.guildName}/${combined.t1.guildId.id} " +
+            logger.error("${E::class.simpleName} ${combined.t1.guildName}/${combined.t1.guild.id} " +
                     "T${(System.currentTimeMillis() - combined.t1.emittenTime.timestamp)/1000}ms => ${it.stackTraceToString()}")
         }
     }
+
+private fun <T : Event> retrieveInteractionContext(botContext: BotContext, event: T, guild: Guild) =
+    mono { GuildId(guild.idLong).let {
+        InteractionContext(
+            botContext = botContext,
+            event = event,
+            languageContainer = SessionManager.retrieveLanguageContainer(botContext.sessionRepository, it),
+            guild = it,
+            guildName = guild.name,
+            emittenTime = LinuxTime(System.currentTimeMillis())
+        )
+    } }
 
 object App {
 
@@ -64,12 +80,16 @@ object App {
         val mySQLConfig = MySQLConfig.fromEnv()
         val b3nzeneConfig = B3nzeneConfig.fromEnv()
 
-        val databaseConnection = DatabaseConnection
-            .connectionFrom(mySQLConfig.serverURL, mySQLConfig.serverUname, mySQLConfig.serverPassword)
+        val databaseConnection = runBlocking {
+            DatabaseConnection
+                .connectionFrom(mySQLConfig.serverURL)
+        }
         logger.info("mysql database connected.")
 
-        val b3nzeneConnection = B3nzeneConnection
-            .connectionFrom(b3nzeneConfig.serverAddress, b3nzeneConfig.serverPort)
+        val b3nzeneConnection = runBlocking {
+            B3nzeneConnection
+                .connectionFrom(b3nzeneConfig.serverAddress, b3nzeneConfig.serverPort)
+        }
         logger.info("b3nzene inference service connected.")
 
         val sessionRepository = SessionRepository(databaseConnection = databaseConnection)
@@ -80,28 +100,28 @@ object App {
 
         eventManager.on<SlashCommandInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
-            .map { InteractionContext.of(botContext, it, it.guild!!) }
-            .flatMap(::slashCommandHandler)
+            .flatMap { retrieveInteractionContext(botContext, it, it.guild!!) }
+            .flatMap(::slashCommandRouter)
             .doOnNext { leaveLog(it) }
             .subscribe()
 
         eventManager.on<MessageReceivedEvent>()
             .filter { it.isFromGuild && !it.author.isBot && it.message.contentRaw.startsWith(COMMAND_PREFIX) }
-            .map { InteractionContext.of(botContext, it, it.guild) }
-            .flatMap(::textCommandHandler)
+            .flatMap { retrieveInteractionContext(botContext, it, it.guild) }
+            .flatMap(::textCommandRouter)
             .doOnNext { leaveLog(it) }
             .subscribe()
 
         eventManager.on<ButtonInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
-            .map { InteractionContext.of(botContext, it, it.guild!!) }
-            .flatMap(::buttonInteractionHandler)
+            .flatMap { retrieveInteractionContext(botContext, it, it.guild!!) }
+            .flatMap(::buttonInteractionRouter)
             .doOnNext { leaveLog(it) }
             .subscribe()
 
         eventManager.on<GuildJoinEvent>()
-            .map { InteractionContext.of(botContext, it, it.guild) }
-            .flatMap(::guildJoinHandler)
+            .flatMap { retrieveInteractionContext(botContext, it, it.guild) }
+            .flatMap(::guildJoinRouter)
             .doOnNext { leaveLog(it) }
             .subscribe()
 
