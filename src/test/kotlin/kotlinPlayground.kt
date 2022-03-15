@@ -1,24 +1,16 @@
-import utility.getLogger
+import java.util.*
 
-interface I
+class TestClass(private val data: Int) : Comparable<TestClass> {
 
-data class A<T> (val v: T)
+    override operator fun compareTo(other: TestClass) = data.compareTo(other.data)
 
-class B <T: I> (val v: T)
+    override fun toString(): String = "$data"
 
-class C(val v: String) : I
+}
 
-inline fun <reified T : I> function(data: Pair<A<String>, B<T>>) = "${data.first.v}, ${data.second.v}"
-
-class TestClass
-
-@Suppress("UNREACHABLE_CODE")
 fun main() {
-    val exception: Result<Unit> = runCatching { throw Exception("eRRoR") }
-    exception.onFailure {
-        getLogger<TestClass>().error(it.stackTraceToString())
-        getLogger<TestClass>().info("an info")
-        getLogger<TestClass>().warn("an warn")
-    }
-    println("${getLogger<C>()} ${getLogger<C>()}")
+    val tree: TreeSet<TestClass> = sortedSetOf(TestClass(9), TestClass(5), TestClass(7))
+    tree.add(TestClass(8))
+    tree.remove(TestClass(5))
+    println(tree)
 }
