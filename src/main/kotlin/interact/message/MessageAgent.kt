@@ -93,7 +93,7 @@ object MessageAgent {
             }
         )).queue()
 
-    fun sendHelpSkin(messagePublisher: MessagePublisher, languageContainer: LanguageContainer): Unit = Unit // TODO
+    fun sendHelpStyle(messagePublisher: MessagePublisher, languageContainer: LanguageContainer): Unit = Unit // TODO
 
     fun sendHelpLanguage(messagePublisher: MessagePublisher, languageContainer: LanguageContainer): Unit = Unit // TODO
 

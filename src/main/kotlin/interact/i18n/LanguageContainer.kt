@@ -2,9 +2,16 @@ package interact.i18n
 
 import java.util.*
 
-val languages = arrayOf(LanguageENG(), LanguageKOR(), LanguageJPN(), LanguageVNM(), LanguagePRK(), LanguageSKO())
+enum class Language(val container: LanguageContainer) {
+    ENG(LanguageENG()),
+    KOR(LanguageKOR()),
+    JPN(LanguageJPN()),
+    VNM(LanguageVNM()),
+    PRK(LanguagePRK()),
+    SKO(LanguageSKO())
+}
 
-interface LanguageContainer {
+sealed interface LanguageContainer {
 
     fun targetRegion(): Array<Locale>
 

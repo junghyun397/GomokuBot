@@ -1,12 +1,11 @@
 package session.entities
 
-import interact.i18n.LanguageContainer
-import interact.i18n.LanguageENG
+import interact.i18n.Language
+import interact.message.graphics.Style
 import utility.UserId
 
 data class GuildSession(
-    val languageContainer: LanguageContainer = LanguageENG(),
-    val guildConfig: GuildConfig = GuildConfig(),
+    val guildConfig: GuildConfig = GuildConfig(Language.ENG, Style.IMAGE),
     val gameSessions: Map<UserId, GameSession> = mapOf(),
     val requestSessions: Map<UserId, RequestSession> = mapOf()
 )

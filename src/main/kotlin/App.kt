@@ -25,7 +25,8 @@ import utility.LinuxTime
 import utility.asciiLogo
 import utility.getLogger
 
-private data class Token(val token: String) {
+@JvmInline
+private value class Token(val token: String) {
     companion object {
         fun fromEnv() = Token(token = System.getenv("GOMOKUBOT_DISCORD_TOKEN"))
     }
@@ -65,7 +66,7 @@ private fun <T : Event> retrieveInteractionContext(botContext: BotContext, event
         InteractionContext(
             botContext = botContext,
             event = event,
-            languageContainer = SessionManager.retrieveLanguageContainer(botContext.sessionRepository, it),
+            guildConfig = SessionManager.retrieveGuildConfig(botContext.sessionRepository, it),
             guild = it,
             guildName = guild.name,
             emittenTime = LinuxTime(System.currentTimeMillis())

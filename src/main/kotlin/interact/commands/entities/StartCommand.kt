@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.build.Commands.slash
 import route.BotContext
+import session.entities.GuildConfig
 import utility.MessagePublisher
 import utility.UserId
 
@@ -17,7 +18,7 @@ class StartCommand(override val name: String = "start", val opponent: UserId?) :
 
     override suspend fun execute(
         botContext: BotContext,
-        languageContainer: LanguageContainer,
+        guildConfig: GuildConfig,
         user: UserId,
         messagePublisher: MessagePublisher
     ): Result<CommandReport> = runCatching {

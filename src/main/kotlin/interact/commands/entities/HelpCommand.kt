@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.build.Commands.slash
 import route.BotContext
+import session.entities.GuildConfig
 import utility.MessagePublisher
 import utility.UserId
 
@@ -17,15 +18,15 @@ class HelpCommand(override val name: String = "help") : Command {
 
     override suspend fun execute(
         botContext: BotContext,
-        languageContainer: LanguageContainer,
+        guildConfig: GuildConfig,
         user: UserId,
         messagePublisher: MessagePublisher,
     ): Result<CommandReport> =
         runCatching {
-            MessageAgent.sendHelpAbout(messagePublisher, languageContainer)
-            MessageAgent.sendHelpCommand(messagePublisher, languageContainer)
-            MessageAgent.sendHelpSkin(messagePublisher, languageContainer)
-            MessageAgent.sendHelpLanguage(messagePublisher, languageContainer)
+            MessageAgent.sendHelpAbout(messagePublisher, guildConfig.language.container)
+            MessageAgent.sendHelpCommand(messagePublisher, guildConfig.language.container)
+            MessageAgent.sendHelpStyle(messagePublisher, guildConfig.language.container)
+            MessageAgent.sendHelpLanguage(messagePublisher, guildConfig.language.container)
 
             CommandReport.ofCommand(this, "succeed")
         }

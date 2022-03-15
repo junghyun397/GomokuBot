@@ -5,7 +5,7 @@ import interact.commands.entities.StartCommand
 import interact.i18n.LanguageContainer
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 
-val buildableCommand: Collection<BuildableCommand> =
+val buildableCommands: Collection<BuildableCommand> =
     listOf(HelpCommand, StartCommand)
 
 interface BuildableCommand {

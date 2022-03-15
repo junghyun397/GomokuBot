@@ -24,24 +24,25 @@ private fun matchCommand(command: String, languageContainer: LanguageContainer):
     }
 
 fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>): Mono<Tuple2<InteractionContext<SlashCommandInteractionEvent>, Result<CommandReport>>> =
-    Mono.zip(context.toMono(),
-            matchCommand(
-                command = context.event.name,
-                languageContainer = context.languageContainer
-            ).toMono()
-        )
+    Mono.zip(
+        context.toMono(),
+        matchCommand(
+            command = context.event.name,
+            languageContainer = context.guildConfig.language.container
+        ).toMono()
+    )
         .filter { it.t2.isSuccess }
         .doOnNext { it.t1.event
             .deferReply().queue()
         }
         .flatMap { Mono.zip(it.t1.toMono(), it.t2.getOrThrow()
-            .parse(event = it.t1.event, languageContainer = it.t1.languageContainer).toMono()
+            .parse(event = it.t1.event, languageContainer = it.t1.guildConfig.language.container).toMono()
         ) }
         .filter { it.t2.isSuccess }
         .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.getOrThrow()
             .execute(
                 botContext = it.t1.botContext,
-                languageContainer = it.t1.languageContainer,
+                guildConfig = it.t1.guildConfig,
                 user = UserId(it.t1.event.user.idLong),
             ) { msg -> WebHookRestActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
         }.toMono()) }
@@ -52,18 +53,15 @@ const val EMOJI_CHECK = "\u2611\uFE0F" // ☑
 const val EMOJI_CROSS = "\u274C" // ❌
 
 fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<Tuple2<InteractionContext<MessageReceivedEvent>, Result<CommandReport>>> =
-        Mono.zip(context.toMono(),
-            matchCommand(
-                command = context.event.message.contentRaw.split(" ")[0].substring(1),
-                languageContainer = context.languageContainer
-            ).toMono()
-        )
-        .doOnNext {
-            if (it.t2.isFailure) it.t1.event.message.addReaction(EMOJI_CROSS).queue()
-        }
-        .filter { it.t2.isSuccess }
+    Mono.zip(
+        context.toMono(),
+        matchCommand(
+            command = context.event.message.contentRaw.split(" ")[0].substring(1),
+            languageContainer = context.guildConfig.language.container
+        ).toMono()
+    )
         .flatMap { Mono.zip(it.t1.toMono(), it.t2.getOrThrow()
-            .parse(event = it.t1.event, languageContainer = it.t1.languageContainer).toMono()
+            .parse(event = it.t1.event, languageContainer = it.t1.guildConfig.language.container).toMono()
         ) }
         .doOnNext {
             if (it.t2.isSuccess) it.t1.event.message.addReaction(EMOJI_CHECK).queue()
@@ -73,7 +71,7 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
         .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.getOrThrow()
             .execute(
                 botContext = it.t1.botContext,
-                languageContainer = it.t1.languageContainer,
+                guildConfig = it.t1.guildConfig,
                 user = UserId(it.t1.event.author.idLong),
             ) { msg -> MessageActionRestActionAdaptor(it.t1.event.message.reply(msg)) }
         }) }
