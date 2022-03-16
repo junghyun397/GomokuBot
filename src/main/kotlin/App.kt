@@ -1,7 +1,7 @@
 import club.minnced.jda.reactor.ReactiveEventManager
 import club.minnced.jda.reactor.on
 import database.DatabaseConnection
-import inference.B3nzeneConnection
+import inference.B3nzeneClient
 import interact.reports.InteractionReport
 import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.runBlocking
@@ -73,10 +73,10 @@ private fun <T : Event> retrieveInteractionContext(botContext: BotContext, event
         )
     } }
 
-object App {
+object GomokuBot {
 
     fun launch() {
-        val logger = getLogger<App>()
+        val logger = getLogger<GomokuBot>()
 
         val mySQLConfig = MySQLConfig.fromEnv()
         val b3nzeneConfig = B3nzeneConfig.fromEnv()
@@ -84,18 +84,18 @@ object App {
         val databaseConnection = runBlocking {
             DatabaseConnection
                 .connectionFrom(mySQLConfig.serverURL)
+                .also { logger.info("mysql database connected.") }
         }
-        logger.info("mysql database connected.")
 
-        val b3nzeneConnection = runBlocking {
-            B3nzeneConnection
-                .connectionFrom(b3nzeneConfig.serverAddress, b3nzeneConfig.serverPort)
-        }
-        logger.info("b3nzene inference service connected.")
+        val b3nzeneClient = B3nzeneClient
+            .connectionFrom(b3nzeneConfig.serverAddress, b3nzeneConfig.serverPort)
+            .also {
+                logger.info("b3nzene inference service connected.")
+            }
 
         val sessionRepository = SessionRepository(databaseConnection = databaseConnection)
 
-        val botContext = BotContext(databaseConnection, b3nzeneConnection, sessionRepository)
+        val botContext = BotContext(databaseConnection, b3nzeneClient, sessionRepository)
 
         val eventManager = ReactiveEventManager()
 
@@ -146,10 +146,10 @@ object App {
 }
 
 fun main() {
-    val logger = getLogger<App>()
+    val logger = getLogger<GomokuBot>()
     logger.info(asciiLogo)
 
-    val launchResult = runCatching { App.launch() }
+    val launchResult = runCatching { GomokuBot.launch() }
 
     launchResult.onSuccess { logger.info("gomokubot ready.") }
     launchResult.onFailure { logger.error(it.stackTraceToString()) }

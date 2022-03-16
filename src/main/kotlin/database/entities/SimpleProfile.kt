@@ -3,37 +3,22 @@ package database.entities
 import utility.UserId
 
 class SimpleProfile(
-    override val id: UserId,
-    override val name: String,
+    val id: UserId,
+    val name: String,
 
-    override val rating: Float,
-    override val wins: Int,
-    override val losses: Int
-) : Profile, Comparable<SimpleProfile> {
+    val rating: Float,
+    val wins: Int,
+    val losses: Int
+) : Comparable<SimpleProfile> {
 
-    override fun compareTo(other: SimpleProfile): Int {
-        TODO("Not yet implemented")
-    }
+    override fun compareTo(other: SimpleProfile): Int =
+        wins - other.wins
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+    override fun equals(other: Any?): Boolean =
+        this === other || (javaClass == other?.javaClass && id == (other as SimpleProfile).id)
 
-        other as SimpleProfile
-
-        if (id != other.id) return false
-        if (wins != other.wins) return false
-        if (losses != other.losses) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = id.hashCode()
-        result = 31 * result + wins
-        result = 31 * result + losses
-        return result
-    }
+    override fun hashCode(): Int =
+        id.hashCode()
 
 }
 

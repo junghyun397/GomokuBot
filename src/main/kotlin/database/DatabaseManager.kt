@@ -25,18 +25,17 @@ object DatabaseManager {
 
     suspend fun uploadGameRecord(connection: DatabaseConnection, ownerId: UserId, opponentId: UserId?): Unit = TODO()
 
-    private suspend fun recalculateRanking(userData: UserData) {
+    private suspend fun recalculateRanking(userData: UserData): Unit =
         userData.toSimpleProfile().let { profile ->
-            rankingCache.first().let {
-                if (profile > it) {
+            rankingCache.first().let { bottomProfile ->
+                if (profile > bottomProfile) {
                     rankingCacheMutex.withLock {
+                        rankingCache.remove(bottomProfile)
                         rankingCache.add(profile)
-                        rankingCache.remove(it)
                     }
                 }
             }
         }
-    }
 
     private suspend fun fetchRankingCache(connection: DatabaseConnection): MutableSet<SimpleProfile> = TODO()
 

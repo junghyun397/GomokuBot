@@ -15,20 +15,23 @@ val protobufVersion = "3.19.4"
 
 plugins {
     application
+    idea
     kotlin("jvm") version "1.5.10"
     id("com.google.protobuf") version "0.8.16"
-    // id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
     id("com.github.johnrengelman.shadow") version "7.1.2"
+    // id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
 }
 
 repositories {
     mavenCentral()
+    google()
     maven("https://m2.dv8tion.net/releases")
     maven("https://jitpack.io/")
-    google()
 }
 
 dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.6.0")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions:1.1.5")
 

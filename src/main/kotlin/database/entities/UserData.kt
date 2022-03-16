@@ -3,11 +3,11 @@ package database.entities
 import utility.UserId
 
 class UserData(
-    override val id: UserId,
-    override val name: String,
+    val id: UserId,
+    val name: String,
     val profileURL: String,
 
-    override val rating: Float,
-    override val wins: Int,
-    override val losses: Int
-) : Profile
+    val rating: Float,
+    val wins: Int,
+    val losses: Int
+)
