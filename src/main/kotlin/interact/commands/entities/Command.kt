@@ -13,8 +13,8 @@ sealed interface Command {
     suspend fun execute(
         botContext: BotContext,
         guildConfig: GuildConfig,
-        user: UserId,
-        messagePublisher: MessagePublisher,
+        userId: UserId,
+        messagePublisher: MessagePublisher
     ): Result<CommandReport>
 
 }

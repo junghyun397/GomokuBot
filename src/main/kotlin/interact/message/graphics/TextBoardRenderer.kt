@@ -2,7 +2,7 @@ package interact.message.graphics
 
 import utility.MessagePublisher
 
-class ImageBoardRenderer : BoardRenderer {
+class TextBoardRenderer : BoardRenderer {
 
     override fun attachBoard(messagePublisher: MessagePublisher) = TODO()
 

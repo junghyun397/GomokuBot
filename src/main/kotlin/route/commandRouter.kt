@@ -11,7 +11,6 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.util.function.Tuple2
-import reactor.util.function.Tuples
 import utility.MessageActionRestActionAdaptor
 import utility.UserId
 import utility.WebHookRestActionAdaptor
@@ -38,14 +37,20 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
         .flatMap { Mono.zip(it.t1.toMono(), it.t2.getOrThrow()
             .parse(event = it.t1.event, languageContainer = it.t1.guildConfig.language.container).toMono()
         ) }
-        .filter { it.t2.isSuccess }
-        .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.getOrThrow()
-            .execute(
-                botContext = it.t1.botContext,
-                guildConfig = it.t1.guildConfig,
-                user = UserId(it.t1.event.user.idLong),
-            ) { msg -> WebHookRestActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
-        }.toMono()) }
+        .flatMap { Mono.zip(it.t1.toMono(), it.t2.fold(
+            onLeft = { command -> mono {
+                command.execute(
+                    botContext = it.t1.botContext,
+                    guildConfig = it.t1.guildConfig,
+                    userId = UserId(it.t1.event.user.idLong),
+                ) { msg -> WebHookRestActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
+            } },
+            onRight = { parseFailure -> mono {
+                parseFailure.notice(
+                    guildConfig = it.t1.guildConfig,
+                ) { msg -> WebHookRestActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
+            } }
+        )) }
 
 const val COMMAND_PREFIX = 126.toChar() // "~"
 
@@ -64,15 +69,20 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
             .parse(event = it.t1.event, languageContainer = it.t1.guildConfig.language.container).toMono()
         ) }
         .doOnNext {
-            if (it.t2.isSuccess) it.t1.event.message.addReaction(EMOJI_CHECK).queue()
+            if (it.t2.isLeft) it.t1.event.message.addReaction(EMOJI_CHECK).queue()
             else it.t1.event.message.addReaction(EMOJI_CROSS).queue()
         }
-        .filter { it.t2.isSuccess }
-        .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.getOrThrow()
-            .execute(
-                botContext = it.t1.botContext,
-                guildConfig = it.t1.guildConfig,
-                user = UserId(it.t1.event.author.idLong),
-            ) { msg -> MessageActionRestActionAdaptor(it.t1.event.message.reply(msg)) }
-        }) }
-        .map { Tuples.of(it.t1, it.t2) }
+        .flatMap { Mono.zip(it.t1.toMono(), it.t2.fold(
+            onLeft = { command -> mono {
+                command.execute(
+                    botContext = it.t1.botContext,
+                    guildConfig = it.t1.guildConfig,
+                    userId = UserId(it.t1.event.author.idLong),
+                ) { msg -> MessageActionRestActionAdaptor(it.t1.event.message.reply(msg)) }
+            } },
+            onRight = { parseFailure -> mono {
+                parseFailure.notice(
+                    guildConfig = it.t1.guildConfig
+                ) { msg -> MessageActionRestActionAdaptor(it.t1.event.message.reply(msg)) }
+            } }
+        )) }

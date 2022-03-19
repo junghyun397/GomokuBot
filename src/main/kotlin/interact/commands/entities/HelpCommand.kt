@@ -5,12 +5,14 @@ import interact.commands.ParsableCommand
 import interact.i18n.LanguageContainer
 import interact.message.MessageAgent
 import interact.reports.CommandReport
+import interact.reports.toCommandReport
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.build.Commands.slash
 import route.BotContext
 import session.entities.GuildConfig
+import utility.Either
 import utility.MessagePublisher
 import utility.UserId
 
@@ -19,7 +21,7 @@ class HelpCommand(override val name: String = "help") : Command {
     override suspend fun execute(
         botContext: BotContext,
         guildConfig: GuildConfig,
-        user: UserId,
+        userId: UserId,
         messagePublisher: MessagePublisher,
     ): Result<CommandReport> =
         runCatching {
@@ -28,16 +30,16 @@ class HelpCommand(override val name: String = "help") : Command {
             MessageAgent.sendHelpStyle(messagePublisher, guildConfig.language.container)
             MessageAgent.sendHelpLanguage(messagePublisher, guildConfig.language.container)
 
-            CommandReport.ofCommand(this, "succeed")
+            this.toCommandReport("succeed")
         }
 
     companion object : ParsableCommand, BuildableCommand {
 
-        override fun parse(event: SlashCommandInteractionEvent, languageContainer: LanguageContainer): Result<Command> =
-            Result.success(HelpCommand())
+        override fun parse(event: SlashCommandInteractionEvent, languageContainer: LanguageContainer) =
+            Either.Left(HelpCommand())
 
-        override fun parse(event: MessageReceivedEvent, languageContainer: LanguageContainer): Result<Command> =
-            Result.success(HelpCommand())
+        override fun parse(event: MessageReceivedEvent, languageContainer: LanguageContainer) =
+            Either.Left(HelpCommand())
 
         override fun buildCommandData(languageContainer: LanguageContainer): CommandData =
             slash(languageContainer.helpCommand(), languageContainer.helpCommandDescription())

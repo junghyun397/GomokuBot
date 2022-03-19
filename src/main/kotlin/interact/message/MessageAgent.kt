@@ -4,7 +4,7 @@ import dev.minn.jda.ktx.Embed
 import dev.minn.jda.ktx.Message
 import interact.i18n.LanguageContainer
 import utility.MessagePublisher
-import utility.colorNormalHex
+import utility.COLOR_NORMAL_HEX
 
 object MessageAgent {
 
@@ -14,7 +14,7 @@ object MessageAgent {
                 title = languageContainer.helpAboutInfo()
                 description = languageContainer.helpAboutDescription()
                 thumbnail = "https://github.com/junghyun397/GomokuBot/blob/master/images/profile-thumbnail.jpg?raw=true"
-                color = colorNormalHex
+                color = COLOR_NORMAL_HEX
 
                 field {
                     name = languageContainer.helpAboutDeveloper()
@@ -44,7 +44,7 @@ object MessageAgent {
             embed = Embed {
                 title = languageContainer.helpCommandInfo()
                 description = languageContainer.helpCommandDescription()
-                color = colorNormalHex
+                color = COLOR_NORMAL_HEX
                 field {
                     name = "/help or ~help"
                     value = languageContainer.helpCommandHelp()
@@ -93,7 +93,11 @@ object MessageAgent {
             }
         )).queue()
 
-    fun sendHelpStyle(messagePublisher: MessagePublisher, languageContainer: LanguageContainer): Unit = Unit // TODO
+    fun sendHelpStyle(messagePublisher: MessagePublisher, languageContainer: LanguageContainer) {
+        messagePublisher(Message {
+
+        })
+    }
 
     fun sendHelpLanguage(messagePublisher: MessagePublisher, languageContainer: LanguageContainer): Unit = Unit // TODO
 

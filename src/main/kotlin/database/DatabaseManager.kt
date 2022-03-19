@@ -2,7 +2,9 @@ package database
 
 import database.entities.SimpleProfile
 import database.entities.UserData
-import database.entities.toSimpleProfile
+import database.entities.asSimpleProfile
+import interact.i18n.Language
+import interact.message.graphics.Style
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import session.entities.GuildConfig
@@ -15,7 +17,8 @@ object DatabaseManager {
     private val rankingCache: TreeSet<SimpleProfile> = sortedSetOf()
     private val rankingCacheMutex: Mutex = Mutex()
 
-    suspend fun fetchGuildConfig(connection: DatabaseConnection, guildId: GuildId): GuildConfig = TODO()
+    suspend fun fetchGuildConfig(connection: DatabaseConnection, guildId: GuildId): GuildConfig =
+        GuildConfig(Language.ENG, Style.IMAGE) // TODO
 
     suspend fun updateGuildConfig(connection: DatabaseConnection, guildId: GuildId, guildConfig: GuildConfig): Unit = TODO()
 
@@ -25,25 +28,26 @@ object DatabaseManager {
 
     suspend fun uploadGameRecord(connection: DatabaseConnection, ownerId: UserId, opponentId: UserId?): Unit = TODO()
 
-    private suspend fun recalculateRanking(userData: UserData): Unit =
-        userData.toSimpleProfile().let { profile ->
-            rankingCache.first().let { bottomProfile ->
-                if (profile > bottomProfile) {
-                    rankingCacheMutex.withLock {
-                        rankingCache.remove(bottomProfile)
-                        rankingCache.add(profile)
-                    }
-                }
+    private suspend fun recalculateRanking(userData: UserData) {
+        val profile = userData.asSimpleProfile()
+        val bottomProfile = rankingCache.first()
+        if (profile > bottomProfile) {
+            rankingCacheMutex.withLock {
+                rankingCache.remove(bottomProfile)
+                rankingCache.add(profile)
             }
         }
+    }
 
     private suspend fun fetchRankingCache(connection: DatabaseConnection): MutableSet<SimpleProfile> = TODO()
 
     suspend fun retrieveRanking(connection: DatabaseConnection): Set<SimpleProfile> =
-        rankingCache.also {
-            it.ifEmpty { rankingCacheMutex.withLock {
-                rankingCache.addAll(fetchRankingCache(connection))
-            } }
+        rankingCache.ifEmpty {
+            fetchRankingCache(connection).also {
+                rankingCacheMutex.withLock {
+                    rankingCache.addAll(it)
+                }
+            }
         }
 
 }

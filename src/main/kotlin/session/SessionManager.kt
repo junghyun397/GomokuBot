@@ -7,40 +7,38 @@ import session.entities.GuildConfig
 import session.entities.GuildSession
 import session.entities.RequestSession
 import utility.GuildId
+import utility.LinuxTime
 import utility.UserId
 
 object SessionManager {
 
     private suspend inline fun retrieveGuildSession(repo: SessionRepository, guildId: GuildId): GuildSession =
-        repo.sessions.getOrPut(guildId.id) {
+        repo.sessions.getOrPut(guildId) {
             GuildSession(guildConfig = DatabaseManager.fetchGuildConfig(repo.databaseConnection, guildId))
         }
 
     private suspend inline fun mapGuildSession(repo: SessionRepository, guildId: GuildId, mapper: (GuildSession) -> GuildSession): GuildSession =
-        this.retrieveGuildSession(repo, guildId).let {
-            mapper(it).also {
-                repo.sessionsMutex.withLock {
-                    repo.sessions[guildId.id] = mapper(it)
-                }
+        mapper(this.retrieveGuildSession(repo, guildId)).also {
+            repo.sessionsMutex.withLock {
+                repo.sessions[guildId] = it
             }
-        }
-
-    private suspend fun cleanEmptySessions(repo: SessionRepository): Unit =
-        repo.sessionsMutex.withLock {
-            repo.sessions
-                .filter { it.value.requestSessions.isEmpty() && it.value.gameSessions.isEmpty() }
-                .forEach { repo.sessions.remove(it.key) }
         }
 
     suspend fun retrieveGuildConfig(repo: SessionRepository, guildId: GuildId): GuildConfig =
         this.retrieveGuildSession(repo, guildId).guildConfig
 
-    suspend fun updateGuildConfig(repo: SessionRepository, guildId: GuildId, guildConfig: GuildConfig): Unit =
+    suspend fun updateGuildConfig(repo: SessionRepository, guildId: GuildId, guildConfig: GuildConfig) {
         this.mapGuildSession(repo, guildId) {
             it.copy(guildConfig = guildConfig)
-        }.let {
+        }.also {
             DatabaseManager.updateGuildConfig(repo.databaseConnection, guildId, it.guildConfig)
         }
+    }
+
+    suspend fun retrieveRequestSession(repo: SessionRepository, guildId: GuildId, userId: UserId): RequestSession? =
+        this.retrieveGuildSession(repo, guildId).requestSessions
+            .values
+            .firstOrNull { it.ownerId == userId || it.opponentId == userId }
 
     suspend fun retrieveRequestSessionByOwner(repo: SessionRepository, guildId: GuildId, ownerId: UserId): RequestSession? =
         this.retrieveGuildSession(repo, guildId).requestSessions[ownerId]
@@ -78,5 +76,34 @@ object SessionManager {
             it.copy(gameSessions = it.gameSessions - ownerId)
         }
     }
+
+    private suspend fun cleanExpiredSessions(repo: SessionRepository): Unit =
+        repo.sessionsMutex.withLock {
+            val referenceTime = LinuxTime()
+            repo.sessions
+                .map {
+                    Triple(
+                        first = it,
+                        second = it.value.gameSessions.filter { session -> session.value.expireDate > referenceTime },
+                        third = it.value.requestSessions.filter { session -> session.value.expireDate > referenceTime }
+                    )
+                }
+                .filter {
+                    it.first.value.gameSessions.size != it.second.size || it.first.value.requestSessions.size != it.third.size
+                }
+                .forEach {
+                    repo.sessions[it.first.key] = it.first.value.copy(
+                        gameSessions = it.second,
+                        requestSessions = it.third
+                    )
+                }
+        }
+
+    private suspend fun cleanEmptySessions(repo: SessionRepository): Unit =
+        repo.sessionsMutex.withLock {
+            repo.sessions
+                .filter { it.value.requestSessions.isEmpty() && it.value.gameSessions.isEmpty() }
+                .forEach { repo.sessions.remove(it.key) }
+        }
 
 }

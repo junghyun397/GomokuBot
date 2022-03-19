@@ -5,7 +5,7 @@ import session.entities.GuildConfig
 import utility.GuildId
 import utility.LinuxTime
 
-data class InteractionContext<T : Event>(
+class InteractionContext<out T : Event>(
     val botContext: BotContext,
     val event: T,
     val guildConfig: GuildConfig,

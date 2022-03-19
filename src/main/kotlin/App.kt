@@ -22,7 +22,7 @@ import session.SessionManager
 import session.SessionRepository
 import utility.GuildId
 import utility.LinuxTime
-import utility.asciiLogo
+import utility.ASCII_LOGO
 import utility.getLogger
 
 @JvmInline
@@ -32,7 +32,16 @@ private value class Token(val token: String) {
     }
 }
 
-private data class B3nzeneConfig(val serverAddress: String, val serverPort: Int) {
+@JvmInline
+private value class MySQLConfig(val serverURL: String) {
+    companion object {
+        fun fromEnv() = MySQLConfig(
+            serverURL = System.getenv("GOMOKUBOT_DB_URL"),
+        )
+    }
+}
+
+private class B3nzeneConfig(val serverAddress: String, val serverPort: Int) {
     companion object {
         fun fromEnv() = B3nzeneConfig(
             serverAddress = System.getenv("GOMOKUBOT_B3NZENE_ADDRESS"),
@@ -41,37 +50,31 @@ private data class B3nzeneConfig(val serverAddress: String, val serverPort: Int)
     }
 }
 
-private data class MySQLConfig(val serverURL: String) {
-    companion object {
-        fun fromEnv() = MySQLConfig(
-            serverURL = System.getenv("GOMOKUBOT_DB_URL"),
-        )
-    }
-}
-
 private inline fun <reified E : Event, reified R : InteractionReport> leaveLog(combined: Tuple2<InteractionContext<E>, Result<R>>) =
     getLogger<R>().let { logger ->
-        combined.t2.onSuccess {
-            logger.info("${E::class.simpleName} ${combined.t1.guildName}/${combined.t1.guild.id} " +
-                    "T${(it.terminationTime.timestamp - combined.t1.emittenTime.timestamp)/1000}ms => $it")
-        }
-        combined.t2.onFailure {
-            logger.error("${E::class.simpleName} ${combined.t1.guildName}/${combined.t1.guild.id} " +
-                    "T${(System.currentTimeMillis() - combined.t1.emittenTime.timestamp)/1000}ms => ${it.stackTraceToString()}")
-        }
+        combined.t2.fold(
+            onSuccess = {
+                logger.info("${E::class.simpleName} ${combined.t1.guildName}/${combined.t1.guild.id} " +
+                        "T${(it.terminationTime.timestamp - combined.t1.emittenTime.timestamp)/1000}ms => $it")
+            },
+            onFailure = {
+                logger.error("${E::class.simpleName} ${combined.t1.guildName}/${combined.t1.guild.id} " +
+                        "T${(System.currentTimeMillis() - combined.t1.emittenTime.timestamp)/1000}ms => ${it.stackTraceToString()}")
+            }
+        )
     }
 
-private fun <T : Event> retrieveInteractionContext(botContext: BotContext, event: T, guild: Guild) =
-    mono { GuildId(guild.idLong).let {
+private suspend inline fun <T : Event> retrieveInteractionContext(botContext: BotContext, event: T, guild: Guild) =
+    GuildId(guild.idLong).let {
         InteractionContext(
             botContext = botContext,
             event = event,
             guildConfig = SessionManager.retrieveGuildConfig(botContext.sessionRepository, it),
             guild = it,
             guildName = guild.name,
-            emittenTime = LinuxTime(System.currentTimeMillis())
+            emittenTime = LinuxTime()
         )
-    } }
+    }
 
 object GomokuBot {
 
@@ -84,14 +87,12 @@ object GomokuBot {
         val databaseConnection = runBlocking {
             DatabaseConnection
                 .connectionFrom(mySQLConfig.serverURL)
-                .also { logger.info("mysql database connected.") }
         }
+        logger.info("mysql database connected.")
 
         val b3nzeneClient = B3nzeneClient
             .connectionFrom(b3nzeneConfig.serverAddress, b3nzeneConfig.serverPort)
-            .also {
-                logger.info("b3nzene inference service connected.")
-            }
+        logger.info("b3nzene inference service connected.")
 
         val sessionRepository = SessionRepository(databaseConnection = databaseConnection)
 
@@ -101,27 +102,27 @@ object GomokuBot {
 
         eventManager.on<SlashCommandInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
-            .flatMap { retrieveInteractionContext(botContext, it, it.guild!!) }
+            .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild!!) } }
             .flatMap(::slashCommandRouter)
             .doOnNext { leaveLog(it) }
             .subscribe()
 
         eventManager.on<MessageReceivedEvent>()
             .filter { it.isFromGuild && !it.author.isBot && it.message.contentRaw.startsWith(COMMAND_PREFIX) }
-            .flatMap { retrieveInteractionContext(botContext, it, it.guild) }
+            .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild) } }
             .flatMap(::textCommandRouter)
             .doOnNext { leaveLog(it) }
             .subscribe()
 
         eventManager.on<ButtonInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
-            .flatMap { retrieveInteractionContext(botContext, it, it.guild!!) }
+            .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild!!) } }
             .flatMap(::buttonInteractionRouter)
             .doOnNext { leaveLog(it) }
             .subscribe()
 
         eventManager.on<GuildJoinEvent>()
-            .flatMap { retrieveInteractionContext(botContext, it, it.guild) }
+            .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild) } }
             .flatMap(::guildJoinRouter)
             .doOnNext { leaveLog(it) }
             .subscribe()
@@ -147,10 +148,13 @@ object GomokuBot {
 
 fun main() {
     val logger = getLogger<GomokuBot>()
-    logger.info(asciiLogo)
+    logger.info(ASCII_LOGO)
 
     val launchResult = runCatching { GomokuBot.launch() }
 
-    launchResult.onSuccess { logger.info("gomokubot ready.") }
-    launchResult.onFailure { logger.error(it.stackTraceToString()) }
+    launchResult.fold(
+        onSuccess = { logger.info("gomokubot ready.") },
+        onFailure = { logger.error(it.stackTraceToString()) }
+    )
 }
+

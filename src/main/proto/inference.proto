@@ -6,15 +6,13 @@ option java_outer_classname = "InferenceProto";
 package inference;
 
 service Inference {
-  rpc validate(google.protobuf.Empty) returns (google.protobuf.Empty) {};
-
-  rpc session(stream Request) returns (stream Response);
+  rpc Session(stream Request) returns (stream Response);
 }
 
 message Request {
   message State {
     bytes board = 1;
-    int64 turns = 2;
+    uint32 turns = 2;
   }
 
   State state = 1;
@@ -29,7 +27,7 @@ enum Method {
 message Response {
   message Solution {
     bytes board = 1;
-    int64 turns = 2;
+    uint32 turns = 2;
   }
 
   Solution solution = 1;
