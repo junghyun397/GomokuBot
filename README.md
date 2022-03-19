@@ -25,6 +25,7 @@ docker-compose up -d
 ### Docker
 
 ```shell
+docker run --name mysql -e MYSQL_ROOT_PASSWORD=1q2w3e4r! -d -p 3306:3306 mysql
 docker build -t gomokubot .
 docker run --name gomokubot gomokubot
 ```

@@ -1,4 +1,6 @@
-FROM openjdk:11-jdk-slim
+FROM alpine
+
+RUN apk add openjdk11
 
 WORKDIR /app
 COPY build/libs/GomokuBot-all.jar .

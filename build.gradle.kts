@@ -35,7 +35,12 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.6.0")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions:1.1.5")
 
+    implementation("io.netty:netty-all:4.1.74.Final")
+    implementation("io.netty:netty-tcnative-boringssl-static:2.0.51.Final")
+
     implementation("dev.miku:r2dbc-mysql:0.8.2.RELEASE")
+    implementation("io.r2dbc:r2dbc-pool:0.9.0.RELEASE")
+    runtimeOnly("mysql:mysql-connector-java:8.0.28")
 
     implementation("net.dv8tion:JDA:5.0.0-alpha.9")
     implementation("com.github.minndevelopment:jda-ktx:652775540cf5832ef03e5f25e80c4448390b4fa1")
@@ -45,6 +50,7 @@ dependencies {
     implementation("io.grpc:grpc-kotlin-stub:$grpcKotlinVersion")
     implementation("io.grpc:grpc-protobuf:$grpcVersion")
     implementation("com.google.protobuf:protobuf-kotlin:$protobufVersion")
+    implementation("io.grpc:grpc-netty:1.45.0")
 
     implementation("ch.qos.logback:logback-classic:1.2.11")
 
@@ -85,7 +91,7 @@ application {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = "11"
 }
 
 tasks.jar {
