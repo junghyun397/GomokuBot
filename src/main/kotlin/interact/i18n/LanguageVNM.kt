@@ -30,7 +30,7 @@ class LanguageVNM : LanguageENG() {
     override fun helpCommandPVP() = "`~start` `@mention` Hai người chơi. VD) `~start` `@player`"
     override fun helpCommandResign() = "`~resign` Dừng ván đang chơi."
 
-    override fun styleInformation() = "GomokuBot / Skin"
+    override fun styleInfo() = "GomokuBot / Skin"
     override fun styleDescription() =
         "Skin A có thể không hiển thị chính xác với một số thiết bị. Chọn các skin có sẵn còn lại và sử dụng"
     override fun styleCommandInfo(style: String) = "Nhập lệnh ``~skin`` ``$style`` để chọn skin này"

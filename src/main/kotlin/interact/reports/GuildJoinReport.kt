@@ -3,9 +3,9 @@ package interact.reports
 import utility.LinuxTime
 
 class GuildJoinReport(
-    override val terminationTime: LinuxTime = LinuxTime(),
     private val commandInserted: Boolean = true,
-    private val helpSent: Boolean = true
+    private val helpSent: Boolean = true,
+    override val terminationTime: LinuxTime = LinuxTime(),
 ) : InteractionReport {
 
     override fun toString(): String = "commandInserted = $commandInserted, helpSent = $helpSent"

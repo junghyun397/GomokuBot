@@ -103,7 +103,7 @@ sealed interface LanguageContainer {
 
     // # STYLE
 
-    fun styleInformation(): String
+    fun styleInfo(): String
     fun styleDescription(): String
     fun styleCommandInfo(style: String): String
     fun styleUpdateError(): String

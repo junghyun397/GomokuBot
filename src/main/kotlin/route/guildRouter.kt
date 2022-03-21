@@ -13,9 +13,9 @@ import utility.MessagePublisher
 fun guildJoinRouter(context: InteractionContext<GuildJoinEvent>): Mono<Tuple2<InteractionContext<GuildJoinEvent>, Result<GuildJoinReport>>> =
     Mono.zip(context.toMono(), runCatching {
         val commandInserted = run {
-            buildableCommands.forEach { command ->
-                context.event.guild.upsertCommand(command.buildCommandData(context.guildConfig.language.container)).queue()
-            }
+            buildableCommands.fold(context.event.guild.updateCommands()) { action, command ->
+                command.buildCommandData(action, context.guildConfig.language.container)
+            }.queue()
             true
         }
 
@@ -27,11 +27,11 @@ fun guildJoinRouter(context: InteractionContext<GuildJoinEvent>): Mono<Tuple2<In
                 MessageAgent.sendHelpAbout(messagePublisher, context.guildConfig.language.container)
                 MessageAgent.sendHelpCommand(messagePublisher, context.guildConfig.language.container)
                 MessageAgent.sendHelpStyle(messagePublisher, context.guildConfig.language.container)
-                MessageAgent.sendHelpLanguage(messagePublisher, context.guildConfig.language.container)
+                MessageAgent.sendHelpLanguage(messagePublisher)
                 true
             }
             false
         }
 
-        GuildJoinReport(commandInserted = commandInserted, helpSent = helpSent)
+        GuildJoinReport(commandInserted, helpSent)
     }.toMono())

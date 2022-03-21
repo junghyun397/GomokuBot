@@ -1,15 +1,15 @@
 package interact.commands.entities
 
+import dev.minn.jda.ktx.interactions.option
+import dev.minn.jda.ktx.interactions.slash
 import interact.commands.BuildableCommand
 import interact.commands.ParsableCommand
 import interact.i18n.LanguageContainer
-import interact.reports.CommandReport
-import interact.reports.toCommandReport
+import interact.reports.asCommandReport
+import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
-import net.dv8tion.jda.api.interactions.commands.OptionType
-import net.dv8tion.jda.api.interactions.commands.build.CommandData
-import net.dv8tion.jda.api.interactions.commands.build.Commands.slash
+import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import route.BotContext
 import session.entities.GuildConfig
 import utility.Either
@@ -23,8 +23,8 @@ class StartCommand(override val name: String = "start", val opponent: UserId?) :
         guildConfig: GuildConfig,
         userId: UserId,
         messagePublisher: MessagePublisher
-    ): Result<CommandReport> = runCatching {
-        this.toCommandReport("$userId request to $opponent")
+    ) = runCatching {
+        this.asCommandReport("$userId request to $opponent")
     }
 
     companion object : ParsableCommand, BuildableCommand {
@@ -50,14 +50,17 @@ class StartCommand(override val name: String = "start", val opponent: UserId?) :
                 )
             )
 
-        override fun buildCommandData(languageContainer: LanguageContainer): CommandData =
-            slash(languageContainer.startCommand(), languageContainer.startCommandDescription())
-                .addOption(
-                    OptionType.USER,
+        override fun buildCommandData(action: CommandListUpdateAction, languageContainer: LanguageContainer) =
+            action.slash(
+                languageContainer.startCommand(),
+                languageContainer.startCommandDescription()
+            ) {
+                option<User>(
                     languageContainer.startCommandOptionOpponent(),
                     languageContainer.startCommandOptionOpponentDescription(),
                     false
                 )
+            }
 
     }
 

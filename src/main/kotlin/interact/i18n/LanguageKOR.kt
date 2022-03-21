@@ -35,7 +35,7 @@ open class LanguageKOR : LanguageENG() {
     override fun helpCommandPVP() = "`~start` `@언급` 언급된 플레이어와의 게임을 시작합니다. Ex) `~start` `@player`"
     override fun helpCommandResign() = "`~resign` 현재 진행되고 있는 게임을 포기합니다."
 
-    override fun styleInformation() = "GomokuBot / 스타일"
+    override fun styleInfo() = "GomokuBot / 스타일"
     override fun styleDescription() =
         "GomokuBot에서 제공하는 기본 오목판(``Style A``)이 제대로 표시되지 않을 수 있습니다." +
                 "준비된 세 가지 스타일 중 하나를 선택해 이 서버에서 사용할 스타일을 설정해 주세요."

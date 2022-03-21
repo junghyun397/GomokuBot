@@ -1,6 +1,6 @@
 package session.entities
 
 import interact.i18n.*
-import interact.message.graphics.Style
+import interact.message.graphics.BoardStyle
 
-data class GuildConfig(val language: Language, val style: Style)
+data class GuildConfig(val language: Language, val boardStyle: BoardStyle)

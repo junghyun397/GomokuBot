@@ -39,10 +39,10 @@ open class LanguageENG : LanguageContainer {
 
     // ## STYLE
 
-    override fun styleCommand() = "skin"
+    override fun styleCommand() = "style"
     override fun styleCommandDescription() = "Change Gomoku-board style setting used on this server."
-    override fun styleCommandOptionCode() = TODO("Not yet implemented")
-    override fun styleCommandOptionCodeDescription() = TODO("Not yet implemented")
+    override fun styleCommandOptionCode() = "style"
+    override fun styleCommandOptionCodeDescription() = "Specific the style"
 
     // ## RANK
 
@@ -99,7 +99,7 @@ open class LanguageENG : LanguageContainer {
 
     // # STYLE
 
-    override fun styleInformation() = "GomokuBot / Style"
+    override fun styleInfo() = "GomokuBot / Style"
     override fun styleDescription() =
         "Default Gomoku board (Style A) may not display properly. " +
                 "Choose one of the three styles available and set the style to use on this server."

@@ -2,14 +2,18 @@ package interact.message.graphics
 
 import utility.MessagePublisher
 
-enum class Style(val renderer: BoardRenderer) {
+enum class BoardStyle(val renderer: BoardRenderer) {
     IMAGE(ImageBoardRenderer()),
     TEXT(TextBoardRenderer()),
-    TEXT_SOLID(TextBoardRenderer()),
-    TEXT_UNICODE(TextBoardRenderer())
+    SOLID_TEXT(SolidTextBoardRenderer()),
+    UNICODE(UnicodeBoardRenderer())
 }
 
 interface BoardRenderer {
+
+    val styleName: String
+
+    val sampleView: String
 
     fun attachBoard(messagePublisher: MessagePublisher)
 

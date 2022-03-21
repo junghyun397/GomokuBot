@@ -4,7 +4,7 @@ import database.entities.SimpleProfile
 import database.entities.UserData
 import database.entities.asSimpleProfile
 import interact.i18n.Language
-import interact.message.graphics.Style
+import interact.message.graphics.BoardStyle
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import session.entities.GuildConfig
@@ -18,7 +18,7 @@ object DatabaseManager {
     private val rankingCacheMutex: Mutex = Mutex()
 
     suspend fun fetchGuildConfig(connection: DatabaseConnection, guildId: GuildId): GuildConfig =
-        GuildConfig(Language.ENG, Style.IMAGE) // TODO
+        GuildConfig(Language.ENG, BoardStyle.IMAGE) // TODO
 
     suspend fun updateGuildConfig(connection: DatabaseConnection, guildId: GuildId, guildConfig: GuildConfig): Unit = TODO()
 

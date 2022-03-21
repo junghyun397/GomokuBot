@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.ReadyEvent
 import net.dv8tion.jda.api.events.ShutdownEvent
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
+import net.dv8tion.jda.api.events.guild.GuildReadyEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -54,11 +55,11 @@ private inline fun <reified E : Event, reified R : InteractionReport> leaveLog(c
     getLogger<R>().let { logger ->
         combined.t2.fold(
             onSuccess = {
-                logger.info("${E::class.simpleName} ${combined.t1.guildName}/${combined.t1.guild.id} " +
+                logger.info("${E::class.simpleName} (${combined.t1.guildName})/${combined.t1.guild.id} " +
                         "T${(it.terminationTime.timestamp - combined.t1.emittenTime.timestamp)/1000}ms => $it")
             },
             onFailure = {
-                logger.error("${E::class.simpleName} ${combined.t1.guildName}/${combined.t1.guild.id} " +
+                logger.error("${E::class.simpleName} (${combined.t1.guildName})/${combined.t1.guild.id} " +
                         "T${(System.currentTimeMillis() - combined.t1.emittenTime.timestamp)/1000}ms => ${it.stackTraceToString()}")
             }
         )
@@ -157,4 +158,3 @@ fun main() {
         onFailure = { logger.error(it.stackTraceToString()) }
     )
 }
-
