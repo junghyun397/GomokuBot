@@ -15,6 +15,7 @@ import session.entities.GuildConfig
 import utility.Either
 import utility.MessagePublisher
 import utility.UserId
+import utility.extractId
 
 class StartCommand(override val name: String = "start", val opponent: UserId?) : Command {
 
@@ -32,10 +33,10 @@ class StartCommand(override val name: String = "start", val opponent: UserId?) :
         override fun parse(event: SlashCommandInteractionEvent, languageContainer: LanguageContainer) =
             Either.Left(
                 StartCommand(
-                    opponent = event.getOption(languageContainer.startCommand())?.let {
+                    opponent = event.getOption(languageContainer.startCommandOptionOpponent())?.let {
                         val user = it.asUser
                         if (user.isBot) null
-                        else UserId(user.idLong)
+                        else user.extractId()
                     }
                 )
             )
@@ -45,7 +46,7 @@ class StartCommand(override val name: String = "start", val opponent: UserId?) :
                 StartCommand(
                     opponent = event.message.mentionedUsers.let {
                         if (it.isEmpty() || it[0].isBot || it[0].idLong == event.author.idLong) null
-                        else UserId(it[0].idLong)
+                        else it[0].extractId()
                     }
                 )
             )

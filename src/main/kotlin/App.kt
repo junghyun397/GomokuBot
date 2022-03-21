@@ -21,10 +21,7 @@ import reactor.util.function.Tuple2
 import route.*
 import session.SessionManager
 import session.SessionRepository
-import utility.GuildId
-import utility.LinuxTime
-import utility.ASCII_LOGO
-import utility.getLogger
+import utility.*
 
 @JvmInline
 private value class Token(val token: String) {
@@ -66,7 +63,7 @@ private inline fun <reified E : Event, reified R : InteractionReport> leaveLog(c
     }
 
 private suspend inline fun <T : Event> retrieveInteractionContext(botContext: BotContext, event: T, guild: Guild) =
-    GuildId(guild.idLong).let {
+    guild.extractId().let {
         InteractionContext(
             botContext = botContext,
             event = event,

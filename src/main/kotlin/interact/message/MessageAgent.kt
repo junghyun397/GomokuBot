@@ -109,8 +109,8 @@ object MessageAgent {
                     .drop(1)
                     .fold(this) { builder, style ->
                         builder.also { field {
-                            name = "Style ``${style.renderer.styleName}``"
-                            value = style.renderer.sampleView
+                            name = "Style ``${style.sample.styleName}``"
+                            value = style.sample.sampleView
                             inline = false
                         } }
                     }

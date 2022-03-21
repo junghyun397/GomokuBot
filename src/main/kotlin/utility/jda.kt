@@ -1,6 +1,8 @@
 package utility
 
+import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.requests.restaction.MessageAction
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageAction
@@ -9,8 +11,12 @@ import java.io.File
 @JvmInline
 value class GuildId(val id: Long)
 
+fun Guild.extractId() = GuildId(this.idLong)
+
 @JvmInline
 value class UserId(val id: Long)
+
+fun User.extractId() = UserId(this.idLong)
 
 typealias MessagePublisher = (Message) -> RestActionAdaptor
 
