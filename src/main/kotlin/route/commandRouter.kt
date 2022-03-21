@@ -11,15 +11,13 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.util.function.Tuple2
-import utility.MessageActionRestActionAdaptor
-import utility.UserId
-import utility.WebHookRestActionAdaptor
+import utility.*
 
-private fun matchCommand(command: String, languageContainer: LanguageContainer): Result<ParsableCommand> =
+private fun matchCommand(command: String, languageContainer: LanguageContainer): Option<ParsableCommand> =
     when (command) {
-        languageContainer.helpCommand() -> Result.success(HelpCommand)
-        languageContainer.startCommand() -> Result.success(StartCommand)
-        else -> Result.failure(Exception("Command mismatch: $command"))
+        languageContainer.helpCommand() -> Option.Some(HelpCommand)
+        languageContainer.startCommand() -> Option.Some(StartCommand)
+        else -> Option.Empty
     }
 
 fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>): Mono<Tuple2<InteractionContext<SlashCommandInteractionEvent>, Result<CommandReport>>> =
@@ -30,11 +28,11 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
             languageContainer = context.guildConfig.language.container
         ).toMono()
     )
-        .filter { it.t2.isSuccess }
+        .filter { it.t2.isDefined }
         .doOnNext { it.t1.event
             .deferReply().queue()
         }
-        .flatMap { Mono.zip(it.t1.toMono(), it.t2.getOrThrow()
+        .flatMap { Mono.zip(it.t1.toMono(), it.t2.getOrNull()!!
             .parse(event = it.t1.event, languageContainer = it.t1.guildConfig.language.container).toMono()
         ) }
         .flatMap { Mono.zip(it.t1.toMono(), it.t2.fold(
@@ -42,7 +40,7 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
                 command.execute(
                     botContext = it.t1.botContext,
                     guildConfig = it.t1.guildConfig,
-                    userId = UserId(it.t1.event.user.idLong),
+                    userId = it.t1.event.user.extractId(),
                 ) { msg -> WebHookRestActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
             } },
             onRight = { parseFailure -> mono {
@@ -65,7 +63,8 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
             languageContainer = context.guildConfig.language.container
         ).toMono()
     )
-        .flatMap { Mono.zip(it.t1.toMono(), it.t2.getOrThrow()
+        .filter { it.t2.isDefined }
+        .flatMap { Mono.zip(it.t1.toMono(), it.t2.getOrNull()!!
             .parse(event = it.t1.event, languageContainer = it.t1.guildConfig.language.container).toMono()
         ) }
         .doOnNext {
@@ -77,7 +76,7 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
                 command.execute(
                     botContext = it.t1.botContext,
                     guildConfig = it.t1.guildConfig,
-                    userId = UserId(it.t1.event.author.idLong),
+                    userId =it.t1.event.author.extractId(),
                 ) { msg -> MessageActionRestActionAdaptor(it.t1.event.message.reply(msg)) }
             } },
             onRight = { parseFailure -> mono {
