@@ -8,6 +8,8 @@ import utility.Either
 
 interface ParsableCommand {
 
+    val name: String
+
     fun parse(event: SlashCommandInteractionEvent, languageContainer: LanguageContainer): Either<Command, ParseFailure>
 
     fun parse(event: MessageReceivedEvent, languageContainer: LanguageContainer): Either<Command, ParseFailure>

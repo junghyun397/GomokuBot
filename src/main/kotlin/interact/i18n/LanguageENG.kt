@@ -1,14 +1,14 @@
 package interact.i18n
 
-import java.util.*
+import net.dv8tion.jda.api.Region
 
 open class LanguageENG : LanguageContainer {
 
-    override fun targetRegion() = arrayOf(Locale.ENGLISH)
+    override fun targetRegion() = emptyArray<Region>()
 
     override fun languageCode() = "ENG"
 
-    override fun languageName() = "English:flag_gb:"
+    override fun languageName() = "English\uD83C\uDDEC\uD83C\uDDE7"
     override fun languageSuggestion() = "Please use the `~lang` `ENG` command."
 
     // # TOKENS
@@ -33,16 +33,16 @@ open class LanguageENG : LanguageContainer {
     // ## LANG
 
     override fun langCommand() = "lang"
-    override fun langCommandDescription() = TODO("Not yet implemented")
-    override fun languageCommandOptionCode() = TODO("Not yet implemented")
-    override fun languageCommandOptionCodeDescription() = TODO("Not yet implemented")
+    override fun langCommandDescription() = "Set language uses in this server"
+    override fun languageCommandOptionCode() = "language"
+    override fun languageCommandOptionCodeDescription() = "select language code"
 
     // ## STYLE
 
     override fun styleCommand() = "style"
     override fun styleCommandDescription() = "Change Gomoku-board style setting used on this server."
     override fun styleCommandOptionCode() = "style"
-    override fun styleCommandOptionCodeDescription() = "Specific the style"
+    override fun styleCommandOptionCodeDescription() = "Select style code"
 
     // ## RANK
 
@@ -52,9 +52,9 @@ open class LanguageENG : LanguageContainer {
     // ## RATING
 
     override fun ratingCommand() = "rating"
-    override fun ratingCommandDescription() = TODO("Not yet implemented")
-    override fun ratingCommandOptionUser() = TODO("Not yet implemented")
-    override fun ratingCommandOptionUserDescription() = TODO("Not yet implemented")
+    override fun ratingCommandDescription() = "Show rating specific User"
+    override fun ratingCommandOptionUser() = "user"
+    override fun ratingCommandOptionUserDescription() = "specific the user"
 
     // ## START
 
@@ -66,13 +66,13 @@ open class LanguageENG : LanguageContainer {
     // ## RESIGN
 
     override fun resignCommand() = "resign"
-    override fun resignCommandDescription() = TODO("Not yet implemented")
+    override fun resignCommandDescription() = "resign"
 
     // # HELP
 
     // ## ABOUT
 
-    override fun helpAboutInfo() = "GomokuBot / Help"
+    override fun helpAboutTitle() = "GomokuBot / Help"
     override fun helpAboutDescription() =
         "GomokuBot is an open-source artificial intelligence Discord Bot that provides Gomoku(Omok) feature in Discord. " +
                 "The collected data is used for training reinforcement learning models."
@@ -103,7 +103,7 @@ open class LanguageENG : LanguageContainer {
     override fun styleDescription() =
         "Default Gomoku board (Style A) may not display properly. " +
                 "Choose one of the three styles available and set the style to use on this server."
-    override fun styleCommandInfo(style: String) = "Enter ``~skin`` ``$style`` to use this style."
+    override fun styleSuggestion(style: String) = "Enter ``~skin`` ``$style`` to use this style."
     override fun styleUpdateError() = "There is an error in the style specification."
     override fun styleUpdateSuccess(style: String) = "Style setting has been change to ``$style`` !"
 

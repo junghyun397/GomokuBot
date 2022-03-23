@@ -10,12 +10,14 @@ import utility.MessagePublisher
 
 object MessageAgent {
 
-    fun sendHelpAbout(messagePublisher: MessagePublisher, languageContainer: LanguageContainer): Unit =
+    fun sendEmbedAbout(messagePublisher: MessagePublisher, languageContainer: LanguageContainer) =
         messagePublisher(Message(
             embed = Embed {
                 color = COLOR_NORMAL_HEX
-                title = languageContainer.helpAboutInfo()
-                thumbnail = "https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/profile-thumbnail.jpg"
+                title = languageContainer.helpAboutTitle()
+                description = languageContainer.helpAboutDescription()
+                thumbnail =
+                    "https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/profile-thumbnail.jpg"
                 field {
                     name = languageContainer.helpAboutDeveloper()
                     value = "junghyun397#6725"
@@ -26,7 +28,7 @@ object MessageAgent {
                 }
                 field {
                     name = languageContainer.helpAboutVersion()
-                    value = "ng 1.0"
+                    value = "NG 1.0"
                 }
                 field {
                     name = languageContainer.helpAboutSupport()
@@ -37,69 +39,70 @@ object MessageAgent {
                     value = "[do1ph.in/gomokubot](https://do1ph.in/gomokubot)"
                 }
             }
-        )).queue()
+        )).map { it.queue() }
 
-    private val languageDelegates = Language.values()
+    private val languageEnumeration = Language.values()
         .fold(StringBuilder()) { builder, language ->
             builder.append(" ``${language.container.languageCode()}``")
         }
         .toString()
 
-    fun sendHelpCommand(messagePublisher: MessagePublisher, languageContainer: LanguageContainer): Unit =
+    fun sendEmbedCommand(messagePublisher: MessagePublisher, languageContainer: LanguageContainer) =
         messagePublisher(Message(
             embed = Embed {
                 color = COLOR_NORMAL_HEX
                 title = languageContainer.helpCommandInfo()
                 description = languageContainer.helpCommandDescription()
                 field {
-                    name= "``/help`` or ``~help``"
+                    name = "``/${languageContainer.helpCommand()}`` or ``~${languageContainer.helpCommand()}``"
                     value = languageContainer.helpCommandHelp()
                     inline = false
                 }
                 field {
-                    name = "``/start`` or ``~start``"
+                    name = "``/${languageContainer.startCommand()}`` or ``~${languageContainer.startCommand()}``"
                     value = languageContainer.helpCommandPVE()
                     inline = false
                 }
                 field {
-                    name = "``/start @mention`` or ``~start @mention``"
+                    name =
+                        "``/${languageContainer.startCommand()} @mention`` or ``~${languageContainer.startCommand()} @mention``"
                     value = languageContainer.helpCommandPVP()
                     inline = false
                 }
                 field {
                     name = "``/s`` or ``~s``"
-                    value = "make move" // TODO
+                    value = "Make move" // TODO
                     inline = false
                 }
                 field {
-                    name = "``/resign`` or ``~resign``"
+                    name = "``/${languageContainer.resignCommand()}`` or ``~${languageContainer.resignCommand()}``"
                     value = languageContainer.helpCommandResign()
                     inline = false
                 }
                 field {
-                    name = "``/lang`` or ``~lang``"
-                    value = languageContainer.helpCommandLang(languageDelegates) // TODO
+                    name = "``/${languageContainer.langCommand()}`` or ``~${languageContainer.langCommand()}``"
+                    value = languageContainer.helpCommandLang(languageEnumeration) // TODO
                     inline = false
                 }
                 field {
-                    name = "``/style`` or ``~style``"
+                    name = "``/${languageContainer.styleCommand()}`` or ``~${languageContainer.styleCommand()}``"
                     value = languageContainer.helpCommandStyle()
                     inline = false
                 }
                 field {
-                    name = "``/rank`` or ``~rank``"
+                    name = "``/${languageContainer.rankCommand()}`` or ``~${languageContainer.rankCommand()}``"
                     value = languageContainer.helpCommandRank()
                     inline = false
                 }
                 field {
-                    name = "``/rating`` or ``~rating``"
+                    name = "``/${languageContainer.ratingCommand()}`` or ``~${languageContainer.ratingCommand()}``"
                     value = languageContainer.helpCommandRating()
                     inline = false
                 }
             }
-        )).queue()
+        )).map { it.queue() }
 
-    fun sendHelpStyle(messagePublisher: MessagePublisher, languageContainer: LanguageContainer): Unit =
+    fun sendEmbedStyle(messagePublisher: MessagePublisher, languageContainer: LanguageContainer) =
         messagePublisher(Message(
             embed = Embed {
                 color = COLOR_NORMAL_HEX
@@ -108,23 +111,25 @@ object MessageAgent {
                 BoardStyle.values()
                     .drop(1)
                     .fold(this) { builder, style ->
-                        builder.also { field {
-                            name = "Style ``${style.sample.styleName}``"
-                            value = style.sample.sampleView
-                            inline = false
-                        } }
+                        builder.also {
+                            field {
+                                name = "Style ``${style.sample.styleShortcut}``:``${style.sample.styleName}``"
+                                value = style.sample.sampleView
+                                inline = false
+                            }
+                        }
                     }
                 field {
-                    name = "Style ``IMAGE``"
+                    name = "Style ``A``:``IMAGE``"
                     inline = false
                 }
                 image = "https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/style-preview.jpg"
             }
-        )).queue()
+        )).map { it.queue() }
 
     private val languageEmbed = Embed {
         color = COLOR_NORMAL_HEX
-        title = "Language guide"
+        title = "GomokuBot / Language"
         description = "The default language has been set as the server region for this channel. Please select the proper language for this server!"
         Language.values().fold(this) { builder, language ->
             builder.also { field {
@@ -135,7 +140,7 @@ object MessageAgent {
         }
     }
 
-    fun sendHelpLanguage(messagePublisher: MessagePublisher): Unit =
-        messagePublisher(Message(embed = languageEmbed)).queue()
+    fun sendEmbedLanguage(messagePublisher: MessagePublisher) =
+        messagePublisher(Message(embed = languageEmbed)).map { it.queue() }
 
 }

@@ -4,7 +4,7 @@ import utility.LinuxTime
 
 class GuildJoinReport(
     private val commandInserted: Boolean = true,
-    private val helpSent: Boolean = true,
+    private val helpSent: Boolean? = true,
     override val terminationTime: LinuxTime = LinuxTime(),
 ) : InteractionReport {
 

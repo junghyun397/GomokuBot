@@ -1,17 +1,17 @@
 package interact.i18n
 
-import java.util.*
+import net.dv8tion.jda.api.Region
 
 class LanguageVNM : LanguageENG() {
 
-    override fun targetRegion() = arrayOf(Locale("vi", "VN"))
+    override fun targetRegion() = emptyArray<Region>()
 
     override fun languageCode() = "VNM"
 
-    override fun languageName() = "Tiếng Việt:flag_vn:"
+    override fun languageName() = "Tiếng Việt\uD83C\uDDFB\uD83C\uDDF3"
     override fun languageSuggestion() = "Vui lòng sử dụng lệnh `~lang` `VNM`"
 
-    override fun helpAboutInfo() = "GomokuBot / Trợ giúp"
+    override fun helpAboutTitle() = "GomokuBot / Trợ giúp"
     override fun helpAboutDescription() =
         "GomokuBot là một con bot Discord mã nguồn mở cho phép bạn chơi ca-rô trên Discord. Mọi dữ liệu trò chơi được dùng để nâng cao tính chính xác của máy khi chơi ca-rô"
     override fun helpAboutDeveloper() = "Nhà phát triển"
@@ -33,7 +33,7 @@ class LanguageVNM : LanguageENG() {
     override fun styleInfo() = "GomokuBot / Skin"
     override fun styleDescription() =
         "Skin A có thể không hiển thị chính xác với một số thiết bị. Chọn các skin có sẵn còn lại và sử dụng"
-    override fun styleCommandInfo(style: String) = "Nhập lệnh ``~skin`` ``$style`` để chọn skin này"
+    override fun styleSuggestion(style: String) = "Nhập lệnh ``~skin`` ``$style`` để chọn skin này"
     override fun styleUpdateError() = "Cú pháp chỉnh skin không hợp lệ."
     override fun styleUpdateSuccess(style: String) = "Skin chơi ca-rô đã chuyển sang skin ``$style`` !"
 

@@ -1,13 +1,11 @@
 package interact.commands
 
-import interact.commands.entities.HelpCommand
-import interact.commands.entities.StartCommand
-import interact.commands.entities.StyleCommand
+import interact.commands.entities.*
 import interact.i18n.LanguageContainer
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 
 val buildableCommands: Collection<BuildableCommand> =
-    listOf(HelpCommand, StartCommand, StyleCommand)
+    listOf(HelpCommand, StartCommand, StyleCommand, LangCommand, ResignCommand, RankCommand, SetCommand, RatingCommand)
 
 interface BuildableCommand {
 

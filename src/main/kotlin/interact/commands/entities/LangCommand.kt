@@ -7,8 +7,8 @@ import interact.commands.BuildableCommand
 import interact.commands.ParsableCommand
 import interact.commands.ParseFailure
 import interact.commands.asParseFailure
+import interact.i18n.Language
 import interact.i18n.LanguageContainer
-import interact.message.graphics.BoardStyle
 import interact.reports.asCommandReport
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -19,7 +19,7 @@ import utility.Either
 import utility.MessagePublisher
 import utility.UserId
 
-class StyleCommand(override val command: String, private val style: BoardStyle) : Command {
+class LangCommand(override val command: String, private val language: Language) : Command {
 
     override suspend fun execute(
         botContext: BotContext,
@@ -27,54 +27,57 @@ class StyleCommand(override val command: String, private val style: BoardStyle) 
         userId: UserId,
         messagePublisher: MessagePublisher
     ) = runCatching {
-        this.asCommandReport("${guildConfig.boardStyle.name} to ${style.name}")
+        this.asCommandReport("${guildConfig.language.name} to ${language.name}")
     }
 
     companion object : ParsableCommand, BuildableCommand {
 
-        override val name = "style"
+        override val name = "lang"
 
-        private fun matchStyle(option: String): BoardStyle? =
-            BoardStyle.values().firstOrNull { it.sample.styleShortcut == option || it.sample.styleName == option }
+        private fun matchLang(option: String): Language? =
+            Language.values().firstOrNull { it.container.languageCode() == option }
 
         override fun parse(event: SlashCommandInteractionEvent, languageContainer: LanguageContainer): Either<Command, ParseFailure> {
-            val style = event.getOption(languageContainer.styleCommandOptionCode())?.asString?.uppercase()?.let {
-                matchStyle(it)
+            val lang = event.getOption(languageContainer.languageCommandOptionCode())?.asString?.uppercase()?.let {
+                matchLang(it)
             }
-                ?: return Either.Right(this.asParseFailure("option missmatch") { _, _ ->
-                    // TODO(internal error)
-                })
-
-            return Either.Left(StyleCommand(languageContainer.styleCommand(), style))
-        }
-
-        override fun parse(event: MessageReceivedEvent, languageContainer: LanguageContainer): Either<Command, ParseFailure> {
-            val option = event.message.contentRaw
-                .drop(languageContainer.styleCommand().length + 2)
-                .uppercase()
-
-            val style = matchStyle(option)
                 ?: return Either.Right(this.asParseFailure("option missmatch") { container, publisher ->
                     // TODO
                 })
 
-            return Either.Left(StyleCommand(languageContainer.styleCommand(), style))
+            return Either.Left(LangCommand(languageContainer.langCommand(), lang))
+        }
+
+        override fun parse(
+            event: MessageReceivedEvent,
+            languageContainer: LanguageContainer
+        ): Either<Command, ParseFailure> {
+            val option = event.message.contentRaw
+                .drop(languageContainer.langCommand().length + 2)
+                .uppercase()
+
+            val lang = matchLang(option)
+                ?: return Either.Right(this.asParseFailure("option missmatch") { container, pulisher ->
+                    // TODO
+                })
+
+            return Either.Left(LangCommand(languageContainer.langCommand(), lang))
         }
 
         override fun buildCommandData(action: CommandListUpdateAction, languageContainer: LanguageContainer) =
             action.slash(
-                languageContainer.styleCommand(),
-                languageContainer.styleCommandDescription()
+                languageContainer.langCommand(),
+                languageContainer.langCommandDescription(),
             ) {
                 option<String>(
-                    languageContainer.styleCommandOptionCode(),
-                    languageContainer.styleCommandOptionCodeDescription(),
+                    languageContainer.languageCommandOptionCode(),
+                    languageContainer.languageCommandOptionCodeDescription(),
                     true
                 ) {
-                    BoardStyle.values().fold(this) { builder, style ->
+                    Language.values().fold(this) { builder, language ->
                         builder.choice(
-                            "${style.sample.styleShortcut}:${style.sample.styleName}",
-                            style.sample.styleShortcut
+                            "${language.container.languageCode()}:${language.container.languageName()}",
+                            language.container.languageCode()
                         )
                     }
                 }

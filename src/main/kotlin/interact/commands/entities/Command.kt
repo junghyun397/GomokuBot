@@ -8,7 +8,7 @@ import utility.UserId
 
 sealed interface Command {
 
-    val name: String
+    val command: String
 
     suspend fun execute(
         botContext: BotContext,

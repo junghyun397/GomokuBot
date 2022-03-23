@@ -1,15 +1,27 @@
 package interact.message.graphics
 
-import utility.MessagePublisher
+import interact.i18n.LanguageContainer
+import net.dv8tion.jda.api.entities.MessageEmbed
+import net.dv8tion.jda.api.interactions.components.ActionRow
 
 class ImageBoardRenderer : BoardRenderer {
 
-    override val styleName = "IMAGE"
+    override fun buildEmbeds(languageContainer: LanguageContainer): Array<MessageEmbed> {
+        TODO("Not yet implemented")
+    }
 
-    override val sampleView = ""
+    override fun buildButtons(): Array<ActionRow> {
+        TODO("Not yet implemented")
+    }
 
-    override fun attachBoard(messagePublisher: MessagePublisher) = TODO()
+    companion object : BoardRendererSample {
 
-    override fun attachBoardWithButtons(messagePublisher: MessagePublisher) = TODO()
+        override val styleShortcut = "A"
+
+        override val styleName = "IMAGE"
+
+        override val sampleView = ""
+
+    }
 
 }

@@ -17,7 +17,7 @@ import utility.MessagePublisher
 import utility.UserId
 import utility.extractId
 
-class StartCommand(override val name: String = "start", val opponent: UserId?) : Command {
+class StartCommand(override val command: String = "start", val opponent: UserId?) : Command {
 
     override suspend fun execute(
         botContext: BotContext,
@@ -29,6 +29,8 @@ class StartCommand(override val name: String = "start", val opponent: UserId?) :
     }
 
     companion object : ParsableCommand, BuildableCommand {
+
+        override val name = "start"
 
         override fun parse(event: SlashCommandInteractionEvent, languageContainer: LanguageContainer) =
             Either.Left(
@@ -44,10 +46,9 @@ class StartCommand(override val name: String = "start", val opponent: UserId?) :
         override fun parse(event: MessageReceivedEvent, languageContainer: LanguageContainer) =
             Either.Left(
                 StartCommand(
-                    opponent = event.message.mentionedUsers.let {
-                        if (it.isEmpty() || it[0].isBot || it[0].idLong == event.author.idLong) null
-                        else it[0].extractId()
-                    }
+                    opponent = event.message.mentionedUsers
+                        .firstOrNull { !it.isBot && it.idLong != event.author.idLong }
+                        ?.extractId()
                 )
             )
 

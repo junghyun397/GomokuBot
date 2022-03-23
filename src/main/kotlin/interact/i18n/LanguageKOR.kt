@@ -1,14 +1,14 @@
 package interact.i18n
 
-import java.util.*
+import net.dv8tion.jda.api.Region
 
 open class LanguageKOR : LanguageENG() {
 
-    override fun targetRegion() = arrayOf(Locale.KOREAN)
+    override fun targetRegion() = arrayOf(Region.SOUTH_KOREA, Region.VIP_SOUTH_KOREA)
 
     override fun languageCode() = "KOR"
 
-    override fun languageName() = "한국어:flag_kr:"
+    override fun languageName() = "한국어\uD83C\uDDF0\uD83C\uDDF7"
     override fun languageSuggestion() = "`~lang` `KOR` 명령어를 사용해주세요."
 
     // TOKENS
@@ -17,7 +17,7 @@ open class LanguageKOR : LanguageENG() {
 
     // HELP
 
-    override fun helpAboutInfo() = "GomokuBot / 도움말"
+    override fun helpAboutTitle() = "GomokuBot / 도움말"
     override fun helpAboutDescription() =
         "GomokuBot 은 디스코드에서 오목 기능을 제공하는 오픈소스 디스코드 봇 입니다. 수집된 기보 데이터는 강화학습 모델 훈련에 사용됩니다."
     override fun helpAboutDeveloper() = "개발자"
@@ -39,7 +39,7 @@ open class LanguageKOR : LanguageENG() {
     override fun styleDescription() =
         "GomokuBot에서 제공하는 기본 오목판(``Style A``)이 제대로 표시되지 않을 수 있습니다." +
                 "준비된 세 가지 스타일 중 하나를 선택해 이 서버에서 사용할 스타일을 설정해 주세요."
-    override fun styleCommandInfo(style: String) = "이 스타일을 사용 하려면 ``~skin`` ``$style`` 명령어를 입력해주세요."
+    override fun styleSuggestion(style: String) = "이 스타일을 사용 하려면 ``~skin`` ``$style`` 명령어를 입력해주세요."
     override fun styleUpdateError() = "스타일 지정에 오류가 있습니다."
     override fun styleUpdateSuccess(style: String) = "스타일 설정이 스타일 ``$style``로 바뀌었습니다!"
 

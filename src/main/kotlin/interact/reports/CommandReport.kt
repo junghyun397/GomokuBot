@@ -15,7 +15,7 @@ class CommandReport(
 }
 
 fun Command.asCommandReport(comment: String) =
-    CommandReport(this.name, comment)
+    CommandReport(this.command, comment)
 
 fun ParseFailure.asCommandReport() =
     CommandReport("PARSE-FAILURE-${this.name}", this.comment)

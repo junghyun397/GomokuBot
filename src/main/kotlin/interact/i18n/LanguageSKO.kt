@@ -1,17 +1,17 @@
 package interact.i18n
 
-import java.util.*
+import net.dv8tion.jda.api.Region
 
 class LanguageSKO : LanguageKOR() {
 
-    override fun targetRegion() = emptyArray<Locale>()
+    override fun targetRegion() = emptyArray<Region>()
 
     override fun languageCode() = "SKO"
 
-    override fun languageName() = "國漢文混用體:flag_kr:"
+    override fun languageName() = "國漢文混用體\uD83C\uDDF0\uD83C\uDDF7"
     override fun languageSuggestion() = "`~lang` `SKO` 命令語를使用해주세요."
 
-    override fun helpAboutInfo() = "GomokuBot / 助言"
+    override fun helpAboutTitle() = "GomokuBot / 助言"
     override fun helpAboutDescription() =
         "GomokuBot은Discord에서五目을滿喫할수있게해주는資料開放DiscordBot입니다. 收集된棋譜資料는强化學習模型訓鍊에使用됩니다. :)"
     override fun helpAboutDeveloper() = "開發者"

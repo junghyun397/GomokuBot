@@ -1,13 +1,22 @@
 package utility
 
-import java.awt.Color
+import net.dv8tion.jda.api.entities.Emoji
 
-val COLOR_NORMAL = Color(0, 145, 234) // #0091EA
+const val COMMAND_PREFIX = 126.toChar() // "~"
+
+const val SELF_LENGTH = "GomokuBot#0000".length
+
 const val COLOR_NORMAL_HEX = 0x0091EA
-val COLOR_GREEN = Color(0, 200, 83) // #00C853
 const val COLOR_GREEN_HEX = 0x00C853
-val COLOR_RED = Color(213, 0, 0) // #D50000
 const val COLOR_RED_HEX = 0xD50000
+
+const val UNICODE_CHECK = "\u2611\uFE0F" // ☑
+const val UNICODE_CROSS = "\u274C" // ❌
+
+const val UNICODE_BLACK_CIRCLE = "\u26AA" // ⚪
+val EMOJI_BLACK_CIRCLE = Emoji.fromUnicode(UNICODE_BLACK_CIRCLE)
+const val UNICODE_WHITE_CIRCLE = "\u26AB" // ⚫
+val EMOJI_WHITE_CIRCLE = Emoji.fromUnicode(UNICODE_WHITE_CIRCLE)
 
 const val ASCII_LOGO = "\n" +
         "                                                ____________\n" +

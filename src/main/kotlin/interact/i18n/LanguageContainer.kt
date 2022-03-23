@@ -1,6 +1,6 @@
 package interact.i18n
 
-import java.util.*
+import net.dv8tion.jda.api.Region
 
 enum class Language(val container: LanguageContainer) {
     ENG(LanguageENG()),
@@ -13,7 +13,7 @@ enum class Language(val container: LanguageContainer) {
 
 sealed interface LanguageContainer {
 
-    fun targetRegion(): Array<Locale>
+    fun targetRegion(): Array<Region>
 
     fun languageCode(): String
 
@@ -79,9 +79,9 @@ sealed interface LanguageContainer {
 
     // # HELP
 
-    // ## ABOUT
+    // ## ABOUT - EMBED
 
-    fun helpAboutInfo(): String
+    fun helpAboutTitle(): String
     fun helpAboutDescription(): String
     fun helpAboutDeveloper(): String
     fun helpAboutRepository(): String
@@ -89,7 +89,7 @@ sealed interface LanguageContainer {
     fun helpAboutSupport(): String
     fun helpAboutInvite(): String
 
-    // ## COMMAND
+    // ## COMMAND - EMBED
 
     fun helpCommandInfo(): String
     fun helpCommandHelp(): String
@@ -103,30 +103,35 @@ sealed interface LanguageContainer {
 
     // # STYLE
 
+    // ## EMBED
+
     fun styleInfo(): String
     fun styleDescription(): String
-    fun styleCommandInfo(style: String): String
+    fun styleSuggestion(style: String): String
+
+    // ## MESSAGE
+
     fun styleUpdateError(): String
     fun styleUpdateSuccess(style: String): String
 
-    // # RANK
+    // # LANG - MESSAGE
+
+    fun langUpdateError(): String
+    fun langUpdateSuccess(): String
+
+    // # RANK - EMBED
 
     fun rankInfo(): String
     fun rankDescription(): String
     fun rankWin(): String
     fun rankLose(): String
 
-    // # RATING
+    // # RATING - EMBED
 
     fun ratingInfo(): String
     fun ratingDescription(): String
     fun ratingUpdate(nameTag: String, prvRating: Float, rating: Float): String
     fun rating(): String
-
-    // # LANG
-    
-    fun langUpdateSuccess(): String
-    fun langUpdateError(): String
 
     // # GAME
 

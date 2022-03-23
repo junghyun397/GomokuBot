@@ -21,3 +21,6 @@ class ParseFailure(
     }
 
 }
+
+fun ParsableCommand.asParseFailure(comment: String, onFailure: (LanguageContainer, MessagePublisher) -> Unit) =
+    ParseFailure(this.name, comment, onFailure)

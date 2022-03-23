@@ -1,17 +1,18 @@
 package interact.i18n
 
+import net.dv8tion.jda.api.Region
 import java.util.*
 
 class LanguageJPN : LanguageENG() {
 
-    override fun targetRegion() = arrayOf(Locale.JAPANESE)
+    override fun targetRegion() = arrayOf(Region.JAPAN, Region.VIP_JAPAN)
 
     override fun languageCode() = "JPN"
 
-    override fun languageName() = "日本語:flag_jp:"
+    override fun languageName() = "日本語\uD83C\uDDEF\uD83C\uDDF5"
     override fun languageSuggestion() = "`~lang` `JPN` コマンドを使ってください。"
 
-    override fun helpAboutInfo() = "GomokuBot / ヘルプ"
+    override fun helpAboutTitle() = "GomokuBot / ヘルプ"
     override fun helpAboutDescription() =
         "GomokuBotはDiscordで五目を楽しませてくれるオープンソースDiscord Botです。収集される基本データは強化学習モデル訓練に使われます。"
     override fun helpAboutDeveloper() = "ディベロッパー"

@@ -13,7 +13,7 @@ import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.ReadyEvent
 import net.dv8tion.jda.api.events.ShutdownEvent
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
-import net.dv8tion.jda.api.events.guild.GuildReadyEvent
+import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -53,11 +53,11 @@ private inline fun <reified E : Event, reified R : InteractionReport> leaveLog(c
         combined.t2.fold(
             onSuccess = {
                 logger.info("${E::class.simpleName} (${combined.t1.guildName})/${combined.t1.guild.id} " +
-                        "T${(it.terminationTime.timestamp - combined.t1.emittenTime.timestamp)/1000}ms => $it")
+                        "T${(it.terminationTime.timestamp - combined.t1.emittenTime.timestamp)}ms => $it")
             },
             onFailure = {
                 logger.error("${E::class.simpleName} (${combined.t1.guildName})/${combined.t1.guild.id} " +
-                        "T${(System.currentTimeMillis() - combined.t1.emittenTime.timestamp)/1000}ms => ${it.stackTraceToString()}")
+                        "T${(System.currentTimeMillis() - combined.t1.emittenTime.timestamp)}ms => ${it.stackTraceToString()}")
             }
         )
     }
@@ -123,6 +123,10 @@ object GomokuBot {
             .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild) } }
             .flatMap(::guildJoinRouter)
             .doOnNext { leaveLog(it) }
+            .subscribe()
+
+        eventManager.on<GuildLeaveEvent>()
+            .doOnNext { logger.info("leave (${it.guild.name})/${it.guild.idLong}") }
             .subscribe()
 
         eventManager.on<ReadyEvent>()

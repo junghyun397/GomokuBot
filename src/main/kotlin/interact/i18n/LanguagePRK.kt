@@ -1,17 +1,17 @@
 package interact.i18n
 
-import java.util.*
+import net.dv8tion.jda.api.Region
 
 class LanguagePRK : LanguageKOR() {
 
-    override fun targetRegion() = emptyArray<Locale>()
+    override fun targetRegion() = emptyArray<Region>()
 
     override fun languageCode() = "PRK"
 
-    override fun languageName() = "조선말:flag_kp:"
+    override fun languageName() = "조선말\uD83C\uDDF0\uD83C\uDDF5"
     override fun languageSuggestion() = "`~lang` `PRK` 시킴말을 사용 하라우."
 
-    override fun helpAboutInfo() = "GomokuBot / 도움말"
+    override fun helpAboutTitle() = "GomokuBot / 도움말"
     override fun helpAboutDescription() =
         "GomokuBot은 불협화음에서 오목 오락을 즐길 수 있게 하는 열린문서 Discord Bot 이라우. 모아진 기보 내용은 강화학습 형태 훈련에 사용된다우."
 

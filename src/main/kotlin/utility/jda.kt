@@ -18,7 +18,7 @@ value class UserId(val id: Long)
 
 fun User.extractId() = UserId(this.idLong)
 
-typealias MessagePublisher = (Message) -> RestActionAdaptor
+typealias MessagePublisher = (Message) -> Option<RestActionAdaptor>
 
 sealed interface RestActionAdaptor {
     fun addFile(file: File): RestActionAdaptor
