@@ -1,15 +1,13 @@
-package discord.utils
+package discord.assets
 
 import net.dv8tion.jda.api.entities.Emoji
-import utils.assets.UNICODE_BLACK_CIRCLE
-import utils.assets.UNICODE_WHITE_CIRCLE
+import utils.assets.*
 
 const val COMMAND_PREFIX = 126.toChar() // "~"
 
-const val SELF_LENGTH = "GomokuBot#0000".length
-
 val EMOJI_BLACK_CIRCLE = Emoji.fromUnicode(UNICODE_BLACK_CIRCLE)
 val EMOJI_WHITE_CIRCLE = Emoji.fromUnicode(UNICODE_WHITE_CIRCLE)
+val EMOJI_DARK_X = Emoji.fromUnicode(UNICODE_DARK_X)
 
 const val ASCII_LOGO = "\n" +
         "                                                ____________\n" +

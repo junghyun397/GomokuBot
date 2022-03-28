@@ -5,8 +5,6 @@ import core.interact.i18n.LanguageContainer
 import dev.minn.jda.ktx.interactions.slash
 import discord.interact.command.BuildableCommand
 import discord.interact.command.ParsableCommand
-import discord.interact.message.DiscordButtons
-import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction

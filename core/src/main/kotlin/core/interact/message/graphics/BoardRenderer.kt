@@ -1,5 +1,8 @@
 package core.interact.message.graphics
 
+import utils.monads.Either
+import java.io.File
+
 enum class BoardStyle(val renderer: BoardRenderer, val sample: BoardRendererSample) {
     IMAGE(ImageBoardRenderer(), ImageBoardRenderer),
     TEXT(TextBoardRenderer(), TextBoardRenderer),
@@ -18,5 +21,7 @@ sealed interface BoardRendererSample {
 }
 
 sealed interface BoardRenderer {
+
+    fun renderBoard(): Either<String, File>
 
 }

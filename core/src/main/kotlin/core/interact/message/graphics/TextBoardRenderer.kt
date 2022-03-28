@@ -2,6 +2,8 @@ package core.interact.message.graphics
 
 open class TextBoardRenderer : BoardRenderer {
 
+    override fun renderBoard() = TODO()
+
     companion object : BoardRendererSample {
 
         override val styleShortcut = "B"

@@ -6,7 +6,7 @@ import core.interact.commands.StartCommand
 import core.interact.i18n.LanguageContainer
 import discord.interact.command.BuildableCommand
 import discord.interact.command.ParsableCommand
-import discord.utils.extractId
+import discord.assets.extractId
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent

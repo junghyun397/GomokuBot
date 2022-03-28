@@ -37,3 +37,9 @@ inline fun <L, R, T> Either<L, R>.flatMapLeft(mapper: (L) -> Either<T, R>): Eith
         is Either.Left -> mapper(this.value)
         is Either.Right -> this
     }
+
+inline fun <L, R, T> Either<L, R>.flatMapRight(mapper: (R) -> Either<L, T>): Either<L, T> =
+    when (this) {
+        is Either.Left -> this
+        is Either.Right -> mapper(this.value)
+    }

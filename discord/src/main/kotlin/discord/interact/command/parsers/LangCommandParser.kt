@@ -1,21 +1,21 @@
 package discord.interact.command.parsers
 
-import dev.minn.jda.ktx.interactions.choice
-import dev.minn.jda.ktx.interactions.option
-import dev.minn.jda.ktx.interactions.slash
-import discord.interact.command.ParseFailure
 import core.interact.commands.Command
 import core.interact.commands.LangCommand
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
+import dev.minn.jda.ktx.interactions.choice
+import dev.minn.jda.ktx.interactions.option
+import dev.minn.jda.ktx.interactions.slash
 import discord.interact.command.BuildableCommand
 import discord.interact.command.ParsableCommand
+import discord.interact.command.ParseFailure
 import discord.interact.command.asParseFailure
+import discord.interact.message.DiscordMessageBinder
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import utils.monads.Either
-import utils.monads.IO
 
 object LangCommandParser : ParsableCommand, BuildableCommand {
 
@@ -28,8 +28,8 @@ object LangCommandParser : ParsableCommand, BuildableCommand {
         val lang = event.getOption(languageContainer.languageCommandOptionCode())?.asString?.uppercase()?.let {
             matchLang(it)
         }
-            ?: return Either.Right(this.asParseFailure("option missmatch") { container, publisher ->
-                IO {}
+            ?: return Either.Right(this.asParseFailure("option missmatch") { _, publisher ->
+                DiscordMessageBinder.bindLanguageGuide(publisher).map { it.retrieve() }
             })
 
         return Either.Left(LangCommand(languageContainer.langCommand(), lang))
@@ -41,8 +41,8 @@ object LangCommandParser : ParsableCommand, BuildableCommand {
             .uppercase()
 
         val lang = matchLang(option)
-            ?: return Either.Right(this.asParseFailure("option missmatch") { container, pulisher ->
-                IO {}
+            ?: return Either.Right(this.asParseFailure("option missmatch") { _, publisher ->
+                DiscordMessageBinder.bindLanguageGuide(publisher).map { it.retrieve() }
             })
 
         return Either.Left(LangCommand(languageContainer.langCommand(), lang))

@@ -4,26 +4,26 @@ package utils.monads
 
 interface IO<out A> {
 
-    fun run(): A
+    suspend fun run(): A
 
-    fun <B> map(mapper: (A) -> B): IO<B> =
+    fun <B> map(mapper: suspend (A) -> B): IO<B> =
         object : IO<B> {
-            override fun run() = mapper(this@IO.run())
+            override suspend fun run() = mapper(this@IO.run())
         }
 
-    fun <B> flatMap(mapper: (A) -> IO<B>): IO<B> =
+    fun <B> flatMap(mapper: suspend (A) -> IO<B>): IO<B> =
         object : IO<B> {
-            override fun run() = mapper(this@IO.run()).run()
+            override suspend fun run() = mapper(this@IO.run()).run()
         }
 
     companion object {
 
-        fun <A> unit(block: () -> A) =
+        fun <A> unit(block: suspend () -> A) =
             object : IO<A> {
-                override fun run() = block()
+                override suspend fun run() = block()
             }
 
-        operator fun <A> invoke(block: () -> A) = unit(block)
+        operator fun <A> invoke(block: suspend () -> A) = unit(block)
 
     }
 

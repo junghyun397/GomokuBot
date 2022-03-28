@@ -1,4 +1,4 @@
-//import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     application
@@ -15,6 +15,10 @@ allprojects {
         mavenCentral()
         google()
         maven("https://jitpack.io/")
+    }
+
+    tasks.withType<KotlinCompile> {
+        kotlinOptions.jvmTarget = "11"
     }
 }
 
@@ -34,8 +38,4 @@ subprojects {
 
         testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
     }
-
-//    tasks.withType<KotlinCompile> {
-//        kotlinOptions.jvmTarget = "11"
-//    }
 }

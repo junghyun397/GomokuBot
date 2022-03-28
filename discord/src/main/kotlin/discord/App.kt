@@ -12,9 +12,9 @@ import discord.route.buttonInteractionRouter
 import discord.route.guildJoinRouter
 import discord.route.slashCommandRouter
 import discord.route.textCommandRouter
-import discord.utils.ASCII_LOGO
-import discord.utils.COMMAND_PREFIX
-import discord.utils.extractId
+import discord.assets.ASCII_LOGO
+import discord.assets.COMMAND_PREFIX
+import discord.assets.extractId
 import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.JDABuilder

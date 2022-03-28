@@ -2,26 +2,80 @@ package discord.interact.message
 
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
+import core.interact.message.MessageAction
 import core.interact.message.MessageBinder
+import core.interact.message.MiniBoardStatusMap
+import core.interact.message.SpotInfo
 import core.interact.message.graphics.BoardStyle
 import dev.minn.jda.ktx.Embed
 import dev.minn.jda.ktx.Message
+import discord.assets.EMOJI_BLACK_CIRCLE
+import discord.assets.EMOJI_DARK_X
+import discord.assets.EMOJI_WHITE_CIRCLE
 import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.interactions.components.ActionRow
+import net.dv8tion.jda.api.interactions.components.buttons.Button
+import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
 import net.dv8tion.jda.api.requests.RestAction
-import utils.assets.COLOR_NORMAL_HEX
-import utils.assets.COLOR_RED_HEX
+import utils.assets.*
+import utils.monads.Either
 import utils.monads.IO
+import java.io.File
 
 object DiscordMessageBinder : MessageBinder<Message, DiscordButtons>() {
 
-    override fun bindAboutBot(container: LanguageContainer, publisher: DiscordMessagePublisher) =
+    private fun buildNextMoveEmbed(container: LanguageContainer) =
+        Embed {
+            color = COLOR_GREEN_HEX
+            description = ":mag: 버튼을 누르거나 ``/s`` ``알파벳`` ``숫자`` 명령어를 입력해 다음 수를 놓아 주세요."
+        }
+
+    override fun bindBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, board: Either<String, File>) =
+        board.fold(
+            onLeft = { textBoard -> IO {
+                arrayOf(publisher(Message(
+                    embeds = listOf(
+                        Embed {
+                            color = COLOR_GREEN_HEX
+                            description = textBoard
+                        },
+                        buildNextMoveEmbed(container)
+                    )
+                )))
+            } },
+            onRight = { imageBoard -> IO {
+                arrayOf(
+                    publisher(Message()).addFile(imageBoard),
+                    publisher(Message(
+                    embeds = listOf(
+                        buildNextMoveEmbed(container)
+                    )))
+                )
+            } }
+        )
+
+    override fun bindButtons(boardAction: MessageAction<DiscordButtons>, container: LanguageContainer, commandMap: MiniBoardStatusMap) =
+        boardAction.addButtons(
+            commandMap.map { row -> ActionRow.of(
+                row.map { element -> when (element.second) {
+                    SpotInfo.FREE -> Button.of(ButtonStyle.SECONDARY, "s-${element.first}", element.first)
+                    SpotInfo.BLACK -> Button.of(ButtonStyle.SECONDARY, "s-${element.first}", "", EMOJI_BLACK_CIRCLE).asDisabled()
+                    SpotInfo.WHITE -> Button.of(ButtonStyle.SECONDARY, "s-${element.first}", "", EMOJI_WHITE_CIRCLE).asDisabled()
+                    SpotInfo.BLACK_RECENT -> Button.of(ButtonStyle.SUCCESS, "s-${element.first}", "", EMOJI_BLACK_CIRCLE).asDisabled()
+                    SpotInfo.WHITE_RECENT -> Button.of(ButtonStyle.SUCCESS, "s-${element.first}", "", EMOJI_WHITE_CIRCLE).asDisabled()
+                    SpotInfo.FORBIDDEN -> Button.of(ButtonStyle.DANGER, "s-${element.first}", "", EMOJI_DARK_X).asDisabled()
+                } }
+            ) }.reversed() // cartesian coordinate system
+        )
+
+    override fun bindAboutBot(publisher: DiscordMessagePublisher, container: LanguageContainer) =
         IO { publisher(Message(
             embed = Embed {
                 color = COLOR_NORMAL_HEX
                 title = container.helpAboutTitle()
                 description = container.helpAboutDescription()
                 thumbnail =
-                    "https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/profile-thumbnail.jpg"
+                    "https://raw.githubusercontent.com/junghyun397/GomokuBot/master/discord/images/profile-thumbnail.jpg"
                 field {
                     name = container.helpAboutDeveloper()
                     value = "junghyun397#6725"
@@ -42,10 +96,13 @@ object DiscordMessageBinder : MessageBinder<Message, DiscordButtons>() {
                     name = container.helpAboutInvite()
                     value = "[do1ph.in/gomokubot](https://do1ph.in/gomokubot)"
                 }
+                footer {
+                    name = "$UNICODE_ZAP Powered by Kotlin, Project Reactor, R2DBC, gRPC, JDA"
+                }
             }
-        )).send() }
+        )) }
 
-    override fun bindCommandGuide(container: LanguageContainer, publisher: DiscordMessagePublisher) =
+    override fun bindCommandGuide(publisher: DiscordMessagePublisher, container: LanguageContainer) =
         IO { publisher(Message(
             embed = Embed {
                 color = COLOR_NORMAL_HEX
@@ -57,14 +114,12 @@ object DiscordMessageBinder : MessageBinder<Message, DiscordButtons>() {
                     inline = false
                 }
                 field {
-                    name =
-                        "``/${container.startCommand()}`` or ``~${container.startCommand()}``"
+                    name = "``/${container.startCommand()}`` or ``~${container.startCommand()}``"
                     value = container.helpCommandPVE()
                     inline = false
                 }
                 field {
-                    name =
-                        "``/${container.startCommand()} @mention`` or ``~${container.startCommand()} @mention``"
+                    name = "``/${container.startCommand()} @mention`` or ``~${container.startCommand()} @mention``"
                     value = container.helpCommandPVP()
                     inline = false
                 }
@@ -74,19 +129,17 @@ object DiscordMessageBinder : MessageBinder<Message, DiscordButtons>() {
                     inline = false
                 }
                 field {
-                    name =
-                        "``/${container.resignCommand()}`` or ``~${container.resignCommand()}``"
+                    name = "``/${container.resignCommand()}`` or ``~${container.resignCommand()}``"
                     value = container.helpCommandResign()
                     inline = false
                 }
                 field {
                     name = "``/${container.langCommand()}`` or ``~${container.langCommand()}``"
-                    value = container.helpCommandLang(languageEnumeration) // TODO
+                    value = container.helpCommandLang(languageEnumeration)
                     inline = false
                 }
                 field {
-                    name =
-                        "``/${container.styleCommand()}`` or ``~${container.styleCommand()}``"
+                    name = "``/${container.styleCommand()}`` or ``~${container.styleCommand()}``"
                     value = container.helpCommandStyle()
                     inline = false
                 }
@@ -96,15 +149,14 @@ object DiscordMessageBinder : MessageBinder<Message, DiscordButtons>() {
                     inline = false
                 }
                 field {
-                    name =
-                        "``/${container.ratingCommand()}`` or ``~${container.ratingCommand()}``"
+                    name = "``/${container.ratingCommand()}`` or ``~${container.ratingCommand()}``"
                     value = container.helpCommandRating()
                     inline = false
                 }
             }
-        )).send() }
+        )) }
 
-    override fun bindStyleGuide(container: LanguageContainer, publisher: DiscordMessagePublisher) =
+    override fun bindStyleGuide(publisher: DiscordMessagePublisher, container: LanguageContainer) =
         IO { publisher(Message(
             embed = Embed {
                 color = COLOR_NORMAL_HEX
@@ -125,9 +177,9 @@ object DiscordMessageBinder : MessageBinder<Message, DiscordButtons>() {
                     name = "Style ``A``:``IMAGE``"
                     inline = false
                 }
-                image = "https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/style-preview.jpg"
+                image = "https://raw.githubusercontent.com/junghyun397/GomokuBot/master/discord/images/style-preview.jpg"
             }
-        )).send() }
+        )) }
 
     private val languageEmbed = Embed {
         color = COLOR_NORMAL_HEX
@@ -143,67 +195,18 @@ object DiscordMessageBinder : MessageBinder<Message, DiscordButtons>() {
     }
 
     override fun bindLanguageGuide(publisher: DiscordMessagePublisher) =
-        IO { publisher(Message(embed = languageEmbed)).send() }
+        IO { publisher(Message(embed = languageEmbed)) }
 
-    fun sendPermissionNotGrantedEmbed(container: LanguageContainer, publisher: (Message) -> RestAction<Message>, channelName: String) =
+    fun sendPermissionNotGrantedEmbed(publisher: (Message) -> RestAction<Message>, container: LanguageContainer, channelName: String) =
         publisher(Message(
             embed = Embed {
                 color = COLOR_RED_HEX
-                title = "\uD83D\uDEA7 Something Wrong"
+                title = "$UNICODE_CONSTRUCTION Something Wrong"
                 description = "GomokuBot은 ``${channelName}``채널에 메시지를 보낼 권한이 없습니다! 역할 및 퍼미션 설정을 확인해 주세요."
                 footer {
-                    name = "⏰ 이 메지시는 1분 뒤 지워집니다."
+                    name = "$UNICODE_ALARM_CLOCK 이 메지시는 1분 뒤 지워집니다."
                 }
             }
         ))
-
-//    fun attachBoardWithButtons(messagePublisher: MessagePublisher) =
-//        messagePublisher(Message(
-//            embeds = listOf(
-//                Embed {
-//                    color = COLOR_GREEN_HEX
-//                    description = ":mag: 버튼을 누르거나 ``/s`` ``알파벳`` ``숫자`` 명령어를 입력해 다음 수를 놓아 주세요."
-//                }
-//            )
-//        )).fold(
-//            onDefined = { it.addActionRow(
-//                ActionRow.of(
-//                    Button.of(ButtonStyle.SECONDARY, "e1", "e1"),
-//                    Button.of(ButtonStyle.SECONDARY, "e2", "", EMOJI_BLACK_CIRCLE).asDisabled(),
-//                    Button.of(ButtonStyle.SECONDARY, "e3", "", EMOJI_WHITE_CIRCLE).asDisabled(),
-//                    Button.of(ButtonStyle.SECONDARY, "e4", "e4"),
-//                    Button.of(ButtonStyle.SECONDARY, "e5", "e5"),
-//                ),
-//                ActionRow.of(
-//                    Button.of(ButtonStyle.SECONDARY, "d1", "d1"),
-//                    Button.of(ButtonStyle.SECONDARY, "d2", "", EMOJI_WHITE_CIRCLE).asDisabled(),
-//                    Button.of(ButtonStyle.SECONDARY, "d3", "", EMOJI_WHITE_CIRCLE).asDisabled(),
-//                    Button.of(ButtonStyle.SECONDARY, "d4", "", EMOJI_BLACK_CIRCLE).asDisabled(),
-//                    Button.of(ButtonStyle.SECONDARY, "d5", "d5"),
-//                ),
-//                ActionRow.of(
-//                    Button.of(ButtonStyle.SECONDARY, "c1", "c1"),
-//                    Button.of(ButtonStyle.SECONDARY, "c2", "c2"),
-//                    Button.of(ButtonStyle.SECONDARY, "c3", "", EMOJI_BLACK_CIRCLE).asDisabled(),
-//                    Button.of(ButtonStyle.SECONDARY, "c4", "c4"),
-//                    Button.of(ButtonStyle.SECONDARY, "c5", "c5"),
-//                ),
-//                ActionRow.of(
-//                    Button.of(ButtonStyle.SECONDARY, "b1", "b1"),
-//                    Button.of(ButtonStyle.SECONDARY, "b2", "b2"),
-//                    Button.of(ButtonStyle.SECONDARY, "b3", "b3"),
-//                    Button.of(ButtonStyle.SECONDARY, "b4", "b4"),
-//                    Button.of(ButtonStyle.SECONDARY, "b5", "b5"),
-//                ),
-//                ActionRow.of(
-//                    Button.of(ButtonStyle.SECONDARY, "a1", "a1"),
-//                    Button.of(ButtonStyle.SECONDARY, "a2", "a2"),
-//                    Button.of(ButtonStyle.SECONDARY, "a3", "a3"),
-//                    Button.of(ButtonStyle.SECONDARY, "a4", "a4"),
-//                    Button.of(ButtonStyle.SECONDARY, "a5", "a5"),
-//                )
-//            ).queue() },
-//            onEmpty = { }
-//        )
 
 }
