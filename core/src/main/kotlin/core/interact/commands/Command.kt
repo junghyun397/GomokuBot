@@ -13,11 +13,11 @@ sealed interface Command {
     val command: String
 
     suspend fun <A, B> execute(
-        botContext: BotContext,
-        guildConfig: GuildConfig,
+        context: BotContext,
+        config: GuildConfig,
         userId: UserId,
-        messageBinder: MessageBinder<A, B>,
-        messagePublisher: MessagePublisher<A, B>
+        binder: MessageBinder<A, B>,
+        publisher: MessagePublisher<A, B>
     ): Result<Pair<IO<Unit>, CommandReport>>
 
 }

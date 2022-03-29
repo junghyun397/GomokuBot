@@ -1,5 +1,7 @@
 package discord.route
 
+import core.assets.UNICODE_CHECK
+import core.assets.UNICODE_CROSS
 import core.interact.commands.Command
 import core.interact.i18n.LanguageContainer
 import core.interact.reports.CommandReport
@@ -23,11 +25,9 @@ import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.util.function.Tuple2
 import reactor.util.function.Tuples
-import utils.assets.UNICODE_CHECK
-import utils.assets.UNICODE_CROSS
 import utils.monads.Either
 import utils.monads.IO
-import utils.monads.Maybe
+import utils.monads.Option
 import java.util.concurrent.TimeUnit
 
 private inline fun withMessagePermissionNode(user: User, guildChannel: GuildChannel, parsableCommand: ParsableCommand, block: (ParsableCommand) -> Either<Command, ParseFailure>) =
@@ -45,17 +45,17 @@ private inline fun withMessagePermissionNode(user: User, guildChannel: GuildChan
         }
     })
 
-private fun matchCommand(command: String, languageContainer: LanguageContainer): Maybe<ParsableCommand> =
+private fun matchCommand(command: String, languageContainer: LanguageContainer): Option<ParsableCommand> =
     when (command.lowercase()) {
-        languageContainer.helpCommand() -> Maybe.Just(HelpCommandParser)
-        languageContainer.startCommand() -> Maybe.Just(StartCommandParser)
-        "s" -> Maybe.Just(SetCommandParser)
-        languageContainer.resignCommand() -> Maybe.Just(ResignCommandParser)
-        languageContainer.langCommand() -> Maybe.Just(LangCommandParser)
-        languageContainer.styleCommand() -> Maybe.Just(StyleCommandParser)
-        languageContainer.rankCommand() -> Maybe.Just(RankCommandParser)
-        languageContainer.ratingCommand() -> Maybe.Just(RatingCommandParser)
-        else -> Maybe.Nothing
+        languageContainer.helpCommand() -> Option.Some(HelpCommandParser)
+        languageContainer.startCommand() -> Option.Some(StartCommandParser)
+        "s" -> Option.Some(SetCommandParser)
+        languageContainer.resignCommand() -> Option.Some(ResignCommandParser)
+        languageContainer.langCommand() -> Option.Some(LangCommandParser)
+        languageContainer.styleCommand() -> Option.Some(StyleCommandParser)
+        languageContainer.rankCommand() -> Option.Some(RankCommandParser)
+        languageContainer.ratingCommand() -> Option.Some(RatingCommandParser)
+        else -> Option.Empty
     }
 
 fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>): Mono<Tuple2<InteractionContext<SlashCommandInteractionEvent>, Result<CommandReport>>> =
@@ -79,10 +79,10 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
         .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.fold(
             onLeft = { command ->
                 command.execute(
-                    botContext = it.t1.botContext,
-                    guildConfig = it.t1.guildConfig,
+                    context = it.t1.botContext,
+                    config = it.t1.guildConfig,
                     userId = it.t1.event.user.extractId(),
-                    messageBinder = DiscordMessageBinder
+                    binder = DiscordMessageBinder
                 ) { msg -> WebHookRestActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
             } ,
             onRight = { parseFailure ->
@@ -120,10 +120,10 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
         .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.fold(
             onLeft = { command ->
                 command.execute(
-                    botContext = it.t1.botContext,
-                    guildConfig = it.t1.guildConfig,
+                    context = it.t1.botContext,
+                    config = it.t1.guildConfig,
                     userId = it.t1.event.author.extractId(),
-                    messageBinder = DiscordMessageBinder,
+                    binder = DiscordMessageBinder,
                 ) { msg -> MessageActionRestActionAdaptor(it.t1.event.message.reply(msg)) }
             },
             onRight = { parseFailure ->

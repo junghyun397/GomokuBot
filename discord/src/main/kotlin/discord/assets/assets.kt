@@ -1,7 +1,7 @@
 package discord.assets
 
 import net.dv8tion.jda.api.entities.Emoji
-import utils.assets.*
+import core.assets.*
 
 const val COMMAND_PREFIX = 126.toChar() // "~"
 

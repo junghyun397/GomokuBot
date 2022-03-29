@@ -1,10 +1,11 @@
 package core.session
 
-import kotlinx.coroutines.sync.withLock
+import core.database.DatabaseManager
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
 import core.session.entities.GuildSession
 import core.session.entities.RequestSession
+import kotlinx.coroutines.sync.withLock
 import utils.values.GuildId
 import utils.values.LinuxTime
 import utils.values.UserId
@@ -13,7 +14,11 @@ object SessionManager {
 
     private suspend inline fun retrieveGuildSession(repo: SessionRepository, guildId: GuildId): GuildSession =
         repo.sessions.getOrPut(guildId) {
-            GuildSession(guildConfig = core.database.DatabaseManager.fetchGuildConfig(repo.databaseConnection, guildId))
+            DatabaseManager.fetchGuildConfig(repo.databaseConnection, guildId)
+                .fold(
+                    onDefined = { GuildSession(guildConfig = it) },
+                    onEmpty = { GuildSession() }
+                )
         }
 
     private suspend inline fun mapGuildSession(repo: SessionRepository, guildId: GuildId, mapper: (GuildSession) -> GuildSession): GuildSession =
@@ -30,7 +35,7 @@ object SessionManager {
         this.mapGuildSession(repo, guildId) {
             it.copy(guildConfig = guildConfig)
         }.also {
-            core.database.DatabaseManager.updateGuildConfig(repo.databaseConnection, guildId, it.guildConfig)
+            DatabaseManager.updateGuildConfig(repo.databaseConnection, guildId, it.guildConfig)
         }
     }
 
@@ -76,10 +81,11 @@ object SessionManager {
         }
     }
 
-    private suspend fun cleanExpiredSessions(repo: SessionRepository): Unit =
+    suspend fun cleanExpiredSessions(repo: SessionRepository): Unit =
         repo.sessionsMutex.withLock {
             val referenceTime = LinuxTime()
             repo.sessions
+                .asSequence()
                 .map {
                     Triple(
                         first = it,
@@ -98,9 +104,10 @@ object SessionManager {
                 }
         }
 
-    private suspend fun cleanEmptySessions(repo: SessionRepository): Unit =
+    suspend fun cleanEmptySessions(repo: SessionRepository): Unit =
         repo.sessionsMutex.withLock {
             repo.sessions
+                .asSequence()
                 .filter { it.value.requestSessions.isEmpty() && it.value.gameSessions.isEmpty() }
                 .forEach { repo.sessions.remove(it.key) }
         }

@@ -13,7 +13,7 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import utils.monads.Either
-import utils.monads.Maybe
+import utils.monads.Option
 
 object SetCommandParser : ParsableCommand, EmbeddableCommand, BuildableCommand {
 
@@ -27,7 +27,7 @@ object SetCommandParser : ParsableCommand, EmbeddableCommand, BuildableCommand {
         TODO("Not yet implemented")
     }
 
-    override fun parse(event: ButtonInteractionEvent): Maybe<Command> = TODO()
+    override fun parse(event: ButtonInteractionEvent): Option<Command> = TODO()
 
     override fun buildCommandData(action: CommandListUpdateAction, languageContainer: LanguageContainer) =
         action.slash(

@@ -12,11 +12,11 @@ import utils.values.UserId
 class RatingCommand(override val command: String) : Command {
 
     override suspend fun <A, B> execute(
-        botContext: BotContext,
-        guildConfig: GuildConfig,
+        context: BotContext,
+        config: GuildConfig,
         userId: UserId,
-        messageBinder: MessageBinder<A, B>,
-        messagePublisher: MessagePublisher<A, B>
+        binder: MessageBinder<A, B>,
+        publisher: MessagePublisher<A, B>
     ): Result<Pair<IO<Unit>, CommandReport>> = runCatching {
         IO { } to this.asCommandReport("succeed")
     }

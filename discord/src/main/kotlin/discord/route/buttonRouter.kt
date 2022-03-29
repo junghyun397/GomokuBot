@@ -12,12 +12,12 @@ import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.util.function.Tuple2
 import reactor.util.function.Tuples
-import utils.monads.Maybe
+import utils.monads.Option
 
 private fun matchAction(prefix: String) =
     when(prefix) {
-        "s" -> Maybe.Just(SetCommandParser)
-        else -> Maybe.Nothing
+        "s" -> Option.Some(SetCommandParser)
+        else -> Option.Empty
     }
 
 fun buttonInteractionRouter(context: InteractionContext<ButtonInteractionEvent>): Mono<Tuple2<InteractionContext<ButtonInteractionEvent>, Result<CommandReport>>> =
@@ -39,10 +39,10 @@ fun buttonInteractionRouter(context: InteractionContext<ButtonInteractionEvent>)
         }
         .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.getOrNull()!!
             .execute(
-                botContext = it.t1.botContext,
-                guildConfig = it.t1.guildConfig,
+                context = it.t1.botContext,
+                config = it.t1.guildConfig,
                 userId = it.t1.event.user.extractId(),
-                messageBinder = DiscordMessageBinder
+                binder = DiscordMessageBinder
             ) { msg -> WebHookRestActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
         }) }
         .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.map { combined ->

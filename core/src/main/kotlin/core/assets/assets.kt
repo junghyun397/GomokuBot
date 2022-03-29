@@ -1,4 +1,4 @@
-package utils.assets
+package core.assets
 
 const val COLOR_NORMAL_HEX = 0x0091EA
 const val COLOR_GREEN_HEX = 0x00C853

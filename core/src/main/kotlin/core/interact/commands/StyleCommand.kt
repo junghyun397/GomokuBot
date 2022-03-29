@@ -13,13 +13,13 @@ import utils.values.UserId
 class StyleCommand(override val command: String, private val style: BoardStyle) : Command {
 
     override suspend fun <A, B> execute(
-        botContext: BotContext,
-        guildConfig: GuildConfig,
+        context: BotContext,
+        config: GuildConfig,
         userId: UserId,
-        messageBinder: MessageBinder<A, B>,
-        messagePublisher: MessagePublisher<A, B>
+        binder: MessageBinder<A, B>,
+        publisher: MessagePublisher<A, B>
     ): Result<Pair<IO<Unit>, CommandReport>> = runCatching {
-        IO { } to this.asCommandReport("${guildConfig.boardStyle.name} to ${style.name}")
+        IO { } to this.asCommandReport("${config.boardStyle.name} to ${style.name}")
     }
 
 }

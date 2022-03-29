@@ -18,7 +18,7 @@ class SimpleProfile(
         this === other || (javaClass == other?.javaClass && id == (other as SimpleProfile).id)
 
     override fun hashCode(): Int =
-        id.id.hashCode()
+        id.hashCode()
 
 }
 

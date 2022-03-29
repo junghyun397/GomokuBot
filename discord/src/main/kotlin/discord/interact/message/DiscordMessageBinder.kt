@@ -17,7 +17,7 @@ import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
 import net.dv8tion.jda.api.requests.RestAction
-import utils.assets.*
+import core.assets.*
 import utils.monads.Either
 import utils.monads.IO
 import java.io.File

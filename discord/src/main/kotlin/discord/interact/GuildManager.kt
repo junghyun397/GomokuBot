@@ -5,16 +5,16 @@ import discord.interact.command.buildableCommands
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.GuildChannel
-import utils.monads.Maybe
+import utils.monads.Option
 
 object GuildManager {
 
     fun lookupPermission(channel: GuildChannel, permission: Permission) =
         channel.guild.selfMember.hasPermission(channel, permission)
 
-    inline fun <T> permissionSafeRun(channel: GuildChannel, permission: Permission, block: (GuildChannel) -> T): Maybe<T> {
-        if (channel.guild.selfMember.hasPermission(channel, permission)) return Maybe.Just(block(channel))
-        return Maybe.Nothing
+    inline fun <T> permissionSafeRun(channel: GuildChannel, permission: Permission, block: (GuildChannel) -> T): Option<T> {
+        if (channel.guild.selfMember.hasPermission(channel, permission)) return Option.Some(block(channel))
+        return Option.Empty
     }
 
     fun insertCommands(guild: Guild, languageContainer: LanguageContainer) =
