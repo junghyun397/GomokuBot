@@ -55,6 +55,7 @@ private fun matchCommand(command: String, languageContainer: LanguageContainer):
         languageContainer.styleCommand() -> Option.Some(StyleCommandParser)
         languageContainer.rankCommand() -> Option.Some(RankCommandParser)
         languageContainer.ratingCommand() -> Option.Some(RatingCommandParser)
+        "debug" -> Option.Some(DebugCommandParser)
         else -> Option.Empty
     }
 
