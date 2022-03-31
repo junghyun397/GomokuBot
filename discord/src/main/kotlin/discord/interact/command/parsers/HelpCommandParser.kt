@@ -3,6 +3,7 @@ package discord.interact.command.parsers
 import core.interact.commands.HelpCommand
 import core.interact.i18n.LanguageContainer
 import dev.minn.jda.ktx.interactions.slash
+import discord.interact.InteractionContext
 import discord.interact.command.BuildableCommand
 import discord.interact.command.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -14,11 +15,11 @@ object HelpCommandParser : ParsableCommand, BuildableCommand {
 
     override val name = "help"
 
-    override fun parse(event: SlashCommandInteractionEvent, languageContainer: LanguageContainer) =
-        Either.Left(HelpCommand(languageContainer.helpCommand()))
+    override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>) =
+        Either.Left(HelpCommand(context.config.language.container.helpCommand()))
 
-    override fun parse(event: MessageReceivedEvent, languageContainer: LanguageContainer) =
-        Either.Left(HelpCommand(languageContainer.helpCommand()))
+    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>) =
+        Either.Left(HelpCommand(context.config.language.container.helpCommand()))
 
     override fun buildCommandData(action: CommandListUpdateAction, languageContainer: LanguageContainer) =
         action.slash(

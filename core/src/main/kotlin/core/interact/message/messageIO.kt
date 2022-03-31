@@ -1,6 +1,6 @@
 package core.interact.message
 
-import utils.values.MessageId
+import core.assets.MessageId
 import java.io.File
 
 typealias MessagePublisher<A, B> = (A) -> MessageAction<B>

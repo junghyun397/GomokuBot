@@ -4,6 +4,7 @@ import core.database.DatabaseManager
 import core.interact.i18n.Language
 import core.interact.reports.GuildJoinReport
 import core.session.entities.GuildConfig
+import discord.assets.extractId
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageBinder
@@ -38,26 +39,25 @@ fun guildJoinRouter(context: InteractionContext<GuildJoinEvent>): Mono<Tuple2<In
     Mono.zip(context.toMono(), mono { runCatching {
         val commandInserted = run {
             context.event.guild.selfMember.hasPermission(Permission.MESSAGE_SEND)
-            GuildManager.insertCommands(context.event.guild, context.guildConfig.language.container)
+            GuildManager.insertCommands(context.event.guild, context.config.language.container)
             true
         }
 
         val defaultRegion = retrieveRegion(context.event.guild)
-
         val matchedLanguage = matchLanguage(defaultRegion)
 
         DatabaseManager.updateGuildConfig(
-            context.botContext.databaseConnection, context.guild,
-            GuildConfig(language = matchedLanguage)
+            context.botContext.databaseConnection, context.guild.extractId(),
+            GuildConfig(context.guild.extractId(), language = matchedLanguage)
         )
 
         val helpSent = context.event.guild.defaultChannel?.let { channel ->
             val messagePublisher: DiscordMessagePublisher = { msg -> MessageActionRestActionAdaptor(channel.sendMessage(msg)) }
 
             GuildManager.permissionSafeRun(channel, Permission.MESSAGE_SEND) {
-                DiscordMessageBinder.bindAboutBot(messagePublisher, context.guildConfig.language.container).map { it.retrieve() }
-                    .flatMap { DiscordMessageBinder.bindCommandGuide(messagePublisher, context.guildConfig.language.container).map { it.retrieve() } }
-                    .flatMap { DiscordMessageBinder.bindStyleGuide(messagePublisher, context.guildConfig.language.container).map { it.retrieve() } }
+                DiscordMessageBinder.bindAboutBot(messagePublisher, context.config.language.container).map { it.retrieve() }
+                    .flatMap { DiscordMessageBinder.bindCommandGuide(messagePublisher, context.config.language.container).map { it.retrieve() } }
+                    .flatMap { DiscordMessageBinder.bindStyleGuide(messagePublisher, context.config.language.container).map { it.retrieve() } }
                     .flatMap { DiscordMessageBinder.bindLanguageGuide(messagePublisher).map { it.launch() } }
             }
         }?.isDefined

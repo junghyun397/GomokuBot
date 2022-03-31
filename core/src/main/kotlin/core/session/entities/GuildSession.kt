@@ -1,11 +1,9 @@
 package core.session.entities
 
-import core.interact.i18n.Language
-import core.interact.message.graphics.BoardStyle
-import utils.values.UserId
+import core.assets.UserId
 
 data class GuildSession(
-    val guildConfig: GuildConfig = GuildConfig(Language.ENG, BoardStyle.IMAGE),
+    val guildConfig: GuildConfig,
     val gameSessions: Map<UserId, GameSession> = emptyMap(),
     val requestSessions: Map<UserId, RequestSession> = emptyMap()
 )

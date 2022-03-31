@@ -7,14 +7,14 @@ import core.inference.B3nzeneClient
 import core.interact.reports.InteractionReport
 import core.session.SessionManager
 import core.session.SessionRepository
+import discord.assets.ASCII_LOGO
+import discord.assets.COMMAND_PREFIX
+import discord.assets.extractId
 import discord.interact.InteractionContext
 import discord.route.buttonInteractionRouter
 import discord.route.guildJoinRouter
 import discord.route.slashCommandRouter
 import discord.route.textCommandRouter
-import discord.assets.ASCII_LOGO
-import discord.assets.COMMAND_PREFIX
-import discord.assets.extractId
 import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.JDABuilder
@@ -29,9 +29,10 @@ import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import net.dv8tion.jda.api.requests.GatewayIntent
 import reactor.util.function.Tuple2
-import utils.values.LinuxTime
 import utils.log.getLogger
+import utils.values.LinuxTime
 
 @JvmInline
 private value class Token(val token: String) {
@@ -58,37 +59,31 @@ private class B3nzeneConfig(val serverAddress: String, val serverPort: Int) {
     }
 }
 
-private inline fun <reified E : Event, reified R : InteractionReport> leaveLog(combined: Tuple2<InteractionContext<E>, Result<R>>) =
-    getLogger<R>().let { logger ->
-        combined.t2.fold(
-            onSuccess = {
-                logger.info("${E::class.simpleName} (${combined.t1.guildName})/${combined.t1.guild.id} " +
-                        "T${(it.terminationTime.timestamp - combined.t1.emittenTime.timestamp)}ms => $it")
-            },
-            onFailure = {
-                logger.error("${E::class.simpleName} (${combined.t1.guildName})/${combined.t1.guild.id} " +
-                        "T${(System.currentTimeMillis() - combined.t1.emittenTime.timestamp)}ms => ${it.stackTraceToString()}")
-            }
-        )
-    }
+private inline fun <reified E : Event, R : InteractionReport> leaveLog(combined: Tuple2<InteractionContext<E>, Result<R>>) =
+    combined.t2.fold(
+        onSuccess = {
+            logger.info("${E::class.simpleName} [${combined.t1.guildName}](${combined.t1.guild.id}) " +
+                    "T${(it.terminationTime.timestamp - combined.t1.emittenTime.timestamp)}ms => $it")
+        },
+        onFailure = {
+            logger.error("${E::class.simpleName} [${combined.t1.guildName}](${combined.t1.guild.id}) " +
+                    "T${(System.currentTimeMillis() - combined.t1.emittenTime.timestamp)}ms => ${it.stackTraceToString()}")
+        }
+    )
 
 private suspend inline fun <E : Event> retrieveInteractionContext(botContext: BotContext, event: E, guild: Guild) =
-    guild.extractId().let {
-        InteractionContext(
-            botContext = botContext,
-            event = event,
-            guildConfig = SessionManager.retrieveGuildConfig(botContext.sessionRepository, it),
-            guild = it,
-            guildName = guild.name,
-            emittenTime = LinuxTime()
-        )
-    }
+    InteractionContext(
+        botContext = botContext,
+        event = event,
+        config = SessionManager.retrieveGuildConfig(botContext.sessionRepository, guild.extractId()),
+        guild = guild,
+        guildName = guild.name,
+        emittenTime = LinuxTime()
+    )
 
 object GomokuBot {
 
     fun launch() {
-        val logger = getLogger<GomokuBot>()
-
         val mySQLConfig = MySQLConfig.fromEnv()
         val b3nzeneConfig = B3nzeneConfig.fromEnv()
 
@@ -152,14 +147,17 @@ object GomokuBot {
         JDABuilder
             .createLight(Token.fromEnv().token)
             .setEventManager(eventManager)
-            .setActivity(Activity.playing("/help or ${COMMAND_PREFIX}help"))
+            .setActivity(Activity.playing("/? or ${COMMAND_PREFIX}? or @GomokuBot"))
             .setStatus(OnlineStatus.ONLINE)
+            .setEnabledIntents(GatewayIntent.GUILD_MESSAGES)
             .build()
     }
+
 }
 
+val logger = getLogger<GomokuBot>()
+
 fun main() {
-    val logger = getLogger<GomokuBot>()
     logger.info(ASCII_LOGO)
 
     val launchResult = runCatching { GomokuBot.launch() }

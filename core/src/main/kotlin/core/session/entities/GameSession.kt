@@ -1,15 +1,13 @@
 package core.session.entities
 
+import core.assets.User
+import jrenju.DeepL3Board
+import jrenju.L3Board
+import utils.monads.Option
 import utils.values.LinuxTime
-import utils.values.UserId
 
 data class GameSession(
-    val ownerId: UserId, val opponent: UserId?, override val expireDate: LinuxTime,
-    val board: Unit, val turns: Int,
+    val owner: User, val opponent: Option<User>,
+    val board: L3Board,
+    override val expireDate: LinuxTime,
 ) : Expirable
-
-fun RequestSession.asGameSession() =
-    GameSession(
-        this.ownerId, this.opponentId, LinuxTime(),
-        Unit, 0
-    )

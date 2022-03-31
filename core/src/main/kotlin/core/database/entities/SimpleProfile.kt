@@ -1,6 +1,6 @@
 package core.database.entities
 
-import utils.values.UserId
+import core.assets.UserId
 
 class SimpleProfile(
     val id: UserId,

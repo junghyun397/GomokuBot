@@ -1,6 +1,7 @@
 package core.session.entities
 
+import core.assets.User
 import utils.values.LinuxTime
-import utils.values.UserId
+import core.assets.UserId
 
-data class RequestSession(val ownerId: UserId, val opponentId: UserId, override val expireDate: LinuxTime) : Expirable
+data class RequestSession(val owner: User, val opponent: User, override val expireDate: LinuxTime) : Expirable

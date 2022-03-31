@@ -1,8 +1,8 @@
 package core.database.entities
 
-import utils.values.UserId
+import core.assets.UserId
 
-class UserData(
+data class UserData(
     val id: UserId,
     val name: String,
     val profileURL: String,

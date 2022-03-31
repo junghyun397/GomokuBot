@@ -10,7 +10,7 @@ class B3nzeneClient(private val channel: ManagedChannel) : Closeable {
     private val b3nzeneStub = InferenceGrpcKt.InferenceCoroutineStub(channel)
 
     override fun close() {
-        channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
+        this.channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
     }
 
     companion object {

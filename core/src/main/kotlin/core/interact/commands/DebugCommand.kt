@@ -1,24 +1,26 @@
 package core.interact.commands
 
 import core.BotContext
+import core.assets.Order
+import core.assets.User
 import core.interact.message.MessageBinder
 import core.interact.message.MessagePublisher
 import core.interact.message.SpotInfo
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
 import utils.monads.Either
-import utils.values.UserId
+import utils.monads.IO
 
 enum class DebugType {
-    BOARD_DEMO
+    BOARD_DEMO, STATUS
 }
 
-class DebugCommand(override val command: String, private val debugType: DebugType) : Command {
+class DebugCommand(override val command: String, private val debugType: DebugType, private val payload: String?) : Command {
 
     override suspend fun <A, B> execute(
         context: BotContext,
         config: GuildConfig,
-        userId: UserId,
+        user: User,
         binder: MessageBinder<A, B>,
         publisher: MessagePublisher<A, B>
     ) = runCatching { when (debugType) {
@@ -39,8 +41,12 @@ class DebugCommand(override val command: String, private val debugType: DebugTyp
             val io = binder.bindBoard(publisher, config.language.container, board)
                 .map { binder.bindButtons(it.first(), config.language.container, commandMap) }
                 .map { it.launch() }
+                .map { Order.UNIT }
 
             io to this.asCommandReport("succeed")
+        }
+        DebugType.STATUS -> {
+            IO { Order.UNIT } to this.asCommandReport("succeed")
         }
     } }
 

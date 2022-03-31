@@ -1,5 +1,6 @@
 package discord.interact.command.parsers
 
+import core.assets.Order
 import core.interact.commands.Command
 import core.interact.commands.StyleCommand
 import core.interact.i18n.LanguageContainer
@@ -7,6 +8,7 @@ import core.interact.message.graphics.BoardStyle
 import dev.minn.jda.ktx.interactions.choice
 import dev.minn.jda.ktx.interactions.option
 import dev.minn.jda.ktx.interactions.slash
+import discord.interact.InteractionContext
 import discord.interact.command.BuildableCommand
 import discord.interact.command.ParsableCommand
 import discord.interact.command.ParseFailure
@@ -24,28 +26,28 @@ object StyleCommandParser : ParsableCommand, BuildableCommand {
     private fun matchStyle(option: String): BoardStyle? =
         BoardStyle.values().firstOrNull { it.sample.styleShortcut == option || it.sample.styleName == option }
 
-    override fun parse(event: SlashCommandInteractionEvent, languageContainer: LanguageContainer): Either<Command, ParseFailure> {
-        val style = event.getOption(languageContainer.styleCommandOptionCode())?.asString?.uppercase()?.let {
+    override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, ParseFailure> {
+        val style = context.event.getOption(context.config.language.container.styleCommandOptionCode())?.asString?.uppercase()?.let {
             matchStyle(it)
         }
             ?: return Either.Right(this.asParseFailure("option missmatch") { container, publisher ->
-                DiscordMessageBinder.bindStyleGuide(publisher, container).map { it.retrieve() }
+                DiscordMessageBinder.bindStyleGuide(publisher, container).map { it.launch(); Order.UNIT }
             })
 
-        return Either.Left(StyleCommand(languageContainer.styleCommand(), style))
+        return Either.Left(StyleCommand(context.config.language.container.styleCommand(), style))
     }
 
-    override fun parse(event: MessageReceivedEvent, languageContainer: LanguageContainer): Either<Command, ParseFailure> {
-        val option = event.message.contentRaw
-            .drop(languageContainer.styleCommand().length + 2)
+    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>): Either<Command, ParseFailure> {
+        val option = context.event.message.contentRaw
+            .drop(context.config.language.container.styleCommand().length + 2)
             .uppercase()
 
         val style = matchStyle(option)
             ?: return Either.Right(this.asParseFailure("option missmatch") { container, publisher ->
-                DiscordMessageBinder.bindStyleGuide(publisher, container).map { it.retrieve() }
+                DiscordMessageBinder.bindStyleGuide(publisher, container).map { it.launch(); Order.UNIT }
             })
 
-        return Either.Left(StyleCommand(languageContainer.styleCommand(), style))
+        return Either.Left(StyleCommand(context.config.language.container.styleCommand(), style))
     }
 
     override fun buildCommandData(action: CommandListUpdateAction, languageContainer: LanguageContainer) =
@@ -60,7 +62,7 @@ object StyleCommandParser : ParsableCommand, BuildableCommand {
             ) {
                 BoardStyle.values().fold(this) { builder, style ->
                     builder.choice(
-                        "${style.sample.styleShortcut}:${style.sample.styleName}",
+                        style.sample.styleShortcut,
                         style.sample.styleShortcut
                     )
                 }

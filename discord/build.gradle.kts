@@ -1,5 +1,6 @@
 plugins {
     application
+    idea
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
@@ -8,6 +9,7 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":utils"))
     implementation(project(":core"))
 
     implementation("net.dv8tion:JDA:5.0.0-alpha.9")

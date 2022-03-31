@@ -13,6 +13,7 @@ allprojects {
 
     repositories {
         mavenCentral()
+        mavenLocal()
         google()
         maven("https://jitpack.io/")
     }
@@ -29,6 +30,8 @@ subprojects {
 
     dependencies {
         implementation(kotlin("stdlib"))
+
+        implementation("jrenju:jrenju_2.13:0.1.0-SNAPSHOT")
 
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.6.0")

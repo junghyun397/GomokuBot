@@ -1,14 +1,14 @@
 package discord.assets
 
-import net.dv8tion.jda.api.entities.Guild
+import core.assets.*
 import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.User
-import utils.values.GuildId
-import utils.values.MessageId
-import utils.values.UserId
 
-fun Guild.extractId() = GuildId(this.idLong)
+fun net.dv8tion.jda.api.entities.Guild.extractGuild() = Guild(this.extractId(), this.name)
 
-fun User.extractId() = UserId(this.idLong)
+fun net.dv8tion.jda.api.entities.User.extractUser() = User(this.extractId(), this.name, this.asTag)
+
+fun net.dv8tion.jda.api.entities.Guild.extractId() = GuildId(this.idLong)
+
+fun net.dv8tion.jda.api.entities.User.extractId() = UserId(this.idLong)
 
 fun Message.extractId() = MessageId(this.idLong)

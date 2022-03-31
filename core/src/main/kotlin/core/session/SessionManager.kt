@@ -6,18 +6,18 @@ import core.session.entities.GuildConfig
 import core.session.entities.GuildSession
 import core.session.entities.RequestSession
 import kotlinx.coroutines.sync.withLock
-import utils.values.GuildId
+import core.assets.GuildId
 import utils.values.LinuxTime
-import utils.values.UserId
+import core.assets.UserId
 
 object SessionManager {
 
     private suspend inline fun retrieveGuildSession(repo: SessionRepository, guildId: GuildId): GuildSession =
-        repo.sessions.getOrPut(guildId) {
+        repo.sessions.getOrElse(guildId) {
             DatabaseManager.fetchGuildConfig(repo.databaseConnection, guildId)
                 .fold(
                     onDefined = { GuildSession(guildConfig = it) },
-                    onEmpty = { GuildSession() }
+                    onEmpty = { GuildSession(GuildConfig(guildId)) }
                 )
         }
 
@@ -42,7 +42,7 @@ object SessionManager {
     suspend fun retrieveRequestSession(repo: SessionRepository, guildId: GuildId, userId: UserId): RequestSession? =
         this.retrieveGuildSession(repo, guildId).requestSessions
             .values
-            .firstOrNull { it.ownerId == userId || it.opponentId == userId }
+            .firstOrNull { it.owner.id == userId || it.opponent.id == userId }
 
     suspend fun retrieveRequestSessionByOwner(repo: SessionRepository, guildId: GuildId, ownerId: UserId): RequestSession? =
         this.retrieveGuildSession(repo, guildId).requestSessions[ownerId]
@@ -50,11 +50,11 @@ object SessionManager {
     suspend fun retrieveRequestSessionByOpponent(repo: SessionRepository, guildId: GuildId, opponentId: UserId): RequestSession? =
         this.retrieveGuildSession(repo, guildId).requestSessions
             .values
-            .firstOrNull { it.opponentId == opponentId }
+            .firstOrNull { it.opponent.id == opponentId }
 
     suspend fun putRequestSession(repo: SessionRepository, guildId: GuildId, requestSession: RequestSession) {
         this.mapGuildSession(repo, guildId) {
-            it.copy(requestSessions = it.requestSessions + (requestSession.ownerId to requestSession))
+            it.copy(requestSessions = it.requestSessions + (requestSession.owner.id to requestSession))
         }
     }
 
@@ -64,14 +64,14 @@ object SessionManager {
         }
     }
 
-    suspend fun retrieveGameSessionById(repo: SessionRepository, guildId: GuildId, userId: UserId): GameSession? =
+    suspend fun retrieveGameSession(repo: SessionRepository, guildId: GuildId, userId: UserId): GameSession? =
         this.retrieveGuildSession(repo, guildId).gameSessions
             .values
-            .firstOrNull { it.ownerId == userId || it.opponent == userId }
+            .firstOrNull { it.owner.id == userId || it.opponent.getOrNull()?.id == userId }
 
     suspend fun putGameSession(repo: SessionRepository, guildId: GuildId, gameSession: GameSession) {
         this.mapGuildSession(repo, guildId) {
-            it.copy(gameSessions = it.gameSessions + (gameSession.ownerId to gameSession))
+            it.copy(gameSessions = it.gameSessions + (gameSession.owner.id to gameSession))
         }
     }
 

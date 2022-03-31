@@ -6,7 +6,7 @@ import discord.assets.extractId
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageAction
-import utils.values.MessageId
+import core.assets.MessageId
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
