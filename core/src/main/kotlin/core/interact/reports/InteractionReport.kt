@@ -1,6 +1,6 @@
 package core.interact.reports
 
-import utils.values.LinuxTime
+import utils.assets.LinuxTime
 
 interface InteractionReport {
 

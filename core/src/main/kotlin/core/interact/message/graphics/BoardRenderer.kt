@@ -1,6 +1,7 @@
 package core.interact.message.graphics
 
-import utils.monads.Either
+import jrenju.L3Board
+import utils.structs.Either
 import java.io.File
 
 enum class BoardStyle(val renderer: BoardRenderer, val sample: BoardRendererSample) {
@@ -22,6 +23,6 @@ sealed interface BoardRendererSample {
 
 sealed interface BoardRenderer {
 
-    fun renderBoard(): Either<String, File>
+    fun renderBoard(board: L3Board): Either<String, File>
 
 }

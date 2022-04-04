@@ -1,17 +1,18 @@
-package discord.interact.command.parsers
+package discord.interact.parse.parsers
 
 import core.interact.commands.HelpCommand
 import core.interact.i18n.LanguageContainer
+import core.interact.parse.NamedParser
 import dev.minn.jda.ktx.interactions.slash
 import discord.interact.InteractionContext
-import discord.interact.command.BuildableCommand
-import discord.interact.command.ParsableCommand
+import discord.interact.parse.BuildableCommand
+import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
-import utils.monads.Either
+import utils.structs.Either
 
-object HelpCommandParser : ParsableCommand, BuildableCommand {
+object HelpCommandParser : NamedParser, ParsableCommand, BuildableCommand {
 
     override val name = "help"
 

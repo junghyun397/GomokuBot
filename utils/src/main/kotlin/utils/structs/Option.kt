@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package utils.monads
+package utils.structs
 
 sealed class Option<out T> {
 

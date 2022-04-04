@@ -1,15 +1,13 @@
 package core.interact.commands
 
 import core.BotContext
-import core.assets.Order
+import core.interact.Order
 import core.assets.User
-import core.interact.message.MessageBinder
+import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
-import core.interact.reports.CommandReport
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
-import utils.monads.IO
-import core.assets.UserId
+import utils.structs.IO
 
 class RatingCommand(override val command: String) : Command {
 
@@ -17,10 +15,10 @@ class RatingCommand(override val command: String) : Command {
         context: BotContext,
         config: GuildConfig,
         user: User,
-        binder: MessageBinder<A, B>,
+        producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>
     ) = runCatching {
-        IO { Order.UNIT } to this.asCommandReport("succeed")
+        IO { Order.Unit } to this.asCommandReport("succeed")
     }
 
 }

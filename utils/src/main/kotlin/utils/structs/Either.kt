@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package utils.monads
+package utils.structs
 
 sealed class Either<out L, out R> {
 
@@ -12,6 +12,18 @@ sealed class Either<out L, out R> {
         when (this) {
             is Left -> Left(onLeft(this.value))
             is Right -> Right(onRight(this.value))
+        }
+
+    inline fun <T> mapLeft(mapper: (L) -> T): Either<T, R> =
+        when (this) {
+            is Left -> Left(mapper(this.value))
+            is Right -> this
+        }
+
+    inline fun <T> mapRight(mapper: (R) -> T): Either<L, T> =
+        when (this) {
+            is Left -> this
+            is Right -> Right(mapper(this.value))
         }
 
     inline fun <A, B> flatMap(onLeft: (L) -> Either<A, B>, onRight: (R) -> Either<A, B>): Either<A, B> =

@@ -1,7 +1,7 @@
 package core.interact.reports
 
 import core.interact.i18n.Language
-import utils.values.LinuxTime
+import utils.assets.LinuxTime
 
 class GuildJoinReport(
     private val commandInserted: Boolean = true,

@@ -3,13 +3,14 @@ package discord
 import club.minnced.jda.reactor.ReactiveEventManager
 import club.minnced.jda.reactor.on
 import core.BotContext
+import core.assets.Guild
 import core.inference.B3nzeneClient
 import core.interact.reports.InteractionReport
 import core.session.SessionManager
 import core.session.SessionRepository
 import discord.assets.ASCII_LOGO
 import discord.assets.COMMAND_PREFIX
-import discord.assets.extractId
+import discord.assets.extractGuild
 import discord.interact.InteractionContext
 import discord.route.buttonInteractionRouter
 import discord.route.guildJoinRouter
@@ -20,7 +21,6 @@ import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.entities.Activity
-import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.ReadyEvent
 import net.dv8tion.jda.api.events.ShutdownEvent
@@ -31,8 +31,8 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
 import reactor.util.function.Tuple2
+import utils.assets.LinuxTime
 import utils.log.getLogger
-import utils.values.LinuxTime
 
 @JvmInline
 private value class Token(val token: String) {
@@ -62,11 +62,11 @@ private class B3nzeneConfig(val serverAddress: String, val serverPort: Int) {
 private inline fun <reified E : Event, R : InteractionReport> leaveLog(combined: Tuple2<InteractionContext<E>, Result<R>>) =
     combined.t2.fold(
         onSuccess = {
-            logger.info("${E::class.simpleName} [${combined.t1.guildName}](${combined.t1.guild.id}) " +
+            logger.info("${E::class.simpleName} [${combined.t1.guild.name}](${combined.t1.guild.id}) " +
                     "T${(it.terminationTime.timestamp - combined.t1.emittenTime.timestamp)}ms => $it")
         },
         onFailure = {
-            logger.error("${E::class.simpleName} [${combined.t1.guildName}](${combined.t1.guild.id}) " +
+            logger.error("${E::class.simpleName} [${combined.t1.guild.name}](${combined.t1.guild.id}) " +
                     "T${(System.currentTimeMillis() - combined.t1.emittenTime.timestamp)}ms => ${it.stackTraceToString()}")
         }
     )
@@ -75,9 +75,8 @@ private suspend inline fun <E : Event> retrieveInteractionContext(botContext: Bo
     InteractionContext(
         botContext = botContext,
         event = event,
-        config = SessionManager.retrieveGuildConfig(botContext.sessionRepository, guild.extractId()),
         guild = guild,
-        guildName = guild.name,
+        config = SessionManager.retrieveGuildConfig(botContext.sessionRepository, guild.id),
         emittenTime = LinuxTime()
     )
 
@@ -105,51 +104,45 @@ object GomokuBot {
 
         eventManager.on<SlashCommandInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
-            .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild!!) } }
+            .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild!!.extractGuild()) } }
             .flatMap(::slashCommandRouter)
-            .doOnNext { leaveLog(it) }
-            .subscribe()
+            .subscribe { leaveLog(it) }
 
         eventManager.on<MessageReceivedEvent>()
             .filter { it.isFromGuild && !it.author.isBot && it.message.contentRaw.startsWith(COMMAND_PREFIX) }
-            .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild) } }
+            .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild.extractGuild()) } }
             .flatMap(::textCommandRouter)
-            .doOnNext { leaveLog(it) }
-            .subscribe()
+            .subscribe { leaveLog(it) }
 
         eventManager.on<ButtonInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
-            .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild!!) } }
+            .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild!!.extractGuild()) } }
             .flatMap(::buttonInteractionRouter)
-            .doOnNext { leaveLog(it) }
-            .subscribe()
+            .subscribe { leaveLog(it) }
 
         eventManager.on<GuildJoinEvent>()
-            .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild) } }
+            .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild.extractGuild()) } }
             .flatMap(::guildJoinRouter)
-            .doOnNext { leaveLog(it) }
-            .subscribe()
+            .subscribe { leaveLog(it) }
 
         eventManager.on<GuildLeaveEvent>()
-            .doOnNext { logger.info("leave (${it.guild.name})/${it.guild.idLong}") }
-            .subscribe()
+            .subscribe { logger.info("leave (${it.guild.name})/${it.guild.idLong}") }
 
         eventManager.on<ReadyEvent>()
-            .doOnNext { logger.info("jda ready, complete loading.") }
-            .subscribe()
+            .subscribe { logger.info("jda ready, complete loading.") }
 
         eventManager.on<ShutdownEvent>()
-            .doOnNext { logger.info("jda shutdown.") }
-            .subscribe()
+            .subscribe { logger.info("jda shutdown.") }
 
         logger.info("reactive event manager ready.")
 
-        JDABuilder
-            .createLight(Token.fromEnv().token)
-            .setEventManager(eventManager)
-            .setActivity(Activity.playing("/? or ${COMMAND_PREFIX}? or @GomokuBot"))
-            .setStatus(OnlineStatus.ONLINE)
-            .setEnabledIntents(GatewayIntent.GUILD_MESSAGES)
+        JDABuilder.createLight(Token.fromEnv().token)
+            .apply {
+                setEventManager(eventManager)
+                setActivity(Activity.playing("/help or ${COMMAND_PREFIX}help or @GomokuBot"))
+                setStatus(OnlineStatus.ONLINE)
+                setEnabledIntents(GatewayIntent.GUILD_MESSAGES)
+            }
             .build()
     }
 

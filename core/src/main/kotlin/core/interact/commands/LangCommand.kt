@@ -1,15 +1,15 @@
 package core.interact.commands
 
 import core.BotContext
-import core.assets.Order
+import core.interact.Order
 import core.assets.User
 import core.interact.i18n.Language
-import core.interact.message.MessageBinder
+import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
 import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
-import utils.monads.IO
+import utils.structs.IO
 
 class LangCommand(override val command: String, private val language: Language) : Command {
 
@@ -17,12 +17,12 @@ class LangCommand(override val command: String, private val language: Language) 
         context: BotContext,
         config: GuildConfig,
         user: User,
-        binder: MessageBinder<A, B>,
+        producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>
     ) = runCatching {
         SessionManager.updateGuildConfig(context.sessionRepository, config.id, config.copy(language = language))
 
-        IO { Order.REFRESH_COMMANDS } to this.asCommandReport("${config.language.name} to ${language.name}")
+        IO { Order.RefreshCommands } to this.asCommandReport("${config.language.name} to ${language.name}")
     }
 
 }

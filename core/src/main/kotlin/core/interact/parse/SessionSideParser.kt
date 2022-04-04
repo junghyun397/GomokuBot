@@ -1,0 +1,19 @@
+package core.interact.parse
+
+import core.BotContext
+import core.assets.Guild
+import core.assets.User
+import core.interact.Order
+import core.session.SessionManager
+import core.session.entities.GameSession
+import utils.structs.Either
+
+abstract class SessionSideParser<A, B> : NamedParser {
+
+    protected suspend fun retrieveSessionWith(context: BotContext, guild: Guild, user: User): Either<GameSession, ParseFailure<A, B>> =
+        SessionManager.retrieveGameSession(context.sessionRepository, guild.id, user.id)?.let { Either.Left(it) }
+            ?: Either.Right(ParseFailure(this.name, "$user session not found") { producer, publisher, container ->
+                producer.produceLanguageGuide(publisher).map { it.launch(); Order.Unit }
+            })
+
+}

@@ -26,5 +26,5 @@ class MessageActionRestActionAdaptor(private val original: net.dv8tion.jda.api.r
     override fun addFile(file: File) = MessageActionRestActionAdaptor(original.addFile(file))
     override fun addButtons(buttons: DiscordButtons) = MessageActionRestActionAdaptor(original.setActionRows(buttons))
     override fun launch() = original.queue()
-    override suspend fun retrieve(): MessageId = suspendCoroutine { control -> original.queue {control.resume(it.extractId()) } }
+    override suspend fun retrieve(): MessageId = suspendCoroutine { control -> original.queue { control.resume(it.extractId()) } }
 }

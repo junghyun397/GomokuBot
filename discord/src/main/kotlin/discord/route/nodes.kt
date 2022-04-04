@@ -1,40 +1,50 @@
 package discord.route
 
-import core.assets.Order
+import core.interact.Order
 import core.interact.commands.Command
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
-import discord.interact.command.ParsableCommand
-import discord.interact.command.ParseFailure
-import discord.interact.message.DiscordMessageBinder
+import discord.interact.message.DiscordMessageProducer
+import discord.interact.parse.DiscordParseFailure
+import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.Permission
-import net.dv8tion.jda.api.entities.GuildChannel
 import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
-import utils.monads.Either
-import utils.monads.IO
+import utils.structs.Either
+import utils.structs.IO
 import java.util.concurrent.TimeUnit
 
-inline fun withMessagePermissionNode(user: User, guildChannel: GuildChannel, parsableCommand: ParsableCommand, block: (ParsableCommand) -> Either<Command, ParseFailure>) =
-    if (GuildManager.lookupPermission(guildChannel, Permission.MESSAGE_SEND)) block(parsableCommand)
-    else Either.Right(ParseFailure(parsableCommand.name, "message permission not granted") { container, _ ->
+inline fun withMessagePermissionNode(channel: TextChannel, user: User, parsableCommand: ParsableCommand, block: (ParsableCommand) -> Either<Command, DiscordParseFailure>) =
+    if (GuildManager.lookupPermission(channel, Permission.MESSAGE_SEND)) block(parsableCommand)
+    else Either.Right(DiscordParseFailure(parsableCommand.name, "message permission not granted") { _, _, container ->
         IO { user.openPrivateChannel()
-            .flatMap { channel -> DiscordMessageBinder.sendPermissionNotGrantedEmbed(
+            .flatMap { channel -> DiscordMessageProducer.sendPermissionNotGrantedEmbed(
                 publisher = { msg -> channel.sendMessage(msg) },
                 container = container,
-                channelName = guildChannel.name
+                channelName = channel.name
             ) }
             .delay(1, TimeUnit.MINUTES)
             .flatMap(Message::delete)
             .queue()
-            Order.UNIT
+            Order.Unit
         }
     })
 
 suspend fun processIO(context: InteractionContext<*>, io: IO<Order>, source: Message?) {
-    when (io.run()) {
-        Order.REFRESH_COMMANDS -> GuildManager.insertCommands(context.guild, context.config.language.container)
-        Order.DELETE_SOURCE -> source?.delete()?.queue()
-        Order.UNIT -> Unit
+    when (val order = io.run()) {
+        is Order.RefreshCommands -> GuildManager.insertCommands(context.jdaGuild, context.config.language.container)
+        is Order.DeleteSource -> source?.delete()?.queue()
+        is Order.BulkDelete -> {
+            order.messages
+                .groupBy { it.channelId }
+                .forEach { entry -> context.jdaGuild.getTextChannelById(entry.key.id)?.let { channel ->
+                    GuildManager.permissionSafeRun(channel, Permission.MESSAGE_MANAGE) { _ ->
+                        channel.deleteMessagesByIds(entry.value.map { it.id.toString() })
+                    }
+                } }
+        }
+        is Order.ArchiveSession -> GuildManager.archiveGame(order.session, order.policy)
+        is Order.Unit -> Unit
     }
 }

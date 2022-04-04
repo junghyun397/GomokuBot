@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package utils.monads
+package utils.structs
 
 interface IO<out A> {
 

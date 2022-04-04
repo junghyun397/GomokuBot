@@ -15,3 +15,5 @@ const val UNICODE_DARK_X = "\u2716" // ✖
 
 const val UNICODE_ALARM_CLOCK = "\u23F0" // ⏰
 const val UNICODE_ZAP = "\u26A1" // ⚡
+
+const val UNICODE_MAILBOX = "\uD83D\uDCEB" // 📫

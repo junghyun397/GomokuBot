@@ -19,6 +19,10 @@ open class LanguageENG : LanguageContainer {
     override fun turns() = "Turns"
     override fun move() = "Latest Move"
 
+    // ## ARTICLE
+
+    override fun somethingWrong() = "Something Wrong"
+
     // # COMMANDS
 
     // ## HELP

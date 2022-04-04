@@ -28,6 +28,10 @@ sealed interface LanguageContainer {
     fun turns(): String
     fun move(): String
 
+    // # ARTICLE
+
+    fun somethingWrong(): String
+
     // # COMMANDS
 
     // ## HELP

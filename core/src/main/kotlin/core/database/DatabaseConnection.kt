@@ -9,8 +9,8 @@ import reactor.core.publisher.Mono
 value class DatabaseConnection(val connection: Connection) {
     companion object {
 
-        suspend fun connectionFrom(serverURL: String): core.database.DatabaseConnection =
-            core.database.DatabaseConnection(Mono.from(ConnectionFactories.get(serverURL).create()).awaitSingle())
+        suspend fun connectionFrom(serverURL: String): DatabaseConnection =
+            DatabaseConnection(Mono.from(ConnectionFactories.get(serverURL).create()).awaitSingle())
 
     }
 }

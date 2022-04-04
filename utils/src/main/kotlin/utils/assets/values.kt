@@ -1,4 +1,4 @@
-package utils.values
+package utils.assets
 
 @JvmInline
 value class LinuxTime(val timestamp: Long = System.currentTimeMillis()) {

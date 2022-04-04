@@ -1,7 +1,7 @@
-package discord.interact.command
+package discord.interact.parse
 
 import core.interact.i18n.LanguageContainer
-import discord.interact.command.parsers.*
+import discord.interact.parse.parsers.*
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 
 val buildableCommands: Collection<BuildableCommand> =

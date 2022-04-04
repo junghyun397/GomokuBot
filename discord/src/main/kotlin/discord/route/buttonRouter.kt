@@ -3,16 +3,18 @@ package discord.route
 import core.interact.reports.CommandReport
 import discord.assets.extractUser
 import discord.interact.InteractionContext
-import discord.interact.command.parsers.AcceptCommandParser
-import discord.interact.command.parsers.SetCommandParser
-import discord.interact.message.DiscordMessageBinder
+import discord.interact.message.DiscordButtons
+import discord.interact.parse.parsers.AcceptCommandParser
+import discord.interact.parse.parsers.SetCommandParser
+import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.WebHookRestActionAdaptor
 import kotlinx.coroutines.reactor.mono
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.util.function.Tuple2
-import utils.monads.Option
+import utils.structs.Option
 
 private fun matchAction(prefix: String) =
     when(prefix) {
@@ -43,7 +45,7 @@ fun buttonInteractionRouter(context: InteractionContext<ButtonInteractionEvent>)
                 context = it.t1.botContext,
                 config = it.t1.config,
                 user = it.t1.event.user.extractUser(),
-                binder = DiscordMessageBinder
+                producer = DiscordMessageProducer
             ) { msg -> WebHookRestActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
         }) }
         .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.map { combined ->

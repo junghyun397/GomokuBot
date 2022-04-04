@@ -12,8 +12,8 @@ interface MessageAction<in T> {
     suspend fun retrieve(): MessageId
 }
 
-enum class SpotInfo {
-        FREE, BLACK, WHITE, BLACK_RECENT, WHITE_RECENT, FORBIDDEN
+enum class ButtonFlag {
+    FREE, BLACK, WHITE, BLACK_RECENT, WHITE_RECENT, FORBIDDEN
 }
 
-typealias MiniBoardStatusMap = Array<Array<Pair<String, SpotInfo>>>
+typealias FocusedFields = List<List<Pair<String, ButtonFlag>>>

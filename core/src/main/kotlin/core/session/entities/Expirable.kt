@@ -1,6 +1,6 @@
 package core.session.entities
 
-import utils.values.LinuxTime
+import utils.assets.LinuxTime
 
 sealed interface Expirable {
 

@@ -6,7 +6,7 @@ import core.database.entities.asSimpleProfile
 import core.session.entities.GuildConfig
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import utils.monads.Option
+import utils.structs.Option
 import core.assets.GuildId
 import core.assets.UserId
 import java.util.*

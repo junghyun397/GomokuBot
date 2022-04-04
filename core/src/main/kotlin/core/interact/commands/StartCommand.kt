@@ -1,19 +1,18 @@
 package core.interact.commands
 
 import core.BotContext
-import core.assets.Order
+import core.interact.Order
 import core.assets.User
-import core.interact.message.MessageBinder
+import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
-import core.interact.reports.CommandReport
 import core.interact.reports.asCommandReport
 import core.session.GameManager
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import core.session.entities.RequestSession
-import utils.monads.IO
-import utils.monads.Option
-import utils.values.LinuxTime
+import utils.structs.IO
+import utils.structs.Option
+import utils.assets.LinuxTime
 
 class StartCommand(override val command: String = "start", val opponent: User?) : Command {
 
@@ -21,21 +20,21 @@ class StartCommand(override val command: String = "start", val opponent: User?) 
         context: BotContext,
         config: GuildConfig,
         user: User,
-        binder: MessageBinder<A, B>,
+        producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>
     ) = runCatching {
         if (opponent != null) {
             val requestSession = RequestSession(user, opponent, LinuxTime())
             SessionManager.putRequestSession(context.sessionRepository, config.id, requestSession)
 
-            val io = { Order.UNIT }
+            val io = { Order.Unit }
             io to this.asCommandReport("$user request to $opponent")
         }
 
         val gameSession = GameManager.generateSession(user, Option.Empty)
         SessionManager.putGameSession(context.sessionRepository, config.id, gameSession)
 
-        val io = IO { Order.UNIT }
+        val io = IO { Order.Unit }
         io to this.asCommandReport("$user start game session with AI")
     }
 

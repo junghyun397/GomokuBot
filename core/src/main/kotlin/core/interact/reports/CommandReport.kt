@@ -1,7 +1,7 @@
 package core.interact.reports
 
 import core.interact.commands.Command
-import utils.values.LinuxTime
+import utils.assets.LinuxTime
 
 class CommandReport(
     private val commandName: String,

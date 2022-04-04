@@ -7,9 +7,9 @@ import core.interact.reports.CommandReport
 import discord.assets.extractUser
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
-import discord.interact.command.ParsableCommand
-import discord.interact.command.parsers.*
-import discord.interact.message.DiscordMessageBinder
+import discord.interact.parse.ParsableCommand
+import discord.interact.parse.parsers.*
+import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.MessageActionRestActionAdaptor
 import discord.interact.message.WebHookRestActionAdaptor
 import kotlinx.coroutines.reactor.mono
@@ -19,7 +19,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.util.function.Tuple2
-import utils.monads.Option
+import utils.structs.Option
 
 private fun matchCommand(command: String, languageContainer: LanguageContainer): Option<ParsableCommand> =
     when (command.lowercase()) {
@@ -50,7 +50,7 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
         }
         .flatMap { Mono.zip(
             it.t1.toMono(),
-            mono { withMessagePermissionNode(it.t1.event.user, it.t1.event.guildChannel, it.t2.getOrNull()!!) { parsable ->
+            mono { withMessagePermissionNode(it.t1.event.textChannel, it.t1.event.user, it.t2.getOrNull()!!) { parsable ->
                 parsable.parseSlash(it.t1)
             } },
         ) }
@@ -60,12 +60,13 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
                     context = it.t1.botContext,
                     config = it.t1.config,
                     user = it.t1.event.user.extractUser(),
-                    binder = DiscordMessageBinder
+                    producer = DiscordMessageProducer
                 ) { msg -> WebHookRestActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
             } ,
             onRight = { parseFailure ->
                 parseFailure.notice(
                     guildConfig = it.t1.config,
+                    producer = DiscordMessageProducer
                 ) { msg -> WebHookRestActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
             }
         ) }) }
@@ -85,12 +86,12 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
         .filter { it.t2.isDefined }
         .flatMap { Mono.zip(
             it.t1.toMono(),
-            mono { withMessagePermissionNode(it.t1.event.author, it.t1.event.guildChannel, it.t2.getOrNull()!!) { parsable ->
+            mono { withMessagePermissionNode(it.t1.event.textChannel, it.t1.event.author, it.t2.getOrNull()!!) { parsable ->
                 parsable.parseText(it.t1)
             } },
         ) }
         .doOnNext {
-            GuildManager.permissionSafeRun(it.t1.event.guildChannel, Permission.MESSAGE_ADD_REACTION) { _ ->
+            GuildManager.permissionSafeRun(it.t1.event.textChannel, Permission.MESSAGE_ADD_REACTION) { _ ->
                 if (it.t2.isLeft) it.t1.event.message.addReaction(UNICODE_CHECK).queue()
                 else it.t1.event.message.addReaction(UNICODE_CROSS).queue()
             }
@@ -101,12 +102,13 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
                     context = it.t1.botContext,
                     config = it.t1.config,
                     user = it.t1.event.author.extractUser(),
-                    binder = DiscordMessageBinder,
+                    producer = DiscordMessageProducer,
                 ) { msg -> MessageActionRestActionAdaptor(it.t1.event.message.reply(msg)) }
             },
             onRight = { parseFailure ->
                 parseFailure.notice(
                     guildConfig = it.t1.config,
+                    producer = DiscordMessageProducer,
                 ) { msg -> MessageActionRestActionAdaptor(it.t1.event.message.reply(msg)) }
             }
         ) }) }

@@ -1,10 +1,10 @@
-package discord.interact.command.parsers
+package discord.interact.parse.parsers
 
 import core.interact.commands.Command
 import discord.interact.InteractionContext
-import discord.interact.command.EmbeddableCommand
+import discord.interact.parse.EmbeddableCommand
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
-import utils.monads.Option
+import utils.structs.Option
 
 object AcceptCommandParser : EmbeddableCommand {
 

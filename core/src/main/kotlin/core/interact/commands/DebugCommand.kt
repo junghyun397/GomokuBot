@@ -1,15 +1,19 @@
 package core.interact.commands
 
 import core.BotContext
-import core.assets.Order
+import core.interact.Order
 import core.assets.User
-import core.interact.message.MessageBinder
+import core.inference.InferenceManager
+import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
-import core.interact.message.SpotInfo
+import core.interact.message.ButtonFlag
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
-import utils.monads.Either
-import utils.monads.IO
+import jrenju.Board
+import jrenju.notation.Flag
+import jrenju.notation.Pos
+import utils.structs.Either
+import utils.structs.IO
 
 enum class DebugType {
     BOARD_DEMO, STATUS
@@ -21,32 +25,42 @@ class DebugCommand(override val command: String, private val debugType: DebugTyp
         context: BotContext,
         config: GuildConfig,
         user: User,
-        binder: MessageBinder<A, B>,
+        producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>
     ) = runCatching { when (debugType) {
         DebugType.BOARD_DEMO -> {
-            val board = Either.Left("BOARDDD")
-            val commandMap = arrayOf(
-                arrayOf(SpotInfo.FREE, SpotInfo.WHITE, SpotInfo.WHITE, SpotInfo.FREE, SpotInfo.BLACK),
-                arrayOf(SpotInfo.FREE, SpotInfo.FREE, SpotInfo.BLACK_RECENT, SpotInfo.BLACK, SpotInfo.WHITE),
-                arrayOf(SpotInfo.FREE, SpotInfo.FREE, SpotInfo.WHITE, SpotInfo.WHITE, SpotInfo.WHITE),
-                arrayOf(SpotInfo.FREE, SpotInfo.BLACK, SpotInfo.BLACK, SpotInfo.BLACK, SpotInfo.WHITE),
-                arrayOf(SpotInfo.FREE, SpotInfo.FREE, SpotInfo.FREE, SpotInfo.WHITE, SpotInfo.BLACK),
-            ).mapIndexed { rowIdx, rowS ->
-                rowS.mapIndexed { colIdx, el ->
-                    "${(colIdx+97).toChar()}${rowIdx+1}" to el
-                }.toTypedArray()
-            }.toTypedArray()
+            val board = Board.newBoard()
+                .makeMove(Pos(8, 7).idx())
+                .makeMove(Pos(7, 6).idx())
+                .calculateL2Board()
+                .calculateL3Board()
+                .calculateDeepL3Board()
 
-            val io = binder.bindBoard(publisher, config.language.container, board)
-                .map { binder.bindButtons(it.first(), config.language.container, commandMap) }
-                .map { it.launch() }
-                .map { Order.UNIT }
+            val focus = InferenceManager.resolveFocus(board, 5)
+
+            val focusedFields = (-2 .. 2).map { colOff -> (-2 .. 2).map { rowOff ->
+                val pos = Pos(focus.row() + rowOff, focus.col() + colOff)
+                val flag = if (pos.idx() == board.latestMove()) when(board.boardField()[board.latestMove()]) {
+                    Flag.BLACK() -> ButtonFlag.BLACK_RECENT
+                    Flag.WHITE() -> ButtonFlag.WHITE_RECENT
+                    else -> ButtonFlag.FREE
+                } else when (board.boardField()[pos.idx()]) {
+                    Flag.BLACK() -> ButtonFlag.BLACK
+                    Flag.WHITE() -> ButtonFlag.WHITE
+                    Flag.FORBIDDEN_33(), Flag.FORBIDDEN_44(), Flag.FORBIDDEN_6() -> ButtonFlag.FORBIDDEN
+                    else -> ButtonFlag.FREE
+                }
+                "${(97 + pos.col()).toChar()}${pos.row() + 1}" to flag
+            } }
+
+            val io = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer.renderBoard(board))
+                .map { producer.attachButtons(it.first(), config.language.container, focusedFields) }
+                .map { it.launch(); Order.Unit }
 
             io to this.asCommandReport("succeed")
         }
         DebugType.STATUS -> {
-            IO { Order.UNIT } to this.asCommandReport("succeed")
+            IO { Order.Unit } to this.asCommandReport("succeed")
         }
     } }
 

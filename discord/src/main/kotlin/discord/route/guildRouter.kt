@@ -4,16 +4,15 @@ import core.database.DatabaseManager
 import core.interact.i18n.Language
 import core.interact.reports.GuildJoinReport
 import core.session.entities.GuildConfig
-import discord.assets.extractId
+import discord.assets.JDAGuild
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
-import discord.interact.message.DiscordMessageBinder
+import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.DiscordMessagePublisher
 import discord.interact.message.MessageActionRestActionAdaptor
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.Region
-import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
@@ -21,7 +20,7 @@ import reactor.util.function.Tuple2
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-private suspend fun retrieveRegion(guild: Guild): Region =
+private suspend fun retrieveRegion(guild: JDAGuild): Region =
     suspendCoroutine { control ->
         guild.retrieveRegions()
             .map { it.first() }
@@ -47,18 +46,18 @@ fun guildJoinRouter(context: InteractionContext<GuildJoinEvent>): Mono<Tuple2<In
         val matchedLanguage = matchLanguage(defaultRegion)
 
         DatabaseManager.updateGuildConfig(
-            context.botContext.databaseConnection, context.guild.extractId(),
-            GuildConfig(context.guild.extractId(), language = matchedLanguage)
+            context.botContext.databaseConnection, context.guild.id,
+            GuildConfig(context.guild.id, language = matchedLanguage)
         )
 
-        val helpSent = context.event.guild.defaultChannel?.let { channel ->
+        val helpSent = context.event.guild.systemChannel?.let { channel ->
             val messagePublisher: DiscordMessagePublisher = { msg -> MessageActionRestActionAdaptor(channel.sendMessage(msg)) }
 
             GuildManager.permissionSafeRun(channel, Permission.MESSAGE_SEND) {
-                DiscordMessageBinder.bindAboutBot(messagePublisher, context.config.language.container).map { it.retrieve() }
-                    .flatMap { DiscordMessageBinder.bindCommandGuide(messagePublisher, context.config.language.container).map { it.retrieve() } }
-                    .flatMap { DiscordMessageBinder.bindStyleGuide(messagePublisher, context.config.language.container).map { it.retrieve() } }
-                    .flatMap { DiscordMessageBinder.bindLanguageGuide(messagePublisher).map { it.launch() } }
+                DiscordMessageProducer.produceAboutBot(messagePublisher, context.config.language.container).map { it.retrieve() }
+                    .flatMap { DiscordMessageProducer.produceCommandGuide(messagePublisher, context.config.language.container).map { it.retrieve() } }
+                    .flatMap { DiscordMessageProducer.produceStyleGuide(messagePublisher, context.config.language.container).map { it.retrieve() } }
+                    .flatMap { DiscordMessageProducer.produceLanguageGuide(messagePublisher).map { it.launch() } }
             }
         }?.isDefined
 

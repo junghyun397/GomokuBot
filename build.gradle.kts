@@ -39,6 +39,6 @@ subprojects {
 
         implementation("org.slf4j:slf4j-api:1.7.36")
 
-        testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
+        testImplementation(kotlin("test"))
     }
 }

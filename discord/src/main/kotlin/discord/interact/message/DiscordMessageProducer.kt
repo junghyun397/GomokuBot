@@ -2,10 +2,6 @@ package discord.interact.message
 
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
-import core.interact.message.MessageAction
-import core.interact.message.MessageBinder
-import core.interact.message.MiniBoardStatusMap
-import core.interact.message.SpotInfo
 import core.interact.message.graphics.BoardStyle
 import dev.minn.jda.ktx.Embed
 import dev.minn.jda.ktx.Message
@@ -18,11 +14,12 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
 import net.dv8tion.jda.api.requests.RestAction
 import core.assets.*
-import utils.monads.Either
-import utils.monads.IO
+import core.interact.message.*
+import utils.structs.Either
+import utils.structs.IO
 import java.io.File
 
-object DiscordMessageBinder : MessageBinder<Message, DiscordButtons>() {
+object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
 
     private fun buildNextMoveEmbed(container: LanguageContainer) =
         Embed {
@@ -30,7 +27,7 @@ object DiscordMessageBinder : MessageBinder<Message, DiscordButtons>() {
             description = ":mag: 버튼을 누르거나 ``/s`` ``알파벳`` ``숫자`` 명령어를 입력해 다음 수를 놓아 주세요."
         }
 
-    override fun bindBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, board: Either<String, File>) =
+    override fun produceBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, board: Either<String, File>) =
         board.fold(
             onLeft = { textBoard -> IO {
                 arrayOf(publisher(Message(
@@ -54,21 +51,21 @@ object DiscordMessageBinder : MessageBinder<Message, DiscordButtons>() {
             } }
         )
 
-    override fun bindButtons(boardAction: MessageAction<DiscordButtons>, container: LanguageContainer, commandMap: MiniBoardStatusMap) =
+    override fun attachButtons(boardAction: MessageAction<DiscordButtons>, container: LanguageContainer, focused: FocusedFields) =
         boardAction.addButtons(
-            commandMap.map { row -> ActionRow.of(
+            focused.map { row -> ActionRow.of(
                 row.map { element -> when (element.second) {
-                    SpotInfo.FREE -> Button.of(ButtonStyle.SECONDARY, "s-${element.first}", element.first)
-                    SpotInfo.BLACK -> Button.of(ButtonStyle.SECONDARY, "s-${element.first}", "", EMOJI_BLACK_CIRCLE).asDisabled()
-                    SpotInfo.WHITE -> Button.of(ButtonStyle.SECONDARY, "s-${element.first}", "", EMOJI_WHITE_CIRCLE).asDisabled()
-                    SpotInfo.BLACK_RECENT -> Button.of(ButtonStyle.SUCCESS, "s-${element.first}", "", EMOJI_BLACK_CIRCLE).asDisabled()
-                    SpotInfo.WHITE_RECENT -> Button.of(ButtonStyle.SUCCESS, "s-${element.first}", "", EMOJI_WHITE_CIRCLE).asDisabled()
-                    SpotInfo.FORBIDDEN -> Button.of(ButtonStyle.DANGER, "s-${element.first}", "", EMOJI_DARK_X).asDisabled()
+                    ButtonFlag.FREE -> Button.of(ButtonStyle.SECONDARY, "s-${element.first}", element.first)
+                    ButtonFlag.BLACK -> Button.of(ButtonStyle.SECONDARY, "s-${element.first}", "", EMOJI_BLACK_CIRCLE).asDisabled()
+                    ButtonFlag.WHITE -> Button.of(ButtonStyle.SECONDARY, "s-${element.first}", "", EMOJI_WHITE_CIRCLE).asDisabled()
+                    ButtonFlag.BLACK_RECENT -> Button.of(ButtonStyle.SUCCESS, "s-${element.first}", "", EMOJI_BLACK_CIRCLE).asDisabled()
+                    ButtonFlag.WHITE_RECENT -> Button.of(ButtonStyle.SUCCESS, "s-${element.first}", "", EMOJI_WHITE_CIRCLE).asDisabled()
+                    ButtonFlag.FORBIDDEN -> Button.of(ButtonStyle.DANGER, "s-${element.first}", "", EMOJI_DARK_X).asDisabled()
                 } }
             ) }.reversed() // cartesian coordinate system
         )
 
-    override fun bindAboutBot(publisher: DiscordMessagePublisher, container: LanguageContainer) =
+    override fun produceAboutBot(publisher: DiscordMessagePublisher, container: LanguageContainer) =
         IO { publisher(Message(
             embed = Embed {
                 color = COLOR_NORMAL_HEX
@@ -102,7 +99,7 @@ object DiscordMessageBinder : MessageBinder<Message, DiscordButtons>() {
             }
         )) }
 
-    override fun bindCommandGuide(publisher: DiscordMessagePublisher, container: LanguageContainer) =
+    override fun produceCommandGuide(publisher: DiscordMessagePublisher, container: LanguageContainer) =
         IO { publisher(Message(
             embed = Embed {
                 color = COLOR_NORMAL_HEX
@@ -156,7 +153,7 @@ object DiscordMessageBinder : MessageBinder<Message, DiscordButtons>() {
             }
         )) }
 
-    override fun bindStyleGuide(publisher: DiscordMessagePublisher, container: LanguageContainer) =
+    override fun produceStyleGuide(publisher: DiscordMessagePublisher, container: LanguageContainer) =
         IO { publisher(Message(
             embed = Embed {
                 color = COLOR_NORMAL_HEX
@@ -194,19 +191,33 @@ object DiscordMessageBinder : MessageBinder<Message, DiscordButtons>() {
         }
     }
 
-    override fun bindLanguageGuide(publisher: DiscordMessagePublisher) =
+    override fun produceLanguageGuide(publisher: DiscordMessagePublisher) =
         IO { publisher(Message(embed = languageEmbed)) }
 
     fun sendPermissionNotGrantedEmbed(publisher: (Message) -> RestAction<Message>, container: LanguageContainer, channelName: String) =
         publisher(Message(
             embed = Embed {
                 color = COLOR_RED_HEX
-                title = "$UNICODE_CONSTRUCTION Something Wrong"
+                title = "$UNICODE_CONSTRUCTION ${container.somethingWrong()}"
                 description = "GomokuBot은 ``${channelName}``채널에 메시지를 보낼 권한이 없습니다! 역할 및 퍼미션 설정을 확인해 주세요."
                 footer {
                     name = "$UNICODE_ALARM_CLOCK 이 메지시는 1분 뒤 지워집니다."
                 }
             }
         ))
+
+    // ## UTILS
+
+    override fun produceNotYetImplemented(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer) =
+        IO { publisher(Message(
+            embed = Embed {
+                color = COLOR_RED_HEX
+                title = "$UNICODE_CONSTRUCTION ${container.somethingWrong()}"
+                description = "이 기능은 아직 완성되지 않았습니다."
+                footer {
+                    name = "$UNICODE_MAILBOX 지원 서버에서 업데이트 소식을 받아볼 수 있습니다."
+                }
+            }
+        )) }
 
 }
