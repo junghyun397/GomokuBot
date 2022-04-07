@@ -6,7 +6,9 @@ import core.interact.commands.DebugCommand
 import core.interact.commands.DebugType
 import core.interact.parse.NamedParser
 import core.interact.parse.asParseFailure
+import discord.assets.extractUser
 import discord.interact.InteractionContext
+import discord.interact.message.DiscordMessageProducer
 import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -27,7 +29,9 @@ object DebugCommandParser : NamedParser, ParsableCommand {
             .uppercase()
 
         val type = matchType(option)
-            ?: return Either.Right(this.asParseFailure("unknown debug type") {_,  _, _ -> IO { Order.Unit } })
+            ?: return Either.Right(this.asParseFailure("unknown debug type", context.event.author.extractUser()) { _,  _, _ ->
+                IO { Order.Unit }
+            })
 
         return Either.Left(DebugCommand(
             "debug", type,
@@ -36,6 +40,8 @@ object DebugCommandParser : NamedParser, ParsableCommand {
     }
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
-        Either.Right(this.asParseFailure("slash not supported") { _, _, _ -> IO { Order.Unit } })
+        Either.Right(this.asParseFailure("slash not supported", context.event.user.extractUser()) { _, _, _ ->
+            IO { Order.Unit }
+        })
 
 }

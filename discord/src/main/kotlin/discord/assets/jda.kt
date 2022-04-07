@@ -6,7 +6,7 @@ typealias JDAGuild = net.dv8tion.jda.api.entities.Guild
 
 fun net.dv8tion.jda.api.entities.Guild.extractGuild() = Guild(this.extractId(), this.name)
 
-fun net.dv8tion.jda.api.entities.User.extractUser() = User(this.extractId(), this.name, this.asTag)
+fun net.dv8tion.jda.api.entities.User.extractUser() = User(this.extractId(), this.name, this.asTag, this.avatarUrl)
 
 fun net.dv8tion.jda.api.entities.Message.extractMessage() = Message(this.extractId(), this.textChannel.extractId())
 

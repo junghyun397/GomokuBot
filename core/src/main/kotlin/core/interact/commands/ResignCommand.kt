@@ -6,6 +6,7 @@ import core.assets.User
 import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
 import core.interact.reports.asCommandReport
+import core.session.GameManager
 import core.session.SessionManager
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
@@ -21,7 +22,10 @@ class ResignCommand(override val command: String, private val session: GameSessi
         publisher: MessagePublisher<A, B>
     ) = runCatching {
         SessionManager.removeGameSession(context.sessionRepository, config.id, session.owner.id)
-        IO { Order.Unit } to this.asCommandReport("$session surrendered")
+
+        val io = producer.produceSurrendered(publisher, config.language.container, user, user).map { it.launch(); Order.Unit }
+
+        io to this.asCommandReport("$session surrendered", user)
     }
 
 }

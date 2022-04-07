@@ -7,11 +7,11 @@ import core.interact.reports.CommandReport
 import discord.assets.extractUser
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
-import discord.interact.parse.ParsableCommand
-import discord.interact.parse.parsers.*
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.MessageActionRestActionAdaptor
 import discord.interact.message.WebHookRestActionAdaptor
+import discord.interact.parse.ParsableCommand
+import discord.interact.parse.parsers.*
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -19,16 +19,17 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.util.function.Tuple2
+import utils.structs.Either
 import utils.structs.Option
 
 private fun matchCommand(command: String, languageContainer: LanguageContainer): Option<ParsableCommand> =
     when (command.lowercase()) {
-        "?" -> Option.Some(HelpCommandParser)
+        "help" -> Option.Some(HelpCommandParser)
         languageContainer.helpCommand() -> Option.Some(HelpCommandParser)
         languageContainer.startCommand() -> Option.Some(StartCommandParser)
         "s" -> Option.Some(SetCommandParser)
         languageContainer.resignCommand() -> Option.Some(ResignCommandParser)
-        languageContainer.langCommand() -> Option.Some(LangCommandParser)
+        languageContainer.languageCommand() -> Option.Some(LangCommandParser)
         languageContainer.styleCommand() -> Option.Some(StyleCommandParser)
         languageContainer.rankCommand() -> Option.Some(RankCommandParser)
         languageContainer.ratingCommand() -> Option.Some(RatingCommandParser)
@@ -48,12 +49,14 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
         .doOnNext { it.t1.event
             .deferReply().queue()
         }
-        .flatMap { Mono.zip(
-            it.t1.toMono(),
-            mono { withMessagePermissionNode(it.t1.event.textChannel, it.t1.event.user, it.t2.getOrNull()!!) { parsable ->
-                parsable.parseSlash(it.t1)
-            } },
-        ) }
+        .flatMap { Mono.zip(it.t1.toMono(), mono {
+            mergeMessagePermission(it.t1.event.textChannel, it.t1.event.user, it.t2.getOrException()).fold(
+                onDefined = { failure -> Either.Right(failure) },
+                onEmpty = { it.t2.getOrException()
+                    .parseSlash(it.t1)
+                }
+            )
+        }) }
         .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.fold(
             onLeft = { command ->
                 command.execute(
@@ -84,12 +87,14 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
         ).toMono()
     )
         .filter { it.t2.isDefined }
-        .flatMap { Mono.zip(
-            it.t1.toMono(),
-            mono { withMessagePermissionNode(it.t1.event.textChannel, it.t1.event.author, it.t2.getOrNull()!!) { parsable ->
-                parsable.parseText(it.t1)
-            } },
-        ) }
+        .flatMap { Mono.zip(it.t1.toMono(), mono {
+            mergeMessagePermission(it.t1.event.textChannel, it.t1.event.author, it.t2.getOrException()).fold(
+                onDefined = { failure -> Either.Right(failure) },
+                onEmpty = { it.t2.getOrException()
+                    .parseText(it.t1)
+                }
+            )
+        }) }
         .doOnNext {
             GuildManager.permissionSafeRun(it.t1.event.textChannel, Permission.MESSAGE_ADD_REACTION) { _ ->
                 if (it.t2.isLeft) it.t1.event.message.addReaction(UNICODE_CHECK).queue()

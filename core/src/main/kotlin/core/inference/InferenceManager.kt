@@ -39,23 +39,29 @@ object InferenceManager {
         if (cond.white3() > 1) RenjuWeights.DOUBLE_THREE else cond.white3() * RenjuWeights.OPEN_THREE +
         if (cond.whiteC4() > 1) RenjuWeights.DOUBLE_FOUR else cond.whiteC4() * RenjuWeights.CLOSED_FOUR
 
-    fun resolveBoard(board: L3Board): Pos = TODO()
+    private fun evaluateBoard(board: L3Board): MutableList<MutableList<Int>> =
+        board.boardField().zip(board.attackField())
+            .map { this.evaluateWeight(it.first, it.second) }
+            .chunked(Renju.BOARD_WIDTH()) { it.toMutableList() }
+            .toMutableList()
+
+    fun resolveBoard(board: L3Board): Pos {
+        val evaluated = this.evaluateBoard(board)
+        TODO()
+    }
 
     // Prefix Sum Algorithm, O(N)
     fun resolveFocus(board: L3Board, kernelWidth: Int): Pos {
         val kernelHalf = kernelWidth / 2
 
-        val evaluated = board.boardField().zip(board.attackField())
-            .map { this.evaluateWeight(it.first, it.second) }
-            .chunked(Renju.BOARD_WIDTH()) { it.toMutableList() }
-            .toMutableList()
+        val evaluated = this.evaluateBoard(board)
 
         val latestPos = board.latestPos()
 
         evaluated[latestPos.col()][latestPos.row()] += RenjuWeights.LATEST_MOVE
 
-        for (col in (latestPos.col() - kernelHalf).bound() .. min(Renju.BOARD_WIDTH(), latestPos.col() + kernelHalf))
-            for (row in (latestPos.row() - kernelHalf).bound() .. min(Renju.BOARD_WIDTH(), latestPos.row() + kernelHalf))
+        for (col in (latestPos.col() - kernelHalf).bound() .. min(Renju.BOARD_WIDTH() - 1, latestPos.col() + kernelHalf))
+            for (row in (latestPos.row() - kernelHalf).bound() .. min(Renju.BOARD_WIDTH() - 1, latestPos.row() + kernelHalf))
                 evaluated[col][row] += RenjuWeights.CENTER_EXTRA
 
         val sum = evaluated

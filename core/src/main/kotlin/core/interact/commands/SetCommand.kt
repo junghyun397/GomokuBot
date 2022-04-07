@@ -20,7 +20,7 @@ class SetCommand(override val command: String, private val session: GameSession,
         producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>
     ) = runCatching {
-        IO { Order.Unit } to this.asCommandReport("succeed")
+        IO { Order.Unit } to this.asCommandReport("succeed", user)
     }
 
 }

@@ -19,9 +19,10 @@ message Request {
 }
 
 enum Method {
-  PASS = 0;
-  HARD = 1;
-  HIT = 2;
+  SHALLOW_INFERENCE = 0;
+  CACHED_SOLUTION = 1;
+  DEEP_INFERENCE = 2;
+  DEEP_SOLUTION = 3;
 }
 
 message Response {

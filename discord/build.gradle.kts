@@ -20,13 +20,13 @@ dependencies {
 }
 
 application {
-    mainClass.set("AppKt")
+    mainClass.set("discord.AppKt")
 }
 
 tasks.jar {
     manifest {
         attributes(
-            "Main-Class" to "AppKt"
+            "Main-Class" to "discord.AppKt"
         )
     }
 }

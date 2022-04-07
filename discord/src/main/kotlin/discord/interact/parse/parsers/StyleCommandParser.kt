@@ -1,5 +1,6 @@
 package discord.interact.parse.parsers
 
+import core.assets.User
 import core.interact.Order
 import core.interact.commands.Command
 import core.interact.commands.StyleCommand
@@ -10,9 +11,11 @@ import core.interact.parse.asParseFailure
 import dev.minn.jda.ktx.interactions.choice
 import dev.minn.jda.ktx.interactions.option
 import dev.minn.jda.ktx.interactions.slash
+import discord.assets.extractUser
 import discord.interact.InteractionContext
-import discord.interact.message.DiscordMessageProducer
-import discord.interact.parse.*
+import discord.interact.parse.BuildableCommand
+import discord.interact.parse.DiscordParseFailure
+import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
@@ -25,13 +28,16 @@ object StyleCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     private fun matchStyle(option: String): BoardStyle? =
         BoardStyle.values().firstOrNull { it.sample.styleShortcut == option || it.sample.styleName == option }
 
+    private fun composeMissMatchFailure(user: User): Either<Command, DiscordParseFailure> =
+        Either.Right(this.asParseFailure("option missmatch", user) { producer, publisher, container ->
+            producer.produceStyleNotFound(publisher, container).map { it.launch() }
+                .flatMap { producer.produceStyleGuide(publisher, container) }.map { it.launch(); Order.Unit }
+        })
+
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {
         val style = context.event.getOption(context.config.language.container.styleCommandOptionCode())?.asString?.uppercase()?.let {
             matchStyle(it)
-        }
-            ?: return Either.Right(this.asParseFailure("option missmatch") { _, publisher, container ->
-                DiscordMessageProducer.produceStyleGuide(publisher, container).map { it.launch(); Order.Unit }
-            })
+        } ?: return this.composeMissMatchFailure(context.event.user.extractUser())
 
         return Either.Left(StyleCommand(context.config.language.container.styleCommand(), style))
     }
@@ -41,10 +47,7 @@ object StyleCommandParser : NamedParser, ParsableCommand, BuildableCommand {
             .drop(context.config.language.container.styleCommand().length + 2)
             .uppercase()
 
-        val style = matchStyle(option)
-            ?: return Either.Right(this.asParseFailure("option missmatch") { _, publisher, container ->
-                DiscordMessageProducer.produceStyleGuide(publisher, container).map { it.launch(); Order.Unit }
-            })
+        val style = matchStyle(option) ?: return this.composeMissMatchFailure(context.event.author.extractUser())
 
         return Either.Left(StyleCommand(context.config.language.container.styleCommand(), style))
     }

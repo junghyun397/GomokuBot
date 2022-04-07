@@ -126,7 +126,7 @@ object GomokuBot {
             .subscribe { leaveLog(it) }
 
         eventManager.on<GuildLeaveEvent>()
-            .subscribe { logger.info("leave (${it.guild.name})/${it.guild.idLong}") }
+            .subscribe { logger.info("leave [${it.guild.name}](${it.guild.idLong})") }
 
         eventManager.on<ReadyEvent>()
             .subscribe { logger.info("jda ready, complete loading.") }
@@ -137,12 +137,10 @@ object GomokuBot {
         logger.info("reactive event manager ready.")
 
         JDABuilder.createLight(Token.fromEnv().token)
-            .apply {
-                setEventManager(eventManager)
-                setActivity(Activity.playing("/help or ${COMMAND_PREFIX}help or @GomokuBot"))
-                setStatus(OnlineStatus.ONLINE)
-                setEnabledIntents(GatewayIntent.GUILD_MESSAGES)
-            }
+            .setEventManager(eventManager)
+            .setActivity(Activity.playing("/help or ${COMMAND_PREFIX}help or @GomokuBot"))
+            .setStatus(OnlineStatus.ONLINE)
+            .setEnabledIntents(GatewayIntent.GUILD_MESSAGES)
             .build()
     }
 

@@ -3,13 +3,11 @@ package discord.route
 import core.interact.reports.CommandReport
 import discord.assets.extractUser
 import discord.interact.InteractionContext
-import discord.interact.message.DiscordButtons
-import discord.interact.parse.parsers.AcceptCommandParser
-import discord.interact.parse.parsers.SetCommandParser
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.WebHookRestActionAdaptor
+import discord.interact.parse.parsers.AcceptCommandParser
+import discord.interact.parse.parsers.SetCommandParser
 import kotlinx.coroutines.reactor.mono
-import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
@@ -19,7 +17,7 @@ import utils.structs.Option
 private fun matchAction(prefix: String) =
     when(prefix) {
         "s" -> Option.Some(SetCommandParser)
-        "r" -> Option.Some(AcceptCommandParser)
+        "a" -> Option.Some(AcceptCommandParser)
         else -> Option.Empty
     }
 

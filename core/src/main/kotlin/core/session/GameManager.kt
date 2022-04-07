@@ -35,10 +35,12 @@ object GameManager {
     fun generateSession(owner: User, opponent: Option<User>): GameSession =
         GameSession(
             owner, opponent,
+            true,
             Board.newBoard(Pos.apply(7, 7).idx())
                 .calculateL2Board()
                 .calculateL3Board(),
-            emptyList(), LinuxTime()
+            emptyList(), emptyList(),
+            LinuxTime()
         )
 
     fun validateMove(session: GameSession, pos: Pos): Option<RejectReason> =

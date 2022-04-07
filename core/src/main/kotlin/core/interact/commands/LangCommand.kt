@@ -22,7 +22,10 @@ class LangCommand(override val command: String, private val language: Language) 
     ) = runCatching {
         SessionManager.updateGuildConfig(context.sessionRepository, config.id, config.copy(language = language))
 
-        IO { Order.RefreshCommands } to this.asCommandReport("${config.language.name} to ${language.name}")
+        val io = producer.produceLanguageUpdated(publisher, this.language.container)
+            .map { it.launch(); Order.RefreshCommands }
+
+        io to this.asCommandReport("${config.language.name} to ${language.name}", user)
     }
 
 }

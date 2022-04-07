@@ -2,11 +2,12 @@ package core.interact.message
 
 import core.assets.MessageId
 import java.io.File
+import java.io.InputStream
 
 typealias MessagePublisher<A, B> = (A) -> MessageAction<B>
 
 interface MessageAction<in T> {
-    fun addFile(file: File): MessageAction<T>
+    fun addFile(file: InputStream, name: String): MessageAction<T>
     fun addButtons(buttons: T): MessageAction<T>
     fun launch()
     suspend fun retrieve(): MessageId

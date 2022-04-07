@@ -1,7 +1,9 @@
 package discord.interact.parse.parsers
 
 import core.interact.commands.HelpCommand
+import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
+import core.interact.i18n.LanguageENG
 import core.interact.parse.NamedParser
 import dev.minn.jda.ktx.interactions.slash
 import discord.interact.InteractionContext
@@ -23,9 +25,15 @@ object HelpCommandParser : NamedParser, ParsableCommand, BuildableCommand {
         Either.Left(HelpCommand(context.config.language.container.helpCommand()))
 
     override fun buildCommandData(action: CommandListUpdateAction, languageContainer: LanguageContainer) =
-        action.slash(
-            languageContainer.helpCommand(),
-            languageContainer.helpCommandDescription()
-        )
+        action.apply {
+            if (languageContainer !is LanguageENG) slash(
+                "help",
+                Language.ENG.container.helpCommandDescription()
+            )
+            slash(
+                languageContainer.helpCommand(),
+                languageContainer.helpCommandDescription()
+            )
+        }
 
 }

@@ -7,169 +7,244 @@ open class LanguageENG : LanguageContainer {
     override fun languageName() = "English\uD83C\uDDEC\uD83C\uDDE7"
     override fun languageSuggestion() = "Please use the `~lang` `ENG` command."
 
-    // # TOKENS
+    // # 1. INFORM
 
-    override fun user() = "User"
+    // ## 1-1. HELP
 
-    // ## BOARD
-
-    override fun inProgress() = "In Progress"
-    override fun finish() = "Finished"
-    override fun progress() = "Turn Progress"
-    override fun turns() = "Turns"
-    override fun move() = "Latest Move"
-
-    // ## ARTICLE
-
-    override fun somethingWrong() = "Something Wrong"
-
-    // # COMMANDS
-
-    // ## HELP
+    // ### 1-1-1. HELP (COMMAND)
 
     override fun helpCommand() = "help"
     override fun helpCommandDescription() = "Get help"
 
-    // ## LANG
+    // ### 1-1-2. HELP:ABOUT (EMBED)
 
-    override fun langCommand() = "lang"
-    override fun langCommandDescription() = "Set language uses in this server"
-    override fun languageCommandOptionCode() = "language"
-    override fun languageCommandOptionCodeDescription() = "select language code"
+    override fun helpAboutEmbedTitle() = "GomokuBot / Help"
+    override fun helpAboutEmbedDescription() =
+        "GomokuBot is an open-source artificial intelligence Discord Bot that provides Renju(Gomoku) feature in Discord. " +
+                "The collected data is used for training reinforcement learning models."
+    override fun helpAboutEmbedDeveloper() = "Developer"
+    override fun helpAboutEmbedRepository() = "Git Repository"
+    override fun helpAboutEmbedVersion() = "Version"
+    override fun helpAboutEmbedSupport() = "Support Channel"
+    override fun helpAboutEmbedInvite() = "Invite Link"
 
-    // ## STYLE
+    // ### 1-1-3. HELP:COMMAND (EMBED)
 
-    override fun styleCommand() = "style"
-    override fun styleCommandDescription() = "Change Gomoku-board style setting used on this server."
-    override fun styleCommandOptionCode() = "style"
-    override fun styleCommandOptionCodeDescription() = "Select style code"
+    override fun helpCommandEmbedTitle() = "GomokuBot / Command"
+    override fun helpCommandEmbedHelp() = "`~help` Get help"
+    override fun helpCommandEmbedRank() = "`~rank` Show ranking from 1st to 10th"
+    override fun helpCommandEmbedRating() = "`~rating`"
 
-    // ## RANK
+    override fun helpCommandEmbedLang(langList: String) =
+        "`~lang` $langList Change the language setting used on this server. Ex) `~lang` `ENG`"
+    override fun helpCommandEmbedStyle() =
+        "`~skin` `A` `B` `C` Change the Gomoku-canvas style setting used on this server. Ex) `~skin` `A`"
+
+    override fun helpCommandEmbedStartPVE() = "`~start` Start the game with A.I."
+    override fun helpCommandEmbedStartPVP() =
+        "`~start` `@mention` Start the game with the mentioned player. Ex) `~start` `@player`"
+    override fun helpCommandEmbedResign() = "`~resign` Surrender the current game."
+
+    // ## 1-2. RANK
+
+    // ### 1-2-1. RANK (COMMAND)
 
     override fun rankCommand() = "rank"
     override fun rankCommandDescription() = "Show ranking from 1st to 10th"
 
-    // ## RATING
+    // ### 1-2-2. RANK:LIST (EMBED)
+
+    override fun rankEmbedTitle() = "GomokuBot / Ranking"
+    override fun rankEmbedDescription() = "Ranked 1st to 10th."
+    override fun rankEmbedWin() = "Victory"
+    override fun rankEmbedLose() = "Defeat"
+
+    // ## 1-3. RATING
+
+    // ### 1-3-1. RATING (COMMAND)
 
     override fun ratingCommand() = "rating"
     override fun ratingCommandDescription() = "Show rating specific User"
     override fun ratingCommandOptionUser() = "user"
     override fun ratingCommandOptionUserDescription() = "specific the user"
 
-    // ## START
+    // ### 1-3-2. RATING:RESPONSE (EMBED)
+
+    override fun ratingEmbed() = TODO("Not yet implemented")
+    override fun ratingEmbedDescription() = TODO("Not yet implemented")
+
+    // # 2. CONFIG
+
+    // ## 2-1. LANG
+
+    // ### 2-1-1. LANG (COMMAND)
+
+    override fun languageCommand() = "lang"
+    override fun languageCommandDescription() = "Set language uses in this server"
+    override fun languageCommandOptionCode() = "language"
+    override fun languageCommandOptionCodeDescription() = "select language code"
+
+    // ### 2-1-2. LANG:SUCCEED:CHANGED (MESSAGE)
+
+    override fun languageUpdated() = "Language setting has been changed to English:flag_gb:!"
+
+    // ## 2-2. STYLE
+
+    // ### 2-2-1. STYLE (COMMAND)
+
+    override fun styleCommand() = "style"
+    override fun styleCommandDescription() = "Change Gomoku-board style setting used on this server."
+    override fun styleCommandOptionCode() = "style"
+    override fun styleCommandOptionCodeDescription() = "Select style code"
+
+    // ### 2-2-2. STYLE:ENUM (EMBED)
+
+    override fun styleEmbedTitle() = "GomokuBot / Style"
+    override fun styleEmbedDescription() =
+        "Default Gomoku board (Style A) may not display properly. " +
+                "Choose one of the three styles available and set the style to use on this server."
+    override fun styleEmbedSuggestion(style: String) = "Enter ``~skin`` ``$style`` to use this style."
+
+    // ### 2-2-3. STYLE:ERROR:NOTFOUND (MESSAGE)
+
+    override fun styleErrorNotfound() = "There is an error in the style specification."
+
+    // ### 2-2-4. STYLE:SUCCEED:CHANGED (MESSAGE)
+
+    override fun styleUpdated(style: String) = "Style setting has been change to ``$style`` !"
+
+    // ## 2-3. POLICY
+
+    // ### 2-3-1. POLICY (COMMAND)
+
+    // # 3. SESSION
+
+    override fun sessionNotFound(): String = ""
+
+    // ## 3-1. START
+
+    // ### 3-1-1. START (COMMAND)
 
     override fun startCommand() = "start"
     override fun startCommandDescription() = "Start a new game"
     override fun startCommandOptionOpponent() = "opponent"
     override fun startCommandOptionOpponentDescription() = "Specific the opponent"
 
-    // ## RESIGN
+    // ### 3-1-2. START:ERROR:ALREADY (MESSAGE)
+
+    override fun startErrorSessionAlready(nameTag: String) =
+        "$nameTag, Game creation failed. Please finish the game in progress. :thinking:"
+    override fun startErrorRequestAlready(nameTag: String) =
+        ""
+
+    // ## 3-2. SET
+
+    // ### 3-2-1. SET (COMMAND)
+
+    override fun setCommandDescription() = ""
+    override fun setCommandOptionRow() = ""
+    override fun setCommandOptionRowDescription() = ""
+    override fun setCommandOptionColumn() = ""
+    override fun setCommandOptionColumnDescription() = ""
+
+    // ### 3-2-2. SET:ERROR:ARGUMENT (MESSAGE)
+
+    override fun setErrorIllegalArgument() =
+        "that's invalid command. Please write in the format of . `~s` `alphabet` `number` :thinking:"
+
+    // ### 3-2-3. SET:ERROR:EXIST (MESSAGE)
+
+    override fun setErrorExist(nameTag: String, pos: String) = "$nameTag, there is already a stone. :thinking:"
+
+    // ### 3-2-4. SET:ERROR:FORBIDDEN (MESSAGE)
+
+    override fun setErrorForbidden(nameTag: String, pos: String, forbiddenType: String) = ""
+
+    // ## 3-3. RESIGN
+
+    // ### 3-3-1. RESIGN (COMMAND)
 
     override fun resignCommand() = "resign"
     override fun resignCommandDescription() = "resign"
 
-    // # HELP
+    // ### 3-3-2. RESIGN:ERROR:NOTFOUND (MESSAGE)
 
-    // ## ABOUT
+    // ## 3-4. REQUEST
 
-    override fun helpAboutTitle() = "GomokuBot / Help"
-    override fun helpAboutDescription() =
-        "GomokuBot is an open-source artificial intelligence Discord Bot that provides Gomoku(Omok) feature in Discord. " +
-                "The collected data is used for training reinforcement learning models."
-    override fun helpAboutDeveloper() = "Developer"
-    override fun helpAboutRepository() = "Git Repository"
-    override fun helpAboutVersion() = "Version"
-    override fun helpAboutSupport() = "Support Channel"
-    override fun helpAboutInvite() = "Invite Link"
+    // ### 3-4-1. REQUEST:ABOUT (EMBED)
 
-    // ## COMMAND
+    override fun requestEmbedTitle() = "대결 요청"
+    override fun requestEmbedDescription(ownerName: String, opponentName: String) = ""
+    override fun requestEmbedButtonAccept() = "Accept"
+    override fun requestEmbedButtonReject() = "Reject"
 
-    override fun helpCommandInfo() = "GomokuBot / Command"
-    override fun helpCommandHelp() = "`~help` Get help"
-    override fun helpCommandRank() = "`~rank` Show ranking from 1st to 10th"
-    override fun helpCommandRating() = "`~rating`"
-    override fun helpCommandLang(langList: String) =
-        "`~lang` $langList Change the language setting used on this server. Ex) `~lang` `ENG`"
-    override fun helpCommandStyle() =
-        "`~skin` `A` `B` `C` Change the Gomoku-canvas style setting used on this server. Ex) `~skin` `A`"
-    override fun helpCommandPVE() = "`~start` Start the game with A.I."
-    override fun helpCommandPVP() =
-        "`~start` `@mention` Start the game with the mentioned player. Ex) `~start` `@player`"
-    override fun helpCommandResign() = "`~resign` Surrender the current game."
+    // # 4. GAME
 
-    // # STYLE
+    // ## 4-1. BEGIN
 
-    override fun styleInfo() = "GomokuBot / Style"
-    override fun styleDescription() =
-        "Default Gomoku board (Style A) may not display properly. " +
-                "Choose one of the three styles available and set the style to use on this server."
-    override fun styleSuggestion(style: String) = "Enter ``~skin`` ``$style`` to use this style."
-    override fun styleUpdateError() = "There is an error in the style specification."
-    override fun styleUpdateSuccess(style: String) = "Style setting has been change to ``$style`` !"
+    // ### 4-1-1. BEGIN:PVP
 
-    // # RANK
+    override fun beginPVP(ownerName: String, opponentName: String, fMove: String) =
+        "The match between`$ownerName` vs `$opponentName` has begun! Attack first is `$fMove`."
 
-    override fun rankInfo() = "GomokuBot / Ranking"
-    override fun rankDescription() = "Ranked 1st to 10th."
-    override fun rankWin() = "Victory"
-    override fun rankLose() = "Defeat"
+    // ### 4-1-2. BEGIN:AI
 
-    // # RATING
+    override fun beginPVE(playerName: String, fMove: String) = ""
 
-    override fun ratingInfo() = TODO("Not yet implemented")
-    override fun ratingDescription() = TODO("Not yet implemented")
-    override fun ratingUpdate(nameTag: String, prvRating: Float, rating: Float) = TODO("Not yet implemented")
-    override fun rating() = TODO("Not yet implemented")
+    // ## 4-2. PROCESS
 
-    // # LANG
+    // ### 4-2-1. PROCES:NEXT (MESSAGE)
 
-    override fun langUpdateError() = "There is an error in the language specification."
-    override fun langUpdateSuccess() = "Language setting has been changed to English:flag_gb:!"
-
-    // # GAME
-
-    // ## CREATION
-
-    override fun gameNotFound(nameTag: String) =
-        "$nameTag, could not find any games in progress. Please start the game with `~start` command!"
-    override fun gameAlreadyInProgress(nameTag: String) =
-        "$nameTag, Game creation failed. Please finish the game in progress. :thinking:"
-    override fun gameSyntaxFail(nameTag: String) =
-        "$nameTag, that's invalid command. Please write in the format of . `~s` `alphabet` `number` :thinking:"
-
-    // ## CREATED
-
-    override fun gameCreatedInfo(playerName: String, targetName: String, fAttack: String) =
-        "The match between`$playerName` vs `$targetName` has begun! Attack first is `$fAttack`."
-    override fun gameCommandInfo() = "Please place the Stone by `~s` `alphabet` `number` format. Ex) `~s` `h` `8`"
-
-    // ## PROCESS
-
-    override fun gameNextTurn(curName: String, prvName: String, lastPos: String) =
+    override fun processNext(curName: String, prvName: String, lastPos: String) =
         "`$curName`, please place the next Stone. `$prvName` was placed on $lastPos"
-    override fun gameInvalidMoveAlreadyExits(nameTag: String) = "$nameTag, there is already a stone. :thinking:"
-    override fun gameInvalidMoveForbidden(nameTag: String) = TODO("Not yet implemented")
-    override fun gameTieCausedByFull() = "There was no more space for the stones, so it was a draw."
 
-    // ## PVP
+    // ### 4-2-2. PROCESS:ERROR:ORDER (MESSAGE)
 
-    override fun gamePVPPleaseWait(turnName: String) =
+    override fun processErrorOrder(turnName: String) =
         "It's `$turnName`s turn now. Please wait for `$turnName`'s next stone. :thinking:"
-    override fun gamePVPWin(winName: String, loseName: String, lastPos: String) =
+
+    // ## 4-3. END
+
+    // ### 4-3-1. END:PVP (MESSAGE)
+
+    override fun endPVPWin(winName: String, loseName: String, lastPos: String) =
         "`$winName` wins by `$loseName` placing Stone on $lastPos!"
-    override fun gamePVPWinCausedByResign(winName: String, loseName: String) =
+    override fun endPVPResign(winName: String, loseName: String) =
         "`$winName` wins by `$loseName` declaring surrender!"
-    override fun gamePVPInfo(winName: String, loseName: String, winCount: Int, loseCount: Int) =
-        "`$winName` vs `$loseName` have been updated to `$winCount : $loseCount`."
+    override fun endPVPTie() = "There was no more space for the stones, so it was a draw."
 
-    // ## PVE
+    // ### 4-3-2. END:AI (MESSAGE)
 
-    override fun gamePVEWin(lastPos: String) =
-        "You beat A.I. by placing Stone on $lastPos. Congratulations! :tada:"
-    override fun gamePVELose(lastPos: String) = "You have been defeated by A.I. placing on $lastPos."
-    override fun gamePVEResign() = "You have been defeated by declaring surrender."
+    override fun endPVEWin(latestPos: String) =
+       "You beat A.I. by placing Stone on $latestPos. Congratulations! :tada:"
+    override fun endPVELose(latestPos: String) = "You have been defeated by A.I. placing on $latestPos."
+    override fun endPVEResign() = "You have been defeated by declaring surrender."
+    override fun endPVETie() = ""
 
-    override fun gamePVEInfo(playerName: String, winCount: Int, loseCount: Int, rank: Int) =
-        "Your entire A.I. has been updated to `$winCount : $loseCount`. $playerName is currently ranked $rank above."
+    // # 5. BOARD
+
+    override fun boardInProgress() = "In Progress"
+    override fun boardFinished() = "Finished"
+
+    override fun boardMoves() = "Moves"
+    override fun boardLatestMove() = "Latest Move"
+
+    override fun boardCommandGuide() = ":mag: 버튼을 누르거나 ``/s`` ``알파벳`` ``숫자`` 명령어를 입력해 다음 수를 놓아 주세요."
+
+    // # 6. UTILS
+
+    override fun somethingWrongEmbedTitle() = "뭔가 잘못됐습니다!"
+
+    // ## 6-1. PERMISSION-NOT-GRANTED (EMBED)
+
+    override fun permissionNotGrantedEmbedDescription(channel: String) = "Gokomubot은 ``$channel``채널에 메시지를 보낼 권한이 없습니다! 역할 및 퍼미션 설정을 확인해 주세요."
+
+    override fun permissionNotGrantedEmbedFooter() = "이 메시지는 1분 뒤 지워집니다."
+
+    // ## 6-2. NOT-YET-IMPLEMENTED (EMBED)
+
+    override fun notYetImplementedEmbedDescription() = "이 기능은 아직 완성되지 않았습니다."
+
+    override fun notYetImplementedEmbedFooter() = "지원 채널에서 Gomokubot 업데이트 소식을 받아볼 수 있습니다."
 
 }

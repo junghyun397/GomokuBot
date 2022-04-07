@@ -3,6 +3,7 @@ package core.interact.commands
 import core.BotContext
 import core.interact.Order
 import core.assets.User
+import core.database.DatabaseManager
 import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
 import core.interact.reports.asCommandReport
@@ -18,7 +19,11 @@ class RankCommand(override val command: String) : Command {
         producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>
     ) = runCatching {
-        IO { Order.Unit } to this.asCommandReport("succeed")
+        val rankings = DatabaseManager.retrieveRanking(context.databaseConnection)
+
+        val io = producer.produceRankings(publisher, config.language.container, rankings).map { it.launch(); Order.Unit }
+
+        io to this.asCommandReport("succeed", user)
     }
 
 }

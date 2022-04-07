@@ -2,6 +2,8 @@ package core.inference
 
 object RenjuWeights {
 
+    const val SELF_FACTOR = 1.2
+
     const val LATEST_MOVE = 100
 
     const val CENTER_EXTRA = 2

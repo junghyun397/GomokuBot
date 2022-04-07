@@ -10,7 +10,7 @@ import core.interact.message.graphics.BoardStyle
 data class GuildConfig(
     val id: GuildId,
     val language: Language = Language.ENG,
-    val boardStyle: BoardStyle = BoardStyle.TEXT, // TODO
+    val boardStyle: BoardStyle = BoardStyle.IMAGE,
     val focusPolicy: FocusPolicy = FocusPolicy.INTELLIGENCE,
     val sweepPolicy: SweepPolicy = SweepPolicy.CLEAR_BODY,
     val archivePolicy: ArchivePolicy = ArchivePolicy.BY_ANONYMOUS

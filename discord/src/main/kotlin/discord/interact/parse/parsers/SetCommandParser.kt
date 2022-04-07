@@ -1,7 +1,7 @@
 package discord.interact.parse.parsers
 
-import core.interact.Order
 import core.assets.User
+import core.interact.Order
 import core.interact.commands.Command
 import core.interact.commands.SetCommand
 import core.interact.i18n.LanguageContainer
@@ -16,8 +16,10 @@ import discord.assets.extractId
 import discord.assets.extractUser
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordButtons
-import discord.interact.parse.*
-import discord.interact.message.DiscordMessageProducer
+import discord.interact.parse.BuildableCommand
+import discord.interact.parse.DiscordParseFailure
+import discord.interact.parse.EmbeddableCommand
+import discord.interact.parse.ParsableCommand
 import jrenju.notation.Pos
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -33,43 +35,43 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
     override val name = "s"
 
     private fun matchColumn(option: String): Int? =
-        option.first().uppercase().firstOrNull()
-            ?.digitToInt()
-            ?.let { if (it in 65..79) it - 65 else null }
+        option.first()
+            .digitToInt()
+            .let { if (it in 65..79) it - 65 else null }
 
     private fun matchRow(option: String): Int? =
         option.toIntOrNull()?.let { if (it in 1..15) it else null }
 
-    private fun composeMissMatchFailure(container: LanguageContainer, user: User): DiscordParseFailure =
-        this.asParseFailure("$user try move but argument missmatch") { _, publisher, _ ->
-            DiscordMessageProducer.produceLanguageGuide(publisher).map { it.launch(); Order.Unit } // TODO
+    private fun composeMissMatchFailure(user: User): DiscordParseFailure =
+        this.asParseFailure("try move but argument missmatch", user) { producer, publisher, container ->
+            producer.produceSetIllegalArgument(publisher, container).map { it.launch(); Order.Unit }
         }
 
-    private fun composeExistFailure(container: LanguageContainer, user: User): DiscordParseFailure =
-        this.asParseFailure("$user make move but already exist") { _, publisher, _ ->
-            DiscordMessageProducer.produceLanguageGuide(publisher).map { it.launch(); Order.Unit } // TODO
+    private fun composeExistFailure(user: User, pos: Pos): DiscordParseFailure =
+        this.asParseFailure("make move but already exist", user) { producer, publisher, container ->
+            producer.produceSetAlreadyExist(publisher, container, user, pos).map { it.launch(); Order.Unit }
         }
 
-    private fun composeForbiddenMoveFailure(container: LanguageContainer, user: User): DiscordParseFailure =
-        this.asParseFailure("$user make move but forbidden") { _, publisher, _ ->
-            DiscordMessageProducer.produceLanguageGuide(publisher).map { it.launch(); Order.Unit } // TODO
+    private fun composeForbiddenMoveFailure(user: User, pos: Pos, flag: Byte): DiscordParseFailure =
+        this.asParseFailure("make move but forbidden", user) { producer, publisher, container ->
+            producer.produceSetForbiddenMove(publisher, container, user, pos, flag).map { it.launch(); Order.Unit }
         }
 
     private suspend fun parseActually(context: InteractionContext<*>, user: User, rawColumn: String?, rawRow: String?): Either<Command, DiscordParseFailure> =
-        this.retrieveSessionWith(context.botContext, context.guild, user).flatMapLeft { session ->
-            if (rawColumn == null || rawRow == null) return Either.Right(composeMissMatchFailure(context.config.language.container, user))
+        this.retrieveSession(context.botContext, context.guild, user).flatMapLeft { session ->
+            if (rawColumn == null || rawRow == null) return Either.Right(composeMissMatchFailure(user))
 
             val column = matchColumn(rawColumn)
             val row = matchRow(rawRow)
 
-            if (column == null || row == null) return Either.Right(composeMissMatchFailure(context.config.language.container, user))
+            if (column == null || row == null) return Either.Right(composeMissMatchFailure(user))
 
             val pos = Pos(column, row)
 
             return GameManager.validateMove(session, pos).fold(
                 onDefined = { when (it) {
-                    RejectReason.EXIST -> Either.Right(this.composeExistFailure(context.config.language.container, user))
-                    RejectReason.FORBIDDEN -> Either.Right(this.composeForbiddenMoveFailure(context.config.language.container, user))
+                    RejectReason.EXIST -> Either.Right(this.composeExistFailure(user, pos))
+                    RejectReason.FORBIDDEN -> Either.Right(this.composeForbiddenMoveFailure(user, pos, session.board.boardField()[pos.idx()]))
                 } },
                 onEmpty = { Either.Left(SetCommand("s", session, pos)) }
             )

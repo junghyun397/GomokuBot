@@ -9,6 +9,12 @@ import kotlin.test.Test
 internal class OptionTest {
 
     @Test
+    fun format() {
+        val n = 9
+        println("%2d".format(n))
+    }
+
+    @Test
     fun chunked() {
         val board = Board.newBoard()
             .calculateL2Board()

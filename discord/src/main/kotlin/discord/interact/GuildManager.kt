@@ -4,6 +4,7 @@ import core.interact.i18n.LanguageContainer
 import core.session.ArchivePolicy
 import core.session.entities.GameSession
 import discord.assets.JDAGuild
+import discord.interact.message.DiscordMessageProducer
 import discord.interact.parse.buildableCommands
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.TextChannel
@@ -14,16 +15,26 @@ object GuildManager {
     fun lookupPermission(channel: TextChannel, permission: Permission) =
         channel.guild.selfMember.hasPermission(channel, permission)
 
-    inline fun <T> permissionSafeRun(channel: TextChannel, permission: Permission, block: (TextChannel) -> T): Option<T> {
-        if (channel.guild.selfMember.hasPermission(channel, permission)) return Option.Some(block(channel))
-        return Option.Empty
-    }
+    inline fun <T> permissionSafeRun(channel: TextChannel, permission: Permission, block: (TextChannel) -> T): Option<T> =
+        if (this.lookupPermission(channel, permission)) Option.Some(block(channel))
+        else Option.Empty
+
+    inline fun <T> permissionNotGrantedRun(channel: TextChannel, permission: Permission, block: () -> T): Option<T> =
+        if (this.lookupPermission(channel, permission)) Option.Empty
+        else Option.Some(block())
 
     fun insertCommands(guild: JDAGuild, languageContainer: LanguageContainer) =
-        buildableCommands.fold(guild.updateCommands()) { action, command ->
-            command.buildCommandData(action, languageContainer)
-        }.queue()
+        guild.retrieveCommands()
+            .map { commands -> commands.map { it.delete() } }
+            .flatMap {
+                buildableCommands.fold(guild.updateCommands()) { action, command ->
+                    command.buildCommandData(action, languageContainer)
+                }
+            }
+            .queue()
 
-    fun archiveGame(session: GameSession, archivePolicy: ArchivePolicy): Unit = TODO()
+    fun archiveGame(archiveChannel: TextChannel, session: GameSession, archivePolicy: ArchivePolicy) =
+        DiscordMessageProducer.sendBoardArchive(session, archivePolicy) { msg -> archiveChannel.sendMessage(msg) }
+            .queue()
 
 }

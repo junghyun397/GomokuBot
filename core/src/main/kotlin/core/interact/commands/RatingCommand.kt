@@ -18,7 +18,7 @@ class RatingCommand(override val command: String) : Command {
         producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>
     ) = runCatching {
-        IO { Order.Unit } to this.asCommandReport("succeed")
+        IO { Order.Unit } to this.asCommandReport("succeed", user)
     }
 
 }
