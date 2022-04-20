@@ -3,6 +3,7 @@ package core.interact.commands
 import core.BotContext
 import core.assets.User
 import core.interact.Order
+import core.interact.message.MessageModifier
 import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
 import core.interact.reports.asCommandReport
@@ -11,7 +12,6 @@ import core.session.SessionManager
 import core.session.entities.GuildConfig
 import core.session.entities.RequestSession
 import utils.assets.LinuxTime
-import utils.structs.Option
 
 class StartCommand(override val command: String = "start", val opponent: User?) : Command {
 
@@ -20,7 +20,8 @@ class StartCommand(override val command: String = "start", val opponent: User?) 
         config: GuildConfig,
         user: User,
         producer: MessageProducer<A, B>,
-        publisher: MessagePublisher<A, B>
+        publisher: MessagePublisher<A, B>,
+        modifier: MessageModifier<A, B>,
     ) = runCatching {
         if (opponent != null) {
             val requestSession = RequestSession(user, opponent, LinuxTime())
@@ -30,10 +31,13 @@ class StartCommand(override val command: String = "start", val opponent: User?) 
 
             io to this.asCommandReport("make request to $opponent", user)
         } else {
-            val gameSession = GameManager.generateSession(user, Option.Empty)
+            val gameSession = GameManager.generateAiSession(user)
             SessionManager.putGameSession(context.sessionRepository, config.id, gameSession)
 
-            val io = producer.produceBeginsPVE(publisher, config.language.container, user).map { it.launch(); Order.Unit }
+            val io = producer.produceBeginsPVE(publisher, config.language.container, user)
+                .map { it.launch() }
+                .flatMap { producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, gameSession) }
+                .map { producer.attachFocusButtons(it, config.language.container, config.focusPolicy, gameSession); Order.Unit }
 
             io to this.asCommandReport("start game session with AI", user)
         }

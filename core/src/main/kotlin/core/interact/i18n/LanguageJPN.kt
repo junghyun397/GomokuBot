@@ -30,30 +30,30 @@ class LanguageJPN : LanguageENG() {
 
     override fun languageUpdated() = "言語設定を日本語:flag_jp:に変更しました\n`Translated by`: `S1RO`"
 
-    override fun startErrorSessionAlready(nameTag: String) =
-        "$nameTag さん, ゲーム生成に失敗しました。今のゲームを終了してください。 :thinking:"
-    override fun setErrorIllegalArgument() =
+    override fun startErrorSessionAlready(user: String) =
+        "$user さん, ゲーム生成に失敗しました。今のゲームを終了してください。 :thinking:"
+    override fun setErrorIllegalArgument(player: String) =
         "さん, 間違いコマンドです。`~s アルファベット 数字` 形式に書いてください。 :thinking:"
-    override fun setErrorExist(nameTag: String, pos: String) = "$nameTag さん, そこにはすでに碁石があります。 :thinking:"
+    override fun setErrorExist(player: String, move: String) = "$player さん, そこにはすでに碁石があります。 :thinking:"
 
-    override fun beginPVP(ownerName: String, opponentName: String, fMove: String) =
-        "`$ownerName`と `$opponentName`のマッチが開始しました。先攻は `$fMove`です。"
+    override fun beginPVP(owner: String, opponent: String, opener: String) =
+        "`$owner`と `$opponent`のマッチが開始しました。先攻は `$opener`です。"
 
-    override fun processNext(curName: String, prvName: String, lastPos: String) =
-        "`$curName`さん, 次の手を置いてください。 `$prvName`は $lastPos に置きました。"
+    override fun processNext(player: String, priorPlayer: String, latestMove: String) =
+        "`$player`さん, 次の手を置いてください。 `$priorPlayer`は $latestMove に置きました。"
 
-    override fun processErrorOrder(turnName: String) =
-        "今は`$turnName`'さんの番です。`$turnName`さんの次の番を待ってください。 :thinking:"
-    override fun endPVPWin(winName: String, loseName: String, lastPos: String) =
-        "`$winName`さんが $lastPos に置いて`$loseName`さんに勝ちました。"
-    override fun endPVPResign(winName: String, loseName: String) =
-        "`$loseName`さんが降伏を宣言して`$winName`さんが勝ちました。"
+    override fun processErrorOrder(user: String, player: String) =
+        "今は`$player`'さんの番です。`$player`さんの次の番を待ってください。 :thinking:"
+    override fun endPVPWin(winner: String, looser: String, latestMove: String) =
+        "`$winner`さんが $latestMove に置いて`$looser`さんに勝ちました。"
+    override fun endPVPResign(winner: String, looser: String) =
+        "`$looser`さんが降伏を宣言して`$winner`さんが勝ちました。"
 
-    override fun endPVEWin(latestPos: String) = latestPos + "に置いてAIに勝ちました。おめでとうございます。"
-    override fun endPVELose(latestPos: String) = "AIが" + latestPos + "に置いて負けました。"
-    override fun endPVEResign() = "降伏を宣言してAIに負けました。"
+    override fun endPVEWin(player: String, latestPos: String) = latestPos + "に置いてAIに勝ちました。おめでとうございます。"
+    override fun endPVELose(player: String, latestPos: String) = "AIが" + latestPos + "に置いて負けました。"
+    override fun endPVEResign(player: String) = "降伏を宣言してAIに負けました。"
 
-    override fun endPVPTie() = "もう碁石を置く所が無くて無勝負に処理されました。"
+    override fun endPVPTie(owner: String, opponent: String) = "もう碁石を置く所が無くて無勝負に処理されました。"
 
     override fun boardInProgress() = "進行中"
     override fun boardFinished() = "終了"

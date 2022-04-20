@@ -62,11 +62,11 @@ private class B3nzeneConfig(val serverAddress: String, val serverPort: Int) {
 private inline fun <reified E : Event, R : InteractionReport> leaveLog(combined: Tuple2<InteractionContext<E>, Result<R>>) =
     combined.t2.fold(
         onSuccess = {
-            logger.info("${E::class.simpleName} [${combined.t1.guild.name}](${combined.t1.guild.id}) " +
+            logger.info("${E::class.simpleName} ${combined.t1.guild} " +
                     "T${(it.terminationTime.timestamp - combined.t1.emittenTime.timestamp)}ms => $it")
         },
         onFailure = {
-            logger.error("${E::class.simpleName} [${combined.t1.guild.name}](${combined.t1.guild.id}) " +
+            logger.error("${E::class.simpleName} ${combined.t1.guild} " +
                     "T${(System.currentTimeMillis() - combined.t1.emittenTime.timestamp)}ms => ${it.stackTraceToString()}")
         }
     )
@@ -120,13 +120,18 @@ object GomokuBot {
             .flatMap(::buttonInteractionRouter)
             .subscribe { leaveLog(it) }
 
+//        eventManager.on<MessageReactionAddEvent>()
+//            .filter { it.isFromGuild && !(it.user?.isBot ?: true) }
+//            .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild.extractGuild()) } }
+//            .subscribe { leaveLog(it) }
+
         eventManager.on<GuildJoinEvent>()
             .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild.extractGuild()) } }
             .flatMap(::guildJoinRouter)
             .subscribe { leaveLog(it) }
 
         eventManager.on<GuildLeaveEvent>()
-            .subscribe { logger.info("leave [${it.guild.name}](${it.guild.idLong})") }
+            .subscribe { logger.info("leave ${it.guild.extractGuild()}") }
 
         eventManager.on<ReadyEvent>()
             .subscribe { logger.info("jda ready, complete loading.") }

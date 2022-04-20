@@ -8,7 +8,6 @@ import core.interact.parse.NamedParser
 import core.interact.parse.asParseFailure
 import discord.assets.extractUser
 import discord.interact.InteractionContext
-import discord.interact.message.DiscordMessageProducer
 import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent

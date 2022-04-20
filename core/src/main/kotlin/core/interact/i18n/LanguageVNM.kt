@@ -29,9 +29,9 @@ class LanguageVNM : LanguageENG() {
     override fun styleEmbedTitle() = "GomokuBot / Skin"
     override fun styleEmbedDescription() =
         "Skin A có thể không hiển thị chính xác với một số thiết bị. Chọn các skin có sẵn còn lại và sử dụng"
-    override fun styleEmbedSuggestion(style: String) = "Nhập lệnh ``~skin`` ``$style`` để chọn skin này"
+    override fun styleEmbedSuggestion(styleName: String) = "Nhập lệnh ``~skin`` ``$styleName`` để chọn skin này"
     override fun styleErrorNotfound() = "Cú pháp chỉnh skin không hợp lệ."
-    override fun styleUpdated(style: String) = "Skin chơi ca-rô đã chuyển sang skin ``$style`` !"
+    override fun styleUpdated(styleName: String) = "Skin chơi ca-rô đã chuyển sang skin ``$styleName`` !"
 
     override fun rankEmbedTitle() = "GomokuBot / Bảng xếp hạng"
     override fun rankEmbedDescription() = "TOP 10 người chơi xuất sắc."
@@ -41,30 +41,30 @@ class LanguageVNM : LanguageENG() {
     override fun languageUpdated() =
         "Đã chỉnh ngôn ngữ sang Tiếng Việt :flag_vn: !\n`Translated by`: `Dongvan Technologies`"
 
-    override fun startErrorSessionAlready(nameTag: String) =
-        "$nameTag, bạn đánh chưa xong ván trước, vui lòng hoàn thành nốt ván đó. :thinking:"
-    override fun setErrorIllegalArgument() =
+    override fun startErrorSessionAlready(user: String) =
+        "$user, bạn đánh chưa xong ván trước, vui lòng hoàn thành nốt ván đó. :thinking:"
+    override fun setErrorIllegalArgument(player: String) =
         "player, bạn đã nhập sai lệnh đánh. Sử dụng lệnh `~s` `alphabet` `number` để đánh. :thinking:"
-    override fun setErrorExist(nameTag: String, pos: String) = "$nameTag, có người đã đánh chỗ đó rồi! :thinking:"
+    override fun setErrorExist(player: String, move: String) = "$player, có người đã đánh chỗ đó rồi! :thinking:"
 
-    override fun beginPVP(ownerName: String, opponentName: String, fMove: String) =
-        "Ván mới đã được bắt đầu giữa `$ownerName` và `$opponentName`! `$fMove` là người đánh trước."
+    override fun beginPVP(owner: String, opponent: String, opener: String) =
+        "Ván mới đã được bắt đầu giữa `$owner` và `$opponent`! `$opener` là người đánh trước."
 
-    override fun processNext(curName: String, prvName: String, lastPos: String) =
-        "`$curName`, tới lượt đánh của bạn. `$prvName` đã đánh ở ô $lastPos"
+    override fun processNext(player: String, priorPlayer: String, latestMove: String) =
+        "`$player`, tới lượt đánh của bạn. `$priorPlayer` đã đánh ở ô $latestMove"
 
-    override fun processErrorOrder(turnName: String) =
-        "`$turnName` đang suy nghĩ. Chờ `$turnName` đánh rồi mới đến lượt của bạn. :thinking:"
-    override fun endPVPWin(winName: String, loseName: String, lastPos: String) =
-        "`$winName` đã thắng `$loseName`. Vị trí mà người thắng đánh cuối cùng là ô $lastPos!"
-    override fun endPVPResign(winName: String, loseName: String) =
-        "`$winName` đã thắng `$loseName` vì `$loseName` đã xin dừng cuộc chơi!"
+    override fun processErrorOrder(user: String, player: String) =
+        "`$player` đang suy nghĩ. Chờ `$player` đánh rồi mới đến lượt của bạn. :thinking:"
+    override fun endPVPWin(winner: String, looser: String, latestMove: String) =
+        "`$winner` đã thắng `$looser`. Vị trí mà người thắng đánh cuối cùng là ô $latestMove!"
+    override fun endPVPResign(winner: String, looser: String) =
+        "`$winner` đã thắng `$looser` vì `$looser` đã xin dừng cuộc chơi!"
 
-    override fun endPVEWin(latestPos: String) = "Bạn thắng máy bằng cách đánh ở ô $latestPos. Chúc mừng! :tada:"
-    override fun endPVELose(latestPos: String) = "Bạn đã thua máy. Máy đã đánh ở ô gần nhất là $latestPos."
-    override fun endPVEResign() = "Bạn đã thua vì đã xin dừng cuộc chơi."
+    override fun endPVEWin(player: String, latestPos: String) = "Bạn thắng máy bằng cách đánh ở ô $latestPos. Chúc mừng! :tada:"
+    override fun endPVELose(player: String, latestPos: String) = "Bạn đã thua máy. Máy đã đánh ở ô gần nhất là $latestPos."
+    override fun endPVEResign(player: String) = "Bạn đã thua vì đã xin dừng cuộc chơi."
 
-    override fun endPVPTie() = "Ván này hoà vì hết ô để đánh."
+    override fun endPVPTie(owner: String, opponent: String) = "Ván này hoà vì hết ô để đánh."
 
     override fun boardInProgress() = "Đang xử lý"
     override fun boardFinished() = "Đã xong"

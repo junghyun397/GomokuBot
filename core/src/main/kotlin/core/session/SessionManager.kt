@@ -1,14 +1,11 @@
 package core.session
 
-import core.database.DatabaseManager
-import core.session.entities.GameSession
-import core.session.entities.GuildConfig
-import core.session.entities.GuildSession
-import core.session.entities.RequestSession
-import kotlinx.coroutines.sync.withLock
 import core.assets.GuildId
-import utils.assets.LinuxTime
+import core.assets.Message
 import core.assets.UserId
+import core.database.DatabaseManager
+import core.session.entities.*
+import utils.assets.LinuxTime
 
 object SessionManager {
 
@@ -23,9 +20,7 @@ object SessionManager {
 
     private suspend inline fun mapGuildSession(repo: SessionRepository, guildId: GuildId, mapper: (GuildSession) -> GuildSession): GuildSession =
         mapper(this.retrieveGuildSession(repo, guildId)).also {
-            repo.sessionsMutex.withLock {
-                repo.sessions[guildId] = it
-            }
+            repo.sessions[guildId] = it
         }
 
     suspend fun retrieveGuildConfig(repo: SessionRepository, guildId: GuildId): GuildConfig =
@@ -47,11 +42,6 @@ object SessionManager {
     suspend fun retrieveRequestSessionByOwner(repo: SessionRepository, guildId: GuildId, ownerId: UserId): RequestSession? =
         this.retrieveGuildSession(repo, guildId).requestSessions[ownerId]
 
-    suspend fun retrieveRequestSessionByOpponent(repo: SessionRepository, guildId: GuildId, opponentId: UserId): RequestSession? =
-        this.retrieveGuildSession(repo, guildId).requestSessions
-            .values
-            .firstOrNull { it.opponent.id == opponentId }
-
     suspend fun putRequestSession(repo: SessionRepository, guildId: GuildId, requestSession: RequestSession) {
         this.mapGuildSession(repo, guildId) {
             it.copy(requestSessions = it.requestSessions + (requestSession.owner.id to requestSession))
@@ -67,7 +57,7 @@ object SessionManager {
     suspend fun retrieveGameSession(repo: SessionRepository, guildId: GuildId, userId: UserId): GameSession? =
         this.retrieveGuildSession(repo, guildId).gameSessions
             .values
-            .firstOrNull { it.owner.id == userId || it.opponent.getOrNull()?.id == userId }
+            .firstOrNull { it.owner.id == userId || if (it is PvpGameSession) it.opponent.id == userId else false }
 
     suspend fun putGameSession(repo: SessionRepository, guildId: GuildId, gameSession: GameSession) {
         this.mapGuildSession(repo, guildId) {
@@ -81,35 +71,40 @@ object SessionManager {
         }
     }
 
-    suspend fun cleanExpiredSessions(repo: SessionRepository): Unit =
-        repo.sessionsMutex.withLock {
-            val referenceTime = LinuxTime()
-            repo.sessions
-                .asSequence()
-                .map {
-                    Triple(
-                        first = it,
-                        second = it.value.gameSessions.filter { session -> session.value.expireDate > referenceTime },
-                        third = it.value.requestSessions.filter { session -> session.value.expireDate > referenceTime }
-                    )
-                }
-                .filter {
-                    it.first.value.gameSessions.size != it.second.size || it.first.value.requestSessions.size != it.third.size
-                }
-                .forEach {
-                    repo.sessions[it.first.key] = it.first.value.copy(
-                        gameSessions = it.second,
-                        requestSessions = it.third
-                    )
-                }
-        }
+    fun appendMessage(repo: SessionRepository, key: String, message: Message) =
+        repo.messageBuffer.getOrPut(key) { mutableListOf() }
+            .add(message)
 
-    suspend fun cleanEmptySessions(repo: SessionRepository): Unit =
-        repo.sessionsMutex.withLock {
-            repo.sessions
-                .asSequence()
-                .filter { it.value.requestSessions.isEmpty() && it.value.gameSessions.isEmpty() }
-                .forEach { repo.sessions.remove(it.key) }
-        }
+    fun checkoutMessages(repo: SessionRepository, key: String): List<Message>? =
+        repo.messageBuffer.remove(key)
+
+    fun cleanExpiredSessions(repo: SessionRepository) {
+        val referenceTime = LinuxTime()
+        repo.sessions
+            .asSequence()
+            .map {
+                Triple(
+                    first = it,
+                    second = it.value.gameSessions.filter { session -> session.value.expireDate > referenceTime },
+                    third = it.value.requestSessions.filter { session -> session.value.expireDate > referenceTime }
+                )
+            }
+            .filter {
+                it.first.value.gameSessions.size != it.second.size || it.first.value.requestSessions.size != it.third.size
+            }
+            .forEach {
+                repo.sessions[it.first.key] = it.first.value.copy(
+                    gameSessions = it.second,
+                    requestSessions = it.third
+                )
+            }
+    }
+
+    fun cleanEmptySessions(repo: SessionRepository) {
+        repo.sessions
+            .asSequence()
+            .filter { it.value.requestSessions.isEmpty() && it.value.gameSessions.isEmpty() }
+            .forEach { repo.sessions.remove(it.key) }
+    }
 
 }

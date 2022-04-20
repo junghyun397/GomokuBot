@@ -9,7 +9,7 @@ import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.DiscordMessagePublisher
-import discord.interact.message.MessageActionRestActionAdaptor
+import discord.interact.message.MessageActionAdaptor
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.Region
@@ -37,7 +37,6 @@ private fun matchLanguage(region: Region): Language =
 fun guildJoinRouter(context: InteractionContext<GuildJoinEvent>): Mono<Tuple2<InteractionContext<GuildJoinEvent>, Result<GuildJoinReport>>> =
     Mono.zip(context.toMono(), mono { runCatching {
         val commandInserted = run {
-            context.event.guild.selfMember.hasPermission(Permission.MESSAGE_SEND)
             GuildManager.insertCommands(context.event.guild, context.config.language.container)
             true
         }
@@ -51,13 +50,17 @@ fun guildJoinRouter(context: InteractionContext<GuildJoinEvent>): Mono<Tuple2<In
         )
 
         val helpSent = context.event.guild.systemChannel?.let { channel ->
-            val messagePublisher: DiscordMessagePublisher = { msg -> MessageActionRestActionAdaptor(channel.sendMessage(msg)) }
+            val messagePublisher: DiscordMessagePublisher = { msg -> MessageActionAdaptor(channel.sendMessage(msg)) }
 
             GuildManager.permissionSafeRun(channel, Permission.MESSAGE_SEND) {
-                DiscordMessageProducer.produceAboutBot(messagePublisher, context.config.language.container).map { it.retrieve() }
-                    .flatMap { DiscordMessageProducer.produceCommandGuide(messagePublisher, context.config.language.container).map { it.retrieve() } }
-                    .flatMap { DiscordMessageProducer.produceStyleGuide(messagePublisher, context.config.language.container).map { it.retrieve() } }
-                    .flatMap { DiscordMessageProducer.produceLanguageGuide(messagePublisher).map { it.launch() } }
+                DiscordMessageProducer.produceAboutBot(messagePublisher, context.config.language.container)
+                    .map { it.launch() }
+                    .flatMap { DiscordMessageProducer.produceCommandGuide(messagePublisher, context.config.language.container) }
+                    .map { it.launch() }
+                    .flatMap { DiscordMessageProducer.produceStyleGuide(messagePublisher, context.config.language.container) }
+                    .map { it.launch() }
+                    .flatMap { DiscordMessageProducer.produceLanguageGuide(messagePublisher) }
+                    .map { it.launch() }
             }
         }?.isDefined
 

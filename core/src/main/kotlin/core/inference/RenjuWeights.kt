@@ -2,21 +2,21 @@ package core.inference
 
 object RenjuWeights {
 
-    const val SELF_FACTOR = 1.2
+    const val SELF_FACTOR = 1.2F
 
-    const val LATEST_MOVE = 100
+    const val LATEST_MOVE = 500
 
-    const val CENTER_EXTRA = 2
-    const val DIST_EXTRA = 1
+    const val CENTER_EXTRA = 1
+    const val NEIGHBORHOOD_EXTRA = 2
 
-    const val CLOSED_FOUR = 5
-    const val OPEN_THREE = 5
+    const val CLOSED_FOUR = 1
+    const val OPEN_THREE = 1
 
-    const val OVERLAP_THREE_FOUR = 50
-    const val DOUBLE_THREE = 30
-    const val DOUBLE_FOUR = 50
+    const val DOUBLE_THREE_FORK = 30
+    const val THREE_FOUR_FORK = 50
+    const val DOUBLE_FOUR_FORK = 50
 
-    const val OPEN_FOUR = 80
-    const val FIVE = 80
+    const val OPEN_FOUR = 150
+    const val FIVE = 200
 
 }

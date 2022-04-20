@@ -6,12 +6,12 @@ import core.interact.Order
 import core.interact.message.MessageModifier
 import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
-import core.interact.message.graphics.BoardStyle
 import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
+import core.session.entities.RequestSession
 
-class StyleCommand(override val command: String, private val style: BoardStyle) : Command {
+class RejectCommand(override val command: String, private val requestSession: RequestSession) : Command {
 
     override suspend fun <A, B> execute(
         context: BotContext,
@@ -21,12 +21,12 @@ class StyleCommand(override val command: String, private val style: BoardStyle) 
         publisher: MessagePublisher<A, B>,
         modifier: MessageModifier<A, B>,
     ) = runCatching {
-        SessionManager.updateGuildConfig(context.sessionRepository, config.id, config.copy(boardStyle = style))
+        SessionManager.removeRequestSession(context.sessionRepository, config.id, requestSession.owner.id)
 
-        val io = producer.produceStyleUpdated(publisher, config.language.container, style.sample.styleName)
-            .map { it.launch(); Order.Unit }
+        val io = producer.produceRequestRejected(publisher, config.language.container, requestSession.owner, requestSession.opponent)
+            .map { it.launch(); Order.DeleteSource }
 
-        io to this.asCommandReport("${config.boardStyle.name} to ${style.name}", user)
+        io to this.asCommandReport("reject ${requestSession.owner}'s request", user)
     }
 
 }

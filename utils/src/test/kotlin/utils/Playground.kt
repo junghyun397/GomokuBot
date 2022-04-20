@@ -1,12 +1,35 @@
 package utils
 
 import jrenju.Board
-import jrenju.rule.Renju
 import utils.assets.bound
 import java.util.*
 import kotlin.test.Test
 
 internal class OptionTest {
+
+    data class NS(var d: String?)
+
+    fun add(map: MutableMap<String, NS>, map2: MutableMap<String, String>) {
+        val nss = NS("ho!")
+
+        map["key"] = nss
+
+        map2[nss.d!!] = "val"
+
+        nss.d = null
+    }
+
+    @Test
+    fun weakHashMap() {
+        val map = mutableMapOf<String, NS>()
+        val weak = WeakHashMap<String, String>()
+
+        add(map, weak)
+
+        System.gc()
+
+        println(weak)
+    }
 
     @Test
     fun format() {
@@ -19,10 +42,6 @@ internal class OptionTest {
         val board = Board.newBoard()
             .calculateL2Board()
             .calculateL3Board()
-
-        println(board.attackField().map { 5 }
-            .chunked(Renju.BOARD_WIDTH()))
-
     }
 
     @Test
@@ -41,8 +60,8 @@ internal class OptionTest {
         println("--")
 
         val mid = sum
-            .runningFold(Collections.nCopies(sum.first().size, 0)) { acc, row ->
-                acc.zip(row).map { it.first + it.second }
+            .runningFold(Collections.nCopies(sum.first().size, 0)) { acc, col ->
+                acc.zip(col).map { it.first + it.second }
             }.drop(1)
 
         mid.forEach { println(it) }
@@ -52,11 +71,11 @@ internal class OptionTest {
         val step = kernelSize - 1
 
         var max = 0 to (0 to 0)
-        for (col in (0 .. source.size - kernelSize)) {
-            for (row in (0 .. source.first().size - kernelSize)) {
-                val collected = mid[col + step][row + step] - mid[(col - 1).bound()][row + step] -
-                        mid[col + step][(row - 1).bound()] + mid[(col - 1).bound()][(row - 1).bound()]
-                if (collected > max.first) max = collected to (col to row)
+        for (row in (0 .. source.size - kernelSize)) {
+            for (col in (0 .. source.first().size - kernelSize)) {
+                val collected = mid[row + step][col + step] - mid[(row - 1).bound()][col + step] -
+                        mid[row + step][(col - 1).bound()] + mid[(row - 1).bound()][(col - 1).bound()]
+                if (collected > max.first) max = collected to (col to col)
             }
         }
 

@@ -16,8 +16,8 @@ class ParseFailure<A, B>(
     private val onFailure: (MessageProducer<A, B>, MessagePublisher<A, B>, LanguageContainer) -> IO<Order>
 ) {
 
-    fun notice(guildConfig: GuildConfig, producer: MessageProducer<A, B>, messagePublisher: MessagePublisher<A, B>): Result<Pair<IO<Order>, CommandReport>> =
-        Result.success(onFailure(producer, messagePublisher, guildConfig.language.container) to this.asCommandReport())
+    fun notice(guildConfig: GuildConfig, producer: MessageProducer<A, B>, publisher: MessagePublisher<A, B>): Result<Pair<IO<Order>, CommandReport>> =
+        Result.success(onFailure(producer, publisher, guildConfig.language.container) to this.asCommandReport())
 
 }
 

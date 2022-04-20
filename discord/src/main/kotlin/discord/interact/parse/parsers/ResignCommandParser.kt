@@ -31,7 +31,7 @@ object ResignCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsa
     override fun buildCommandData(action: CommandListUpdateAction, languageContainer: LanguageContainer) =
         action.slash(
             languageContainer.resignCommand(),
-            languageContainer.ratingCommandDescription()
+            languageContainer.resignCommandDescription()
         )
 
 }

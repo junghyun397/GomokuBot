@@ -1,11 +1,14 @@
 package core.session
 
-import core.session.entities.GuildSession
-import kotlinx.coroutines.sync.Mutex
 import core.assets.GuildId
+import core.assets.Message
+import core.database.DatabaseConnection
+import core.session.entities.GuildSession
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 class SessionRepository(
-    val sessions: MutableMap<GuildId, GuildSession> = mutableMapOf(),
-    val sessionsMutex: Mutex = Mutex(),
-    val databaseConnection: core.database.DatabaseConnection
+    val sessions: MutableMap<GuildId, GuildSession> = ConcurrentHashMap(),
+    val messageBuffer: MutableMap<String, MutableList<Message>> = Collections.synchronizedMap(WeakHashMap()),
+    val databaseConnection: DatabaseConnection,
 )

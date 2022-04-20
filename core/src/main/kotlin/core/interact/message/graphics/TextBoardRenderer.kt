@@ -1,13 +1,13 @@
 package core.interact.message.graphics
 
-import jrenju.BoardTransform
-import jrenju.L3Board
+import core.assets.toBoardIO
+import jrenju.Board
 import utils.structs.Either
 
 open class TextBoardRenderer : BoardRenderer {
 
-    override fun renderBoard(board: L3Board) =
-        Either.Left("```\n${BoardTransform.buildBoardText(board.boardField()).replace(".", " ")}```")
+    override fun renderBoard(board: Board) =
+        Either.Left("```\n${board.toBoardIO().boardText().replace(".", " ")}```")
 
     companion object : BoardRendererSample {
 

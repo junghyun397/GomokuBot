@@ -106,7 +106,7 @@ sealed interface LanguageContainer {
 
     fun styleEmbedTitle(): String
     fun styleEmbedDescription(): String
-    fun styleEmbedSuggestion(style: String): String
+    fun styleEmbedSuggestion(styleName: String): String
 
     // ### 2-2-3. STYLE:ERROR:NOTFOUND (MESSAGE)
 
@@ -114,7 +114,7 @@ sealed interface LanguageContainer {
 
     // ### 2-2-4. STYLE:SUCCESS:UPDATED (MESSAGE)
 
-    fun styleUpdated(style: String): String
+    fun styleUpdated(styleName: String): String
 
     // ## 2-3. POLICY
 
@@ -135,30 +135,30 @@ sealed interface LanguageContainer {
 
     // ### 3-1-2. START:ERROR:ALREADY (MESSAGE)
 
-    fun startErrorSessionAlready(nameTag: String): String
-    fun startErrorRequestAlready(nameTag: String): String
+    fun startErrorSessionAlready(user: String): String
+    fun startErrorRequestAlready(user: String): String
 
     // ## 3-2. SET
 
     // ### 3-2-1. SET (COMMAND)
 
     fun setCommandDescription(): String
-    fun setCommandOptionRow(): String
-    fun setCommandOptionRowDescription(): String
     fun setCommandOptionColumn(): String
     fun setCommandOptionColumnDescription(): String
+    fun setCommandOptionRow(): String
+    fun setCommandOptionRowDescription(): String
 
     // ### 3-2-2. SET:ERROR:ARGUMENT (MESSAGE)
 
-    fun setErrorIllegalArgument(): String
+    fun setErrorIllegalArgument(player: String): String
 
     // ### 3-2-3. SET:ERROR:EXIST (MESSAGE)
 
-    fun setErrorExist(nameTag: String, pos: String): String
+    fun setErrorExist(player: String, move: String): String
 
     // ### 3-2-4. SET:ERROR:FORBIDDEN (MESSAGE)
 
-    fun setErrorForbidden(nameTag: String, pos: String, forbiddenType: String): String
+    fun setErrorForbidden(player: String, move: String, forbiddenKind: String): String
 
     // ## 3-3. RESIGN
 
@@ -172,9 +172,13 @@ sealed interface LanguageContainer {
     // ### 3-4-1. REQUEST:ABOUT (EMBED)
 
     fun requestEmbedTitle(): String
-    fun requestEmbedDescription(ownerName: String, opponentName: String): String
+    fun requestEmbedDescription(owner: String, opponent: String): String
     fun requestEmbedButtonAccept(): String
     fun requestEmbedButtonReject(): String
+
+    // ### 3-4-1. REQUEST:REJECTED (MESSAGE)
+
+    fun requestRejected(owner: String, opponent: String): String
 
     // # 4. GAME
 
@@ -182,36 +186,36 @@ sealed interface LanguageContainer {
 
     // ### 4-1-1. BEGIN:PVP (MESSAGE)
 
-    fun beginPVP(ownerName: String, opponentName: String, fMove: String): String
+    fun beginPVP(owner: String, opponent: String, opener: String): String
 
     // ### 4-1-2. BEGIN:AI (Message)
 
-    fun beginPVE(playerName: String, fMove: String): String
+    fun beginPVE(player: String, opener: String): String
 
     // ## 4-2. PROCESS
 
     // ### 4-2-1. PROCESS:NEXT (MESSAGE)
 
-    fun processNext(curName: String, prvName: String, lastPos: String): String
+    fun processNext(player: String, priorPlayer: String, latestMove: String): String
 
     // ### 4-2-2. PROCESS:ERROR:ORDER (MESSAGE)
 
-    fun processErrorOrder(turnName: String): String
+    fun processErrorOrder(user: String, player: String): String
 
     // ## 4-3. END
 
     // ### 4-3-1. END:PVP (MESSAGE)
 
-    fun endPVPWin(winName: String, loseName: String, lastPos: String): String
-    fun endPVPResign(winName: String, loseName: String): String
-    fun endPVPTie(): String
+    fun endPVPWin(winner: String, looser: String, latestMove: String): String
+    fun endPVPResign(winner: String, looser: String): String
+    fun endPVPTie(owner: String, opponent: String): String
 
     // ### 4-3-2. END:AI (MESSAGE)
 
-    fun endPVEWin(latestPos: String): String
-    fun endPVELose(latestPos: String): String
-    fun endPVEResign(): String
-    fun endPVETie(): String
+    fun endPVEWin(player: String, latestPos: String): String
+    fun endPVELose(player: String, latestPos: String): String
+    fun endPVEResign(player: String): String
+    fun endPVETie(player: String): String
 
     // # 5. BOARD
 
@@ -221,6 +225,11 @@ sealed interface LanguageContainer {
     fun boardMoves(): String
     fun boardLatestMove(): String
 
+    fun boardResult(): String
+
+    fun boardWinDescription(winner: String): String
+    fun boardTieDescription(): String
+
     fun boardCommandGuide(): String
 
     // # 6. UTILS
@@ -229,7 +238,7 @@ sealed interface LanguageContainer {
 
     // ## 6-1. PERMISSION-NOT-GRANTED (EMBED)
 
-    fun permissionNotGrantedEmbedDescription(channel: String): String
+    fun permissionNotGrantedEmbedDescription(channelName: String): String
     fun permissionNotGrantedEmbedFooter(): String
 
     // ## 6-2. NOT-YET-IMPLEMENTED (EMBED)

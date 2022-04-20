@@ -51,3 +51,5 @@ inline fun <T> Option<T>.orElse(produce: () -> Option<T>): Option<T> =
         is Option.Some -> this
         is Option.Empty -> produce()
     }
+
+fun <T> T?.asOption(): Option<T> = this?.let { Option.Some(this) } ?: Option.Empty

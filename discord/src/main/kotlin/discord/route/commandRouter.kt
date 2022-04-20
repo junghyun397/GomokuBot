@@ -2,25 +2,49 @@ package discord.route
 
 import core.assets.UNICODE_CHECK
 import core.assets.UNICODE_CROSS
+import core.interact.Order
 import core.interact.i18n.LanguageContainer
 import core.interact.reports.CommandReport
 import discord.assets.extractUser
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageProducer
-import discord.interact.message.MessageActionRestActionAdaptor
-import discord.interact.message.WebHookRestActionAdaptor
+import discord.interact.message.MessageActionAdaptor
+import discord.interact.message.WebHookActionAdaptor
+import discord.interact.message.WebHookMessageUpdateActionAdaptor
+import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
 import discord.interact.parse.parsers.*
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.util.function.Tuple2
 import utils.structs.Either
+import utils.structs.IO
 import utils.structs.Option
+import java.util.concurrent.TimeUnit
+
+fun buildPermissionNode(channel: TextChannel, user: User, parsableCommand: ParsableCommand): Option<DiscordParseFailure> =
+    GuildManager.permissionNotGrantedRun(channel, Permission.MESSAGE_SEND) {
+        DiscordParseFailure(parsableCommand.name, "message permission not granted", user.extractUser()) { _, _, container ->
+            IO { user.openPrivateChannel()
+                .flatMap { privateChannel -> DiscordMessageProducer.sendPermissionNotGrantedEmbed(
+                    container = container,
+                    channelName = channel.name
+                ) { msg -> privateChannel.sendMessage(msg) } }
+                .delay(1, TimeUnit.MINUTES)
+                .flatMap(Message::delete)
+                .queue()
+                Order.Unit
+            }
+        }
+    }
 
 private fun matchCommand(command: String, languageContainer: LanguageContainer): Option<ParsableCommand> =
     when (command.lowercase()) {
@@ -50,7 +74,7 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
             .deferReply().queue()
         }
         .flatMap { Mono.zip(it.t1.toMono(), mono {
-            mergeMessagePermission(it.t1.event.textChannel, it.t1.event.user, it.t2.getOrException()).fold(
+            buildPermissionNode(it.t1.event.textChannel, it.t1.event.user, it.t2.getOrException()).fold(
                 onDefined = { failure -> Either.Right(failure) },
                 onEmpty = { it.t2.getOrException()
                     .parseSlash(it.t1)
@@ -63,18 +87,21 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
                     context = it.t1.botContext,
                     config = it.t1.config,
                     user = it.t1.event.user.extractUser(),
-                    producer = DiscordMessageProducer
-                ) { msg -> WebHookRestActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
+                    producer = DiscordMessageProducer,
+                    publisher = { msg -> WebHookActionAdaptor(it.t1.event.hook.sendMessage(msg)) },
+                    modifier = { msg -> WebHookMessageUpdateActionAdaptor(it.t1.event.hook.editOriginal(msg)) },
+                )
             } ,
             onRight = { parseFailure ->
                 parseFailure.notice(
                     guildConfig = it.t1.config,
-                    producer = DiscordMessageProducer
-                ) { msg -> WebHookRestActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
+                    producer = DiscordMessageProducer,
+                    publisher = { msg -> WebHookActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
+                )
             }
         ) }) }
         .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.map { combined ->
-            processIO(it.t1, combined.first, null)
+            consumeIO(it.t1, combined.first, null)
             combined.second
         } }) }
 
@@ -88,7 +115,7 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
     )
         .filter { it.t2.isDefined }
         .flatMap { Mono.zip(it.t1.toMono(), mono {
-            mergeMessagePermission(it.t1.event.textChannel, it.t1.event.author, it.t2.getOrException()).fold(
+            buildPermissionNode(it.t1.event.textChannel, it.t1.event.author, it.t2.getOrException()).fold(
                 onDefined = { failure -> Either.Right(failure) },
                 onEmpty = { it.t2.getOrException()
                     .parseText(it.t1)
@@ -108,16 +135,19 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
                     config = it.t1.config,
                     user = it.t1.event.author.extractUser(),
                     producer = DiscordMessageProducer,
-                ) { msg -> MessageActionRestActionAdaptor(it.t1.event.message.reply(msg)) }
+                    publisher = { msg -> MessageActionAdaptor(it.t1.event.message.reply(msg)) },
+                    modifier = { msg -> MessageActionAdaptor(it.t1.event.message.editMessage(msg)) }
+                )
             },
             onRight = { parseFailure ->
                 parseFailure.notice(
                     guildConfig = it.t1.config,
                     producer = DiscordMessageProducer,
-                ) { msg -> MessageActionRestActionAdaptor(it.t1.event.message.reply(msg)) }
+                    publisher = { msg -> MessageActionAdaptor(it.t1.event.message.reply(msg)) }
+                )
             }
         ) }) }
         .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.map { combined ->
-            processIO(it.t1, combined.first, it.t1.event.message)
+            consumeIO(it.t1, combined.first, null)
             combined.second
         } }) }

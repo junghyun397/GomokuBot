@@ -1,90 +1,122 @@
 package core.inference
 
-import jrenju.AttackPoints
 import jrenju.Board
-import jrenju.L3Board
+import jrenju.notation.Color
 import jrenju.notation.Flag
 import jrenju.notation.Pos
-import jrenju.rule.Renju
+import jrenju.notation.Renju
+import jrenju.protocol.Solution
 import utils.assets.bound
-import utils.structs.Option
 import java.util.*
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
 object InferenceManager {
 
-    suspend fun requestSolution(client: B3nzeneClient, board: Board): Option<Pair<L3Board, Pos>> = TODO()
+    private fun isStoneExist(board: Board, row: Int, col: Int) =
+        Flag.onlyStone(board.boardField()[Pos.rowColToIdx(row, col).coerceIn(0, Renju.BOARD_LENGTH() - 1)]) != Flag.FREE()
 
-    suspend fun terminateSession(client: B3nzeneClient, board: Board): Unit = TODO()
+    private fun evaluateWeight(board: Board, idx: Int): Int {
+        val flag = board.boardField()[idx]
+        val cond = board.pointsField()[idx]
+        val color = board.color()
 
-    suspend fun reportSession(client: B3nzeneClient, board: Board): Unit = TODO()
+        var scoreBlack = 0.0F
 
-    private fun evaluateWeight(flag: Byte, cond: AttackPoints): Int =
-        if (cond.black3() > 0 && cond.blackC4() > 0) RenjuWeights.OVERLAP_THREE_FOUR else
-            cond.black3() * RenjuWeights.OPEN_THREE + cond.blackC4() * RenjuWeights.CLOSED_FOUR +
+        if (flag == Flag.FREE()) {
+            scoreBlack += if (cond.black().three() > 0 && cond.black().closed4().sum() > 0)
+                RenjuWeights.THREE_FOUR_FORK
+            else
+                cond.black().three() * RenjuWeights.OPEN_THREE +
+                        cond.black().open4().count { it } * RenjuWeights.OPEN_FOUR +
+                        cond.black().closed4().sum() * RenjuWeights.CLOSED_FOUR +
+                        cond.black().fiveInRow() * RenjuWeights.FIVE
+        }
 
-        cond.black5() * RenjuWeights.FIVE +
+        var scoreWhite = 0.0F
 
-        if (flag > Flag.FREE()) 0 else
-            cond.black3() * RenjuWeights.OPEN_THREE + cond.blackC4() * RenjuWeights.CLOSED_FOUR +
-                    cond.blackO4() * RenjuWeights.OPEN_FOUR +
+        scoreWhite += if (cond.white().four() > 1)
+            RenjuWeights.DOUBLE_FOUR_FORK
+        else if (cond.white().three() > 1)
+            RenjuWeights.DOUBLE_THREE_FORK
+        else {
+            if (cond.white().three() > 0 && cond.white().closed4().sum() > 0)
+                RenjuWeights.THREE_FOUR_FORK
+            else
+                cond.white().three() * RenjuWeights.OPEN_THREE +
+                        cond.white().open4().count { it } * RenjuWeights.OPEN_FOUR +
+                        cond.white().closed4().sum() * RenjuWeights.CLOSED_FOUR
+        }
 
-        if (cond.white3() > 0 && cond.whiteC4() > 0) RenjuWeights.OVERLAP_THREE_FOUR else
-            cond.white3() * RenjuWeights.OPEN_THREE + cond.whiteC4() * RenjuWeights.CLOSED_FOUR +
+        scoreWhite += cond.white().fiveInRow() * RenjuWeights.FIVE
 
-        cond.whiteO4() * RenjuWeights.OPEN_FOUR +
-        cond.white5() * RenjuWeights.FIVE +
+        when (color) {
+            Color.BLACK() -> scoreBlack *= RenjuWeights.SELF_FACTOR
+            Color.WHITE() -> scoreWhite *= RenjuWeights.SELF_FACTOR
+        }
 
-        if (cond.white3() > 1) RenjuWeights.DOUBLE_THREE else cond.white3() * RenjuWeights.OPEN_THREE +
-        if (cond.whiteC4() > 1) RenjuWeights.DOUBLE_FOUR else cond.whiteC4() * RenjuWeights.CLOSED_FOUR
+        var score = abs(scoreBlack + scoreWhite).toInt()
 
-    private fun evaluateBoard(board: L3Board): MutableList<MutableList<Int>> =
-        board.boardField().zip(board.attackField())
-            .map { this.evaluateWeight(it.first, it.second) }
+        val row = Pos.idxToRow(idx)
+        val col = Pos.idxToCol(idx)
+
+        if (Flag.onlyStone(flag) == Flag.FREE() &&
+            (this.isStoneExist(board, row + 1, col - 1) || this.isStoneExist(board, row + 1, col) || this.isStoneExist(board, row + 1, col + 1) ||
+            this.isStoneExist(board, row, col - 1) || this.isStoneExist(board, row, col + 1) ||
+            this.isStoneExist(board, row - 1, col - 1) || this.isStoneExist(board, row - 1, col) || this.isStoneExist(board, row - 1, col + 1)))
+            score += RenjuWeights.NEIGHBORHOOD_EXTRA
+
+        return score
+    }
+
+    private fun evaluateBoard(board: Board): MutableList<MutableList<Int>> =
+        (0 until Renju.BOARD_LENGTH())
+            .map { this.evaluateWeight(board, it) }
             .chunked(Renju.BOARD_WIDTH()) { it.toMutableList() }
             .toMutableList()
 
-    fun resolveBoard(board: L3Board): Pos {
-        val evaluated = this.evaluateBoard(board)
-        TODO()
-    }
+    fun retrieveAiMove(board: Board, latestMove: Pos): Solution = TODO()
 
     // Prefix Sum Algorithm, O(N)
-    fun resolveFocus(board: L3Board, kernelWidth: Int): Pos {
-        val kernelHalf = kernelWidth / 2
+    fun resolveFocus(board: Board, kernelWidth: Int): Pos =
+        board.latestPos().fold(
+            { Renju.BOARD_CENTER() },
+            { latestPos ->
+                val kernelHalf = kernelWidth / 2
+                val kernelQuarter = kernelHalf / 2
 
-        val evaluated = this.evaluateBoard(board)
+                val evaluated = this.evaluateBoard(board)
 
-        val latestPos = board.latestPos()
+                evaluated[latestPos.row()][latestPos.col()] += RenjuWeights.LATEST_MOVE
 
-        evaluated[latestPos.col()][latestPos.row()] += RenjuWeights.LATEST_MOVE
+                for (row in (latestPos.row() - kernelHalf).bound() .. min(Renju.BOARD_MAX_IDX(), latestPos.row() + kernelHalf))
+                    for (col in (latestPos.col() - kernelHalf).bound() .. min(Renju.BOARD_MAX_IDX(), latestPos.col() + kernelHalf))
+                        evaluated[row][col] += RenjuWeights.CENTER_EXTRA
 
-        for (col in (latestPos.col() - kernelHalf).bound() .. min(Renju.BOARD_WIDTH() - 1, latestPos.col() + kernelHalf))
-            for (row in (latestPos.row() - kernelHalf).bound() .. min(Renju.BOARD_WIDTH() - 1, latestPos.row() + kernelHalf))
-                evaluated[col][row] += RenjuWeights.CENTER_EXTRA
+                for (row in (latestPos.row() - kernelQuarter).bound() .. min(Renju.BOARD_MAX_IDX(), latestPos.row() + kernelQuarter))
+                    for (col in (latestPos.col() - kernelQuarter).bound() .. min(Renju.BOARD_MAX_IDX(), latestPos.col() + kernelQuarter))
+                        evaluated[row][col] += RenjuWeights.CENTER_EXTRA
 
-        val sum = evaluated
-            .map { it.runningFold(0) { acc, weight -> acc + weight }.drop(1) }
-            .runningFold(Collections.nCopies(Renju.BOARD_WIDTH(), 0)) { acc, row ->
-                acc.zip(row).map { it.first + it.second }
-            }.drop(1)
-            .toMutableList()
+                val prefix = evaluated
+                    .map { it.runningFold(0) { acc, weight -> acc + weight } }
+                    .runningFold(Collections.nCopies(Renju.BOARD_WIDTH() + 1, 0)) { acc, col ->
+                        acc.zip(col).map { it.first + it.second }
+                    }
+                    .toMutableList()
 
-        val step = Renju.BOARD_WIDTH() - kernelWidth
+                val step = Renju.BOARD_WIDTH() - kernelWidth
 
-        var max = 0 to (latestPos.col() to latestPos.row())
-        for (col in (0 .. step))
-            for (row in (0 .. step)) {
-                val collected = sum[col + kernelWidth - 1][row + kernelWidth - 1] - sum[(col - 1).bound()][row + kernelWidth - 1] -
-                        sum[col + kernelWidth - 1][(row - 1).bound()] + sum[(col - 1).bound()][(row - 1).bound()]
-                if (collected > max.first) max = collected to (col to row)
+                var max = Triple(0, latestPos.row(), latestPos.col())
+                for (row in (0 .. step))
+                    for (col in (0 .. step)) {
+                        val collected = prefix[row + kernelWidth][col + kernelWidth] - prefix[row][col + kernelWidth] -
+                                prefix[row + kernelWidth][col] + prefix[row][col]
+                        if (collected > max.first) max = Triple(collected, row, col)
+                    }
+
+                Pos(max(kernelHalf, max.second + kernelHalf), max(kernelHalf, max.third + kernelHalf))
             }
-
-        return max.second.let { Pos(
-            max(kernelHalf, it.second + kernelHalf),
-            max(kernelHalf, it.first + kernelHalf)
-        ) }
-    }
+        )
 
 }

@@ -1,16 +1,14 @@
 package core.interact.commands
 
 import core.BotContext
-import core.interact.Order
 import core.assets.User
+import core.interact.Order
+import core.interact.message.MessageModifier
 import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
 import core.interact.reports.asCommandReport
-import core.session.GameManager
 import core.session.SessionManager
-import core.session.entities.GameSession
-import core.session.entities.GuildConfig
-import utils.structs.IO
+import core.session.entities.*
 
 class ResignCommand(override val command: String, private val session: GameSession) : Command {
 
@@ -19,13 +17,24 @@ class ResignCommand(override val command: String, private val session: GameSessi
         config: GuildConfig,
         user: User,
         producer: MessageProducer<A, B>,
-        publisher: MessagePublisher<A, B>
+        publisher: MessagePublisher<A, B>,
+        modifier: MessageModifier<A, B>,
     ) = runCatching {
         SessionManager.removeGameSession(context.sessionRepository, config.id, session.owner.id)
 
-        val io = producer.produceSurrendered(publisher, config.language.container, user, user).map { it.launch(); Order.Unit }
+        val (finishedSession, result) = this.session.asResigned()
 
-        io to this.asCommandReport("$session surrendered", user)
+        val io = when (finishedSession) {
+            is AiGameSession ->
+                producer.produceSurrenderedPVE(publisher, config.language.container, finishedSession.owner)
+            is PvpGameSession ->
+                producer.produceSurrenderedPVP(publisher, config.language.container, result.winner, result.looser)
+        }
+            .map { it.launch() }
+            .flatMap { producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, finishedSession) }
+            .map { it.launch(); Order.BulkDelete(this.session.messageBufferKey) }
+
+        io to this.asCommandReport("terminate session by surrendered", user)
     }
 
 }

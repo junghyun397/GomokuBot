@@ -32,29 +32,29 @@ class LanguagePRK : LanguageKOR() {
 
     override fun languageUpdated() = "말씨 설정이 조선말:flag_kp:로 바뀌었습네다!"
 
-    override fun startErrorSessionAlready(nameTag: String) =
-        "$nameTag 동무, 놀음 만들기에 실패 했습네다. 즐기고 있던 놀음을 마무리 해주시우. :thinking:"
+    override fun startErrorSessionAlready(user: String) =
+        "$user 동무, 놀음 만들기에 실패 했습네다. 즐기고 있던 놀음을 마무리 해주시우. :thinking:"
 
-    override fun beginPVP(ownerName: String, opponentName: String, fMove: String) =
-        "`$ownerName`동무와 `$opponentName`동무과의 쌈박질이 시작 되었습네다! 선공은 `$fMove`동무 입네다."
+    override fun beginPVP(owner: String, opponent: String, opener: String) =
+        "`$owner`동무와 `$opponent`동무과의 쌈박질이 시작 되었습네다! 선공은 `$opener`동무 입네다."
 
-    override fun processNext(curName: String, prvName: String, lastPos: String) =
-        "`" + curName + "`동무, 다음 돌을 놓아주시우. `" + prvName + "`동무는 " + lastPos + "에 놓았습네다."
+    override fun processNext(player: String, priorPlayer: String, latestMove: String) =
+        "`" + player + "`동무, 다음 돌을 놓아주시우. `" + priorPlayer + "`동무는 " + latestMove + "에 놓았습네다."
 
-    override fun processErrorOrder(turnName: String) =
-        "지금은 `$turnName`동무의 차례입니다. `$turnName`동무의 다음 수를 기다려 주시우. :thinking:"
+    override fun processErrorOrder(user: String, player: String) =
+        "지금은 `$player`동무의 차례입니다. `$player`동무의 다음 수를 기다려 주시우. :thinking:"
 
-    override fun endPVPWin(winName: String, loseName: String, lastPos: String) =
-        "`" + winName + "`동무가 " + lastPos + "에 놓음으로서 `" + loseName + "`동무에게 이겼습네다!"
+    override fun endPVPWin(winner: String, looser: String, latestMove: String) =
+        "`" + winner + "`동무가 " + latestMove + "에 놓음으로서 `" + looser + "`동무에게 이겼습네다!"
 
-    override fun endPVPResign(winName: String, loseName: String) =
-        "`$loseName`동무가 항복을 선언 함으로서 `$winName`동무가 이겼습네다!"
+    override fun endPVPResign(winner: String, looser: String) =
+        "`$looser`동무가 항복을 선언 함으로서 `$winner`동무가 이겼습네다!"
 
-    override fun endPVEWin(latestPos: String) = latestPos + "에 놓음으로서 콤퓨타에게 승리 하였습네다. 축하합네다!"
-    override fun endPVELose(latestPos: String) = "콤퓨타가 " + latestPos + "에 놓음으로서 콤퓨타에게 패배 하였습네다."
-    override fun endPVEResign() = "항복을 외침으로써 콤퓨타에게 패배 하였습네다."
+    override fun endPVEWin(player: String, latestPos: String) = latestPos + "에 놓음으로서 콤퓨타에게 승리 하였습네다. 축하합네다!"
+    override fun endPVELose(player: String, latestPos: String) = "콤퓨타가 " + latestPos + "에 놓음으로서 콤퓨타에게 패배 하였습네다."
+    override fun endPVEResign(player: String) = "항복을 외침으로써 콤퓨타에게 패배 하였습네다."
 
-    override fun endPVPTie() = "더이상 돌을 넣을 자리가 없어 무승부 처리 되었습네다."
+    override fun endPVPTie(owner: String, opponent: String) = "더이상 돌을 넣을 자리가 없어 무승부 처리 되었습네다."
 
     override fun boardInProgress() = "쌈박질중"
     override fun boardFinished() = "초토화됨"
