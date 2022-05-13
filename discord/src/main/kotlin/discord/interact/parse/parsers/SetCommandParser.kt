@@ -43,43 +43,52 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
     private fun matchRow(option: String): Int? =
         option.toIntOrNull()?.let { if (it in 1..15) it - 1 else null }
 
+    private fun composeOrderFailure(context: BotContext, session: GameSession, user: User, player: User): DiscordParseFailure =
+        this.asParseFailure("try move but now $player's turn", user) { producer, publisher, container ->
+            producer.produceOrderFailure(publisher, container, user, player)
+                .map { SessionManager.appendMessage(context.sessionRepository, session.messageBufferKey, it.retrieve().message); Order.Unit }
+        }
+
     private fun composeMissMatchFailure(context: BotContext, session: GameSession, user: User): DiscordParseFailure =
         this.asParseFailure("try move but argument missmatch", user) { producer, publisher, container ->
             producer.produceSetIllegalArgument(publisher, container, user)
-                .map { SessionManager.appendMessage(context.sessionRepository, session.messageBufferKey, it.retrieve()); Order.Unit }
+                .map { SessionManager.appendMessage(context.sessionRepository, session.messageBufferKey, it.retrieve().message); Order.Unit }
         }
 
     private fun composeExistFailure(context: BotContext, session: GameSession, user: User, pos: Pos): DiscordParseFailure =
         this.asParseFailure("make move but already exist", user) { producer, publisher, container ->
             producer.produceSetAlreadyExist(publisher, container, user, pos)
-                .map { SessionManager.appendMessage(context.sessionRepository, session.messageBufferKey, it.retrieve()); Order.Unit }
+                .map { SessionManager.appendMessage(context.sessionRepository, session.messageBufferKey, it.retrieve().message); Order.Unit }
         }
 
     private fun composeForbiddenMoveFailure(context: BotContext, session: GameSession, user: User, pos: Pos, flag: Byte): DiscordParseFailure =
         this.asParseFailure("make move but forbidden", user) { producer, publisher, container ->
             producer.produceSetForbiddenMove(publisher, container, user, pos, flag)
-                .map { SessionManager.appendMessage(context.sessionRepository, session.messageBufferKey, it.retrieve()); Order.Unit }
+                .map { SessionManager.appendMessage(context.sessionRepository, session.messageBufferKey, it.retrieve().message); Order.Unit }
         }
 
     private suspend fun parseActually(context: InteractionContext<*>, user: User, rawRow: String?, rawColumn: String?): Either<Command, DiscordParseFailure> =
-        this.retrieveSession(context.botContext, context.guild, user).flatMapLeft { session ->
+        this.retrieveSession(context.bot, context.guild, user).flatMapLeft { session ->
+            if ((session.owner.id == user.id) xor !(session.board.isNextColorBlack xor session.ownerHasBlack))
+                return Either.Right(this.composeOrderFailure(context.bot, session, user, session.player))
+
             if (rawRow == null || rawColumn == null)
-                return Either.Right(composeMissMatchFailure(context.botContext, session, user))
+                return Either.Right(composeMissMatchFailure(context.bot, session, user))
 
             val row = this.matchRow(rawRow)
             val column = this.matchColumn(rawColumn.lowercase())
 
             if (row == null || column == null)
-                return Either.Right(composeMissMatchFailure(context.botContext, session, user))
+                return Either.Right(composeMissMatchFailure(context.bot, session, user))
 
             val pos = Pos(row, column)
 
             return GameManager.validateMove(session, pos).fold(
                 onDefined = { when (it) {
-                    RejectReason.EXIST -> Either.Right(this.composeExistFailure(context.botContext, session, user, pos))
+                    RejectReason.EXIST -> Either.Right(this.composeExistFailure(context.bot, session, user, pos))
                     RejectReason.FORBIDDEN ->
                         if (session.board.nextColor() == Color.BLACK())
-                            Either.Right(this.composeForbiddenMoveFailure(context.botContext, session, user, pos, session.board.boardField()[pos.idx()]))
+                            Either.Right(this.composeForbiddenMoveFailure(context.bot, session, user, pos, session.board.boardField()[pos.idx()]))
                         else
                             Either.Left(SetCommand("s", session, pos))
                 } },
@@ -113,21 +122,24 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
 
         val pos = Pos(row, column)
 
-        val session = SessionManager.retrieveGameSession(context.botContext.sessionRepository, context.config.id, context.event.user.extractId())
+        val userId = context.event.user.extractId()
+
+        val session = SessionManager.retrieveGameSession(context.bot.sessionRepository, context.config.id, userId)
             ?: return Option.Empty
 
-        if (session.board.validateMove(pos.idx()).isDefined) return Option.Empty
+        if ((session.owner.id == userId) xor !(session.board.isNextColorBlack xor session.ownerHasBlack))
+            return Option.Empty
 
         return Option.Some(SetCommand("s", session, pos))
     }
 
-    override fun buildCommandData(action: CommandListUpdateAction, languageContainer: LanguageContainer) =
+    override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.slash(
             "s",
-            languageContainer.setCommandDescription(),
+            container.setCommandDescription(),
         ) {
-            option<String>(languageContainer.setCommandOptionColumn(), languageContainer.setCommandOptionColumnDescription(), true)
-            option<Int>(languageContainer.setCommandOptionRow(), languageContainer.setCommandOptionRowDescription(), true)
+            option<String>(container.setCommandOptionColumn(), container.setCommandOptionColumnDescription(), true)
+            option<Int>(container.setCommandOptionRow(), container.setCommandOptionRowDescription(), true)
         }
 
 }

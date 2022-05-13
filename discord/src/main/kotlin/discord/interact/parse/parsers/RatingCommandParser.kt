@@ -23,22 +23,22 @@ object RatingCommandParser : NamedParser, ParsableCommand, BuildableCommand {
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("not yet implemented", context.event.user.extractUser()) { producer, publisher, container ->
-            producer.produceNotYetImplemented(publisher, container).map { it.launch(); Order.Unit }
+            producer.produceNotYetImplemented(publisher, container, context.bot.config.officialChannel).map { it.launch(); Order.Unit }
         })
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("not yet implemented", context.event.author.extractUser()) { producer, publisher, container ->
-            producer.produceNotYetImplemented(publisher, container).map { it.launch(); Order.Unit }
+            producer.produceNotYetImplemented(publisher, container, context.bot.config.officialChannel).map { it.launch(); Order.Unit }
         })
 
-    override fun buildCommandData(action: CommandListUpdateAction, languageContainer: LanguageContainer) =
+    override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.slash(
-            languageContainer.ratingCommand(),
-            languageContainer.ratingCommandDescription()
+            container.ratingCommand(),
+            container.ratingCommandDescription()
         ) {
             option<net.dv8tion.jda.api.entities.User>(
-                languageContainer.ratingCommandOptionUser(),
-                languageContainer.ratingCommandOptionUserDescription(),
+                container.ratingCommandOptionUser(),
+                container.ratingCommandOptionUserDescription(),
                 false
             )
         }

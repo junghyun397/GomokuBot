@@ -2,11 +2,12 @@ package discord.interact.message
 
 import core.assets.Message
 import core.interact.message.MessageAction
+import core.interact.message.MessageAdaptor
 import core.interact.message.MessagePublisher
 import discord.assets.extractMessage
 import net.dv8tion.jda.api.interactions.components.ActionRow
+import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageAction
-import net.dv8tion.jda.api.requests.restaction.WebhookMessageUpdateAction
 import java.io.InputStream
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -15,23 +16,32 @@ typealias DiscordButtons = List<ActionRow>
 
 typealias DiscordMessagePublisher = MessagePublisher<net.dv8tion.jda.api.entities.Message, DiscordButtons>
 
-class WebHookActionAdaptor(private val original: WebhookMessageAction<net.dv8tion.jda.api.entities.Message>) : MessageAction<DiscordButtons> {
+typealias DiscordMessageAction = MessageAction<net.dv8tion.jda.api.entities.Message, DiscordButtons>
+
+abstract class DiscordMessageActionAdaptor(private val original: RestAction<net.dv8tion.jda.api.entities.Message>) : DiscordMessageAction {
+    override fun launch() = this.original.queue()
+    override suspend fun retrieve(): DiscordMessageAdaptor = suspendCoroutine { control -> this.original.queue { control.resume(DiscordMessageAdaptor(it)) } }
+}
+
+class WebHookActionAdaptor(private val original: WebhookMessageAction<net.dv8tion.jda.api.entities.Message>) : DiscordMessageActionAdaptor(original) {
     override fun addFile(file: InputStream, name: String) = WebHookActionAdaptor(original.addFile(file, name))
     override fun addButtons(buttons: DiscordButtons) = WebHookActionAdaptor(original.addActionRows(buttons))
-    override fun launch() = original.queue()
-    override suspend fun retrieve(): Message = suspendCoroutine { control -> original.queue { control.resume(it.extractMessage()) } }
 }
 
-class WebHookMessageUpdateActionAdaptor(private val original: WebhookMessageUpdateAction<net.dv8tion.jda.api.entities.Message>) : MessageAction<DiscordButtons> {
-    override fun addFile(file: InputStream, name: String) = WebHookMessageUpdateActionAdaptor(original.addFile(file, name))
-    override fun addButtons(buttons: DiscordButtons) = WebHookMessageUpdateActionAdaptor(original.setActionRows(buttons))
-    override fun launch() = original.queue()
-    override suspend fun retrieve(): Message = suspendCoroutine { control -> original.queue { control.resume(it.extractMessage()) } }
-}
-
-class MessageActionAdaptor(private val original: net.dv8tion.jda.api.requests.restaction.MessageAction) : MessageAction<DiscordButtons> {
+class MessageActionAdaptor(private val original: net.dv8tion.jda.api.requests.restaction.MessageAction) : DiscordMessageActionAdaptor(original) {
     override fun addFile(file: InputStream, name: String) = MessageActionAdaptor(original.addFile(file, name))
     override fun addButtons(buttons: DiscordButtons) = MessageActionAdaptor(original.setActionRows(buttons))
-    override fun launch() = original.queue()
-    override suspend fun retrieve(): Message = suspendCoroutine { control -> original.queue { control.resume(it.extractMessage()) } }
+}
+
+class DiscordMessageAdaptor(override val original: net.dv8tion.jda.api.entities.Message) : MessageAdaptor<net.dv8tion.jda.api.entities.Message, DiscordButtons>() {
+
+    override val message: Message
+        get() = this.original.extractMessage()
+
+    override val buttons: DiscordButtons
+        get() = this.original.actionRows
+
+    override fun updateButtons(buttons: DiscordButtons) =
+        MessageActionAdaptor(this.original.editMessageComponents(buttons))
+
 }

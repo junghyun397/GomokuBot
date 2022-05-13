@@ -16,3 +16,5 @@ fun BufferedImage.toInputStream(): InputStream {
 }
 
 fun String.toInputStream(): InputStream = this.byteInputStream(Charsets.UTF_8)
+
+fun CharArray.asString(): String = String(this)

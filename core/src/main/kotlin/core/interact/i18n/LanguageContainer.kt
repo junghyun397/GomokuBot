@@ -9,12 +9,23 @@ enum class Language(val container: LanguageContainer) {
     SKO(LanguageSKO())
 }
 
+typealias Highlighter = (String) -> String
+
 sealed interface LanguageContainer {
 
     fun languageCode(): String
 
     fun languageName(): String
     fun languageSuggestion(): String
+
+    // # 0. TOKENS
+
+    fun aiLevelAmoeba(): String
+    fun aiLevelApe(): String
+    fun aiLevelBeginner(): String
+    fun aiLevelModerate(): String
+    fun aiLevelExpert(): String
+    fun aiLevelGuru(): String
 
     // # 1. INFORM
 
@@ -28,7 +39,7 @@ sealed interface LanguageContainer {
     // ### 1-1-2. HELP:ABOUT (EMBED)
 
     fun helpAboutEmbedTitle(): String
-    fun helpAboutEmbedDescription(): String
+    fun helpAboutEmbedDescription(platform: String): String
     fun helpAboutEmbedDeveloper(): String
     fun helpAboutEmbedRepository(): String
     fun helpAboutEmbedVersion(): String
@@ -136,7 +147,10 @@ sealed interface LanguageContainer {
     // ### 3-1-2. START:ERROR:ALREADY (MESSAGE)
 
     fun startErrorSessionAlready(user: String): String
-    fun startErrorRequestAlready(user: String): String
+    fun startErrorOpponentSessionAlready(owner: String, opponent: String): String
+    fun startErrorRequestAlreadySent(owner: String, opponent: String): String
+    fun startErrorRequestAlready(user: String, opponent: String): String
+    fun startErrorOpponentRequestAlready(owner: String, opponent: String): String
 
     // ## 3-2. SET
 
@@ -180,23 +194,31 @@ sealed interface LanguageContainer {
 
     fun requestRejected(owner: String, opponent: String): String
 
+    fun requestExpired(owner: String, opponent: String): String
+
+    fun requestExpiredNewRequest(): String
+
     // # 4. GAME
 
     // ## 4-1. BEGIN
 
     // ### 4-1-1. BEGIN:PVP (MESSAGE)
 
-    fun beginPVP(owner: String, opponent: String, opener: String): String
+    fun beginPVP(blackPlayer: String, whitePlayer: String): String
 
     // ### 4-1-2. BEGIN:AI (Message)
 
-    fun beginPVE(player: String, opener: String): String
+    fun beginPVEAiWhite(player: String): String
+
+    fun beginPVEAiBlack(player: String): String
 
     // ## 4-2. PROCESS
 
     // ### 4-2-1. PROCESS:NEXT (MESSAGE)
 
-    fun processNext(player: String, priorPlayer: String, latestMove: String): String
+    fun processNextPVE(owner: String, latestMove: String): String
+
+    fun processNextPVP(player: String, priorPlayer: String, latestMove: String): String
 
     // ### 4-2-2. PROCESS:ERROR:ORDER (MESSAGE)
 
@@ -209,6 +231,7 @@ sealed interface LanguageContainer {
     fun endPVPWin(winner: String, looser: String, latestMove: String): String
     fun endPVPResign(winner: String, looser: String): String
     fun endPVPTie(owner: String, opponent: String): String
+    fun endPVPTimeOut(winner: String, looser: String): String
 
     // ### 4-3-2. END:AI (MESSAGE)
 
@@ -216,6 +239,7 @@ sealed interface LanguageContainer {
     fun endPVELose(player: String, latestPos: String): String
     fun endPVEResign(player: String): String
     fun endPVETie(player: String): String
+    fun endPVETimeOut(player: String): String
 
     // # 5. BOARD
 
@@ -244,6 +268,6 @@ sealed interface LanguageContainer {
     // ## 6-2. NOT-YET-IMPLEMENTED (EMBED)
 
     fun notYetImplementedEmbedDescription(): String
-    fun notYetImplementedEmbedFooter(): String
+    fun notYetImplementedEmbedFooter(officialChannel: String): String
 
 }

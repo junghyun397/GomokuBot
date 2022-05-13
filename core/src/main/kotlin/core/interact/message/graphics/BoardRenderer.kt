@@ -1,7 +1,9 @@
 package core.interact.message.graphics
 
 import jrenju.Board
+import jrenju.notation.Pos
 import utils.structs.Either
+import utils.structs.Option
 import java.io.InputStream
 
 enum class BoardStyle(val renderer: BoardRenderer, val sample: BoardRendererSample) {
@@ -23,6 +25,6 @@ sealed interface BoardRendererSample {
 
 sealed interface BoardRenderer {
 
-    fun renderBoard(board: Board): Either<String, Pair<InputStream, String>>
+    fun renderBoard(board: Board, history: Option<List<Pos>>): Either<String, Pair<InputStream, String>>
 
 }

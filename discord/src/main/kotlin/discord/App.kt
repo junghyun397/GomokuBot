@@ -2,6 +2,7 @@ package discord
 
 import club.minnced.jda.reactor.ReactiveEventManager
 import club.minnced.jda.reactor.on
+import core.BotConfig
 import core.BotContext
 import core.assets.Guild
 import core.inference.B3nzeneClient
@@ -12,10 +13,7 @@ import discord.assets.ASCII_LOGO
 import discord.assets.COMMAND_PREFIX
 import discord.assets.extractGuild
 import discord.interact.InteractionContext
-import discord.route.buttonInteractionRouter
-import discord.route.guildJoinRouter
-import discord.route.slashCommandRouter
-import discord.route.textCommandRouter
+import discord.route.*
 import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.JDABuilder
@@ -29,10 +27,13 @@ import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
 import reactor.util.function.Tuple2
 import utils.assets.LinuxTime
+import utils.lang.schedule
 import utils.log.getLogger
+import java.time.Duration
 
 @JvmInline
 private value class Token(val token: String) {
@@ -73,7 +74,7 @@ private inline fun <reified E : Event, R : InteractionReport> leaveLog(combined:
 
 private suspend inline fun <E : Event> retrieveInteractionContext(botContext: BotContext, event: E, guild: Guild) =
     InteractionContext(
-        botContext = botContext,
+        bot = botContext,
         event = event,
         guild = guild,
         config = SessionManager.retrieveGuildConfig(botContext.sessionRepository, guild.id),
@@ -83,6 +84,8 @@ private suspend inline fun <E : Event> retrieveInteractionContext(botContext: Bo
 object GomokuBot {
 
     fun launch() {
+        val botConfig = BotConfig()
+
         val mySQLConfig = MySQLConfig.fromEnv()
         val b3nzeneConfig = B3nzeneConfig.fromEnv()
 
@@ -98,7 +101,7 @@ object GomokuBot {
 
         val sessionRepository = SessionRepository(databaseConnection = databaseConnection)
 
-        val botContext = BotContext(databaseConnection, b3nzeneClient, sessionRepository)
+        val botContext = BotContext(botConfig, databaseConnection, b3nzeneClient, sessionRepository)
 
         val eventManager = ReactiveEventManager()
 
@@ -120,10 +123,11 @@ object GomokuBot {
             .flatMap(::buttonInteractionRouter)
             .subscribe { leaveLog(it) }
 
-//        eventManager.on<MessageReactionAddEvent>()
-//            .filter { it.isFromGuild && !(it.user?.isBot ?: true) }
-//            .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild.extractGuild()) } }
-//            .subscribe { leaveLog(it) }
+        eventManager.on<MessageReactionAddEvent>()
+            .filter { it.isFromGuild && !(it.user?.isBot ?: true) }
+            .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild.extractGuild()) } }
+            .flatMap(::reactionRouter)
+            .subscribe { leaveLog(it) }
 
         eventManager.on<GuildJoinEvent>()
             .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild.extractGuild()) } }
@@ -141,12 +145,24 @@ object GomokuBot {
 
         logger.info("reactive event manager ready.")
 
-        JDABuilder.createLight(Token.fromEnv().token)
+        val jda = JDABuilder.createLight(Token.fromEnv().token)
             .setEventManager(eventManager)
             .setActivity(Activity.playing("/help or ${COMMAND_PREFIX}help or @GomokuBot"))
             .setStatus(OnlineStatus.ONLINE)
-            .setEnabledIntents(GatewayIntent.GUILD_MESSAGES)
+            .setEnabledIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS)
             .build()
+
+        schedule(Duration.ofHours(1)) {
+            SessionManager.cleanExpiredGameSession(botContext.sessionRepository).forEach {
+            }
+
+            SessionManager.cleanEmptySessions(botContext.sessionRepository)
+        }
+
+        schedule(Duration.ofMinutes(10)) {
+            SessionManager.cleanExpiredRequestSessions(botContext.sessionRepository).forEach {
+            }
+        }
     }
 
 }

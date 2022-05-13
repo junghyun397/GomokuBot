@@ -22,10 +22,10 @@ object RankCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>) =
         Either.Left(RankCommand(context.config.language.container.rankCommand()))
 
-    override fun buildCommandData(action: CommandListUpdateAction, languageContainer: LanguageContainer) =
+    override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.slash(
-            languageContainer.rankCommand(),
-            languageContainer.rankCommandDescription()
+            container.rankCommand(),
+            container.rankCommandDescription()
         )
 
 }

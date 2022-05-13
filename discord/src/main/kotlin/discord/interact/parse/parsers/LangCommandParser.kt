@@ -54,14 +54,14 @@ object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
         return Either.Left(LangCommand(context.config.language.container.languageCommand(), lang))
     }
 
-    override fun buildCommandData(action: CommandListUpdateAction, languageContainer: LanguageContainer) =
+    override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.slash(
-            languageContainer.languageCommand(),
-            languageContainer.languageCommandDescription(),
+            container.languageCommand(),
+            container.languageCommandDescription(),
         ) {
             option<String>(
-                languageContainer.languageCommandOptionCode(),
-                languageContainer.languageCommandOptionCodeDescription(),
+                container.languageCommandOptionCode(),
+                container.languageCommandOptionCodeDescription(),
                 true
             ) {
                 Language.values().fold(this) { builder, language ->

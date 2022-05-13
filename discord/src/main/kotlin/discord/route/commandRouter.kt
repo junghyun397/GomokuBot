@@ -1,3 +1,5 @@
+@file:Suppress("DuplicatedCode")
+
 package discord.route
 
 import core.assets.UNICODE_CHECK
@@ -5,16 +7,18 @@ import core.assets.UNICODE_CROSS
 import core.interact.Order
 import core.interact.i18n.LanguageContainer
 import core.interact.reports.CommandReport
+import dev.minn.jda.ktx.await
 import discord.assets.extractUser
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
+import discord.interact.message.DiscordMessageAdaptor
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.MessageActionAdaptor
 import discord.interact.message.WebHookActionAdaptor
-import discord.interact.message.WebHookMessageUpdateActionAdaptor
 import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
 import discord.interact.parse.parsers.*
+import kotlinx.coroutines.async
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Message
@@ -30,14 +34,16 @@ import utils.structs.IO
 import utils.structs.Option
 import java.util.concurrent.TimeUnit
 
-fun buildPermissionNode(channel: TextChannel, user: User, parsableCommand: ParsableCommand): Option<DiscordParseFailure> =
+private fun buildPermissionNode(channel: TextChannel, user: User, parsableCommand: ParsableCommand): Option<DiscordParseFailure> =
     GuildManager.permissionNotGrantedRun(channel, Permission.MESSAGE_SEND) {
-        DiscordParseFailure(parsableCommand.name, "message permission not granted", user.extractUser()) { _, _, container ->
+        DiscordParseFailure(parsableCommand.name, "message permission not granted in $channel", user.extractUser()) { _, _, container ->
             IO { user.openPrivateChannel()
                 .flatMap { privateChannel -> DiscordMessageProducer.sendPermissionNotGrantedEmbed(
+                    { msg -> privateChannel.sendMessage(msg) },
                     container = container,
                     channelName = channel.name
-                ) { msg -> privateChannel.sendMessage(msg) } }
+                )
+                }
                 .delay(1, TimeUnit.MINUTES)
                 .flatMap(Message::delete)
                 .queue()
@@ -46,17 +52,17 @@ fun buildPermissionNode(channel: TextChannel, user: User, parsableCommand: Parsa
         }
     }
 
-private fun matchCommand(command: String, languageContainer: LanguageContainer): Option<ParsableCommand> =
+private fun matchCommand(command: String, container: LanguageContainer): Option<ParsableCommand> =
     when (command.lowercase()) {
         "help" -> Option.Some(HelpCommandParser)
-        languageContainer.helpCommand() -> Option.Some(HelpCommandParser)
-        languageContainer.startCommand() -> Option.Some(StartCommandParser)
+        container.helpCommand() -> Option.Some(HelpCommandParser)
+        container.startCommand() -> Option.Some(StartCommandParser)
         "s" -> Option.Some(SetCommandParser)
-        languageContainer.resignCommand() -> Option.Some(ResignCommandParser)
-        languageContainer.languageCommand() -> Option.Some(LangCommandParser)
-        languageContainer.styleCommand() -> Option.Some(StyleCommandParser)
-        languageContainer.rankCommand() -> Option.Some(RankCommandParser)
-        languageContainer.ratingCommand() -> Option.Some(RatingCommandParser)
+        container.resignCommand() -> Option.Some(ResignCommandParser)
+        container.languageCommand() -> Option.Some(LangCommandParser)
+        container.styleCommand() -> Option.Some(StyleCommandParser)
+        container.rankCommand() -> Option.Some(RankCommandParser)
+        container.ratingCommand() -> Option.Some(RatingCommandParser)
         "debug" -> Option.Some(DebugCommandParser)
         else -> Option.Empty
     }
@@ -66,7 +72,7 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
         context.toMono(),
         matchCommand(
             command = context.event.name,
-            languageContainer = context.config.language.container
+            container = context.config.language.container
         ).toMono()
     )
         .filter { it.t2.isDefined }
@@ -84,13 +90,12 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
         .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.fold(
             onLeft = { command ->
                 command.execute(
-                    context = it.t1.botContext,
+                    bot = it.t1.bot,
                     config = it.t1.config,
                     user = it.t1.event.user.extractUser(),
-                    producer = DiscordMessageProducer,
-                    publisher = { msg -> WebHookActionAdaptor(it.t1.event.hook.sendMessage(msg)) },
-                    modifier = { msg -> WebHookMessageUpdateActionAdaptor(it.t1.event.hook.editOriginal(msg)) },
-                )
+                    message = async { DiscordMessageAdaptor(it.t1.event.hook.retrieveOriginal().await()) },
+                    producer = DiscordMessageProducer
+                ) { msg -> WebHookActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
             } ,
             onRight = { parseFailure ->
                 parseFailure.notice(
@@ -110,7 +115,7 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
         context.toMono(),
         matchCommand(
             command = context.event.message.contentRaw.split(" ")[0].substring(1),
-            languageContainer = context.config.language.container
+            container = context.config.language.container
         ).toMono()
     )
         .filter { it.t2.isDefined }
@@ -131,13 +136,12 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
         .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.fold(
             onLeft = { command ->
                 command.execute(
-                    context = it.t1.botContext,
+                    bot = it.t1.bot,
                     config = it.t1.config,
                     user = it.t1.event.author.extractUser(),
-                    producer = DiscordMessageProducer,
-                    publisher = { msg -> MessageActionAdaptor(it.t1.event.message.reply(msg)) },
-                    modifier = { msg -> MessageActionAdaptor(it.t1.event.message.editMessage(msg)) }
-                )
+                    message = async { DiscordMessageAdaptor(it.t1.event.message) },
+                    producer = DiscordMessageProducer
+                ) { msg -> MessageActionAdaptor(it.t1.event.message.reply(msg)) }
             },
             onRight = { parseFailure ->
                 parseFailure.notice(

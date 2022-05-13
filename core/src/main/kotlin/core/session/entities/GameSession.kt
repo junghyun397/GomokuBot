@@ -2,9 +2,10 @@ package core.session.entities
 
 import core.assets.User
 import core.assets.aiUser
+import core.inference.AiLevel
 import core.session.GameResult
+import core.session.SessionManager
 import jrenju.Board
-import jrenju.notation.Color
 import jrenju.notation.Pos
 import jrenju.protocol.SolutionNode
 import utils.assets.LinuxTime
@@ -19,25 +20,45 @@ sealed class GameSession(
     abstract val ownerHasBlack: Boolean
 
     abstract val board: Board
-    
+
     abstract val gameResult: Option<GameResult>
-    
+
     abstract val history: List<Pos>
+
     abstract val messageBufferKey: String
+
+    abstract val expireOffset: Long
+
+    val player get() =
+        if (this.ownerHasBlack xor !this.board.isNextColorBlack)
+            this.owner
+        else
+            this.opponent
+
+    val nextPlayer get() =
+        if (this.ownerHasBlack xor !this.board.isNextColorBlack)
+            this.opponent
+        else
+            this.owner
 
 }
 
 data class AiGameSession(
     override val owner: User,
-    override val opponent: User,
+    val aiLevel: AiLevel,
     val solution: Option<SolutionNode>,
     override val ownerHasBlack: Boolean,
     override val board: Board,
     override val gameResult: Option<GameResult> = Option.Empty,
     override val history: List<Pos>,
     override val messageBufferKey: String,
+    override val expireOffset: Long,
     override val expireDate: LinuxTime,
-) : GameSession(expireDate)
+) : GameSession(expireDate) {
+
+    override val opponent = aiUser
+
+}
 
 data class PvpGameSession(
     override val owner: User,
@@ -47,55 +68,29 @@ data class PvpGameSession(
     override val gameResult: Option<GameResult> = Option.Empty,
     override val history: List<Pos>,
     override val messageBufferKey: String,
+    override val expireOffset: Long,
     override val expireDate: LinuxTime,
-) : GameSession(expireDate) {
+) : GameSession(expireDate)
 
-    val priorPlayer get() =
-        if (this.board.color() == Color.BLACK() && this.ownerHasBlack)
-            this.owner
-        else
-            this.opponent
-
-    val player get() =
-        if (this.board.nextColor() == Color.BLACK() && this.ownerHasBlack)
-            this.owner
-        else
-            this.opponent
-
-}
-
-fun generateMessageBufferKey(owner: User) =
-    String(owner.name.toCharArray() + System.currentTimeMillis().toString().toCharArray())
-
-fun GameSession.nextWith(board: Board, pos: Pos, gameResult: Option<GameResult> = Option.Empty) =
+fun GameSession.nextWith(
+    board: Board,
+    move: Pos,
+    gameResult: Option<GameResult>,
+    messageBufferKey: String = SessionManager.generateMessageBufferKey(this.owner)
+) =
     when (this) {
         is AiGameSession -> this.copy(
-            board = board, history = this.history + pos, gameResult = gameResult,
-            messageBufferKey = generateMessageBufferKey(this.owner)
+            board = board,
+            history = this.history + move,
+            gameResult = gameResult,
+            expireDate = LinuxTime.withExpireOffset(this.expireOffset),
+            messageBufferKey = messageBufferKey
         )
         is PvpGameSession -> this.copy(
-            board = board, history = this.history + pos, gameResult = gameResult,
-            messageBufferKey = generateMessageBufferKey(this.owner)
+            board = board,
+            history = this.history + move,
+            gameResult = gameResult,
+            expireDate = LinuxTime.withExpireOffset(this.expireOffset),
+            messageBufferKey = messageBufferKey
         )
-    }
-
-fun GameSession.asResigned() =
-    when (this) {
-        is AiGameSession -> {
-            val result = GameResult.Win(this.board.nextColor(), aiUser, this.owner)
-
-            this.copy(
-                gameResult = Option.Some(GameResult.Win(this.board.nextColor(), aiUser, this.owner))
-            ) to result
-        }
-        is PvpGameSession -> {
-            val (winner, looser) = if (this.board.color() == Color.BLACK() && this.ownerHasBlack)
-                this.owner to this.opponent
-            else
-                this.opponent to this.owner
-
-            val result = GameResult.Win(this.board.nextColor(), winner, looser)
-
-            this.copy(gameResult = Option.Some(result)) to result
-        }
     }

@@ -14,6 +14,6 @@ val buildableCommands: Collection<BuildableCommand> =
 
 interface BuildableCommand {
 
-    fun buildCommandData(action: CommandListUpdateAction, languageContainer: LanguageContainer): CommandListUpdateAction
+    fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer): CommandListUpdateAction
 
 }

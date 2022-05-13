@@ -52,14 +52,14 @@ object StyleCommandParser : NamedParser, ParsableCommand, BuildableCommand {
         return Either.Left(StyleCommand(context.config.language.container.styleCommand(), style))
     }
 
-    override fun buildCommandData(action: CommandListUpdateAction, languageContainer: LanguageContainer) =
+    override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.slash(
-            languageContainer.styleCommand(),
-            languageContainer.styleCommandDescription()
+            container.styleCommand(),
+            container.styleCommandDescription()
         ) {
             option<String>(
-                languageContainer.styleCommandOptionCode(),
-                languageContainer.styleCommandOptionCodeDescription(),
+                container.styleCommandOptionCode(),
+                container.styleCommandOptionCodeDescription(),
                 true
             ) {
                 BoardStyle.values().fold(this) { builder, style ->

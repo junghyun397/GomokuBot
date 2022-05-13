@@ -8,7 +8,7 @@ class LanguagePRK : LanguageKOR() {
     override fun languageSuggestion() = "`~lang` `PRK` 시킴말을 사용 하라우."
 
     override fun helpAboutEmbedTitle() = "GomokuBot / 도움말"
-    override fun helpAboutEmbedDescription() =
+    override fun helpAboutEmbedDescription(platform: String) =
         "GomokuBot은 불협화음에서 오목 오락을 즐길 수 있게 하는 열린문서 Discord Bot 이라우. 모아진 기보 내용은 강화학습 형태 훈련에 사용된다우."
 
     override fun helpAboutEmbedDeveloper() = "주체자"
@@ -35,10 +35,10 @@ class LanguagePRK : LanguageKOR() {
     override fun startErrorSessionAlready(user: String) =
         "$user 동무, 놀음 만들기에 실패 했습네다. 즐기고 있던 놀음을 마무리 해주시우. :thinking:"
 
-    override fun beginPVP(owner: String, opponent: String, opener: String) =
-        "`$owner`동무와 `$opponent`동무과의 쌈박질이 시작 되었습네다! 선공은 `$opener`동무 입네다."
+    override fun beginPVP(blackPlayer: String, whitePlayer: String) =
+        "`$blackPlayer`동무와 `$whitePlayer`동무과의 쌈박질이 시작 되었습네다! 선공은 `$blackPlayer`동무 입네다."
 
-    override fun processNext(player: String, priorPlayer: String, latestMove: String) =
+    override fun processNextPVP(player: String, priorPlayer: String, latestMove: String) =
         "`" + player + "`동무, 다음 돌을 놓아주시우. `" + priorPlayer + "`동무는 " + latestMove + "에 놓았습네다."
 
     override fun processErrorOrder(user: String, player: String) =

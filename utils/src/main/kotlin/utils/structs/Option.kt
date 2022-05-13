@@ -8,7 +8,11 @@ sealed class Option<out T> {
 
     val isEmpty: Boolean get() = this is Empty
 
-    fun getOrNull(): T? = (this as Some).value
+    fun getOrNull(): T? =
+        when (this) {
+            is Some -> this.value
+            is Empty -> null
+        }
 
     fun getOrException(): T =
         when (this) {
@@ -33,6 +37,11 @@ sealed class Option<out T> {
             is Some -> onDefined(this.value)
             is Empty -> onEmpty()
         }
+
+    inline fun forEach(block: (T) -> Unit) {
+        if (this.isDefined)
+            block((this as Some).value)
+    }
 
     data class Some<out T>(val value: T) : Option<T>()
 

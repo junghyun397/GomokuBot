@@ -17,6 +17,7 @@ import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.util.function.Tuple2
+import java.util.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -34,35 +35,36 @@ private fun matchLanguage(region: Region): Language =
         else -> Language.ENG
     }
 
+private fun matchLanguage(locale: Locale): Language =
+    when (locale) {
+        Locale.KOREA, Locale.KOREAN -> Language.KOR
+        Locale.JAPAN, Locale.JAPANESE -> Language.JPN
+        else -> Language.ENG
+    }
+
 fun guildJoinRouter(context: InteractionContext<GuildJoinEvent>): Mono<Tuple2<InteractionContext<GuildJoinEvent>, Result<GuildJoinReport>>> =
     Mono.zip(context.toMono(), mono { runCatching {
-        val commandInserted = run {
-            GuildManager.insertCommands(context.event.guild, context.config.language.container)
-            true
-        }
-
-        val defaultRegion = retrieveRegion(context.event.guild)
-        val matchedLanguage = matchLanguage(defaultRegion)
+        val defaultLocale = context.event.guild.locale
+        val matchedLanguage = matchLanguage(defaultLocale)
 
         DatabaseManager.updateGuildConfig(
-            context.botContext.databaseConnection, context.guild.id,
+            context.bot.databaseConnection, context.guild.id,
             GuildConfig(context.guild.id, language = matchedLanguage)
         )
+
+        val commandInserted = run {
+            GuildManager.upsertCommands(context.event.guild, matchedLanguage.container)
+            true
+        }
 
         val helpSent = context.event.guild.systemChannel?.let { channel ->
             val messagePublisher: DiscordMessagePublisher = { msg -> MessageActionAdaptor(channel.sendMessage(msg)) }
 
             GuildManager.permissionSafeRun(channel, Permission.MESSAGE_SEND) {
-                DiscordMessageProducer.produceAboutBot(messagePublisher, context.config.language.container)
-                    .map { it.launch() }
-                    .flatMap { DiscordMessageProducer.produceCommandGuide(messagePublisher, context.config.language.container) }
-                    .map { it.launch() }
-                    .flatMap { DiscordMessageProducer.produceStyleGuide(messagePublisher, context.config.language.container) }
-                    .map { it.launch() }
-                    .flatMap { DiscordMessageProducer.produceLanguageGuide(messagePublisher) }
+                DiscordMessageProducer.produceWelcomeKit(messagePublisher, matchedLanguage.container)
                     .map { it.launch() }
             }
         }?.isDefined
 
-        GuildJoinReport(commandInserted, helpSent, defaultRegion.name, matchedLanguage)
+        GuildJoinReport(commandInserted, helpSent, defaultLocale.displayName, matchedLanguage)
     } } )

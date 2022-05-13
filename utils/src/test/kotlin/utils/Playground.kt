@@ -1,6 +1,5 @@
 package utils
 
-import jrenju.Board
 import utils.assets.bound
 import java.util.*
 import kotlin.test.Test
@@ -21,27 +20,14 @@ internal class OptionTest {
 
     @Test
     fun weakHashMap() {
-        val map = mutableMapOf<String, NS>()
-        val weak = WeakHashMap<String, String>()
-
-        add(map, weak)
-
-        System.gc()
-
-        println(weak)
+        val l = listOf("A", "B", "C")
+        println(l.reduce { acc, s -> acc + s })
     }
 
     @Test
     fun format() {
         val n = 9
         println("%2d".format(n))
-    }
-
-    @Test
-    fun chunked() {
-        val board = Board.newBoard()
-            .calculateL2Board()
-            .calculateL3Board()
     }
 
     @Test

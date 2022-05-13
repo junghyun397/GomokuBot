@@ -24,7 +24,7 @@ object DebugCommandParser : NamedParser, ParsableCommand {
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>): Either<Command, DiscordParseFailure> {
         val option = context.event.message.contentRaw
-            .drop(this.name.length + 2)
+            .split(" ")[1]
             .uppercase()
 
         val type = matchType(option)
@@ -34,7 +34,12 @@ object DebugCommandParser : NamedParser, ParsableCommand {
 
         return Either.Left(DebugCommand(
             "debug", type,
-            context.event.message.contentRaw.split(" ").drop(1).firstOrNull()
+            context.event.message.contentRaw.split("\n").drop(1).let {
+                if (it.isEmpty())
+                    null
+                else
+                    it.reduce { acc, s -> acc + s }
+            }
         ))
     }
 

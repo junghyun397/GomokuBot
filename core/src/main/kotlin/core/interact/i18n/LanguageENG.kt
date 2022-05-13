@@ -7,6 +7,15 @@ open class LanguageENG : LanguageContainer {
     override fun languageName() = "English\uD83C\uDDEC\uD83C\uDDE7"
     override fun languageSuggestion() = "Please use the `~lang` `ENG` command."
 
+    // # 0. TOKENS
+
+    override fun aiLevelAmoeba() = "Amoeba"
+    override fun aiLevelApe() = "Ape"
+    override fun aiLevelBeginner() = "Beginner"
+    override fun aiLevelModerate() = "Moderate"
+    override fun aiLevelExpert() = "Expert"
+    override fun aiLevelGuru() = "Guru"
+
     // # 1. INFORM
 
     // ## 1-1. HELP
@@ -14,14 +23,15 @@ open class LanguageENG : LanguageContainer {
     // ### 1-1-1. HELP (COMMAND)
 
     override fun helpCommand() = "help"
-    override fun helpCommandDescription() = "Get help"
+    override fun helpCommandDescription() = "Get help."
 
     // ### 1-1-2. HELP:ABOUT (EMBED)
 
     override fun helpAboutEmbedTitle() = "GomokuBot / Help"
-    override fun helpAboutEmbedDescription() =
-        "GomokuBot is an open-source artificial intelligence Discord Bot that provides Renju(Gomoku) feature in Discord. " +
-                "The collected data is used for training reinforcement learning models."
+    override fun helpAboutEmbedDescription(platform: String) =
+        "Now play **Gomoku** on **$platform**. **GomokuBot** can do it." +
+                " ― GomokuBot is an open-source AI bot that provides Gomoku([Renju](https://www.renju.net/rules/)) feature in $platform. " +
+                "The collected data are used for training reinforcement learning models."
     override fun helpAboutEmbedDeveloper() = "Developer"
     override fun helpAboutEmbedRepository() = "Git Repository"
     override fun helpAboutEmbedVersion() = "Version"
@@ -31,42 +41,42 @@ open class LanguageENG : LanguageContainer {
     // ### 1-1-3. HELP:COMMAND (EMBED)
 
     override fun helpCommandEmbedTitle() = "GomokuBot / Command"
-    override fun helpCommandEmbedHelp() = "`~help` Get help"
-    override fun helpCommandEmbedRank() = "`~rank` Show ranking from 1st to 10th"
-    override fun helpCommandEmbedRating() = "`~rating`"
+    override fun helpCommandEmbedHelp() = "Get help."
+    override fun helpCommandEmbedRank() = "Get a ranking from 1st to 10th."
+    override fun helpCommandEmbedRating() = "Get ``GomokuBot ELO`` rating."
 
     override fun helpCommandEmbedLang(langList: String) =
-        "`~lang` $langList Change the language setting used on this server. Ex) `~lang` `ENG`"
+        "Change the language setting used by this server. Ex) ``/lang`` ``ENG``"
     override fun helpCommandEmbedStyle() =
-        "`~skin` `A` `B` `C` Change the Gomoku-canvas style setting used on this server. Ex) `~skin` `A`"
+        "Change the Gomoku Board style used by this server. Ex) ``/style`` ``A``"
 
-    override fun helpCommandEmbedStartPVE() = "`~start` Start the game with A.I."
+    override fun helpCommandEmbedStartPVE() = "Start a new game with AI."
     override fun helpCommandEmbedStartPVP() =
-        "`~start` `@mention` Start the game with the mentioned player. Ex) `~start` `@player`"
-    override fun helpCommandEmbedResign() = "`~resign` Surrender the current game."
+        "Send a game request to the mentioned user. Ex) ``/start`` ``@user``"
+    override fun helpCommandEmbedResign() = "Resign from a game in progress."
 
     // ## 1-2. RANK
 
     // ### 1-2-1. RANK (COMMAND)
 
     override fun rankCommand() = "rank"
-    override fun rankCommandDescription() = "Show ranking from 1st to 10th"
+    override fun rankCommandDescription() = "Get a ranking from 1st to 10th."
 
     // ### 1-2-2. RANK:LIST (EMBED)
 
     override fun rankEmbedTitle() = "GomokuBot / Ranking"
-    override fun rankEmbedDescription() = "Ranked 1st to 10th."
-    override fun rankEmbedWin() = "Victory"
-    override fun rankEmbedLose() = "Defeat"
+    override fun rankEmbedDescription() = "Ranking from 1st to 10th."
+    override fun rankEmbedWin() = "Wins"
+    override fun rankEmbedLose() = "Losses"
 
     // ## 1-3. RATING
 
     // ### 1-3-1. RATING (COMMAND)
 
     override fun ratingCommand() = "rating"
-    override fun ratingCommandDescription() = "Show rating specific User"
+    override fun ratingCommandDescription() = "Get rating."
     override fun ratingCommandOptionUser() = "user"
-    override fun ratingCommandOptionUserDescription() = "specific the user"
+    override fun ratingCommandOptionUserDescription() = "Specific a user to check the rating."
 
     // ### 1-3-2. RATING:RESPONSE (EMBED)
 
@@ -80,9 +90,9 @@ open class LanguageENG : LanguageContainer {
     // ### 2-1-1. LANG (COMMAND)
 
     override fun languageCommand() = "lang"
-    override fun languageCommandDescription() = "Set language uses in this server"
+    override fun languageCommandDescription() = "Change the language setting used by this server."
     override fun languageCommandOptionCode() = "language"
-    override fun languageCommandOptionCodeDescription() = "select language code"
+    override fun languageCommandOptionCodeDescription() = "Select a language code."
 
     // ### 2-1-2. LANG:SUCCEED:CHANGED (MESSAGE)
 
@@ -93,25 +103,25 @@ open class LanguageENG : LanguageContainer {
     // ### 2-2-1. STYLE (COMMAND)
 
     override fun styleCommand() = "style"
-    override fun styleCommandDescription() = "Change Gomoku-board style setting used on this server."
+    override fun styleCommandDescription() = "Change the Gomoku Board style used by this server."
     override fun styleCommandOptionCode() = "style"
-    override fun styleCommandOptionCodeDescription() = "Select style code"
+    override fun styleCommandOptionCodeDescription() = "Select a style code."
 
     // ### 2-2-2. STYLE:ENUM (EMBED)
 
     override fun styleEmbedTitle() = "GomokuBot / Style"
     override fun styleEmbedDescription() =
-        "Default Gomoku board (Style A) may not display properly. " +
-                "Choose one of the three styles available and set the style to use on this server."
-    override fun styleEmbedSuggestion(styleName: String) = "Enter ``~skin`` ``$styleName`` to use this style."
+        "Default Gomoku Board style(``Style A``) applied to this server may not display correctly. " +
+                "Choose one of the four styles you like."
+    override fun styleEmbedSuggestion(styleName: String) = "Enter ``~skin`` $styleName to use this style."
 
     // ### 2-2-3. STYLE:ERROR:NOTFOUND (MESSAGE)
 
-    override fun styleErrorNotfound() = "There is an error in the style specification."
+    override fun styleErrorNotfound() = "There is an error in the specification style code. Please enter in ``/style`` ``style code`` format."
 
     // ### 2-2-4. STYLE:SUCCEED:CHANGED (MESSAGE)
 
-    override fun styleUpdated(styleName: String) = "Style setting has been change to ``$styleName`` !"
+    override fun styleUpdated(styleName: String) = "Style setting has been changed to style $styleName!"
 
     // ## 2-3. POLICY
 
@@ -119,53 +129,62 @@ open class LanguageENG : LanguageContainer {
 
     // # 3. SESSION
 
-    override fun sessionNotFound(): String = ""
+    override fun sessionNotFound(): String =
+        "There is no game in progress. Start a new game with the ``/start`` command."
 
     // ## 3-1. START
 
     // ### 3-1-1. START (COMMAND)
 
     override fun startCommand() = "start"
-    override fun startCommandDescription() = "Start a new game"
+    override fun startCommandDescription() = "Start a new game."
     override fun startCommandOptionOpponent() = "opponent"
-    override fun startCommandOptionOpponentDescription() = "Specific the opponent"
+    override fun startCommandOptionOpponentDescription() = "Specific the user to start game with."
 
     // ### 3-1-2. START:ERROR:ALREADY (MESSAGE)
 
     override fun startErrorSessionAlready(user: String) =
-        "$user, Game creation failed. Please finish the game in progress. :thinking:"
-    override fun startErrorRequestAlready(user: String) =
-        ""
+        "$user, There is already a game in progress. Please finish the game in progress first."
+    override fun startErrorOpponentSessionAlready(owner: String, opponent: String) =
+        "$owner, $opponent is already playing another game. Please wait until $opponent's game is over."
+    override fun startErrorRequestAlreadySent(owner: String, opponent: String) =
+        "$owner, a game request sent to $opponent is still pending. Please wait for $opponent's response."
+    override fun startErrorRequestAlready(user: String, opponent: String) =
+        "$user, You have not yet responded to the game request sent by $opponent. Please respond to $opponent's game request first."
+    override fun startErrorOpponentRequestAlready(owner: String, opponent: String) =
+        "$owner, There is one other game request that $opponent has not yet responded to. Please wait until $opponent responds to another game request."
 
     // ## 3-2. SET
 
     // ### 3-2-1. SET (COMMAND)
 
-    override fun setCommandDescription() = "돌을 놓습니다."
-    override fun setCommandOptionColumn() = "x"
-    override fun setCommandOptionColumnDescription() = "알파벳"
-    override fun setCommandOptionRow() = "y"
-    override fun setCommandOptionRowDescription() = "숫자"
+    override fun setCommandDescription() = "Make a move."
+    override fun setCommandOptionColumn() = "column"
+    override fun setCommandOptionColumnDescription() = "alphabet"
+    override fun setCommandOptionRow() = "row"
+    override fun setCommandOptionRowDescription() = "number"
 
     // ### 3-2-2. SET:ERROR:ARGUMENT (MESSAGE)
 
     override fun setErrorIllegalArgument(player: String) =
-        "that's invalid command. Please write in the format of . `~s` `alphabet` `number` :thinking:"
+        "$player, There is an error in the command format. Please enter in ``/s`` ``alphabet`` ``number`` format."
 
     // ### 3-2-3. SET:ERROR:EXIST (MESSAGE)
 
-    override fun setErrorExist(player: String, move: String) = "$player, there is already a stone. :thinking:"
+    override fun setErrorExist(player: String, move: String) =
+        "$player, There is already a stone in $move. Please move to another place."
 
     // ### 3-2-4. SET:ERROR:FORBIDDEN (MESSAGE)
 
-    override fun setErrorForbidden(player: String, move: String, forbiddenKind: String) = ""
+    override fun setErrorForbidden(player: String, move: String, forbiddenKind: String) =
+        "$player, ``$move`` is ``$forbiddenKind forbidden move``. Please move to another place."
 
     // ## 3-3. RESIGN
 
     // ### 3-3-1. RESIGN (COMMAND)
 
     override fun resignCommand() = "resign"
-    override fun resignCommandDescription() = "resign"
+    override fun resignCommandDescription() = "Resigns from a game in progress."
 
     // ### 3-3-2. RESIGN:ERROR:NOTFOUND (MESSAGE)
 
@@ -173,16 +192,22 @@ open class LanguageENG : LanguageContainer {
 
     // ### 3-4-1. REQUEST:ABOUT (EMBED)
 
-    override fun requestEmbedTitle() = "오목 한 판 괜찮겠습니까?"
+    override fun requestEmbedTitle() = "How about a round of Gomoku?"
     override fun requestEmbedDescription(owner: String, opponent: String) =
-        "<@$owner> 님이 <@$opponent> 님에게 대결 요청을 보냈습니다. 아래 버튼을 눌러 대답해 주세요."
+        "$owner sent a game request to $opponent. Please respond by pressing the button."
     override fun requestEmbedButtonAccept() = "Accept"
     override fun requestEmbedButtonReject() = "Reject"
 
     // ### 3-4-2. REQUEST:REJECTED (MESSAGE)
 
     override fun requestRejected(owner: String, opponent: String) =
-        ""
+        "$opponent rejected $owner's game request."
+
+    override fun requestExpired(owner: String, opponent: String) =
+        "Game request that $owner sent to $opponent has expired. If anyone still wants to game with $opponent, please send a new request."
+
+    override fun requestExpiredNewRequest() =
+        "re-Request"
 
     // # 4. GAME
 
@@ -190,42 +215,57 @@ open class LanguageENG : LanguageContainer {
 
     // ### 4-1-1. BEGIN:PVP
 
-    override fun beginPVP(owner: String, opponent: String, opener: String) =
-        "The match between`$owner` vs `$opponent` has begun! Attack first is `$opener`."
+    override fun beginPVP(blackPlayer: String, whitePlayer: String) =
+        "The game of $blackPlayer vs $whitePlayer has started! $blackPlayer is Black. Please make the first move."
 
     // ### 4-1-2. BEGIN:AI
 
-    override fun beginPVE(player: String, opener: String) = ""
+    override fun beginPVEAiBlack(player: String) =
+        "The game of $player vs AI has started! $player is White. AI placed ``h8``. Please make the next move."
+
+    override fun beginPVEAiWhite(player: String) =
+        "The game of $player vs AI has started! $player is Black. Please make the first move."
 
     // ## 4-2. PROCESS
 
     // ### 4-2-1. PROCES:NEXT (MESSAGE)
 
-    override fun processNext(player: String, priorPlayer: String, latestMove: String) =
-        "`$player`, please place the next Stone. `$priorPlayer` was placed on $latestMove"
+    override fun processNextPVE(owner: String, latestMove: String) =
+        "$owner, Please make the next move. AI placed $latestMove."
+
+    override fun processNextPVP(player: String, priorPlayer: String, latestMove: String) =
+        "$player, Please make the next move. $priorPlayer placed $latestMove."
 
     // ### 4-2-2. PROCESS:ERROR:ORDER (MESSAGE)
 
     override fun processErrorOrder(user: String, player: String) =
-        "It's `$player`s turn now. Please wait for `$player`'s next stone. :thinking:"
+        "$user, Now it's $player`s turn. Please wait until $player makes the next move."
 
     // ## 4-3. END
 
     // ### 4-3-1. END:PVP (MESSAGE)
 
     override fun endPVPWin(winner: String, looser: String, latestMove: String) =
-        "`$winner` wins by `$looser` placing Stone on $latestMove!"
+        "$winner wins by $looser placed in $latestMove!"
     override fun endPVPResign(winner: String, looser: String) =
-        "`$winner` wins by `$looser` declaring surrender!"
-    override fun endPVPTie(owner: String, opponent: String) = "There was no more space for the stones, so it was a draw."
+        "$winner wins by $looser resignation!"
+    override fun endPVPTie(owner: String, opponent: String) =
+        "$owner vs $opponent ended in a draw because there were no more points to make a move."
+    override fun endPVPTimeOut(winner: String, looser: String) =
+        "$winner wins by $looser because $looser didn't make the next move for a long time."
 
     // ### 4-3-2. END:AI (MESSAGE)
 
     override fun endPVEWin(player: String, latestPos: String) =
-       "You beat A.I. by placing Stone on $latestPos. Congratulations! :tada:"
-    override fun endPVELose(player: String, latestPos: String) = "You have been defeated by A.I. placing on $latestPos."
-    override fun endPVEResign(player: String) = "You have been defeated by declaring surrender."
-    override fun endPVETie(player: String) = ""
+        "$player, You won to AI by placed in $latestPos."
+    override fun endPVELose(player: String, latestPos: String) =
+        "$player, You lose to AI by AI placed in $latestPos."
+    override fun endPVEResign(player: String) =
+        "$player, You lose to AI by resignation."
+    override fun endPVETie(player: String) =
+        "$player vs AI ended in a draw because there were no more points to make a move."
+    override fun endPVETimeOut(player: String) =
+        "$player, You lost to Ai because you didn't make the next move for a long time."
 
     // # 5. BOARD
 
@@ -233,29 +273,31 @@ open class LanguageENG : LanguageContainer {
     override fun boardFinished() = "Finished"
 
     override fun boardMoves() = "Moves"
-    override fun boardLatestMove() = "Latest Move"
+    override fun boardLatestMove() = "Last Move"
 
     override fun boardResult() = "Result"
 
     override fun boardWinDescription(winner: String) = "$winner win"
     override fun boardTieDescription() = "Tie"
 
-    override fun boardCommandGuide() = ":mag: 버튼을 누르거나 ``/s`` ``알파벳`` ``숫자`` 명령어를 입력해 다음 수를 놓아 주세요."
+    override fun boardCommandGuide() =
+        ":mag: Press the button or use ``/s`` ``column`` ``row`` command to make the next move."
 
     // # 6. UTILS
 
-    override fun somethingWrongEmbedTitle() = "뭔가 잘못됐습니다!"
+    override fun somethingWrongEmbedTitle() = "Something Wrong"
 
     // ## 6-1. PERMISSION-NOT-GRANTED (EMBED)
 
-    override fun permissionNotGrantedEmbedDescription(channelName: String) = "Gokomubot은 ``$channelName``채널에 메시지를 보낼 권한이 없습니다! 역할 및 퍼미션 설정을 확인해 주세요."
+    override fun permissionNotGrantedEmbedDescription(channelName: String) =
+        "GomokuBot dose not has permission to send messages to ``$channelName``! Please check the role and permission settings."
 
-    override fun permissionNotGrantedEmbedFooter() = "이 메시지는 1분 뒤 지워집니다."
+    override fun permissionNotGrantedEmbedFooter() = "this message will be deleted after 1 minute."
 
     // ## 6-2. NOT-YET-IMPLEMENTED (EMBED)
 
-    override fun notYetImplementedEmbedDescription() = "이 기능은 아직 완성되지 않았습니다."
+    override fun notYetImplementedEmbedDescription() = "This feature is not yet implemented."
 
-    override fun notYetImplementedEmbedFooter() = "지원 채널에서 Gomokubot 업데이트 소식을 받아볼 수 있습니다."
+    override fun notYetImplementedEmbedFooter(officialChannel: String) = "Get updates on GomokuBot in support channel($officialChannel)."
 
 }

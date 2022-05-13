@@ -8,7 +8,7 @@ class LanguageSKO : LanguageKOR() {
     override fun languageSuggestion() = "`~lang` `SKO` 命令語를使用해주세요."
 
     override fun helpAboutEmbedTitle() = "GomokuBot / 助言"
-    override fun helpAboutEmbedDescription() =
+    override fun helpAboutEmbedDescription(platform: String) =
         "GomokuBot은Discord에서五目을滿喫할수있게해주는資料開放DiscordBot입니다. 收集된棋譜資料는强化學習模型訓鍊에使用됩니다. :)"
     override fun helpAboutEmbedDeveloper() = "開發者"
     override fun helpAboutEmbedRepository() = "Git 貯藏所"
@@ -34,10 +34,10 @@ class LanguageSKO : LanguageKOR() {
     override fun startErrorSessionAlready(user: String) =
         "$user 님, 遊戱生成에失敗했습니다. 滿喫하고계신遊戱를完了해주세요. :thinking:"
 
-    override fun beginPVP(owner: String, opponent: String, opener: String) =
-        "`$owner`님과의對決이開始되었습니다! 先攻은`$opener`님입니다."
+    override fun beginPVP(blackPlayer: String, whitePlayer: String) =
+        "`$blackPlayer`님과의對決이開始되었습니다! 先攻은`$blackPlayer`님입니다."
 
-    override fun processNext(player: String, priorPlayer: String, latestMove: String) =
+    override fun processNextPVP(player: String, priorPlayer: String, latestMove: String) =
         "`$player`님, 다음手를置하여주세요. `" + priorPlayer + "`는 " + latestMove + "에置하였습니다."
 
     override fun processErrorOrder(user: String, player: String) =

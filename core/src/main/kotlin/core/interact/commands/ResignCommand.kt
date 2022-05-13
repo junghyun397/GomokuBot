@@ -3,26 +3,31 @@ package core.interact.commands
 import core.BotContext
 import core.assets.User
 import core.interact.Order
-import core.interact.message.MessageModifier
+import core.interact.message.MessageAdaptor
 import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
 import core.interact.reports.asCommandReport
+import core.session.GameManager
 import core.session.SessionManager
-import core.session.entities.*
+import core.session.entities.AiGameSession
+import core.session.entities.GameSession
+import core.session.entities.GuildConfig
+import core.session.entities.PvpGameSession
+import kotlinx.coroutines.Deferred
 
 class ResignCommand(override val command: String, private val session: GameSession) : Command {
 
     override suspend fun <A, B> execute(
-        context: BotContext,
+        bot: BotContext,
         config: GuildConfig,
         user: User,
+        message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>,
-        modifier: MessageModifier<A, B>,
     ) = runCatching {
-        SessionManager.removeGameSession(context.sessionRepository, config.id, session.owner.id)
+        SessionManager.removeGameSession(bot.sessionRepository, config.id, session.owner.id)
 
-        val (finishedSession, result) = this.session.asResigned()
+        val (finishedSession, result) = GameManager.resignSession(this.session, user)
 
         val io = when (finishedSession) {
             is AiGameSession ->

@@ -23,13 +23,13 @@ object HelpCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>) =
         Either.Left(HelpCommand(context.config.language.container.helpCommand()))
 
-    override fun buildCommandData(action: CommandListUpdateAction, languageContainer: LanguageContainer) =
+    override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.apply {
             slash(
-                languageContainer.helpCommand(),
-                languageContainer.helpCommandDescription()
+                container.helpCommand(),
+                container.helpCommandDescription()
             )
-            if (languageContainer.languageCode() != Language.ENG.container.languageCode()) slash(
+            if (container.helpCommand() != Language.ENG.container.helpCommand()) slash(
                 "help",
                 Language.ENG.container.helpCommandDescription()
             )

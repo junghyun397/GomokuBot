@@ -8,6 +8,7 @@ import jrenju.notation.Renju
 import utils.lang.clone
 import utils.lang.toInputStream
 import utils.structs.Either
+import utils.structs.Option
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.RenderingHints
@@ -22,9 +23,13 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
     override val sampleView = ""
 
     private const val POINT_SIZE = 60 // Must have 60 as a factor
+    private val BOARD_SIZE = POINT_SIZE * Renju.BOARD_WIDTH()
+
     private const val COORDINATE_SIZE = POINT_SIZE / 2
     private const val COORDINATE_FONT_SIZE = POINT_SIZE / 3
-    private val BOARD_SIZE = POINT_SIZE * Renju.BOARD_WIDTH()
+    private const val COORDINATE_FONT = "Bitstream Charter"
+    private const val COORDINATE_START_OFFSET = COORDINATE_SIZE + POINT_SIZE / 2
+    private const val COORDINATE_PADDING = COORDINATE_SIZE / 5
 
     private val DIMENSION = (COORDINATE_SIZE * 2 + BOARD_SIZE).let { Dimension(it, it) }
 
@@ -32,20 +37,19 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
     private const val LINE_START_POS = COORDINATE_SIZE + POINT_SIZE / 2 - LINE_WEIGHT / 2
     private val LINE_END_POS = BOARD_SIZE - POINT_SIZE + LINE_WEIGHT
 
-    private const val COORDINATE_FONT = "Bitstream Charter"
-    private const val COORDINATE_START_OFFSET = COORDINATE_SIZE + POINT_SIZE / 2
-    private const val COORDINATE_PADDING = COORDINATE_SIZE / 5
-
     private const val STONE_SIZE = POINT_SIZE - POINT_SIZE / 30
     private const val STONE_OFFSET = (POINT_SIZE - STONE_SIZE) / 2
 
-    private const val WHITE_BOARDER_SIZE = POINT_SIZE / 20
+    private const val BOARDER_SIZE = POINT_SIZE / 20
 
     private const val LATEST_MOVE_DOT_SIZE = POINT_SIZE / 5
     private const val LATEST_MOVE_DOT_OFFSET = (POINT_SIZE - LATEST_MOVE_DOT_SIZE) / 2
 
     private const val FORBIDDEN_DOT_SIZE = POINT_SIZE / 5
     private const val FORBIDDEN_DOT_OFFSET = (POINT_SIZE - FORBIDDEN_DOT_SIZE) / 2
+
+    private const val HISTORY_FONT_SIZE = POINT_SIZE / 2
+    private const val HISTORY_FONT = "Bitstream Charter"
 
     private val protoImage: BufferedImage by lazy {
         BufferedImage(DIMENSION.width, DIMENSION.height, BufferedImage.TYPE_INT_RGB).also { image ->
@@ -109,10 +113,10 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
             COORDINATE_SIZE + (Renju.BOARD_WIDTH() - this.row() - 1) * POINT_SIZE
         )
 
-    override fun renderBoard(board: Board) =
-        Either.Right(this.renderBoard(board, false))
+    override fun renderBoard(board: Board, history: Option<List<Pos>>) =
+        Either.Right(this.renderBoardImage(board, history))
 
-    fun renderBoard(board: Board, withHistory: Boolean) =
+    fun renderBoardImage(board: Board, history: Option<List<Pos>>) =
         this.protoImage.clone().also { image ->
             image.createGraphics().apply {
                 setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
@@ -128,10 +132,10 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
 
                             color = COLOR_BLACK
                             fillOval(
-                                it.first.x + STONE_OFFSET + WHITE_BOARDER_SIZE,
-                                it.first.y + STONE_OFFSET + WHITE_BOARDER_SIZE,
-                                STONE_SIZE - 2 * WHITE_BOARDER_SIZE,
-                                STONE_SIZE - 2 * WHITE_BOARDER_SIZE,
+                                it.first.x + STONE_OFFSET + BOARDER_SIZE,
+                                it.first.y + STONE_OFFSET + BOARDER_SIZE,
+                                STONE_SIZE - 2 * BOARDER_SIZE,
+                                STONE_SIZE - 2 * BOARDER_SIZE,
                             )
                         }
                         Flag.WHITE() -> {
@@ -140,10 +144,10 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
 
                             color = COLOR_WHITE
                             fillOval(
-                                it.first.x + STONE_OFFSET + WHITE_BOARDER_SIZE,
-                                it.first.y + STONE_OFFSET + WHITE_BOARDER_SIZE,
-                                STONE_SIZE - 2 * WHITE_BOARDER_SIZE,
-                                STONE_SIZE - 2 * WHITE_BOARDER_SIZE,
+                                it.first.x + STONE_OFFSET + BOARDER_SIZE,
+                                it.first.y + STONE_OFFSET + BOARDER_SIZE,
+                                STONE_SIZE - 2 * BOARDER_SIZE,
+                                STONE_SIZE - 2 * BOARDER_SIZE,
                             )
                         }
                         Flag.FORBIDDEN_33(), Flag.FORBIDDEN_44(), Flag.FORBIDDEN_6() -> {
@@ -157,17 +161,41 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
                         }
                     } }
 
-                board.latestPos()
-                    .map { it.asBoardPos() }
-                    .foreach { pos ->
-                        color = if (board.color() == jrenju.notation.Color.BLACK()) COLOR_WHITE else COLOR_BLACK
-                        fillOval(
-                            pos.x + LATEST_MOVE_DOT_OFFSET,
-                            pos.y + LATEST_MOVE_DOT_OFFSET,
-                            LATEST_MOVE_DOT_SIZE,
-                            LATEST_MOVE_DOT_SIZE
-                        )
+                history.fold(
+                    onEmpty = {
+                        board.latestPos()
+                            .map { it.asBoardPos() }
+                            .foreach { pos ->
+                                color = if (board.color() == jrenju.notation.Color.BLACK()) COLOR_WHITE else COLOR_BLACK
+                                fillOval(
+                                    pos.x + LATEST_MOVE_DOT_OFFSET,
+                                    pos.y + LATEST_MOVE_DOT_OFFSET,
+                                    LATEST_MOVE_DOT_SIZE,
+                                    LATEST_MOVE_DOT_SIZE
+                                )
+                            }
+                    },
+                    onDefined = { histories ->
+                        setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
+
+                        val historyFont = Font(HISTORY_FONT, Font.TRUETYPE_FONT, HISTORY_FONT_SIZE)
+                        val fontMetrics = getFontMetrics(historyFont)
+                        font = historyFont
+
+                        histories
+                            .mapIndexed { idx, pos -> idx + 1 to pos.asBoardPos() }
+                            .forEach {
+                                val textWidth = fontMetrics.stringWidth(it.first.toString())
+
+                                color = if (it.first % 2 == 0) COLOR_BLACK else COLOR_WHITE
+                                drawString(
+                                    it.first.toString(),
+                                    it.second.x + POINT_SIZE / 2 - textWidth / 2,
+                                    it.second.y + POINT_SIZE / 2 + HISTORY_FONT_SIZE / 2 - HISTORY_FONT_SIZE / 5
+                                )
+                            }
                     }
+                )
 
                 dispose()
             }

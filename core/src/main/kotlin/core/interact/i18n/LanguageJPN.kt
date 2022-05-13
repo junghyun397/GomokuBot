@@ -8,7 +8,7 @@ class LanguageJPN : LanguageENG() {
     override fun languageSuggestion() = "`~lang` `JPN` コマンドを使ってください。"
 
     override fun helpAboutEmbedTitle() = "GomokuBot / ヘルプ"
-    override fun helpAboutEmbedDescription() =
+    override fun helpAboutEmbedDescription(platform: String) =
         "GomokuBotはDiscordで五目を楽しませてくれるオープンソースDiscord Botです。収集される基本データは強化学習モデル訓練に使われます。"
     override fun helpAboutEmbedDeveloper() = "ディベロッパー"
     override fun helpAboutEmbedRepository() = "Git 貯蔵所"
@@ -36,10 +36,10 @@ class LanguageJPN : LanguageENG() {
         "さん, 間違いコマンドです。`~s アルファベット 数字` 形式に書いてください。 :thinking:"
     override fun setErrorExist(player: String, move: String) = "$player さん, そこにはすでに碁石があります。 :thinking:"
 
-    override fun beginPVP(owner: String, opponent: String, opener: String) =
-        "`$owner`と `$opponent`のマッチが開始しました。先攻は `$opener`です。"
+    override fun beginPVP(blackPlayer: String, whitePlayer: String) =
+        "`$blackPlayer`と `$whitePlayer`のマッチが開始しました。先攻は `$blackPlayer`です。"
 
-    override fun processNext(player: String, priorPlayer: String, latestMove: String) =
+    override fun processNextPVP(player: String, priorPlayer: String, latestMove: String) =
         "`$player`さん, 次の手を置いてください。 `$priorPlayer`は $latestMove に置きました。"
 
     override fun processErrorOrder(user: String, player: String) =

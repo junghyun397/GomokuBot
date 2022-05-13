@@ -1,13 +1,14 @@
 package core.interact.message.graphics
 
-import core.assets.toBoardIO
 import jrenju.Board
+import jrenju.notation.Pos
 import utils.structs.Either
+import utils.structs.Option
 
 class SolidTextBoardRenderer : TextBoardRenderer() {
 
-    override fun renderBoard(board: Board) =
-        Either.Left("```\n${board.toBoardIO().boardText().replace(".", "·")}```")
+    override fun renderBoard(board: Board, history: Option<List<Pos>>) =
+        Either.Left("```\n${this.renderBoardText(board).replace(".", "·")}```")
 
     companion object : BoardRendererSample {
 

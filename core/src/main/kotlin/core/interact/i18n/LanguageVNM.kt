@@ -8,7 +8,7 @@ class LanguageVNM : LanguageENG() {
     override fun languageSuggestion() = "Vui lòng sử dụng lệnh `~lang` `VNM`"
 
     override fun helpAboutEmbedTitle() = "GomokuBot / Trợ giúp"
-    override fun helpAboutEmbedDescription() =
+    override fun helpAboutEmbedDescription(platform: String) =
         "GomokuBot là một con bot Discord mã nguồn mở cho phép bạn chơi ca-rô trên Discord. Mọi dữ liệu trò chơi được dùng để nâng cao tính chính xác của máy khi chơi ca-rô"
     override fun helpAboutEmbedDeveloper() = "Nhà phát triển"
     override fun helpAboutEmbedRepository() = "Xem mã nguồn trên GitHub"
@@ -47,10 +47,10 @@ class LanguageVNM : LanguageENG() {
         "player, bạn đã nhập sai lệnh đánh. Sử dụng lệnh `~s` `alphabet` `number` để đánh. :thinking:"
     override fun setErrorExist(player: String, move: String) = "$player, có người đã đánh chỗ đó rồi! :thinking:"
 
-    override fun beginPVP(owner: String, opponent: String, opener: String) =
-        "Ván mới đã được bắt đầu giữa `$owner` và `$opponent`! `$opener` là người đánh trước."
+    override fun beginPVP(blackPlayer: String, whitePlayer: String) =
+        "Ván mới đã được bắt đầu giữa `$blackPlayer` và `$whitePlayer`! `$blackPlayer` là người đánh trước."
 
-    override fun processNext(player: String, priorPlayer: String, latestMove: String) =
+    override fun processNextPVP(player: String, priorPlayer: String, latestMove: String) =
         "`$player`, tới lượt đánh của bạn. `$priorPlayer` đã đánh ở ô $latestMove"
 
     override fun processErrorOrder(user: String, player: String) =

@@ -14,7 +14,7 @@ val COLOR_WOOD = Color(242, 176, 109) // F2B06D
 val COLOR_BLACK = Color(0, 0, 0) // 000000
 val COLOR_WHITE = Color(255, 255, 255) // FFFFFF
 val COLOR_GREY = Color(54, 57, 63) // 36393F
-val COLOR_RED = Color(240, 71, 71) // F04747
+val COLOR_RED = Color(240, 0, 0) // F04747
 
 const val UNICODE_CHECK = "\u2611\uFE0F" // ☑
 const val UNICODE_CROSS = "\u274C" // ❌
@@ -30,11 +30,11 @@ const val UNICODE_ZAP = "\u26A1" // ⚡
 
 const val UNICODE_MAILBOX = "\uD83D\uDCEB" // 📫
 
-const val UNICODE_LEFT = "\u25C0" // ◀
+const val UNICODE_LEFT = "\u25C0\ufe0f" // ◀
 const val UNICODE_DOWN = "\ud83d\udd3d" // 🔽
 const val UNICODE_UP = "\ud83d\udd3c" // 🔼
-const val UNICODE_RIGHT = "\u25b6" // ▶
-const val UNICODE_FOCUS = "\u23fa" // ⏺
+const val UNICODE_RIGHT = "\u25b6\ufe0f" // ▶
+const val UNICODE_FOCUS = "\u23fa\ufe0f" // ⏺
 
 val anonymousUser = User(
     id = UserId(0),
