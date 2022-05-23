@@ -26,7 +26,7 @@ import jrenju.notation.Color
 import jrenju.notation.Pos
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
-import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
+import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import utils.structs.Either
@@ -103,17 +103,16 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
         return this.parseActually(context, context.event.user.extractUser(), rawRow, rawColumn)
     }
 
-    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>): Either<Command, DiscordParseFailure> {
-        val (rawColumn, rawRow) = context.event.message.contentRaw
-            .drop(3)
-            .split(" ")
+    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
+        val (rawColumn, rawRow) = payload
+            .drop(1)
             .take(2)
             .let { if (it.size != 2) listOf(null, null) else it }
 
         return this.parseActually(context, context.event.author.extractUser(), rawRow, rawColumn)
     }
 
-    override suspend fun parseButton(context: InteractionContext<ButtonInteractionEvent>): Option<Command> {
+    override suspend fun parseButton(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
         val (column, row) = context.event.componentId
             .drop(2)
             .let { this.matchColumn(it.take(1)) to this.matchRow(it.drop(1)) }
@@ -130,7 +129,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
         if ((session.owner.id == userId) xor !(session.board.isNextColorBlack xor session.ownerHasBlack))
             return Option.Empty
 
-        return Option.Some(SetCommand("s", session, pos))
+        return Option(SetCommand("s", session, pos))
     }
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

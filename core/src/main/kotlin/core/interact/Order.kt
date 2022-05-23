@@ -6,10 +6,10 @@ import core.session.ArchivePolicy
 import core.session.entities.GameSession
 
 sealed class Order {
-    class RefreshCommands(val container: LanguageContainer) : Order()
+    class UpsertCommands(val container: LanguageContainer) : Order()
     object DeleteSource : Order()
     class BulkDelete(val key: String) : Order()
-    class RemoveNavigators(val message: Message) : Order()
+    class RemoveNavigators(val message: Message, val retainFistEmbed: Boolean = false) : Order()
     class ArchiveSession(val session: GameSession, val policy: ArchivePolicy) : Order()
     object Unit : Order()
 }

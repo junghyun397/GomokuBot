@@ -1,9 +1,9 @@
 package discord.interact.parse.parsers
 
-import dev.minn.jda.ktx.interactions.slash
 import core.interact.commands.RankCommand
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.NamedParser
+import dev.minn.jda.ktx.interactions.slash
 import discord.interact.InteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.ParsableCommand
@@ -19,7 +19,7 @@ object RankCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>) =
         Either.Left(RankCommand(context.config.language.container.rankCommand()))
 
-    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>) =
+    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>) =
         Either.Left(RankCommand(context.config.language.container.rankCommand()))
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

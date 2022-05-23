@@ -26,7 +26,7 @@ object RatingCommandParser : NamedParser, ParsableCommand, BuildableCommand {
             producer.produceNotYetImplemented(publisher, container, context.bot.config.officialChannel).map { it.launch(); Order.Unit }
         })
 
-    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>): Either<Command, DiscordParseFailure> =
+    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("not yet implemented", context.event.author.extractUser()) { producer, publisher, container ->
             producer.produceNotYetImplemented(publisher, container, context.bot.config.officialChannel).map { it.launch(); Order.Unit }
         })

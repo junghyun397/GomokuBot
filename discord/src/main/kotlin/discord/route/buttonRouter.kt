@@ -11,11 +11,12 @@ import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.WebHookActionAdaptor
 import discord.interact.parse.EmbeddableCommand
 import discord.interact.parse.parsers.AcceptCommandParser
+import discord.interact.parse.parsers.ConfigCommandParser
 import discord.interact.parse.parsers.RejectCommandParser
 import discord.interact.parse.parsers.SetCommandParser
 import kotlinx.coroutines.async
 import kotlinx.coroutines.reactor.mono
-import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
+import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.util.function.Tuple2
@@ -24,16 +25,17 @@ import utils.structs.asOption
 
 private fun matchAction(prefix: String): Option<EmbeddableCommand> =
     when (prefix) {
-        "s" -> Option.Some(SetCommandParser)
-        "a" -> Option.Some(AcceptCommandParser)
-        "r" -> Option.Some(RejectCommandParser)
+        "s" -> Option(SetCommandParser)
+        "a" -> Option(AcceptCommandParser)
+        "r" -> Option(RejectCommandParser)
+        "p" -> Option(ConfigCommandParser)
         else -> Option.Empty
     }
 
-fun buttonInteractionRouter(context: InteractionContext<ButtonInteractionEvent>): Mono<Tuple2<InteractionContext<ButtonInteractionEvent>, Result<CommandReport>>> =
+fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteractionCreateEvent>): Mono<Tuple2<InteractionContext<GenericComponentInteractionCreateEvent>, Result<CommandReport>>> =
     Mono.zip(
         context.toMono(),
-        context.event.button.id.asOption().flatMap {
+        context.event.component.id.asOption().flatMap {
             matchAction(
                 prefix = it.split("-").first()
             )
@@ -46,8 +48,9 @@ fun buttonInteractionRouter(context: InteractionContext<ButtonInteractionEvent>)
             } }
         ) }
         .filter { it.t2.isDefined }
-        .doOnNext { it.t1.event
-            .deferReply().queue()
+        .doOnNext {
+            it.t1.event
+                .deferReply().queue()
         }
         .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.getOrException()
             .execute(

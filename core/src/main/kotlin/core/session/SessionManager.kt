@@ -93,8 +93,11 @@ object SessionManager {
         repo.messageBuffer.getOrPut(key) { mutableListOf() }
             .add(message)
 
-    fun getHeadMessage(repo: SessionRepository, key: String): Message? =
+    fun viewHeadMessage(repo: SessionRepository, key: String): Message? =
         repo.messageBuffer[key]?.first()
+
+    fun viewTailMessage(repo: SessionRepository, key: String): Message? =
+        repo.messageBuffer[key]?.last()
 
     fun checkoutMessages(repo: SessionRepository, key: String): List<Message>? =
         repo.messageBuffer.remove(key)
@@ -116,7 +119,7 @@ object SessionManager {
                 .asSequence()
                 .flatMap { entry ->
                     extract(entry.value)
-                        .filter { it.value.expireDate.timestamp > referenceTime.timestamp }
+                        .filter { referenceTime.timestamp > it.value.expireDate.timestamp }
                         .map { Triple(entry.value.guildConfig, it.key, it.value) }
                 }
                 .toList()
@@ -145,5 +148,11 @@ object SessionManager {
             .asSequence()
             .filter { it.value.requestSessions.isEmpty() && it.value.gameSessions.isEmpty() }
             .forEach { repo.sessions.remove(it.key) }
+
+    fun cleanExpiredNavigators(repo: SessionRepository) =
+        LinuxTime().let { referenceTime ->
+            repo.navigates
+                .filter { referenceTime.timestamp > it.value.expireDate.timestamp }
+        }.onEach { repo.navigates.remove(it.key) }
 
 }

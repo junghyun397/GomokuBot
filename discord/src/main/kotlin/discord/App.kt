@@ -26,14 +26,13 @@ import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
+import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
 import reactor.util.function.Tuple2
 import utils.assets.LinuxTime
-import utils.lang.schedule
 import utils.log.getLogger
-import java.time.Duration
 
 @JvmInline
 private value class Token(val token: String) {
@@ -112,12 +111,18 @@ object GomokuBot {
             .subscribe { leaveLog(it) }
 
         eventManager.on<MessageReceivedEvent>()
-            .filter { it.isFromGuild && !it.author.isBot && it.message.contentRaw.startsWith(COMMAND_PREFIX) }
+            .filter { it.isFromGuild && !it.author.isBot && (it.message.contentRaw.startsWith(COMMAND_PREFIX) || it.message.isMentioned(it.jda.selfUser)) }
             .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild.extractGuild()) } }
             .flatMap(::textCommandRouter)
             .subscribe { leaveLog(it) }
 
         eventManager.on<ButtonInteractionEvent>()
+            .filter { it.isFromGuild && !it.user.isBot }
+            .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild!!.extractGuild()) } }
+            .flatMap(::buttonInteractionRouter)
+            .subscribe { leaveLog(it) }
+
+        eventManager.on<SelectMenuInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
             .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild!!.extractGuild()) } }
             .flatMap(::buttonInteractionRouter)
@@ -152,17 +157,7 @@ object GomokuBot {
             .setEnabledIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS)
             .build()
 
-        schedule(Duration.ofHours(1)) {
-            SessionManager.cleanExpiredGameSession(botContext.sessionRepository).forEach {
-            }
-
-            SessionManager.cleanEmptySessions(botContext.sessionRepository)
-        }
-
-        schedule(Duration.ofMinutes(10)) {
-            SessionManager.cleanExpiredRequestSessions(botContext.sessionRepository).forEach {
-            }
-        }
+        scheduleCleaner(botContext, jda)
     }
 
 }

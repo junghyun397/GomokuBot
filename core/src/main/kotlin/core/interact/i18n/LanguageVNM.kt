@@ -30,7 +30,7 @@ class LanguageVNM : LanguageENG() {
     override fun styleEmbedDescription() =
         "Skin A có thể không hiển thị chính xác với một số thiết bị. Chọn các skin có sẵn còn lại và sử dụng"
     override fun styleEmbedSuggestion(styleName: String) = "Nhập lệnh ``~skin`` ``$styleName`` để chọn skin này"
-    override fun styleErrorNotfound() = "Cú pháp chỉnh skin không hợp lệ."
+    override fun styleErrorNotfound(user: String) = "Cú pháp chỉnh skin không hợp lệ."
     override fun styleUpdated(styleName: String) = "Skin chơi ca-rô đã chuyển sang skin ``$styleName`` !"
 
     override fun rankEmbedTitle() = "GomokuBot / Bảng xếp hạng"

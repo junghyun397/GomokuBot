@@ -14,9 +14,8 @@ import dev.minn.jda.ktx.interactions.slash
 import discord.assets.extractUser
 import discord.interact.InteractionContext
 import discord.interact.parse.BuildableCommand
-import discord.interact.parse.ParsableCommand
-import discord.interact.message.DiscordMessageProducer
 import discord.interact.parse.DiscordParseFailure
+import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
@@ -45,11 +44,12 @@ object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
         return Either.Left(LangCommand(context.config.language.container.languageCommand(), lang))
     }
 
-    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>): Either<Command, DiscordParseFailure> {
-        val option = context.event.message.contentRaw
-            .drop(context.config.language.container.languageCommand().length + 2)
-            .uppercase()
-        val lang = matchLang(option) ?: return this.composeMissMatchFailure(context.event.author.extractUser())
+    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
+        val lang = payload
+            .getOrNull(1)
+            ?.uppercase()
+            ?.let { matchLang(it) }
+            ?: return this.composeMissMatchFailure(context.event.author.extractUser())
 
         return Either.Left(LangCommand(context.config.language.container.languageCommand(), lang))
     }

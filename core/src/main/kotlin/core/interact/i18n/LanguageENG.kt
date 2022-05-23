@@ -113,24 +113,73 @@ open class LanguageENG : LanguageContainer {
     override fun styleEmbedDescription() =
         "Default Gomoku Board style(``Style A``) applied to this server may not display correctly. " +
                 "Choose one of the four styles you like."
-    override fun styleEmbedSuggestion(styleName: String) = "Enter ``~skin`` $styleName to use this style."
+    override fun styleEmbedSuggestion(styleName: String) = "Enter ``/style`` $styleName to use this style."
 
     // ### 2-2-3. STYLE:ERROR:NOTFOUND (MESSAGE)
 
-    override fun styleErrorNotfound() = "There is an error in the specification style code. Please enter in ``/style`` ``style code`` format."
+    override fun styleErrorNotfound(user: String) =
+        "$user, There is an error in the specification style code. Please enter in ``/style`` ``style code`` format."
 
     // ### 2-2-4. STYLE:SUCCEED:CHANGED (MESSAGE)
 
-    override fun styleUpdated(styleName: String) = "Style setting has been changed to style $styleName!"
+    override fun styleUpdated(styleName: String) =
+        "Style setting has been changed to style $styleName!"
 
     // ## 2-3. POLICY
 
-    // ### 2-3-1. POLICY (COMMAND)
+    override fun configApplied(choice: String) = "$choice Setting has been applied to this server."
+
+    // ### 2-3-1. FOCUS
+
+    override fun focusEmbedTitle() = "GomokuBot / Focus"
+    override fun focusEmbedDescription() =
+        "GomokuBot uses a small-sized \"Button Board\" for intuitive input. Please set how the GomokuBot should zoom in on the board."
+
+    override fun focusSelectIntelligence() = "Intelligence"
+    override fun focusSelectIntelligenceDescription() =
+        "The GomokuBot inference engine will focus on the most optimal places."
+
+    override fun focusSelectFallowing() = "Fallow"
+    override fun focusSelectFallowingDescription() =
+        "Always focus on the last move."
+
+    // ### 2-3-2. SWEEP
+
+    override fun sweepEmbedTitle() = "GomokuBot / Sweep"
+    override fun sweepEmbedDescription() =
+        "GomokuBot sends very, very many messages. Please set what to do with the message sent by GomokuBot."
+
+    override fun sweepSelectRelay() = "Relay"
+    override fun sweepSelectRelayDescription() =
+        "When a player makes a new move, clear all previously sent messages."
+
+    override fun sweepSelectLeave() = "Leave"
+    override fun sweepSelectLeaveDescription() =
+        "Do not delete any messages. Except for the Navigators."
+
+    // ### 2-3-3. ARCHIVE
+
+    override fun archiveEmbedTitle() = "GomokuBot / Archive"
+    override fun archiveEmbedDescription() =
+        "GomokuBot archives players' awesome game results to the official channel of GomokuBot. " +
+                "Of course, GomokuBot places predominant on player privacy. Please set how you want to archive the results of the game."
+
+    override fun archiveSelectByAnonymous() = "Anonymous"
+    override fun archiveSelectByAnonymousDescription() =
+        "Share player's game results anonymously."
+
+    override fun archiveSelectWithProfile() = "By Profile"
+    override fun archiveSelectWithProfileDescription() =
+        "Share player's game results with their profile picture and name."
+
+    override fun archiveSelectPrivacy() = "Keep Privacy"
+    override fun archiveSelectPrivacyDescription() =
+        "Don't share player's game results with anyone."
 
     // # 3. SESSION
 
-    override fun sessionNotFound(): String =
-        "There is no game in progress. Start a new game with the ``/start`` command."
+    override fun sessionNotFound(user: String): String =
+        "$user, There is no game in progress. Start a new game with the ``/start`` command."
 
     // ## 3-1. START
 
@@ -239,7 +288,7 @@ open class LanguageENG : LanguageContainer {
     // ### 4-2-2. PROCESS:ERROR:ORDER (MESSAGE)
 
     override fun processErrorOrder(user: String, player: String) =
-        "$user, Now it's $player`s turn. Please wait until $player makes the next move."
+        "$user, Now it's $player's turn. Please wait until $player makes the next move."
 
     // ## 4-3. END
 
@@ -292,12 +341,12 @@ open class LanguageENG : LanguageContainer {
     override fun permissionNotGrantedEmbedDescription(channelName: String) =
         "GomokuBot dose not has permission to send messages to ``$channelName``! Please check the role and permission settings."
 
-    override fun permissionNotGrantedEmbedFooter() = "this message will be deleted after 1 minute."
+    override fun permissionNotGrantedEmbedFooter() = "this message will be deleted after a minute."
 
     // ## 6-2. NOT-YET-IMPLEMENTED (EMBED)
 
     override fun notYetImplementedEmbedDescription() = "This feature is not yet implemented."
 
-    override fun notYetImplementedEmbedFooter(officialChannel: String) = "Get updates on GomokuBot in support channel($officialChannel)."
+    override fun notYetImplementedEmbedFooter(officialChannel: String) = "Get updates on GomokuBot in the support channel($officialChannel)."
 
 }

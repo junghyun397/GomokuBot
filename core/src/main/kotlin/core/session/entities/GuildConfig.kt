@@ -12,6 +12,6 @@ data class GuildConfig(
     val language: Language = Language.ENG,
     val boardStyle: BoardStyle = BoardStyle.IMAGE,
     val focusPolicy: FocusPolicy = FocusPolicy.INTELLIGENCE,
-    val sweepPolicy: SweepPolicy = SweepPolicy.LEAVE,
+    val sweepPolicy: SweepPolicy = SweepPolicy.RELAY,
     val archivePolicy: ArchivePolicy = ArchivePolicy.BY_ANONYMOUS
 )

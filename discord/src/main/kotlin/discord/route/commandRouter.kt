@@ -8,6 +8,7 @@ import core.interact.Order
 import core.interact.i18n.LanguageContainer
 import core.interact.reports.CommandReport
 import dev.minn.jda.ktx.await
+import discord.assets.COMMAND_PREFIX
 import discord.assets.extractUser
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
@@ -54,16 +55,16 @@ private fun buildPermissionNode(channel: TextChannel, user: User, parsableComman
 
 private fun matchCommand(command: String, container: LanguageContainer): Option<ParsableCommand> =
     when (command.lowercase()) {
-        "help" -> Option.Some(HelpCommandParser)
-        container.helpCommand() -> Option.Some(HelpCommandParser)
-        container.startCommand() -> Option.Some(StartCommandParser)
-        "s" -> Option.Some(SetCommandParser)
-        container.resignCommand() -> Option.Some(ResignCommandParser)
-        container.languageCommand() -> Option.Some(LangCommandParser)
-        container.styleCommand() -> Option.Some(StyleCommandParser)
-        container.rankCommand() -> Option.Some(RankCommandParser)
-        container.ratingCommand() -> Option.Some(RatingCommandParser)
-        "debug" -> Option.Some(DebugCommandParser)
+        "help" -> Option(HelpCommandParser)
+        container.helpCommand() -> Option(HelpCommandParser)
+        container.startCommand() -> Option(StartCommandParser)
+        "s" -> Option(SetCommandParser)
+        container.resignCommand() -> Option(ResignCommandParser)
+        container.languageCommand() -> Option(LangCommandParser)
+        container.styleCommand() -> Option(StyleCommandParser)
+        container.rankCommand() -> Option(RankCommandParser)
+        container.ratingCommand() -> Option(RatingCommandParser)
+        "debug" -> Option(DebugCommandParser)
         else -> Option.Empty
     }
 
@@ -111,19 +112,35 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
         } }) }
 
 fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<Tuple2<InteractionContext<MessageReceivedEvent>, Result<CommandReport>>> =
-    Mono.zip(
-        context.toMono(),
-        matchCommand(
-            command = context.event.message.contentRaw.split(" ")[0].substring(1),
-            container = context.config.language.container
-        ).toMono()
-    )
+    run {
+        val messageRaw = context.event.message.contentRaw
+
+        if (messageRaw.startsWith(COMMAND_PREFIX))
+            messageRaw.drop(1).split(" ")
+        else {
+            val payload = messageRaw.drop(21).trimStart().split(" ")
+
+            if (payload.first().isEmpty())
+                listOf("help")
+            else
+                payload
+        }
+    }.let {
+        Mono.zip(
+            context.toMono(),
+            matchCommand(
+                command = it.first(),
+                container = context.config.language.container
+            ).toMono(),
+            it.toMono()
+        )
+    }
         .filter { it.t2.isDefined }
         .flatMap { Mono.zip(it.t1.toMono(), mono {
             buildPermissionNode(it.t1.event.textChannel, it.t1.event.author, it.t2.getOrException()).fold(
                 onDefined = { failure -> Either.Right(failure) },
                 onEmpty = { it.t2.getOrException()
-                    .parseText(it.t1)
+                    .parseText(it.t1, it.t3)
                 }
             )
         }) }

@@ -16,6 +16,4 @@ data class InteractionContext<out E : Event>(
 
     val jdaGuild get() = this.event.jda.getGuildById(guild.id.idLong)!!
 
-    val archiveChannel get() = this.event.jda.getGuildById(64645)!!.getTextChannelById(546465)!!
-
 }

@@ -85,9 +85,9 @@ object GameManager {
     fun validateMove(session: GameSession, pos: Pos): Option<RejectReason> =
         session.board.validateMove(pos.idx()).let {
             if (it.isDefined) when (it.get()) {
-                jrenju.notation.RejectReason.EXIST() -> Option.Some(RejectReason.EXIST)
-                jrenju.notation.RejectReason.FORBIDDEN() -> Option.Some(RejectReason.FORBIDDEN)
-                else -> Option.Some(RejectReason.EXIST)
+                jrenju.notation.RejectReason.EXIST() -> Option(RejectReason.EXIST)
+                jrenju.notation.RejectReason.FORBIDDEN() -> Option(RejectReason.FORBIDDEN)
+                else -> Option(RejectReason.EXIST)
             }
             else Option.Empty
         }
@@ -98,7 +98,7 @@ object GameManager {
         if (session.board.moves() + 1 >= Renju.BOARD_SIZE())
             return session.nextWith(
                 thenBoard, pos,
-                Option.Some(GameResult.Full),
+                Option(GameResult.Full),
                 session.messageBufferKey
             )
 
@@ -107,7 +107,7 @@ object GameManager {
             {
                 session.nextWith(
                     thenBoard, pos,
-                    Option.Some(GameResult.Win(GameResult.WinCause.FIVE_IN_A_ROW, thenBoard.color(), session.player, session.nextPlayer)),
+                    Option(GameResult.Win(GameResult.WinCause.FIVE_IN_A_ROW, thenBoard.color(), session.player, session.nextPlayer)),
                     session.messageBufferKey
                 )
             }
@@ -119,13 +119,13 @@ object GameManager {
             .flatMap { solutionNode ->
                 solutionNode.child().get(latestMove.idx()).fold(
                     { Option.Empty },
-                    { Option.Some(it) }
+                    { Option(it) }
                 )
             }
             .fold(
                 onDefined = {
                     when(it) {
-                        is SolutionNode -> it.idx() to Option.Some(it)
+                        is SolutionNode -> it.idx() to Option(it)
                         else -> it.idx() to Option.Empty
                     }
                 },
@@ -133,7 +133,7 @@ object GameManager {
                     when (val solution = session.aiLevel.solver(
                         b3nzeneClient, session.board, Pos.fromIdx(session.board.latestMove()))
                     ) {
-                        is SolutionNode -> solution.idx() to Option.Some(solution)
+                        is SolutionNode -> solution.idx() to Option(solution)
                         else -> solution.idx() to Option.Empty
                     }
                 },
@@ -145,7 +145,7 @@ object GameManager {
             val gameResult = GameResult.Win(GameResult.WinCause.FIVE_IN_A_ROW, thenBoard.color(), aiUser, session.owner)
             session.copy(
                 board = thenBoard,
-                gameResult = Option.Some(gameResult),
+                gameResult = Option(gameResult),
                 history = session.history + Pos.fromIdx(aiMove),
             )
         } else session.copy(
@@ -155,12 +155,12 @@ object GameManager {
         )
     }
 
-    fun resignSession(session: GameSession, user: User?) =
+    fun resignSession(session: GameSession, cause: GameResult.WinCause, user: User?) =
         when (session) {
             is AiGameSession -> {
-                val result = GameResult.Win(GameResult.WinCause.RESIGN, session.board.color(), aiUser, session.owner)
+                val result = GameResult.Win(cause, session.board.color(), aiUser, session.owner)
 
-                session.copy(gameResult = Option.Some(result)) to result
+                session.copy(gameResult = Option(result)) to result
             }
             is PvpGameSession -> {
                 val (winner, looser) = if (user?.id == session.owner.id)
@@ -168,9 +168,9 @@ object GameManager {
                 else
                     session.owner to session.opponent
 
-                val result = GameResult.Win(GameResult.WinCause.RESIGN, session.board.color(), winner, looser)
+                val result = GameResult.Win(cause, session.board.color(), winner, looser)
 
-                session.copy(gameResult = Option.Some(result)) to result
+                session.copy(gameResult = Option(result)) to result
             }
         }
 

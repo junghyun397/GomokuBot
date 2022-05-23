@@ -23,7 +23,7 @@ object ResignCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsa
             ResignCommand(context.config.language.container.resignCommand(), it)
         }
 
-    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>) =
+    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>) =
         this.retrieveSession(context.bot, context.guild, context.event.author.extractUser()).mapLeft {
             ResignCommand(context.config.language.container.resignCommand(), it)
         }

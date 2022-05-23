@@ -4,7 +4,7 @@ import core.assets.Message
 import core.assets.MessageId
 import core.interact.reports.CommandReport
 import core.session.SessionManager
-import core.session.entities.NavigableKind
+import core.session.entities.NavigationKind
 import dev.minn.jda.ktx.await
 import discord.assets.extractId
 import discord.assets.extractUser
@@ -13,6 +13,7 @@ import discord.interact.message.DiscordMessageAdaptor
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.MessageActionAdaptor
 import discord.interact.parse.parsers.FocusCommandParser
+import discord.interact.parse.parsers.NavigateCommandParser
 import kotlinx.coroutines.async
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
@@ -30,19 +31,19 @@ fun reactionRouter(context: InteractionContext<MessageReactionAddEvent>): Mono<T
             guildId = context.guild.id,
             channelId = context.event.textChannel.extractId()
         )).asOption()
-            .map { when(it.navigableKind) {
-                NavigableKind.BOARD -> FocusCommandParser
-                else -> FocusCommandParser
+            .map { when(it.navigationKind) {
+                NavigationKind.BOARD -> it to FocusCommandParser
+                NavigationKind.ABOUT, NavigationKind.SETTINGS -> it to NavigateCommandParser
             } }
             .toMono()
     )
         .flatMap { Mono.zip(
             it.t1.toMono(),
             mono { it.t2.flatMap { parsable ->
-                parsable.parseReaction(it.t1).flatMap { command ->
+                parsable.second.parseReaction(it.t1, parsable.first).flatMap { command ->
                     val message = it.t1.event.retrieveMessage().await()
                     if (message.author.idLong == it.t1.event.jda.selfUser.idLong)
-                        Option.Some(command to message)
+                        Option(command to message)
                     else
                         Option.Empty
                 }

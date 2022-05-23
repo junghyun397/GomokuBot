@@ -22,9 +22,8 @@ object DebugCommandParser : NamedParser, ParsableCommand {
     private fun matchType(option: String): DebugType? =
         DebugType.values().firstOrNull { it.name == option }
 
-    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>): Either<Command, DiscordParseFailure> {
-        val option = context.event.message.contentRaw
-            .split(" ")[1]
+    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
+        val option = payload[1]
             .uppercase()
 
         val type = matchType(option)

@@ -30,7 +30,7 @@ object StyleCommandParser : NamedParser, ParsableCommand, BuildableCommand {
 
     private fun composeMissMatchFailure(user: User): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("option missmatch", user) { producer, publisher, container ->
-            producer.produceStyleNotFound(publisher, container).map { it.launch() }
+            producer.produceStyleNotFound(publisher, container, user).map { it.launch() }
                 .flatMap { producer.produceStyleGuide(publisher, container) }.map { it.launch(); Order.Unit }
         })
 
@@ -42,12 +42,12 @@ object StyleCommandParser : NamedParser, ParsableCommand, BuildableCommand {
         return Either.Left(StyleCommand(context.config.language.container.styleCommand(), style))
     }
 
-    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>): Either<Command, DiscordParseFailure> {
-        val option = context.event.message.contentRaw
-            .drop(context.config.language.container.styleCommand().length + 2)
-            .uppercase()
-
-        val style = matchStyle(option) ?: return this.composeMissMatchFailure(context.event.author.extractUser())
+    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
+        val style = payload
+            .getOrNull(1)
+            ?.uppercase()
+            ?.let { matchStyle(it) }
+            ?: return this.composeMissMatchFailure(context.event.author.extractUser())
 
         return Either.Left(StyleCommand(context.config.language.container.styleCommand(), style))
     }

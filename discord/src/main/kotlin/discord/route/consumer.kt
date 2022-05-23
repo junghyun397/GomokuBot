@@ -1,7 +1,9 @@
 package discord.route
 
+import core.BotContext
 import core.interact.Order
 import core.session.SessionManager
+import discord.assets.JDAGuild
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import net.dv8tion.jda.api.Permission
@@ -10,13 +12,16 @@ import net.dv8tion.jda.api.exceptions.ErrorResponseException
 import utils.structs.IO
 
 suspend fun consumeIO(context: InteractionContext<*>, io: IO<Order>, source: Message?) =
+    consumeIO(context.bot, context.jdaGuild, io, source)
+
+suspend fun consumeIO(bot: BotContext, jdaGuild: JDAGuild, io: IO<Order>, source: Message?) =
     when (val order = io.run()) {
-        is Order.RefreshCommands -> GuildManager.upsertCommands(context.jdaGuild, order.container)
+        is Order.UpsertCommands -> GuildManager.upsertCommands(jdaGuild, order.container)
         is Order.DeleteSource -> source?.delete()?.queue()
         is Order.BulkDelete ->
-            SessionManager.checkoutMessages(context.bot.sessionRepository, order.key)
+            SessionManager.checkoutMessages(bot.sessionRepository, order.key)
                 ?.groupBy { it.channelId }
-                ?.forEach { entry -> context.jdaGuild.getTextChannelById(entry.key.idLong)?.let { channel ->
+                ?.forEach { entry -> jdaGuild.getTextChannelById(entry.key.idLong)?.let { channel ->
                     try {
                         GuildManager.permissionSafeRun(channel, Permission.MESSAGE_MANAGE) { _ ->
                             if (entry.value.size < 2)
@@ -26,7 +31,16 @@ suspend fun consumeIO(context: InteractionContext<*>, io: IO<Order>, source: Mes
                         }
                     } catch (_: ErrorResponseException) { }
                 } }
-        is Order.RemoveNavigators -> GuildManager.removeNavigators(context.event.jda, order.message)
-        is Order.ArchiveSession -> GuildManager.archiveSession(context.archiveChannel, order.session, order.policy)
+        is Order.RemoveNavigators -> GuildManager.retrieveJDAMessage(jdaGuild.jda, order.message)
+            ?.let {
+                if (order.retainFistEmbed)
+                    GuildManager.retainFirstEmbed(it)
+
+                GuildManager.removeNavigators(it)
+            }
+        is Order.ArchiveSession -> GuildManager.archiveSession(
+            jdaGuild.jda.getTextChannelById(553959991489331200)!!,
+            order.session, order.policy
+        )
         is Order.Unit -> Unit
     }

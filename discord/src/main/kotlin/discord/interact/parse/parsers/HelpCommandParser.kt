@@ -20,7 +20,7 @@ object HelpCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>) =
         Either.Left(HelpCommand(context.config.language.container.helpCommand()))
 
-    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>) =
+    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>) =
         Either.Left(HelpCommand(context.config.language.container.helpCommand()))
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

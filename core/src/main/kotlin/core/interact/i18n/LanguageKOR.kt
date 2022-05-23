@@ -110,7 +110,7 @@ open class LanguageKOR : LanguageENG() {
 
     // ### 2-2-3. STYLE:ERROR:NOTFOUND (MESSAGE)
 
-    override fun styleErrorNotfound() = "스타일 지정에 오류가 있습니다. ``/스타일`` ``스타일 코드`` 형식으로 입력해 주세요."
+    override fun styleErrorNotfound(user: String) = "$user 님, 스타일 지정에 오류가 있습니다. ``/스타일`` ``스타일 코드`` 형식으로 입력해 주세요."
 
     // ### 2-2-4. STYLE:SUCCEED:CHANGED (MESSAGE)
 
@@ -122,8 +122,8 @@ open class LanguageKOR : LanguageENG() {
 
     // # 3. SESSION
 
-    override fun sessionNotFound(): String =
-        "진행 중인 게임을 찾을 수 없습니다. 먼저 ``/시작`` 명령어로 게임을 시작해 주세요."
+    override fun sessionNotFound(user: String): String =
+        "$user 님, 진행 중인 게임을 찾을 수 없습니다. 먼저 ``/시작`` 명령어로 게임을 시작해 주세요."
 
     // ## 3-1. START
 

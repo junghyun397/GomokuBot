@@ -1,10 +1,12 @@
 package discord.route
 
-import core.database.DatabaseManager
+import core.interact.commands.helpSequenceAboutBot
+import core.interact.commands.helpSequenceSettings
 import core.interact.i18n.Language
-import core.interact.reports.GuildJoinReport
+import core.interact.reports.ServerJoinReport
+import core.session.SessionManager
 import core.session.entities.GuildConfig
-import discord.assets.JDAGuild
+import dev.minn.jda.ktx.await
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageProducer
@@ -18,22 +20,6 @@ import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.util.function.Tuple2
 import java.util.*
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
-
-private suspend fun retrieveRegion(guild: JDAGuild): Region =
-    suspendCoroutine { control ->
-        guild.retrieveRegions()
-            .map { it.first() }
-            .queue { control.resume(it) }
-    }
-
-private fun matchLanguage(region: Region): Language =
-    when (region) {
-        Region.SOUTH_KOREA, Region.VIP_SOUTH_KOREA -> Language.KOR
-        Region.JAPAN, Region.VIP_JAPAN -> Language.JPN
-        else -> Language.ENG
-    }
 
 private fun matchLanguage(locale: Locale): Language =
     when (locale) {
@@ -42,29 +28,43 @@ private fun matchLanguage(locale: Locale): Language =
         else -> Language.ENG
     }
 
-fun guildJoinRouter(context: InteractionContext<GuildJoinEvent>): Mono<Tuple2<InteractionContext<GuildJoinEvent>, Result<GuildJoinReport>>> =
-    Mono.zip(context.toMono(), mono { runCatching {
-        val defaultLocale = context.event.guild.locale
-        val matchedLanguage = matchLanguage(defaultLocale)
+private fun matchRegion(regions: EnumSet<Region>): Language =
+    if (Region.SOUTH_KOREA in regions || Region.VIP_SOUTH_KOREA in regions)
+        Language.KOR
+    else if (Region.JAPAN in regions || Region.VIP_JAPAN in regions)
+        Language.JPN
+    else
+        Language.ENG
 
-        DatabaseManager.updateGuildConfig(
-            context.bot.databaseConnection, context.guild.id,
-            GuildConfig(context.guild.id, language = matchedLanguage)
-        )
+fun guildJoinRouter(context: InteractionContext<GuildJoinEvent>): Mono<Tuple2<InteractionContext<GuildJoinEvent>, Result<ServerJoinReport>>> =
+    Mono.zip(context.toMono(), mono { runCatching {
+        val matchedLanguage = run {
+            val language = matchLanguage(context.event.guild.locale)
+
+            if (language == Language.ENG)
+                return@run matchRegion(context.event.guild.retrieveRegions().await())
+
+            return@run language
+        }
+
+        val guildConfig = GuildConfig(context.guild.id, language = matchedLanguage)
+
+        SessionManager.updateGuildConfig(context.bot.sessionRepository, context.guild.id, guildConfig)
 
         val commandInserted = run {
             GuildManager.upsertCommands(context.event.guild, matchedLanguage.container)
             true
         }
 
-        val helpSent = context.event.guild.systemChannel?.let { channel ->
-            val messagePublisher: DiscordMessagePublisher = { msg -> MessageActionAdaptor(channel.sendMessage(msg)) }
+        val helpSent = context.event.guild.systemChannel?.run {
+            val publisher: DiscordMessagePublisher = { msg -> MessageActionAdaptor(this.sendMessage(msg)) }
 
-            GuildManager.permissionSafeRun(channel, Permission.MESSAGE_SEND) {
-                DiscordMessageProducer.produceWelcomeKit(messagePublisher, matchedLanguage.container)
-                    .map { it.launch() }
+            GuildManager.permissionSafeRun(this, Permission.MESSAGE_SEND) {
+                helpSequenceAboutBot(context.bot, guildConfig, DiscordMessageProducer, publisher)
+                    .flatMap { helpSequenceSettings(context.bot, DiscordMessageProducer, publisher) }
+                    .run()
             }
         }?.isDefined
 
-        GuildJoinReport(commandInserted, helpSent, defaultLocale.displayName, matchedLanguage)
+        ServerJoinReport(commandInserted, helpSent, context.event.guild.locale.displayName, matchedLanguage)
     } } )

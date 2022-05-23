@@ -8,15 +8,20 @@ import core.interact.message.*
 import core.interact.message.graphics.BoardRenderer
 import core.interact.message.graphics.BoardStyle
 import core.interact.message.graphics.ImageBoardRenderer
+import core.session.ArchivePolicy
+import core.session.FocusPolicy
 import core.session.GameResult
+import core.session.SweepPolicy
 import core.session.entities.GameSession
+import core.session.entities.GuildConfig
 import dev.minn.jda.ktx.Embed
 import dev.minn.jda.ktx.InlineEmbed
 import dev.minn.jda.ktx.Message
-import discord.assets.EMOJI_BLACK_CIRCLE
-import discord.assets.EMOJI_DARK_X
-import discord.assets.EMOJI_WHITE_CIRCLE
+import dev.minn.jda.ktx.interactions.SelectMenu
+import dev.minn.jda.ktx.interactions.option
+import discord.assets.*
 import jrenju.notation.Pos
+import jrenju.notation.Renju
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
@@ -35,6 +40,7 @@ import utils.structs.Option
 object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
 
     override val focusWidth = 5
+    override val focusRange = 2 until Renju.BOARD_WIDTH_MAX_IDX() - 2
 
     private fun User.asMentionFormat() = "<@${this.id.idLong}>"
 
@@ -50,7 +56,11 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
                 append(" vs ")
                 append(session.opponentWithColor())
                 append(", ")
-                append(if (session.gameResult.isDefined) container.boardFinished() else container.boardInProgress())
+
+                if (session.gameResult.isDefined)
+                    append(container.boardFinished())
+                else
+                    append(container.boardInProgress())
             }.toString()
         }
 
@@ -101,19 +111,19 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
 
     override fun produceBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, session: GameSession): IO<DiscordMessageAction> {
         val barColor = session.gameResult.fold(onDefined = { COLOR_RED_HEX }, onEmpty = { COLOR_GREEN_HEX })
-        return renderer.renderBoard(session.board, if (session.gameResult.isDefined) Option.Some(session.history) else Option.Empty).fold(
+        return renderer.renderBoard(session.board, if (session.gameResult.isDefined) Option(session.history) else Option.Empty).fold(
             onLeft = { textBoard -> IO {
                 publisher(Message(
                     embeds = mutableListOf<MessageEmbed>().apply {
                         add(Embed {
                             color = barColor
 
-                            this.buildBoardAuthor(container, session)
+                            buildBoardAuthor(container, session)
                             description = textBoard
 
                             session.gameResult.fold(
-                                onDefined = { this.buildResultFields(container, session, it) },
-                                onEmpty = { this.buildStatusFields(container, session) },
+                                onDefined = { buildResultFields(container, session, it) },
+                                onEmpty = { buildStatusFields(container, session) },
                             )
                         })
 
@@ -128,11 +138,11 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
                         add(Embed {
                             color = barColor
 
-                            this.buildBoardAuthor(container, session)
+                            buildBoardAuthor(container, session)
 
                             session.gameResult.fold(
-                                onDefined = { this.buildResultFields(container, session, it) },
-                                onEmpty = { this.buildStatusFields(container, session) },
+                                onDefined = { buildResultFields(container, session, it) },
+                                onEmpty = { buildStatusFields(container, session) },
                             )
 
                             image = "attachment://${imageBoard.second}"
@@ -147,16 +157,16 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
     }
 
     override fun produceSessionArchive(publisher: MessagePublisher<Message, DiscordButtons>, session: GameSession): IO<DiscordMessageAction> {
-        val board = ImageBoardRenderer.renderBoardImage(session.board, Option.Some(session.history))
+        val board = ImageBoardRenderer.renderBoardImage(session.board, Option(session.history))
         return IO { publisher(Message(
             embed = Embed {
                 color = COLOR_NORMAL_HEX
 
-                this.buildBoardAuthor(Language.ENG.container, session)
+                buildBoardAuthor(Language.ENG.container, session)
 
                 session.gameResult.fold(
-                    onDefined = { this.buildResultFields(Language.ENG.container, session, it) },
-                    onEmpty = { this.buildStatusFields(Language.ENG.container, session) },
+                    onDefined = { buildResultFields(Language.ENG.container, session, it) },
+                    onEmpty = { buildStatusFields(Language.ENG.container, session) },
                 )
 
                 image = "attachment://${board.second}"
@@ -181,11 +191,7 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
     override fun attachFocusButtons(boardAction: DiscordMessageAction, session: GameSession, focus: Pos): DiscordMessageAction =
         boardAction.addButtons(this.generateFocusedButtons(this.generateFocusedField(session.board, focus)))
 
-    override fun attachNavigators(
-        flow: Flow<String>,
-        message: MessageAdaptor<Message, DiscordButtons>,
-        checkTerminated: suspend () -> Boolean
-    ) =
+    override fun attachNavigators(flow: Flow<String>, message: MessageAdaptor<Message, DiscordButtons>, checkTerminated: suspend () -> Boolean) =
         IO {
             try {
                 coroutineScope {
@@ -205,7 +211,7 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
 
     // GAME
 
-    override fun produceBeginsPVP(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, blackPlayer: User, whitePlayer: User): IO<MessageAction<Message, DiscordButtons>> =
+    override fun produceBeginsPVP(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, blackPlayer: User, whitePlayer: User): IO<MessageIO<Message, DiscordButtons>> =
         IO { publisher(Message(container.beginPVP(blackPlayer.asMentionFormat(), whitePlayer.asMentionFormat()))) }
 
     override fun produceBeginsPVE(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User, ownerHasBlack: Boolean) =
@@ -226,7 +232,10 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
         IO { publisher(Message(container.endPVPTie(owner.asMentionFormat(), opponent.asMentionFormat()))) }
 
     override fun produceSurrenderedPVP(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, winner: User, looser: User) =
-        IO { publisher(Message(container.endPVPResign(winner.asMentionFormat(), looser.asMentionFormat())))}
+        IO { publisher(Message(container.endPVPResign(winner.asMentionFormat(), looser.asMentionFormat()))) }
+
+    override fun produceTimeoutPVP(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, winner: User, looser: User) =
+        IO { publisher(Message(container.endPVPTimeOut(winner.asMentionFormat(), looser.asMentionFormat()))) }
 
     override fun produceNextMovePVE(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User, latestMove: Pos) =
         IO { publisher(Message(container.processNextPVE(owner.asMentionFormat(), latestMove.toCartesian().asHighlightFormat()))) }
@@ -243,6 +252,9 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
     override fun produceSurrenderedPVE(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User) =
         IO { publisher(Message(container.endPVEResign(owner.asMentionFormat())))}
 
+    override fun produceTimeoutPVE(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, player: User) =
+        IO { publisher(Message(container.endPVETimeOut(player.asMentionFormat()))) }
+
     // HELP
 
     private fun buildAboutEmbed(container: LanguageContainer) =
@@ -250,8 +262,8 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
             color = COLOR_NORMAL_HEX
             title = container.helpAboutEmbedTitle()
             description = container.helpAboutEmbedDescription("Discord")
-            thumbnail =
-                "https://raw.githubusercontent.com/junghyun397/GomokuBot/master/discord/images/profile-thumbnail.jpg"
+            thumbnail = "https://raw.githubusercontent.com/junghyun397/GomokuBot/master/discord/images/profile-thumbnail.jpg"
+
             field {
                 name = container.helpAboutEmbedDeveloper()
                 value = "junghyun397#6725"
@@ -272,28 +284,11 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
                 name = container.helpAboutEmbedInvite()
                 value = "[do1ph.in/gomokubot](https://do1ph.in/gomokubot)"
             }
+
             footer {
                 name = "$UNICODE_ZAP Powered by Kotlin, Scala, Project Reactor, R2DBC, gRPC, JDA"
             }
         }
-
-    override fun produceGuideKit(publisher: DiscordMessagePublisher, container: LanguageContainer) =
-        IO { publisher(Message(
-            embeds = listOf(
-                this.buildAboutEmbed(container),
-                this.buildCommandGuideEmbed(container),
-            )
-        )) }
-
-    override fun produceWelcomeKit(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer) =
-        IO { publisher(Message(
-            embeds = listOf(
-                this.buildAboutEmbed(container),
-                this.buildCommandGuideEmbed(container),
-                this.buildStyleGuideEmbed(container),
-                this.languageEmbed,
-            )
-        )) }
 
     private fun buildCommandGuideEmbed(container: LanguageContainer) =
         Embed {
@@ -341,8 +336,35 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
             }
         }
 
-    override fun produceCommandGuide(publisher: DiscordMessagePublisher, container: LanguageContainer) =
-        IO { publisher(Message(embed = this.buildCommandGuideEmbed(container))) }
+    override fun produceAboutBot(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer) =
+        IO { publisher(Message(embeds = listOf(this.buildAboutEmbed(container), this.buildCommandGuideEmbed(container)))) }
+
+    override fun paginateAboutBot(original: MessageAdaptor<Message, DiscordButtons>, container: LanguageContainer, page: Int) =
+        IO { original.original.editMessage(
+            when (page) {
+                0 -> Message(embeds = listOf(this.buildAboutEmbed(container), this.buildCommandGuideEmbed(container)))
+                else -> throw IllegalStateException()
+            }
+        ).queue() }
+
+    override fun paginateSettings(original: MessageAdaptor<Message, DiscordButtons>, config: GuildConfig, page: Int) =
+        IO {
+            original.original
+                .editMessageComponents()
+                .flatMap { message ->
+                    when (page) {
+                        0 -> message.editMessage(Message(embed = this.languageEmbed))
+                        1 -> message.editMessage(Message(embed = this.buildStyleGuideEmbed(config.language.container)))
+                        2 -> message.editMessage(Message(embed = this.buildFocusPolicyGuideEmbed(config.language.container)))
+                            .setActionRow(listOf(this.buildFocusPolicyMenu(config)))
+                        3 -> message.editMessage(Message(embed = this.buildSweepPolicyGuideEmbed(config.language.container)))
+                            .setActionRow(listOf(this.buildSweepPolicyMenu(config)))
+                        4 -> message.editMessage(Message(embed = this.buildArchivePolicyGuideEmbed(config.language.container)))
+                            .setActionRow(listOf(this.buildArchivePolicyMenu(config)))
+                        else -> throw IllegalStateException()
+                    }
+                }.queue()
+        }
 
     // RANK
 
@@ -382,7 +404,7 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
     override fun produceLanguageUpdated(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer) =
         IO { publisher(Message(content = container.languageUpdated())) }
 
-    // STYLE
+    // SETTINGS
 
     private fun buildStyleGuideEmbed(container: LanguageContainer) =
         Embed {
@@ -394,35 +416,157 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
                 .fold(this) { builder, style ->
                     builder.also {
                         field {
-                            name = "Style ``${style.sample.styleShortcut}``:``${style.sample.styleName}``"
-                            value = "${container.styleEmbedSuggestion(style.sample.styleShortcut)}\n${style.sample.sampleView}"
+                            name = "Style ${style.sample.styleShortcut.asHighlightFormat()}:${style.sample.styleName.asHighlightFormat()}"
+                            value = "${container.styleEmbedSuggestion(style.sample.styleShortcut.asHighlightFormat())}\n${style.sample.sampleView}"
                             inline = false
                         }
                     }
                 }
             field {
                 name = "Style ``A``:``IMAGE``"
-                value = container.styleEmbedSuggestion("A")
+                value = container.styleEmbedSuggestion("A".asHighlightFormat())
                 inline = false
             }
             image = "https://raw.githubusercontent.com/junghyun397/GomokuBot/master/discord/images/style-preview.jpg"
         }
 
+    private fun buildFocusPolicyGuideEmbed(container: LanguageContainer) =
+        Embed {
+            title = container.focusEmbedTitle()
+            description = container.focusEmbedDescription()
+            color = COLOR_NORMAL_HEX
+
+            field {
+                name = "$UNICODE_ZAP ${container.focusSelectIntelligence()}"
+                value = container.focusSelectIntelligenceDescription()
+                inline = false
+            }
+
+            field {
+                name = "$UNICODE_MAG ${container.focusSelectFallowing()}"
+                value = container.focusSelectFallowingDescription()
+                inline = false
+            }
+        }
+
+    private fun buildFocusPolicyMenu(config: GuildConfig) =
+        SelectMenu("p") {
+            option(
+                label = config.language.container.focusSelectIntelligence(),
+                value = "f-i",
+                emoji = EMOJI_ZAP,
+                default = config.focusPolicy == FocusPolicy.INTELLIGENCE
+            )
+            option(
+                label = config.language.container.focusSelectFallowing(),
+                value = "f-f",
+                emoji = EMOJI_MAG,
+                default = config.focusPolicy == FocusPolicy.FALLOWING
+            )
+        }
+
+    private fun buildSweepPolicyGuideEmbed(container: LanguageContainer) =
+        Embed {
+            title = container.sweepEmbedTitle()
+            description = container.sweepEmbedDescription()
+            color = COLOR_NORMAL_HEX
+
+            field {
+                name = "$UNICODE_BROOM ${container.sweepSelectRelay()}"
+                value = container.sweepSelectRelayDescription()
+                inline = false
+            }
+
+            field {
+                name = "$UNICODE_CABINET ${container.sweepSelectLeave()}"
+                value = container.sweepSelectLeaveDescription()
+                inline = false
+            }
+        }
+
+    private fun buildSweepPolicyMenu(config: GuildConfig) =
+        SelectMenu("p") {
+            option(
+                label = config.language.container.sweepSelectRelay(),
+                value = "s-r",
+                emoji = EMOJI_BROOM,
+                default = config.sweepPolicy == SweepPolicy.RELAY
+            )
+            option(
+                label = config.language.container.sweepSelectLeave(),
+                value = "s-l",
+                emoji = EMOJI_CABINET,
+                default = config.sweepPolicy == SweepPolicy.LEAVE
+            )
+        }
+
+    private fun buildArchivePolicyGuideEmbed(container: LanguageContainer) =
+        Embed {
+            title = container.archiveEmbedTitle()
+            description = container.archiveEmbedDescription()
+            color = COLOR_NORMAL_HEX
+
+            field {
+                name = "$UNICODE_PERFORMING ${container.archiveSelectByAnonymous()}"
+                value = container.archiveSelectByAnonymousDescription()
+                inline = false
+            }
+
+            field {
+                name = "$UNICODE_SILHOUETTE ${container.archiveSelectWithProfile()}"
+                value = container.archiveSelectWithProfileDescription()
+                inline = false
+            }
+
+            field {
+                name = "$UNICODE_LOCK ${container.archiveSelectPrivacy()}"
+                value = container.archiveSelectPrivacyDescription()
+                inline = false
+            }
+        }
+
+    private fun buildArchivePolicyMenu(config: GuildConfig) =
+        SelectMenu("p") {
+            option(
+                label = config.language.container.archiveSelectByAnonymous(),
+                value = "a-a",
+                emoji = EMOJI_PERFORMING,
+                default = config.archivePolicy == ArchivePolicy.BY_ANONYMOUS
+            )
+            option(
+                label = config.language.container.archiveSelectWithProfile(),
+                value = "a-p",
+                emoji = EMOJI_SILHOUETTE,
+                default = config.archivePolicy == ArchivePolicy.WITH_PROFILE
+            )
+            option(
+                label = config.language.container.archiveSelectPrivacy(),
+                value = "a-b",
+                emoji = EMOJI_LOCK,
+                default = config.archivePolicy == ArchivePolicy.PRIVACY
+            )
+        }
+
+    // STYLE
+
     override fun produceStyleGuide(publisher: DiscordMessagePublisher, container: LanguageContainer) =
         IO { publisher(Message(embed = this.buildStyleGuideEmbed(container))) }
 
-    override fun produceStyleNotFound(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer) =
-        IO { publisher(Message(content = container.styleErrorNotfound())) }
+    override fun produceStyleNotFound(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, user: User) =
+        IO { publisher(Message(content = container.styleErrorNotfound(user.asMentionFormat()))) }
 
     override fun produceStyleUpdated(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, style: String) =
         IO { publisher(Message(content = container.styleUpdated(style))) }
 
     // POLICY
 
+    override fun produceConfigApplied(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, configKind: String, configChoice: String) =
+        IO { publisher(Message(content = container.configApplied(configChoice.asHighlightFormat()))) }
+
     // SESSION
 
-    override fun produceSessionNotFound(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer) =
-        IO { publisher(Message(content = container.sessionNotFound())) }
+    override fun produceSessionNotFound(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, user: User) =
+        IO { publisher(Message(content = container.sessionNotFound(user.asMentionFormat()))) }
 
     // START
 
@@ -473,6 +617,9 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
 
     override fun produceRequestRejected(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User, opponent: User) =
         IO { publisher(Message(content = container.requestRejected(owner.asMentionFormat(), opponent.asMentionFormat()))) }
+
+    override fun produceRequestExpired(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User, opponent: User) =
+        IO { publisher(Message(content = container.requestExpired(owner.asMentionFormat(), opponent.asMentionFormat()))) }
 
     // UTILS
 

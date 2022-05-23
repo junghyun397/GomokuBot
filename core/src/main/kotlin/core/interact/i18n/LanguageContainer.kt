@@ -121,7 +121,7 @@ sealed interface LanguageContainer {
 
     // ### 2-2-3. STYLE:ERROR:NOTFOUND (MESSAGE)
 
-    fun styleErrorNotfound(): String
+    fun styleErrorNotfound(user: String): String
 
     // ### 2-2-4. STYLE:SUCCESS:UPDATED (MESSAGE)
 
@@ -129,11 +129,47 @@ sealed interface LanguageContainer {
 
     // ## 2-3. POLICY
 
-    // ### 2-3-1. POLICY (COMMAND)
+    fun configApplied(choice: String): String
+
+    // ### 2-3-1. FOCUS
+
+    fun focusEmbedTitle(): String
+    fun focusEmbedDescription(): String
+
+    fun focusSelectIntelligence(): String
+    fun focusSelectIntelligenceDescription(): String
+
+    fun focusSelectFallowing(): String
+    fun focusSelectFallowingDescription(): String
+
+    // ### 2-3-2. SWEEP
+
+    fun sweepEmbedTitle(): String
+    fun sweepEmbedDescription(): String
+
+    fun sweepSelectRelay(): String
+    fun sweepSelectRelayDescription(): String
+
+    fun sweepSelectLeave(): String
+    fun sweepSelectLeaveDescription(): String
+
+    // ### 2-3-3. ARCHIVE
+
+    fun archiveEmbedTitle(): String
+    fun archiveEmbedDescription(): String
+
+    fun archiveSelectByAnonymous(): String
+    fun archiveSelectByAnonymousDescription(): String
+
+    fun archiveSelectWithProfile(): String
+    fun archiveSelectWithProfileDescription(): String
+
+    fun archiveSelectPrivacy(): String
+    fun archiveSelectPrivacyDescription(): String
 
     // # 3. SESSION
 
-    fun sessionNotFound(): String
+    fun sessionNotFound(user: String): String
 
     // ## 3-1. START
 

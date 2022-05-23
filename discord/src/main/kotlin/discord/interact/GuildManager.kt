@@ -7,6 +7,7 @@ import core.session.ArchivePolicy
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.PvpGameSession
+import dev.minn.jda.ktx.Message
 import dev.minn.jda.ktx.await
 import discord.assets.JDAGuild
 import discord.interact.message.DiscordMessageProducer
@@ -24,17 +25,15 @@ object GuildManager {
         channel.guild.selfMember.hasPermission(channel, permission)
 
     inline fun <T> permissionSafeRun(channel: TextChannel, permission: Permission, block: (TextChannel) -> T): Option<T> =
-        if (this.lookupPermission(channel, permission)) Option.Some(block(channel))
+        if (this.lookupPermission(channel, permission)) Option(block(channel))
         else Option.Empty
 
     inline fun <T> permissionNotGrantedRun(channel: TextChannel, permission: Permission, block: () -> T): Option<T> =
         if (this.lookupPermission(channel, permission)) Option.Empty
-        else Option.Some(block())
+        else Option(block())
 
     fun upsertCommands(guild: JDAGuild, container: LanguageContainer) {
-        guild.retrieveCommands()
-            .map { commands -> commands.map { it.delete() } }
-            .queue()
+        guild.updateCommands()
 
         buildableCommands.fold(guild.updateCommands()) { action, command ->
             command.buildCommandData(action, container)
@@ -55,22 +54,26 @@ object GuildManager {
             .map { it.launch() }
     }
 
-    suspend fun removeNavigators(jda: JDA, message: Message) {
+    suspend fun retrieveJDAMessage(jda: JDA, message: Message): net.dv8tion.jda.api.entities.Message? =
         jda.getGuildById(message.guildId.idLong)
             ?.getTextChannelById(message.channelId.idLong)
             ?.retrieveMessageById(message.id.idLong)
-            ?.also { action ->
-                val original = action.await()
+            ?.await()
 
-                original.editMessageComponents()
-                    .and(
-                        original
-                            .reactions
-                            .map { it.removeReaction() }
-                            .reduce { acc, restAction -> acc.and(restAction).delay(Duration.ofMillis(500)) }
-                    )
-                    .queue()
-            }
+    fun retainFirstEmbed(message: net.dv8tion.jda.api.entities.Message) {
+        message.editMessage(Message(embed = message.embeds.first()))
+            .retainFiles(message.attachments) // TODO: v10 API
+            .queue()
     }
+
+    fun removeNavigators(message: net.dv8tion.jda.api.entities.Message) =
+        message.editMessageComponents()
+            .and(
+                message
+                    .reactions
+                    .map { it.removeReaction() }
+                    .reduce { acc, removeAction -> acc.delay(Duration.ofMillis(500)).and(removeAction) }
+            )
+            .queue()
 
 }

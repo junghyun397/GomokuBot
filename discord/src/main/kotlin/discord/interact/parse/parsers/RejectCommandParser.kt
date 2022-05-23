@@ -7,13 +7,13 @@ import core.session.SessionManager
 import discord.assets.extractId
 import discord.interact.InteractionContext
 import discord.interact.parse.EmbeddableCommand
-import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
+import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import utils.structs.Option
 
 @Suppress("DuplicatedCode")
 object RejectCommandParser : EmbeddableCommand {
 
-    override suspend fun parseButton(context: InteractionContext<ButtonInteractionEvent>): Option<Command> {
+    override suspend fun parseButton(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
         val owner = context.event.componentId
             .drop(2)
             .toLongOrNull()
@@ -26,7 +26,7 @@ object RejectCommandParser : EmbeddableCommand {
         val session = SessionManager.retrieveRequestSessionByOwner(context.bot.sessionRepository, context.guild.id, owner)
             ?: return Option.Empty
 
-        return Option.Some(RejectCommand("reject", session))
+        return Option(RejectCommand("reject", session))
     }
 
 }

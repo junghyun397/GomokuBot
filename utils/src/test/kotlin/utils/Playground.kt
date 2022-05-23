@@ -4,31 +4,7 @@ import utils.assets.bound
 import java.util.*
 import kotlin.test.Test
 
-internal class OptionTest {
-
-    data class NS(var d: String?)
-
-    fun add(map: MutableMap<String, NS>, map2: MutableMap<String, String>) {
-        val nss = NS("ho!")
-
-        map["key"] = nss
-
-        map2[nss.d!!] = "val"
-
-        nss.d = null
-    }
-
-    @Test
-    fun weakHashMap() {
-        val l = listOf("A", "B", "C")
-        println(l.reduce { acc, s -> acc + s })
-    }
-
-    @Test
-    fun format() {
-        val n = 9
-        println("%2d".format(n))
-    }
+internal class Playground {
 
     @Test
     fun prefixSum() {
