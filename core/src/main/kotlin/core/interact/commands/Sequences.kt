@@ -3,7 +3,7 @@ package core.interact.commands
 import core.BotContext
 import core.inference.FocusSolver
 import core.interact.Order
-import core.interact.message.MessageAction
+import core.interact.message.MessageIO
 import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
 import core.session.FocusPolicy
@@ -11,22 +11,14 @@ import core.session.SessionManager
 import core.session.SweepPolicy
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
-import core.session.entities.NavigableKind
 import core.session.entities.NavigateState
+import core.session.entities.NavigationKind
 import jrenju.notation.Pos
 import jrenju.notation.Renju
+import utils.assets.LinuxTime
 import utils.structs.IO
 
-fun <A, B> IO<Unit>.attachBeginSequence(
-    bot: BotContext,
-    config: GuildConfig,
-    producer: MessageProducer<A, B>,
-    publisher: MessagePublisher<A, B>,
-    session: GameSession,
-) = this
-    .attachBoardSequence(bot, config, producer, publisher, session)
-
-fun <A, B> IO<MessageAction<A, B>>.attachNextMoveSequence(
+fun <A, B> IO<MessageIO<A, B>>.attachNextMoveSequence(
     bot: BotContext,
     config: GuildConfig,
     producer: MessageProducer<A, B>,
@@ -51,7 +43,7 @@ fun <A, B> IO<*>.attachBoardSequence(
             FocusPolicy.INTELLIGENCE -> FocusSolver.resolveFocus(session.board, producer.focusWidth)
             FocusPolicy.FALLOWING -> session.board.latestPos().fold(
                 { Renju.BOARD_CENTER_POS() },
-                { Pos(it.row().coerceIn(2, Renju.BOARD_WIDTH_MAX_IDX() - 2), it.col().coerceIn(2, Renju.BOARD_WIDTH_MAX_IDX() - 2)) }
+                { Pos(it.row().coerceIn(producer.focusRange), it.col().coerceIn(producer.focusRange)) }
             )
         }
 
@@ -59,7 +51,7 @@ fun <A, B> IO<*>.attachBoardSequence(
     }
     .flatMap {
         SessionManager.addNavigate(
-            bot.sessionRepository, it.first.message, NavigateState(NavigableKind.BOARD, it.second.idx(), session.expireDate)
+            bot.sessionRepository, it.first.message, NavigateState(NavigationKind.BOARD, it.second.idx(), session.expireDate)
         )
         SessionManager.appendMessageHead(bot.sessionRepository, session.messageBufferKey, it.first.message)
         producer.attachFocusNavigators(it.first) {
@@ -67,7 +59,7 @@ fun <A, B> IO<*>.attachBoardSequence(
         }
     }
 
-private fun IO<Unit>.attachSweepSequence(
+private fun IO<*>.attachSweepSequence(
     bot: BotContext,
     config: GuildConfig,
     session: GameSession
@@ -75,13 +67,13 @@ private fun IO<Unit>.attachSweepSequence(
     .flatMap { when (config.sweepPolicy) {
         SweepPolicy.RELAY -> IO { Order.BulkDelete(session.messageBufferKey) }
         SweepPolicy.LEAVE -> {
-            SessionManager.getHeadMessage(bot.sessionRepository, session.messageBufferKey)
-                ?.let { IO { Order.RemoveNavigators(it) } }
+            SessionManager.viewHeadMessage(bot.sessionRepository, session.messageBufferKey)
+                ?.let { IO { Order.RemoveNavigators(it, true) } }
                 ?: IO { Order.Unit }
         }
     } }
 
-fun <A, B> IO<Unit>.attachFinishSequence(
+fun <A, B> IO<*>.attachFinishSequence(
     bot: BotContext,
     producer: MessageProducer<A, B>,
     publisher: MessagePublisher<A, B>,
@@ -93,3 +85,38 @@ fun <A, B> IO<Unit>.attachFinishSequence(
         producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, thenSession).map { it.launch() }
     }
     .attachSweepSequence(bot, config, session)
+
+fun <A, B> helpSequenceAboutBot(
+    bot: BotContext,
+    config: GuildConfig,
+    producer: MessageProducer<A, B>,
+    publisher: MessagePublisher<A, B>
+) = producer.produceAboutBot(publisher, config.language.container)
+    .flatMap {
+        val messageAdaptor = it.retrieve()
+
+        SessionManager.addNavigate(
+            bot.sessionRepository,
+            messageAdaptor.message,
+            NavigateState(NavigationKind.ABOUT, 0, LinuxTime.withExpireOffset(bot.config.navigatorExpireOffset))
+        )
+
+        producer.attachBinaryNavigators(messageAdaptor)
+    }
+
+fun <A, B> helpSequenceSettings(
+    bot: BotContext,
+    producer: MessageProducer<A, B>,
+    publisher: MessagePublisher<A, B>
+) = producer.produceLanguageGuide(publisher)
+    .flatMap {
+        val messageAdaptor = it.retrieve()
+
+        SessionManager.addNavigate(
+            bot.sessionRepository,
+            messageAdaptor.message,
+            NavigateState(NavigationKind.SETTINGS, 0, LinuxTime.withExpireOffset(bot.config.navigatorExpireOffset))
+        )
+
+        producer.attachBinaryNavigators(messageAdaptor)
+    }

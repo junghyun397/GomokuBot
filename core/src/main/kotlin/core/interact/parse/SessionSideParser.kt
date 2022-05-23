@@ -13,7 +13,7 @@ abstract class SessionSideParser<A, B> : NamedParser {
     protected suspend fun retrieveSession(context: BotContext, guild: Guild, user: User): Either<GameSession, ParseFailure<A, B>> =
         SessionManager.retrieveGameSession(context.sessionRepository, guild.id, user.id)?.let { Either.Left(it) }
             ?: Either.Right(ParseFailure(this.name, "$user session not found", user) { producer, publisher, container ->
-                producer.produceSessionNotFound(publisher, container).map { it.launch(); Order.Unit }
+                producer.produceSessionNotFound(publisher, container, user).map { it.launch(); Order.Unit }
             })
 
 }

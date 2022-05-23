@@ -22,7 +22,7 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
 
     override val sampleView = ""
 
-    private const val POINT_SIZE = 60 // Must have 60 as a factor
+    private const val POINT_SIZE = 60 // Must have 30 as a factor
     private val BOARD_SIZE = POINT_SIZE * Renju.BOARD_WIDTH()
 
     private const val COORDINATE_SIZE = POINT_SIZE / 2

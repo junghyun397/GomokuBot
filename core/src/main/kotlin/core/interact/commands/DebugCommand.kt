@@ -55,7 +55,7 @@ class DebugCommand(override val command: String, private val debugType: DebugTyp
                 val requestSession = RequestSession(
                     user, user,
                     SessionManager.generateMessageBufferKey(user),
-                    LinuxTime(System.currentTimeMillis() + bot.config.expireOffset),
+                    LinuxTime(System.currentTimeMillis() + bot.config.gameExpireOffset),
                 )
 
                 SessionManager.putRequestSession(bot.sessionRepository, config.id, requestSession)
@@ -75,8 +75,8 @@ class DebugCommand(override val command: String, private val debugType: DebugTyp
                 board = BoardIO.fromBoardText(payload, Pos.fromCartesian(this.payload!!.take(3).trim(' ')).get().idx()).get(),
                 history = if (board.isNextColorBlack) emptyList() else listOf(Renju.BOARD_CENTER_POS()),
                 messageBufferKey = SessionManager.generateMessageBufferKey(user),
-                expireOffset = bot.config.expireOffset,
-                expireDate = LinuxTime.withExpireOffset(bot.config.expireOffset)
+                expireOffset = bot.config.gameExpireOffset,
+                expireDate = LinuxTime.withExpireOffset(bot.config.gameExpireOffset)
             )
             SessionManager.putGameSession(bot.sessionRepository, config.id, session)
 
@@ -148,8 +148,8 @@ class DebugCommand(override val command: String, private val debugType: DebugTyp
                 board = BoardIO.fromBoardText(vcfCase, Pos.fromCartesian("m3").get().idx()).get(),
                 history = emptyList(),
                 messageBufferKey = SessionManager.generateMessageBufferKey(user),
-                expireOffset = bot.config.expireOffset,
-                expireDate = LinuxTime.withExpireOffset(bot.config.expireOffset)
+                expireOffset = bot.config.gameExpireOffset,
+                expireDate = LinuxTime.withExpireOffset(bot.config.gameExpireOffset)
             )
             SessionManager.putGameSession(bot.sessionRepository, config.id, session)
 

@@ -47,6 +47,16 @@ sealed class Option<out T> {
 
     object Empty : Option<Nothing>()
 
+    companion object {
+
+        fun <T> unit(value: T) =
+            Some(value)
+
+        operator fun <T> invoke(value: T) =
+            unit(value)
+
+    }
+
 }
 
 inline fun <T> Option<T>.foldLeft(onEmpty: () -> T): T =
@@ -61,4 +71,4 @@ inline fun <T> Option<T>.orElse(produce: () -> Option<T>): Option<T> =
         is Option.Empty -> produce()
     }
 
-fun <T> T?.asOption(): Option<T> = this?.let { Option.Some(this) } ?: Option.Empty
+fun <T> T?.asOption(): Option<T> = this?.let { Option(this) } ?: Option.Empty

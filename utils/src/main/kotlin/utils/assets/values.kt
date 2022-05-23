@@ -7,6 +7,7 @@ package utils.assets
     companion object {
 
         fun withExpireOffset(offset: Long) = LinuxTime(System.currentTimeMillis() + offset)
+
     }
 
 }

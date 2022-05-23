@@ -3,7 +3,7 @@ package core.interact.reports
 import core.interact.i18n.Language
 import utils.assets.LinuxTime
 
-class GuildJoinReport(
+class ServerJoinReport(
     private val commandInserted: Boolean = true,
     private val helpSent: Boolean? = true,
     private val defaultRegion: String = "unrecognized",

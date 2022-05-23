@@ -22,14 +22,15 @@ class LangCommand(override val command: String, private val language: Language) 
         producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>,
     ) = runCatching {
-        SessionManager.updateGuildConfig(bot.sessionRepository, config.id, config.copy(language = language))
+        val thenConfig = config.copy(language = this.language)
+
+        SessionManager.updateGuildConfig(bot.sessionRepository, config.id, thenConfig)
 
         val io = producer.produceLanguageUpdated(publisher, this.language.container)
-            .map { it.launch() }
-            .flatMap { producer.produceGuideKit(publisher, this.language.container) }
-            .map { it.launch(); Order.RefreshCommands(this.language.container) }
+            .flatMap { helpSequenceAboutBot(bot, thenConfig, producer, publisher) }
+            .map { Order.UpsertCommands(thenConfig.language.container) }
 
-        io to this.asCommandReport("${config.language.name} to ${language.name}", user)
+        io to this.asCommandReport("${config.language.name} to ${thenConfig.language.name}", user)
     }
 
 }

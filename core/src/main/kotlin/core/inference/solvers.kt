@@ -6,8 +6,8 @@ import jrenju.notation.Renju
 import jrenju.protocol.Presets
 import jrenju.protocol.Solution
 import jrenju.protocol.SolutionLeaf
-import jrenju.protocol.`SolutionNode$`
 import jrenju.solve.LRUMemo
+import jrenju.solve.`SolutionMapper$`
 import jrenju.solve.`VCFSolver$`
 import java.util.*
 
@@ -49,10 +49,8 @@ fun surfaceSolver(b3nzeneClient: B3nzeneClient, board: Board, latestMove: Pos): 
             .let { if (it.size() == 0) null else it }
     else null
 
-    println(vcfSequence) // TODO
-
     return if (vcfSequence != null)
-        `SolutionNode$`.`MODULE$`.SequenceToNode(vcfSequence).toSolution()
+        `SolutionMapper$`.`MODULE$`.SequenceToNode(vcfSequence).toSolution()
     else
         SolutionLeaf(builder[Random().nextInt(builder.size)])
 }

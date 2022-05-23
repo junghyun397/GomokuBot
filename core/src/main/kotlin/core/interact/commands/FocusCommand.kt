@@ -11,8 +11,8 @@ import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
+import core.session.entities.NavigateState
 import jrenju.notation.Pos
-import jrenju.notation.Renju
 import kotlinx.coroutines.Deferred
 import utils.structs.IO
 
@@ -20,7 +20,12 @@ enum class Direction {
     LEFT, DOWN, UP, RIGHT, FOCUS
 }
 
-class FocusCommand(override val command: String, private val session: GameSession, private val direction: Direction) : Command {
+class FocusCommand(
+    override val command: String,
+    private val navigateState: NavigateState,
+    private val session: GameSession,
+    private val direction: Direction,
+) : Command {
 
     override suspend fun <A, B> execute(
         bot: BotContext,
@@ -32,45 +37,28 @@ class FocusCommand(override val command: String, private val session: GameSessio
     ) = runCatching {
         val originalMessage = message.await()
 
-        val focusState = SessionManager.getNavigateState(bot.sessionRepository, originalMessage.message)!!
-
         val newFocus = run {
-            val kernelHalf = producer.focusWidth / 2
-            val step = kernelHalf + 1
+            val step = producer.focusWidth / 2 + 1
 
-            val row = Pos.idxToRow(focusState.page)
-            val col = Pos.idxToCol(focusState.page)
+            val row = Pos.idxToRow(this.navigateState.page)
+            val col = Pos.idxToCol(this.navigateState.page)
 
             when (this.direction) {
-                Direction.LEFT -> Pos(
-                    row,
-                    (col - step).coerceIn(kernelHalf, Renju.BOARD_WIDTH_MAX_IDX() - kernelHalf)
-                )
-                Direction.DOWN -> Pos(
-                    (row - step).coerceIn(kernelHalf, Renju.BOARD_WIDTH_MAX_IDX() - kernelHalf),
-                    col
-                )
-                Direction.UP -> Pos(
-                    (row + step).coerceIn(kernelHalf, Renju.BOARD_WIDTH_MAX_IDX() - kernelHalf),
-                    col
-                )
-                Direction.RIGHT -> Pos(
-                    row,
-                    (col + step).coerceIn(kernelHalf, Renju.BOARD_WIDTH_MAX_IDX() - kernelHalf)
-                )
+                Direction.LEFT -> Pos(row, (col - step).coerceIn(producer.focusRange))
+                Direction.DOWN -> Pos((row - step).coerceIn(producer.focusRange), col)
+                Direction.UP -> Pos((row + step).coerceIn(producer.focusRange), col)
+                Direction.RIGHT -> Pos(row, (col + step).coerceIn(producer.focusRange))
                 Direction.FOCUS -> FocusSolver.resolveFocus(this.session.board, producer.focusWidth)
             }
         }
 
-        SessionManager.addNavigate(bot.sessionRepository, originalMessage.message, focusState.copy(page = newFocus.idx()))
+        SessionManager.addNavigate(bot.sessionRepository, originalMessage.message, this.navigateState.copy(page = newFocus.idx()))
 
         val action = originalMessage.updateButtons(
-            producer.generateFocusedButtons(
-                producer.generateFocusedField(this.session.board, newFocus)
-            )
+            producer.generateFocusedButtons(producer.generateFocusedField(this.session.board, newFocus))
         )
 
-        IO { action.launch(); Order.Unit } to this.asCommandReport("succeed", user)
+        IO { action.launch(); Order.Unit } to this.asCommandReport("move focus $direction", user)
     }
 
 }

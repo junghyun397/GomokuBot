@@ -24,7 +24,7 @@ class AcceptCommand(override val command: String, private val requestSession: Re
         publisher: MessagePublisher<A, B>,
     ) = runCatching {
         val gameSession = GameManager.generatePvpSession(
-            bot.config.expireOffset,
+            bot.config.gameExpireOffset,
             this.requestSession.owner,
             this.requestSession.opponent
         )
@@ -35,7 +35,7 @@ class AcceptCommand(override val command: String, private val requestSession: Re
 
         val io = producer.produceBeginsPVP(publisher, config.language.container, gameSession.player, gameSession.nextPlayer)
             .map { it.launch() }
-            .attachBeginSequence(bot, config, producer, publisher, gameSession)
+            .attachBoardSequence(bot, config, producer, publisher, gameSession)
             .map { Order.DeleteSource }
 
         io to this.asCommandReport("accepted", user)

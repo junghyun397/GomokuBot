@@ -8,6 +8,7 @@ import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
 import core.interact.reports.asCommandReport
 import core.session.GameManager
+import core.session.GameResult
 import core.session.SessionManager
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
@@ -27,7 +28,7 @@ class ResignCommand(override val command: String, private val session: GameSessi
     ) = runCatching {
         SessionManager.removeGameSession(bot.sessionRepository, config.id, session.owner.id)
 
-        val (finishedSession, result) = GameManager.resignSession(this.session, user)
+        val (finishedSession, result) = GameManager.resignSession(this.session, GameResult.WinCause.RESIGN, user)
 
         val io = when (finishedSession) {
             is AiGameSession ->

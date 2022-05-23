@@ -6,6 +6,7 @@ import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.interact.message.graphics.BoardRenderer
 import core.session.entities.GameSession
+import core.session.entities.GuildConfig
 import jrenju.Board
 import jrenju.notation.Color
 import jrenju.notation.Flag
@@ -19,6 +20,7 @@ import utils.structs.IO
 abstract class MessageProducer<A, B> {
 
     abstract val focusWidth: Int
+    abstract val focusRange: IntRange
 
     // BOARD
 
@@ -35,9 +37,9 @@ abstract class MessageProducer<A, B> {
         if (this.ownerHasBlack) this.opponent.withColor(Color.WHITE()) else opponent.withColor(Color.BLACK())
 
     fun generateFocusedField(board: Board, focus: Pos): FocusedFields {
-        val kernelHalf = this.focusWidth / 2
-        return (-kernelHalf .. kernelHalf).map { rowOffset ->
-            (-kernelHalf .. kernelHalf).map { colOffset ->
+        val half = this.focusWidth / 2
+        return (-half .. half).map { rowOffset ->
+            (-half .. half).map { colOffset ->
                 val pos = Pos(focus.row() + rowOffset, focus.col() + colOffset)
                 val flag = if (pos.idx() == board.latestMove()) when (board.boardField()[board.latestMove()]) {
                     Flag.BLACK() -> ButtonFlag.BLACK_RECENT
@@ -60,11 +62,11 @@ abstract class MessageProducer<A, B> {
 
     abstract fun generateFocusedButtons(focusedFields: FocusedFields): B
 
-    abstract fun produceBoard(publisher: MessagePublisher<A, B>, container: LanguageContainer, renderer: BoardRenderer, session: GameSession): IO<MessageAction<A, B>>
+    abstract fun produceBoard(publisher: MessagePublisher<A, B>, container: LanguageContainer, renderer: BoardRenderer, session: GameSession): IO<MessageIO<A, B>>
 
-    abstract fun produceSessionArchive(publisher: MessagePublisher<A, B>, session: GameSession): IO<MessageAction<A, B>>
+    abstract fun produceSessionArchive(publisher: MessagePublisher<A, B>, session: GameSession): IO<MessageIO<A, B>>
 
-    abstract fun attachFocusButtons(boardAction: MessageAction<A, B>, session: GameSession, focus: Pos): MessageAction<A, B>
+    abstract fun attachFocusButtons(boardAction: MessageIO<A, B>, session: GameSession, focus: Pos): MessageIO<A, B>
 
     abstract fun attachNavigators(flow: Flow<String>, message: MessageAdaptor<A, B>, checkTerminated: suspend () -> Boolean): IO<Unit>
 
@@ -80,43 +82,47 @@ abstract class MessageProducer<A, B> {
 
     // GAME
 
-    abstract fun produceBeginsPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, blackPlayer: User, whitePlayer: User): IO<MessageAction<A, B>>
+    abstract fun produceBeginsPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, blackPlayer: User, whitePlayer: User): IO<MessageIO<A, B>>
 
-    abstract fun produceBeginsPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, ownerHasBlack: Boolean): IO<MessageAction<A, B>>
+    abstract fun produceBeginsPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, ownerHasBlack: Boolean): IO<MessageIO<A, B>>
 
-    abstract fun produceNextMovePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, previousPlayer: User, nextPlayer: User, latestMove: Pos): IO<MessageAction<A, B>>
+    abstract fun produceNextMovePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, previousPlayer: User, nextPlayer: User, latestMove: Pos): IO<MessageIO<A, B>>
 
-    abstract fun produceWinPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, looser: User, latestMove: Pos): IO<MessageAction<A, B>>
+    abstract fun produceWinPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, looser: User, latestMove: Pos): IO<MessageIO<A, B>>
 
-    abstract fun produceTiePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): IO<MessageAction<A, B>>
+    abstract fun produceTiePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): IO<MessageIO<A, B>>
 
-    abstract fun produceSurrenderedPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, looser: User): IO<MessageAction<A, B>>
+    abstract fun produceSurrenderedPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, looser: User): IO<MessageIO<A, B>>
 
-    abstract fun produceNextMovePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, latestMove: Pos): IO<MessageAction<A, B>>
+    abstract fun produceTimeoutPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, looser: User): IO<MessageIO<A, B>>
 
-    abstract fun produceWinPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, latestMove: Pos): IO<MessageAction<A, B>>
+    abstract fun produceNextMovePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, latestMove: Pos): IO<MessageIO<A, B>>
 
-    abstract fun produceLosePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, latestMove: Pos): IO<MessageAction<A, B>>
+    abstract fun produceWinPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, latestMove: Pos): IO<MessageIO<A, B>>
 
-    abstract fun produceTiePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User): IO<MessageAction<A, B>>
+    abstract fun produceLosePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, latestMove: Pos): IO<MessageIO<A, B>>
 
-    abstract fun produceSurrenderedPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User): IO<MessageAction<A, B>>
+    abstract fun produceTiePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User): IO<MessageIO<A, B>>
+
+    abstract fun produceSurrenderedPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User): IO<MessageIO<A, B>>
+
+    abstract fun produceTimeoutPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, player: User): IO<MessageIO<A, B>>
 
     // HELP
 
-    abstract fun produceGuideKit(publisher: MessagePublisher<A, B>, container: LanguageContainer): IO<MessageAction<A, B>>
+    abstract fun produceAboutBot(publisher: MessagePublisher<A, B>, container: LanguageContainer): IO<MessageIO<A, B>>
 
-    abstract fun produceWelcomeKit(publisher: MessagePublisher<A, B>, container: LanguageContainer): IO<MessageAction<A, B>>
+    abstract fun paginateAboutBot(original: MessageAdaptor<A, B>, container: LanguageContainer, page: Int): IO<Unit>
 
-    abstract fun produceCommandGuide(publisher: MessagePublisher<A, B>, container: LanguageContainer): IO<MessageAction<A, B>>
+    abstract fun paginateSettings(original: MessageAdaptor<A, B>, config: GuildConfig, page: Int): IO<Unit>
 
     // RANK
 
-    abstract fun produceRankings(publisher: MessagePublisher<A, B>, container: LanguageContainer, rankings: Set<SimpleProfile>): IO<MessageAction<A, B>>
+    abstract fun produceRankings(publisher: MessagePublisher<A, B>, container: LanguageContainer, rankings: Set<SimpleProfile>): IO<MessageIO<A, B>>
 
     // RATING
 
-    abstract fun produceRating(publisher: MessagePublisher<A, B>, container: LanguageContainer): IO<MessageAction<A, B>>
+    abstract fun produceRating(publisher: MessagePublisher<A, B>, container: LanguageContainer): IO<MessageIO<A, B>>
 
     // LANG
 
@@ -126,56 +132,65 @@ abstract class MessageProducer<A, B> {
         }
         .toString()
 
-    abstract fun produceLanguageGuide(publisher: MessagePublisher<A, B>): IO<MessageAction<A, B>>
+    abstract fun produceLanguageGuide(publisher: MessagePublisher<A, B>): IO<MessageIO<A, B>>
 
-    abstract fun produceLanguageNotFound(publisher: MessagePublisher<A, B>): IO<MessageAction<A, B>>
+    abstract fun produceLanguageNotFound(publisher: MessagePublisher<A, B>): IO<MessageIO<A, B>>
 
-    abstract fun produceLanguageUpdated(publisher: MessagePublisher<A, B>, container: LanguageContainer): IO<MessageAction<A, B>>
+    abstract fun produceLanguageUpdated(publisher: MessagePublisher<A, B>, container: LanguageContainer): IO<MessageIO<A, B>>
 
     // STYLE
 
-    abstract fun produceStyleGuide(publisher: MessagePublisher<A, B>, container: LanguageContainer): IO<MessageAction<A, B>>
+    abstract fun produceStyleGuide(publisher: MessagePublisher<A, B>, container: LanguageContainer): IO<MessageIO<A, B>>
 
-    abstract fun produceStyleNotFound(publisher: MessagePublisher<A, B>, container: LanguageContainer): IO<MessageAction<A, B>>
+    abstract fun produceStyleNotFound(publisher: MessagePublisher<A, B>, container: LanguageContainer, user: User): IO<MessageIO<A, B>>
 
-    abstract fun produceStyleUpdated(publisher: MessagePublisher<A, B>, container: LanguageContainer, style: String): IO<MessageAction<A, B>>
+    abstract fun produceStyleUpdated(publisher: MessagePublisher<A, B>, container: LanguageContainer, style: String): IO<MessageIO<A, B>>
 
     // POLICY
 
+    abstract fun produceConfigApplied(
+        publisher: MessagePublisher<A, B>,
+        container: LanguageContainer,
+        configKind: String,
+        configChoice: String
+    ): IO<MessageIO<A, B>>
+
     // SESSION
 
-    abstract fun produceSessionNotFound(publisher: MessagePublisher<A, B>, container: LanguageContainer): IO<MessageAction<A, B>>
+    abstract fun produceSessionNotFound(publisher: MessagePublisher<A, B>, container: LanguageContainer, user: User): IO<MessageIO<A, B>>
 
     // START
 
-    abstract fun produceSessionAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User): IO<MessageAction<A, B>>
+    abstract fun produceSessionAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User): IO<MessageIO<A, B>>
 
-    abstract fun produceOpponentSessionAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): IO<MessageAction<A, B>>
+    abstract fun produceOpponentSessionAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): IO<MessageIO<A, B>>
 
-    abstract fun produceRequestAlreadySent(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): IO<MessageAction<A, B>>
+    abstract fun produceRequestAlreadySent(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): IO<MessageIO<A, B>>
 
-    abstract fun produceRequestAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): IO<MessageAction<A, B>>
+    abstract fun produceRequestAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): IO<MessageIO<A, B>>
 
-    abstract fun produceOpponentRequestAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): IO<MessageAction<A, B>>
+    abstract fun produceOpponentRequestAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): IO<MessageIO<A, B>>
 
     // SET
 
-    abstract fun produceOrderFailure(publisher: MessagePublisher<A, B>, container: LanguageContainer, user: User, player: User): IO<MessageAction<A, B>>
+    abstract fun produceOrderFailure(publisher: MessagePublisher<A, B>, container: LanguageContainer, user: User, player: User): IO<MessageIO<A, B>>
 
-    abstract fun produceSetIllegalArgument(publisher: MessagePublisher<A, B>, container: LanguageContainer, user: User): IO<MessageAction<A, B>>
+    abstract fun produceSetIllegalArgument(publisher: MessagePublisher<A, B>, container: LanguageContainer, user: User): IO<MessageIO<A, B>>
 
-    abstract fun produceSetAlreadyExist(publisher: MessagePublisher<A, B>, container: LanguageContainer, user: User, pos: Pos): IO<MessageAction<A, B>>
+    abstract fun produceSetAlreadyExist(publisher: MessagePublisher<A, B>, container: LanguageContainer, user: User, pos: Pos): IO<MessageIO<A, B>>
 
-    abstract fun produceSetForbiddenMove(publisher: MessagePublisher<A, B>, container: LanguageContainer, user: User, pos: Pos, forbiddenFlag: Byte): IO<MessageAction<A, B>>
+    abstract fun produceSetForbiddenMove(publisher: MessagePublisher<A, B>, container: LanguageContainer, user: User, pos: Pos, forbiddenFlag: Byte): IO<MessageIO<A, B>>
 
     // REQUEST
 
-    abstract fun produceRequest(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): IO<MessageAction<A, B>>
+    abstract fun produceRequest(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): IO<MessageIO<A, B>>
 
-    abstract fun produceRequestRejected(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): IO<MessageAction<A, B>>
+    abstract fun produceRequestRejected(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): IO<MessageIO<A, B>>
+
+    abstract fun produceRequestExpired(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): IO<MessageIO<A, B>>
 
     // UTILS
 
-    abstract fun produceNotYetImplemented(publisher: MessagePublisher<A, B>, container: LanguageContainer, officialChannel: String): IO<MessageAction<A, B>>
+    abstract fun produceNotYetImplemented(publisher: MessagePublisher<A, B>, container: LanguageContainer, officialChannel: String): IO<MessageIO<A, B>>
 
 }

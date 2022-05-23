@@ -1,5 +1,7 @@
 package core.database
 
+import core.assets.GuildId
+import core.assets.UserId
 import core.database.entities.SimpleProfile
 import core.database.entities.UserData
 import core.database.entities.asSimpleProfile
@@ -7,8 +9,6 @@ import core.session.entities.GuildConfig
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import utils.structs.Option
-import core.assets.GuildId
-import core.assets.UserId
 import java.util.*
 
 object DatabaseManager {
@@ -17,7 +17,7 @@ object DatabaseManager {
     private val rankingCacheMutex: Mutex = Mutex()
 
     suspend fun fetchGuildConfig(connection: DatabaseConnection, guildId: GuildId): Option<GuildConfig> =
-        Option.Some(GuildConfig(guildId)) // TODO
+        Option(GuildConfig(guildId)) // TODO
 
     suspend fun updateGuildConfig(connection: DatabaseConnection, guildId: GuildId, guildConfig: GuildConfig): Unit = Unit
 

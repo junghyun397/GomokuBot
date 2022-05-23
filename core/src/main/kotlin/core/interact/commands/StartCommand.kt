@@ -29,22 +29,22 @@ class StartCommand(override val command: String = "start", val opponent: User?) 
             val requestSession = RequestSession(
                 user, opponent,
                 SessionManager.generateMessageBufferKey(user),
-                LinuxTime.withExpireOffset(bot.config.expireOffset),
+                LinuxTime.withExpireOffset(bot.config.requestExpireOffset),
             )
 
             SessionManager.putRequestSession(bot.sessionRepository, config.id, requestSession)
 
             val io = producer.produceRequest(publisher, config.language.container, user, opponent)
-                .map { it.launch(); Order.Unit }
+                .map { SessionManager.appendMessage(bot.sessionRepository, requestSession.messageBufferKey, it.retrieve().message); Order.Unit }
 
-            io to this.asCommandReport("make request to $this.opponent", user)
+            io to this.asCommandReport("make request to ${this.opponent}", user)
         } else {
-            val gameSession = GameManager.generateAiSession(bot.config.expireOffset, user, AiLevel.AMOEBA)
+            val gameSession = GameManager.generateAiSession(bot.config.gameExpireOffset, user, AiLevel.AMOEBA)
             SessionManager.putGameSession(bot.sessionRepository, config.id, gameSession)
 
             val io = producer.produceBeginsPVE(publisher, config.language.container, user, gameSession.ownerHasBlack)
                 .map { it.launch() }
-                .attachBeginSequence(bot, config, producer, publisher, gameSession)
+                .attachBoardSequence(bot, config, producer, publisher, gameSession)
                 .map { Order.Unit }
 
             io to this.asCommandReport("start game session with AI", user)
