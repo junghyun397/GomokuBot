@@ -36,12 +36,16 @@ const val UNICODE_UP = "\ud83d\udd3c" // 🔼
 const val UNICODE_RIGHT = "\u25b6\ufe0f" // ▶
 const val UNICODE_FOCUS = "\u23fa\ufe0f" // ⏺
 
+const val UNICODE_IMAGE = "\ud83d\uddbc" // 🖼
+const val UNICODE_T = "\ud83c\uddf9" // 🇹
+const val UNICODE_GEM = "\ud83d\udc8e" // 💎
+
 const val UNICODE_MAG = "\ud83d\udd0d" // 🔍
 const val UNICODE_BROOM = "\ud83e\uddf9" // 🧹
 const val UNICODE_CABINET = "\ud83d\uddc4" // 🗄
 
-const val UNICODE_PERFORMING = "\ud83c\udfad" // 🎭
 const val UNICODE_SILHOUETTE = "\ud83d\udc64" // 👤
+const val UNICODE_SMILING = "\ud83d\ude42" // 🙂
 const val UNICODE_LOCK = "\ud83d\udd12" // 🔒
 
 val anonymousUser = User(

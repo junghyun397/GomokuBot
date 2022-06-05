@@ -19,8 +19,6 @@ sealed interface BoardRendererSample {
 
     val styleName: String
 
-    val sampleView: String
-
 }
 
 sealed interface BoardRenderer {

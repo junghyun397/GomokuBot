@@ -25,6 +25,16 @@ interface IO<out A> {
 
         operator fun <A> invoke(block: suspend () -> A) = unit(block)
 
+        fun <A, B> zip(a: IO<A>, b: IO<B>) =
+            object : IO<Pair<A, B>> {
+                override suspend fun run() = a.run() to b.run()
+            }
+
+        fun <A, B, C> zip(a: IO<A>, b: IO<B>, c: IO<C>) =
+            object : IO<Triple<A, B, C>> {
+                override suspend fun run() = Triple(a.run(), b.run(), c.run())
+            }
+
     }
 
 }

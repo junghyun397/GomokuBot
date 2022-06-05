@@ -15,9 +15,13 @@ val EMOJI_MAG = Emoji.fromUnicode(UNICODE_MAG)
 val EMOJI_BROOM = Emoji.fromUnicode(UNICODE_BROOM)
 val EMOJI_CABINET = Emoji.fromUnicode(UNICODE_CABINET)
 
-val EMOJI_PERFORMING = Emoji.fromUnicode(UNICODE_PERFORMING)
 val EMOJI_SILHOUETTE = Emoji.fromUnicode(UNICODE_SILHOUETTE)
+val EMOJI_SMILING = Emoji.fromUnicode(UNICODE_SMILING)
 val EMOJI_LOCK = Emoji.fromUnicode(UNICODE_LOCK)
+
+val EMOJI_IMAGE = Emoji.fromUnicode(UNICODE_IMAGE)
+val EMOJI_T = Emoji.fromUnicode(UNICODE_T)
+val EMOJI_GEM = Emoji.fromUnicode(UNICODE_GEM)
 
 const val ASCII_LOGO = "\n" +
         "                                                ____________\n" +

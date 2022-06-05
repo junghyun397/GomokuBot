@@ -14,7 +14,6 @@ import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.AiGameSession
 import core.session.entities.GuildConfig
-import core.session.entities.PvpGameSession
 import core.session.entities.RequestSession
 import jrenju.BoardIO
 import jrenju.notation.Pos
@@ -26,7 +25,7 @@ import utils.structs.IO
 import utils.structs.Option
 
 enum class DebugType {
-    BOARD_DEMO, BOARD_ANALYSIS, SELF_REQUEST, VCF_SESSION, INJECT_BOARD, STATUS
+    ANALYSIS, SELF_REQUEST, VCF, INJECT, STATUS
 }
 
 class DebugCommand(override val command: String, private val debugType: DebugType, private val payload: String?) : Command {
@@ -40,7 +39,7 @@ class DebugCommand(override val command: String, private val debugType: DebugTyp
         producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>,
     ) = runCatching { when (debugType) {
-        DebugType.BOARD_ANALYSIS -> {
+        DebugType.ANALYSIS -> {
             SessionManager.retrieveGameSession(bot.sessionRepository, config.id, user.id)?.let { session ->
                 producer.produceSessionArchive(publisher, session)
                     .map { it.addFile(session.board.toBoardIO().debugText().toInputStream(), "analysis-report-${System.currentTimeMillis()}.txt") }
@@ -65,7 +64,7 @@ class DebugCommand(override val command: String, private val debugType: DebugTyp
                 io to this.asCommandReport("succeed", user)
             }
         }
-        DebugType.INJECT_BOARD -> {
+        DebugType.INJECT -> {
             val board = BoardIO.fromBoardText(this.payload, Renju.BOARD_CENTER_POS().idx()).get()
             val session = AiGameSession(
                 owner = user,
@@ -89,38 +88,7 @@ class DebugCommand(override val command: String, private val debugType: DebugTyp
         DebugType.STATUS -> {
             IO { Order.Unit } to this.asCommandReport("succeed", user)
         }
-        DebugType.BOARD_DEMO -> {
-            val complexCase = """
-                   A B C D E F G H I J K L M N O
-                15 . . . . . . . . . . . . . . . 15
-                14 . . . . . . . . . . . . . . . 14
-                13 . . . . . . . . . . . . . . . 13
-                12 . . . . . . . . . . . . . . . 12
-                11 . . . O . . O . . . . . . . . 11
-                10 . . . . X . . X . O . . . . . 10
-                 9 . . . . O X O X X . . . . . . 9
-                 8 . . . . . . X X . . . . . . . 8
-                 7 . . . . . . O O X X . . . . . 7
-                 6 . . . . . X . . . . . . . . . 6
-                 5 . . . . O X . . . . . . . . . 5
-                 4 . . . . . O . . . . . . . . . 4
-                 3 . . . . . . . . . . . . . . . 3
-                 2 . . . . . . . . . . . . . . . 2
-                 1 . . . . . . . . . . . . . . . 1
-                   A B C D E F G H I J K L M N O
-            """.trimMargin()
-
-            val board = BoardIO.fromBoardText(complexCase, Pos.fromCartesian("i9").get().idx()).get()
-
-            val session = PvpGameSession(user, user, true, board, Option.Empty, emptyList(),  "debug", 0, LinuxTime(0))
-
-            val io = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, session)
-                .map { producer.attachFocusButtons(it, session, Pos.fromCartesian("j10").get()) }
-                .map { it.launch(); Order.Unit }
-
-            io to this.asCommandReport("succeed", user)
-        }
-        DebugType.VCF_SESSION -> {
+        DebugType.VCF -> {
             val vcfCase = """
                        A B C D E F G H I J K L M N O
                     15 O . . . X . . . . . . . X . X 15

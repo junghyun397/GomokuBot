@@ -5,7 +5,7 @@ import club.minnced.jda.reactor.on
 import core.BotConfig
 import core.BotContext
 import core.assets.Guild
-import core.inference.B3nzeneClient
+import core.inference.KvineClient
 import core.interact.reports.InteractionReport
 import core.session.SessionManager
 import core.session.SessionRepository
@@ -50,11 +50,11 @@ private value class MySQLConfig(val serverURL: String) {
     }
 }
 
-private class B3nzeneConfig(val serverAddress: String, val serverPort: Int) {
+private class KvineConfig(val serverAddress: String, val serverPort: Int) {
     companion object {
-        fun fromEnv() = B3nzeneConfig(
-            serverAddress = System.getenv("GOMOKUBOT_B3NZENE_ADDRESS"),
-            serverPort = System.getenv("GOMOKUBOT_B3NZENE_PORT").toInt()
+        fun fromEnv() = KvineConfig(
+            serverAddress = System.getenv("GOMOKUBOT_KVINE_ADDRESS"),
+            serverPort = System.getenv("GOMOKUBOT_KVINE_PORT").toInt()
         )
     }
 }
@@ -86,21 +86,23 @@ object GomokuBot {
         val botConfig = BotConfig()
 
         val mySQLConfig = MySQLConfig.fromEnv()
-        val b3nzeneConfig = B3nzeneConfig.fromEnv()
+        val kvineConfig = KvineConfig.fromEnv()
 
         val databaseConnection = runBlocking {
             core.database.DatabaseConnection
                 .connectionFrom(mySQLConfig.serverURL)
         }
+
         logger.info("mysql database connected.")
 
-        val b3nzeneClient = B3nzeneClient
-            .connectionFrom(b3nzeneConfig.serverAddress, b3nzeneConfig.serverPort)
-        logger.info("b3nzene inference service connected.")
+        val kvineClient = KvineClient
+            .connectionFrom(kvineConfig.serverAddress, kvineConfig.serverPort)
+
+        logger.info("kvine inference service connected.")
 
         val sessionRepository = SessionRepository(databaseConnection = databaseConnection)
 
-        val botContext = BotContext(botConfig, databaseConnection, b3nzeneClient, sessionRepository)
+        val botContext = BotContext(botConfig, databaseConnection, kvineClient, sessionRepository)
 
         val eventManager = ReactiveEventManager()
 
@@ -157,7 +159,7 @@ object GomokuBot {
             .setEnabledIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS)
             .build()
 
-        scheduleCleaner(botContext, jda)
+        scheduleCleaner(logger, botContext, jda)
     }
 
 }

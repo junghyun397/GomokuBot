@@ -86,37 +86,28 @@ fun <A, B> IO<*>.attachFinishSequence(
     }
     .attachSweepSequence(bot, config, session)
 
-fun <A, B> helpSequenceAboutBot(
+fun <A, B> buildHelpSequence(
     bot: BotContext,
     config: GuildConfig,
-    producer: MessageProducer<A, B>,
-    publisher: MessagePublisher<A, B>
-) = producer.produceAboutBot(publisher, config.language.container)
-    .flatMap {
-        val messageAdaptor = it.retrieve()
+    publisher: MessagePublisher<A, B>,
+    producer: MessageProducer<A, B>
+) = IO.zip(producer.produceAboutBot(publisher, config.language.container), producer.produceLanguageGuide(publisher))
+    .flatMap { combined ->
+        val aboutMessage = combined.first.retrieve()
+        val settingsMessage = combined.second.retrieve()
 
         SessionManager.addNavigate(
             bot.sessionRepository,
-            messageAdaptor.message,
+            aboutMessage.message,
             NavigateState(NavigationKind.ABOUT, 0, LinuxTime.withExpireOffset(bot.config.navigatorExpireOffset))
         )
 
-        producer.attachBinaryNavigators(messageAdaptor)
-    }
-
-fun <A, B> helpSequenceSettings(
-    bot: BotContext,
-    producer: MessageProducer<A, B>,
-    publisher: MessagePublisher<A, B>
-) = producer.produceLanguageGuide(publisher)
-    .flatMap {
-        val messageAdaptor = it.retrieve()
-
         SessionManager.addNavigate(
             bot.sessionRepository,
-            messageAdaptor.message,
+            settingsMessage.message,
             NavigateState(NavigationKind.SETTINGS, 0, LinuxTime.withExpireOffset(bot.config.navigatorExpireOffset))
         )
 
-        producer.attachBinaryNavigators(messageAdaptor)
+        producer.attachBinaryNavigators(aboutMessage)
+            .flatMap { producer.attachBinaryNavigators(settingsMessage) }
     }

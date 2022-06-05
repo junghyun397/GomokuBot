@@ -39,7 +39,7 @@ class SetCommand(override val command: String, private val session: GameSession,
                     io to this.asCommandReport("make move ${pos.toCartesian()}", user)
                 }
                 is AiGameSession -> {
-                    val nextSession = GameManager.makeAiMove(bot.b3NzeneClient, thenSession, Pos.fromIdx(thenSession.board.latestMove()))
+                    val nextSession = GameManager.makeAiMove(bot.kvineClient, thenSession, Pos.fromIdx(thenSession.board.latestMove()))
 
                     nextSession.gameResult.fold(
                         onEmpty = {

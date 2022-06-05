@@ -57,7 +57,7 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
         SessionManager.retrieveGameSession(context.bot.sessionRepository, context.config.id, user.id)?.let { session ->
             Option(this.asParseFailure("already has game session", user) { producer, publisher, container ->
                 producer.produceSessionAlready(publisher, container, session.owner)
-                    .map { it.launch() }
+                    .map { SessionManager.appendMessage(context.bot.sessionRepository, session.messageBufferKey, it.retrieve().message) }
                     .attachBoardSequence(context.bot, context.config, producer, publisher, session)
                     .map { Order.Unit }
             })

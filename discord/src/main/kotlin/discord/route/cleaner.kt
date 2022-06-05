@@ -20,8 +20,10 @@ import utils.lang.schedule
 import utils.structs.IO
 import java.time.Duration
 
-fun scheduleCleaner(botContext: BotContext, jda: JDA) {
-    schedule(Duration.ofHours(1)) {
+fun scheduleCleaner(logger: org.slf4j.Logger, botContext: BotContext, jda: JDA) {
+    val exceptionHandler: (Exception) -> Unit  = { logger.error(it.stackTraceToString()) }
+
+    schedule(Duration.ofHours(1), exceptionHandler) {
         SessionManager.cleanExpiredGameSession(botContext.sessionRepository).forEach { combined ->
             val message = SessionManager.viewTailMessage(botContext.sessionRepository, combined.third.messageBufferKey)
 
@@ -58,7 +60,7 @@ fun scheduleCleaner(botContext: BotContext, jda: JDA) {
         SessionManager.cleanEmptySessions(botContext.sessionRepository)
     }
 
-    schedule(Duration.ofMinutes(5)) {
+    schedule(Duration.ofMinutes(5), exceptionHandler) {
         SessionManager.cleanExpiredRequestSessions(botContext.sessionRepository).forEach { combined ->
             val message = SessionManager.viewTailMessage(botContext.sessionRepository, combined.third.messageBufferKey)
 
@@ -83,7 +85,7 @@ fun scheduleCleaner(botContext: BotContext, jda: JDA) {
         }
     }
 
-    schedule(Duration.ofSeconds(5)) {
+    schedule(Duration.ofSeconds(5), exceptionHandler) {
         SessionManager.cleanExpiredNavigators(botContext.sessionRepository).forEach { navigate ->
             val guild = jda.getGuildById(navigate.key.guildId.idLong)
             val channel = guild?.getTextChannelById(navigate.key.channelId.idLong)

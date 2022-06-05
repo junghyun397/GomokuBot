@@ -3,7 +3,7 @@ package core.session
 import core.assets.User
 import core.assets.aiUser
 import core.inference.AiLevel
-import core.inference.B3nzeneClient
+import core.inference.KvineClient
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.PvpGameSession
@@ -114,7 +114,7 @@ object GameManager {
         )
     }
 
-    fun makeAiMove(b3nzeneClient: B3nzeneClient, session: AiGameSession, latestMove: Pos): AiGameSession {
+    fun makeAiMove(kvineClient: KvineClient, session: AiGameSession, latestMove: Pos): AiGameSession {
         val (aiMove, solutionNode) = session.solution
             .flatMap { solutionNode ->
                 solutionNode.child().get(latestMove.idx()).fold(
@@ -131,7 +131,7 @@ object GameManager {
                 },
                 onEmpty = {
                     when (val solution = session.aiLevel.solver(
-                        b3nzeneClient, session.board, Pos.fromIdx(session.board.latestMove()))
+                        kvineClient, session.board, Pos.fromIdx(session.board.latestMove()))
                     ) {
                         is SolutionNode -> solution.idx() to Option(solution)
                         else -> solution.idx() to Option.Empty

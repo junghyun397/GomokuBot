@@ -20,8 +20,7 @@ class HelpCommand(override val command: String) : Command {
         producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>,
     ) = runCatching {
-        val io = helpSequenceAboutBot(bot, config, producer, publisher)
-            .flatMap { helpSequenceSettings(bot, producer, publisher) }
+        val io = buildHelpSequence(bot, config, publisher, producer)
             .map { Order.Unit }
 
         io to this.asCommandReport("succeed", user)

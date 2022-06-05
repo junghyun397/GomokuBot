@@ -20,8 +20,6 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
 
     override val styleName = "IMAGE"
 
-    override val sampleView = ""
-
     private const val POINT_SIZE = 60 // Must have 30 as a factor
     private val BOARD_SIZE = POINT_SIZE * Renju.BOARD_WIDTH()
 

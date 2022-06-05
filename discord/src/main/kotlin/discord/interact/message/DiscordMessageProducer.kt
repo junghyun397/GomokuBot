@@ -30,10 +30,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageEmbed
+import net.dv8tion.jda.api.exceptions.ContextException
 import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
 import net.dv8tion.jda.api.requests.RestAction
+import utils.assets.toEnumString
+import utils.lang.memoize
 import utils.structs.IO
 import utils.structs.Option
 
@@ -103,11 +106,12 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
             }
         }
 
-    private fun buildNextMoveEmbed(container: LanguageContainer) =
+    private val buildNextMoveEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
             color = COLOR_GREEN_HEX
             description = container.boardCommandGuide()
         }
+    }
 
     override fun produceBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, session: GameSession): IO<DiscordMessageAction> {
         val barColor = session.gameResult.fold(onDefined = { COLOR_RED_HEX }, onEmpty = { COLOR_GREEN_HEX })
@@ -206,7 +210,9 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
                             }
                         }
                 }
-            } catch (_: CancellationException) {}
+            }
+            catch (_: CancellationException) {}
+            catch (_: ContextException) {} // JDA bug?
         }
 
     // GAME
@@ -257,12 +263,13 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
 
     // HELP
 
-    private fun buildAboutEmbed(container: LanguageContainer) =
+    private val buildAboutEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
             color = COLOR_NORMAL_HEX
             title = container.helpAboutEmbedTitle()
             description = container.helpAboutEmbedDescription("Discord")
-            thumbnail = "https://raw.githubusercontent.com/junghyun397/GomokuBot/master/discord/images/profile-thumbnail.jpg"
+            thumbnail =
+                "https://raw.githubusercontent.com/junghyun397/GomokuBot/master/discord/images/profile-thumbnail.jpg"
 
             field {
                 name = container.helpAboutEmbedDeveloper()
@@ -289,52 +296,54 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
                 name = "$UNICODE_ZAP Powered by Kotlin, Scala, Project Reactor, R2DBC, gRPC, JDA"
             }
         }
+    }
 
-    private fun buildCommandGuideEmbed(container: LanguageContainer) =
+    private val buildCommandGuideEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
             color = COLOR_NORMAL_HEX
             title = container.helpCommandEmbedTitle()
             field {
-                name = "``/${container.helpCommand()}`` or ``~${container.helpCommand()}``"
+                name = "``/${container.helpCommand()}`` or ``$COMMAND_PREFIX${container.helpCommand()}``"
                 value = container.helpCommandEmbedHelp()
                 inline = false
             }
             field {
-                name = "``/${container.startCommand()}`` or ``~${container.startCommand()}``"
+                name = "``/${container.startCommand()}`` or ``$COMMAND_PREFIX${container.startCommand()}``"
                 value = container.helpCommandEmbedStartPVE()
                 inline = false
             }
             field {
-                name = "``/${container.startCommand()} @mention`` or ``~${container.startCommand()} @mention``"
+                name = "``/${container.startCommand()} @mention`` or ``$COMMAND_PREFIX${container.startCommand()} @mention``"
                 value = container.helpCommandEmbedStartPVP()
                 inline = false
             }
             field {
-                name = "``/${container.resignCommand()}`` or ``~${container.resignCommand()}``"
+                name = "``/${container.resignCommand()}`` or ``$COMMAND_PREFIX${container.resignCommand()}``"
                 value = container.helpCommandEmbedResign()
                 inline = false
             }
             field {
-                name = "``/${container.languageCommand()}`` or ``~${container.languageCommand()}``"
+                name = "``/${container.languageCommand()}`` or ``$COMMAND_PREFIX${container.languageCommand()}``"
                 value = container.helpCommandEmbedLang(languageEnumeration)
                 inline = false
             }
             field {
-                name = "``/${container.styleCommand()}`` or ``~${container.styleCommand()}``"
+                name = "``/${container.styleCommand()}`` or ``$COMMAND_PREFIX${container.styleCommand()}``"
                 value = container.helpCommandEmbedStyle()
                 inline = false
             }
             field {
-                name = "``/${container.rankCommand()}`` or ``~${container.rankCommand()}``"
+                name = "``/${container.rankCommand()}`` or ``$COMMAND_PREFIX${container.rankCommand()}``"
                 value = container.helpCommandEmbedRank()
                 inline = false
             }
             field {
-                name = "``/${container.ratingCommand()}`` or ``~${container.ratingCommand()}``"
+                name = "``/${container.ratingCommand()}`` or ``$COMMAND_PREFIX${container.ratingCommand()}``"
                 value = container.helpCommandEmbedRating()
                 inline = false
             }
         }
+    }
 
     override fun produceAboutBot(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer) =
         IO { publisher(Message(embeds = listOf(this.buildAboutEmbed(container), this.buildCommandGuideEmbed(container)))) }
@@ -355,6 +364,7 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
                     when (page) {
                         0 -> message.editMessage(Message(embed = this.languageEmbed))
                         1 -> message.editMessage(Message(embed = this.buildStyleGuideEmbed(config.language.container)))
+                            .setActionRow(listOf(this.buildStylePolicyMenu(config)))
                         2 -> message.editMessage(Message(embed = this.buildFocusPolicyGuideEmbed(config.language.container)))
                             .setActionRow(listOf(this.buildFocusPolicyMenu(config)))
                         3 -> message.editMessage(Message(embed = this.buildSweepPolicyGuideEmbed(config.language.container)))
@@ -406,31 +416,67 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
 
     // SETTINGS
 
-    private fun buildStyleGuideEmbed(container: LanguageContainer) =
+    private val buildStyleGuideEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
-            color = COLOR_NORMAL_HEX
             title = container.styleEmbedTitle()
             description = container.styleEmbedDescription()
-            BoardStyle.values()
-                .drop(1)
-                .fold(this) { builder, style ->
-                    builder.also {
-                        field {
-                            name = "Style ${style.sample.styleShortcut.asHighlightFormat()}:${style.sample.styleName.asHighlightFormat()}"
-                            value = "${container.styleEmbedSuggestion(style.sample.styleShortcut.asHighlightFormat())}\n${style.sample.sampleView}"
-                            inline = false
-                        }
-                    }
-                }
+            color = COLOR_NORMAL_HEX
+
             field {
-                name = "Style ``A``:``IMAGE``"
-                value = container.styleEmbedSuggestion("A".asHighlightFormat())
+                name = "$UNICODE_IMAGE ${container.styleSelectImage()} (``${BoardStyle.IMAGE.sample.styleShortcut}``)"
+                value = container.styleSelectImageDescription()
                 inline = false
             }
-            image = "https://raw.githubusercontent.com/junghyun397/GomokuBot/master/discord/images/style-preview.jpg"
+
+            field {
+                name = "$UNICODE_T ${container.styleSelectText()} (``${BoardStyle.TEXT.sample.styleShortcut}``)"
+                value = container.styleSelectTextDescription()
+                inline = false
+            }
+
+            field {
+                name = "$UNICODE_T ${container.styleSelectSolidText()} (``${BoardStyle.SOLID_TEXT.sample.styleShortcut}``)"
+                value = container.styleSelectSolidTextDescription()
+                inline = false
+            }
+
+            field {
+                name = "$UNICODE_GEM ${container.styleSelectUnicodeText()} (``${BoardStyle.UNICODE.sample.styleShortcut}``)"
+                value = container.styleSelectUnicodeTextDescription()
+                inline = false
+            }
+        }
+    }
+
+    private fun buildStylePolicyMenu(config: GuildConfig) =
+        SelectMenu("p") {
+            option(
+                label = config.language.container.styleSelectImage(),
+                value = BoardStyle.IMAGE.toEnumString(),
+                emoji = EMOJI_IMAGE,
+                default = config.boardStyle == BoardStyle.IMAGE
+            )
+            option(
+                label = config.language.container.styleSelectText(),
+                value = BoardStyle.TEXT.toEnumString(),
+                emoji = EMOJI_T,
+                default = config.boardStyle == BoardStyle.TEXT
+            )
+            option(
+                label = config.language.container.styleSelectSolidText(),
+                value = BoardStyle.SOLID_TEXT.toEnumString(),
+                emoji = EMOJI_T,
+                default = config.boardStyle == BoardStyle.SOLID_TEXT
+            )
+            option(
+                label = config.language.container.styleSelectUnicodeText(),
+                value = BoardStyle.UNICODE.toEnumString(),
+                emoji = EMOJI_GEM,
+                default = config.boardStyle == BoardStyle.UNICODE
+            )
         }
 
-    private fun buildFocusPolicyGuideEmbed(container: LanguageContainer) =
+    private val buildFocusPolicyGuideEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
             title = container.focusEmbedTitle()
             description = container.focusEmbedDescription()
@@ -448,24 +494,25 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
                 inline = false
             }
         }
+    }
 
     private fun buildFocusPolicyMenu(config: GuildConfig) =
         SelectMenu("p") {
             option(
                 label = config.language.container.focusSelectIntelligence(),
-                value = "f-i",
+                value = FocusPolicy.INTELLIGENCE.toEnumString(),
                 emoji = EMOJI_ZAP,
                 default = config.focusPolicy == FocusPolicy.INTELLIGENCE
             )
             option(
                 label = config.language.container.focusSelectFallowing(),
-                value = "f-f",
+                value = FocusPolicy.FALLOWING.toEnumString(),
                 emoji = EMOJI_MAG,
                 default = config.focusPolicy == FocusPolicy.FALLOWING
             )
         }
 
-    private fun buildSweepPolicyGuideEmbed(container: LanguageContainer) =
+    private val buildSweepPolicyGuideEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
             title = container.sweepEmbedTitle()
             description = container.sweepEmbedDescription()
@@ -483,37 +530,38 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
                 inline = false
             }
         }
+    }
 
     private fun buildSweepPolicyMenu(config: GuildConfig) =
         SelectMenu("p") {
             option(
                 label = config.language.container.sweepSelectRelay(),
-                value = "s-r",
+                value = SweepPolicy.RELAY.toEnumString(),
                 emoji = EMOJI_BROOM,
                 default = config.sweepPolicy == SweepPolicy.RELAY
             )
             option(
                 label = config.language.container.sweepSelectLeave(),
-                value = "s-l",
+                value = SweepPolicy.LEAVE.toEnumString(),
                 emoji = EMOJI_CABINET,
                 default = config.sweepPolicy == SweepPolicy.LEAVE
             )
         }
 
-    private fun buildArchivePolicyGuideEmbed(container: LanguageContainer) =
+    private val buildArchivePolicyGuideEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
             title = container.archiveEmbedTitle()
             description = container.archiveEmbedDescription()
             color = COLOR_NORMAL_HEX
 
             field {
-                name = "$UNICODE_PERFORMING ${container.archiveSelectByAnonymous()}"
+                name = "$UNICODE_SILHOUETTE ${container.archiveSelectByAnonymous()}"
                 value = container.archiveSelectByAnonymousDescription()
                 inline = false
             }
 
             field {
-                name = "$UNICODE_SILHOUETTE ${container.archiveSelectWithProfile()}"
+                name = "$UNICODE_SMILING ${container.archiveSelectWithProfile()}"
                 value = container.archiveSelectWithProfileDescription()
                 inline = false
             }
@@ -524,24 +572,25 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
                 inline = false
             }
         }
+    }
 
     private fun buildArchivePolicyMenu(config: GuildConfig) =
         SelectMenu("p") {
             option(
                 label = config.language.container.archiveSelectByAnonymous(),
-                value = "a-a",
-                emoji = EMOJI_PERFORMING,
+                value = ArchivePolicy.BY_ANONYMOUS.toEnumString(),
+                emoji = EMOJI_SILHOUETTE,
                 default = config.archivePolicy == ArchivePolicy.BY_ANONYMOUS
             )
             option(
                 label = config.language.container.archiveSelectWithProfile(),
-                value = "a-p",
-                emoji = EMOJI_SILHOUETTE,
+                value = ArchivePolicy.WITH_PROFILE.toEnumString(),
+                emoji = EMOJI_SMILING,
                 default = config.archivePolicy == ArchivePolicy.WITH_PROFILE
             )
             option(
                 label = config.language.container.archiveSelectPrivacy(),
-                value = "a-b",
+                value = ArchivePolicy.PRIVACY.toEnumString(),
                 emoji = EMOJI_LOCK,
                 default = config.archivePolicy == ArchivePolicy.PRIVACY
             )

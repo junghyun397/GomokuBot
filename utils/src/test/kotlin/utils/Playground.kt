@@ -1,10 +1,20 @@
 package utils
 
 import utils.assets.bound
+import utils.assets.toEnumString
 import java.util.*
 import kotlin.test.Test
 
 internal class Playground {
+
+    enum class D {
+        A, B, C
+    }
+
+    @Test
+    fun enum() {
+        println(D.A.toEnumString())
+    }
 
     @Test
     fun prefixSum() {

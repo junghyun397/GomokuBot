@@ -129,7 +129,21 @@ open class LanguageENG : LanguageContainer {
 
     override fun configApplied(choice: String) = "$choice Setting has been applied to this server."
 
-    // ### 2-3-1. FOCUS
+    // ### 2-3-1. STYLE
+
+    override fun styleSelectImage() = "Image"
+    override fun styleSelectImageDescription() = "Render as an Image. Depending on the status of the Discord server, there may be some delays."
+
+    override fun styleSelectText() = "Text"
+    override fun styleSelectTextDescription() = "Render as a Monospaced Text. The fastest."
+
+    override fun styleSelectSolidText() = "Solid Text"
+    override fun styleSelectSolidTextDescription() = "Same as Text - but with dots instead of blanks."
+
+    override fun styleSelectUnicodeText() = "Unicode"
+    override fun styleSelectUnicodeTextDescription() = "Render as Unicode characters. Depending on the font settings, it may look broken."
+
+    // ### 2-3-2. FOCUS
 
     override fun focusEmbedTitle() = "GomokuBot / Focus"
     override fun focusEmbedDescription() =
@@ -143,7 +157,7 @@ open class LanguageENG : LanguageContainer {
     override fun focusSelectFallowingDescription() =
         "Always focus on the last move."
 
-    // ### 2-3-2. SWEEP
+    // ### 2-3-3. SWEEP
 
     override fun sweepEmbedTitle() = "GomokuBot / Sweep"
     override fun sweepEmbedDescription() =
@@ -157,7 +171,7 @@ open class LanguageENG : LanguageContainer {
     override fun sweepSelectLeaveDescription() =
         "Do not delete any messages. Except for the Navigators."
 
-    // ### 2-3-3. ARCHIVE
+    // ### 2-3-4. ARCHIVE
 
     override fun archiveEmbedTitle() = "GomokuBot / Archive"
     override fun archiveEmbedDescription() =

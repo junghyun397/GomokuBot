@@ -9,8 +9,6 @@ enum class Language(val container: LanguageContainer) {
     SKO(LanguageSKO())
 }
 
-typealias Highlighter = (String) -> String
-
 sealed interface LanguageContainer {
 
     fun languageCode(): String
@@ -131,7 +129,21 @@ sealed interface LanguageContainer {
 
     fun configApplied(choice: String): String
 
-    // ### 2-3-1. FOCUS
+    // ### 2-3-1. STYLE
+
+    fun styleSelectImage(): String
+    fun styleSelectImageDescription(): String
+
+    fun styleSelectText(): String
+    fun styleSelectTextDescription(): String
+
+    fun styleSelectSolidText(): String
+    fun styleSelectSolidTextDescription(): String
+
+    fun styleSelectUnicodeText(): String
+    fun styleSelectUnicodeTextDescription(): String
+
+    // ### 2-3-2. FOCUS
 
     fun focusEmbedTitle(): String
     fun focusEmbedDescription(): String
@@ -142,7 +154,7 @@ sealed interface LanguageContainer {
     fun focusSelectFallowing(): String
     fun focusSelectFallowingDescription(): String
 
-    // ### 2-3-2. SWEEP
+    // ### 2-3-3. SWEEP
 
     fun sweepEmbedTitle(): String
     fun sweepEmbedDescription(): String
@@ -153,7 +165,7 @@ sealed interface LanguageContainer {
     fun sweepSelectLeave(): String
     fun sweepSelectLeaveDescription(): String
 
-    // ### 2-3-3. ARCHIVE
+    // ### 2-3-4. ARCHIVE
 
     fun archiveEmbedTitle(): String
     fun archiveEmbedDescription(): String

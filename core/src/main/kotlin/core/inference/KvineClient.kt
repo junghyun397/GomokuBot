@@ -6,8 +6,8 @@ import io.grpc.ManagedChannelBuilder
 import java.io.Closeable
 import java.util.concurrent.TimeUnit
 
-class B3nzeneClient(private val channel: ManagedChannel) : Closeable {
-    private val b3nzeneStub = InferenceGrpcKt.InferenceCoroutineStub(channel)
+class KvineClient(private val channel: ManagedChannel) : Closeable {
+    private val kvineStub = InferenceGrpcKt.InferenceCoroutineStub(this.channel)
 
     override fun close() {
         this.channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
@@ -15,8 +15,8 @@ class B3nzeneClient(private val channel: ManagedChannel) : Closeable {
 
     companion object {
 
-        fun connectionFrom(serverAddress: String, serverPort: Int): B3nzeneClient =
-            B3nzeneClient(
+        fun connectionFrom(serverAddress: String, serverPort: Int): KvineClient =
+            KvineClient(
                 ManagedChannelBuilder
                     .forAddress(serverAddress, serverPort)
                     .build()

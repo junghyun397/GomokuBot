@@ -33,12 +33,14 @@ object DebugCommandParser : NamedParser, ParsableCommand {
 
         return Either.Left(DebugCommand(
             "debug", type,
-            context.event.message.contentRaw.split("\n").drop(1).let {
-                if (it.isEmpty())
-                    null
-                else
-                    it.reduce { acc, s -> acc + s }
-            }
+            context.event.message.contentRaw
+                .drop(
+                    context.event.message.contentRaw
+                        .split(" ")
+                        .take(2)
+                        .fold(0) { acc, s -> acc + s.length }
+                )
+                .ifEmpty { null }
         ))
     }
 

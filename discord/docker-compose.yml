@@ -17,8 +17,8 @@ services:
   gomokubot:
     image: gomokubot-discord
     environment:
-      - "GOMOKUBOT_B3NZENE_ADDRESS=localhost"
-      - "GOMOKUBOT_B3NZENE_PORT=2001"
+      - "GOMOKUBOT_KVINE_ADDRESS=localhost"
+      - "GOMOKUBOT_KVINE_PORT=2001"
 
       - "GOMOKUBOT_DB_URL=r2dbcs:mysql://root:1q2w3e4r!@localhost:3306/gomokubot?autoReconnection=true&useUnicode=true&characterEncoding=UTF-8"
 
