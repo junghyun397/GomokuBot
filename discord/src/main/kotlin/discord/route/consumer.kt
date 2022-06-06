@@ -4,6 +4,7 @@ import core.BotContext
 import core.interact.Order
 import core.session.SessionManager
 import discord.assets.JDAGuild
+import discord.assets.OFFICIAL_CHANNEL_ID
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import net.dv8tion.jda.api.Permission
@@ -39,7 +40,7 @@ suspend fun consumeIO(bot: BotContext, jdaGuild: JDAGuild, io: IO<Order>, source
                 GuildManager.removeNavigators(it)
             }
         is Order.ArchiveSession -> GuildManager.archiveSession(
-            jdaGuild.jda.getTextChannelById(553959991489331200)!!,
+            jdaGuild.jda.getTextChannelById(OFFICIAL_CHANNEL_ID)!!,
             order.session, order.policy
         )
         is Order.Unit -> Unit

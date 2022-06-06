@@ -69,7 +69,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
 
     private suspend fun parseActually(context: InteractionContext<*>, user: User, rawRow: String?, rawColumn: String?): Either<Command, DiscordParseFailure> =
         this.retrieveSession(context.bot, context.guild, user).flatMapLeft { session ->
-            if ((session.owner.id == user.id) xor !(session.board.isNextColorBlack xor session.ownerHasBlack))
+            if (session.nextPlayer.id != user.id)
                 return Either.Right(this.composeOrderFailure(context.bot, session, user, session.player))
 
             if (rawRow == null || rawColumn == null)
@@ -126,7 +126,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
         val session = SessionManager.retrieveGameSession(context.bot.sessionRepository, context.config.id, userId)
             ?: return Option.Empty
 
-        if ((session.owner.id == userId) xor !(session.board.isNextColorBlack xor session.ownerHasBlack))
+        if (session.nextPlayer.id != userId)
             return Option.Empty
 
         return Option(SetCommand("s", session, pos))

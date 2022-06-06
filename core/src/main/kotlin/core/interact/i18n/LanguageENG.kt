@@ -123,7 +123,7 @@ open class LanguageENG : LanguageContainer {
     // ### 2-2-4. STYLE:SUCCEED:CHANGED (MESSAGE)
 
     override fun styleUpdated(styleName: String) =
-        "Style setting has been changed to style $styleName!"
+        "Style setting has been changed to style ``$styleName``!"
 
     // ## 2-3. POLICY
 
@@ -240,7 +240,7 @@ open class LanguageENG : LanguageContainer {
     // ### 3-2-4. SET:ERROR:FORBIDDEN (MESSAGE)
 
     override fun setErrorForbidden(player: String, move: String, forbiddenKind: String) =
-        "$player, ``$move`` is ``$forbiddenKind forbidden move``. Please move to another place."
+        "$player, ``$move`` is ``$forbiddenKind`` forbidden move. Please move to another place."
 
     // ## 3-3. RESIGN
 
@@ -353,7 +353,7 @@ open class LanguageENG : LanguageContainer {
     // ## 6-1. PERMISSION-NOT-GRANTED (EMBED)
 
     override fun permissionNotGrantedEmbedDescription(channelName: String) =
-        "GomokuBot dose not has permission to send messages to ``$channelName``! Please check the role and permission settings."
+        "GomokuBot dose not has permission to send messages to $channelName! Please check the role and permission settings."
 
     override fun permissionNotGrantedEmbedFooter() = "this message will be deleted after a minute."
 

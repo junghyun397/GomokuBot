@@ -32,7 +32,7 @@ class LangCommand(override val command: String, private val language: Language) 
         val io = producer.produceLanguageUpdated(publisher, this.language.container)
             .map { it.launch() }
             .flatMap {
-                producer.produceAboutBot(publisher, config.language.container)
+                producer.produceAboutBot(publisher, thenConfig.language.container)
                     .flatMap {
                         val aboutMessage = it.retrieve()
 

@@ -4,7 +4,6 @@ import core.assets.UserId
 import core.interact.commands.Command
 import core.interact.commands.RejectCommand
 import core.session.SessionManager
-import discord.assets.extractId
 import discord.interact.InteractionContext
 import discord.interact.parse.EmbeddableCommand
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
@@ -19,9 +18,6 @@ object RejectCommandParser : EmbeddableCommand {
             .toLongOrNull()
             ?.let { UserId(it) }
             ?: return Option.Empty
-
-        if (context.event.user.extractId() == owner)
-            return Option.Empty
 
         val session = SessionManager.retrieveRequestSessionByOwner(context.bot.sessionRepository, context.guild.id, owner)
             ?: return Option.Empty

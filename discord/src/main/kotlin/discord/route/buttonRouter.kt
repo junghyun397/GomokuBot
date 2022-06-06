@@ -58,8 +58,9 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
                 config = it.t1.config,
                 user = it.t1.event.user.extractUser(),
                 message = async { DiscordMessageAdaptor(it.t1.event.hook.retrieveOriginal().await()) },
-                producer = DiscordMessageProducer
-            ) { msg -> WebHookActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
+                producer = DiscordMessageProducer,
+                publisher = { msg -> WebHookActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
+            )
         }) }
         .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.map { combined ->
             consumeIO(it.t1, combined.first, it.t1.event.message)

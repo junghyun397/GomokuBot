@@ -160,7 +160,7 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
         )
     }
 
-    override fun produceSessionArchive(publisher: MessagePublisher<Message, DiscordButtons>, session: GameSession): IO<DiscordMessageAction> {
+    override fun produceSessionArchive(publisher: DiscordMessagePublisher, session: GameSession): IO<DiscordMessageAction> {
         val board = ImageBoardRenderer.renderBoardImage(session.board, Option(session.history))
         return IO { publisher(Message(
             embed = Embed {
@@ -217,10 +217,10 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
 
     // GAME
 
-    override fun produceBeginsPVP(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, blackPlayer: User, whitePlayer: User): IO<MessageIO<Message, DiscordButtons>> =
+    override fun produceBeginsPVP(publisher: DiscordMessagePublisher, container: LanguageContainer, blackPlayer: User, whitePlayer: User): IO<MessageIO<Message, DiscordButtons>> =
         IO { publisher(Message(container.beginPVP(blackPlayer.asMentionFormat(), whitePlayer.asMentionFormat()))) }
 
-    override fun produceBeginsPVE(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User, ownerHasBlack: Boolean) =
+    override fun produceBeginsPVE(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, ownerHasBlack: Boolean) =
         IO { publisher(Message(
             if (ownerHasBlack)
                 container.beginPVEAiWhite(owner.asMentionFormat())
@@ -228,37 +228,37 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
                 container.beginPVEAiBlack(owner.asMentionFormat())
         ))}
 
-    override fun produceNextMovePVP(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, previousPlayer: User, nextPlayer: User, latestMove: Pos) =
+    override fun produceNextMovePVP(publisher: DiscordMessagePublisher, container: LanguageContainer, previousPlayer: User, nextPlayer: User, latestMove: Pos) =
         IO { publisher(Message(container.processNextPVP(previousPlayer.asMentionFormat(), nextPlayer.asMentionFormat(), latestMove.toCartesian().asHighlightFormat()))) }
 
-    override fun produceWinPVP(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, winner: User, looser: User, latestMove: Pos) =
+    override fun produceWinPVP(publisher: DiscordMessagePublisher, container: LanguageContainer, winner: User, looser: User, latestMove: Pos) =
         IO { publisher(Message(container.endPVPWin(winner.asMentionFormat(), looser.asMentionFormat(), latestMove.toCartesian().asHighlightFormat())))}
 
-    override fun produceTiePVP(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User, opponent: User) =
+    override fun produceTiePVP(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
         IO { publisher(Message(container.endPVPTie(owner.asMentionFormat(), opponent.asMentionFormat()))) }
 
-    override fun produceSurrenderedPVP(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, winner: User, looser: User) =
+    override fun produceSurrenderedPVP(publisher: DiscordMessagePublisher, container: LanguageContainer, winner: User, looser: User) =
         IO { publisher(Message(container.endPVPResign(winner.asMentionFormat(), looser.asMentionFormat()))) }
 
-    override fun produceTimeoutPVP(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, winner: User, looser: User) =
+    override fun produceTimeoutPVP(publisher: DiscordMessagePublisher, container: LanguageContainer, winner: User, looser: User) =
         IO { publisher(Message(container.endPVPTimeOut(winner.asMentionFormat(), looser.asMentionFormat()))) }
 
-    override fun produceNextMovePVE(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User, latestMove: Pos) =
+    override fun produceNextMovePVE(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, latestMove: Pos) =
         IO { publisher(Message(container.processNextPVE(owner.asMentionFormat(), latestMove.toCartesian().asHighlightFormat()))) }
 
-    override fun produceWinPVE(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User, latestMove: Pos) =
+    override fun produceWinPVE(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, latestMove: Pos) =
         IO { publisher(Message(container.endPVEWin(owner.asMentionFormat(), latestMove.toCartesian().asHighlightFormat()))) }
 
-    override fun produceLosePVE(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User, latestMove: Pos) =
+    override fun produceLosePVE(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, latestMove: Pos) =
         IO { publisher(Message(container.endPVELose(owner.asMentionFormat(), latestMove.toCartesian().asHighlightFormat())))}
 
-    override fun produceTiePVE(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User) =
+    override fun produceTiePVE(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User) =
         IO { publisher(Message(container.endPVETie(owner.asMentionFormat()))) }
 
-    override fun produceSurrenderedPVE(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User) =
+    override fun produceSurrenderedPVE(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User) =
         IO { publisher(Message(container.endPVEResign(owner.asMentionFormat())))}
 
-    override fun produceTimeoutPVE(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, player: User) =
+    override fun produceTimeoutPVE(publisher: DiscordMessagePublisher, container: LanguageContainer, player: User) =
         IO { publisher(Message(container.endPVETimeOut(player.asMentionFormat()))) }
 
     // HELP
@@ -345,7 +345,7 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
         }
     }
 
-    override fun produceAboutBot(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer) =
+    override fun produceAboutBot(publisher: DiscordMessagePublisher, container: LanguageContainer) =
         IO { publisher(Message(embeds = listOf(this.buildAboutEmbed(container), this.buildCommandGuideEmbed(container)))) }
 
     override fun paginateAboutBot(original: MessageAdaptor<Message, DiscordButtons>, container: LanguageContainer, page: Int) =
@@ -378,7 +378,7 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
 
     // RANK
 
-    override fun produceRankings(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, rankings: Set<SimpleProfile>) =
+    override fun produceRankings(publisher: DiscordMessagePublisher, container: LanguageContainer, rankings: Set<SimpleProfile>) =
         IO { publisher(Message(
             embed = Embed {
                 title = container.rankEmbedTitle()
@@ -388,7 +388,7 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
 
     // RATING
 
-    override fun produceRating(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer) = TODO()
+    override fun produceRating(publisher: DiscordMessagePublisher, container: LanguageContainer) = TODO()
 
     // LANG
 
@@ -408,10 +408,10 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
     override fun produceLanguageGuide(publisher: DiscordMessagePublisher) =
         IO { publisher(Message(embed = languageEmbed)) }
 
-    override fun produceLanguageNotFound(publisher: MessagePublisher<Message, DiscordButtons>) =
+    override fun produceLanguageNotFound(publisher: DiscordMessagePublisher) =
         IO { publisher(Message(content = "There is an error in the Language Code. Please select from the llist below.")) }
 
-    override fun produceLanguageUpdated(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer) =
+    override fun produceLanguageUpdated(publisher: DiscordMessagePublisher, container: LanguageContainer) =
         IO { publisher(Message(content = container.languageUpdated())) }
 
     // SETTINGS
@@ -601,56 +601,56 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
     override fun produceStyleGuide(publisher: DiscordMessagePublisher, container: LanguageContainer) =
         IO { publisher(Message(embed = this.buildStyleGuideEmbed(container))) }
 
-    override fun produceStyleNotFound(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, user: User) =
+    override fun produceStyleNotFound(publisher: DiscordMessagePublisher, container: LanguageContainer, user: User) =
         IO { publisher(Message(content = container.styleErrorNotfound(user.asMentionFormat()))) }
 
-    override fun produceStyleUpdated(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, style: String) =
+    override fun produceStyleUpdated(publisher: DiscordMessagePublisher, container: LanguageContainer, style: String) =
         IO { publisher(Message(content = container.styleUpdated(style))) }
 
     // POLICY
 
-    override fun produceConfigApplied(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, configKind: String, configChoice: String) =
+    override fun produceConfigApplied(publisher: DiscordMessagePublisher, container: LanguageContainer, configKind: String, configChoice: String) =
         IO { publisher(Message(content = container.configApplied(configChoice.asHighlightFormat()))) }
 
     // SESSION
 
-    override fun produceSessionNotFound(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, user: User) =
+    override fun produceSessionNotFound(publisher: DiscordMessagePublisher, container: LanguageContainer, user: User) =
         IO { publisher(Message(content = container.sessionNotFound(user.asMentionFormat()))) }
 
     // START
 
-    override fun produceSessionAlready(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User) =
+    override fun produceSessionAlready(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User) =
         IO { publisher(Message(content = container.startErrorSessionAlready(owner.asMentionFormat()))) }
 
-    override fun produceOpponentSessionAlready(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User, opponent: User) =
+    override fun produceOpponentSessionAlready(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
         IO { publisher(Message(content = container.startErrorOpponentSessionAlready(owner.asMentionFormat(), opponent.asMentionFormat())))}
 
-    override fun produceRequestAlreadySent(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User, opponent: User) =
+    override fun produceRequestAlreadySent(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
         IO { publisher(Message(content = container.startErrorRequestAlreadySent(owner.asMentionFormat(), opponent.asMentionFormat())))}
 
-    override fun produceRequestAlready(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User, opponent: User) =
+    override fun produceRequestAlready(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
         IO { publisher(Message(content = container.startErrorRequestAlready(owner.asMentionFormat(), opponent.asMentionFormat()))) }
 
-    override fun produceOpponentRequestAlready(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User, opponent: User) =
+    override fun produceOpponentRequestAlready(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
         IO { publisher(Message(content = container.startErrorOpponentRequestAlready(owner.asMentionFormat(), opponent.asMentionFormat())))}
 
     // SET
 
-    override fun produceOrderFailure(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, user: User, player: User) =
+    override fun produceOrderFailure(publisher: DiscordMessagePublisher, container: LanguageContainer, user: User, player: User) =
         IO { publisher(Message(content = container.processErrorOrder(user.asMentionFormat(), player.asMentionFormat()))) }
 
-    override fun produceSetIllegalArgument(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, user: User) =
+    override fun produceSetIllegalArgument(publisher: DiscordMessagePublisher, container: LanguageContainer, user: User) =
         IO { publisher(Message(content = container.setErrorIllegalArgument(user.asMentionFormat()))) }
 
-    override fun produceSetAlreadyExist(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, user: User, pos: Pos) =
+    override fun produceSetAlreadyExist(publisher: DiscordMessagePublisher, container: LanguageContainer, user: User, pos: Pos) =
         IO { publisher(Message(content = container.setErrorExist(user.asMentionFormat(), pos.toCartesian().asHighlightFormat()))) }
 
-    override fun produceSetForbiddenMove(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, user: User, pos: Pos, forbiddenFlag: Byte) =
+    override fun produceSetForbiddenMove(publisher: DiscordMessagePublisher, container: LanguageContainer, user: User, pos: Pos, forbiddenFlag: Byte) =
         IO { publisher(Message(content = container.setErrorForbidden(user.asMentionFormat(), pos.toCartesian().asHighlightFormat(), forbiddenFlagToText(forbiddenFlag).asHighlightFormat()))) }
 
     // REQUEST
 
-    override fun produceRequest(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User, opponent: User) =
+    override fun produceRequest(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
         IO { publisher(Message(
             embed = Embed {
                 color = COLOR_GREEN_HEX
@@ -664,15 +664,15 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
             ))
         ) }
 
-    override fun produceRequestRejected(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User, opponent: User) =
+    override fun produceRequestRejected(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
         IO { publisher(Message(content = container.requestRejected(owner.asMentionFormat(), opponent.asMentionFormat()))) }
 
-    override fun produceRequestExpired(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, owner: User, opponent: User) =
+    override fun produceRequestExpired(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
         IO { publisher(Message(content = container.requestExpired(owner.asMentionFormat(), opponent.asMentionFormat()))) }
 
     // UTILS
 
-    override fun produceNotYetImplemented(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, officialChannel: String) =
+    override fun produceNotYetImplemented(publisher: DiscordMessagePublisher, container: LanguageContainer, officialChannel: String) =
         IO { publisher(Message(
             embed = Embed {
                 color = COLOR_RED_HEX

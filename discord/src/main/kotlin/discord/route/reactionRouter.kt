@@ -59,8 +59,9 @@ fun reactionRouter(context: InteractionContext<MessageReactionAddEvent>): Mono<T
                 config = it.t1.config,
                 user = it.t1.event.user!!.extractUser(),
                 message = async { DiscordMessageAdaptor(it.t2.getOrException().second) },
-                producer = DiscordMessageProducer
-            ) { msg -> MessageActionAdaptor(it.t1.event.channel.sendMessage(msg)) }
+                producer = DiscordMessageProducer,
+                publisher = { msg -> MessageActionAdaptor(it.t1.event.channel.sendMessage(msg)) }
+            )
         }) }
         .flatMap { Mono.zip(it.t1.toMono(), mono { it.t3.map { combined ->
             consumeIO(it.t1, combined.first, it.t2)

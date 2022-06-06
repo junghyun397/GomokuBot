@@ -62,18 +62,23 @@ object GuildManager {
 
     fun retainFirstEmbed(message: net.dv8tion.jda.api.entities.Message) {
         message.editMessage(Message(embed = message.embeds.first()))
-            .retainFiles(message.attachments) // TODO: v10 API
+            .retainFiles(message.attachments) // TODO: JDA v10 API
             .queue()
     }
 
-    fun removeNavigators(message: net.dv8tion.jda.api.entities.Message) =
-        message.editMessageComponents()
-            .and(
-                message
-                    .reactions
-                    .map { it.removeReaction() }
-                    .reduce { acc, removeAction -> acc.delay(Duration.ofMillis(500)).and(removeAction) }
-            )
-            .queue()
+    fun removeNavigators(message: net.dv8tion.jda.api.entities.Message) {
+        val action = if (message.reactions.isNotEmpty())
+            message.editMessageComponents()
+                .and(
+                    message
+                        .reactions
+                        .map { it.removeReaction() }
+                        .reduce { acc, removeAction -> acc.delay(Duration.ofMillis(500)).and(removeAction) }
+                )
+        else
+            message.editMessageComponents()
+
+        action.queue()
+    }
 
 }

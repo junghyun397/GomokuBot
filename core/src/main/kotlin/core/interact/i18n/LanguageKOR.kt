@@ -114,7 +114,7 @@ open class LanguageKOR : LanguageENG() {
 
     // ### 2-2-4. STYLE:SUCCEED:CHANGED (MESSAGE)
 
-    override fun styleUpdated(styleName: String) = "스타일 설정이 스타일 ${styleName}로 바뀌었습니다!"
+    override fun styleUpdated(styleName: String) = "스타일 설정이 스타일 ``${styleName}``로 바뀌었습니다!"
 
     // ## 2-3. POLICY
 
@@ -281,7 +281,7 @@ open class LanguageKOR : LanguageENG() {
     // ## 6-1. PERMISSION-NOT-GRANTED (EMBED)
 
     override fun permissionNotGrantedEmbedDescription(channelName: String) =
-        "Gokomubot은 ``$channelName`` 채널에 메시지를 보낼 권한이 없습니다! 역할 및 퍼미션 설정을 확인해 주세요."
+        "Gokomubot은 $channelName 채널에 메시지를 보낼 권한이 없습니다! 역할 및 퍼미션 설정을 확인해 주세요."
 
     override fun permissionNotGrantedEmbedFooter() = "이 메시지는 1분 뒤 지워집니다."
 

@@ -4,6 +4,7 @@ import core.assets.*
 import net.dv8tion.jda.api.entities.Emoji
 
 const val COMMAND_PREFIX = 126.toChar() // "~"
+const val OFFICIAL_CHANNEL_ID = 553959991489331200
 
 val EMOJI_BLACK_CIRCLE = Emoji.fromUnicode(UNICODE_BLACK_CIRCLE)
 val EMOJI_WHITE_CIRCLE = Emoji.fromUnicode(UNICODE_WHITE_CIRCLE)
