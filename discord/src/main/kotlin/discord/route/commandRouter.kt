@@ -30,6 +30,9 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.util.function.Tuple2
+import utils.lang.component1
+import utils.lang.component2
+import utils.lang.component3
 import utils.structs.Either
 import utils.structs.IO
 import utils.structs.Option
@@ -77,41 +80,43 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
             container = context.config.language.container
         ).toMono()
     )
-        .filter { it.t2.isDefined }
-        .doOnNext { it.t1.event
-            .deferReply().queue()
+        .filter { (_, parsable) -> parsable.isDefined }
+        .doOnNext { (context, _) ->
+            context.event.deferReply().queue()
         }
-        .flatMap { Mono.zip(it.t1.toMono(), mono {
-            buildPermissionNode(it.t1.event.textChannel, it.t1.event.user, it.t2.getOrException()).fold(
+        .flatMap { (context, parsable) -> Mono.zip(context.toMono(), mono {
+            buildPermissionNode(context.event.textChannel, context.event.user, parsable.getOrException()).fold(
                 onDefined = { failure -> Either.Right(failure) },
-                onEmpty = { it.t2.getOrException()
-                    .parseSlash(it.t1)
+                onEmpty = { parsable.getOrException()
+                    .parseSlash(context)
                 }
             )
         }) }
-        .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.fold(
+        .flatMap { (context, parsed) -> Mono.zip(context.toMono(), mono { parsed.fold(
             onLeft = { command ->
                 command.execute(
-                    bot = it.t1.bot,
-                    config = it.t1.config,
-                    user = it.t1.event.user.extractUser(),
-                    message = async { DiscordMessageAdaptor(it.t1.event.hook.retrieveOriginal().await()) },
+                    bot = context.bot,
+                    config = context.config,
+                    user = context.event.user.extractUser(),
+                    message = async { DiscordMessageAdaptor(context.event.hook.retrieveOriginal().await()) },
                     producer = DiscordMessageProducer,
-                    publisher = { msg -> WebHookActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
+                    publisher = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) }
                 )
             } ,
             onRight = { parseFailure ->
                 parseFailure.notice(
-                    guildConfig = it.t1.config,
+                    guildConfig = context.config,
                     producer = DiscordMessageProducer,
-                    publisher = { msg -> WebHookActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
+                    publisher = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) }
                 )
             }
         ) }) }
-        .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.map { combined ->
-            consumeIO(it.t1, combined.first, null)
-            combined.second
-        } }) }
+        .flatMap { (context, result) ->
+            Mono.zip(context.toMono(), mono { result.map { (io, report) ->
+                export(context, io, null)
+                report
+            } })
+        }
 
 fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<Tuple2<InteractionContext<MessageReceivedEvent>, Result<CommandReport>>> =
     run {
@@ -137,41 +142,45 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
             it.toMono()
         )
     }
-        .filter { it.t2.isDefined }
-        .flatMap { Mono.zip(it.t1.toMono(), mono {
-            buildPermissionNode(it.t1.event.textChannel, it.t1.event.author, it.t2.getOrException()).fold(
+        .filter { (_, parsable, _) -> parsable.isDefined }
+        .flatMap { (context, parsable, payload) -> Mono.zip(context.toMono(), mono {
+            buildPermissionNode(context.event.textChannel, context.event.author, parsable.getOrException()).fold(
                 onDefined = { failure -> Either.Right(failure) },
-                onEmpty = { it.t2.getOrException()
-                    .parseText(it.t1, it.t3)
+                onEmpty = { parsable.getOrException()
+                    .parseText(context, payload)
                 }
             )
         }) }
-        .doOnNext {
-            GuildManager.permissionSafeRun(it.t1.event.textChannel, Permission.MESSAGE_ADD_REACTION) { _ ->
-                if (it.t2.isLeft) it.t1.event.message.addReaction(UNICODE_CHECK).queue()
-                else it.t1.event.message.addReaction(UNICODE_CROSS).queue()
+        .doOnNext { (context, parsed) ->
+            GuildManager.permissionGrantedRun(context.event.textChannel, Permission.MESSAGE_ADD_REACTION) {
+                parsed.fold(
+                    onLeft = { context.event.message.addReaction(UNICODE_CHECK).queue() },
+                    onRight = { context.event.message.addReaction(UNICODE_CROSS).queue() }
+                )
             }
         }
-        .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.fold(
+        .flatMap { (context, parsed) -> Mono.zip(context.toMono(), mono { parsed.fold(
             onLeft = { command ->
                 command.execute(
-                    bot = it.t1.bot,
-                    config = it.t1.config,
-                    user = it.t1.event.author.extractUser(),
-                    message = async { DiscordMessageAdaptor(it.t1.event.message) },
+                    bot = context.bot,
+                    config = context.config,
+                    user = context.event.author.extractUser(),
+                    message = async { DiscordMessageAdaptor(context.event.message) },
                     producer = DiscordMessageProducer,
-                    publisher = { msg -> MessageActionAdaptor(it.t1.event.message.reply(msg)) }
+                    publisher = { msg -> MessageActionAdaptor(context.event.message.reply(msg)) }
                 )
             },
             onRight = { parseFailure ->
                 parseFailure.notice(
-                    guildConfig = it.t1.config,
+                    guildConfig = context.config,
                     producer = DiscordMessageProducer,
-                    publisher = { msg -> MessageActionAdaptor(it.t1.event.message.reply(msg)) }
+                    publisher = { msg -> MessageActionAdaptor(context.event.message.reply(msg)) }
                 )
             }
         ) }) }
-        .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.map { combined ->
-            consumeIO(it.t1, combined.first, null)
-            combined.second
-        } }) }
+        .flatMap { (context, result) ->
+            Mono.zip(context.toMono(), mono { result.map { (io, report) ->
+                export(context, io, null)
+                report
+            } })
+        }

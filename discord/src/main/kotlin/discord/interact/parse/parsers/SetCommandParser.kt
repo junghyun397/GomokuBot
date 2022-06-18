@@ -24,6 +24,7 @@ import discord.interact.parse.EmbeddableCommand
 import discord.interact.parse.ParsableCommand
 import jrenju.notation.Color
 import jrenju.notation.Pos
+import jrenju.notation.Renju
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
@@ -38,38 +39,38 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
     override val name = "s"
 
     private fun matchColumn(option: String): Int? =
-        option.firstOrNull()?.let { if (it.code in 97..112) it.code - 97 else null }
+        option.firstOrNull()?.let { if (it.code in 97 .. 97 + Renju.BOARD_WIDTH()) it.code - 97 else null }
 
     private fun matchRow(option: String): Int? =
-        option.toIntOrNull()?.let { if (it in 1..15) it - 1 else null }
+        option.toIntOrNull()?.let { if (it in 1..Renju.BOARD_WIDTH()) it - 1 else null }
 
     private fun composeOrderFailure(context: BotContext, session: GameSession, user: User, player: User): DiscordParseFailure =
         this.asParseFailure("try move but now $player's turn", user) { producer, publisher, container ->
             producer.produceOrderFailure(publisher, container, user, player)
-                .map { SessionManager.appendMessage(context.sessionRepository, session.messageBufferKey, it.retrieve().message); Order.Unit }
+                .map { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.retrieve().messageRef); Order.Unit }
         }
 
     private fun composeMissMatchFailure(context: BotContext, session: GameSession, user: User): DiscordParseFailure =
         this.asParseFailure("try move but argument missmatch", user) { producer, publisher, container ->
             producer.produceSetIllegalArgument(publisher, container, user)
-                .map { SessionManager.appendMessage(context.sessionRepository, session.messageBufferKey, it.retrieve().message); Order.Unit }
+                .map { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.retrieve().messageRef); Order.Unit }
         }
 
     private fun composeExistFailure(context: BotContext, session: GameSession, user: User, pos: Pos): DiscordParseFailure =
         this.asParseFailure("make move but already exist", user) { producer, publisher, container ->
             producer.produceSetAlreadyExist(publisher, container, user, pos)
-                .map { SessionManager.appendMessage(context.sessionRepository, session.messageBufferKey, it.retrieve().message); Order.Unit }
+                .map { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.retrieve().messageRef); Order.Unit }
         }
 
     private fun composeForbiddenMoveFailure(context: BotContext, session: GameSession, user: User, pos: Pos, flag: Byte): DiscordParseFailure =
         this.asParseFailure("make move but forbidden", user) { producer, publisher, container ->
             producer.produceSetForbiddenMove(publisher, container, user, pos, flag)
-                .map { SessionManager.appendMessage(context.sessionRepository, session.messageBufferKey, it.retrieve().message); Order.Unit }
+                .map { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.retrieve().messageRef); Order.Unit }
         }
 
     private suspend fun parseActually(context: InteractionContext<*>, user: User, rawRow: String?, rawColumn: String?): Either<Command, DiscordParseFailure> =
         this.retrieveSession(context.bot, context.guild, user).flatMapLeft { session ->
-            if (session.nextPlayer.id != user.id)
+            if (session.player.id != user.id)
                 return Either.Right(this.composeOrderFailure(context.bot, session, user, session.player))
 
             if (rawRow == null || rawColumn == null)
@@ -107,7 +108,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
         val (rawColumn, rawRow) = payload
             .drop(1)
             .take(2)
-            .let { if (it.size != 2) listOf(null, null) else it }
+            .let { if (it.size != 2) null to null else it.component1() to it.component2() }
 
         return this.parseActually(context, context.event.author.extractUser(), rawRow, rawColumn)
     }
@@ -123,10 +124,10 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
 
         val userId = context.event.user.extractId()
 
-        val session = SessionManager.retrieveGameSession(context.bot.sessionRepository, context.config.id, userId)
+        val session = SessionManager.retrieveGameSession(context.bot.sessions, context.config.id, userId)
             ?: return Option.Empty
 
-        if (session.nextPlayer.id != userId)
+        if (session.player.id != userId)
             return Option.Empty
 
         return Option(SetCommand("s", session, pos))

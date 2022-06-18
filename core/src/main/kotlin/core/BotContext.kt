@@ -7,5 +7,5 @@ data class BotContext(
     val config: BotConfig,
     val databaseConnection: core.database.DatabaseConnection,
     val kvineClient: KvineClient,
-    val sessionRepository: SessionRepository,
+    val sessions: SessionRepository,
 )

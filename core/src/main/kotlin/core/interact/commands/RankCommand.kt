@@ -21,9 +21,10 @@ class RankCommand(override val command: String) : Command {
         producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>,
     ) = runCatching {
-        val rankings = DatabaseManager.retrieveRanking(bot.databaseConnection)
+        val rankings = DatabaseManager.retrieveRanking(bot.databaseConnection, 10)
 
-        val io = producer.produceRankings(publisher, config.language.container, rankings).map { it.launch(); Order.Unit }
+        val io = producer.produceRankings(publisher, config.language.container, rankings)
+            .map { it.launch(); Order.Unit }
 
         io to this.asCommandReport("succeed", user)
     }

@@ -8,7 +8,7 @@ data class User(val id: UserId, val name: String, val nameTag: String, val profi
     override fun toString() = "[$nameTag](${id.idLong})"
 }
 
-data class Message(val id: MessageId, val guildId: GuildId, val channelId: ChannelId)
+data class MessageRef(val id: MessageId, val guildId: GuildId, val channelId: ChannelId)
 
 @JvmInline value class GuildId(val idLong: Long)
 

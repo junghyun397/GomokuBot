@@ -20,6 +20,8 @@ import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteract
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.util.function.Tuple2
+import utils.lang.component1
+import utils.lang.component2
 import utils.structs.Option
 import utils.structs.asOption
 
@@ -41,28 +43,28 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
             )
         }.toMono()
     )
-        .flatMap { Mono.zip(
-            it.t1.toMono(),
-            mono { it.t2.flatMap { parsable ->
-                parsable.parseButton(it.t1)
+        .flatMap { (context, parsable) -> Mono.zip(
+            context.toMono(),
+            mono { parsable.flatMap { parsable ->
+                parsable.parseButton(context)
             } }
         ) }
-        .filter { it.t2.isDefined }
-        .doOnNext {
-            it.t1.event
+        .filter { (_, parsable) -> parsable.isDefined }
+        .doOnNext { (context, _) ->
+            context.event
                 .deferReply().queue()
         }
-        .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.getOrException()
+        .flatMap { (context, command) -> Mono.zip(context.toMono(), mono { command.getOrException()
             .execute(
-                bot = it.t1.bot,
-                config = it.t1.config,
-                user = it.t1.event.user.extractUser(),
-                message = async { DiscordMessageAdaptor(it.t1.event.hook.retrieveOriginal().await()) },
+                bot = context.bot,
+                config = context.config,
+                user = context.event.user.extractUser(),
+                message = async { DiscordMessageAdaptor(context.event.hook.retrieveOriginal().await()) },
                 producer = DiscordMessageProducer,
-                publisher = { msg -> WebHookActionAdaptor(it.t1.event.hook.sendMessage(msg)) }
+                publisher = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) }
             )
         }) }
-        .flatMap { Mono.zip(it.t1.toMono(), mono { it.t2.map { combined ->
-            consumeIO(it.t1, combined.first, it.t1.event.message)
-            combined.second
+        .flatMap { (context, result) -> Mono.zip(context.toMono(), mono { result.map { (io, report) ->
+            export(context, io, context.event.message)
+            report
         } }) }

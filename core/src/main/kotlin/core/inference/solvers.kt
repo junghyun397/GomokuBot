@@ -20,7 +20,7 @@ enum class AiLevel(val solver: (KvineClient, Board, Pos) -> Solution) {
     GURU(kvineSolver(guruPresets))
 }
 
-val amoebaSolver: (KvineClient, Board, Pos) -> Solution = { _, board, _ -> AmoebaSolver.solve(board) }
+val amoebaSolver: (KvineClient, Board, Pos) -> Solution = { _, board, _ -> FocusSolver.findSolution(board) }
 
 // currying
 fun kvineSolver(aiPresets: Presets): (KvineClient, Board, Pos) -> Solution = { kvineClient, board, pos ->

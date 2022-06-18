@@ -1,6 +1,6 @@
 package discord.interact.message
 
-import core.assets.Message
+import core.assets.MessageRef
 import core.interact.message.MessageAdaptor
 import core.interact.message.MessageIO
 import core.interact.message.MessagePublisher
@@ -46,7 +46,7 @@ class MessageActionAdaptor(private val original: net.dv8tion.jda.api.requests.re
 
 class DiscordMessageAdaptor(override val original: net.dv8tion.jda.api.entities.Message) : MessageAdaptor<net.dv8tion.jda.api.entities.Message, DiscordButtons>() {
 
-    override val message: Message
+    override val messageRef: MessageRef
         get() = this.original.extractMessage()
 
     override val buttons: DiscordButtons

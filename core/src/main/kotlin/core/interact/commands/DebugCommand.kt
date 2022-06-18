@@ -40,24 +40,27 @@ class DebugCommand(override val command: String, private val debugType: DebugTyp
         publisher: MessagePublisher<A, B>,
     ) = runCatching { when (debugType) {
         DebugType.ANALYSIS -> {
-            SessionManager.retrieveGameSession(bot.sessionRepository, config.id, user.id)?.let { session ->
+            SessionManager.retrieveGameSession(bot.sessions, config.id, user.id)?.let { session ->
                 producer.produceSessionArchive(publisher, session)
-                    .map { it.addFile(session.board.toBoardIO().debugText().toInputStream(), "analysis-report-${System.currentTimeMillis()}.txt") }
-                    .map { it.launch(); Order.Unit } to this.asCommandReport("succeed", user)
+                    .map {
+                        it.addFile(session.board.toBoardIO().debugText().toInputStream(), "analysis-report-${System.currentTimeMillis()}.txt")
+                            .launch()
+                        Order.Unit
+                    } to this.asCommandReport("succeed", user)
             } ?: (IO { Order.Unit } to this.asCommandReport("failed", user))
         }
         DebugType.SELF_REQUEST -> {
-            if (SessionManager.retrieveGameSession(bot.sessionRepository, config.id, user.id) != null ||
-                SessionManager.retrieveRequestSession(bot.sessionRepository, config.id, user.id) != null)
+            if (SessionManager.retrieveGameSession(bot.sessions, config.id, user.id) != null ||
+                SessionManager.retrieveRequestSession(bot.sessions, config.id, user.id) != null)
                 IO { Order.Unit } to this.asCommandReport("failed", user)
             else {
                 val requestSession = RequestSession(
                     user, user,
                     SessionManager.generateMessageBufferKey(user),
-                    LinuxTime(System.currentTimeMillis() + bot.config.gameExpireOffset),
+                    LinuxTime.withExpireOffset(bot.config.gameExpireOffset)
                 )
 
-                SessionManager.putRequestSession(bot.sessionRepository, config.id, requestSession)
+                SessionManager.putRequestSession(bot.sessions, config.id, requestSession)
 
                 val io = producer.produceRequest(publisher, config.language.container, user, user).map { it.launch(); Order.Unit }
 
@@ -71,16 +74,16 @@ class DebugCommand(override val command: String, private val debugType: DebugTyp
                 aiLevel = AiLevel.AMOEBA,
                 solution = Option.Empty,
                 ownerHasBlack = board.isNextColorBlack,
-                board = BoardIO.fromBoardText(payload, Pos.fromCartesian(this.payload!!.take(3).trim(' ')).get().idx()).get(),
-                history = if (board.isNextColorBlack) emptyList() else listOf(Renju.BOARD_CENTER_POS()),
+                board = board,
+                history = List(board.moves()) { null },
                 messageBufferKey = SessionManager.generateMessageBufferKey(user),
                 expireOffset = bot.config.gameExpireOffset,
                 expireDate = LinuxTime.withExpireOffset(bot.config.gameExpireOffset)
             )
-            SessionManager.putGameSession(bot.sessionRepository, config.id, session)
+            SessionManager.putGameSession(bot.sessions, config.id, session)
 
             val io = producer.produceNextMovePVE(publisher, config.language.container, user, session.board.latestPos().get())
-                .attachBoardSequence(bot, config, producer, publisher, session)
+                .flatMap { buildBoardSequence(bot, config, producer, publisher, session) }
                 .map { Order.Unit }
 
             io to this.asCommandReport("succeed", user)
@@ -107,22 +110,25 @@ class DebugCommand(override val command: String, private val debugType: DebugTyp
                      2 . . . . . . . X . . . . . . O 2
                      1 X O O O . X . . X . X . . . . 1
                        A B C D E F G H I J K L M N O
-                """.trimMargin()
+                """
+                .let { BoardIO.fromBoardText(it, Pos.fromCartesian("m3").get().idx()).get() }
+
             val session = AiGameSession(
                 owner = user,
                 aiLevel = AiLevel.AMOEBA,
                 solution = Option.Empty,
                 ownerHasBlack = false,
-                board = BoardIO.fromBoardText(vcfCase, Pos.fromCartesian("m3").get().idx()).get(),
-                history = emptyList(),
+                board = vcfCase,
+                history = List(vcfCase.moves()) { null },
                 messageBufferKey = SessionManager.generateMessageBufferKey(user),
                 expireOffset = bot.config.gameExpireOffset,
                 expireDate = LinuxTime.withExpireOffset(bot.config.gameExpireOffset)
             )
-            SessionManager.putGameSession(bot.sessionRepository, config.id, session)
+            SessionManager.putGameSession(bot.sessions, config.id, session)
 
             val io = producer.produceNextMovePVE(publisher, config.language.container, user, session.board.latestPos().get())
-                .attachNextMoveSequence(bot, config, producer, publisher, session, session)
+                .flatMap { buildBoardSequence(bot, config, producer, publisher, session) }
+                .map { Order.Unit }
 
             io to this.asCommandReport("succeed", user)
         }

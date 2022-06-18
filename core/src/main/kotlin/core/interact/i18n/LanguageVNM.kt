@@ -4,7 +4,7 @@ class LanguageVNM : LanguageENG() {
 
     override fun languageCode() = "VNM"
 
-    override fun languageName() = "Tiếng Việt\uD83C\uDDFB\uD83C\uDDF3"
+    override fun languageName() = "\uD83C\uDDFB\uD83C\uDDF3 Tiếng Việt"
     override fun languageSuggestion() = "Vui lòng sử dụng lệnh `~lang` `VNM`"
 
     override fun helpAboutEmbedTitle() = "GomokuBot / Trợ giúp"

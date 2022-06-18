@@ -2,7 +2,7 @@ package discord.route
 
 import core.BotContext
 import core.interact.Order
-import core.interact.commands.attachFinishSequence
+import core.interact.commands.buildFinishSequence
 import core.session.GameManager
 import core.session.GameResult
 import core.session.SessionManager
@@ -24,47 +24,47 @@ fun scheduleCleaner(logger: org.slf4j.Logger, botContext: BotContext, jda: JDA) 
     val exceptionHandler: (Exception) -> Unit  = { logger.error(it.stackTraceToString()) }
 
     schedule(Duration.ofHours(1), exceptionHandler) {
-        SessionManager.cleanExpiredGameSession(botContext.sessionRepository).forEach { combined ->
-            val message = SessionManager.viewTailMessage(botContext.sessionRepository, combined.third.messageBufferKey)
+        SessionManager.cleanExpiredGameSession(botContext.sessions).forEach { (config, id, session) ->
+            val message = SessionManager.viewTailMessage(botContext.sessions, session.messageBufferKey)
 
-            val guild = jda.getGuildById(combined.first.id.idLong)
+            val guild = jda.getGuildById(id.idLong)
             val channel = message?.let { jda.getTextChannelById(it.channelId.idLong) }
 
             if (message != null && guild != null && channel != null) {
                 val publisher: DiscordMessagePublisher = { msg -> MessageActionAdaptor(channel.sendMessage(msg)) }
 
-                val thenSession = GameManager.resignSession(combined.third, GameResult.WinCause.TIMEOUT, combined.third.player).first
+                val (thenSession, _) = GameManager.resignSession(session, GameResult.WinCause.TIMEOUT, session.player)
 
-                val io = when (combined.third) {
+                val io = when (session) {
                     is PvpGameSession -> DiscordMessageProducer.produceTimeoutPVP(
                         publisher,
-                        combined.first.language.container,
-                        combined.third.nextPlayer,
-                        combined.third.player
+                        config.language.container,
+                        session.nextPlayer,
+                        session.player
                     )
                     is AiGameSession -> DiscordMessageProducer.produceTimeoutPVE(
                         publisher,
-                        combined.first.language.container,
-                        combined.third.owner
+                        config.language.container,
+                        session.owner
                     )
                 }
                     .map { it.launch() }
-                    .attachFinishSequence(botContext, DiscordMessageProducer, publisher, combined.first, combined.third, thenSession)
+                    .flatMap { buildFinishSequence(botContext, DiscordMessageProducer, publisher, config, session, thenSession) }
 
                 CoroutineScope(Dispatchers.Default).launch {
-                    consumeIO(botContext, guild, io, null)
+                    export(botContext, guild, io, null)
                 }
             }
         }
 
-        SessionManager.cleanEmptySessions(botContext.sessionRepository)
+        SessionManager.cleanEmptySessions(botContext.sessions)
     }
 
     schedule(Duration.ofMinutes(5), exceptionHandler) {
-        SessionManager.cleanExpiredRequestSessions(botContext.sessionRepository).forEach { combined ->
-            val message = SessionManager.viewTailMessage(botContext.sessionRepository, combined.third.messageBufferKey)
+        SessionManager.cleanExpiredRequestSessions(botContext.sessions).forEach { (config, id, session) ->
+            val message = SessionManager.viewTailMessage(botContext.sessions, session.messageBufferKey)
 
-            val guild = jda.getGuildById(combined.first.id.idLong)
+            val guild = jda.getGuildById(id.idLong)
             val channel = message?.let { jda.getTextChannelById(it.channelId.idLong) }
 
             if (message != null && guild != null && channel != null) {
@@ -72,29 +72,35 @@ fun scheduleCleaner(logger: org.slf4j.Logger, botContext: BotContext, jda: JDA) 
 
                 val io = DiscordMessageProducer.produceRequestExpired(
                     publisher,
-                    combined.first.language.container,
-                    combined.third.owner,
-                    combined.third.opponent
+                    config.language.container,
+                    session.owner,
+                    session.opponent
                 )
                     .map { it.launch(); Order.DeleteSource }
 
                 CoroutineScope(Dispatchers.Default).launch {
-                    consumeIO(botContext, guild, io, channel.retrieveMessageById(message.id.idLong).await())
+                    try {
+                        val original = channel.retrieveMessageById(message.id.idLong).await()
+                        export(botContext, guild, io, original)
+                    } catch (_: Exception) {}
                 }
             }
         }
     }
 
     schedule(Duration.ofSeconds(5), exceptionHandler) {
-        SessionManager.cleanExpiredNavigators(botContext.sessionRepository).forEach { navigate ->
-            val guild = jda.getGuildById(navigate.key.guildId.idLong)
-            val channel = guild?.getTextChannelById(navigate.key.channelId.idLong)
+        SessionManager.cleanExpiredNavigators(botContext.sessions).forEach { (message, _) ->
+            val guild = jda.getGuildById(message.guildId.idLong)
+            val channel = guild?.getTextChannelById(message.channelId.idLong)
 
             if (guild != null && channel != null) {
-                val io = IO.unit { Order.RemoveNavigators(navigate.key) }
+                val io = IO { Order.RemoveNavigators(message) }
 
                 CoroutineScope(Dispatchers.Default).launch {
-                    consumeIO(botContext, guild, io, channel.retrieveMessageById(navigate.key.id.idLong).await())
+                    try {
+                        val original = channel.retrieveMessageById(message.id.idLong).await()
+                        export(botContext, guild, io, original)
+                    } catch (_: Exception) {}
                 }
             }
         }

@@ -25,7 +25,7 @@ object FocusCommandParser : NavigableCommand {
         }
 
     override suspend fun parseReaction(context: InteractionContext<MessageReactionAddEvent>, state: NavigateState) =
-        SessionManager.retrieveGameSession(context.bot.sessionRepository, context.guild.id, context.event.user!!.extractUser().id)
+        SessionManager.retrieveGameSession(context.bot.sessions, context.guild.id, context.event.user!!.extractUser().id)
             .asOption()
             .flatMap {
                 val direction = this.matchDirection(context.event.reactionEmote.emoji)

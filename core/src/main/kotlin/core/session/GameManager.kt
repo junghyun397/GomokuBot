@@ -83,14 +83,16 @@ object GameManager {
     }
 
     fun validateMove(session: GameSession, pos: Pos): Option<RejectReason> =
-        session.board.validateMove(pos.idx()).let {
-            if (it.isDefined) when (it.get()) {
-                jrenju.notation.RejectReason.EXIST() -> Option(RejectReason.EXIST)
-                jrenju.notation.RejectReason.FORBIDDEN() -> Option(RejectReason.FORBIDDEN)
-                else -> Option(RejectReason.EXIST)
+        session.board.validateMove(pos.idx()).fold(
+            { Option.Empty },
+            {
+                when (it) {
+                    jrenju.notation.RejectReason.EXIST() -> Option(RejectReason.EXIST)
+                    jrenju.notation.RejectReason.FORBIDDEN() -> Option(RejectReason.FORBIDDEN)
+                    else -> throw IllegalStateException()
+                }
             }
-            else Option.Empty
-        }
+        )
 
     fun makeMove(session: GameSession, pos: Pos): GameSession {
         val thenBoard = session.board.makeMove(pos)
@@ -124,15 +126,13 @@ object GameManager {
             }
             .fold(
                 onDefined = {
-                    when(it) {
+                    when (it) {
                         is SolutionNode -> it.idx() to Option(it)
                         else -> it.idx() to Option.Empty
                     }
                 },
                 onEmpty = {
-                    when (val solution = session.aiLevel.solver(
-                        kvineClient, session.board, Pos.fromIdx(session.board.latestMove()))
-                    ) {
+                    when (val solution = session.aiLevel.solver(kvineClient, session.board, Pos.fromIdx(session.board.latestMove()))) {
                         is SolutionNode -> solution.idx() to Option(solution)
                         else -> solution.idx() to Option.Empty
                     }
@@ -143,10 +143,19 @@ object GameManager {
 
         return if (thenBoard.winner().isDefined) {
             val gameResult = GameResult.Win(GameResult.WinCause.FIVE_IN_A_ROW, thenBoard.color(), aiUser, session.owner)
+
             session.copy(
                 board = thenBoard,
                 gameResult = Option(gameResult),
                 history = session.history + Pos.fromIdx(aiMove),
+            )
+        } else if (thenBoard.moves() == Renju.BOARD_SIZE()) {
+            val gameResult = GameResult.Full
+
+            session.copy(
+                board = thenBoard,
+                gameResult = Option(gameResult),
+                history = session.history + Pos.fromIdx(aiMove)
             )
         } else session.copy(
             board = thenBoard,

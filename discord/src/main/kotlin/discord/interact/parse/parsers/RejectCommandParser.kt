@@ -19,7 +19,7 @@ object RejectCommandParser : EmbeddableCommand {
             ?.let { UserId(it) }
             ?: return Option.Empty
 
-        val session = SessionManager.retrieveRequestSessionByOwner(context.bot.sessionRepository, context.guild.id, owner)
+        val session = SessionManager.retrieveRequestSessionByOwner(context.bot.sessions, context.guild.id, owner)
             ?: return Option.Empty
 
         return Option(RejectCommand("reject", session))

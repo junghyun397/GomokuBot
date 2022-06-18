@@ -9,7 +9,6 @@ import dev.minn.jda.ktx.await
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageProducer
-import discord.interact.message.DiscordMessagePublisher
 import discord.interact.message.MessageActionAdaptor
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.Permission
@@ -20,7 +19,7 @@ import reactor.kotlin.core.publisher.toMono
 import reactor.util.function.Tuple2
 import java.util.*
 
-private fun matchLanguage(locale: Locale): Language =
+private fun matchLocale(locale: Locale): Language =
     when (locale) {
         Locale.KOREA, Locale.KOREAN -> Language.KOR
         Locale.JAPAN, Locale.JAPANESE -> Language.JPN
@@ -38,28 +37,24 @@ private fun matchRegion(regions: EnumSet<Region>): Language =
 fun guildJoinRouter(context: InteractionContext<GuildJoinEvent>): Mono<Tuple2<InteractionContext<GuildJoinEvent>, Result<ServerJoinReport>>> =
     Mono.zip(context.toMono(), mono { runCatching {
         val matchedLanguage = run {
-            val language = matchLanguage(context.event.guild.locale)
+            val language = matchLocale(context.event.guild.locale)
 
             if (language == Language.ENG)
-                return@run matchRegion(context.event.guild.retrieveRegions().await())
-
-            return@run language
+                matchRegion(context.event.guild.retrieveRegions().await())
+            else language
         }
 
         val guildConfig = GuildConfig(context.guild.id, language = matchedLanguage)
 
-        SessionManager.updateGuildConfig(context.bot.sessionRepository, context.guild.id, guildConfig)
+        SessionManager.updateGuildConfig(context.bot.sessions, context.guild.id, guildConfig)
 
-        val commandInserted = run {
+        val commandInserted = runCatching {
             GuildManager.upsertCommands(context.event.guild, matchedLanguage.container)
-            true
-        }
+        }.isSuccess
 
         val helpSent = context.event.guild.systemChannel?.run {
-            val publisher: DiscordMessagePublisher = { msg -> MessageActionAdaptor(this.sendMessage(msg)) }
-
-            GuildManager.permissionSafeRun(this, Permission.MESSAGE_SEND) {
-                buildHelpSequence(context.bot, guildConfig, publisher, DiscordMessageProducer)
+            GuildManager.permissionGrantedRun(this, Permission.MESSAGE_SEND) {
+                buildHelpSequence(context.bot, guildConfig, { msg -> MessageActionAdaptor(this.sendMessage(msg)) }, DiscordMessageProducer, 0)
                     .run()
             }
         }?.isDefined

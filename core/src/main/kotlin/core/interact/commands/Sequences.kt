@@ -18,26 +18,27 @@ import jrenju.notation.Renju
 import utils.assets.LinuxTime
 import utils.structs.IO
 
-fun <A, B> IO<MessageIO<A, B>>.attachNextMoveSequence(
+fun <A, B> buildNextMoveSequence(
+    messageIO: MessageIO<A, B>,
     bot: BotContext,
     config: GuildConfig,
     producer: MessageProducer<A, B>,
     publisher: MessagePublisher<A, B>,
     session: GameSession,
     thenSession: GameSession,
-) = this
-    .map { SessionManager.appendMessage(bot.sessionRepository, thenSession.messageBufferKey, it.retrieve().message) }
-    .attachBoardSequence(bot, config, producer, publisher, thenSession)
-    .attachSweepSequence(bot, config, session)
+) = IO {
+    SessionManager.appendMessage(bot.sessions, thenSession.messageBufferKey, messageIO.retrieve().messageRef)
+}
+    .flatMap { buildBoardSequence(bot, config, producer, publisher, thenSession) }
+    .flatMap { buildSweepSequence(bot, config, session) }
 
-fun <A, B> IO<*>.attachBoardSequence(
+fun <A, B> buildBoardSequence(
     bot: BotContext,
     config: GuildConfig,
     producer: MessageProducer<A, B>,
     publisher: MessagePublisher<A, B>,
     session: GameSession,
-) = this
-    .flatMap { producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, session) }
+) = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, session)
     .map { action ->
         val focus = when (config.focusPolicy) {
             FocusPolicy.INTELLIGENCE -> FocusSolver.resolveFocus(session.board, producer.focusWidth)
@@ -49,63 +50,60 @@ fun <A, B> IO<*>.attachBoardSequence(
 
         producer.attachFocusButtons(action, session, focus).retrieve() to focus
     }
-    .flatMap {
+    .flatMap { (message, pos) ->
         SessionManager.addNavigate(
-            bot.sessionRepository, it.first.message, NavigateState(NavigationKind.BOARD, it.second.idx(), session.expireDate)
+            bot.sessions, message.messageRef, NavigateState(NavigationKind.BOARD, pos.idx(), session.expireDate)
         )
-        SessionManager.appendMessageHead(bot.sessionRepository, session.messageBufferKey, it.first.message)
-        producer.attachFocusNavigators(it.first) {
-            SessionManager.retrieveGameSession(bot.sessionRepository, config.id, session.owner.id) != session
+        SessionManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.messageRef)
+        producer.attachFocusNavigators(message) {
+            SessionManager.retrieveGameSession(bot.sessions, config.id, session.owner.id) != session
         }
     }
 
-private fun IO<*>.attachSweepSequence(
+private fun buildSweepSequence(
     bot: BotContext,
     config: GuildConfig,
     session: GameSession
-) = this
-    .flatMap { when (config.sweepPolicy) {
-        SweepPolicy.RELAY -> IO { Order.BulkDelete(session.messageBufferKey) }
-        SweepPolicy.LEAVE -> {
-            SessionManager.viewHeadMessage(bot.sessionRepository, session.messageBufferKey)
-                ?.let { IO { Order.RemoveNavigators(it, true) } }
-                ?: IO { Order.Unit }
-        }
-    } }
+) = when (config.sweepPolicy) {
+    SweepPolicy.RELAY -> IO { Order.BulkDelete(session.messageBufferKey) }
+    SweepPolicy.LEAVE -> {
+        SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
+            ?.let { IO { Order.RemoveNavigators(it, true) } }
+            ?: IO { Order.Unit }
+    }
+}
 
-fun <A, B> IO<*>.attachFinishSequence(
+fun <A, B> buildFinishSequence(
     bot: BotContext,
     producer: MessageProducer<A, B>,
     publisher: MessagePublisher<A, B>,
     config: GuildConfig,
     session: GameSession,
     thenSession: GameSession
-) = this
-    .flatMap {
-        producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, thenSession).map { it.launch() }
-    }
-    .attachSweepSequence(bot, config, session)
+) = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, thenSession).map { it.launch() }
+    .flatMap { buildSweepSequence(bot, config, session) }
 
 fun <A, B> buildHelpSequence(
     bot: BotContext,
     config: GuildConfig,
     publisher: MessagePublisher<A, B>,
-    producer: MessageProducer<A, B>
-) = IO.zip(producer.produceAboutBot(publisher, config.language.container), producer.produceLanguageGuide(publisher))
-    .flatMap { combined ->
-        val aboutMessage = combined.first.retrieve()
-        val settingsMessage = combined.second.retrieve()
+    producer: MessageProducer<A, B>,
+    settingsPage: Int
+) = IO.zip(producer.produceHelp(publisher, config.language.container, 0), producer.produceSettings(publisher, config, settingsPage))
+    .flatMap { (helpIO, settingsIO) ->
+        val aboutMessage = helpIO.retrieve()
+        val settingsMessage = settingsIO.retrieve()
 
         SessionManager.addNavigate(
-            bot.sessionRepository,
-            aboutMessage.message,
+            bot.sessions,
+            aboutMessage.messageRef,
             NavigateState(NavigationKind.ABOUT, 0, LinuxTime.withExpireOffset(bot.config.navigatorExpireOffset))
         )
 
         SessionManager.addNavigate(
-            bot.sessionRepository,
-            settingsMessage.message,
-            NavigateState(NavigationKind.SETTINGS, 0, LinuxTime.withExpireOffset(bot.config.navigatorExpireOffset))
+            bot.sessions,
+            settingsMessage.messageRef,
+            NavigateState(NavigationKind.SETTINGS, settingsPage, LinuxTime.withExpireOffset(bot.config.navigatorExpireOffset))
         )
 
         producer.attachBinaryNavigators(aboutMessage)

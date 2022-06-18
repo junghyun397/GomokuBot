@@ -5,7 +5,7 @@ import core.assets.UserId
 import core.interact.Order
 import core.interact.commands.Command
 import core.interact.commands.StartCommand
-import core.interact.commands.attachBoardSequence
+import core.interact.commands.buildBoardSequence
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.NamedParser
 import core.interact.parse.asParseFailure
@@ -25,50 +25,50 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import utils.structs.Either
 import utils.structs.Option
+import utils.structs.Option.Empty.orElse
 import utils.structs.asOption
-import utils.structs.orElse
 
 object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, BuildableCommand {
 
     override val name = "start"
 
     private suspend fun lookupRequestSent(context: InteractionContext<*>, owner: User): Option<DiscordParseFailure> =
-        SessionManager.retrieveRequestSessionByOwner(context.bot.sessionRepository, context.config.id, owner.id)?.let { session ->
+        SessionManager.retrieveRequestSessionByOwner(context.bot.sessions, context.config.id, owner.id).asOption().flatMap { session ->
             Option(this.asParseFailure("already sent request session", owner) { producer, publisher, container ->
                 producer.produceRequestAlreadySent(publisher, container, owner, session.opponent).map { it.launch(); Order.Unit }
             })
-        } ?: Option.Empty
+        }
 
     private suspend fun lookupRequestOwner(context: InteractionContext<*>, owner: User): Option<DiscordParseFailure> =
-        SessionManager.retrieveRequestSession(context.bot.sessionRepository, context.config.id, owner.id)?.let { session ->
+        SessionManager.retrieveRequestSession(context.bot.sessions, context.config.id, owner.id).asOption().flatMap { session ->
             Option(this.asParseFailure("already has request session", owner) { producer, publisher, container ->
                 producer.produceRequestAlready(publisher, container, session.owner, session.opponent).map { it.launch(); Order.Unit }
             })
-        } ?: Option.Empty
+        }
 
     private suspend fun lookupRequestOpponent(context: InteractionContext<*>, owner: User, opponent: User): Option<DiscordParseFailure> =
-        SessionManager.retrieveRequestSession(context.bot.sessionRepository, context.config.id, opponent.id)?.let { _ ->
+        SessionManager.retrieveRequestSession(context.bot.sessions, context.config.id, opponent.id).asOption().flatMap { _ ->
             Option(this.asParseFailure("try to send request session but $opponent already has request session", owner) { producer, publisher, container ->
                 producer.produceOpponentRequestAlready(publisher, container, owner, opponent).map { it.launch(); Order.Unit }
             })
-        } ?: Option.Empty
+        }
 
     private suspend fun lookupSessionOwner(context: InteractionContext<*>, user: User): Option<DiscordParseFailure> =
-        SessionManager.retrieveGameSession(context.bot.sessionRepository, context.config.id, user.id)?.let { session ->
+        SessionManager.retrieveGameSession(context.bot.sessions, context.config.id, user.id).asOption().flatMap { session ->
             Option(this.asParseFailure("already has game session", user) { producer, publisher, container ->
                 producer.produceSessionAlready(publisher, container, session.owner)
-                    .map { SessionManager.appendMessage(context.bot.sessionRepository, session.messageBufferKey, it.retrieve().message) }
-                    .attachBoardSequence(context.bot, context.config, producer, publisher, session)
+                    .map { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.retrieve().messageRef) }
+                    .flatMap { buildBoardSequence(context.bot, context.config, producer, publisher, session) }
                     .map { Order.Unit }
             })
-        } ?: Option.Empty
+        }
 
     private suspend fun lookupSessionOpponent(context: InteractionContext<*>, user: User, opponent: User): Option<DiscordParseFailure> =
-        SessionManager.retrieveGameSession(context.bot.sessionRepository, context.config.id, opponent.id)?.let { session ->
+        SessionManager.retrieveGameSession(context.bot.sessions, context.config.id, opponent.id).asOption().flatMap { _ ->
             Option(this.asParseFailure("try to send request session but $opponent already has game session", user) { producer, publisher, container ->
-                producer.produceOpponentSessionAlready(publisher, container, session.owner, opponent).map { it.launch(); Order.Unit }
+                producer.produceOpponentSessionAlready(publisher, container, user, opponent).map { it.launch(); Order.Unit }
             })
-        } ?: Option.Empty
+        }
 
     private suspend fun parseActually(context: InteractionContext<*>, owner: User, opponent: Option<User>) =
         this.lookupSessionOwner(context, owner)
@@ -84,12 +84,12 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {
         val owner = context.event.user.extractUser()
         val opponent = context.event.getOption(context.config.language.container.startCommandOptionOpponent())
-            ?.let {
-                val jdaUser = it.asUser
-                if (jdaUser.isBot) null
-                else jdaUser.extractUser()
-            }
             .asOption()
+            .flatMap {
+                val jdaUser = it.asUser
+                if (jdaUser.isBot) Option.Empty
+                else Option(jdaUser.extractUser())
+            }
 
         return this.parseActually(context, owner, opponent)
     }
@@ -114,8 +114,8 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
             ?: return Option.Empty
 
         return if (
-            SessionManager.hasRequestSession(context.bot.sessionRepository, context.guild.id, ownerId, opponentId)
-            || SessionManager.hasGameSession(context.bot.sessionRepository, context.guild.id, ownerId, opponentId)
+            SessionManager.hasRequestSession(context.bot.sessions, context.guild.id, ownerId, opponentId)
+            || SessionManager.hasGameSession(context.bot.sessions, context.guild.id, ownerId, opponentId)
         )
             Option.Empty
         else

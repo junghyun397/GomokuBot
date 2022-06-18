@@ -31,7 +31,8 @@ subprojects {
     dependencies {
         implementation(kotlin("stdlib"))
 
-        implementation("com.github.junghyun397.Kvine:jrenju_2.13:-SNAPSHOT")
+        implementation("jrenju:jrenju_2.13:0.1.0-SNAPSHOT")
+//        implementation("com.github.junghyun397.Kvine:jrenju_2.13:-SNAPSHOT")
 
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.6.0")

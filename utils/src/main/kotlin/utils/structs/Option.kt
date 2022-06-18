@@ -43,6 +43,22 @@ sealed class Option<out T> {
             block((this as Some).value)
     }
 
+    inline fun filter(predicate: (T) -> Boolean) =
+        if (this is Some && predicate(this.value)) this
+        else Empty
+
+    inline fun <T> Option<T>.getOrElse(onEmpty: () -> T): T =
+        when (this) {
+            is Some -> this.value
+            is Empty -> onEmpty()
+        }
+
+    inline fun <T> Option<T>.orElse(produce: () -> Option<T>): Option<T> =
+        when (this) {
+            is Some -> this
+            is Empty -> produce()
+        }
+
     data class Some<out T>(val value: T) : Option<T>()
 
     object Empty : Option<Nothing>()
@@ -59,16 +75,6 @@ sealed class Option<out T> {
 
 }
 
-inline fun <T> Option<T>.foldLeft(onEmpty: () -> T): T =
-    when(this) {
-        is Option.Some -> this.value
-        is Option.Empty -> onEmpty()
-    }
-
-inline fun <T> Option<T>.orElse(produce: () -> Option<T>): Option<T> =
-    when (this) {
-        is Option.Some -> this
-        is Option.Empty -> produce()
-    }
-
-fun <T> T?.asOption(): Option<T> = this?.let { Option(this) } ?: Option.Empty
+fun <T> T?.asOption(): Option<T> =
+    if (this == null) Option.Empty
+    else Option(this)

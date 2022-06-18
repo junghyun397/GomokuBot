@@ -76,7 +76,7 @@ private suspend inline fun <E : Event> retrieveInteractionContext(botContext: Bo
         bot = botContext,
         event = event,
         guild = guild,
-        config = SessionManager.retrieveGuildConfig(botContext.sessionRepository, guild.id),
+        config = SessionManager.retrieveGuildConfig(botContext.sessions, guild.id),
         emittenTime = LinuxTime()
     )
 
@@ -169,10 +169,8 @@ val logger = getLogger<GomokuBot>()
 fun main() {
     logger.info(ASCII_LOGO)
 
-    val launchResult = runCatching { GomokuBot.launch() }
+    runCatching { GomokuBot.launch() }
+        .onSuccess { logger.info("gomokubot ready.") }
+        .onFailure { logger.error(it.stackTraceToString()) }
 
-    launchResult.fold(
-        onSuccess = { logger.info("gomokubot ready.") },
-        onFailure = { logger.error(it.stackTraceToString()) }
-    )
 }

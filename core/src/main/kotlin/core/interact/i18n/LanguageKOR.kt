@@ -4,8 +4,8 @@ open class LanguageKOR : LanguageENG() {
 
     override fun languageCode() = "KOR"
 
-    override fun languageName() = "한국어\uD83C\uDDF0\uD83C\uDDF7"
-    override fun languageSuggestion() = "`~lang` `KOR` 명령어를 사용해주세요."
+    override fun languageName() = "\uD83C\uDDF0\uD83C\uDDF7 한국어"
+    override fun languageSuggestion() = "``/lang`` ``KOR`` 명령어를 사용해주세요."
 
     // # 0. TOKENS
 
@@ -100,7 +100,7 @@ open class LanguageKOR : LanguageENG() {
     override fun styleCommandOptionCode() = "스타일"
     override fun styleCommandOptionCodeDescription() = "스타일 코드를 지정해 주세요."
 
-    // ### 2-2-2. STYLE:ENUM (EMBED)
+    // ### 2-2-2. STYLE:LIST (EMBED)
 
     override fun styleEmbedTitle() = "GomokuBot / 스타일"
     override fun styleEmbedDescription() =
@@ -118,7 +118,70 @@ open class LanguageKOR : LanguageENG() {
 
     // ## 2-3. POLICY
 
-    // ### 2-3-1. POLICY (COMMAND)
+    override fun configApplied(choice: String) = "$choice 설정이 이 서버에 적용되었습니다."
+
+    // ### 2-3-1. STYLE
+
+    override fun styleSelectImage() = "이미지"
+    override fun styleSelectImageDescription() =
+        "오목 판을 이미지로 표시합니다. 플랫폼 서버 상태에 따라 약간의 지연이 생길 수 있습니다."
+
+    override fun styleSelectText() = "텍스트"
+    override fun styleSelectTextDescription() = "오목 판을 텍스트로 표시합니다. 가장 단순하지만 가장 빠릅니다."
+
+    override fun styleSelectSolidText() = "점박이 텍스트"
+    override fun styleSelectSolidTextDescription() = "텍스트와 거의 같습니다. 다만 빈 자리에 공백이 아닌 점을 표시합니다."
+
+    override fun styleSelectUnicodeText() = "유니코드"
+    override fun styleSelectUnicodeTextDescription() =
+        "오목 판을 유니코드 이모지로 표시합니다. 폰트 설정에 따라 완전히 망가져 보일 수 있습니다."
+
+    // ### 2-3-2. FOCUS
+
+    override fun focusEmbedTitle() = "GomokuBot / 확대"
+    override fun focusEmbedDescription() =
+        "GomokuBot은 직관적인 입력을 돕기 위해 작은 크기의 \"버튼 판\"을 사용합니다. GomokuBot이 어떤 부분을 어떻게 확대할지 정해주세요."
+
+    override fun focusSelectIntelligence() = "지능적"
+    override fun focusSelectIntelligenceDescription() =
+        "GomokuBot 추론 엔진으로 가장 적절한 위치를 분석해 확대합니다."
+
+    override fun focusSelectFallowing() = "추종적"
+    override fun focusSelectFallowingDescription() =
+        "항상 마지막 수를 가운데 둡니다."
+
+    // ### 2-3-3. SWEEP
+
+    override fun sweepEmbedTitle() = "GomokuBot / 청소"
+    override fun sweepEmbedDescription() =
+        "GomokuBot은 아주, 아주 많은 양의 메시지를 보냅니다. GomokuBot이 보낸 메시지를 어떻게 처리할지 정해주세요."
+
+    override fun sweepSelectRelay() = "이어가기"
+    override fun sweepSelectRelayDescription() =
+        "다음 수를 놓을 때 이전에 보낸 메시지를 모두 삭제합니다."
+
+    override fun sweepSelectLeave() = "놓아두기"
+    override fun sweepSelectLeaveDescription() =
+        "그 어떤 메시지도 삭제하지 않습니다."
+
+    // ### 2-3-4. ARCHIVE
+
+    override fun archiveEmbedTitle() = "GomokuBot / 공유"
+    override fun archiveEmbedDescription() =
+        "GomokuBot은 몇몇 멋진 게임 결과들을 GomokuBot 공식 채널에 공유합니다. " +
+                "물론 GomokuBot은 개인정보를 매우 중요하게 생각합니다. 게임 결과를 어떻게 공유할지 정해주세요."
+
+    override fun archiveSelectByAnonymous() = "익명"
+    override fun archiveSelectByAnonymousDescription() =
+        "익명으로 게임 결과를 공유합니다."
+
+    override fun archiveSelectWithProfile() = "기명"
+    override fun archiveSelectWithProfileDescription() =
+        "프로필 사진 그리고 닉네임과 함께 게임 결과를 공유합니다."
+
+    override fun archiveSelectPrivacy() = "비밀"
+    override fun archiveSelectPrivacyDescription() =
+        "그 어디에도 게임 결과를 공유하지 않습니다."
 
     // # 3. SESSION
 
@@ -289,6 +352,7 @@ open class LanguageKOR : LanguageENG() {
 
     override fun notYetImplementedEmbedDescription() = "이 기능은 아직 완성되지 않았습니다."
 
-    override fun notYetImplementedEmbedFooter(officialChannel: String) = "지원 채널($officialChannel)에서 Gomokubot 업데이트 소식을 받아볼 수 있습니다."
+    override fun notYetImplementedEmbedFooter(officialChannel: String) =
+        "지원 채널($officialChannel)에서 Gomokubot 업데이트 소식을 받아볼 수 있습니다."
 
 }

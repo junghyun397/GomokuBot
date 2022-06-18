@@ -12,32 +12,34 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.exceptions.ErrorResponseException
 import utils.structs.IO
 
-suspend fun consumeIO(context: InteractionContext<*>, io: IO<Order>, source: Message?) =
-    consumeIO(context.bot, context.jdaGuild, io, source)
+suspend fun export(context: InteractionContext<*>, io: IO<Order>, source: Message?) =
+    export(context.bot, context.jdaGuild, io, source)
 
-suspend fun consumeIO(bot: BotContext, jdaGuild: JDAGuild, io: IO<Order>, source: Message?) =
+suspend fun export(bot: BotContext, jdaGuild: JDAGuild, io: IO<Order>, source: Message?) =
     when (val order = io.run()) {
         is Order.UpsertCommands -> GuildManager.upsertCommands(jdaGuild, order.container)
         is Order.DeleteSource -> source?.delete()?.queue()
         is Order.BulkDelete ->
-            SessionManager.checkoutMessages(bot.sessionRepository, order.key)
+            SessionManager.checkoutMessages(bot.sessions, order.key)
                 ?.groupBy { it.channelId }
-                ?.forEach { entry -> jdaGuild.getTextChannelById(entry.key.idLong)?.let { channel ->
+                ?.forEach { (key, value) -> jdaGuild.getTextChannelById(key.idLong)?.let { channel ->
                     try {
-                        GuildManager.permissionSafeRun(channel, Permission.MESSAGE_MANAGE) { _ ->
-                            if (entry.value.size < 2)
-                                channel.deleteMessageById(entry.value.first().id.idLong.toString()).queue()
+                        GuildManager.permissionGrantedRun(channel, Permission.MESSAGE_MANAGE) {
+                            if (value.size < 2)
+                                channel.deleteMessageById(value.first().id.idLong.toString()).queue()
                             else
-                                channel.deleteMessagesByIds(entry.value.map { it.id.idLong.toString() }).queue()
+                                channel.deleteMessagesByIds(value.map { it.id.idLong.toString() }).queue()
                         }
-                    } catch (_: ErrorResponseException) { }
+                    } catch (_: ErrorResponseException) {}
                 } }
-        is Order.RemoveNavigators -> GuildManager.retrieveJDAMessage(jdaGuild.jda, order.message)
+        is Order.RemoveNavigators -> GuildManager.retrieveJDAMessage(jdaGuild.jda, order.messageRef)
             ?.let {
-                if (order.retainFistEmbed)
+                if (order.reduceComponents) {
                     GuildManager.retainFirstEmbed(it)
+                    GuildManager.removeComponents(it)
+                }
 
-                GuildManager.removeNavigators(it)
+                GuildManager.removeReactions(it)
             }
         is Order.ArchiveSession -> GuildManager.archiveSession(
             jdaGuild.jda.getTextChannelById(OFFICIAL_CHANNEL_ID)!!,

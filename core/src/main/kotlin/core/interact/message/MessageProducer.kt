@@ -110,15 +110,17 @@ abstract class MessageProducer<A, B> {
 
     // HELP
 
-    abstract fun produceAboutBot(publisher: MessagePublisher<A, B>, container: LanguageContainer): IO<MessageIO<A, B>>
+    abstract fun produceHelp(publisher: MessagePublisher<A, B>, container: LanguageContainer, page: Int): IO<MessageIO<A, B>>
 
-    abstract fun paginateAboutBot(original: MessageAdaptor<A, B>, container: LanguageContainer, page: Int): IO<Unit>
+    abstract fun paginateHelp(original: MessageAdaptor<A, B>, container: LanguageContainer, page: Int): IO<MessageIO<A, B>>
 
-    abstract fun paginateSettings(original: MessageAdaptor<A, B>, config: GuildConfig, page: Int): IO<Unit>
+    abstract fun produceSettings(publisher: MessagePublisher<A, B>, config: GuildConfig, page: Int): IO<MessageIO<A, B>>
+
+    abstract fun paginateSettings(original: MessageAdaptor<A, B>, config: GuildConfig, page: Int): IO<MessageIO<A, B>>
 
     // RANK
 
-    abstract fun produceRankings(publisher: MessagePublisher<A, B>, container: LanguageContainer, rankings: Set<SimpleProfile>): IO<MessageIO<A, B>>
+    abstract fun produceRankings(publisher: MessagePublisher<A, B>, container: LanguageContainer, rankings: List<SimpleProfile>): IO<MessageIO<A, B>>
 
     // RATING
 
@@ -146,14 +148,9 @@ abstract class MessageProducer<A, B> {
 
     abstract fun produceStyleUpdated(publisher: MessagePublisher<A, B>, container: LanguageContainer, style: String): IO<MessageIO<A, B>>
 
-    // POLICY
+    // CONFIG
 
-    abstract fun produceConfigApplied(
-        publisher: MessagePublisher<A, B>,
-        container: LanguageContainer,
-        configKind: String,
-        configChoice: String
-    ): IO<MessageIO<A, B>>
+    abstract fun produceConfigApplied(publisher: MessagePublisher<A, B>, container: LanguageContainer, configKind: String, configChoice: String): IO<MessageIO<A, B>>
 
     // SESSION
 

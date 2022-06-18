@@ -10,7 +10,7 @@ enum class BoardStyle(val renderer: BoardRenderer, val sample: BoardRendererSamp
     IMAGE(ImageBoardRenderer, ImageBoardRenderer),
     TEXT(TextBoardRenderer(), TextBoardRenderer),
     SOLID_TEXT(SolidTextBoardRenderer(), SolidTextBoardRenderer),
-    UNICODE(UnicodeBoardRenderer(), UnicodeBoardRenderer)
+    UNICODE(UnicodeBoardRenderer, UnicodeBoardRenderer)
 }
 
 sealed interface BoardRendererSample {
@@ -23,6 +23,6 @@ sealed interface BoardRendererSample {
 
 sealed interface BoardRenderer {
 
-    fun renderBoard(board: Board, history: Option<List<Pos>>): Either<String, Pair<InputStream, String>>
+    fun renderBoard(board: Board, history: Option<List<Pos?>>): Either<String, Pair<InputStream, String>>
 
 }

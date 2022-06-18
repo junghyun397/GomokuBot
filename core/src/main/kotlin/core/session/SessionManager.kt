@@ -1,7 +1,7 @@
 package core.session
 
 import core.assets.GuildId
-import core.assets.Message
+import core.assets.MessageRef
 import core.assets.User
 import core.assets.UserId
 import core.database.DatabaseManager
@@ -85,29 +85,29 @@ object SessionManager {
     fun generateMessageBufferKey(owner: User) =
         String(owner.name.toCharArray() + System.currentTimeMillis().toString().toCharArray())
 
-    fun appendMessageHead(repo: SessionRepository, key: String, message: Message) =
+    fun appendMessageHead(repo: SessionRepository, key: String, messageRef: MessageRef) =
         repo.messageBuffer.getOrPut(key) { mutableListOf() }
-            .add(0, message)
+            .add(0, messageRef)
 
-    fun appendMessage(repo: SessionRepository, key: String, message: Message) =
+    fun appendMessage(repo: SessionRepository, key: String, messageRef: MessageRef) =
         repo.messageBuffer.getOrPut(key) { mutableListOf() }
-            .add(message)
+            .add(messageRef)
 
-    fun viewHeadMessage(repo: SessionRepository, key: String): Message? =
+    fun viewHeadMessage(repo: SessionRepository, key: String): MessageRef? =
         repo.messageBuffer[key]?.first()
 
-    fun viewTailMessage(repo: SessionRepository, key: String): Message? =
+    fun viewTailMessage(repo: SessionRepository, key: String): MessageRef? =
         repo.messageBuffer[key]?.last()
 
-    fun checkoutMessages(repo: SessionRepository, key: String): List<Message>? =
+    fun checkoutMessages(repo: SessionRepository, key: String): List<MessageRef>? =
         repo.messageBuffer.remove(key)
 
-    fun addNavigate(repo: SessionRepository, message: Message, state: NavigateState) {
-        repo.navigates[message] = state
+    fun addNavigate(repo: SessionRepository, messageRef: MessageRef, state: NavigateState) {
+        repo.navigates[messageRef] = state
     }
 
-    fun getNavigateState(repo: SessionRepository, message: Message): NavigateState? =
-        repo.navigates[message]
+    fun getNavigateState(repo: SessionRepository, messageRef: MessageRef): NavigateState? =
+        repo.navigates[messageRef]
 
     private inline fun <T : Expirable> cleanExpired(
         repo: SessionRepository,
@@ -116,15 +116,16 @@ object SessionManager {
     ): List<Triple<GuildConfig, UserId, T>> =
         LinuxTime().let { referenceTime ->
             repo.sessions
+                .values
                 .asSequence()
-                .flatMap { entry ->
-                    extract(entry.value)
+                .flatMap { value ->
+                    extract(value)
                         .filter { referenceTime.timestamp > it.value.expireDate.timestamp }
-                        .map { Triple(entry.value.guildConfig, it.key, it.value) }
+                        .map { Triple(value.guildConfig, it.key, it.value) }
                 }
                 .toList()
-        }.also { expired ->
-            expired
+        }.also { expires ->
+            expires
                 .groupBy { it.first.id }
                 .forEach { entry ->
                     repo.sessions[entry.key] = mutate(repo.sessions[entry.key]!!, entry.value.map { it.second }.toSet())

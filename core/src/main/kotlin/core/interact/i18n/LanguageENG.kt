@@ -4,8 +4,8 @@ open class LanguageENG : LanguageContainer {
 
     override fun languageCode() = "ENG"
 
-    override fun languageName() = "English\uD83C\uDDEC\uD83C\uDDE7"
-    override fun languageSuggestion() = "Please use the `~lang` `ENG` command."
+    override fun languageName() = "\uD83C\uDDEC\uD83C\uDDE7 English"
+    override fun languageSuggestion() = "Please use the ``/lang`` ``ENG`` command."
 
     // # 0. TOKENS
 
@@ -107,7 +107,7 @@ open class LanguageENG : LanguageContainer {
     override fun styleCommandOptionCode() = "style"
     override fun styleCommandOptionCodeDescription() = "Select a style code."
 
-    // ### 2-2-2. STYLE:ENUM (EMBED)
+    // ### 2-2-2. STYLE:LIST (EMBED)
 
     override fun styleEmbedTitle() = "GomokuBot / Style"
     override fun styleEmbedDescription() =
@@ -132,7 +132,8 @@ open class LanguageENG : LanguageContainer {
     // ### 2-3-1. STYLE
 
     override fun styleSelectImage() = "Image"
-    override fun styleSelectImageDescription() = "Render as an Image. Depending on the status of the Discord server, there may be some delays."
+    override fun styleSelectImageDescription() =
+        "Render as an Image. Depending on the status of the platform server, there may be some delays."
 
     override fun styleSelectText() = "Text"
     override fun styleSelectTextDescription() = "Render as a Monospaced Text. The fastest."
@@ -141,7 +142,8 @@ open class LanguageENG : LanguageContainer {
     override fun styleSelectSolidTextDescription() = "Same as Text - but with dots instead of blanks."
 
     override fun styleSelectUnicodeText() = "Unicode"
-    override fun styleSelectUnicodeTextDescription() = "Render as Unicode characters. Depending on the font settings, it may look broken."
+    override fun styleSelectUnicodeTextDescription() =
+        "Render as Unicode characters. Depending on the font settings, it may look broken."
 
     // ### 2-3-2. FOCUS
 

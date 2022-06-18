@@ -16,6 +16,8 @@ inline fun <reified T: Comparable<T>> Iterable<T>.maxSet(): Array<Int>? {
     val maxPoints = LinkedList<Int>()
     var max = iterator.next()
 
+    maxPoints.add(0)
+
     var idx = 0
     while (iterator.hasNext()) {
         val e = iterator.next()
@@ -32,3 +34,6 @@ inline fun <reified T: Comparable<T>> Iterable<T>.maxSet(): Array<Int>? {
 
     return maxPoints.toTypedArray()
 }
+
+fun <T> Array<T>.choiceOne(): T =
+    this[Random().nextInt(this.size)]

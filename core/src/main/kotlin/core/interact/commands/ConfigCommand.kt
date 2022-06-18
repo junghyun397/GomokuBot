@@ -26,7 +26,7 @@ class ConfigCommand(
         producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>
     ) = runCatching {
-        SessionManager.updateGuildConfig(bot.sessionRepository, config.id, newConfig)
+        SessionManager.updateGuildConfig(bot.sessions, config.id, newConfig)
 
         val io = producer.produceConfigApplied(publisher, config.language.container, this.configName, this.configChoice)
             .map { it.launch(); Order.Unit }

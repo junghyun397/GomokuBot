@@ -26,7 +26,7 @@ class ResignCommand(override val command: String, private val session: GameSessi
         producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>,
     ) = runCatching {
-        SessionManager.removeGameSession(bot.sessionRepository, config.id, session.owner.id)
+        SessionManager.removeGameSession(bot.sessions, config.id, session.owner.id)
 
         val (finishedSession, result) = GameManager.resignSession(this.session, GameResult.WinCause.RESIGN, user)
 

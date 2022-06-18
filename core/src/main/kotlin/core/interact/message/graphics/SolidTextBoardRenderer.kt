@@ -7,7 +7,7 @@ import utils.structs.Option
 
 class SolidTextBoardRenderer : TextBoardRenderer() {
 
-    override fun renderBoard(board: Board, history: Option<List<Pos>>) =
+    override fun renderBoard(board: Board, history: Option<List<Pos?>>) =
         Either.Left("```\n${this.renderBoardText(board).replace(".", "·")}```")
 
     companion object : BoardRendererSample {

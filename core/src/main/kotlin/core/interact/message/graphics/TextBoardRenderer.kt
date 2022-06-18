@@ -11,7 +11,7 @@ open class TextBoardRenderer : BoardRenderer {
     protected fun renderBoardText(board: Board) =
         board.toBoardIO().boardText()!!
 
-    override fun renderBoard(board: Board, history: Option<List<Pos>>) =
+    override fun renderBoard(board: Board, history: Option<List<Pos?>>) =
         Either.Left("```\n${this.renderBoardText(board).replace(".", " ")}```")
 
     companion object : BoardRendererSample {

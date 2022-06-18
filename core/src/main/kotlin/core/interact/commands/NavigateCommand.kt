@@ -42,18 +42,19 @@ class NavigateCommand(
             expireDate = LinuxTime(this.navigateState.expireDate.timestamp + bot.config.gameExpireOffset)
         )
 
-        if (this.navigateState == newState)
+        if (this.navigateState.page == newState.page)
             return@runCatching IO { Order.Unit } to this.asCommandReport("navigate bounded", user)
 
-        SessionManager.addNavigate(bot.sessionRepository, originalMessage.message, newState)
+        SessionManager.addNavigate(bot.sessions, originalMessage.messageRef, newState)
 
         val io = when (this.navigateState.navigationKind) {
             NavigationKind.ABOUT ->
-                producer.paginateAboutBot(originalMessage, config.language.container, newState.page)
-            NavigationKind.SETTINGS -> producer.paginateSettings(originalMessage, config, newState.page)
+                producer.paginateHelp(originalMessage, config.language.container, newState.page)
+            NavigationKind.SETTINGS ->
+                producer.paginateSettings(originalMessage, config, newState.page)
             else -> throw Exception()
         }
-            .map { Order.Unit }
+            .map { it.launch(); Order.Unit }
 
         io to this.asCommandReport("navigate ${newState.navigationKind} as ${newState.page}", user)
     }

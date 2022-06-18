@@ -72,7 +72,7 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
 
                 for (idx in 0 until  Renju.BOARD_WIDTH()) {
                     val col = (65 + idx).toChar().toString()
-                    val row = 15 - idx
+                    val row = Renju.BOARD_WIDTH() - idx
                     val rowLeft = "%2d".format(row)
                     val rowRight = row.toString()
 
@@ -111,10 +111,10 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
             COORDINATE_SIZE + (Renju.BOARD_WIDTH() - this.row() - 1) * POINT_SIZE
         )
 
-    override fun renderBoard(board: Board, history: Option<List<Pos>>) =
-        Either.Right(this.renderBoardImage(board, history))
+    override fun renderBoard(board: Board, history: Option<List<Pos?>>) =
+        Either.Right(this.renderImageBoard(board, history))
 
-    fun renderBoardImage(board: Board, history: Option<List<Pos>>) =
+    fun renderImageBoard(board: Board, history: Option<List<Pos?>>) =
         this.protoImage.clone().also { image ->
             image.createGraphics().apply {
                 setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
@@ -123,27 +123,27 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
                     .withIndex()
                     .filter { it.value != Flag.FREE() }
                     .map { Pos.fromIdx(it.index).asBoardPos() to it.value }
-                    .forEach { when(it.second) {
+                    .forEach { (pos, flag) -> when (flag) {
                         Flag.BLACK() -> {
                             color = COLOR_GREY
-                            fillOval(it.first.x + STONE_OFFSET, it.first.y + STONE_OFFSET, STONE_SIZE, STONE_SIZE)
+                            fillOval(pos.x + STONE_OFFSET, pos.y + STONE_OFFSET, STONE_SIZE, STONE_SIZE)
 
                             color = COLOR_BLACK
                             fillOval(
-                                it.first.x + STONE_OFFSET + BOARDER_SIZE,
-                                it.first.y + STONE_OFFSET + BOARDER_SIZE,
+                                pos.x + STONE_OFFSET + BOARDER_SIZE,
+                                pos.y + STONE_OFFSET + BOARDER_SIZE,
                                 STONE_SIZE - 2 * BOARDER_SIZE,
                                 STONE_SIZE - 2 * BOARDER_SIZE,
                             )
                         }
                         Flag.WHITE() -> {
                             color = COLOR_GREY
-                            fillOval(it.first.x + STONE_OFFSET, it.first.y + STONE_OFFSET, STONE_SIZE, STONE_SIZE)
+                            fillOval(pos.x + STONE_OFFSET, pos.y + STONE_OFFSET, STONE_SIZE, STONE_SIZE)
 
                             color = COLOR_WHITE
                             fillOval(
-                                it.first.x + STONE_OFFSET + BOARDER_SIZE,
-                                it.first.y + STONE_OFFSET + BOARDER_SIZE,
+                                pos.x + STONE_OFFSET + BOARDER_SIZE,
+                                pos.y + STONE_OFFSET + BOARDER_SIZE,
                                 STONE_SIZE - 2 * BOARDER_SIZE,
                                 STONE_SIZE - 2 * BOARDER_SIZE,
                             )
@@ -151,8 +151,8 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
                         Flag.FORBIDDEN_33(), Flag.FORBIDDEN_44(), Flag.FORBIDDEN_6() -> {
                             color = COLOR_RED
                             fillOval(
-                                it.first.x + FORBIDDEN_DOT_OFFSET,
-                                it.first.y + FORBIDDEN_DOT_OFFSET,
+                                pos.x + FORBIDDEN_DOT_OFFSET,
+                                pos.y + FORBIDDEN_DOT_OFFSET,
                                 LATEST_MOVE_DOT_SIZE,
                                 LATEST_MOVE_DOT_SIZE,
                             )
@@ -181,15 +181,17 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
                         font = historyFont
 
                         histories
-                            .mapIndexed { idx, pos -> idx + 1 to pos.asBoardPos() }
-                            .forEach {
-                                val textWidth = fontMetrics.stringWidth(it.first.toString())
+                            .withIndex()
+                            .filter { it.value != null }
+                            .map { it.index + 1 to it.value!!.asBoardPos() }
+                            .forEach { (sequence, pos) ->
+                                val textWidth = fontMetrics.stringWidth(sequence.toString())
 
-                                color = if (it.first % 2 == 0) COLOR_BLACK else COLOR_WHITE
+                                color = if (sequence % 2 == 0) COLOR_BLACK else COLOR_WHITE
                                 drawString(
-                                    it.first.toString(),
-                                    it.second.x + POINT_SIZE / 2 - textWidth / 2,
-                                    it.second.y + POINT_SIZE / 2 + HISTORY_FONT_SIZE / 2 - HISTORY_FONT_SIZE / 5
+                                    sequence.toString(),
+                                    pos.x + POINT_SIZE / 2 - textWidth / 2,
+                                    pos.y + POINT_SIZE / 2 + HISTORY_FONT_SIZE / 2 - HISTORY_FONT_SIZE / 5
                                 )
                             }
                     }

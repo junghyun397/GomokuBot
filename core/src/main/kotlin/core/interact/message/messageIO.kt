@@ -1,6 +1,6 @@
 package core.interact.message
 
-import core.assets.Message
+import core.assets.MessageRef
 import java.io.InputStream
 
 typealias MessagePublisher<A, B> = (A) -> MessageIO<A, B>
@@ -19,7 +19,7 @@ interface MessageIO<A, B> {
 
 abstract class MessageAdaptor<A, B> {
 
-    abstract val message: Message
+    abstract val messageRef: MessageRef
 
     abstract val original: A
 

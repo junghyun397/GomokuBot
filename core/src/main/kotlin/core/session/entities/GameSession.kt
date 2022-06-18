@@ -23,7 +23,7 @@ sealed class GameSession(
 
     abstract val gameResult: Option<GameResult>
 
-    abstract val history: List<Pos>
+    abstract val history: List<Pos?>
 
     abstract val messageBufferKey: String
 
@@ -44,13 +44,14 @@ sealed class GameSession(
 }
 
 data class AiGameSession(
-    override val owner: User,
     val aiLevel: AiLevel,
     val solution: Option<SolutionNode>,
+
+    override val owner: User,
     override val ownerHasBlack: Boolean,
     override val board: Board,
     override val gameResult: Option<GameResult> = Option.Empty,
-    override val history: List<Pos>,
+    override val history: List<Pos?>,
     override val messageBufferKey: String,
     override val expireOffset: Long,
     override val expireDate: LinuxTime,
@@ -66,7 +67,7 @@ data class PvpGameSession(
     override val ownerHasBlack: Boolean,
     override val board: Board,
     override val gameResult: Option<GameResult> = Option.Empty,
-    override val history: List<Pos>,
+    override val history: List<Pos?>,
     override val messageBufferKey: String,
     override val expireOffset: Long,
     override val expireDate: LinuxTime,

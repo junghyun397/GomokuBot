@@ -52,7 +52,7 @@ class FocusCommand(
             }
         }
 
-        SessionManager.addNavigate(bot.sessionRepository, originalMessage.message, this.navigateState.copy(page = newFocus.idx()))
+        SessionManager.addNavigate(bot.sessions, originalMessage.messageRef, this.navigateState.copy(page = newFocus.idx()))
 
         val action = originalMessage.updateButtons(
             producer.generateFocusedButtons(producer.generateFocusedField(this.session.board, newFocus))

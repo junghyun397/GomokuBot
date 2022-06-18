@@ -22,7 +22,7 @@ class RejectCommand(override val command: String, private val requestSession: Re
         producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>,
     ) = runCatching {
-        SessionManager.removeRequestSession(bot.sessionRepository, config.id, requestSession.owner.id)
+        SessionManager.removeRequestSession(bot.sessions, config.id, requestSession.owner.id)
 
         val io = producer.produceRequestRejected(publisher, config.language.container, requestSession.owner, requestSession.opponent)
             .map { it.launch(); Order.DeleteSource }

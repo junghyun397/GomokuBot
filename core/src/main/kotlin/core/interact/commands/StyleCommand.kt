@@ -22,7 +22,7 @@ class StyleCommand(override val command: String, private val style: BoardStyle) 
         producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>,
     ) = runCatching {
-        SessionManager.updateGuildConfig(bot.sessionRepository, config.id, config.copy(boardStyle = style))
+        SessionManager.updateGuildConfig(bot.sessions, config.id, config.copy(boardStyle = style))
 
         val io = producer.produceStyleUpdated(publisher, config.language.container, style.sample.styleName)
             .map { it.launch(); Order.Unit }

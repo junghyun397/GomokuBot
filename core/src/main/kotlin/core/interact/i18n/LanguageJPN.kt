@@ -4,8 +4,8 @@ class LanguageJPN : LanguageENG() {
 
     override fun languageCode() = "JPN"
 
-    override fun languageName() = "日本語\uD83C\uDDEF\uD83C\uDDF5"
-    override fun languageSuggestion() = "`~lang` `JPN` コマンドを使ってください。"
+    override fun languageName() = "\uD83C\uDDEF\uD83C\uDDF5 日本語"
+    override fun languageSuggestion() = "`/lang` `JPN` コマンドを使ってください。"
 
     override fun helpAboutEmbedTitle() = "GomokuBot / ヘルプ"
     override fun helpAboutEmbedDescription(platform: String) =

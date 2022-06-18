@@ -4,8 +4,8 @@ class LanguageSKO : LanguageKOR() {
 
     override fun languageCode() = "SKO"
 
-    override fun languageName() = "國漢文混用體\uD83C\uDDF0\uD83C\uDDF7"
-    override fun languageSuggestion() = "`~lang` `SKO` 命令語를使用해주세요."
+    override fun languageName() = "\uD83C\uDDF0\uD83C\uDDF7 國漢文混用體"
+    override fun languageSuggestion() = "`/lang` `SKO` 命令語를使用해주세요."
 
     override fun helpAboutEmbedTitle() = "GomokuBot / 助言"
     override fun helpAboutEmbedDescription(platform: String) =
@@ -35,17 +35,17 @@ class LanguageSKO : LanguageKOR() {
         "$user 님, 遊戱生成에失敗했습니다. 滿喫하고계신遊戱를完了해주세요. :thinking:"
 
     override fun beginPVP(blackPlayer: String, whitePlayer: String) =
-        "`$blackPlayer`님과의對決이開始되었습니다! 先攻은`$blackPlayer`님입니다."
+        "$blackPlayer 님과의對決이開始되었습니다! 先攻은 $blackPlayer 님입니다."
 
     override fun processNextPVP(player: String, priorPlayer: String, latestMove: String) =
-        "`$player`님, 다음手를置하여주세요. `" + priorPlayer + "`는 " + latestMove + "에置하였습니다."
+        "$player 님, 다음手를置하여주세요. " + priorPlayer + "는 " + latestMove + "에置하였습니다."
 
     override fun processErrorOrder(user: String, player: String) =
-        "只今은`$player`님의次例입니다. `$player`님의다음手를待機해주세요. :thinking:"
+        "只今은 $player 님의次例입니다. $player 님의다음手를待機해주세요. :thinking:"
     override fun endPVPWin(winner: String, looser: String, latestMove: String) =
-        "`" + winner + "`님이" + latestMove + "에置함으로서`" + looser + "`님에게勝利하였습니다!"
+        winner + " 님이" + latestMove + "에置함으로서 " + looser + " 님에게勝利하였습니다!"
     override fun endPVPResign(winner: String, looser: String) =
-        "`$looser`님이降伏을宣言함으로서`$winner`님이勝利하였습니다!"
+        "$looser 님이降伏을宣言함으로서 $winner 님이勝利하였습니다!"
 
     override fun endPVEWin(player: String, latestPos: String) = latestPos +  "에置함으로서人工知能에게勝利하셨습니다. 祝賀합니다!"
     override fun endPVELose(player: String, latestPos: String) = "人工知能이" + latestPos + "에置함으로서敗北하셨습니다."

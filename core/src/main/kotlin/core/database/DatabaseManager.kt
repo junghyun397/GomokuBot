@@ -40,13 +40,13 @@ object DatabaseManager {
 
     private suspend fun fetchRankingCache(connection: DatabaseConnection): MutableSet<SimpleProfile> = TODO()
 
-    suspend fun retrieveRanking(connection: DatabaseConnection): Set<SimpleProfile> =
+    suspend fun retrieveRanking(connection: DatabaseConnection, takeN: Int): List<SimpleProfile> =
         this.rankingCache.ifEmpty {
             this.fetchRankingCache(connection).also {
                 this.rankingCacheMutex.withLock {
                     this.rankingCache.addAll(it)
                 }
             }
-        }
+        }.take(takeN)
 
 }

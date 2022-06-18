@@ -7,6 +7,7 @@ import core.interact.commands.DebugType
 import core.interact.parse.NamedParser
 import core.interact.parse.asParseFailure
 import discord.assets.extractUser
+import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
@@ -23,10 +24,12 @@ object DebugCommandParser : NamedParser, ParsableCommand {
         DebugType.values().firstOrNull { it.name == option }
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
-        val option = payload[1]
-            .uppercase()
+        if (!GuildManager.hasDebugPermission(context.event.author))
+            return Either.Right(this.asParseFailure("tester permission not granted", context.event.author.extractUser()) { _, _, _ ->
+                IO { Order.Unit }
+            })
 
-        val type = matchType(option)
+        val type = run { if (payload.size < 2) null else matchType(payload.component2().uppercase()) }
             ?: return Either.Right(this.asParseFailure("unknown debug type", context.event.author.extractUser()) { _,  _, _ ->
                 IO { Order.Unit }
             })
@@ -45,7 +48,7 @@ object DebugCommandParser : NamedParser, ParsableCommand {
     }
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
-        Either.Right(this.asParseFailure("slash not supported", context.event.user.extractUser()) { _, _, _ ->
+        Either.Right(this.asParseFailure("slash commands not supported", context.event.user.extractUser()) { _, _, _ ->
             IO { Order.Unit }
         })
 
