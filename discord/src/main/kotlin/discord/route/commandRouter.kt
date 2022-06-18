@@ -61,6 +61,7 @@ private fun matchCommand(command: String, container: LanguageContainer): Option<
     when (command.lowercase()) {
         "help" -> Option(HelpCommandParser)
         container.helpCommand() -> Option(HelpCommandParser)
+        container.configCommand() -> Option(SettingsCommandParser)
         container.startCommand() -> Option(StartCommandParser)
         "s" -> Option(SetCommandParser)
         container.resignCommand() -> Option(ResignCommandParser)

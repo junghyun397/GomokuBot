@@ -25,6 +25,9 @@ open class LanguageENG : LanguageContainer {
     override fun helpCommand() = "help"
     override fun helpCommandDescription() = "Get help."
 
+    override fun configCommand() = "config"
+    override fun configCommandDescription() = "Get configuration panel."
+
     // ### 1-1-2. HELP:ABOUT (EMBED)
 
     override fun helpAboutEmbedTitle() = "GomokuBot / Help"
@@ -42,6 +45,7 @@ open class LanguageENG : LanguageContainer {
 
     override fun helpCommandEmbedTitle() = "GomokuBot / Command"
     override fun helpCommandEmbedHelp() = "Get help."
+    override fun helpCommandEmbedConfig() = "Get configuration panel."
     override fun helpCommandEmbedRank() = "Get a ranking from 1st to 10th."
     override fun helpCommandEmbedRating() = "Get ``GomokuBot ELO`` rating."
 

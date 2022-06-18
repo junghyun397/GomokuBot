@@ -34,6 +34,9 @@ sealed interface LanguageContainer {
     fun helpCommand(): String
     fun helpCommandDescription(): String
 
+    fun configCommand(): String
+    fun configCommandDescription(): String
+
     // ### 1-1-2. HELP:ABOUT (EMBED)
 
     fun helpAboutEmbedTitle(): String
@@ -49,6 +52,7 @@ sealed interface LanguageContainer {
     fun helpCommandEmbedTitle(): String
 
     fun helpCommandEmbedHelp(): String
+    fun helpCommandEmbedConfig(): String
     fun helpCommandEmbedRank(): String
     fun helpCommandEmbedRating(): String
 

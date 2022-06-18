@@ -316,6 +316,12 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
             }
 
             field {
+                name = "``/${container.configCommand()}`` or ``$COMMAND_PREFIX${container.configCommand()}``"
+                value = container.helpCommandEmbedConfig()
+                inline = false
+            }
+
+            field {
                 name = "``/${container.languageCommand()}`` or ``$COMMAND_PREFIX${container.languageCommand()}``"
                 value = container.helpCommandEmbedLang(languageEnumeration)
                 inline = false

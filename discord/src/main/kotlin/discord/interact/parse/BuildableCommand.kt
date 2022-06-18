@@ -4,12 +4,12 @@ import core.interact.i18n.LanguageContainer
 import discord.interact.parse.parsers.*
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 
-val buildableCommands: Collection<BuildableCommand> =
-    listOf(
-        HelpCommandParser, StartCommandParser,
+val buildableCommands: Set<BuildableCommand> =
+    setOf(
+        HelpCommandParser, SettingsCommandParser,
         StyleCommandParser, LangCommandParser,
-        ResignCommandParser, RankCommandParser,
-        SetCommandParser, RatingCommandParser
+        StartCommandParser, ResignCommandParser, SetCommandParser,
+        RankCommandParser, RatingCommandParser
     )
 
 interface BuildableCommand {

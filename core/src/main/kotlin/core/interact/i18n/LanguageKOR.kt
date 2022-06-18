@@ -25,6 +25,9 @@ open class LanguageKOR : LanguageENG() {
     override fun helpCommand() = "도움말"
     override fun helpCommandDescription() = "도움말을 알아봅니다."
 
+    override fun configCommand() = "설정"
+    override fun configCommandDescription() = "설정 화면을 표시합니다."
+
     // ### 1-1-2. HELP:ABOUT (EMBED)
 
     override fun helpAboutEmbedTitle() = "GomokuBot / 도움말"
