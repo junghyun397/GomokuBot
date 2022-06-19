@@ -96,9 +96,9 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
         val owner = context.event.author.extractUser()
-        val opponent = context.event.message.mentionedUsers
-            .firstOrNull { !it.isBot && it.idLong != owner.id.idLong }
-            ?.extractUser()
+        val opponent = context.event.message.mentions.members
+            .firstOrNull { !it.user.isBot && it.idLong != owner.id.idLong }
+            ?.user?.extractUser()
             .asOption()
 
         return this.parseActually(context, owner, opponent)

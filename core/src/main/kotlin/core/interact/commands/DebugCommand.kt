@@ -28,7 +28,11 @@ enum class DebugType {
     ANALYSIS, SELF_REQUEST, VCF, INJECT, STATUS
 }
 
-class DebugCommand(override val command: String, private val debugType: DebugType, private val payload: String?) : Command {
+class DebugCommand(
+    override val command: String,
+    private val debugType: DebugType,
+    private val payload: String?,
+) : Command {
 
     @Suppress("DuplicatedCode")
     override suspend fun <A, B> execute(

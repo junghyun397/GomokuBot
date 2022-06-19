@@ -78,3 +78,9 @@ sealed class Option<out T> {
 fun <T> T?.asOption(): Option<T> =
     if (this == null) Option.Empty
     else Option(this)
+
+fun <T> Result<T>.toOption(): Option<T> =
+    this.fold(
+        onSuccess = { Option(it) },
+        onFailure = { Option.Empty }
+    )

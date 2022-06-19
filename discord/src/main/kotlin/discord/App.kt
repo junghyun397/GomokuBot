@@ -113,7 +113,7 @@ object GomokuBot {
             .subscribe { leaveLog(it) }
 
         eventManager.on<MessageReceivedEvent>()
-            .filter { it.isFromGuild && !it.author.isBot && (it.message.contentRaw.startsWith(COMMAND_PREFIX) || it.message.isMentioned(it.jda.selfUser)) }
+            .filter { it.isFromGuild && !it.author.isBot && (it.message.contentRaw.startsWith(COMMAND_PREFIX) || it.message.mentions.isMentioned(it.jda.selfUser)) }
             .flatMap { mono { retrieveInteractionContext(botContext, it, it.guild.extractGuild()) } }
             .flatMap(::textCommandRouter)
             .subscribe { leaveLog(it) }

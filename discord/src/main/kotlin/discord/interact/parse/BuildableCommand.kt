@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 
 val buildableCommands: Set<BuildableCommand> =
     setOf(
-        HelpCommandParser, SettingsCommandParser,
+        HelpCommandParser, ConfigCommandParser,
         StyleCommandParser, LangCommandParser,
         StartCommandParser, ResignCommandParser, SetCommandParser,
         RankCommandParser, RatingCommandParser

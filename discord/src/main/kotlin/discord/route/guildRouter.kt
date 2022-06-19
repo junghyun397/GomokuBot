@@ -1,6 +1,6 @@
 package discord.route
 
-import core.interact.commands.buildHelpSequence
+import core.interact.commands.buildCombinedHelpSequence
 import core.interact.i18n.Language
 import core.interact.reports.ServerJoinReport
 import core.session.SessionManager
@@ -54,7 +54,7 @@ fun guildJoinRouter(context: InteractionContext<GuildJoinEvent>): Mono<Tuple2<In
 
         val helpSent = context.event.guild.systemChannel?.run {
             GuildManager.permissionGrantedRun(this, Permission.MESSAGE_SEND) {
-                buildHelpSequence(context.bot, guildConfig, { msg -> MessageActionAdaptor(this.sendMessage(msg)) }, DiscordMessageProducer, 0)
+                buildCombinedHelpSequence(context.bot, guildConfig, { msg -> MessageActionAdaptor(this.sendMessage(msg)) }, DiscordMessageProducer, 0)
                     .run()
             }
         }?.isDefined

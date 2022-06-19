@@ -8,7 +8,7 @@ import core.session.entities.NavigateState
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-class SessionRepository(
+data class SessionRepository(
     val sessions: MutableMap<GuildId, GuildSession> = ConcurrentHashMap(),
     val navigates: MutableMap<MessageRef, NavigateState> = Collections.synchronizedMap(WeakHashMap()),
     val messageBuffer: MutableMap<String, MutableList<MessageRef>> = Collections.synchronizedMap(WeakHashMap()),

@@ -17,11 +17,24 @@ object HelpCommandParser : NamedParser, ParsableCommand, BuildableCommand {
 
     override val name = "help"
 
+    private fun checkCrossLanguageCommand(container: LanguageContainer, command: String) =
+        container.helpCommand() != command
+
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>) =
-        Either.Left(HelpCommand(context.config.language.container.helpCommand()))
+        Either.Left(
+            HelpCommand(
+                context.config.language.container.helpCommand(),
+                this.checkCrossLanguageCommand(context.config.language.container, context.event.name)
+            )
+        )
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>) =
-        Either.Left(HelpCommand(context.config.language.container.helpCommand()))
+        Either.Left(
+            HelpCommand(
+                context.config.language.container.helpCommand(),
+                this.checkCrossLanguageCommand(context.config.language.container, payload[0])
+            )
+        )
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.apply {
@@ -29,10 +42,13 @@ object HelpCommandParser : NamedParser, ParsableCommand, BuildableCommand {
                 container.helpCommand(),
                 container.helpCommandDescription()
             )
-            if (container.helpCommand() != Language.ENG.container.helpCommand()) slash(
-                "help",
-                Language.ENG.container.helpCommandDescription()
-            )
+
+            if (container.helpCommand() != Language.ENG.container.helpCommand()) {
+                slash(
+                    "help",
+                    Language.ENG.container.helpCommandDescription()
+                )
+            }
         }
 
 }

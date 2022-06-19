@@ -11,7 +11,7 @@ import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.WebHookActionAdaptor
 import discord.interact.parse.EmbeddableCommand
 import discord.interact.parse.parsers.AcceptCommandParser
-import discord.interact.parse.parsers.ConfigCommandParser
+import discord.interact.parse.parsers.ApplyConfigCommandParser
 import discord.interact.parse.parsers.RejectCommandParser
 import discord.interact.parse.parsers.SetCommandParser
 import kotlinx.coroutines.async
@@ -30,7 +30,7 @@ private fun matchAction(prefix: String): Option<EmbeddableCommand> =
         "s" -> Option(SetCommandParser)
         "a" -> Option(AcceptCommandParser)
         "r" -> Option(RejectCommandParser)
-        "p" -> Option(ConfigCommandParser)
+        "p" -> Option(ApplyConfigCommandParser)
         else -> Option.Empty
     }
 

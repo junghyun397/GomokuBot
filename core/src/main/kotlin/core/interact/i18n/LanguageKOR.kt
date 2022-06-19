@@ -45,6 +45,7 @@ open class LanguageKOR : LanguageENG() {
 
     override fun helpCommandEmbedTitle() = "GomokuBot / 명령어"
     override fun helpCommandEmbedHelp() = "도움말을 알아봅니다."
+    override fun helpCommandEmbedConfig() = "설정 화면을 표시합니다."
     override fun helpCommandEmbedRank() = "1위부터 10위까지의 순위를 알아봅니다."
     override fun helpCommandEmbedRating() = "``GomokuBot ELO`` 레이팅을 알아봅니다."
 

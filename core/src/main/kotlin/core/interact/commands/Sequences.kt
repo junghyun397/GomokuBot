@@ -88,6 +88,24 @@ fun <A, B> buildHelpSequence(
     config: GuildConfig,
     publisher: MessagePublisher<A, B>,
     producer: MessageProducer<A, B>,
+    page: Int
+) = producer.produceHelp(publisher, config.language.container, page)
+    .map { it.retrieve() }
+    .flatMap { helpMessage ->
+        SessionManager.addNavigate(
+            bot.sessions,
+            helpMessage.messageRef,
+            NavigateState(NavigationKind.ABOUT, page, LinuxTime.withExpireOffset(bot.config.navigatorExpireOffset))
+        )
+
+        producer.attachBinaryNavigators(helpMessage)
+    }
+
+fun <A, B> buildCombinedHelpSequence(
+    bot: BotContext,
+    config: GuildConfig,
+    publisher: MessagePublisher<A, B>,
+    producer: MessageProducer<A, B>,
     settingsPage: Int
 ) = IO.zip(producer.produceHelp(publisher, config.language.container, 0), producer.produceSettings(publisher, config, settingsPage))
     .flatMap { (helpIO, settingsIO) ->

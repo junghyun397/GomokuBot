@@ -9,14 +9,12 @@ import core.interact.message.MessagePublisher
 import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
+import core.session.entities.NavigateState
+import core.session.entities.NavigationKind
 import kotlinx.coroutines.Deferred
+import utils.assets.LinuxTime
 
-class ConfigCommand(
-    override val command: String,
-    private val newConfig: GuildConfig,
-    private val configName: String,
-    private val configChoice: String,
-) : Command {
+class ConfigCommand(override val command: String) : Command {
 
     override suspend fun <A, B> execute(
         bot: BotContext,
@@ -24,14 +22,22 @@ class ConfigCommand(
         user: User,
         message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
-        publisher: MessagePublisher<A, B>
+        publisher: MessagePublisher<A, B>,
     ) = runCatching {
-        SessionManager.updateGuildConfig(bot.sessions, config.id, newConfig)
+        val io = producer.produceSettings(publisher, config, 0)
+            .map { it.retrieve() }
+            .flatMap { settingsMessage ->
+                SessionManager.addNavigate(
+                    bot.sessions,
+                    settingsMessage.messageRef,
+                    NavigateState(NavigationKind.SETTINGS, 0, LinuxTime.withExpireOffset(bot.config.navigatorExpireOffset))
+                )
 
-        val io = producer.produceConfigApplied(publisher, config.language.container, this.configName, this.configChoice)
-            .map { it.launch(); Order.Unit }
+                producer.attachBinaryNavigators(settingsMessage)
+            }
+            .map { Order.Unit }
 
-        io to this.asCommandReport("update $configName as $configChoice", user)
+        io to this.asCommandReport("succeed", user)
     }
 
 }

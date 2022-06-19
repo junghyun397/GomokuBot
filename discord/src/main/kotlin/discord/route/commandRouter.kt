@@ -61,7 +61,7 @@ private fun matchCommand(command: String, container: LanguageContainer): Option<
     when (command.lowercase()) {
         "help" -> Option(HelpCommandParser)
         container.helpCommand() -> Option(HelpCommandParser)
-        container.configCommand() -> Option(SettingsCommandParser)
+        container.configCommand() -> Option(ConfigCommandParser)
         container.startCommand() -> Option(StartCommandParser)
         "s" -> Option(SetCommandParser)
         container.resignCommand() -> Option(ResignCommandParser)
@@ -126,21 +126,20 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
         if (messageRaw.startsWith(COMMAND_PREFIX))
             messageRaw.drop(1).split(" ")
         else {
+            // drop <@000000000000000000>
             val payload = messageRaw.drop(21).trimStart().split(" ")
 
-            if (payload.first().isEmpty())
-                listOf("help")
-            else
-                payload
+            if (payload.first().isEmpty()) listOf("help")
+            else payload
         }
-    }.let {
+    }.let { payload ->
         Mono.zip(
             context.toMono(),
             matchCommand(
-                command = it.first(),
+                command = payload.first(),
                 container = context.config.language.container
             ).toMono(),
-            it.toMono()
+            payload.toMono()
         )
     }
         .filter { (_, parsable, _) -> parsable.isDefined }
