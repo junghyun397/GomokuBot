@@ -24,32 +24,32 @@ fun scheduleCleaner(logger: org.slf4j.Logger, botContext: BotContext, jda: JDA) 
     val exceptionHandler: (Exception) -> Unit  = { logger.error(it.stackTraceToString()) }
 
     schedule(Duration.ofHours(1), exceptionHandler) {
-        SessionManager.cleanExpiredGameSession(botContext.sessions).forEach { (config, id, session) ->
+        SessionManager.cleanExpiredGameSession(botContext.sessions).forEach { (_, guildSession, _, session) ->
             val message = SessionManager.viewTailMessage(botContext.sessions, session.messageBufferKey)
 
-            val guild = jda.getGuildById(id.idLong)
+            val guild = jda.getGuildById(guildSession.guild.givenId.idLong)
             val channel = message?.let { jda.getTextChannelById(it.channelId.idLong) }
 
             if (message != null && guild != null && channel != null) {
                 val publisher: DiscordMessagePublisher = { msg -> MessageActionAdaptor(channel.sendMessage(msg)) }
 
-                val (thenSession, _) = GameManager.resignSession(session, GameResult.WinCause.TIMEOUT, session.player)
+                val (thenSession, _) = GameManager.resignSession(session, GameResult.Cause.TIMEOUT, session.player)
 
                 val io = when (session) {
                     is PvpGameSession -> DiscordMessageProducer.produceTimeoutPVP(
                         publisher,
-                        config.language.container,
+                        guildSession.config.language.container,
                         session.nextPlayer,
                         session.player
                     )
                     is AiGameSession -> DiscordMessageProducer.produceTimeoutPVE(
                         publisher,
-                        config.language.container,
+                        guildSession.config.language.container,
                         session.owner
                     )
                 }
                     .map { it.launch() }
-                    .flatMap { buildFinishSequence(botContext, DiscordMessageProducer, publisher, config, session, thenSession) }
+                    .flatMap { buildFinishSequence(botContext, DiscordMessageProducer, publisher, guildSession.config, session, thenSession) }
 
                 CoroutineScope(Dispatchers.Default).launch {
                     export(botContext, guild, io, null)
@@ -61,10 +61,10 @@ fun scheduleCleaner(logger: org.slf4j.Logger, botContext: BotContext, jda: JDA) 
     }
 
     schedule(Duration.ofMinutes(5), exceptionHandler) {
-        SessionManager.cleanExpiredRequestSessions(botContext.sessions).forEach { (config, id, session) ->
+        SessionManager.cleanExpiredRequestSessions(botContext.sessions).forEach { (_, guildSession, _, session) ->
             val message = SessionManager.viewTailMessage(botContext.sessions, session.messageBufferKey)
 
-            val guild = jda.getGuildById(id.idLong)
+            val guild = jda.getGuildById(guildSession.guild.givenId.idLong)
             val channel = message?.let { jda.getTextChannelById(it.channelId.idLong) }
 
             if (message != null && guild != null && channel != null) {
@@ -72,7 +72,7 @@ fun scheduleCleaner(logger: org.slf4j.Logger, botContext: BotContext, jda: JDA) 
 
                 val io = DiscordMessageProducer.produceRequestExpired(
                     publisher,
-                    config.language.container,
+                    guildSession.config.language.container,
                     session.owner,
                     session.opponent
                 )

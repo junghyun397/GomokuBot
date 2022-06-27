@@ -1,6 +1,7 @@
 package core.interact.commands
 
 import core.BotContext
+import core.assets.Guild
 import core.assets.User
 import core.interact.Order
 import core.interact.message.MessageAdaptor
@@ -17,12 +18,13 @@ class StyleCommand(override val command: String, private val style: BoardStyle) 
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: GuildConfig,
+        guild: Guild,
         user: User,
         message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>,
     ) = runCatching {
-        SessionManager.updateGuildConfig(bot.sessions, config.id, config.copy(boardStyle = style))
+        SessionManager.updateGuildConfig(bot.sessions, guild, config.copy(boardStyle = style))
 
         val io = producer.produceStyleUpdated(publisher, config.language.container, style.sample.styleName)
             .map { it.launch(); Order.Unit }

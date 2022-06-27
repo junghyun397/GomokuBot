@@ -9,7 +9,7 @@ fun Boolean.toInt() = if (this) 1 else 0
 
 fun <T : Enum<*>> T.toEnumString() = "${this.javaClass.simpleName}-$this"
 
-inline fun <reified T: Comparable<T>> Iterable<T>.maxSet(): Array<Int>? {
+fun <T: Comparable<T>> Iterable<T>.maxSet(): Array<Int>? {
     val iterator = this.iterator()
     if (!iterator.hasNext()) return null
 

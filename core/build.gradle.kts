@@ -1,9 +1,11 @@
+
 import com.google.protobuf.gradle.generateProtoTasks
 import com.google.protobuf.gradle.id
 import com.google.protobuf.gradle.ofSourceSet
 import com.google.protobuf.gradle.plugins
 import com.google.protobuf.gradle.protobuf
 import com.google.protobuf.gradle.protoc
+import org.gradle.kotlin.dsl.invoke
 
 val grpcVersion = "1.44.1"
 val grpcKotlinVersion = "1.2.1"
@@ -17,18 +19,16 @@ plugins {
 dependencies {
     implementation(project(":utils"))
 
-    implementation("dev.miku:r2dbc-mysql:0.8.2.RELEASE")
-    implementation("io.r2dbc:r2dbc-pool:0.9.0.RELEASE")
-    runtimeOnly("mysql:mysql-connector-java:8.0.28")
+    implementation("io.r2dbc:r2dbc-postgresql:0.8.12.RELEASE")
 
-    runtimeOnly("io.netty:netty-all:4.1.75.Final")
-    runtimeOnly("io.netty:netty-tcnative-boringssl-static:2.0.51.Final")
+    runtimeOnly("io.netty:netty-all:4.1.77.Final")
+    runtimeOnly("io.netty:netty-tcnative-boringssl-static:2.0.53.Final")
 
-    implementation("io.grpc:grpc-stub:1.45.0")
+    implementation("io.grpc:grpc-stub:1.47.0")
     implementation("io.grpc:grpc-kotlin-stub:$grpcKotlinVersion")
     implementation("io.grpc:grpc-protobuf:$grpcVersion")
     implementation("com.google.protobuf:protobuf-kotlin:$protobufVersion")
-    implementation("io.grpc:grpc-netty:1.45.0")
+    implementation("io.grpc:grpc-netty:1.47.0")
 }
 
 protobuf {

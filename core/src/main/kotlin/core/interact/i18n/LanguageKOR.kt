@@ -72,6 +72,7 @@ open class LanguageKOR : LanguageENG() {
     override fun rankEmbedDescription() = "1위부터 10위까지의 승리 순위"
     override fun rankEmbedWin() = "승"
     override fun rankEmbedLose() = "패"
+    override fun rankEmbedDraw() = "무"
 
     // ## 1-3. RATING
 

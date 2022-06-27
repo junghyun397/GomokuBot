@@ -1,7 +1,7 @@
 package discord.interact.message
 
 import core.assets.*
-import core.database.entities.SimpleProfile
+import core.database.entities.UserStats
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.interact.message.*
@@ -48,7 +48,7 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
     override val focusWidth = 5
     override val focusRange = 2 .. Renju.BOARD_WIDTH_MAX_IDX() - 2
 
-    private fun User.asMentionFormat() = "<@${this.id.idLong}>"
+    private fun User.asMentionFormat() = "<@${this.givenId.idLong}>"
 
     private fun String.asHighlightFormat() = "``$this``"
 
@@ -405,17 +405,22 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
 
     // RANK
 
-    override fun produceRankings(publisher: DiscordMessagePublisher, container: LanguageContainer, rankings: List<SimpleProfile>) =
+    override fun produceRankings(publisher: DiscordMessagePublisher, container: LanguageContainer, rankings: List<UserStats>) =
         IO { publisher(Message(
             embed = Embed {
                 color = COLOR_NORMAL_HEX
                 title = container.rankEmbedTitle()
                 description = container.rankEmbedDescription()
 
-                rankings.forEachIndexed { index, simpleProfile ->
+                rankings.forEachIndexed { index, stats ->
                     field {
-                        name = "#${index + 1} ${simpleProfile.name}"
-                        value = "${container.rankEmbedWin()}: ``${simpleProfile.wins}``, ${container.rankEmbedLose()}: ``${simpleProfile.losses}``"
+                        name = "#${index + 1} ${stats.profile.name}"
+                        value = "``$UNICODE_BLACK_CIRCLE``${container.rankEmbedWin()}: ``${stats.blackWins}``, " +
+                                "``$UNICODE_BLACK_CIRCLE``${container.rankEmbedLose()}: ``${stats.blackLosses}``, " +
+                                "``$UNICODE_BLACK_CIRCLE``${container.rankEmbedDraw()}: ``${stats.blackDraws}``," +
+                                "``$UNICODE_WHITE_CIRCLE``${container.rankEmbedWin()}: ``${stats.whiteWins}``, " +
+                                "``$UNICODE_WHITE_CIRCLE``${container.rankEmbedLose()}: ``${stats.whiteLosses}``, " +
+                                "``$UNICODE_WHITE_CIRCLE``${container.rankEmbedDraw()}: ``${stats.whiteDraws}``"
                         inline = false
                     }
                 }
@@ -696,8 +701,8 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
             }
         )).addButtons(
             listOf(ActionRow.of(
-                Button.of(ButtonStyle.DANGER, "r-${owner.id.idLong}", container.requestEmbedButtonReject()),
-                Button.of(ButtonStyle.SUCCESS, "a-${owner.id.idLong}", container.requestEmbedButtonAccept())
+                Button.of(ButtonStyle.DANGER, "r-${owner.givenId.idLong}", container.requestEmbedButtonReject()),
+                Button.of(ButtonStyle.SUCCESS, "a-${owner.givenId.idLong}", container.requestEmbedButtonAccept())
             ))
         ) }
 

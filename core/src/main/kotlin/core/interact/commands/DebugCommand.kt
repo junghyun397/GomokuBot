@@ -3,6 +3,7 @@
 package core.interact.commands
 
 import core.BotContext
+import core.assets.Guild
 import core.assets.User
 import core.assets.toBoardIO
 import core.inference.AiLevel
@@ -38,13 +39,14 @@ class DebugCommand(
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: GuildConfig,
+        guild: Guild,
         user: User,
         message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>,
     ) = runCatching { when (debugType) {
         DebugType.ANALYSIS -> {
-            SessionManager.retrieveGameSession(bot.sessions, config.id, user.id)?.let { session ->
+            SessionManager.retrieveGameSession(bot.sessions, guild, user.id)?.let { session ->
                 producer.produceSessionArchive(publisher, session)
                     .map {
                         it.addFile(session.board.toBoardIO().debugText().toInputStream(), "analysis-report-${System.currentTimeMillis()}.txt")
@@ -54,8 +56,8 @@ class DebugCommand(
             } ?: (IO { Order.Unit } to this.asCommandReport("failed", user))
         }
         DebugType.SELF_REQUEST -> {
-            if (SessionManager.retrieveGameSession(bot.sessions, config.id, user.id) != null ||
-                SessionManager.retrieveRequestSession(bot.sessions, config.id, user.id) != null)
+            if (SessionManager.retrieveGameSession(bot.sessions, guild, user.id) != null ||
+                SessionManager.retrieveRequestSession(bot.sessions, guild, user.id) != null)
                 IO { Order.Unit } to this.asCommandReport("failed", user)
             else {
                 val requestSession = RequestSession(
@@ -64,7 +66,7 @@ class DebugCommand(
                     LinuxTime.withExpireOffset(bot.config.gameExpireOffset)
                 )
 
-                SessionManager.putRequestSession(bot.sessions, config.id, requestSession)
+                SessionManager.putRequestSession(bot.sessions, guild, requestSession)
 
                 val io = producer.produceRequest(publisher, config.language.container, user, user).map { it.launch(); Order.Unit }
 
@@ -84,10 +86,11 @@ class DebugCommand(
                 expireOffset = bot.config.gameExpireOffset,
                 expireDate = LinuxTime.withExpireOffset(bot.config.gameExpireOffset)
             )
-            SessionManager.putGameSession(bot.sessions, config.id, session)
+
+            SessionManager.putGameSession(bot.sessions, guild, session)
 
             val io = producer.produceNextMovePVE(publisher, config.language.container, user, session.board.latestPos().get())
-                .flatMap { buildBoardSequence(bot, config, producer, publisher, session) }
+                .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, session) }
                 .map { Order.Unit }
 
             io to this.asCommandReport("succeed", user)
@@ -128,10 +131,11 @@ class DebugCommand(
                 expireOffset = bot.config.gameExpireOffset,
                 expireDate = LinuxTime.withExpireOffset(bot.config.gameExpireOffset)
             )
-            SessionManager.putGameSession(bot.sessions, config.id, session)
+
+            SessionManager.putGameSession(bot.sessions, guild, session)
 
             val io = producer.produceNextMovePVE(publisher, config.language.container, user, session.board.latestPos().get())
-                .flatMap { buildBoardSequence(bot, config, producer, publisher, session) }
+                .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, session) }
                 .map { Order.Unit }
 
             io to this.asCommandReport("succeed", user)

@@ -33,7 +33,7 @@ open class LanguageENG : LanguageContainer {
     override fun helpAboutEmbedTitle() = "GomokuBot / Help"
     override fun helpAboutEmbedDescription(platform: String) =
         "Now play **Gomoku** on **$platform**. **GomokuBot** can do it." +
-                " ― GomokuBot is an open-source AI bot that provides Gomoku([Renju](https://www.renju.net/rules/)) feature in $platform. " +
+                " ― GomokuBot is an AI bot that provides Gomoku([Renju](https://www.renju.net/rules/)) feature in $platform. " +
                 "The collected data are used for training reinforcement learning models."
     override fun helpAboutEmbedDeveloper() = "Developer"
     override fun helpAboutEmbedRepository() = "Git Repository"
@@ -72,6 +72,7 @@ open class LanguageENG : LanguageContainer {
     override fun rankEmbedDescription() = "Ranking from 1st to 10th."
     override fun rankEmbedWin() = "Wins"
     override fun rankEmbedLose() = "Losses"
+    override fun rankEmbedDraw() = "Draws"
 
     // ## 1-3. RATING
 

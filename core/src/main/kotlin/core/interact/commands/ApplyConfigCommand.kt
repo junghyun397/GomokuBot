@@ -1,6 +1,7 @@
 package core.interact.commands
 
 import core.BotContext
+import core.assets.Guild
 import core.assets.User
 import core.interact.Order
 import core.interact.message.MessageAdaptor
@@ -21,12 +22,13 @@ class ApplyConfigCommand(
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: GuildConfig,
+        guild: Guild,
         user: User,
         message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>
     ) = runCatching {
-        SessionManager.updateGuildConfig(bot.sessions, config.id, newConfig)
+        SessionManager.updateGuildConfig(bot.sessions, guild, newConfig)
 
         val io = producer.produceConfigApplied(publisher, config.language.container, this.configName, this.configChoice)
             .map { it.launch(); Order.Unit }

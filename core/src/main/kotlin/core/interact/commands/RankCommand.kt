@@ -1,6 +1,7 @@
 package core.interact.commands
 
 import core.BotContext
+import core.assets.Guild
 import core.assets.User
 import core.database.DatabaseManager
 import core.interact.Order
@@ -16,12 +17,13 @@ class RankCommand(override val command: String) : Command {
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: GuildConfig,
+        guild: Guild,
         user: User,
         message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>,
     ) = runCatching {
-        val rankings = DatabaseManager.retrieveRanking(bot.databaseConnection, 10)
+        val rankings = DatabaseManager.fetchRankings(bot.databaseConnection)
 
         val io = producer.produceRankings(publisher, config.language.container, rankings)
             .map { it.launch(); Order.Unit }

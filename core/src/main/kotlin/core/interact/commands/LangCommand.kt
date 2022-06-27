@@ -1,6 +1,7 @@
 package core.interact.commands
 
 import core.BotContext
+import core.assets.Guild
 import core.assets.User
 import core.interact.Order
 import core.interact.i18n.Language
@@ -17,6 +18,7 @@ class LangCommand(override val command: String, private val language: Language) 
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: GuildConfig,
+        guild: Guild,
         user: User,
         message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
@@ -24,7 +26,7 @@ class LangCommand(override val command: String, private val language: Language) 
     ) = runCatching {
         val thenConfig = config.copy(language = this.language)
 
-        SessionManager.updateGuildConfig(bot.sessions, config.id, thenConfig)
+        SessionManager.updateGuildConfig(bot.sessions, guild, thenConfig)
 
         val io = producer.produceLanguageUpdated(publisher, this.language.container)
             .map { it.launch() }

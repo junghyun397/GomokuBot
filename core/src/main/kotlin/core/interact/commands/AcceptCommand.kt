@@ -1,6 +1,7 @@
 package core.interact.commands
 
 import core.BotContext
+import core.assets.Guild
 import core.assets.User
 import core.interact.Order
 import core.interact.message.MessageAdaptor
@@ -18,6 +19,7 @@ class AcceptCommand(override val command: String, private val requestSession: Re
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: GuildConfig,
+        guild: Guild,
         user: User,
         message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
@@ -29,13 +31,13 @@ class AcceptCommand(override val command: String, private val requestSession: Re
             this.requestSession.opponent
         )
 
-        SessionManager.putGameSession(bot.sessions, config.id, gameSession)
+        SessionManager.putGameSession(bot.sessions, guild, gameSession)
 
-        SessionManager.removeRequestSession(bot.sessions, config.id, this.requestSession.owner.id)
+        SessionManager.removeRequestSession(bot.sessions, guild, this.requestSession.owner.id)
 
         val io = producer.produceBeginsPVP(publisher, config.language.container, gameSession.player, gameSession.nextPlayer)
             .map { it.launch() }
-            .flatMap { buildBoardSequence(bot, config, producer, publisher, gameSession) }
+            .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, gameSession) }
             .map { Order.DeleteSource }
 
         io to this.asCommandReport("accepted", user)

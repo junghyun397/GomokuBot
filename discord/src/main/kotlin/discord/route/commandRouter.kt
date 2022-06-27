@@ -9,7 +9,6 @@ import core.interact.i18n.LanguageContainer
 import core.interact.reports.CommandReport
 import dev.minn.jda.ktx.await
 import discord.assets.COMMAND_PREFIX
-import discord.assets.extractUser
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageAdaptor
@@ -38,11 +37,11 @@ import utils.structs.IO
 import utils.structs.Option
 import java.util.concurrent.TimeUnit
 
-private fun buildPermissionNode(channel: TextChannel, user: User, parsableCommand: ParsableCommand): Option<DiscordParseFailure> =
+private fun buildPermissionNode(context: InteractionContext<*>, channel: TextChannel, jdaUser: User, parsableCommand: ParsableCommand) =
     GuildManager.permissionNotGrantedRun(channel, Permission.MESSAGE_SEND) {
-        DiscordParseFailure(parsableCommand.name, "message permission not granted in $channel", user.extractUser()) { _, _, container ->
+        DiscordParseFailure(parsableCommand.name, "message permission not granted in $channel", context.user) { _, _, container ->
             IO {
-                user.openPrivateChannel()
+                jdaUser.openPrivateChannel()
                     .flatMap { privateChannel -> DiscordMessageProducer.sendPermissionNotGrantedEmbed(
                         publisher = { msg -> privateChannel.sendMessage(msg) },
                         container = container,
@@ -86,7 +85,7 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
             context.event.deferReply().queue()
         }
         .flatMap { (context, parsable) -> Mono.zip(context.toMono(), mono {
-            buildPermissionNode(context.event.textChannel, context.event.user, parsable.getOrException()).fold(
+            buildPermissionNode(context, context.event.textChannel, context.event.user, parsable.getOrException()).fold(
                 onDefined = { failure -> Either.Right(failure) },
                 onEmpty = { parsable.getOrException()
                     .parseSlash(context)
@@ -98,11 +97,11 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
                 command.execute(
                     bot = context.bot,
                     config = context.config,
-                    user = context.event.user.extractUser(),
+                    user = context.user,
+                    guild = context.guild,
                     message = async { DiscordMessageAdaptor(context.event.hook.retrieveOriginal().await()) },
-                    producer = DiscordMessageProducer,
-                    publisher = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) }
-                )
+                    producer = DiscordMessageProducer
+                ) { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) }
             } ,
             onRight = { parseFailure ->
                 parseFailure.notice(
@@ -144,7 +143,7 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
     }
         .filter { (_, parsable, _) -> parsable.isDefined }
         .flatMap { (context, parsable, payload) -> Mono.zip(context.toMono(), mono {
-            buildPermissionNode(context.event.textChannel, context.event.author, parsable.getOrException()).fold(
+            buildPermissionNode(context, context.event.textChannel, context.event.author, parsable.getOrException()).fold(
                 onDefined = { failure -> Either.Right(failure) },
                 onEmpty = { parsable.getOrException()
                     .parseText(context, payload)
@@ -164,11 +163,11 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
                 command.execute(
                     bot = context.bot,
                     config = context.config,
-                    user = context.event.author.extractUser(),
+                    user = context.user,
+                    guild = context.guild,
                     message = async { DiscordMessageAdaptor(context.event.message) },
-                    producer = DiscordMessageProducer,
-                    publisher = { msg -> MessageActionAdaptor(context.event.message.reply(msg)) }
-                )
+                    producer = DiscordMessageProducer
+                ) { msg -> MessageActionAdaptor(context.event.message.reply(msg)) }
             },
             onRight = { parseFailure ->
                 parseFailure.notice(

@@ -1,6 +1,7 @@
 package core.interact.commands
 
 import core.BotContext
+import core.assets.Guild
 import core.assets.User
 import core.interact.message.MessageAdaptor
 import core.interact.message.MessageProducer
@@ -21,6 +22,7 @@ class SetCommand(override val command: String, private val session: GameSession,
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: GuildConfig,
+        guild: Guild,
         user: User,
         message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
@@ -31,10 +33,10 @@ class SetCommand(override val command: String, private val session: GameSession,
         thenSession.gameResult.fold(
             onEmpty = { when (thenSession) {
                 is PvpGameSession -> {
-                    SessionManager.putGameSession(bot.sessions, config.id, thenSession)
+                    SessionManager.putGameSession(bot.sessions, guild, thenSession)
 
                     val io = producer.produceNextMovePVP(publisher, config.language.container, thenSession.player, thenSession.nextPlayer, this.pos)
-                        .flatMap { buildNextMoveSequence(it, bot, config, producer, publisher, this.session, thenSession) }
+                        .flatMap { buildNextMoveSequence(it, bot, guild, config, producer, publisher, this.session, thenSession) }
 
                     io to this.asCommandReport("make move ${pos.toCartesian()}", user)
                 }
@@ -43,15 +45,15 @@ class SetCommand(override val command: String, private val session: GameSession,
 
                     nextSession.gameResult.fold(
                         onEmpty = {
-                            SessionManager.putGameSession(bot.sessions, config.id, nextSession)
+                            SessionManager.putGameSession(bot.sessions, guild, nextSession)
 
                             val io = producer.produceNextMovePVE(publisher, config.language.container, nextSession.owner, nextSession.board.latestPos().get())
-                                .flatMap { buildNextMoveSequence(it, bot, config, producer, publisher, this.session, nextSession) }
+                                .flatMap { buildNextMoveSequence(it, bot, guild, config, producer, publisher, this.session, nextSession) }
 
                             io to this.asCommandReport("make move ${pos.toCartesian()}", user)
                         },
                         onDefined = { result ->
-                            SessionManager.removeGameSession(bot.sessions, config.id, this.session.owner.id)
+                            SessionManager.removeGameSession(bot.sessions, guild, this.session.owner.id)
 
                             val io = when (result) {
                                 is GameResult.Win ->
@@ -69,7 +71,7 @@ class SetCommand(override val command: String, private val session: GameSession,
             } },
             onDefined = { result -> when (thenSession) {
                 is PvpGameSession -> {
-                    SessionManager.removeGameSession(bot.sessions, config.id, this.session.owner.id)
+                    SessionManager.removeGameSession(bot.sessions, guild, this.session.owner.id)
 
                     val io = when (result) {
                         is GameResult.Win ->
@@ -83,7 +85,7 @@ class SetCommand(override val command: String, private val session: GameSession,
                     io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", user)
                 }
                 is AiGameSession -> {
-                    SessionManager.removeGameSession(bot.sessions, config.id, this.session.owner.id)
+                    SessionManager.removeGameSession(bot.sessions, guild, this.session.owner.id)
 
                     val io = when (result) {
                         is GameResult.Win ->

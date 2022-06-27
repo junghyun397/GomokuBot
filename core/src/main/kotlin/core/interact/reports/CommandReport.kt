@@ -4,10 +4,10 @@ import core.assets.User
 import core.interact.commands.Command
 import utils.assets.LinuxTime
 
-class CommandReport(
-    private val commandName: String,
-    private val comment: String,
-    private val user: User,
+data class CommandReport(
+    val commandName: String,
+    val comment: String,
+    val user: User,
     override val terminationTime: LinuxTime = LinuxTime(),
 ) : InteractionReport {
 

@@ -1,6 +1,7 @@
 package core.interact.commands
 
 import core.BotContext
+import core.assets.Guild
 import core.inference.FocusSolver
 import core.interact.Order
 import core.interact.message.MessageIO
@@ -21,6 +22,7 @@ import utils.structs.IO
 fun <A, B> buildNextMoveSequence(
     messageIO: MessageIO<A, B>,
     bot: BotContext,
+    guild: Guild,
     config: GuildConfig,
     producer: MessageProducer<A, B>,
     publisher: MessagePublisher<A, B>,
@@ -29,11 +31,12 @@ fun <A, B> buildNextMoveSequence(
 ) = IO {
     SessionManager.appendMessage(bot.sessions, thenSession.messageBufferKey, messageIO.retrieve().messageRef)
 }
-    .flatMap { buildBoardSequence(bot, config, producer, publisher, thenSession) }
+    .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, thenSession) }
     .flatMap { buildSweepSequence(bot, config, session) }
 
 fun <A, B> buildBoardSequence(
     bot: BotContext,
+    guild: Guild,
     config: GuildConfig,
     producer: MessageProducer<A, B>,
     publisher: MessagePublisher<A, B>,
@@ -56,7 +59,7 @@ fun <A, B> buildBoardSequence(
         )
         SessionManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.messageRef)
         producer.attachFocusNavigators(message) {
-            SessionManager.retrieveGameSession(bot.sessions, config.id, session.owner.id) != session
+            SessionManager.retrieveGameSession(bot.sessions, guild, session.owner.id) != session
         }
     }
 

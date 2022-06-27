@@ -1,6 +1,7 @@
 package core.interact.commands
 
 import core.BotContext
+import core.assets.Guild
 import core.assets.User
 import core.inference.AiLevel
 import core.interact.Order
@@ -20,6 +21,7 @@ class StartCommand(override val command: String = "start", val opponent: User?) 
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: GuildConfig,
+        guild: Guild,
         user: User,
         message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
@@ -32,7 +34,7 @@ class StartCommand(override val command: String = "start", val opponent: User?) 
                 LinuxTime.withExpireOffset(bot.config.requestExpireOffset),
             )
 
-            SessionManager.putRequestSession(bot.sessions, config.id, requestSession)
+            SessionManager.putRequestSession(bot.sessions, guild, requestSession)
 
             val io = producer.produceRequest(publisher, config.language.container, user, opponent)
                 .map { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.retrieve().messageRef); Order.Unit }
@@ -40,11 +42,11 @@ class StartCommand(override val command: String = "start", val opponent: User?) 
             io to this.asCommandReport("make request to ${this.opponent}", user)
         } else {
             val gameSession = GameManager.generateAiSession(bot.config.gameExpireOffset, user, AiLevel.AMOEBA)
-            SessionManager.putGameSession(bot.sessions, config.id, gameSession)
+            SessionManager.putGameSession(bot.sessions, guild, gameSession)
 
             val io = producer.produceBeginsPVE(publisher, config.language.container, user, gameSession.ownerHasBlack)
                 .map { it.launch() }
-                .flatMap { buildBoardSequence(bot, config, producer, publisher, gameSession) }
+                .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, gameSession) }
                 .map { Order.Unit }
 
             io to this.asCommandReport("start game session with AI", user)

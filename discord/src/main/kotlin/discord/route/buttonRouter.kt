@@ -4,7 +4,6 @@ package discord.route
 
 import core.interact.reports.CommandReport
 import dev.minn.jda.ktx.await
-import discord.assets.extractUser
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageAdaptor
 import discord.interact.message.DiscordMessageProducer
@@ -58,11 +57,11 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
             .execute(
                 bot = context.bot,
                 config = context.config,
-                user = context.event.user.extractUser(),
+                user = context.user,
+                guild = context.guild,
                 message = async { DiscordMessageAdaptor(context.event.hook.retrieveOriginal().await()) },
-                producer = DiscordMessageProducer,
-                publisher = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) }
-            )
+                producer = DiscordMessageProducer
+            ) { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) }
         }) }
         .flatMap { (context, result) -> Mono.zip(context.toMono(), mono { result.map { (io, report) ->
             export(context, io, context.event.message)

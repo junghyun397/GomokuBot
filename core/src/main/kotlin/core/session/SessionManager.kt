@@ -1,83 +1,81 @@
 package core.session
 
-import core.assets.GuildId
-import core.assets.MessageRef
-import core.assets.User
-import core.assets.UserId
+import core.assets.*
 import core.database.DatabaseManager
 import core.session.entities.*
 import utils.assets.LinuxTime
+import utils.structs.Quadruple
 
 object SessionManager {
 
-    private suspend inline fun retrieveGuildSession(repo: SessionRepository, guildId: GuildId): GuildSession =
-        repo.sessions.getOrElse(guildId) {
-            DatabaseManager.fetchGuildConfig(repo.databaseConnection, guildId)
+    private suspend fun retrieveGuildSession(repo: SessionRepository, guild: Guild): GuildSession =
+        repo.sessions.getOrElse(guild.id) {
+            DatabaseManager.fetchGuildConfig(repo.databaseConnection, guild.id)
                 .fold(
-                    onDefined = { GuildSession(guildConfig = it) },
-                    onEmpty = { GuildSession(GuildConfig(guildId)) }
+                    onDefined = { GuildSession(guild = guild, config = it) },
+                    onEmpty = { GuildSession(guild = guild, GuildConfig()) }
                 )
         }
 
-    private suspend inline fun mapGuildSession(repo: SessionRepository, guildId: GuildId, mapper: (GuildSession) -> GuildSession): GuildSession =
-        mapper(this.retrieveGuildSession(repo, guildId)).also {
-            repo.sessions[guildId] = it
+    private suspend inline fun mapGuildSession(repo: SessionRepository, guild: Guild, mapper: (GuildSession) -> GuildSession): GuildSession =
+        mapper(this.retrieveGuildSession(repo, guild)).also {
+            repo.sessions[guild.id] = it
         }
 
-    suspend fun retrieveGuildConfig(repo: SessionRepository, guildId: GuildId): GuildConfig =
-        this.retrieveGuildSession(repo, guildId).guildConfig
+    suspend fun retrieveGuildConfig(repo: SessionRepository, guild: Guild): GuildConfig =
+        this.retrieveGuildSession(repo, guild).config
 
-    suspend fun updateGuildConfig(repo: SessionRepository, guildId: GuildId, guildConfig: GuildConfig) {
-        this.mapGuildSession(repo, guildId) {
-            it.copy(guildConfig = guildConfig)
+    suspend fun updateGuildConfig(repo: SessionRepository, guild: Guild, guildConfig: GuildConfig) {
+        this.mapGuildSession(repo, guild) {
+            it.copy(config = guildConfig)
         }.also {
-            DatabaseManager.updateGuildConfig(repo.databaseConnection, guildId, it.guildConfig)
+            DatabaseManager.upsertGuildConfig(repo.databaseConnection, guild.id, it.config)
         }
     }
 
-    suspend fun hasRequestSession(repo: SessionRepository, guildId: GuildId, user1: UserId, user2: UserId) =
-        this.retrieveGuildSession(repo, guildId).requestSessions
+    suspend fun hasRequestSession(repo: SessionRepository, guild: Guild, user1: UserUid, user2: UserUid) =
+        this.retrieveGuildSession(repo, guild).requestSessions
             .values
             .firstOrNull { it.owner.id == user1 || it.owner.id == user2 || it.opponent.id == user1 || it.opponent.id == user2 } != null
 
-    suspend fun retrieveRequestSession(repo: SessionRepository, guildId: GuildId, userId: UserId): RequestSession? =
-        this.retrieveGuildSession(repo, guildId).requestSessions
+    suspend fun retrieveRequestSession(repo: SessionRepository, guild: Guild, userUid: UserUid): RequestSession? =
+        this.retrieveGuildSession(repo, guild).requestSessions
             .values
-            .firstOrNull { it.owner.id == userId || it.opponent.id == userId }
+            .firstOrNull { it.owner.id == userUid || it.opponent.id == userUid }
 
-    suspend fun retrieveRequestSessionByOwner(repo: SessionRepository, guildId: GuildId, ownerId: UserId): RequestSession? =
-        this.retrieveGuildSession(repo, guildId).requestSessions[ownerId]
+    suspend fun retrieveRequestSessionByOwner(repo: SessionRepository, guild: Guild, ownerId: UserUid): RequestSession? =
+        this.retrieveGuildSession(repo, guild).requestSessions[ownerId]
 
-    suspend fun putRequestSession(repo: SessionRepository, guildId: GuildId, requestSession: RequestSession) {
-        this.mapGuildSession(repo, guildId) {
+    suspend fun putRequestSession(repo: SessionRepository, guild: Guild, requestSession: RequestSession) {
+        this.mapGuildSession(repo, guild) {
             it.copy(requestSessions = it.requestSessions + (requestSession.owner.id to requestSession))
         }
     }
 
-    suspend fun removeRequestSession(repo: SessionRepository, guildId: GuildId, ownerId: UserId) {
-        this.mapGuildSession(repo, guildId) {
+    suspend fun removeRequestSession(repo: SessionRepository, guild: Guild, ownerId: UserUid) {
+        this.mapGuildSession(repo, guild) {
             it.copy(requestSessions = it.requestSessions - ownerId)
         }
     }
 
-    suspend fun hasGameSession(repo: SessionRepository, guildId: GuildId, user1: UserId, user2: UserId) =
-        this.retrieveGuildSession(repo, guildId).gameSessions
+    suspend fun hasGameSession(repo: SessionRepository, guild: Guild, user1: UserUid, user2: UserUid) =
+        this.retrieveGuildSession(repo, guild).gameSessions
             .values
             .firstOrNull { it.owner.id == user1 || it.owner.id == user2 || it.opponent.id == user1 || it.opponent.id == user2 } != null
 
-    suspend fun retrieveGameSession(repo: SessionRepository, guildId: GuildId, userId: UserId): GameSession? =
-        this.retrieveGuildSession(repo, guildId).gameSessions
+    suspend fun retrieveGameSession(repo: SessionRepository, guild: Guild, userUid: UserUid): GameSession? =
+        this.retrieveGuildSession(repo, guild).gameSessions
             .values
-            .firstOrNull { it.owner.id == userId || if (it is PvpGameSession) it.opponent.id == userId else false }
+            .firstOrNull { it.owner.id == userUid || if (it is PvpGameSession) it.opponent.id == userUid else false }
 
-    suspend fun putGameSession(repo: SessionRepository, guildId: GuildId, gameSession: GameSession) {
-        this.mapGuildSession(repo, guildId) {
+    suspend fun putGameSession(repo: SessionRepository, guild: Guild, gameSession: GameSession) {
+        this.mapGuildSession(repo, guild) {
             it.copy(gameSessions = it.gameSessions + (gameSession.owner.id to gameSession))
         }
     }
 
-    suspend fun removeGameSession(repo: SessionRepository, guildId: GuildId, ownerId: UserId) {
-        this.mapGuildSession(repo, guildId) {
+    suspend fun removeGameSession(repo: SessionRepository, guild: Guild, ownerId: UserUid) {
+        this.mapGuildSession(repo, guild) {
             it.copy(gameSessions = it.gameSessions - ownerId)
         }
     }
@@ -111,24 +109,19 @@ object SessionManager {
 
     private inline fun <T : Expirable> cleanExpired(
         repo: SessionRepository,
-        crossinline extract: (GuildSession) -> Map<UserId, T>,
-        crossinline mutate: (GuildSession, Set<UserId>) -> GuildSession
-    ): List<Triple<GuildConfig, UserId, T>> =
+        crossinline extract: (GuildSession) -> Map<UserUid, T>,
+        crossinline mutate: (GuildSession, Set<UserUid>) -> GuildSession
+    ): Sequence<Quadruple<GuildUid, GuildSession, UserUid, T>> =
         LinuxTime().let { referenceTime ->
             repo.sessions
-                .values
                 .asSequence()
-                .flatMap { value ->
-                    extract(value)
+                .flatMap { (guildId, session) ->
+                    extract(session)
                         .filter { referenceTime.timestamp > it.value.expireDate.timestamp }
-                        .map { Triple(value.guildConfig, it.key, it.value) }
-                }
-                .toList()
-        }.also { expires ->
-            expires
-                .groupBy { it.first.id }
-                .forEach { entry ->
-                    repo.sessions[entry.key] = mutate(repo.sessions[entry.key]!!, entry.value.map { it.second }.toSet())
+                        .map { (userId, expired) -> Quadruple(guildId, session, userId, expired) }
+                        .also { expires ->
+                            repo.sessions[guildId] = mutate(repo.sessions[guildId]!!, expires.map { it.third }.toSet())
+                        }
                 }
         }
 
@@ -153,7 +146,7 @@ object SessionManager {
     fun cleanExpiredNavigators(repo: SessionRepository) =
         LinuxTime().let { referenceTime ->
             repo.navigates
-                .filter { referenceTime.timestamp > it.value.expireDate.timestamp }
+                .filterValues { referenceTime.timestamp > it.expireDate.timestamp }
         }.onEach { repo.navigates.remove(it.key) }
 
 }

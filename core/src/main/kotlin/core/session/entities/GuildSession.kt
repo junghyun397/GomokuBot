@@ -1,9 +1,11 @@
 package core.session.entities
 
-import core.assets.UserId
+import core.assets.Guild
+import core.assets.UserUid
 
 data class GuildSession(
-    val guildConfig: GuildConfig,
-    val gameSessions: Map<UserId, GameSession> = emptyMap(),
-    val requestSessions: Map<UserId, RequestSession> = emptyMap()
+    val guild: Guild,
+    val config: GuildConfig,
+    val gameSessions: Map<UserUid, GameSession> = emptyMap(),
+    val requestSessions: Map<UserUid, RequestSession> = emptyMap()
 )

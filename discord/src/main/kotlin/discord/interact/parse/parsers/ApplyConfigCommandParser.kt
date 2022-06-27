@@ -11,7 +11,7 @@ import discord.interact.parse.EmbeddableCommand
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent
 import utils.structs.Option
-import utils.structs.toOption
+import utils.structs.asOption
 
 object ApplyConfigCommandParser : EmbeddableCommand {
 
@@ -89,7 +89,7 @@ object ApplyConfigCommandParser : EmbeddableCommand {
             }
             else -> throw IllegalStateException()
         } }
-            .toOption()
+            .asOption()
             .map { (newConfig, kindName, choiceName) ->
                 ApplyConfigCommand("p", newConfig, kindName, choiceName)
             }

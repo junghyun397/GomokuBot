@@ -10,6 +10,7 @@ import core.session.entities.PvpGameSession
 import core.session.entities.nextWith
 import jrenju.Board
 import jrenju.`EmptyBoard$`
+import jrenju.notation.Color
 import jrenju.notation.Pos
 import jrenju.notation.Renju
 import jrenju.protocol.SolutionNode
@@ -18,34 +19,59 @@ import utils.assets.LinuxTime
 import utils.structs.Option
 import kotlin.random.Random
 
-enum class FocusPolicy {
-    INTELLIGENCE, FALLOWING
+enum class FocusPolicy(val id: Int) {
+    INTELLIGENCE(0), FALLOWING(1)
 }
 
-enum class SweepPolicy {
-    RELAY, LEAVE
+enum class SweepPolicy(val id: Int) {
+    RELAY(0), LEAVE(1)
 }
 
-enum class ArchivePolicy {
-    WITH_PROFILE, BY_ANONYMOUS, PRIVACY
+enum class ArchivePolicy(val id: Int) {
+    WITH_PROFILE(0), BY_ANONYMOUS(1), PRIVACY(2)
 }
 
-enum class RejectReason {
-    EXIST, FORBIDDEN
+enum class RejectReason(val id: Int) {
+    EXIST(0), FORBIDDEN(1)
 }
 
 sealed interface GameResult {
 
-    enum class WinCause {
-        FIVE_IN_A_ROW, RESIGN, TIMEOUT
+    val cause: Cause
+
+    val message: String
+
+    enum class Cause(val id: Int) {
+        FIVE_IN_A_ROW(0), RESIGN(1), TIMEOUT(2), DRAW(3)
     }
 
-    class Win(val winCause: WinCause, val winColor: Enumeration.Value, val winner: User, val looser: User) : GameResult {
-        override fun toString() = "$winner wins over $looser by $winCause"
+    class Win(override val cause: Cause, val winColor: Enumeration.Value, val winner: User, val looser: User) : GameResult {
+
+        override val message get() = "$winner wins over $looser by $cause"
+
     }
 
     object Full : GameResult {
-        override fun toString() = "tie caused by full"
+
+        override val cause = Cause.DRAW
+
+        override val message get() = "tie caused by full"
+
+    }
+
+    companion object {
+
+        fun valueOf(id: Int, blackUser: User, whiteUser: User, winColor: Enumeration.Value?): GameResult? =
+            Cause.values().find { it.id == id }
+                ?.let { cause -> when (cause) {
+                    Cause.FIVE_IN_A_ROW, Cause.RESIGN, Cause.TIMEOUT -> when (winColor) {
+                        Color.BLACK() -> Win(cause, Color.BLACK(), blackUser, whiteUser)
+                        Color.WHITE() -> Win(cause, Color.WHITE(), whiteUser, blackUser)
+                        else -> null
+                    }
+                    Cause.DRAW -> Full
+                } }
+
     }
 
 }
@@ -109,7 +135,7 @@ object GameManager {
             {
                 session.nextWith(
                     thenBoard, pos,
-                    Option(GameResult.Win(GameResult.WinCause.FIVE_IN_A_ROW, thenBoard.color(), session.player, session.nextPlayer)),
+                    Option(GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, thenBoard.color(), session.player, session.nextPlayer)),
                     session.messageBufferKey
                 )
             }
@@ -142,7 +168,7 @@ object GameManager {
         val thenBoard = session.board.makeMove(aiMove)
 
         return if (thenBoard.winner().isDefined) {
-            val gameResult = GameResult.Win(GameResult.WinCause.FIVE_IN_A_ROW, thenBoard.color(), aiUser, session.owner)
+            val gameResult = GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, thenBoard.color(), aiUser, session.owner)
 
             session.copy(
                 board = thenBoard,
@@ -164,7 +190,7 @@ object GameManager {
         )
     }
 
-    fun resignSession(session: GameSession, cause: GameResult.WinCause, user: User?) =
+    fun resignSession(session: GameSession, cause: GameResult.Cause, user: User?) =
         when (session) {
             is AiGameSession -> {
                 val result = GameResult.Win(cause, session.board.color(), aiUser, session.owner)

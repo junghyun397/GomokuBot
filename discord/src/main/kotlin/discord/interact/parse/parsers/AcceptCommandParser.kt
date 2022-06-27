@@ -1,9 +1,11 @@
 package discord.interact.parse.parsers
 
 import core.assets.UserId
+import core.database.DatabaseManager
 import core.interact.commands.AcceptCommand
 import core.interact.commands.Command
 import core.session.SessionManager
+import discord.assets.DISCORD_PLATFORM_ID
 import discord.interact.InteractionContext
 import discord.interact.parse.EmbeddableCommand
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
@@ -16,10 +18,11 @@ object AcceptCommandParser : EmbeddableCommand {
         val owner = context.event.componentId
             .drop(2)
             .toLongOrNull()
-            ?.let { UserId(it) }
+            ?.let { DatabaseManager.retrieveUser(context.bot.databaseConnection, DISCORD_PLATFORM_ID, UserId(it)) }
+            ?.getOrException()
             ?: return Option.Empty
 
-        val session = SessionManager.retrieveRequestSessionByOwner(context.bot.sessions, context.guild.id, owner)
+        val session = SessionManager.retrieveRequestSessionByOwner(context.bot.sessions, context.guild, owner.id)
             ?: return Option.Empty
 
         return Option.Some(AcceptCommand("accept", session))

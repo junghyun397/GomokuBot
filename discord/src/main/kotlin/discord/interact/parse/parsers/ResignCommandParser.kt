@@ -4,7 +4,6 @@ import core.interact.commands.ResignCommand
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.SessionSideParser
 import dev.minn.jda.ktx.interactions.slash
-import discord.assets.extractUser
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordButtons
 import discord.interact.parse.BuildableCommand
@@ -19,12 +18,12 @@ object ResignCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsa
     override val name = "resign"
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>) =
-        this.retrieveSession(context.bot, context.guild, context.event.user.extractUser()).mapLeft {
+        this.retrieveSession(context.bot, context.guild, context.user).mapLeft {
             ResignCommand(context.config.language.container.resignCommand(), it)
         }
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>) =
-        this.retrieveSession(context.bot, context.guild, context.event.author.extractUser()).mapLeft {
+        this.retrieveSession(context.bot, context.guild, context.user).mapLeft {
             ResignCommand(context.config.language.container.resignCommand(), it)
         }
 

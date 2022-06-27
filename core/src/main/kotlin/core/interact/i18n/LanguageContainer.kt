@@ -1,12 +1,12 @@
 package core.interact.i18n
 
-enum class Language(val container: LanguageContainer) {
-    ENG(LanguageENG()),
-    KOR(LanguageKOR()),
-    JPN(LanguageJPN()),
-    VNM(LanguageVNM()),
-    PRK(LanguagePRK()),
-    SKO(LanguageSKO())
+enum class Language(val id: Int, val container: LanguageContainer) {
+    ENG(0, LanguageENG()),
+    KOR(1, LanguageKOR()),
+    JPN(2, LanguageJPN()),
+    VNM(3, LanguageVNM()),
+    PRK(4, LanguagePRK()),
+    SKO(5, LanguageSKO())
 }
 
 sealed interface LanguageContainer {
@@ -76,6 +76,7 @@ sealed interface LanguageContainer {
     fun rankEmbedDescription(): String
     fun rankEmbedWin(): String
     fun rankEmbedLose(): String
+    fun rankEmbedDraw(): String
 
     // ## 1-3. RATING
 

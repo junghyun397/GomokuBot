@@ -1,6 +1,7 @@
 package core.interact.commands
 
 import core.BotContext
+import core.assets.Guild
 import core.assets.User
 import core.interact.Order
 import core.interact.message.MessageAdaptor
@@ -21,14 +22,15 @@ class ResignCommand(override val command: String, private val session: GameSessi
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: GuildConfig,
+        guild: Guild,
         user: User,
         message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
         publisher: MessagePublisher<A, B>,
     ) = runCatching {
-        SessionManager.removeGameSession(bot.sessions, config.id, session.owner.id)
+        SessionManager.removeGameSession(bot.sessions, guild, session.owner.id)
 
-        val (finishedSession, result) = GameManager.resignSession(this.session, GameResult.WinCause.RESIGN, user)
+        val (finishedSession, result) = GameManager.resignSession(this.session, GameResult.Cause.RESIGN, user)
 
         val io = when (finishedSession) {
             is AiGameSession ->

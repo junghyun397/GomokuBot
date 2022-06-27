@@ -75,11 +75,13 @@ sealed class Option<out T> {
 
 }
 
+@JvmName("nullableAsOption")
 fun <T> T?.asOption(): Option<T> =
     if (this == null) Option.Empty
     else Option(this)
 
-fun <T> Result<T>.toOption(): Option<T> =
+@JvmName("resultAsOption")
+fun <T> Result<T>.asOption(): Option<T> =
     this.fold(
         onSuccess = { Option(it) },
         onFailure = { Option.Empty }

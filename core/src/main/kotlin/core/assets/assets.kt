@@ -5,6 +5,7 @@ import jrenju.BoardIO
 import jrenju.`BoardIO$`
 import jrenju.notation.Flag
 import java.awt.Color
+import java.util.*
 
 const val COLOR_NORMAL_HEX = 0x0091EA
 const val COLOR_GREEN_HEX = 0x00C853
@@ -48,8 +49,12 @@ const val UNICODE_SILHOUETTE = "\ud83d\udc64" // 👤
 const val UNICODE_SMILING = "\ud83d\ude42" // 🙂
 const val UNICODE_LOCK = "\ud83d\udd12" // 🔒
 
+const val GENERIC_PLATFORM_ID = 0
+
 val anonymousUser = User(
-    id = UserId(0),
+    id = UserUid(UUID.fromString("gomokubot-ai")),
+    platform = GENERIC_PLATFORM_ID,
+    givenId = UserId(0L),
     name = "Anon",
     nameTag = "Anon#0000",
     profileURL = null,

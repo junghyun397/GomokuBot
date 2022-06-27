@@ -5,7 +5,6 @@ import core.interact.commands.Direction
 import core.interact.commands.FocusCommand
 import core.session.SessionManager
 import core.session.entities.NavigateState
-import discord.assets.extractUser
 import discord.interact.InteractionContext
 import discord.interact.parse.NavigableCommand
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
@@ -25,7 +24,7 @@ object FocusCommandParser : NavigableCommand {
         }
 
     override suspend fun parseReaction(context: InteractionContext<MessageReactionAddEvent>, state: NavigateState) =
-        SessionManager.retrieveGameSession(context.bot.sessions, context.guild.id, context.event.user!!.extractUser().id)
+        SessionManager.retrieveGameSession(context.bot.sessions, context.guild, context.user.id)
             .asOption()
             .flatMap {
                 val direction = this.matchDirection(context.event.reactionEmote.emoji)

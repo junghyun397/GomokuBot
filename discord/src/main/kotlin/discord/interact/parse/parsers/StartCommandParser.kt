@@ -2,6 +2,7 @@ package discord.interact.parse.parsers
 
 import core.assets.User
 import core.assets.UserId
+import core.database.DatabaseManager
 import core.interact.Order
 import core.interact.commands.Command
 import core.interact.commands.StartCommand
@@ -10,10 +11,12 @@ import core.interact.i18n.LanguageContainer
 import core.interact.parse.NamedParser
 import core.interact.parse.asParseFailure
 import core.session.SessionManager
+import dev.minn.jda.ktx.await
 import dev.minn.jda.ktx.interactions.option
 import dev.minn.jda.ktx.interactions.slash
+import discord.assets.DISCORD_PLATFORM_ID
+import discord.assets.buildNewProfile
 import discord.assets.extractId
-import discord.assets.extractUser
 import discord.interact.InteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.DiscordParseFailure
@@ -33,38 +36,38 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
     override val name = "start"
 
     private suspend fun lookupRequestSent(context: InteractionContext<*>, owner: User): Option<DiscordParseFailure> =
-        SessionManager.retrieveRequestSessionByOwner(context.bot.sessions, context.config.id, owner.id).asOption().flatMap { session ->
+        SessionManager.retrieveRequestSessionByOwner(context.bot.sessions, context.guild, owner.id).asOption().flatMap { session ->
             Option(this.asParseFailure("already sent request session", owner) { producer, publisher, container ->
                 producer.produceRequestAlreadySent(publisher, container, owner, session.opponent).map { it.launch(); Order.Unit }
             })
         }
 
     private suspend fun lookupRequestOwner(context: InteractionContext<*>, owner: User): Option<DiscordParseFailure> =
-        SessionManager.retrieveRequestSession(context.bot.sessions, context.config.id, owner.id).asOption().flatMap { session ->
+        SessionManager.retrieveRequestSession(context.bot.sessions, context.guild, owner.id).asOption().flatMap { session ->
             Option(this.asParseFailure("already has request session", owner) { producer, publisher, container ->
                 producer.produceRequestAlready(publisher, container, session.owner, session.opponent).map { it.launch(); Order.Unit }
             })
         }
 
     private suspend fun lookupRequestOpponent(context: InteractionContext<*>, owner: User, opponent: User): Option<DiscordParseFailure> =
-        SessionManager.retrieveRequestSession(context.bot.sessions, context.config.id, opponent.id).asOption().flatMap { _ ->
+        SessionManager.retrieveRequestSession(context.bot.sessions, context.guild, opponent.id).asOption().flatMap { _ ->
             Option(this.asParseFailure("try to send request session but $opponent already has request session", owner) { producer, publisher, container ->
                 producer.produceOpponentRequestAlready(publisher, container, owner, opponent).map { it.launch(); Order.Unit }
             })
         }
 
     private suspend fun lookupSessionOwner(context: InteractionContext<*>, user: User): Option<DiscordParseFailure> =
-        SessionManager.retrieveGameSession(context.bot.sessions, context.config.id, user.id).asOption().flatMap { session ->
+        SessionManager.retrieveGameSession(context.bot.sessions, context.guild, user.id).asOption().flatMap { session ->
             Option(this.asParseFailure("already has game session", user) { producer, publisher, container ->
                 producer.produceSessionAlready(publisher, container, session.owner)
                     .map { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.retrieve().messageRef) }
-                    .flatMap { buildBoardSequence(context.bot, context.config, producer, publisher, session) }
+                    .flatMap { buildBoardSequence(context.bot, context.guild, context.config, producer, publisher, session) }
                     .map { Order.Unit }
             })
         }
 
     private suspend fun lookupSessionOpponent(context: InteractionContext<*>, user: User, opponent: User): Option<DiscordParseFailure> =
-        SessionManager.retrieveGameSession(context.bot.sessions, context.config.id, opponent.id).asOption().flatMap { _ ->
+        SessionManager.retrieveGameSession(context.bot.sessions, context.guild, opponent.id).asOption().flatMap { _ ->
             Option(this.asParseFailure("try to send request session but $opponent already has game session", user) { producer, publisher, container ->
                 producer.produceOpponentSessionAlready(publisher, container, user, opponent).map { it.launch(); Order.Unit }
             })
@@ -82,44 +85,57 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
             )
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {
-        val owner = context.event.user.extractUser()
+        val owner = context.user
         val opponent = context.event.getOption(context.config.language.container.startCommandOptionOpponent())
             .asOption()
             .flatMap {
                 val jdaUser = it.asUser
-                if (jdaUser.isBot) Option.Empty
-                else Option(jdaUser.extractUser())
+
+                if (jdaUser.isBot)
+                    Option.Empty
+                else
+                    DatabaseManager.retrieveUser(context.bot.databaseConnection, DISCORD_PLATFORM_ID, jdaUser.extractId())
             }
 
         return this.parseActually(context, owner, opponent)
     }
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
-        val owner = context.event.author.extractUser()
+        val owner = context.user
         val opponent = context.event.message.mentions.members
-            .firstOrNull { !it.user.isBot && it.idLong != owner.id.idLong }
-            ?.user?.extractUser()
+            .firstOrNull { !it.user.isBot && it.idLong != owner.givenId.idLong }
+            ?.user
             .asOption()
+            .map {
+                DatabaseManager.retrieveOrInsertUser(context.bot.databaseConnection, DISCORD_PLATFORM_ID, it.extractId()) {
+                    it.buildNewProfile()
+                }
+            }
 
         return this.parseActually(context, owner, opponent)
     }
 
     override suspend fun parseButton(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
-        val ownerId = context.event.user.extractId()
-
-        val opponentId = context.event.componentId
+        val owner = context.user
+        val opponent = context.event.componentId
             .drop(2)
             .toLongOrNull()
-            ?.let { UserId(it) }
+            ?.let {
+                val opponentUser = context.jdaGuild.retrieveMemberById(it).await()
+
+                DatabaseManager.retrieveOrInsertUser(context.bot.databaseConnection, DISCORD_PLATFORM_ID, UserId(it)) {
+                    opponentUser.user.buildNewProfile()
+                }
+            }
             ?: return Option.Empty
 
         return if (
-            SessionManager.hasRequestSession(context.bot.sessions, context.guild.id, ownerId, opponentId)
-            || SessionManager.hasGameSession(context.bot.sessions, context.guild.id, ownerId, opponentId)
+            SessionManager.hasRequestSession(context.bot.sessions, context.guild, owner.id, opponent.id)
+            || SessionManager.hasGameSession(context.bot.sessions, context.guild, owner.id, opponent.id)
         )
             Option.Empty
         else
-            Option(StartCommand(opponent = context.jdaGuild.getMemberById(opponentId.idLong)!!.user.extractUser()))
+            Option(StartCommand(opponent = opponent))
     }
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

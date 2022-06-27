@@ -7,7 +7,6 @@ import core.session.SessionManager
 import core.session.entities.NavigationKind
 import dev.minn.jda.ktx.await
 import discord.assets.extractId
-import discord.assets.extractUser
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageAdaptor
 import discord.interact.message.DiscordMessageProducer
@@ -29,14 +28,18 @@ import utils.structs.asOption
 fun reactionRouter(context: InteractionContext<MessageReactionAddEvent>): Mono<Tuple2<InteractionContext<MessageReactionAddEvent>, Result<CommandReport>>> =
     Mono.zip(
         context.toMono(),
-        SessionManager.getNavigateState(context.bot.sessions, MessageRef(
-            id = MessageId(context.event.messageIdLong),
-            guildId = context.guild.id,
-            channelId = context.event.textChannel.extractId()
-        )).asOption()
-            .map { when (it.navigationKind) {
-                NavigationKind.BOARD -> it to FocusCommandParser
-                NavigationKind.ABOUT, NavigationKind.SETTINGS -> it to NavigateCommandParser
+        SessionManager.getNavigateState(
+            context.bot.sessions,
+            MessageRef(
+                id = MessageId(context.event.messageIdLong),
+                guildId = context.guild.givenId,
+                channelId = context.event.textChannel.extractId()
+            )
+        )
+            .asOption()
+            .map { it to when (it.navigationKind) {
+                NavigationKind.BOARD ->FocusCommandParser
+                NavigationKind.ABOUT, NavigationKind.SETTINGS -> NavigateCommandParser
             } }
             .toMono()
     )
@@ -61,11 +64,11 @@ fun reactionRouter(context: InteractionContext<MessageReactionAddEvent>): Mono<T
                 .execute(
                     bot = context.bot,
                     config = context.config,
-                    user = context.event.user!!.extractUser(),
+                    user = context.user,
+                    guild = context.guild,
                     message = async { DiscordMessageAdaptor(command.getOrException().second) },
-                    producer = DiscordMessageProducer,
-                    publisher = { msg -> MessageActionAdaptor(context.event.channel.sendMessage(msg)) }
-                )
+                    producer = DiscordMessageProducer
+                ) { msg -> MessageActionAdaptor(context.event.channel.sendMessage(msg)) }
             })
         }
         .flatMap { (context, message, result) ->

@@ -1,7 +1,7 @@
 package core.interact.message
 
 import core.assets.*
-import core.database.entities.SimpleProfile
+import core.database.entities.UserStats
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.interact.message.graphics.BoardRenderer
@@ -120,7 +120,7 @@ abstract class MessageProducer<A, B> {
 
     // RANK
 
-    abstract fun produceRankings(publisher: MessagePublisher<A, B>, container: LanguageContainer, rankings: List<SimpleProfile>): IO<MessageIO<A, B>>
+    abstract fun produceRankings(publisher: MessagePublisher<A, B>, container: LanguageContainer, rankings: List<UserStats>): IO<MessageIO<A, B>>
 
     // RATING
 

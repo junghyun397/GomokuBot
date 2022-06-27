@@ -11,7 +11,6 @@ import core.interact.parse.asParseFailure
 import dev.minn.jda.ktx.interactions.choice
 import dev.minn.jda.ktx.interactions.option
 import dev.minn.jda.ktx.interactions.slash
-import discord.assets.extractUser
 import discord.interact.InteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.DiscordParseFailure
@@ -39,7 +38,7 @@ object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {
         val lang = context.event.getOption(context.config.language.container.languageCommandOptionCode())?.asString?.uppercase()?.let {
             matchLang(it)
-        } ?: return this.composeMissMatchFailure(context.event.user.extractUser())
+        } ?: return this.composeMissMatchFailure(context.user)
 
         return Either.Left(LangCommand(context.config.language.container.languageCommand(), lang))
     }
@@ -49,7 +48,7 @@ object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
             .getOrNull(1)
             ?.uppercase()
             ?.let { matchLang(it) }
-            ?: return this.composeMissMatchFailure(context.event.author.extractUser())
+            ?: return this.composeMissMatchFailure(context.user)
 
         return Either.Left(LangCommand(context.config.language.container.languageCommand(), lang))
     }

@@ -14,8 +14,6 @@ import core.session.SessionManager
 import core.session.entities.GameSession
 import dev.minn.jda.ktx.interactions.option
 import dev.minn.jda.ktx.interactions.slash
-import discord.assets.extractId
-import discord.assets.extractUser
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordButtons
 import discord.interact.parse.BuildableCommand
@@ -101,7 +99,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
         val rawColumn = context.event.getOption(context.config.language.container.setCommandOptionColumn())?.asString
         val rawRow = context.event.getOption(context.config.language.container.setCommandOptionRow())?.asString
 
-        return this.parseActually(context, context.event.user.extractUser(), rawRow, rawColumn)
+        return this.parseActually(context, context.user, rawRow, rawColumn)
     }
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
@@ -110,7 +108,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
             .take(2)
             .let { if (it.size != 2) null to null else it.component1() to it.component2() }
 
-        return this.parseActually(context, context.event.author.extractUser(), rawRow, rawColumn)
+        return this.parseActually(context, context.user, rawRow, rawColumn)
     }
 
     override suspend fun parseButton(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
@@ -122,9 +120,9 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
 
         val pos = Pos(row, column)
 
-        val userId = context.event.user.extractId()
+        val userId = context.user.id
 
-        val session = SessionManager.retrieveGameSession(context.bot.sessions, context.config.id, userId)
+        val session = SessionManager.retrieveGameSession(context.bot.sessions, context.guild, userId)
             ?: return Option.Empty
 
         if (session.player.id != userId)

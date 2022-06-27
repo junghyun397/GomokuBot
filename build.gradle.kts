@@ -38,6 +38,8 @@ subprojects {
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.6.0")
         implementation("io.projectreactor.kotlin:reactor-kotlin-extensions:1.1.5")
 
+        implementation("com.google.guava:guava:31.1-jre")
+
         implementation("org.slf4j:slf4j-api:1.7.36")
 
         testImplementation(kotlin("test"))

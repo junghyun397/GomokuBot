@@ -7,7 +7,6 @@ import core.interact.parse.NamedParser
 import core.interact.parse.asParseFailure
 import dev.minn.jda.ktx.interactions.option
 import dev.minn.jda.ktx.interactions.slash
-import discord.assets.extractUser
 import discord.interact.InteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.DiscordParseFailure
@@ -22,12 +21,12 @@ object RatingCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     override val name = "rating"
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
-        Either.Right(this.asParseFailure("not yet implemented", context.event.user.extractUser()) { producer, publisher, container ->
+        Either.Right(this.asParseFailure("not yet implemented", context.user) { producer, publisher, container ->
             producer.produceNotYetImplemented(publisher, container, "https://discord.gg/vq8pkfF").map { it.launch(); Order.Unit }
         })
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> =
-        Either.Right(this.asParseFailure("not yet implemented", context.event.author.extractUser()) { producer, publisher, container ->
+        Either.Right(this.asParseFailure("not yet implemented", context.user) { producer, publisher, container ->
             producer.produceNotYetImplemented(publisher, container, "https://discord.gg/vq8pkfF").map { it.launch(); Order.Unit }
         })
 

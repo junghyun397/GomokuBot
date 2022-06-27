@@ -1,6 +1,5 @@
 package core.session.entities
 
-import core.assets.GuildId
 import core.interact.i18n.Language
 import core.interact.message.graphics.BoardStyle
 import core.session.ArchivePolicy
@@ -8,7 +7,6 @@ import core.session.FocusPolicy
 import core.session.SweepPolicy
 
 data class GuildConfig(
-    val id: GuildId,
     val language: Language = Language.ENG,
     val boardStyle: BoardStyle = BoardStyle.IMAGE,
     val focusPolicy: FocusPolicy = FocusPolicy.INTELLIGENCE,
