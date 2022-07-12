@@ -7,14 +7,11 @@ import core.assets.UNICODE_CROSS
 import core.interact.Order
 import core.interact.i18n.LanguageContainer
 import core.interact.reports.CommandReport
-import dev.minn.jda.ktx.await
+import dev.minn.jda.ktx.coroutines.await
 import discord.assets.COMMAND_PREFIX
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
-import discord.interact.message.DiscordMessageAdaptor
-import discord.interact.message.DiscordMessageProducer
-import discord.interact.message.MessageActionAdaptor
-import discord.interact.message.WebHookActionAdaptor
+import discord.interact.message.*
 import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
 import discord.interact.parse.parsers.*
@@ -32,9 +29,7 @@ import reactor.util.function.Tuple2
 import utils.lang.component1
 import utils.lang.component2
 import utils.lang.component3
-import utils.structs.Either
-import utils.structs.IO
-import utils.structs.Option
+import utils.structs.*
 import java.util.concurrent.TimeUnit
 
 private fun buildPermissionNode(context: InteractionContext<*>, channel: TextChannel, jdaUser: User, parsableCommand: ParsableCommand) =
@@ -81,9 +76,6 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
         ).toMono()
     )
         .filter { (_, parsable) -> parsable.isDefined }
-        .doOnNext { (context, _) ->
-            context.event.deferReply().queue()
-        }
         .flatMap { (context, parsable) -> Mono.zip(context.toMono(), mono {
             buildPermissionNode(context, context.event.textChannel, context.event.user, parsable.getOrException()).fold(
                 onDefined = { failure -> Either.Right(failure) },
@@ -92,22 +84,27 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
                 }
             )
         }) }
+        .doOnNext { (context, parsed) ->
+            if (parsed.isLeft) context.event.deferReply().queue()
+        }
         .flatMap { (context, parsed) -> Mono.zip(context.toMono(), mono { parsed.fold(
             onLeft = { command ->
                 command.execute(
                     bot = context.bot,
                     config = context.config,
-                    user = context.user,
                     guild = context.guild,
+                    user = context.user,
+                    producer = DiscordMessageProducer,
                     message = async { DiscordMessageAdaptor(context.event.hook.retrieveOriginal().await()) },
-                    producer = DiscordMessageProducer
-                ) { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) }
-            } ,
+                    publisher = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
+                    editPublisher = { msg -> WebHookUpdateActionAdaptor(context.event.hook.editOriginal(msg)) },
+                )
+            },
             onRight = { parseFailure ->
                 parseFailure.notice(
                     guildConfig = context.config,
                     producer = DiscordMessageProducer,
-                    publisher = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) }
+                    publisher = { msg -> ReplyActionAdaptor(context.event.reply(msg)) }
                 )
             }
         ) }) }
@@ -122,14 +119,17 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
     run {
         val messageRaw = context.event.message.contentRaw
 
-        if (messageRaw.startsWith(COMMAND_PREFIX))
-            messageRaw.drop(1).split(" ")
-        else {
-            // drop <@000000000000000000>
-            val payload = messageRaw.drop(21).trimStart().split(" ")
+        when {
+            messageRaw.startsWith(COMMAND_PREFIX) -> messageRaw.drop(1).split(" ")
+            else -> {
+                // drop <@000000000000000000>
+                val payload = messageRaw.drop(21).trimStart().split(" ")
 
-            if (payload.first().isEmpty()) listOf("help")
-            else payload
+                when {
+                    payload.first().isEmpty() -> listOf("help")
+                    else -> payload
+                }
+            }
         }
     }.let { payload ->
         Mono.zip(
@@ -163,11 +163,13 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
                 command.execute(
                     bot = context.bot,
                     config = context.config,
-                    user = context.user,
                     guild = context.guild,
+                    user = context.user,
                     message = async { DiscordMessageAdaptor(context.event.message) },
-                    producer = DiscordMessageProducer
-                ) { msg -> MessageActionAdaptor(context.event.message.reply(msg)) }
+                    producer = DiscordMessageProducer,
+                    publisher = { msg -> MessageActionAdaptor(context.event.message.reply(msg)) },
+                    editPublisher = { msg -> MessageActionAdaptor(context.event.message.editMessage(msg)) }
+                )
             },
             onRight = { parseFailure ->
                 parseFailure.notice(

@@ -4,6 +4,7 @@ import core.assets.User
 import core.assets.aiUser
 import core.inference.AiLevel
 import core.inference.KvineClient
+import core.interact.message.graphics.*
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.PvpGameSession
@@ -11,27 +12,36 @@ import core.session.entities.nextWith
 import jrenju.Board
 import jrenju.`EmptyBoard$`
 import jrenju.notation.Color
+import jrenju.notation.Flag
 import jrenju.notation.Pos
 import jrenju.notation.Renju
 import jrenju.protocol.SolutionNode
 import scala.Enumeration
 import utils.assets.LinuxTime
-import utils.structs.Option
+import utils.structs.*
+import kotlin.collections.find
 import kotlin.random.Random
 
-enum class FocusPolicy(val id: Int) {
+enum class BoardStyle(override val id: Short, val renderer: BoardRenderer, val sample: BoardRendererSample) : Identifiable {
+    IMAGE(0, ImageBoardRenderer, ImageBoardRenderer),
+    TEXT(1, TextBoardRenderer(), TextBoardRenderer),
+    SOLID_TEXT(2, SolidTextBoardRenderer(), SolidTextBoardRenderer),
+    UNICODE(3, UnicodeBoardRenderer, UnicodeBoardRenderer)
+}
+
+enum class FocusPolicy(override val id: Short) : Identifiable {
     INTELLIGENCE(0), FALLOWING(1)
 }
 
-enum class SweepPolicy(val id: Int) {
+enum class SweepPolicy(override val id: Short) : Identifiable {
     RELAY(0), LEAVE(1)
 }
 
-enum class ArchivePolicy(val id: Int) {
+enum class ArchivePolicy(override val id: Short) : Identifiable {
     WITH_PROFILE(0), BY_ANONYMOUS(1), PRIVACY(2)
 }
 
-enum class RejectReason(val id: Int) {
+enum class RejectReason(override val id: Short) : Identifiable {
     EXIST(0), FORBIDDEN(1)
 }
 
@@ -41,11 +51,11 @@ sealed interface GameResult {
 
     val message: String
 
-    enum class Cause(val id: Int) {
+    enum class Cause(override val id: Short) : Identifiable {
         FIVE_IN_A_ROW(0), RESIGN(1), TIMEOUT(2), DRAW(3)
     }
 
-    class Win(override val cause: Cause, val winColor: Enumeration.Value, val winner: User, val looser: User) : GameResult {
+    data class Win(override val cause: Cause, val winColor: Enumeration.Value, val winner: User, val looser: User) : GameResult {
 
         override val message get() = "$winner wins over $looser by $cause"
 
@@ -61,16 +71,15 @@ sealed interface GameResult {
 
     companion object {
 
-        fun valueOf(id: Int, blackUser: User, whiteUser: User, winColor: Enumeration.Value?): GameResult? =
-            Cause.values().find { it.id == id }
-                ?.let { cause -> when (cause) {
-                    Cause.FIVE_IN_A_ROW, Cause.RESIGN, Cause.TIMEOUT -> when (winColor) {
-                        Color.BLACK() -> Win(cause, Color.BLACK(), blackUser, whiteUser)
-                        Color.WHITE() -> Win(cause, Color.WHITE(), whiteUser, blackUser)
-                        else -> null
-                    }
-                    Cause.DRAW -> Full
-                } }
+        fun build(id: Short, blackUser: User?, whiteUser: User?, winColor: Enumeration.Value?): GameResult? =
+            when (val cause = Cause.values().find(id)) {
+                Cause.FIVE_IN_A_ROW, Cause.RESIGN, Cause.TIMEOUT -> when (winColor) {
+                    Color.BLACK() -> Win(cause, Color.BLACK(), blackUser ?: aiUser, whiteUser ?: aiUser)
+                    Color.WHITE() -> Win(cause, Color.WHITE(), whiteUser ?: aiUser, blackUser ?: aiUser)
+                    else -> null
+                }
+                Cause.DRAW -> Full
+            }
 
     }
 

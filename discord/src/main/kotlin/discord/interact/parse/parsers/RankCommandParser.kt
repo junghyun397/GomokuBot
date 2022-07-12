@@ -3,7 +3,7 @@ package discord.interact.parse.parsers
 import core.interact.commands.RankCommand
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.NamedParser
-import dev.minn.jda.ktx.interactions.slash
+import dev.minn.jda.ktx.interactions.commands.slash
 import discord.interact.InteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.ParsableCommand

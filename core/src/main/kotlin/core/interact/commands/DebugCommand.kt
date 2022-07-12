@@ -24,6 +24,8 @@ import utils.assets.LinuxTime
 import utils.lang.toInputStream
 import utils.structs.IO
 import utils.structs.Option
+import utils.structs.flatMap
+import utils.structs.map
 
 enum class DebugType {
     ANALYSIS, SELF_REQUEST, VCF, INJECT, STATUS
@@ -41,9 +43,10 @@ class DebugCommand(
         config: GuildConfig,
         guild: Guild,
         user: User,
-        message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
+        message: Deferred<MessageAdaptor<A, B>>,
         publisher: MessagePublisher<A, B>,
+        editPublisher: MessagePublisher<A, B>,
     ) = runCatching { when (debugType) {
         DebugType.ANALYSIS -> {
             SessionManager.retrieveGameSession(bot.sessions, guild, user.id)?.let { session ->

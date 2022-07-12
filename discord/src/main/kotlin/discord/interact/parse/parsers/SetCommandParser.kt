@@ -12,8 +12,8 @@ import core.session.GameManager
 import core.session.RejectReason
 import core.session.SessionManager
 import core.session.entities.GameSession
-import dev.minn.jda.ktx.interactions.option
-import dev.minn.jda.ktx.interactions.slash
+import dev.minn.jda.ktx.interactions.commands.option
+import dev.minn.jda.ktx.interactions.commands.slash
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordButtons
 import discord.interact.parse.BuildableCommand
@@ -28,9 +28,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
-import utils.structs.Either
-import utils.structs.Option
-import utils.structs.flatMapLeft
+import utils.structs.*
 
 object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), ParsableCommand, EmbeddableCommand, BuildableCommand {
 
@@ -49,7 +47,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
         }
 
     private fun composeMissMatchFailure(context: BotContext, session: GameSession, user: User): DiscordParseFailure =
-        this.asParseFailure("try move but argument missmatch", user) { producer, publisher, container ->
+        this.asParseFailure("try move but argument mismatch", user) { producer, publisher, container ->
             producer.produceSetIllegalArgument(publisher, container, user)
                 .map { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.retrieve().messageRef); Order.Unit }
         }

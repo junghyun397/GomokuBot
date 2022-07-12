@@ -39,4 +39,4 @@ const val ASCII_LOGO = "\n" +
         "/ /_/ / /_/ / /  / / /_/ / /| / /_/ / /_/ / /_/ / / /\n" +
         "\\____/\\____/_/  /_/\\____/_/ |_\\____/_____/\\____/ /_/\n" +
         "\n" +
-        "Powered by [Kotlin, Project Reactor, R2DBC, MySQL, gRPC, JDA]"
+        "Powered by [Kotlin, Project Reactor, R2DBC, PostgreSQL, gRPC, JDA]"

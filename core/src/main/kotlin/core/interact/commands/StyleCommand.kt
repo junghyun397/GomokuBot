@@ -7,11 +7,12 @@ import core.interact.Order
 import core.interact.message.MessageAdaptor
 import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
-import core.interact.message.graphics.BoardStyle
 import core.interact.reports.asCommandReport
+import core.session.BoardStyle
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
+import utils.structs.map
 
 class StyleCommand(override val command: String, private val style: BoardStyle) : Command {
 
@@ -20,9 +21,10 @@ class StyleCommand(override val command: String, private val style: BoardStyle) 
         config: GuildConfig,
         guild: Guild,
         user: User,
-        message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
+        message: Deferred<MessageAdaptor<A, B>>,
         publisher: MessagePublisher<A, B>,
+        editPublisher: MessagePublisher<A, B>,
     ) = runCatching {
         SessionManager.updateGuildConfig(bot.sessions, guild, config.copy(boardStyle = style))
 

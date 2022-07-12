@@ -1,8 +1,8 @@
 package core.session.entities
 
 import core.interact.i18n.Language
-import core.interact.message.graphics.BoardStyle
 import core.session.ArchivePolicy
+import core.session.BoardStyle
 import core.session.FocusPolicy
 import core.session.SweepPolicy
 

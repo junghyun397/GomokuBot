@@ -8,9 +8,9 @@ import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.NamedParser
 import core.interact.parse.asParseFailure
-import dev.minn.jda.ktx.interactions.choice
-import dev.minn.jda.ktx.interactions.option
-import dev.minn.jda.ktx.interactions.slash
+import dev.minn.jda.ktx.interactions.commands.choice
+import dev.minn.jda.ktx.interactions.commands.option
+import dev.minn.jda.ktx.interactions.commands.slash
 import discord.interact.InteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.DiscordParseFailure
@@ -19,6 +19,8 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import utils.structs.Either
+import utils.structs.flatMap
+import utils.structs.map
 
 object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
 
@@ -28,10 +30,12 @@ object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
         Language.values().firstOrNull { it.container.languageCode() == option }
 
     private fun composeMissMatchFailure(user: User): Either<Command, DiscordParseFailure> =
-        Either.Right(this.asParseFailure("option missmatch", user) { producer, publisher, _ ->
-            producer.produceLanguageNotFound(publisher).map { it.launch() }
+        Either.Right(this.asParseFailure("option mismatch", user) { producer, publisher, _ ->
+            producer.produceLanguageNotFound(publisher)
+                .map { it.launch() }
                 .flatMap {
-                    producer.produceLanguageGuide(publisher).map { it.launch(); Order.Unit }
+                    producer.produceLanguageGuide(publisher)
+                        .map { it.launch(); Order.Unit }
                 }
         })
 

@@ -5,12 +5,12 @@ import core.interact.Order
 import core.interact.commands.Command
 import core.interact.commands.StyleCommand
 import core.interact.i18n.LanguageContainer
-import core.interact.message.graphics.BoardStyle
 import core.interact.parse.NamedParser
 import core.interact.parse.asParseFailure
-import dev.minn.jda.ktx.interactions.choice
-import dev.minn.jda.ktx.interactions.option
-import dev.minn.jda.ktx.interactions.slash
+import core.session.BoardStyle
+import dev.minn.jda.ktx.interactions.commands.choice
+import dev.minn.jda.ktx.interactions.commands.option
+import dev.minn.jda.ktx.interactions.commands.slash
 import discord.interact.InteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.DiscordParseFailure
@@ -19,6 +19,8 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import utils.structs.Either
+import utils.structs.flatMap
+import utils.structs.map
 
 object StyleCommandParser : NamedParser, ParsableCommand, BuildableCommand {
 
@@ -28,9 +30,11 @@ object StyleCommandParser : NamedParser, ParsableCommand, BuildableCommand {
         BoardStyle.values().firstOrNull { it.sample.styleShortcut == option || it.sample.styleName == option }
 
     private fun composeMissMatchFailure(user: User): Either<Command, DiscordParseFailure> =
-        Either.Right(this.asParseFailure("option missmatch", user) { producer, publisher, container ->
-            producer.produceStyleNotFound(publisher, container, user).map { it.launch() }
-                .flatMap { producer.produceStyleGuide(publisher, container) }.map { it.launch(); Order.Unit }
+        Either.Right(this.asParseFailure("option mismatch", user) { producer, publisher, container ->
+            producer.produceStyleNotFound(publisher, container, user)
+                .map { it.launch() }
+                .flatMap { producer.produceStyleGuide(publisher, container) }
+                .map { it.launch(); Order.Unit }
         })
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {

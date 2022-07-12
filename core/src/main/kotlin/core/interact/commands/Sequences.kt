@@ -18,6 +18,8 @@ import jrenju.notation.Pos
 import jrenju.notation.Renju
 import utils.assets.LinuxTime
 import utils.structs.IO
+import utils.structs.flatMap
+import utils.structs.map
 
 fun <A, B> buildNextMoveSequence(
     messageIO: MessageIO<A, B>,

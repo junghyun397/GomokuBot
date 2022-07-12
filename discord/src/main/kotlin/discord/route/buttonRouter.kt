@@ -3,11 +3,11 @@
 package discord.route
 
 import core.interact.reports.CommandReport
-import dev.minn.jda.ktx.await
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageAdaptor
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.WebHookActionAdaptor
+import discord.interact.message.WebHookUpdateActionAdaptor
 import discord.interact.parse.EmbeddableCommand
 import discord.interact.parse.parsers.AcceptCommandParser
 import discord.interact.parse.parsers.ApplyConfigCommandParser
@@ -23,6 +23,8 @@ import utils.lang.component1
 import utils.lang.component2
 import utils.structs.Option
 import utils.structs.asOption
+import utils.structs.flatMap
+import utils.structs.getOrException
 
 private fun matchAction(prefix: String): Option<EmbeddableCommand> =
     when (prefix) {
@@ -49,19 +51,18 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
             } }
         ) }
         .filter { (_, parsable) -> parsable.isDefined }
-        .doOnNext { (context, _) ->
-            context.event
-                .deferReply().queue()
-        }
+        .doOnNext { (context, _) -> context.event.deferReply().queue() }
         .flatMap { (context, command) -> Mono.zip(context.toMono(), mono { command.getOrException()
             .execute(
                 bot = context.bot,
                 config = context.config,
-                user = context.user,
                 guild = context.guild,
-                message = async { DiscordMessageAdaptor(context.event.hook.retrieveOriginal().await()) },
-                producer = DiscordMessageProducer
-            ) { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) }
+                user = context.user,
+                producer = DiscordMessageProducer,
+                message = async { DiscordMessageAdaptor(context.event.message) },
+                publisher = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
+                editPublisher = { msg -> WebHookUpdateActionAdaptor(context.event.hook.editOriginal(msg)) },
+            )
         }) }
         .flatMap { (context, result) -> Mono.zip(context.toMono(), mono { result.map { (io, report) ->
             export(context, io, context.event.message)

@@ -13,7 +13,7 @@ data class InteractionContext<out E : Event>(
     val user: User,
     val guild: Guild,
     val config: GuildConfig,
-    val emittenTime: LinuxTime
+    val emittedTime: LinuxTime
 ) {
 
     val jdaGuild get() = this.event.jda.getGuildById(guild.givenId.idLong)!!

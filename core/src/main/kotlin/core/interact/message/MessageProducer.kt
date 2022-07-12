@@ -112,15 +112,15 @@ abstract class MessageProducer<A, B> {
 
     abstract fun produceHelp(publisher: MessagePublisher<A, B>, container: LanguageContainer, page: Int): IO<MessageIO<A, B>>
 
-    abstract fun paginateHelp(original: MessageAdaptor<A, B>, container: LanguageContainer, page: Int): IO<MessageIO<A, B>>
+    abstract fun paginateHelp(publisher: MessagePublisher<A, B>, container: LanguageContainer, page: Int): IO<MessageIO<A, B>>
 
     abstract fun produceSettings(publisher: MessagePublisher<A, B>, config: GuildConfig, page: Int): IO<MessageIO<A, B>>
 
-    abstract fun paginateSettings(original: MessageAdaptor<A, B>, config: GuildConfig, page: Int): IO<MessageIO<A, B>>
+    abstract fun paginateSettings(publisher: MessagePublisher<A, B>, config: GuildConfig, page: Int): IO<MessageIO<A, B>>
 
     // RANK
 
-    abstract fun produceRankings(publisher: MessagePublisher<A, B>, container: LanguageContainer, rankings: List<UserStats>): IO<MessageIO<A, B>>
+    abstract fun produceRankings(publisher: MessagePublisher<A, B>, container: LanguageContainer, rankings: List<Pair<User, UserStats>>): IO<MessageIO<A, B>>
 
     // RATING
 

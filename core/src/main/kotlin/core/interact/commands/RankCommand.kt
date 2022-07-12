@@ -3,7 +3,8 @@ package core.interact.commands
 import core.BotContext
 import core.assets.Guild
 import core.assets.User
-import core.database.DatabaseManager
+import core.database.repositories.UserProfileRepository
+import core.database.repositories.UserStatsRepository
 import core.interact.Order
 import core.interact.message.MessageAdaptor
 import core.interact.message.MessageProducer
@@ -11,6 +12,7 @@ import core.interact.message.MessagePublisher
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
+import utils.structs.map
 
 class RankCommand(override val command: String) : Command {
 
@@ -19,13 +21,17 @@ class RankCommand(override val command: String) : Command {
         config: GuildConfig,
         guild: Guild,
         user: User,
-        message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
+        message: Deferred<MessageAdaptor<A, B>>,
         publisher: MessagePublisher<A, B>,
+        editPublisher: MessagePublisher<A, B>,
     ) = runCatching {
-        val rankings = DatabaseManager.fetchRankings(bot.databaseConnection)
+        val rankings = UserStatsRepository.fetchRankings(bot.dbConnection)
 
-        val io = producer.produceRankings(publisher, config.language.container, rankings)
+        val combined = rankings
+            .map { UserProfileRepository.retrieveUser(bot.dbConnection, it.userId) to it }
+
+        val io = producer.produceRankings(publisher, config.language.container, combined)
             .map { it.launch(); Order.Unit }
 
         io to this.asCommandReport("succeed", user)

@@ -19,9 +19,10 @@ class RatingCommand(override val command: String) : Command {
         config: GuildConfig,
         guild: Guild,
         user: User,
-        message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
+        message: Deferred<MessageAdaptor<A, B>>,
         publisher: MessagePublisher<A, B>,
+        editPublisher: MessagePublisher<A, B>,
     ) = runCatching {
         IO { Order.Unit } to this.asCommandReport("succeed", user)
     }

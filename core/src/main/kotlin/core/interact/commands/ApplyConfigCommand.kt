@@ -11,6 +11,7 @@ import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
+import utils.structs.map
 
 class ApplyConfigCommand(
     override val command: String,
@@ -24,9 +25,10 @@ class ApplyConfigCommand(
         config: GuildConfig,
         guild: Guild,
         user: User,
-        message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
-        publisher: MessagePublisher<A, B>
+        message: Deferred<MessageAdaptor<A, B>>,
+        publisher: MessagePublisher<A, B>,
+        editPublisher: MessagePublisher<A, B>
     ) = runCatching {
         SessionManager.updateGuildConfig(bot.sessions, guild, newConfig)
 

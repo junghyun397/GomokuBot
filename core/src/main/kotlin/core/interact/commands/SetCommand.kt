@@ -16,6 +16,9 @@ import core.session.entities.GuildConfig
 import core.session.entities.PvpGameSession
 import jrenju.notation.Pos
 import kotlinx.coroutines.Deferred
+import utils.structs.flatMap
+import utils.structs.fold
+import utils.structs.map
 
 class SetCommand(override val command: String, private val session: GameSession, private val pos: Pos) : Command {
 
@@ -24,9 +27,10 @@ class SetCommand(override val command: String, private val session: GameSession,
         config: GuildConfig,
         guild: Guild,
         user: User,
-        message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
+        message: Deferred<MessageAdaptor<A, B>>,
         publisher: MessagePublisher<A, B>,
+        editPublisher: MessagePublisher<A, B>,
     ) = runCatching {
         val thenSession = GameManager.makeMove(this.session, this.pos)
 

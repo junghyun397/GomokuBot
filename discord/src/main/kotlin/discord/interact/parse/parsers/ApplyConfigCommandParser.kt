@@ -2,8 +2,8 @@ package discord.interact.parse.parsers
 
 import core.interact.commands.ApplyConfigCommand
 import core.interact.commands.Command
-import core.interact.message.graphics.BoardStyle
 import core.session.ArchivePolicy
+import core.session.BoardStyle
 import core.session.FocusPolicy
 import core.session.SweepPolicy
 import discord.interact.InteractionContext
@@ -12,6 +12,7 @@ import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteract
 import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent
 import utils.structs.Option
 import utils.structs.asOption
+import utils.structs.map
 
 object ApplyConfigCommandParser : EmbeddableCommand {
 

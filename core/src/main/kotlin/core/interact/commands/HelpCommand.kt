@@ -10,6 +10,7 @@ import core.interact.message.MessagePublisher
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
+import utils.structs.map
 
 class HelpCommand(override val command: String, private val sendCombined: Boolean) : Command {
 
@@ -18,9 +19,10 @@ class HelpCommand(override val command: String, private val sendCombined: Boolea
         config: GuildConfig,
         guild: Guild,
         user: User,
-        message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
+        message: Deferred<MessageAdaptor<A, B>>,
         publisher: MessagePublisher<A, B>,
+        editPublisher: MessagePublisher<A, B>,
     ) = runCatching {
         val io = run {
             if (this.sendCombined)

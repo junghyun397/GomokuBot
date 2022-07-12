@@ -10,4 +10,5 @@ data class Quadruple<out A, out B, out C, out D>(
 ) : Serializable {
 
     override fun toString() = "($first, $second, $third, $fourth)"
+
 }

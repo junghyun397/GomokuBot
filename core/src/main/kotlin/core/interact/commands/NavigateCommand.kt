@@ -16,6 +16,7 @@ import core.session.entities.NavigationKind
 import kotlinx.coroutines.Deferred
 import utils.assets.LinuxTime
 import utils.structs.IO
+import utils.structs.map
 
 class NavigateCommand(
     override val command: String,
@@ -28,9 +29,10 @@ class NavigateCommand(
         config: GuildConfig,
         guild: Guild,
         user: User,
-        message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
-        publisher: MessagePublisher<A, B>
+        message: Deferred<MessageAdaptor<A, B>>,
+        publisher: MessagePublisher<A, B>,
+        editPublisher: MessagePublisher<A, B>
     ): Result<Pair<IO<Order>, CommandReport>> = runCatching {
         val originalMessage = message.await()
 
@@ -51,9 +53,9 @@ class NavigateCommand(
 
         val io = when (this.navigateState.navigationKind) {
             NavigationKind.ABOUT ->
-                producer.paginateHelp(originalMessage, config.language.container, newState.page)
+                producer.paginateHelp(editPublisher, config.language.container, newState.page)
             NavigationKind.SETTINGS ->
-                producer.paginateSettings(originalMessage, config, newState.page)
+                producer.paginateSettings(editPublisher, config, newState.page)
             else -> throw Exception()
         }
             .map { it.launch(); Order.Unit }

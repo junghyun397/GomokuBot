@@ -9,6 +9,7 @@ import utils.lang.clone
 import utils.lang.toInputStream
 import utils.structs.Either
 import utils.structs.Option
+import utils.structs.fold
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.RenderingHints

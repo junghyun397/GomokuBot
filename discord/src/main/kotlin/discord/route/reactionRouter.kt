@@ -5,7 +5,7 @@ import core.assets.MessageRef
 import core.interact.reports.CommandReport
 import core.session.SessionManager
 import core.session.entities.NavigationKind
-import dev.minn.jda.ktx.await
+import dev.minn.jda.ktx.coroutines.await
 import discord.assets.extractId
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageAdaptor
@@ -22,8 +22,7 @@ import reactor.util.function.Tuple2
 import utils.lang.component1
 import utils.lang.component2
 import utils.lang.component3
-import utils.structs.Option
-import utils.structs.asOption
+import utils.structs.*
 
 fun reactionRouter(context: InteractionContext<MessageReactionAddEvent>): Mono<Tuple2<InteractionContext<MessageReactionAddEvent>, Result<CommandReport>>> =
     Mono.zip(
@@ -67,8 +66,10 @@ fun reactionRouter(context: InteractionContext<MessageReactionAddEvent>): Mono<T
                     user = context.user,
                     guild = context.guild,
                     message = async { DiscordMessageAdaptor(command.getOrException().second) },
-                    producer = DiscordMessageProducer
-                ) { msg -> MessageActionAdaptor(context.event.channel.sendMessage(msg)) }
+                    producer = DiscordMessageProducer,
+                    publisher = { msg -> MessageActionAdaptor(context.event.channel.sendMessage(msg)) },
+                    editPublisher = { msg -> MessageActionAdaptor(command.getOrException().second.editMessage(msg)) }
+                )
             })
         }
         .flatMap { (context, message, result) ->

@@ -12,6 +12,7 @@ import core.session.SessionManager
 import core.session.entities.GuildConfig
 import core.session.entities.RequestSession
 import kotlinx.coroutines.Deferred
+import utils.structs.map
 
 class RejectCommand(override val command: String, private val requestSession: RequestSession) : Command {
 
@@ -20,9 +21,10 @@ class RejectCommand(override val command: String, private val requestSession: Re
         config: GuildConfig,
         guild: Guild,
         user: User,
-        message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
+        message: Deferred<MessageAdaptor<A, B>>,
         publisher: MessagePublisher<A, B>,
+        editPublisher: MessagePublisher<A, B>,
     ) = runCatching {
         SessionManager.removeRequestSession(bot.sessions, guild, requestSession.owner.id)
 

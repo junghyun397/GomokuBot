@@ -8,57 +8,6 @@ sealed class Option<out T> {
 
     val isEmpty: Boolean get() = this is Empty
 
-    fun getOrNull(): T? =
-        when (this) {
-            is Some -> this.value
-            is Empty -> null
-        }
-
-    fun getOrException(): T =
-        when (this) {
-            is Some -> this.value
-            is Empty -> throw NullPointerException()
-        }
-
-    inline fun <R> map(mapper: (T) -> R): Option<R> =
-        when (this) {
-            is Some -> Some(mapper(this.value))
-            is Empty -> this
-        }
-
-    inline fun <R> flatMap(mapper: (T) -> Option<R>): Option<R> =
-        when (this) {
-            is Some -> mapper(this.value)
-            is Empty -> this
-        }
-
-    inline fun <R> fold(onDefined: (T) -> R, onEmpty: () -> R): R =
-        when (this) {
-            is Some -> onDefined(this.value)
-            is Empty -> onEmpty()
-        }
-
-    inline fun forEach(block: (T) -> Unit) {
-        if (this.isDefined)
-            block((this as Some).value)
-    }
-
-    inline fun filter(predicate: (T) -> Boolean) =
-        if (this is Some && predicate(this.value)) this
-        else Empty
-
-    inline fun <T> Option<T>.getOrElse(onEmpty: () -> T): T =
-        when (this) {
-            is Some -> this.value
-            is Empty -> onEmpty()
-        }
-
-    inline fun <T> Option<T>.orElse(produce: () -> Option<T>): Option<T> =
-        when (this) {
-            is Some -> this
-            is Empty -> produce()
-        }
-
     data class Some<out T>(val value: T) : Option<T>()
 
     object Empty : Option<Nothing>()
@@ -74,6 +23,59 @@ sealed class Option<out T> {
     }
 
 }
+
+fun <T> Option<T>.getOrNull(): T? =
+    when (this) {
+        is Option.Some -> this.value
+        is Option.Empty -> null
+    }
+
+fun <T> Option<T>.getOrException(): T =
+    when (this) {
+        is Option.Some -> this.value
+        is Option.Empty -> throw NullPointerException()
+    }
+
+inline fun <T, R> Option<T>.map(mapper: (T) -> R): Option<R> =
+    when (this) {
+        is Option.Some -> Option.Some(mapper(this.value))
+        is Option.Empty -> this
+    }
+
+inline fun <T, R> Option<T>.flatMap(mapper: (T) -> Option<R>): Option<R> =
+    when (this) {
+        is Option.Some -> mapper(this.value)
+        is Option.Empty -> this
+    }
+
+inline fun <T, R> Option<T>.fold(onDefined: (T) -> R, onEmpty: () -> R): R =
+    when (this) {
+        is Option.Some -> onDefined(this.value)
+        is Option.Empty -> onEmpty()
+    }
+
+inline fun <T> Option<T>.forEach(block: (T) -> Unit) {
+    if (this.isDefined)
+        block((this as Option.Some).value)
+}
+
+inline fun <T> Option<T>.filter(predicate: (T) -> Boolean) =
+    when {
+        this is Option.Some && predicate(this.value) -> this
+        else -> Option.Empty
+    }
+
+inline fun <T> Option<T>.getOrElse(onEmpty: () -> T): T =
+    when (this) {
+        is Option.Some -> this.value
+        is Option.Empty -> onEmpty()
+    }
+
+inline fun <T> Option<T>.orElse(produce: () -> Option<T>): Option<T> =
+    when (this) {
+        is Option.Some -> this
+        is Option.Empty -> produce()
+    }
 
 @JvmName("nullableAsOption")
 fun <T> T?.asOption(): Option<T> =

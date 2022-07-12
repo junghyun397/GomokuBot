@@ -13,6 +13,8 @@ import core.session.SessionManager
 import core.session.entities.GuildConfig
 import core.session.entities.RequestSession
 import kotlinx.coroutines.Deferred
+import utils.structs.flatMap
+import utils.structs.map
 
 class AcceptCommand(override val command: String, private val requestSession: RequestSession) : Command {
 
@@ -21,9 +23,10 @@ class AcceptCommand(override val command: String, private val requestSession: Re
         config: GuildConfig,
         guild: Guild,
         user: User,
-        message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
+        message: Deferred<MessageAdaptor<A, B>>,
         publisher: MessagePublisher<A, B>,
+        editPublisher: MessagePublisher<A, B>,
     ) = runCatching {
         val gameSession = GameManager.generatePvpSession(
             bot.config.gameExpireOffset,

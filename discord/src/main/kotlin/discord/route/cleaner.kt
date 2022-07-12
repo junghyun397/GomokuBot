@@ -8,7 +8,7 @@ import core.session.GameResult
 import core.session.SessionManager
 import core.session.entities.AiGameSession
 import core.session.entities.PvpGameSession
-import dev.minn.jda.ktx.await
+import dev.minn.jda.ktx.coroutines.await
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.DiscordMessagePublisher
 import discord.interact.message.MessageActionAdaptor
@@ -16,11 +16,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.JDA
+import org.slf4j.Logger
 import utils.lang.schedule
 import utils.structs.IO
+import utils.structs.flatMap
+import utils.structs.map
 import java.time.Duration
 
-fun scheduleCleaner(logger: org.slf4j.Logger, botContext: BotContext, jda: JDA) {
+fun scheduleCleaner(logger: Logger, botContext: BotContext, jda: JDA) {
     val exceptionHandler: (Exception) -> Unit  = { logger.error(it.stackTraceToString()) }
 
     schedule(Duration.ofHours(1), exceptionHandler) {

@@ -15,6 +15,8 @@ import core.session.entities.GuildConfig
 import core.session.entities.RequestSession
 import kotlinx.coroutines.Deferred
 import utils.assets.LinuxTime
+import utils.structs.flatMap
+import utils.structs.map
 
 class StartCommand(override val command: String = "start", val opponent: User?) : Command {
 
@@ -23,33 +25,37 @@ class StartCommand(override val command: String = "start", val opponent: User?) 
         config: GuildConfig,
         guild: Guild,
         user: User,
-        message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
+        message: Deferred<MessageAdaptor<A, B>>,
         publisher: MessagePublisher<A, B>,
+        editPublisher: MessagePublisher<A, B>,
     ) = runCatching {
-        if (this.opponent != null) {
-            val requestSession = RequestSession(
-                user, opponent,
-                SessionManager.generateMessageBufferKey(user),
-                LinuxTime.withExpireOffset(bot.config.requestExpireOffset),
-            )
+        when(this.opponent) {
+            null -> {
+                val gameSession = GameManager.generateAiSession(bot.config.gameExpireOffset, user, AiLevel.AMOEBA)
+                SessionManager.putGameSession(bot.sessions, guild, gameSession)
 
-            SessionManager.putRequestSession(bot.sessions, guild, requestSession)
+                val io = producer.produceBeginsPVE(publisher, config.language.container, user, gameSession.ownerHasBlack)
+                    .map { it.launch() }
+                    .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, gameSession) }
+                    .map { Order.Unit }
 
-            val io = producer.produceRequest(publisher, config.language.container, user, opponent)
-                .map { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.retrieve().messageRef); Order.Unit }
+                io to this.asCommandReport("start game session with AI", user)
+            }
+            else -> {
+                val requestSession = RequestSession(
+                    user, opponent,
+                    SessionManager.generateMessageBufferKey(user),
+                    LinuxTime.withExpireOffset(bot.config.requestExpireOffset),
+                )
 
-            io to this.asCommandReport("make request to ${this.opponent}", user)
-        } else {
-            val gameSession = GameManager.generateAiSession(bot.config.gameExpireOffset, user, AiLevel.AMOEBA)
-            SessionManager.putGameSession(bot.sessions, guild, gameSession)
+                SessionManager.putRequestSession(bot.sessions, guild, requestSession)
 
-            val io = producer.produceBeginsPVE(publisher, config.language.container, user, gameSession.ownerHasBlack)
-                .map { it.launch() }
-                .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, gameSession) }
-                .map { Order.Unit }
+                val io = producer.produceRequest(publisher, config.language.container, user, opponent)
+                    .map { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.retrieve().messageRef); Order.Unit }
 
-            io to this.asCommandReport("start game session with AI", user)
+                io to this.asCommandReport("make request to ${this.opponent}", user)
+            }
         }
     }
 

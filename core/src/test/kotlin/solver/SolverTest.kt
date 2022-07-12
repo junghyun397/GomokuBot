@@ -35,7 +35,6 @@ internal class SolverTest {
 
     }
 
-    @Test
     fun aiBenchmark() {
         var solver1Wins = 0
         var solver2Wins = 0

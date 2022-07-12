@@ -1,5 +1,6 @@
 package core.assets
 
+import io.r2dbc.spi.Statement
 import jrenju.Board
 import jrenju.BoardIO
 import jrenju.`BoardIO$`
@@ -52,7 +53,7 @@ const val UNICODE_LOCK = "\ud83d\udd12" // 🔒
 const val GENERIC_PLATFORM_ID = 0
 
 val anonymousUser = User(
-    id = UserUid(UUID.fromString("gomokubot-ai")),
+    id = UserUid(UUID.fromString("d20fa7d1-8107-406d-8fe0-ff5335b2d559")),
     platform = GENERIC_PLATFORM_ID,
     givenId = UserId(0L),
     name = "Anon",
@@ -74,3 +75,9 @@ fun forbiddenFlagToText(flag: Byte) =
     }
 
 fun Board.toBoardIO(): BoardIO.BoardToText = `BoardIO$`.`MODULE$`.BoardToText(this)
+
+inline fun <reified T : Any> Statement.bindNullable(name: String, value: T?): Statement =
+    if (value != null)
+        bind(name, value)
+    else
+        bindNull(name, T::class.java)

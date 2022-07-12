@@ -2,11 +2,23 @@ package core.assets
 
 import java.util.*
 
-data class Guild(val id: GuildUid, val platform: Int, val givenId: GuildId, val name: String) {
+data class Guild(
+    val id: GuildUid,
+    val platform: Int,
+    val givenId: GuildId,
+    val name: String,
+) {
     override fun toString() = "[$name](${id.uuid})"
 }
 
-data class User(val id: UserUid, val platform: Int, val givenId: UserId, val name: String, val nameTag: String, val profileURL: String?) {
+data class User(
+    val id: UserUid,
+    val platform: Int,
+    val givenId: UserId,
+    val name: String,
+    val nameTag: String,
+    val profileURL: String?
+) {
     override fun toString() = "[$nameTag](${id.uuid})"
 }
 

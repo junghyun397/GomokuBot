@@ -14,6 +14,8 @@ import core.session.entities.NavigateState
 import core.session.entities.NavigationKind
 import kotlinx.coroutines.Deferred
 import utils.assets.LinuxTime
+import utils.structs.flatMap
+import utils.structs.map
 
 class ConfigCommand(override val command: String) : Command {
 
@@ -22,9 +24,10 @@ class ConfigCommand(override val command: String) : Command {
         config: GuildConfig,
         guild: Guild,
         user: User,
-        message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
+        message: Deferred<MessageAdaptor<A, B>>,
         publisher: MessagePublisher<A, B>,
+        editPublisher: MessagePublisher<A, B>,
     ) = runCatching {
         val io = producer.produceSettings(publisher, config, 0)
             .map { it.retrieve() }

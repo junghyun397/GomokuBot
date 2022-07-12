@@ -6,20 +6,15 @@ import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.interact.message.*
 import core.interact.message.graphics.BoardRenderer
-import core.interact.message.graphics.BoardStyle
 import core.interact.message.graphics.ImageBoardRenderer
-import core.session.ArchivePolicy
-import core.session.FocusPolicy
-import core.session.GameResult
-import core.session.SweepPolicy
+import core.session.*
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
-import dev.minn.jda.ktx.Embed
-import dev.minn.jda.ktx.InlineEmbed
-import dev.minn.jda.ktx.Message
-import dev.minn.jda.ktx.await
-import dev.minn.jda.ktx.interactions.SelectMenu
-import dev.minn.jda.ktx.interactions.option
+import dev.minn.jda.ktx.interactions.components.SelectMenu
+import dev.minn.jda.ktx.interactions.components.option
+import dev.minn.jda.ktx.messages.Embed
+import dev.minn.jda.ktx.messages.InlineEmbed
+import dev.minn.jda.ktx.messages.Message
 import discord.assets.*
 import jrenju.notation.Pos
 import jrenju.notation.Renju
@@ -42,6 +37,7 @@ import utils.assets.toEnumString
 import utils.lang.memoize
 import utils.structs.IO
 import utils.structs.Option
+import utils.structs.fold
 
 object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
 
@@ -199,6 +195,18 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
 
     override fun attachFocusButtons(boardAction: DiscordMessageAction, session: GameSession, focus: Pos): DiscordMessageAction =
         boardAction.addButtons(this.generateFocusedButtons(this.generateFocusedField(session.board, focus)))
+
+    fun generateBinaryNavigators(first: String, previous: String?, next: String?, last: String): DiscordButtons =
+        listOf(ActionRow.of(
+            Button.of(ButtonStyle.PRIMARY, first, "first")
+                .apply { if (previous == first) asDisabled() },
+            Button.of(ButtonStyle.PRIMARY, previous ?: "disabled", "previous")
+                .apply { if (previous == null) asDisabled() },
+            Button.of(ButtonStyle.PRIMARY, next ?: "disabled", "next")
+                .apply { if (next == null) asDisabled() },
+            Button.of(ButtonStyle.PRIMARY, last, "last")
+                .apply { if (next == last) asDisabled() }
+        ))
 
     override fun attachNavigators(flow: Flow<String>, message: MessageAdaptor<Message, DiscordButtons>, checkTerminated: suspend () -> Boolean) =
         IO {
@@ -374,8 +382,8 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
     override fun produceHelp(publisher: DiscordMessagePublisher, container: LanguageContainer, page: Int) =
         IO { publisher(Message(embeds = listOf(this.buildAboutEmbed(container), this.buildCommandGuideEmbed(container)))) }
 
-    override fun paginateHelp(original: MessageAdaptor<Message, DiscordButtons>, container: LanguageContainer, page: Int) =
-        IO { this.buildHelpMessage({ MessageActionAdaptor(original.original.editMessage(it)) }, container, page)}
+    override fun paginateHelp(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, page: Int): IO<MessageIO<Message, DiscordButtons>> =
+        IO { this.buildHelpMessage(publisher, container, page)}
 
     private fun buildSettingsMessage(publisher: DiscordMessagePublisher, config: GuildConfig, page: Int) =
         when (page) {
@@ -394,27 +402,22 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
     override fun produceSettings(publisher: MessagePublisher<Message, DiscordButtons>, config: GuildConfig, page: Int) =
         IO { this.buildSettingsMessage(publisher, config, page) }
 
-    override fun paginateSettings(original: MessageAdaptor<Message, DiscordButtons>, config: GuildConfig, page: Int) =
-        IO {
-            val message = original.original
-                .editMessageComponents()
-                .await()
-
-            this.buildSettingsMessage({ MessageActionAdaptor(message.editMessage(it)) }, config, page)
-        }
+    override fun paginateSettings(publisher: MessagePublisher<Message, DiscordButtons>, config: GuildConfig, page: Int): IO<MessageIO<Message, DiscordButtons>> =
+        IO { this.buildSettingsMessage(publisher, config, page) }
 
     // RANK
 
-    override fun produceRankings(publisher: DiscordMessagePublisher, container: LanguageContainer, rankings: List<UserStats>) =
+    override fun produceRankings(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, rankings: List<Pair<User, UserStats>>): IO<MessageIO<Message, DiscordButtons>> =
         IO { publisher(Message(
             embed = Embed {
                 color = COLOR_NORMAL_HEX
                 title = container.rankEmbedTitle()
                 description = container.rankEmbedDescription()
 
-                rankings.forEachIndexed { index, stats ->
+                rankings.forEachIndexed { index, details ->
+                    val (profile, stats) = details
                     field {
-                        name = "#${index + 1} ${stats.profile.name}"
+                        name = "#${index + 1} ${profile.name}"
                         value = "``$UNICODE_BLACK_CIRCLE``${container.rankEmbedWin()}: ``${stats.blackWins}``, " +
                                 "``$UNICODE_BLACK_CIRCLE``${container.rankEmbedLose()}: ``${stats.blackLosses}``, " +
                                 "``$UNICODE_BLACK_CIRCLE``${container.rankEmbedDraw()}: ``${stats.blackDraws}``," +

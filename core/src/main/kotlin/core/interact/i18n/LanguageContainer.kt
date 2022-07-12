@@ -1,6 +1,8 @@
 package core.interact.i18n
 
-enum class Language(val id: Int, val container: LanguageContainer) {
+import utils.structs.Identifiable
+
+enum class Language(override val id: Short, val container: LanguageContainer) : Identifiable {
     ENG(0, LanguageENG()),
     KOR(1, LanguageKOR()),
     JPN(2, LanguageJPN()),

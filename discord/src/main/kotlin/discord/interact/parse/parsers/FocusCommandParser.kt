@@ -10,6 +10,8 @@ import discord.interact.parse.NavigableCommand
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import utils.structs.Option
 import utils.structs.asOption
+import utils.structs.flatMap
+import utils.structs.map
 
 object FocusCommandParser : NavigableCommand {
 

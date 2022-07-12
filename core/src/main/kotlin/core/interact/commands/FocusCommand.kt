@@ -16,6 +16,8 @@ import core.session.entities.NavigateState
 import jrenju.notation.Pos
 import kotlinx.coroutines.Deferred
 import utils.structs.IO
+import utils.structs.flatMap
+import utils.structs.map
 
 enum class Direction {
     LEFT, DOWN, UP, RIGHT, FOCUS
@@ -33,9 +35,10 @@ class FocusCommand(
         config: GuildConfig,
         guild: Guild,
         user: User,
-        message: Deferred<MessageAdaptor<A, B>>,
         producer: MessageProducer<A, B>,
-        publisher: MessagePublisher<A, B>
+        message: Deferred<MessageAdaptor<A, B>>,
+        publisher: MessagePublisher<A, B>,
+        editPublisher: MessagePublisher<A, B>
     ) = runCatching {
         val originalMessage = message.await()
 
@@ -55,6 +58,9 @@ class FocusCommand(
         }
 
         SessionManager.addNavigate(bot.sessions, originalMessage.messageRef, this.navigateState.copy(page = newFocus.idx()))
+
+//        return@runCatching producer.produceBoard(editPublisher, config.language.container, config.boardStyle.renderer, this.session)
+//            .map { producer.attachFocusButtons(it, this.session, newFocus).launch(); Order.Unit } to this.asCommandReport("move focus $direction", user)
 
         val action = originalMessage.updateButtons(
             producer.generateFocusedButtons(producer.generateFocusedField(this.session.board, newFocus))

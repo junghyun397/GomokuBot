@@ -7,8 +7,8 @@ import core.session.ArchivePolicy
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.PvpGameSession
-import dev.minn.jda.ktx.Message
-import dev.minn.jda.ktx.await
+import dev.minn.jda.ktx.messages.Message
+import dev.minn.jda.ktx.coroutines.await
 import discord.assets.JDAGuild
 import discord.assets.OFFICIAL_SERVER_ID
 import discord.assets.TESTER_ROLE_ID
@@ -20,6 +20,7 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
 import utils.structs.Option
+import utils.structs.map
 import java.time.Duration
 
 object GuildManager {

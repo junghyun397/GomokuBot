@@ -1,16 +1,17 @@
 package core.session
 
 import core.assets.*
-import core.database.DatabaseManager
+import core.database.repositories.GuildConfigRepository
 import core.session.entities.*
 import utils.assets.LinuxTime
 import utils.structs.Quadruple
+import utils.structs.fold
 
 object SessionManager {
 
     private suspend fun retrieveGuildSession(repo: SessionRepository, guild: Guild): GuildSession =
         repo.sessions.getOrElse(guild.id) {
-            DatabaseManager.fetchGuildConfig(repo.databaseConnection, guild.id)
+            GuildConfigRepository.fetchGuildConfig(repo.dbConnection, guild.id)
                 .fold(
                     onDefined = { GuildSession(guild = guild, config = it) },
                     onEmpty = { GuildSession(guild = guild, GuildConfig()) }
@@ -29,7 +30,7 @@ object SessionManager {
         this.mapGuildSession(repo, guild) {
             it.copy(config = guildConfig)
         }.also {
-            DatabaseManager.upsertGuildConfig(repo.databaseConnection, guild.id, it.config)
+            GuildConfigRepository.upsertGuildConfig(repo.dbConnection, guild.id, it.config)
         }
     }
 
@@ -45,6 +46,9 @@ object SessionManager {
 
     suspend fun retrieveRequestSessionByOwner(repo: SessionRepository, guild: Guild, ownerId: UserUid): RequestSession? =
         this.retrieveGuildSession(repo, guild).requestSessions[ownerId]
+
+    suspend fun retrieveRequestSessionByOpponent(repo: SessionRepository, guild: Guild, opponentId: UserUid): RequestSession? =
+        this.retrieveGuildSession(repo, guild).requestSessions.values.firstOrNull { it.opponent.id == opponentId }
 
     suspend fun putRequestSession(repo: SessionRepository, guild: Guild, requestSession: RequestSession) {
         this.mapGuildSession(repo, guild) {

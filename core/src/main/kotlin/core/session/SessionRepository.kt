@@ -12,5 +12,5 @@ data class SessionRepository(
     val sessions: MutableMap<GuildUid, GuildSession> = ConcurrentHashMap(),
     val navigates: MutableMap<MessageRef, NavigateState> = Collections.synchronizedMap(WeakHashMap()),
     val messageBuffer: MutableMap<String, MutableList<MessageRef>> = Collections.synchronizedMap(WeakHashMap()),
-    val databaseConnection: DatabaseConnection,
+    val dbConnection: DatabaseConnection,
 )

@@ -6,24 +6,14 @@ interface IO<out A> {
 
     suspend fun run(): A
 
-    fun <B> map(mapper: suspend (A) -> B): IO<B> =
-        object : IO<B> {
-            override suspend fun run() = mapper(this@IO.run())
-        }
-
-    fun <B> flatMap(mapper: suspend (A) -> IO<B>): IO<B> =
-        object : IO<B> {
-            override suspend fun run() = mapper(this@IO.run()).run()
-        }
-
     companion object {
 
-        fun <A> unit(block: suspend () -> A) =
+        inline fun <A> unit(crossinline block: suspend () -> A) =
             object : IO<A> {
                 override suspend fun run() = block()
             }
 
-        operator fun <A> invoke(block: suspend () -> A) = unit(block)
+        inline operator fun <A> invoke(crossinline block: suspend () -> A) = unit(block)
 
         fun <A, B> zip(a: IO<A>, b: IO<B>) =
             object : IO<Pair<A, B>> {
@@ -38,3 +28,13 @@ interface IO<out A> {
     }
 
 }
+
+inline fun <A, B> IO<A>.map(crossinline mapper: suspend (A) -> B): IO<B> =
+    object : IO<B> {
+        override suspend fun run() = mapper(this@map.run())
+    }
+
+fun <A, B> IO<A>.flatMap(mapper: suspend (A) -> IO<B>): IO<B> =
+    object : IO<B> {
+        override suspend fun run() = mapper(this@flatMap.run()).run()
+    }
