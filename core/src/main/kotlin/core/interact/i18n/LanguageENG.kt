@@ -25,8 +25,8 @@ open class LanguageENG : LanguageContainer {
     override fun helpCommand() = "help"
     override fun helpCommandDescription() = "Get help."
 
-    override fun configCommand() = "config"
-    override fun configCommandDescription() = "Get configuration panel."
+    override fun settingsCommand() = "setting"
+    override fun settingsCommandDescription() = "Get settings panel."
 
     // ### 1-1-2. HELP:ABOUT (EMBED)
 
@@ -45,7 +45,7 @@ open class LanguageENG : LanguageContainer {
 
     override fun helpCommandEmbedTitle() = "GomokuBot / Command"
     override fun helpCommandEmbedHelp() = "Get help."
-    override fun helpCommandEmbedConfig() = "Get configuration panel."
+    override fun helpCommandEmbedSettings() = "Get settings panel."
     override fun helpCommandEmbedRank() = "Get a ranking from 1st to 10th."
     override fun helpCommandEmbedRating() = "Get ``GomokuBot ELO`` rating."
 
@@ -88,7 +88,7 @@ open class LanguageENG : LanguageContainer {
     override fun ratingEmbed() = TODO("Not yet implemented")
     override fun ratingEmbedDescription() = TODO("Not yet implemented")
 
-    // # 2. CONFIG
+    // # 2. SETTING
 
     // ## 2-1. LANG
 
@@ -132,7 +132,7 @@ open class LanguageENG : LanguageContainer {
 
     // ## 2-3. POLICY
 
-    override fun configApplied(choice: String) = "$choice Setting has been applied to this server."
+    override fun settingApplied(choice: String) = "$choice Setting has been applied to this server."
 
     // ### 2-3-1. STYLE
 

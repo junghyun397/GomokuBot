@@ -83,7 +83,7 @@ class LanguagePRK : LanguageKOR() {
     override fun ratingEmbed() = TODO("Not yet implemented")
     override fun ratingEmbedDescription() = TODO("Not yet implemented")
 
-    // # 2. CONFIG
+    // # 2. SETTING
 
     // ## 2-1. LANG
 
@@ -118,7 +118,7 @@ class LanguagePRK : LanguageKOR() {
 
     // ## 2-3. POLICY
 
-    override fun configApplied(choice: String) = "$choice 설정이 이 봉사기에 적용되었습니다."
+    override fun settingApplied(choice: String) = "$choice 설정이 이 봉사기에 적용되었습니다."
 
     // ### 2-3-1. STYLE
 

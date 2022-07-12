@@ -25,8 +25,8 @@ open class LanguageKOR : LanguageENG() {
     override fun helpCommand() = "도움말"
     override fun helpCommandDescription() = "도움말을 알아봅니다."
 
-    override fun configCommand() = "설정"
-    override fun configCommandDescription() = "설정 화면을 표시합니다."
+    override fun settingsCommand() = "설정"
+    override fun settingsCommandDescription() = "설정 화면을 표시합니다."
 
     // ### 1-1-2. HELP:ABOUT (EMBED)
 
@@ -45,7 +45,7 @@ open class LanguageKOR : LanguageENG() {
 
     override fun helpCommandEmbedTitle() = "GomokuBot / 명령어"
     override fun helpCommandEmbedHelp() = "도움말을 알아봅니다."
-    override fun helpCommandEmbedConfig() = "설정 화면을 표시합니다."
+    override fun helpCommandEmbedSettings() = "설정 화면을 표시합니다."
     override fun helpCommandEmbedRank() = "1위부터 10위까지의 순위를 알아봅니다."
     override fun helpCommandEmbedRating() = "``GomokuBot ELO`` 레이팅을 알아봅니다."
 
@@ -88,7 +88,7 @@ open class LanguageKOR : LanguageENG() {
     override fun ratingEmbed() = TODO("Not yet implemented")
     override fun ratingEmbedDescription() = TODO("Not yet implemented")
 
-    // # 2. CONFIG
+    // # 2. SETTING
 
     // ## 2-1. LANG
 
@@ -123,7 +123,7 @@ open class LanguageKOR : LanguageENG() {
 
     // ## 2-3. POLICY
 
-    override fun configApplied(choice: String) = "$choice 설정이 이 서버에 적용되었습니다."
+    override fun settingApplied(choice: String) = "$choice 설정이 이 서버에 적용되었습니다."
 
     // ### 2-3-1. STYLE
 

@@ -324,8 +324,8 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
             }
 
             field {
-                name = "``/${container.configCommand()}`` or ``$COMMAND_PREFIX${container.configCommand()}``"
-                value = container.helpCommandEmbedConfig()
+                name = "``/${container.settingsCommand()}`` or ``$COMMAND_PREFIX${container.settingsCommand()}``"
+                value = container.helpCommandEmbedSettings()
                 inline = false
             }
 
@@ -655,7 +655,7 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
     // CONFIG
 
     override fun produceConfigApplied(publisher: DiscordMessagePublisher, container: LanguageContainer, configKind: String, configChoice: String) =
-        IO { publisher(Message(content = container.configApplied(configChoice.asHighlightFormat()))) }
+        IO { publisher(Message(content = container.settingApplied(configChoice.asHighlightFormat()))) }
 
     // SESSION
 

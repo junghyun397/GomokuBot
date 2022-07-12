@@ -36,8 +36,8 @@ sealed interface LanguageContainer {
     fun helpCommand(): String
     fun helpCommandDescription(): String
 
-    fun configCommand(): String
-    fun configCommandDescription(): String
+    fun settingsCommand(): String
+    fun settingsCommandDescription(): String
 
     // ### 1-1-2. HELP:ABOUT (EMBED)
 
@@ -54,7 +54,7 @@ sealed interface LanguageContainer {
     fun helpCommandEmbedTitle(): String
 
     fun helpCommandEmbedHelp(): String
-    fun helpCommandEmbedConfig(): String
+    fun helpCommandEmbedSettings(): String
     fun helpCommandEmbedRank(): String
     fun helpCommandEmbedRating(): String
 
@@ -94,7 +94,7 @@ sealed interface LanguageContainer {
     fun ratingEmbed(): String
     fun ratingEmbedDescription(): String
 
-    // # 2. CONFIG
+    // # 2. SETTINGS
 
     // ## 2-1. LANG
 
@@ -132,9 +132,9 @@ sealed interface LanguageContainer {
 
     fun styleUpdated(styleName: String): String
 
-    // ## 2-3. POLICY
+    // ## 2-3. SETTINGS
 
-    fun configApplied(choice: String): String
+    fun settingApplied(choice: String): String
 
     // ### 2-3-1. STYLE
 

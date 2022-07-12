@@ -1,6 +1,6 @@
 package discord.interact.parse.parsers
 
-import core.interact.commands.ConfigCommand
+import core.interact.commands.SettingsCommand
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.NamedParser
 import dev.minn.jda.ktx.interactions.commands.slash
@@ -12,21 +12,21 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import utils.structs.Either
 
-object ConfigCommandParser : NamedParser, ParsableCommand, BuildableCommand {
+object SettingsCommandParser : NamedParser, ParsableCommand, BuildableCommand {
 
     override val name = "config"
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>) =
-        Either.Left(ConfigCommand(context.config.language.container.configCommand()))
+        Either.Left(SettingsCommand(context.config.language.container.settingsCommand()))
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>) =
-        Either.Left(ConfigCommand(context.config.language.container.configCommand()))
+        Either.Left(SettingsCommand(context.config.language.container.settingsCommand()))
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.apply {
             slash(
-                container.configCommand(),
-                container.configCommandDescription()
+                container.settingsCommand(),
+                container.settingsCommandDescription()
             )
         }
 
