@@ -6,18 +6,15 @@ import core.BotConfig
 import core.BotContext
 import core.assets.Guild
 import core.assets.GuildUid
-import core.assets.User
-import core.assets.UserUid
-import core.database.Caches
+import core.database.LocalCaches
 import core.database.DatabaseManager
+import core.database.repositories.GuildProfileRepository
+import core.database.repositories.UserProfileRepository
 import core.inference.KvineClient
 import core.interact.reports.InteractionReport
 import core.session.SessionManager
 import core.session.SessionRepository
-import discord.assets.ASCII_LOGO
-import discord.assets.COMMAND_PREFIX
-import discord.assets.DISCORD_PLATFORM_ID
-import discord.assets.extractId
+import discord.assets.*
 import discord.interact.InteractionContext
 import discord.route.*
 import kotlinx.coroutines.reactor.mono
@@ -39,26 +36,26 @@ import net.dv8tion.jda.api.requests.GatewayIntent
 import reactor.util.function.Tuple2
 import utils.assets.LinuxTime
 import utils.log.getLogger
-import utils.structs.Option.Empty.getOrElse
+import utils.structs.forEach
 import java.util.*
+import kotlin.reflect.KClass
 
-@JvmInline
-private value class Token(val token: String) {
+private data class Token(val token: String) {
     companion object {
         fun fromEnv() = Token(token = System.getenv("GOMOKUBOT_DISCORD_TOKEN"))
     }
 }
 
-@JvmInline
-private value class PostgreSQLConfig(val serverURL: String) {
+private data class PostgreSQLConfig(val serverURL: String) {
     companion object {
         fun fromEnv() = PostgreSQLConfig(
             serverURL = System.getenv("GOMOKUBOT_DB_URL"),
+//            password = System.getenv("GOMOKUBOT_DB_PASSWORD")
         )
     }
 }
 
-private class KvineConfig(val serverAddress: String, val serverPort: Int) {
+private data class KvineConfig(val serverAddress: String, val serverPort: Int) {
     companion object {
         fun fromEnv() = KvineConfig(
             serverAddress = System.getenv("GOMOKUBOT_KVINE_ADDRESS"),
@@ -71,38 +68,29 @@ private inline fun <reified E : Event, R : InteractionReport> leaveLog(combined:
     combined.t2
         .onSuccess{
             logger.info("${E::class.simpleName} ${combined.t1.guild} " +
-                    "T${(it.terminationTime.timestamp - combined.t1.emittenTime.timestamp)}ms => $it")
+                    "T${(it.terminationTime.timestamp - combined.t1.emittedTime.timestamp)}ms => $it")
         }
         .onFailure {
             logger.error("${E::class.simpleName} ${combined.t1.guild} " +
-                    "T${(System.currentTimeMillis() - combined.t1.emittenTime.timestamp)}ms => ${it.stackTraceToString()}")
+                    "T${(System.currentTimeMillis() - combined.t1.emittedTime.timestamp)}ms => ${it.stackTraceToString()}")
         }
 
+private fun leaveLog(event: KClass<*>, error: Throwable) =
+    logger.error("${event.simpleName} ${error.stackTraceToString()}")
+
 private suspend inline fun <E : Event> retrieveInteractionContext(bot: BotContext, event: E, jdaUser: net.dv8tion.jda.api.entities.User, jdaGuild: net.dv8tion.jda.api.entities.Guild): InteractionContext<E> {
-    val user = DatabaseManager.retrieveUser(bot.databaseConnection, DISCORD_PLATFORM_ID, jdaUser.extractId())
-        .getOrElse {
-            User(
-                id = UserUid(UUID.randomUUID()),
-                platform = DISCORD_PLATFORM_ID,
-                givenId = jdaUser.extractId(),
-                name = jdaUser.name,
-                nameTag = jdaUser.asTag,
-                profileURL = jdaUser.avatarUrl
-            ).also {
-                DatabaseManager.upsertUser(bot.databaseConnection, it)
-            }
-        }
-    val guild = DatabaseManager.retrieveGuild(bot.databaseConnection, DISCORD_PLATFORM_ID, jdaGuild.extractId())
-        .getOrElse {
-            Guild(
-                id = GuildUid(UUID.randomUUID()),
-                platform = DISCORD_PLATFORM_ID,
-                givenId = jdaGuild.extractId(),
-                name = jdaGuild.name,
-            ).also {
-                DatabaseManager.upsertGuild(bot.databaseConnection, it)
-            }
-        }
+    val user = UserProfileRepository.retrieveOrInsertUser(bot.dbConnection, DISCORD_PLATFORM_ID, jdaUser.extractId()) {
+        jdaUser.buildNewProfile()
+    }
+
+    val guild = GuildProfileRepository.retrieveOrInsertGuild(bot.dbConnection, DISCORD_PLATFORM_ID, jdaGuild.extractId()) {
+        Guild(
+            id = GuildUid(UUID.randomUUID()),
+            platform = DISCORD_PLATFORM_ID,
+            givenId = jdaGuild.extractId(),
+            name = jdaGuild.name,
+        )
+    }
 
     return InteractionContext(
         bot = bot,
@@ -110,7 +98,7 @@ private suspend inline fun <E : Event> retrieveInteractionContext(bot: BotContex
         user = user,
         guild = guild,
         config = SessionManager.retrieveGuildConfig(bot.sessions, guild),
-        emittenTime = LinuxTime()
+        emittedTime = LinuxTime()
     )
 }
 
@@ -122,63 +110,68 @@ object GomokuBot {
         val postgresqlConfig = PostgreSQLConfig.fromEnv()
         val kvineConfig = KvineConfig.fromEnv()
 
-        val databaseConnection = runBlocking {
-            core.database.DatabaseConnection
-                .connectionFrom(postgresqlConfig.serverURL, Caches())
-                .also {
-                    DatabaseManager.initTables(it)
-                }
+        val dbConnection = runBlocking {
+            DatabaseManager.newConnectionFrom(postgresqlConfig.serverURL, LocalCaches())
+                .also { DatabaseManager.initTables(it) }
         }
 
-        logger.info("mysql database connected.")
+        logger.info("postgresql database connected.")
 
         val kvineClient = KvineClient
             .connectionFrom(kvineConfig.serverAddress, kvineConfig.serverPort)
 
         logger.info("kvine renju inference service connected.")
 
-        val sessionRepository = SessionRepository(databaseConnection = databaseConnection)
+        val sessionRepository = SessionRepository(dbConnection = dbConnection)
 
-        val botContext = BotContext(botConfig, databaseConnection, kvineClient, sessionRepository)
+        val botContext = BotContext(botConfig, dbConnection, kvineClient, sessionRepository)
 
         val eventManager = ReactiveEventManager()
 
         eventManager.on<SlashCommandInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
             .flatMap { mono { retrieveInteractionContext(botContext, it, it.user, it.guild!!) } }
+            .onErrorContinue { error, _ -> leaveLog(SlashCommandInteractionEvent::class, error) }
             .flatMap(::slashCommandRouter)
             .subscribe { leaveLog(it) }
 
         eventManager.on<MessageReceivedEvent>()
             .filter { it.isFromGuild && !it.author.isBot && (it.message.contentRaw.startsWith(COMMAND_PREFIX) || it.message.mentions.isMentioned(it.jda.selfUser)) }
             .flatMap { mono { retrieveInteractionContext(botContext, it, it.author, it.guild) } }
+            .onErrorContinue { error, _ -> leaveLog(MessageReceivedEvent::class, error) }
             .flatMap(::textCommandRouter)
             .subscribe { leaveLog(it) }
 
         eventManager.on<ButtonInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
             .flatMap { mono { retrieveInteractionContext(botContext, it, it.user, it.guild!!) } }
+            .onErrorContinue { error, _ -> leaveLog(ButtonInteractionEvent::class, error) }
             .flatMap(::buttonInteractionRouter)
             .subscribe { leaveLog(it) }
 
         eventManager.on<SelectMenuInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
             .flatMap { mono { retrieveInteractionContext(botContext, it, it.user, it.guild!!) } }
+            .onErrorContinue { error, _ -> leaveLog(SelectMenuInteractionEvent::class, error) }
             .flatMap(::buttonInteractionRouter)
             .subscribe { leaveLog(it) }
 
         eventManager.on<MessageReactionAddEvent>()
             .filter { it.isFromGuild && !(it.user?.isBot ?: true) }
             .flatMap { mono { retrieveInteractionContext(botContext, it, it.user!!, it.guild) } }
+            .onErrorContinue { error, _ -> leaveLog(MessageReceivedEvent::class, error) }
             .flatMap(::reactionRouter)
             .subscribe { leaveLog(it) }
 
         eventManager.on<GuildJoinEvent>()
-            .map { guildJoinRouter(botContext, it) }
-            .subscribe { println(it) } // TODO
+            .flatMap { guildJoinRouter(botContext, it) }
+            .onErrorContinue { error, _ -> leaveLog(GuildJoinEvent::class, error) }
+            .subscribe { println("join $it") }
 
         eventManager.on<GuildLeaveEvent>()
-            .subscribe { logger.info("leave $it") } // TODO
+            .flatMap { mono { GuildProfileRepository.retrieveGuild(botContext.dbConnection, DISCORD_PLATFORM_ID, it.guild.extractId()) } }
+            .onErrorContinue { error, _ -> leaveLog(GuildLeaveEvent::class, error) }
+            .subscribe { guild -> guild.forEach { logger.info("leave $it") } }
 
         eventManager.on<ReadyEvent>()
             .subscribe { logger.info("jda ready, complete loading.") }
@@ -208,5 +201,4 @@ fun main() {
     runCatching { GomokuBot.launch() }
         .onSuccess { logger.info("gomokubot ready.") }
         .onFailure { logger.error(it.stackTraceToString()) }
-
 }

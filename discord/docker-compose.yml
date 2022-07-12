@@ -2,16 +2,15 @@ version: "3"
 services:
 
   database:
-    image: mysql:8.0
+    image: postgres:latest
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - ~/apps/mysql:/var/lib/mysql
+      - db:/var/lib/postgresql/data
     environment:
-      - "MYSQL_ROOT_PASSWORD=1q2w3e4r!"
-      - "MYSQL_PASSWORD=1q2w3e4r!"
-
-    container_name: mysql
+      - POSTGRE_USER=gomokubot
+      - POSTGRE_PASSWORD=acomplexpassword
+    container_name: postgres
     restart: always
 
   gomokubot:
@@ -20,9 +19,12 @@ services:
       - "GOMOKUBOT_KVINE_ADDRESS=localhost"
       - "GOMOKUBOT_KVINE_PORT=2001"
 
-      - "GOMOKUBOT_DB_URL=r2dbcs:mysql://root:1q2w3e4r!@localhost:3306/gomokubot?autoReconnection=true&useUnicode=true&characterEncoding=UTF-8"
+      - "GOMOKUBOT_DB_URL=r2dbc:postgresql://gomokubot:acomplexpassword@localhost/gomokubot"
 
       - "GOMOKUBOT_DISCORD_TOKEN=${GOMOKUBOT_DISCORD_TOKEN}"
-
     container_name: gomokubot-discord
     restart: always
+
+volumes:
+  db:
+    driver: local

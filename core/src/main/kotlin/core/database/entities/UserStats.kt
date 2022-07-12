@@ -1,17 +1,20 @@
 package core.database.entities
 
-import core.assets.User
+import core.assets.UserUid
+import utils.assets.LinuxTime
 
 data class UserStats(
-    val profile: User,
+    val userId: UserUid,
 
-    val blackWins: Int,
-    val blackLosses: Int,
-    val blackDraws: Int,
+    val blackWins: Int = 0,
+    val blackLosses: Int = 0,
+    val blackDraws: Int = 0,
 
-    val whiteWins: Int,
-    val whiteLosses: Int,
-    val whiteDraws: Int,
+    val whiteWins: Int = 0,
+    val whiteLosses: Int = 0,
+    val whiteDraws: Int = 0,
+
+    val date: LinuxTime = LinuxTime()
 ) : Comparable<UserStats> {
 
     val totalWins get() = this.blackWins + this.whiteWins

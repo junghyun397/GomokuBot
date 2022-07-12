@@ -1,184 +1,105 @@
 package core.database
 
-import core.assets.*
-import core.database.entities.GameRecord
-import core.database.entities.UserStats
-import core.interact.i18n.Language
-import core.interact.message.graphics.BoardStyle
-import core.session.ArchivePolicy
-import core.session.FocusPolicy
-import core.session.SweepPolicy
-import core.session.entities.GuildConfig
-import kotlinx.coroutines.reactive.awaitSingle
-import utils.structs.Option
-import utils.structs.Option.Empty.getOrElse
-import utils.structs.asOption
-import java.util.*
+import io.r2dbc.spi.ConnectionFactories
+import kotlinx.coroutines.reactive.awaitFirst
+import kotlinx.coroutines.reactive.awaitLast
 
 object DatabaseManager {
+
+    suspend fun newConnectionFrom(url: String, localCaches: LocalCaches): DatabaseConnection =
+        DatabaseConnection(
+            ConnectionFactories.get(url)
+                .create()
+                .awaitFirst(),
+            localCaches
+        )
 
     suspend fun initTables(connection: DatabaseConnection) {
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
-                .createBatch()
-                .add(
-                    "CREATE TABLE IF NOT EXISTS guild_profile ()"
-                )
-                .add(
-                    "CREATE TABLE IF NOT EXISTS guild_config ()"
-                )
-                .add(
-                    "CREATE TABLE IF NOT EXISTS user_profile ()"
-                )
-                .add(
-                    "CREATE TABLE IF NOT EXISTS user_stats ()"
-                )
-                .execute()
-            }
-            .awaitSingle()
-    }
-
-    // guild_profile
-
-    suspend fun retrieveOrInsertGuild(connection: DatabaseConnection, platform: Int, givenId: GuildId, produce: () -> Guild): Guild =
-        this.retrieveGuild(connection, platform, givenId)
-            .getOrElse {
-                produce()
-                    .also { this.upsertGuild(connection, it) }
-            }
-
-    suspend fun retrieveGuild(connection: DatabaseConnection, platform: Int, givenId: GuildId): Option<Guild> =
-        connection.caches.guildProfileCache
-            .getIfPresent(givenId)
-            .asOption()
-            .flatMap { this.fetchGuild(connection, platform, givenId) }
-
-    suspend fun retrieveGuild(connection: DatabaseConnection, guildUid: GuildUid): Guild =
-        connection.liftConnection()
-            .flatMapMany { dbc -> dbc
-                .createStatement("a") // TODO()
-                .bind("$1", guildUid.uuid)
-                .execute()
-            }
-            .flatMap { result -> result
-                .map { row, _ ->
-                    Guild(
-                        id = GuildUid(row["id"] as UUID),
-                        platform = row["platform"] as Int,
-                        givenId = GuildId(row["given_id"] as Long),
-                        name = row["name"] as String
-                    )
-                }
-            }
-            .doOnNext { connection.caches.guildProfileCache.put(it.givenId, it) }
-            .awaitSingle()
-
-    private suspend fun fetchGuild(connection: DatabaseConnection, platform: Int, givenId: GuildId): Option<Guild> =
-        connection.liftConnection()
-            .flatMapMany { dbc -> dbc
-                .createStatement("a") // TODO
-                .execute()
-            }
-            .flatMap { result -> result
-                .map { row, _ ->
-                    Option(Guild(
-                        id = GuildUid(row["id"] as UUID),
-                        platform = platform,
-                        givenId = givenId,
-                        name = row["name"] as String
-                    ))
-                }
-            }
-            .switchIfEmpty { Option.Empty }
-            .awaitSingle()
-
-    fun upsertGuild(connection: DatabaseConnection, guild: Guild) {
-        connection.caches.guildProfileCache.put(guild.givenId, guild)
-
-        connection.liftConnection()
-            .flatMapMany { dbc -> dbc
-                .createStatement("a") // TODO
-                .execute()
-            }
-            .subscribe()
-    }
-
-    // guild_config
-
-    suspend fun fetchGuildConfig(connection: DatabaseConnection, guildUid: GuildUid): Option<GuildConfig> =
-        connection.liftConnection()
-            .flatMapMany { dbc -> dbc
                 .createStatement(
-                    "SELECT * FROM guild_info WHERE id == $1"
+                    """
+                        CREATE TABLE IF NOT EXISTS public.guild_profile (
+                            guild_id uuid PRIMARY KEY,
+                            platform smallint NOT NULL,
+                            given_id bigint NOT NULL,
+                            name varchar NOT NULL,
+                            register_date timestamp without time zone DEFAULT now(),
+                            UNIQUE (given_id, platform)
+                        );
+                        
+                        CREATE TABLE IF NOT EXISTS public.guild_config (
+                            guild_id uuid PRIMARY KEY,
+                            language smallint NOT NULL,
+                            board_style smallint NOT NULL,
+                            focus_policy smallint NOT NULL,
+                            sweep_policy smallint NOT NULL,
+                            archive_policy smallint NOT NULL,
+                            FOREIGN KEY (guild_id) REFERENCES guild_profile (guild_id)
+                        );
+                        
+                        CREATE TABLE IF NOT EXISTS public.user_profile (
+                            user_id uuid PRIMARY KEY,
+                            platform smallint NOT NULL,
+                            given_id bigint NOT NULL,
+                            name varchar NOT NULL,
+                            name_tag varchar NOT NULL,
+                            profile_url varchar NOT NULL,
+                            register_date timestamp without time zone DEFAULT now(),
+                            UNIQUE (given_id, platform)
+                        );
+                        
+                        CREATE TABLE IF NOT EXISTS public.user_stats (
+                            user_id uuid PRIMARY KEY,
+                            black_wins int NOT NULL DEFAULT 0,
+                            black_losses int NOT NULL DEFAULT 0,
+                            black_draws int NOT NULL DEFAULT 0,
+                            white_wins int NOT NULL DEFAULT 0,
+                            white_losses int NOT NULL DEFAULT 0,
+                            white_draws int NOT NULL DEFAULT 0,
+                            last_update timestamp without time zone DEFAULT now(),
+                            FOREIGN KEY (user_id) REFERENCES user_profile (user_id)
+                        );
+                            
+                        CREATE TABLE IF NOT EXISTS public.game_record (
+                            record_id SERIAL PRIMARY KEY,
+                            board_status bytea NOT NULL,
+                            history int[],
+                            cause smallint NOT NULL,
+                            win_color smallint,
+                            guild_id uuid NOT NULL,
+                            black_id uuid,
+                            white_id uuid,
+                            ai_level smallint,
+                            create_date timestamp without time zone DEFAULT now(),
+                            FOREIGN KEY (guild_id) REFERENCES guild_profile (guild_id),
+                            FOREIGN KEY (black_id) REFERENCES user_profile (user_id),
+                            FOREIGN KEY (white_id) REFERENCES user_profile (user_id)
+                        );
+                        
+                        CREATE OR REPLACE PROCEDURE upload_game_record(
+                            board_status bytea,
+                            history int[],
+                            cause smallint,
+                            win_color smallint,
+                            guild_id uuid,
+                            black_id uuid,
+                            white_id uuid,
+                            ai_level smallint
+                        ) LANGUAGE sql AS $$
+                        
+                        BEGIN;
+                        
+                        INSERT INTO game_record (board_status, history, cause, win_color, guild_id, black_id, white_id, ai_level)
+                            VALUES (board_status, history, cause, win_color, guild_id, black_id, white_id, ai_level);
+                        
+                        END;
+                        $$;
+                    """.trimIndent()
                 )
-                .bind("$1", guildUid.uuid)
                 .execute()
             }
-            .flatMap { result -> result
-                .map { row, _ ->
-                    Option(GuildConfig(
-                        language = Language.values().find { it.id == row["language"] as Int }!!,
-                        boardStyle = BoardStyle.values().find { it.id == row["board_style"] as Int }!!,
-                        focusPolicy = FocusPolicy.values().find { it.id == row["focus_policy"] as Int }!!,
-                        sweepPolicy = SweepPolicy.values().find { it.id == row["sweep_policy"] as Int }!!,
-                        archivePolicy = ArchivePolicy.values().find { it.id == row["archive_policy"] as Int }!!
-                    ))
-                }
-            }
-            .switchIfEmpty { Option.Empty }
-            .awaitSingle()
-
-    fun upsertGuildConfig(connection: DatabaseConnection, guildUid: GuildUid, guildConfig: GuildConfig) {
-        connection.liftConnection()
-            .flatMapMany { dbc -> dbc
-                .createStatement(
-                    "UPDATE guild_info SET language=$1, board_style=$2, focus_policy=$3, sweep_policy=$4, archive_policy=$5 WHERE id == $6"
-                )
-                .bind("$1", guildConfig.language.id)
-                .bind("$2", guildConfig.boardStyle.id)
-                .bind("$3", guildConfig.focusPolicy.id)
-                .bind("$4", guildConfig.sweepPolicy.id)
-                .bind("$5", guildConfig.archivePolicy.id)
-                .bind("$6", guildUid.uuid)
-                .execute()
-            }
-            .subscribe()
-    }
-
-    // user_profile
-
-    suspend fun retrieveOrInsertUser(connection: DatabaseConnection, platform: Int, givenId: UserId, produce: () -> User): User =
-        this.retrieveUser(connection, platform, givenId)
-            .getOrElse {
-                produce()
-                    .also { this.upsertUser(connection, it) }
-            }
-
-    suspend fun retrieveUser(connection: DatabaseConnection, platform: Int, givenId: UserId): Option<User> = TODO()
-
-    suspend fun fetchUser(connection: DatabaseConnection, platform: Int, givenId: UserId): Option<User> = TODO()
-
-    fun upsertUser(connection: DatabaseConnection, user: User): Unit = TODO()
-
-    // user_stats
-
-    suspend fun retrieveUserStats(connection: DatabaseConnection, userUid: UserUid): Option<UserStats> = TODO()
-
-    suspend fun fetchUserStats(connection: DatabaseConnection, userUid: UserUid): Option<UserStats> = TODO()
-
-    fun upsertUserStats(connection: DatabaseConnection, userStats: UserStats): Unit = TODO()
-
-    suspend fun fetchRankings(connection: DatabaseConnection): List<UserStats> = TODO()
-
-    // game_record
-
-    suspend fun uploadGameRecord(connection: DatabaseConnection, record: GameRecord) {
-        connection.liftConnection()
-            .flatMapMany { dbc -> dbc
-                .createStatement("a")
-                .execute()
-            }
-            .subscribe()
+            .awaitLast()
     }
 
 }
