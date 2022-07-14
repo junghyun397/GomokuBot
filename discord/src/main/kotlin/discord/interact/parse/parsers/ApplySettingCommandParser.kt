@@ -1,6 +1,6 @@
 package discord.interact.parse.parsers
 
-import core.interact.commands.ApplyConfigCommand
+import core.interact.commands.ApplySettingCommand
 import core.interact.commands.Command
 import core.session.ArchivePolicy
 import core.session.BoardStyle
@@ -14,7 +14,7 @@ import utils.structs.Option
 import utils.structs.asOption
 import utils.structs.map
 
-object ApplyConfigCommandParser : EmbeddableCommand {
+object ApplySettingCommandParser : EmbeddableCommand {
 
     override suspend fun parseButton(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
         val (kind, choice) = run {
@@ -92,7 +92,7 @@ object ApplyConfigCommandParser : EmbeddableCommand {
         } }
             .asOption()
             .map { (newConfig, kindName, choiceName) ->
-                ApplyConfigCommand("p", newConfig, kindName, choiceName)
+                ApplySettingCommand("p", newConfig, kindName, choiceName)
             }
     }
 

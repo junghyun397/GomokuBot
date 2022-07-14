@@ -15,7 +15,7 @@ abstract class SessionSideParser<A, B> : NamedParser {
         SessionManager.retrieveGameSession(context.sessions, guild, user.id)?.let { Either.Left(it) }
             ?: Either.Right(ParseFailure(this.name, "$user session not found", user) { producer, publisher, container ->
                 producer.produceSessionNotFound(publisher, container, user)
-                    .map { it.launch(); Order.Unit }
+                    .map { it.launch(); emptyList<Order>() }
             })
 
 }

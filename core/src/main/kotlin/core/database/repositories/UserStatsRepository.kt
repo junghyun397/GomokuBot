@@ -5,8 +5,9 @@ import core.database.DatabaseConnection
 import core.database.entities.UserStats
 import kotlinx.coroutines.reactive.awaitSingle
 import utils.assets.LinuxTime
-import utils.structs.Option
-import java.util.UUID
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.util.*
 
 object UserStatsRepository {
 
@@ -29,7 +30,7 @@ object UserStatsRepository {
                         whiteLosses = row["white_losses"] as Int,
                         whiteDraws = row["white_draws"] as Int,
 
-                        date = LinuxTime(row["date"] as Long)
+                        date = LinuxTime(row["last_update"] as Long)
                     )
                 }
             }
@@ -46,9 +47,7 @@ object UserStatsRepository {
                             RANK () OVER (
                                 ORDER BY black_wins + white_wins DESC 
                             ) wins_rank
-                            
-                        FROM
-                            user_stats
+                        FROM user_stats ORDER BY wins_rank DESC limit 10
                     """.trimIndent()
                 )
                 .execute()
@@ -65,7 +64,7 @@ object UserStatsRepository {
                         whiteLosses = row["white_losses"] as Int,
                         whiteDraws = row["white_draws"] as Int,
 
-                        date = LinuxTime(row["date"] as Long)
+                        date = LinuxTime((row["last_update"] as LocalDateTime).toInstant(ZoneOffset.UTC).toEpochMilli())
                     )
                 }
             }

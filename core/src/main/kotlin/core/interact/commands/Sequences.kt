@@ -70,11 +70,11 @@ private fun buildSweepSequence(
     config: GuildConfig,
     session: GameSession
 ) = when (config.sweepPolicy) {
-    SweepPolicy.RELAY -> IO { Order.BulkDelete(session.messageBufferKey) }
+    SweepPolicy.RELAY -> IO { listOf(Order.BulkDelete(session.messageBufferKey)) }
     SweepPolicy.LEAVE -> {
         SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
-            ?.let { IO { Order.RemoveNavigators(it, true) } }
-            ?: IO { Order.Unit }
+            ?.let { IO { listOf(Order.RemoveNavigators(it, true)) } }
+            ?: IO { emptyList() }
     }
 }
 

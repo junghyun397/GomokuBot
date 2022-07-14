@@ -11,5 +11,4 @@ sealed class Order {
     class BulkDelete(val key: String) : Order()
     class RemoveNavigators(val messageRef: MessageRef, val reduceComponents: Boolean = false) : Order()
     class ArchiveSession(val session: GameSession, val policy: ArchivePolicy) : Order()
-    object Unit : Order()
 }

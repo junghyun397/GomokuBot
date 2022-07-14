@@ -1,7 +1,6 @@
 package discord.interact.parse.parsers
 
 import core.assets.User
-import core.interact.Order
 import core.interact.commands.Command
 import core.interact.commands.LangCommand
 import core.interact.i18n.Language
@@ -35,7 +34,7 @@ object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
                 .map { it.launch() }
                 .flatMap {
                     producer.produceLanguageGuide(publisher)
-                        .map { it.launch(); Order.Unit }
+                        .map { it.launch(); emptyList() }
                 }
         })
 

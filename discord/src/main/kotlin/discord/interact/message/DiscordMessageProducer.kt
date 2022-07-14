@@ -196,18 +196,6 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
     override fun attachFocusButtons(boardAction: DiscordMessageAction, session: GameSession, focus: Pos): DiscordMessageAction =
         boardAction.addButtons(this.generateFocusedButtons(this.generateFocusedField(session.board, focus)))
 
-    fun generateBinaryNavigators(first: String, previous: String?, next: String?, last: String): DiscordButtons =
-        listOf(ActionRow.of(
-            Button.of(ButtonStyle.PRIMARY, first, "first")
-                .apply { if (previous == first) asDisabled() },
-            Button.of(ButtonStyle.PRIMARY, previous ?: "disabled", "previous")
-                .apply { if (previous == null) asDisabled() },
-            Button.of(ButtonStyle.PRIMARY, next ?: "disabled", "next")
-                .apply { if (next == null) asDisabled() },
-            Button.of(ButtonStyle.PRIMARY, last, "last")
-                .apply { if (next == last) asDisabled() }
-        ))
-
     override fun attachNavigators(flow: Flow<String>, message: MessageAdaptor<Message, DiscordButtons>, checkTerminated: suspend () -> Boolean) =
         IO {
             try {

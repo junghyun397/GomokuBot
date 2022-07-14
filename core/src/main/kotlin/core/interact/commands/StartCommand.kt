@@ -38,7 +38,7 @@ class StartCommand(override val command: String = "start", val opponent: User?) 
                 val io = producer.produceBeginsPVE(publisher, config.language.container, user, gameSession.ownerHasBlack)
                     .map { it.launch() }
                     .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, gameSession) }
-                    .map { Order.Unit }
+                    .map { emptyList<Order>() }
 
                 io to this.asCommandReport("start game session with AI", user)
             }
@@ -52,7 +52,7 @@ class StartCommand(override val command: String = "start", val opponent: User?) 
                 SessionManager.putRequestSession(bot.sessions, guild, requestSession)
 
                 val io = producer.produceRequest(publisher, config.language.container, user, opponent)
-                    .map { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.retrieve().messageRef); Order.Unit }
+                    .map { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.retrieve().messageRef); emptyList<Order>() }
 
                 io to this.asCommandReport("make request to ${this.opponent}", user)
             }

@@ -13,7 +13,7 @@ import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
 import utils.structs.map
 
-class ApplyConfigCommand(
+class ApplySettingCommand(
     override val command: String,
     private val newConfig: GuildConfig,
     private val configName: String,
@@ -33,7 +33,7 @@ class ApplyConfigCommand(
         SessionManager.updateGuildConfig(bot.sessions, guild, newConfig)
 
         val io = producer.produceConfigApplied(publisher, config.language.container, this.configName, this.configChoice)
-            .map { it.launch(); Order.Unit }
+            .map { it.launch(); emptyList<Order>()  }
 
         io to this.asCommandReport("update $configName as $configChoice", user)
     }

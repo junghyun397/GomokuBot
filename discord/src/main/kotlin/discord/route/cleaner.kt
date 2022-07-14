@@ -79,7 +79,7 @@ fun scheduleCleaner(logger: Logger, botContext: BotContext, jda: JDA) {
                     session.owner,
                     session.opponent
                 )
-                    .map { it.launch(); Order.DeleteSource }
+                    .map { it.launch(); listOf(Order.DeleteSource) }
 
                 CoroutineScope(Dispatchers.Default).launch {
                     try {
@@ -97,7 +97,7 @@ fun scheduleCleaner(logger: Logger, botContext: BotContext, jda: JDA) {
             val channel = guild?.getTextChannelById(message.channelId.idLong)
 
             if (guild != null && channel != null) {
-                val io = IO { Order.RemoveNavigators(message) }
+                val io = IO { listOf(Order.RemoveNavigators(message)) }
 
                 CoroutineScope(Dispatchers.Default).launch {
                     try {

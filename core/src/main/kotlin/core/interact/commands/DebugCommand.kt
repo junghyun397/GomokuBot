@@ -54,14 +54,14 @@ class DebugCommand(
                     .map {
                         it.addFile(session.board.toBoardIO().debugText().toInputStream(), "analysis-report-${System.currentTimeMillis()}.txt")
                             .launch()
-                        Order.Unit
+                        emptyList<Order>()
                     } to this.asCommandReport("succeed", user)
-            } ?: (IO { Order.Unit } to this.asCommandReport("failed", user))
+            } ?: (IO { emptyList<Order>() } to this.asCommandReport("failed", user))
         }
         DebugType.SELF_REQUEST -> {
             if (SessionManager.retrieveGameSession(bot.sessions, guild, user.id) != null ||
                 SessionManager.retrieveRequestSession(bot.sessions, guild, user.id) != null)
-                IO { Order.Unit } to this.asCommandReport("failed", user)
+                IO { emptyList<Order>() } to this.asCommandReport("failed", user)
             else {
                 val requestSession = RequestSession(
                     user, user,
@@ -71,7 +71,7 @@ class DebugCommand(
 
                 SessionManager.putRequestSession(bot.sessions, guild, requestSession)
 
-                val io = producer.produceRequest(publisher, config.language.container, user, user).map { it.launch(); Order.Unit }
+                val io = producer.produceRequest(publisher, config.language.container, user, user).map { it.launch(); emptyList<Order>() }
 
                 io to this.asCommandReport("succeed", user)
             }
@@ -94,12 +94,12 @@ class DebugCommand(
 
             val io = producer.produceNextMovePVE(publisher, config.language.container, user, session.board.latestPos().get())
                 .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, session) }
-                .map { Order.Unit }
+                .map { emptyList<Order>() }
 
             io to this.asCommandReport("succeed", user)
         }
         DebugType.STATUS -> {
-            IO { Order.Unit } to this.asCommandReport("succeed", user)
+            IO { emptyList<Order>() } to this.asCommandReport("succeed", user)
         }
         DebugType.VCF -> {
             val vcfCase = """
@@ -120,7 +120,7 @@ class DebugCommand(
                      2 . . . . . . . X . . . . . . O 2
                      1 X O O O . X . . X . X . . . . 1
                        A B C D E F G H I J K L M N O
-                """
+                """.trimIndent()
                 .let { BoardIO.fromBoardText(it, Pos.fromCartesian("m3").get().idx()).get() }
 
             val session = AiGameSession(
@@ -139,7 +139,7 @@ class DebugCommand(
 
             val io = producer.produceNextMovePVE(publisher, config.language.container, user, session.board.latestPos().get())
                 .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, session) }
-                .map { Order.Unit }
+                .map { emptyList<Order>() }
 
             io to this.asCommandReport("succeed", user)
         }

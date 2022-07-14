@@ -12,14 +12,12 @@ import core.session.entities.nextWith
 import jrenju.Board
 import jrenju.`EmptyBoard$`
 import jrenju.notation.Color
-import jrenju.notation.Flag
 import jrenju.notation.Pos
 import jrenju.notation.Renju
 import jrenju.protocol.SolutionNode
 import scala.Enumeration
 import utils.assets.LinuxTime
 import utils.structs.*
-import kotlin.collections.find
 import kotlin.random.Random
 
 enum class BoardStyle(override val id: Short, val renderer: BoardRenderer, val sample: BoardRendererSample) : Identifiable {

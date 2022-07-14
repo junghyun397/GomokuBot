@@ -7,7 +7,6 @@ import core.interact.Order
 import core.interact.message.MessageAdaptor
 import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
-import core.interact.reports.CommandReport
 import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
@@ -33,7 +32,7 @@ class NavigateCommand(
         message: Deferred<MessageAdaptor<A, B>>,
         publisher: MessagePublisher<A, B>,
         editPublisher: MessagePublisher<A, B>
-    ): Result<Pair<IO<Order>, CommandReport>> = runCatching {
+    ) = runCatching {
         val originalMessage = message.await()
 
         val newState = this.navigateState.copy(
@@ -47,7 +46,7 @@ class NavigateCommand(
         )
 
         if (this.navigateState.page == newState.page)
-            return@runCatching IO { Order.Unit } to this.asCommandReport("navigate bounded", user)
+            return@runCatching IO { emptyList<Order>() } to this.asCommandReport("navigate bounded", user)
 
         SessionManager.addNavigate(bot.sessions, originalMessage.messageRef, newState)
 
@@ -58,7 +57,7 @@ class NavigateCommand(
                 producer.paginateSettings(editPublisher, config, newState.page)
             else -> throw Exception()
         }
-            .map { it.launch(); Order.Unit }
+            .map { it.launch(); emptyList<Order>() }
 
         io to this.asCommandReport("navigate ${newState.navigationKind} as ${newState.page}", user)
     }

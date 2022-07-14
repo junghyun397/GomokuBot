@@ -13,15 +13,15 @@ class ParseFailure<A, B>(
     val name: String,
     val comment: String,
     val user: User,
-    private val onFailure: (MessageProducer<A, B>, MessagePublisher<A, B>, LanguageContainer) -> IO<Order>
+    private val onFailure: (MessageProducer<A, B>, MessagePublisher<A, B>, LanguageContainer) -> IO<List<Order>>
 ) {
 
-    fun notice(guildConfig: GuildConfig, producer: MessageProducer<A, B>, publisher: MessagePublisher<A, B>): Result<Pair<IO<Order>, CommandReport>> =
+    fun notice(guildConfig: GuildConfig, producer: MessageProducer<A, B>, publisher: MessagePublisher<A, B>): Result<Pair<IO<List<Order>>, CommandReport>> =
         Result.success(onFailure(producer, publisher, guildConfig.language.container) to this.asCommandReport())
 
 }
 
-fun <A, B> NamedParser.asParseFailure(comment: String, user: User, onFailure: (MessageProducer<A, B>, MessagePublisher<A, B>, LanguageContainer) -> IO<Order>) =
+fun <A, B> NamedParser.asParseFailure(comment: String, user: User, onFailure: (MessageProducer<A, B>, MessagePublisher<A, B>, LanguageContainer) -> IO<List<Order>>) =
     ParseFailure(this.name, comment, user, onFailure)
 
 fun ParseFailure<*, *>.asCommandReport() =

@@ -24,7 +24,7 @@ object HelpCommandParser : NamedParser, ParsableCommand, BuildableCommand {
         Either.Left(
             HelpCommand(
                 context.config.language.container.helpCommand(),
-                this.checkCrossLanguageCommand(context.config.language.container, context.event.name)
+                this.checkCrossLanguageCommand(context.config.language.container, context.event.name.lowercase())
             )
         )
 
@@ -32,7 +32,7 @@ object HelpCommandParser : NamedParser, ParsableCommand, BuildableCommand {
         Either.Left(
             HelpCommand(
                 context.config.language.container.helpCommand(),
-                this.checkCrossLanguageCommand(context.config.language.container, payload[0])
+                this.checkCrossLanguageCommand(context.config.language.container, payload[0].lowercase())
             )
         )
 
@@ -43,7 +43,7 @@ object HelpCommandParser : NamedParser, ParsableCommand, BuildableCommand {
                 container.helpCommandDescription()
             )
 
-            if (container.helpCommand() != Language.ENG.container.helpCommand()) {
+            if (container.helpCommand() != "help") {
                 slash(
                     "help",
                     Language.ENG.container.helpCommandDescription()

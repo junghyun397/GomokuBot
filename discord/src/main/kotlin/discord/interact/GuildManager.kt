@@ -7,12 +7,13 @@ import core.session.ArchivePolicy
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.PvpGameSession
-import dev.minn.jda.ktx.messages.Message
 import dev.minn.jda.ktx.coroutines.await
+import dev.minn.jda.ktx.messages.Message
 import discord.assets.JDAGuild
 import discord.assets.OFFICIAL_SERVER_ID
 import discord.assets.TESTER_ROLE_ID
 import discord.interact.message.DiscordMessageProducer
+import discord.interact.message.DiscordMessagePublisher
 import discord.interact.message.MessageActionAdaptor
 import discord.interact.parse.buildableCommands
 import net.dv8tion.jda.api.JDA
@@ -53,7 +54,7 @@ object GuildManager {
         }.queue()
     }
 
-    fun archiveSession(archiveChannel: TextChannel, session: GameSession, archivePolicy: ArchivePolicy) {
+    suspend fun archiveSession(archiveChannel: TextChannel, session: GameSession, archivePolicy: ArchivePolicy) {
         if (archivePolicy == ArchivePolicy.PRIVACY) return
 
         val modSession = when (archivePolicy) {
@@ -64,8 +65,11 @@ object GuildManager {
             else -> session
         }
 
-        DiscordMessageProducer.produceSessionArchive({ msg -> MessageActionAdaptor(archiveChannel.sendMessage(msg)) }, modSession)
+        val publisher: DiscordMessagePublisher = { msg -> MessageActionAdaptor(archiveChannel.sendMessage(msg)) }
+
+        DiscordMessageProducer.produceSessionArchive(publisher, modSession)
             .map { it.launch() }
+            .run()
     }
 
     suspend fun retrieveJDAMessage(jda: JDA, messageRef: MessageRef): net.dv8tion.jda.api.entities.Message? =

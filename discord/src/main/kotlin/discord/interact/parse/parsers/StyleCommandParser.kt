@@ -1,7 +1,6 @@
 package discord.interact.parse.parsers
 
 import core.assets.User
-import core.interact.Order
 import core.interact.commands.Command
 import core.interact.commands.StyleCommand
 import core.interact.i18n.LanguageContainer
@@ -34,7 +33,7 @@ object StyleCommandParser : NamedParser, ParsableCommand, BuildableCommand {
             producer.produceStyleNotFound(publisher, container, user)
                 .map { it.launch() }
                 .flatMap { producer.produceStyleGuide(publisher, container) }
-                .map { it.launch(); Order.Unit }
+                .map { it.launch(); emptyList() }
         })
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {

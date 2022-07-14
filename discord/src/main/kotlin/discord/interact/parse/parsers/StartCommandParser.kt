@@ -3,7 +3,6 @@ package discord.interact.parse.parsers
 import core.assets.User
 import core.assets.UserId
 import core.database.repositories.UserProfileRepository
-import core.interact.Order
 import core.interact.commands.Command
 import core.interact.commands.StartCommand
 import core.interact.commands.buildBoardSequence
@@ -35,21 +34,21 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
     private suspend fun lookupRequestSent(context: InteractionContext<*>, owner: User): Option<DiscordParseFailure> =
         SessionManager.retrieveRequestSessionByOwner(context.bot.sessions, context.guild, owner.id).asOption().map { session ->
             this.asParseFailure("already sent request session", owner) { producer, publisher, container ->
-                producer.produceRequestAlreadySent(publisher, container, owner, session.opponent).map { it.launch(); Order.Unit }
+                producer.produceRequestAlreadySent(publisher, container, owner, session.opponent).map { it.launch(); emptyList() }
             }
         }
 
     private suspend fun lookupRequestOwner(context: InteractionContext<*>, owner: User): Option<DiscordParseFailure> =
         SessionManager.retrieveRequestSession(context.bot.sessions, context.guild, owner.id).asOption().map { session ->
             this.asParseFailure("already has request session", owner) { producer, publisher, container ->
-                producer.produceRequestAlready(publisher, container, session.owner, session.opponent).map { it.launch(); Order.Unit }
+                producer.produceRequestAlready(publisher, container, session.owner, session.opponent).map { it.launch(); emptyList() }
             }
         }
 
     private suspend fun lookupRequestOpponent(context: InteractionContext<*>, owner: User, opponent: User): Option<DiscordParseFailure> =
         SessionManager.retrieveRequestSession(context.bot.sessions, context.guild, opponent.id).asOption().map { _ ->
             this.asParseFailure("try to send request session but $opponent already has request session", owner) { producer, publisher, container ->
-                producer.produceOpponentRequestAlready(publisher, container, owner, opponent).map { it.launch(); Order.Unit }
+                producer.produceOpponentRequestAlready(publisher, container, owner, opponent).map { it.launch(); emptyList() }
             }
         }
 
@@ -59,14 +58,14 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
                 producer.produceSessionAlready(publisher, container, session.owner)
                     .map { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.retrieve().messageRef) }
                     .flatMap { buildBoardSequence(context.bot, context.guild, context.config, producer, publisher, session) }
-                    .map { Order.Unit }
+                    .map { emptyList() }
             }
         }
 
     private suspend fun lookupSessionOpponent(context: InteractionContext<*>, user: User, opponent: User): Option<DiscordParseFailure> =
         SessionManager.retrieveGameSession(context.bot.sessions, context.guild, opponent.id).asOption().map { _ ->
             this.asParseFailure("try to send request session but $opponent already has game session", user) { producer, publisher, container ->
-                producer.produceOpponentSessionAlready(publisher, container, user, opponent).map { it.launch(); Order.Unit }
+                producer.produceOpponentSessionAlready(publisher, container, user, opponent).map { it.launch(); emptyList() }
             }
         }
 

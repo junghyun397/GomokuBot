@@ -3,6 +3,8 @@ package core.interact.commands
 import core.BotContext
 import core.assets.Guild
 import core.assets.User
+import core.database.entities.asGameRecord
+import core.database.repositories.GameRecordRepository
 import core.interact.Order
 import core.interact.message.MessageAdaptor
 import core.interact.message.MessageProducer
@@ -31,9 +33,10 @@ class ResignCommand(override val command: String, private val session: GameSessi
         publisher: MessagePublisher<A, B>,
         editPublisher: MessagePublisher<A, B>,
     ) = runCatching {
-        SessionManager.removeGameSession(bot.sessions, guild, session.owner.id)
-
         val (finishedSession, result) = GameManager.resignSession(this.session, GameResult.Cause.RESIGN, user)
+
+        SessionManager.removeGameSession(bot.sessions, guild, session.owner.id)
+        GameRecordRepository.uploadGameRecord(bot.dbConnection, finishedSession.asGameRecord(guild.id, result))
 
         val io = when (finishedSession) {
             is AiGameSession ->
@@ -43,7 +46,13 @@ class ResignCommand(override val command: String, private val session: GameSessi
         }
             .map { it.launch() }
             .flatMap { producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, finishedSession) }
-            .map { it.launch(); Order.BulkDelete(this.session.messageBufferKey) }
+            .map {
+                it.launch()
+                listOf(
+                    Order.BulkDelete(this.session.messageBufferKey),
+                    Order.ArchiveSession(finishedSession, config.archivePolicy)
+                )
+            }
 
         io to this.asCommandReport("terminate session by surrendered", user)
     }

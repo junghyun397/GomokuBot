@@ -1,6 +1,5 @@
 package discord.interact.parse.parsers
 
-import core.interact.Order
 import core.interact.commands.Command
 import core.interact.commands.DebugCommand
 import core.interact.commands.DebugType
@@ -25,12 +24,12 @@ object DebugCommandParser : NamedParser, ParsableCommand {
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
         if (!GuildManager.hasDebugPermission(context.event.author))
             return Either.Right(this.asParseFailure("tester permission not granted", context.user) { _, _, _ ->
-                IO { Order.Unit }
+                IO { emptyList() }
             })
 
         val type = run { if (payload.size < 2) null else matchType(payload.component2().uppercase()) }
             ?: return Either.Right(this.asParseFailure("unknown debug type", context.user) { _,  _, _ ->
-                IO { Order.Unit }
+                IO { emptyList() }
             })
 
         return Either.Left(DebugCommand(
@@ -48,7 +47,7 @@ object DebugCommandParser : NamedParser, ParsableCommand {
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("slash commands not supported", context.user) { _, _, _ ->
-            IO { Order.Unit }
+            IO { emptyList() }
         })
 
 }

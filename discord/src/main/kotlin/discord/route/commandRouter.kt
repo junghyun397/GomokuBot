@@ -4,7 +4,6 @@ package discord.route
 
 import core.assets.UNICODE_CHECK
 import core.assets.UNICODE_CROSS
-import core.interact.Order
 import core.interact.i18n.LanguageContainer
 import core.interact.reports.CommandReport
 import dev.minn.jda.ktx.coroutines.await
@@ -46,7 +45,7 @@ private fun buildPermissionNode(context: InteractionContext<*>, channel: TextCha
                     .flatMap(Message::delete)
                     .queue()
 
-                Order.Unit
+                emptyList()
             }
         }
     }

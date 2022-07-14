@@ -1,6 +1,5 @@
 package discord.interact.parse.parsers
 
-import core.interact.Order
 import core.interact.commands.Command
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.NamedParser
@@ -24,13 +23,13 @@ object RatingCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("not yet implemented", context.user) { producer, publisher, container ->
             producer.produceNotYetImplemented(publisher, container, "https://discord.gg/vq8pkfF")
-                .map { it.launch(); Order.Unit }
+                .map { it.launch(); emptyList() }
         })
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("not yet implemented", context.user) { producer, publisher, container ->
             producer.produceNotYetImplemented(publisher, container, "https://discord.gg/vq8pkfF")
-                .map { it.launch(); Order.Unit }
+                .map { it.launch(); emptyList() }
         })
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

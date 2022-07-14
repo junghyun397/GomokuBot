@@ -41,7 +41,7 @@ class AcceptCommand(override val command: String, private val requestSession: Re
         val io = producer.produceBeginsPVP(publisher, config.language.container, gameSession.player, gameSession.nextPlayer)
             .map { it.launch() }
             .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, gameSession) }
-            .map { Order.DeleteSource }
+            .map { listOf(Order.DeleteSource) }
 
         io to this.asCommandReport("accepted", user)
     }

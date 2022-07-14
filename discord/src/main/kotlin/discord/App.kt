@@ -6,8 +6,8 @@ import core.BotConfig
 import core.BotContext
 import core.assets.Guild
 import core.assets.GuildUid
-import core.database.LocalCaches
 import core.database.DatabaseManager
+import core.database.LocalCaches
 import core.database.repositories.GuildProfileRepository
 import core.database.repositories.UserProfileRepository
 import core.inference.KvineClient
@@ -112,7 +112,7 @@ object GomokuBot {
 
         val dbConnection = runBlocking {
             DatabaseManager.newConnectionFrom(postgresqlConfig.serverURL, LocalCaches())
-                .also { DatabaseManager.initTables(it) }
+                .also { DatabaseManager.initDatabase(it) }
         }
 
         logger.info("postgresql database connected.")
@@ -131,36 +131,36 @@ object GomokuBot {
         eventManager.on<SlashCommandInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
             .flatMap { mono { retrieveInteractionContext(botContext, it, it.user, it.guild!!) } }
-            .onErrorContinue { error, _ -> leaveLog(SlashCommandInteractionEvent::class, error) }
             .flatMap(::slashCommandRouter)
+            .onErrorContinue { error, _ -> leaveLog(SlashCommandInteractionEvent::class, error) }
             .subscribe { leaveLog(it) }
 
         eventManager.on<MessageReceivedEvent>()
             .filter { it.isFromGuild && !it.author.isBot && (it.message.contentRaw.startsWith(COMMAND_PREFIX) || it.message.mentions.isMentioned(it.jda.selfUser)) }
             .flatMap { mono { retrieveInteractionContext(botContext, it, it.author, it.guild) } }
-            .onErrorContinue { error, _ -> leaveLog(MessageReceivedEvent::class, error) }
             .flatMap(::textCommandRouter)
+            .onErrorContinue { error, _ -> leaveLog(MessageReceivedEvent::class, error) }
             .subscribe { leaveLog(it) }
 
         eventManager.on<ButtonInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
             .flatMap { mono { retrieveInteractionContext(botContext, it, it.user, it.guild!!) } }
-            .onErrorContinue { error, _ -> leaveLog(ButtonInteractionEvent::class, error) }
             .flatMap(::buttonInteractionRouter)
+            .onErrorContinue { error, _ -> leaveLog(ButtonInteractionEvent::class, error) }
             .subscribe { leaveLog(it) }
 
         eventManager.on<SelectMenuInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
             .flatMap { mono { retrieveInteractionContext(botContext, it, it.user, it.guild!!) } }
-            .onErrorContinue { error, _ -> leaveLog(SelectMenuInteractionEvent::class, error) }
             .flatMap(::buttonInteractionRouter)
+            .onErrorContinue { error, _ -> leaveLog(SelectMenuInteractionEvent::class, error) }
             .subscribe { leaveLog(it) }
 
         eventManager.on<MessageReactionAddEvent>()
             .filter { it.isFromGuild && !(it.user?.isBot ?: true) }
             .flatMap { mono { retrieveInteractionContext(botContext, it, it.user!!, it.guild) } }
-            .onErrorContinue { error, _ -> leaveLog(MessageReceivedEvent::class, error) }
             .flatMap(::reactionRouter)
+            .onErrorContinue { error, _ -> leaveLog(MessageReceivedEvent::class, error) }
             .subscribe { leaveLog(it) }
 
         eventManager.on<GuildJoinEvent>()

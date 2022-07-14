@@ -29,7 +29,7 @@ class StyleCommand(override val command: String, private val style: BoardStyle) 
         SessionManager.updateGuildConfig(bot.sessions, guild, config.copy(boardStyle = style))
 
         val io = producer.produceStyleUpdated(publisher, config.language.container, style.sample.styleName)
-            .map { it.launch(); Order.Unit }
+            .map { it.launch(); emptyList<Order>() }
 
         io to this.asCommandReport("${config.boardStyle.name} to ${style.name}", user)
     }

@@ -40,7 +40,7 @@ class SettingsCommand(override val command: String) : Command {
 
                 producer.attachBinaryNavigators(settingsMessage)
             }
-            .map { Order.Unit }
+            .map { emptyList<Order>() }
 
         io to this.asCommandReport("succeed", user)
     }

@@ -25,6 +25,6 @@ sealed interface Command {
         message: Deferred<MessageAdaptor<A, B>>,
         publisher: MessagePublisher<A, B>,
         editPublisher: MessagePublisher<A, B>,
-    ): Result<Pair<IO<Order>, CommandReport>>
+    ): Result<Pair<IO<List<Order>>, CommandReport>>
 
 }

@@ -32,7 +32,7 @@ class RankCommand(override val command: String) : Command {
             .map { UserProfileRepository.retrieveUser(bot.dbConnection, it.userId) to it }
 
         val io = producer.produceRankings(publisher, config.language.container, combined)
-            .map { it.launch(); Order.Unit }
+            .map { it.launch(); emptyList<Order>() }
 
         io to this.asCommandReport("succeed", user)
     }

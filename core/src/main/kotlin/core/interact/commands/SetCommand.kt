@@ -3,6 +3,9 @@ package core.interact.commands
 import core.BotContext
 import core.assets.Guild
 import core.assets.User
+import core.database.entities.asGameRecord
+import core.database.repositories.GameRecordRepository
+import core.interact.Order
 import core.interact.message.MessageAdaptor
 import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
@@ -58,6 +61,7 @@ class SetCommand(override val command: String, private val session: GameSession,
                         },
                         onDefined = { result ->
                             SessionManager.removeGameSession(bot.sessions, guild, this.session.owner.id)
+                            GameRecordRepository.uploadGameRecord(bot.dbConnection, nextSession.asGameRecord(guild.id, result))
 
                             val io = when (result) {
                                 is GameResult.Win ->
@@ -67,6 +71,7 @@ class SetCommand(override val command: String, private val session: GameSession,
                             }
                                 .map { it.launch() }
                                 .flatMap { buildFinishSequence(bot, producer, publisher, config, this.session, nextSession) }
+                                .map { it + Order.ArchiveSession(nextSession, config.archivePolicy) }
 
                             io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", user)
                         }
@@ -76,6 +81,7 @@ class SetCommand(override val command: String, private val session: GameSession,
             onDefined = { result -> when (thenSession) {
                 is PvpGameSession -> {
                     SessionManager.removeGameSession(bot.sessions, guild, this.session.owner.id)
+                    GameRecordRepository.uploadGameRecord(bot.dbConnection, thenSession.asGameRecord(guild.id, result))
 
                     val io = when (result) {
                         is GameResult.Win ->
@@ -85,11 +91,13 @@ class SetCommand(override val command: String, private val session: GameSession,
                     }
                         .map { it.launch() }
                         .flatMap { buildFinishSequence(bot, producer, publisher, config, this.session, thenSession) }
+                        .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
                     io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", user)
                 }
                 is AiGameSession -> {
                     SessionManager.removeGameSession(bot.sessions, guild, this.session.owner.id)
+                    GameRecordRepository.uploadGameRecord(bot.dbConnection, thenSession.asGameRecord(guild.id, result))
 
                     val io = when (result) {
                         is GameResult.Win ->
@@ -99,6 +107,7 @@ class SetCommand(override val command: String, private val session: GameSession,
                     }
                         .map { it.launch() }
                         .flatMap { buildFinishSequence(bot, producer, publisher, config, this.session, thenSession) }
+                        .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
                     io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", user)
                 }

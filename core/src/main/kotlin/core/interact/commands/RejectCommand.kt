@@ -29,7 +29,7 @@ class RejectCommand(override val command: String, private val requestSession: Re
         SessionManager.removeRequestSession(bot.sessions, guild, requestSession.owner.id)
 
         val io = producer.produceRequestRejected(publisher, config.language.container, requestSession.owner, requestSession.opponent)
-            .map { it.launch(); Order.DeleteSource }
+            .map { it.launch(); listOf(Order.DeleteSource) }
 
         io to this.asCommandReport("reject ${requestSession.owner}'s request", user)
     }

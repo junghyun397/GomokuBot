@@ -26,11 +26,11 @@ class HelpCommand(override val command: String, private val sendCombined: Boolea
     ) = runCatching {
         val io = run {
             if (this.sendCombined)
-                buildHelpSequence(bot, config, publisher, producer, 0)
-            else
                 buildCombinedHelpSequence(bot, config, publisher, producer, 0)
+            else
+                buildHelpSequence(bot, config, publisher, producer, 0)
         }
-            .map { Order.Unit }
+            .map { emptyList<Order>() }
 
         io to this.asCommandReport("succeed", user)
     }
