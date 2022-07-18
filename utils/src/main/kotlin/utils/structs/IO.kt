@@ -25,6 +25,11 @@ interface IO<out A> {
                 override suspend fun run() = Triple(a.run(), b.run(), c.run())
             }
 
+        fun <A, B, C, D> zip(a: IO<A>, b: IO<B>, c: IO<C>, d: IO<D>) =
+            object : IO<Quadruple<A, B, C, D>> {
+                override suspend fun run() = Quadruple(a.run(), b.run(), c.run(), d.run())
+            }
+
     }
 
 }

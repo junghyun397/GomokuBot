@@ -16,7 +16,7 @@ import kotlinx.coroutines.Deferred
 import utils.structs.flatMap
 import utils.structs.map
 
-class AcceptCommand(override val command: String, private val requestSession: RequestSession) : Command {
+class AcceptCommand(override val name: String, private val requestSession: RequestSession) : Command {
 
     override suspend fun <A, B> execute(
         bot: BotContext,

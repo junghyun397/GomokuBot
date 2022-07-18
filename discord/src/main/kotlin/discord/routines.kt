@@ -1,6 +1,7 @@
-package discord.route
+package discord
 
 import core.BotContext
+import core.database.repositories.AnnounceRepository
 import core.interact.Order
 import core.interact.commands.buildFinishSequence
 import core.session.GameManager
@@ -12,6 +13,7 @@ import dev.minn.jda.ktx.coroutines.await
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.DiscordMessagePublisher
 import discord.interact.message.MessageActionAdaptor
+import discord.route.export
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,7 +25,7 @@ import utils.structs.flatMap
 import utils.structs.map
 import java.time.Duration
 
-fun scheduleCleaner(logger: Logger, botContext: BotContext, jda: JDA) {
+fun scheduleRoutines(logger: Logger, botContext: BotContext, jda: JDA) {
     val exceptionHandler: (Exception) -> Unit  = { logger.error(it.stackTraceToString()) }
 
     schedule(Duration.ofHours(1), exceptionHandler) {
@@ -106,6 +108,12 @@ fun scheduleCleaner(logger: Logger, botContext: BotContext, jda: JDA) {
                     } catch (_: Exception) {}
                 }
             }
+        }
+    }
+
+    schedule(Duration.ofMinutes(10), exceptionHandler) {
+        CoroutineScope(Dispatchers.Default).launch {
+            AnnounceRepository.updateAnnounceCache(botContext.dbConnection)
         }
     }
 }

@@ -1,6 +1,7 @@
 package core.interact.message
 
 import core.assets.*
+import core.database.entities.Announce
 import core.database.entities.UserStats
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
@@ -187,6 +188,8 @@ abstract class MessageProducer<A, B> {
     abstract fun produceRequestExpired(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): IO<MessageIO<A, B>>
 
     // UTILS
+
+    abstract fun produceAnnounce(publisher: MessagePublisher<A, B>, container: LanguageContainer, announce: Announce): IO<MessageIO<A, B>>
 
     abstract fun produceNotYetImplemented(publisher: MessagePublisher<A, B>, container: LanguageContainer, officialChannel: String): IO<MessageIO<A, B>>
 

@@ -21,7 +21,7 @@ import kotlinx.coroutines.Deferred
 import utils.structs.flatMap
 import utils.structs.map
 
-class ResignCommand(override val command: String, private val session: GameSession) : Command {
+class ResignCommand(override val name: String, private val session: GameSession) : Command {
 
     override suspend fun <A, B> execute(
         bot: BotContext,

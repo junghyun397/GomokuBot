@@ -14,7 +14,7 @@ import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
 import utils.structs.map
 
-class RankCommand(override val command: String) : Command {
+class RankCommand(override val name: String) : Command {
 
     override suspend fun <A, B> execute(
         bot: BotContext,

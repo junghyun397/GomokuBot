@@ -16,4 +16,4 @@ data class CommandReport(
 }
 
 fun Command.asCommandReport(comment: String, user: User) =
-    CommandReport(this.command, comment, user)
+    CommandReport(this.name, comment, user)

@@ -12,7 +12,7 @@ import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
 import utils.structs.map
 
-class HelpCommand(override val command: String, private val sendCombined: Boolean) : Command {
+class HelpCommand(override val name: String, private val sendCombined: Boolean) : Command {
 
     override suspend fun <A, B> execute(
         bot: BotContext,

@@ -12,7 +12,7 @@ object GuildProfileRepository {
 
     suspend fun retrieveOrInsertGuild(connection: DatabaseConnection, platform: Int, givenId: GuildId, produce: () -> Guild): Guild =
         this.retrieveGuild(connection, platform, givenId)
-            .getOrElse {
+            .orElseGet {
                 produce()
                     .also { this.upsertGuild(connection, it) }
             }
@@ -21,7 +21,7 @@ object GuildProfileRepository {
         connection.localCaches.guildProfileUidCache
             .getIfPresent(guildUid)
             .asOption()
-            .getOrElse {
+            .orElseGet {
                 this.fetchGuild(connection, guildUid)
                     .also { guild ->
                         connection.localCaches.guildProfileGivenIdCache.put(guild.givenId, guild)

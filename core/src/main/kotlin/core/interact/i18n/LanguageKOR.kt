@@ -344,6 +344,8 @@ open class LanguageKOR : LanguageENG() {
 
     // # 6. UTILS
 
+    override fun announceWrittenOn(date: String) = "$date 에 쓰여짐"
+
     override fun somethingWrongEmbedTitle() = "뭔가 잘못됐습니다!"
 
     // ## 6-1. PERMISSION-NOT-GRANTED (EMBED)

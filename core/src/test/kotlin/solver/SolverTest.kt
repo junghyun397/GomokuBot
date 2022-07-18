@@ -6,6 +6,10 @@ import jrenju.Board
 import jrenju.`BoardIO$`
 import jrenju.protocol.Solution
 import org.junit.Test
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.ForkJoinPool
 
@@ -33,6 +37,13 @@ internal class SolverTest {
         override val threeFourFork = 105
         override val doubleFourFork = 150
 
+    }
+
+    @Test
+    fun dateTime() {
+        val time = LocalDateTime.of(LocalDate.now(), LocalTime.now())
+
+        println(time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd kk:mm")))
     }
 
     fun aiBenchmark() {

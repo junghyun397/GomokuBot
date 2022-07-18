@@ -14,7 +14,7 @@ import kotlinx.coroutines.Deferred
 import utils.structs.map
 
 class ApplySettingCommand(
-    override val command: String,
+    override val name: String,
     private val newConfig: GuildConfig,
     private val configName: String,
     private val configChoice: String,

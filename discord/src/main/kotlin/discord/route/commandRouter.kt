@@ -4,6 +4,9 @@ package discord.route
 
 import core.assets.UNICODE_CHECK
 import core.assets.UNICODE_CROSS
+import core.database.repositories.AnnounceRepository
+import core.interact.commands.AnnounceCommand
+import core.interact.commands.Command
 import core.interact.i18n.LanguageContainer
 import core.interact.reports.CommandReport
 import dev.minn.jda.ktx.coroutines.await
@@ -20,6 +23,7 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import reactor.core.publisher.Mono
@@ -48,7 +52,21 @@ private fun buildPermissionNode(context: InteractionContext<*>, channel: TextCha
                 emptyList()
             }
         }
-    }
+    }.fold(
+        onDefined = { Either.Right(it) },
+        onEmpty = { Either.Left(parsableCommand) }
+    )
+
+private fun <T : Event> buildAnnounceNode(combined: Tuple2<InteractionContext<T>, Either<Command, DiscordParseFailure>>) =
+    if (
+        combined.t2.isLeft &&
+        (combined.t1.user.announceId ?: -1) < (AnnounceRepository.getLatestAnnounceId(combined.t1.bot.dbConnection) ?: -1)
+    )
+        combined.mapT2 { parsed -> parsed
+            .mapLeft { AnnounceCommand("+a", it) }
+        }
+    else
+        combined
 
 private fun matchCommand(command: String, container: LanguageContainer): Option<ParsableCommand> =
     when (command.lowercase()) {
@@ -75,17 +93,18 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
         ).toMono()
     )
         .filter { (_, parsable) -> parsable.isDefined }
-        .flatMap { (context, parsable) -> Mono.zip(context.toMono(), mono {
-            buildPermissionNode(context, context.event.textChannel, context.event.user, parsable.getOrException()).fold(
-                onDefined = { failure -> Either.Right(failure) },
-                onEmpty = { parsable.getOrException()
-                    .parseSlash(context)
-                }
-            )
+        .map { tuple -> tuple.mapT2 { parsable ->
+            buildPermissionNode(context, context.event.textChannel, context.event.user, parsable.getOrException())
+        } }
+        .flatMap { (context, combined) -> Mono.zip(context.toMono(), mono {
+            combined.flatMapLeft { parsable ->
+                parsable.parseSlash(context)
+            }
         }) }
         .doOnNext { (context, parsed) ->
             if (parsed.isLeft) context.event.deferReply().queue()
         }
+        .map(::buildAnnounceNode)
         .flatMap { (context, parsed) -> Mono.zip(context.toMono(), mono { parsed.fold(
             onLeft = { command ->
                 command.execute(
@@ -101,7 +120,7 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
             },
             onRight = { parseFailure ->
                 parseFailure.notice(
-                    guildConfig = context.config,
+                    config = context.config,
                     producer = DiscordMessageProducer,
                     publisher = { msg -> ReplyActionAdaptor(context.event.reply(msg)) }
                 )
@@ -141,13 +160,13 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
         )
     }
         .filter { (_, parsable, _) -> parsable.isDefined }
-        .flatMap { (context, parsable, payload) -> Mono.zip(context.toMono(), mono {
-            buildPermissionNode(context, context.event.textChannel, context.event.author, parsable.getOrException()).fold(
-                onDefined = { failure -> Either.Right(failure) },
-                onEmpty = { parsable.getOrException()
-                    .parseText(context, payload)
-                }
-            )
+        .map { tuple -> tuple.mapT2 { parsable ->
+            buildPermissionNode(context, context.event.textChannel, context.event.author, parsable.getOrException())
+        } }
+        .flatMap { (context, combined, payload) -> Mono.zip(context.toMono(), mono {
+            combined.flatMapLeft { parsable ->
+                parsable.parseText(context, payload)
+            }
         }) }
         .doOnNext { (context, parsed) ->
             GuildManager.permissionGrantedRun(context.event.textChannel, Permission.MESSAGE_ADD_REACTION) {
@@ -157,6 +176,7 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
                 )
             }
         }
+        .map(::buildAnnounceNode)
         .flatMap { (context, parsed) -> Mono.zip(context.toMono(), mono { parsed.fold(
             onLeft = { command ->
                 command.execute(
@@ -172,7 +192,7 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
             },
             onRight = { parseFailure ->
                 parseFailure.notice(
-                    guildConfig = context.config,
+                    config = context.config,
                     producer = DiscordMessageProducer,
                     publisher = { msg -> MessageActionAdaptor(context.event.message.reply(msg)) }
                 )

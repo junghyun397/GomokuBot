@@ -19,4 +19,4 @@ fun net.dv8tion.jda.api.entities.Message.extractId() = MessageId(this.idLong)
 fun net.dv8tion.jda.api.entities.TextChannel.extractId() = ChannelId(this.idLong)
 
 fun net.dv8tion.jda.api.entities.User.buildNewProfile() =
-    User(UserUid(UUID.randomUUID()), DISCORD_PLATFORM_ID, this.extractId(), this.name, this.asTag, this.avatarUrl)
+    User(UserUid(UUID.randomUUID()), DISCORD_PLATFORM_ID, this.extractId(), this.name, this.asTag, null, this.avatarUrl)

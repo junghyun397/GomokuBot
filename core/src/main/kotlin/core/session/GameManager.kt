@@ -49,6 +49,8 @@ sealed interface GameResult {
 
     val message: String
 
+    val winColorId: Short?
+
     enum class Cause(override val id: Short) : Identifiable {
         FIVE_IN_A_ROW(0), RESIGN(1), TIMEOUT(2), DRAW(3)
     }
@@ -56,6 +58,8 @@ sealed interface GameResult {
     data class Win(override val cause: Cause, val winColor: Enumeration.Value, val winner: User, val looser: User) : GameResult {
 
         override val message get() = "$winner wins over $looser by $cause"
+
+        override val winColorId = this.winColor.id().toShort()
 
     }
 
@@ -65,12 +69,14 @@ sealed interface GameResult {
 
         override val message get() = "tie caused by full"
 
+        override val winColorId = null
+
     }
 
     companion object {
 
-        fun build(id: Short, blackUser: User?, whiteUser: User?, winColor: Enumeration.Value?): GameResult? =
-            when (val cause = Cause.values().find(id)) {
+        fun build(causeId: Short, blackUser: User?, whiteUser: User?, winColor: Enumeration.Value?): GameResult? =
+            when (val cause = Cause.values().find(causeId)) {
                 Cause.FIVE_IN_A_ROW, Cause.RESIGN, Cause.TIMEOUT -> when (winColor) {
                     Color.BLACK() -> Win(cause, Color.BLACK(), blackUser ?: aiUser, whiteUser ?: aiUser)
                     Color.WHITE() -> Win(cause, Color.WHITE(), whiteUser ?: aiUser, blackUser ?: aiUser)

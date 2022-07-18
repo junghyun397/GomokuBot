@@ -23,7 +23,7 @@ import utils.structs.flatMap
 import utils.structs.fold
 import utils.structs.map
 
-class SetCommand(override val command: String, private val session: GameSession, private val pos: Pos) : Command {
+class SetCommand(override val name: String, private val session: GameSession, private val pos: Pos) : Command {
 
     override suspend fun <A, B> execute(
         bot: BotContext,

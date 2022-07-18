@@ -1,5 +1,6 @@
 package core.database
 
+import core.database.repositories.AnnounceRepository
 import io.r2dbc.spi.ConnectionFactories
 import jrenju.notation.Flag
 import kotlinx.coroutines.reactive.awaitFirst
@@ -20,6 +21,12 @@ object DatabaseManager {
             .flatMapMany { dbc -> dbc
                 .createStatement(
                     """
+                        CREATE TABLE IF NOT EXISTS announce (
+                            announce_id SERIAL PRIMARY KEY,
+                            contents text NOT NULL,
+                            create_date timestamp without time zone DEFAULT now()
+                        );
+                        
                         CREATE TABLE IF NOT EXISTS guild_profile (
                             guild_id uuid PRIMARY KEY,
                             platform smallint NOT NULL,
@@ -46,7 +53,9 @@ object DatabaseManager {
                             name varchar NOT NULL,
                             name_tag varchar NOT NULL,
                             profile_url varchar NOT NULL,
+                            announce_id int,
                             register_date timestamp without time zone DEFAULT now(),
+                            FOREIGN KEY (announce_id) REFERENCES announce (announce_id),
                             UNIQUE (given_id, platform)
                         );
                         
@@ -65,7 +74,7 @@ object DatabaseManager {
                         CREATE TABLE IF NOT EXISTS game_record (
                             record_id SERIAL PRIMARY KEY,
                             board_status bytea NOT NULL,
-                            history int[],
+                            history int[] NOT NULL,
                             cause smallint NOT NULL,
                             win_color smallint,
                             guild_id uuid NOT NULL,
@@ -125,6 +134,10 @@ object DatabaseManager {
                 .execute()
             }
             .awaitLast()
+    }
+
+    suspend fun initCaches(connection: DatabaseConnection) {
+        AnnounceRepository.updateAnnounceCache(connection)
     }
 
 }

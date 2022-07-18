@@ -18,7 +18,7 @@ import utils.structs.IO
 import utils.structs.map
 
 class NavigateCommand(
-    override val command: String,
+    override val name: String,
     private val navigateState: NavigateState,
     private val isForward: Boolean
 ) : Command {

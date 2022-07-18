@@ -14,7 +14,7 @@ import core.session.entities.RequestSession
 import kotlinx.coroutines.Deferred
 import utils.structs.map
 
-class RejectCommand(override val command: String, private val requestSession: RequestSession) : Command {
+class RejectCommand(override val name: String, private val requestSession: RequestSession) : Command {
 
     override suspend fun <A, B> execute(
         bot: BotContext,

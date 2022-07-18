@@ -8,7 +8,9 @@ data class Guild(
     val givenId: GuildId,
     val name: String,
 ) {
+
     override fun toString() = "[$name](${id.uuid})"
+
 }
 
 data class User(
@@ -17,9 +19,12 @@ data class User(
     val givenId: UserId,
     val name: String,
     val nameTag: String,
+    val announceId: Int?,
     val profileURL: String?
 ) {
+
     override fun toString() = "[$nameTag](${id.uuid})"
+
 }
 
 data class MessageRef(val id: MessageId, val guildId: GuildId, val channelId: ChannelId)

@@ -16,6 +16,9 @@ object SessionManager {
                     onDefined = { GuildSession(guild = guild, config = it) },
                     onEmpty = { GuildSession(guild = guild, GuildConfig()) }
                 )
+                .also {
+                    repo.sessions[guild.id] = it
+                }
         }
 
     private suspend inline fun mapGuildSession(repo: SessionRepository, guild: Guild, mapper: (GuildSession) -> GuildSession): GuildSession =

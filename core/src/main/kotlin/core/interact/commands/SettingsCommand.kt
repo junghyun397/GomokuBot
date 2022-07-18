@@ -17,7 +17,7 @@ import utils.assets.LinuxTime
 import utils.structs.flatMap
 import utils.structs.map
 
-class SettingsCommand(override val command: String) : Command {
+class SettingsCommand(override val name: String) : Command {
 
     override suspend fun <A, B> execute(
         bot: BotContext,

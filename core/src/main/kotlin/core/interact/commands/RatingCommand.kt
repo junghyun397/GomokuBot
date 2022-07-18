@@ -12,7 +12,7 @@ import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
 import utils.structs.IO
 
-class RatingCommand(override val command: String) : Command {
+class RatingCommand(override val name: String) : Command {
 
     override suspend fun <A, B> execute(
         bot: BotContext,

@@ -15,7 +15,7 @@ import kotlinx.coroutines.Deferred
 import utils.structs.flatMap
 import utils.structs.map
 
-class LangCommand(override val command: String, private val language: Language) : Command {
+class LangCommand(override val name: String, private val language: Language) : Command {
 
     override suspend fun <A, B> execute(
         bot: BotContext,

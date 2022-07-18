@@ -14,7 +14,7 @@ import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
 import utils.structs.map
 
-class StyleCommand(override val command: String, private val style: BoardStyle) : Command {
+class StyleCommand(override val name: String, private val style: BoardStyle) : Command {
 
     override suspend fun <A, B> execute(
         bot: BotContext,

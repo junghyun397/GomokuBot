@@ -13,7 +13,7 @@ import utils.assets.LinuxTime
 @Suppress("ArrayInDataClass")
 data class GameRecord(
     val boardStatus: ByteArray,
-    val history: List<Pos>?,
+    val history: List<Pos>,
 
     val gameResult: GameResult,
 
@@ -29,10 +29,7 @@ data class GameRecord(
 fun GameSession.asGameRecord(guildUid: GuildUid, gameResult: GameResult) =
     GameRecord(
         boardStatus = board.boardField(),
-        history = when {
-            history.any { it == null } -> null
-            else -> history.map { it!! }
-        },
+        history = history.map { it!! },
 
         gameResult = gameResult,
 

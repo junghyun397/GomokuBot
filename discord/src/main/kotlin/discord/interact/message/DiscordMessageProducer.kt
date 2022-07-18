@@ -1,6 +1,7 @@
 package discord.interact.message
 
 import core.assets.*
+import core.database.entities.Announce
 import core.database.entities.UserStats
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
@@ -38,6 +39,7 @@ import utils.lang.memoize
 import utils.structs.IO
 import utils.structs.Option
 import utils.structs.fold
+import java.time.format.DateTimeFormatter
 
 object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
 
@@ -705,6 +707,19 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
 
     // UTILS
 
+    override fun produceAnnounce(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, announce: Announce) =
+        IO { publisher(Message(
+            embed = Embed {
+                color = COLOR_NORMAL_HEX
+                title = "$UNICODE_SPEAKER ${announce.title}"
+                description = announce.content
+
+                footer {
+                    name = container.announceWrittenOn("$UNICODE_ALARM_CLOCK ${announce.date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd kk:mm"))} UTC")
+                }
+            }
+        )) }
+
     override fun produceNotYetImplemented(publisher: DiscordMessagePublisher, container: LanguageContainer, officialChannel: String) =
         IO { publisher(Message(
             embed = Embed {
@@ -713,7 +728,6 @@ object DiscordMessageProducer : MessageProducer<Message, DiscordButtons>() {
                 description = container.notYetImplementedEmbedDescription()
                 footer {
                     name = "$UNICODE_MAILBOX ${container.notYetImplementedEmbedFooter(officialChannel)}"
-
                 }
             }
         )) }

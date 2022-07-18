@@ -14,7 +14,7 @@ import utils.structs.IO
 
 sealed interface Command {
 
-    val command: String
+    val name: String
 
     suspend fun <A, B> execute(
         bot: BotContext,

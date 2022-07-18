@@ -11,7 +11,7 @@ import java.util.*
 
 object UserStatsRepository {
 
-    suspend fun retrieveUserStats(connection: DatabaseConnection, userUid: UserUid): UserStats =
+    suspend fun fetchUserStats(connection: DatabaseConnection, userUid: UserUid): UserStats =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
                 .createStatement("SELECT * FROM user_stats WHERE user_id = $1")

@@ -49,8 +49,7 @@ private data class Token(val token: String) {
 private data class PostgreSQLConfig(val serverURL: String) {
     companion object {
         fun fromEnv() = PostgreSQLConfig(
-            serverURL = System.getenv("GOMOKUBOT_DB_URL"),
-//            password = System.getenv("GOMOKUBOT_DB_PASSWORD")
+            serverURL = System.getenv("GOMOKUBOT_DB_URL")
         )
     }
 }
@@ -112,7 +111,10 @@ object GomokuBot {
 
         val dbConnection = runBlocking {
             DatabaseManager.newConnectionFrom(postgresqlConfig.serverURL, LocalCaches())
-                .also { DatabaseManager.initDatabase(it) }
+                .also { connection ->
+                    DatabaseManager.initDatabase(connection)
+                    DatabaseManager.initCaches(connection)
+                }
         }
 
         logger.info("postgresql database connected.")
@@ -188,7 +190,7 @@ object GomokuBot {
             .setEnabledIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS)
             .build()
 
-        scheduleCleaner(logger, botContext, jda)
+        scheduleRoutines(logger, botContext, jda)
     }
 
 }

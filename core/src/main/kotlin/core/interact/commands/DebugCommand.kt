@@ -32,7 +32,7 @@ enum class DebugType {
 }
 
 class DebugCommand(
-    override val command: String,
+    override val name: String,
     private val debugType: DebugType,
     private val payload: String?,
 ) : Command {

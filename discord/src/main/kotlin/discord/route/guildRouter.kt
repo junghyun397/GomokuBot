@@ -21,7 +21,7 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.Region
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import reactor.core.publisher.Mono
-import utils.structs.getOrElse
+import utils.structs.orElseGet
 import java.util.*
 
 private fun matchLocale(locale: Locale): Language =
@@ -51,7 +51,7 @@ fun guildJoinRouter(bot: BotContext, event: GuildJoinEvent): Mono<ServerJoinRepo
         }
 
         val config = GuildConfigRepository.fetchGuildConfig(bot.dbConnection, guild.id)
-            .getOrElse {
+            .orElseGet {
                 val matchedLanguage = run {
                     val language = matchLocale(event.guild.locale)
 
@@ -72,13 +72,12 @@ fun guildJoinRouter(bot: BotContext, event: GuildJoinEvent): Mono<ServerJoinRepo
         val helpSent = event.guild.systemChannel?.run {
             GuildManager.permissionGrantedRun(this, Permission.MESSAGE_SEND) {
                 buildCombinedHelpSequence(
-                    bot,
-                    config,
-                    { msg -> MessageActionAdaptor(this.sendMessage(msg)) },
-                    DiscordMessageProducer,
-                    0
-                )
-                    .run()
+                    bot = bot,
+                    config = config,
+                    publisher = { msg -> MessageActionAdaptor(this.sendMessage(msg)) },
+                    producer = DiscordMessageProducer,
+                    settingsPage = 0
+                ).run()
             }
         }?.isDefined
 

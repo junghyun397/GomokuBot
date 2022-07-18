@@ -313,6 +313,8 @@ sealed interface LanguageContainer {
 
     // # 6. UTILS
 
+    fun announceWrittenOn(date: String): String
+
     fun somethingWrongEmbedTitle(): String
 
     // ## 6-1. PERMISSION-NOT-GRANTED (EMBED)

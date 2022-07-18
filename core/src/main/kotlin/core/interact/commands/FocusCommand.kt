@@ -22,7 +22,7 @@ enum class Direction {
 }
 
 class FocusCommand(
-    override val command: String,
+    override val name: String,
     private val navigateState: NavigateState,
     private val session: GameSession,
     private val direction: Direction,

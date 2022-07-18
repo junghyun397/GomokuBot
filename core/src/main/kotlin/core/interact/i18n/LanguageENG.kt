@@ -355,6 +355,8 @@ open class LanguageENG : LanguageContainer {
 
     // # 6. UTILS
 
+    override fun announceWrittenOn(date: String) = "Written on $date."
+
     override fun somethingWrongEmbedTitle() = "Something Wrong"
 
     // ## 6-1. PERMISSION-NOT-GRANTED (EMBED)

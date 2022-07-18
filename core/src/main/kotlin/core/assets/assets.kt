@@ -50,6 +50,8 @@ const val UNICODE_SILHOUETTE = "\ud83d\udc64" // 👤
 const val UNICODE_SMILING = "\ud83d\ude42" // 🙂
 const val UNICODE_LOCK = "\ud83d\udd12" // 🔒
 
+const val UNICODE_SPEAKER = "\ud83d\udce2" // 📢
+
 const val GENERIC_PLATFORM_ID = 0
 
 val anonymousUser = User(
@@ -58,6 +60,7 @@ val anonymousUser = User(
     givenId = UserId(0L),
     name = "Anon",
     nameTag = "Anon#0000",
+    announceId = -1,
     profileURL = null,
 )
 

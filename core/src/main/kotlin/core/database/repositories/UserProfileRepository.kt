@@ -13,8 +13,9 @@ object UserProfileRepository {
 
     suspend fun retrieveOrInsertUser(connection: DatabaseConnection, platform: Int, givenId: UserId, produce: () -> User): User =
         this.retrieveUser(connection, platform, givenId)
-            .getOrElse {
+            .orElseGet {
                 produce()
+                    .copy(announceId = AnnounceRepository.getLatestAnnounceId(connection))
                     .also { this.upsertUser(connection, it) }
             }
 
@@ -22,7 +23,7 @@ object UserProfileRepository {
         connection.localCaches.userProfileUidCache
             .getIfPresent(userUid)
             .asOption()
-            .getOrElse {
+            .orElseGet {
                 this.fetchUser(connection, userUid)
                     .also { user ->
                         connection.localCaches.userProfileUidCache.put(user.id, user)
@@ -59,6 +60,7 @@ object UserProfileRepository {
                         givenId = UserId(row["given_id"] as Long),
                         name = row["name"] as String,
                         nameTag = row["name_tag"] as String,
+                        announceId = row["announce_id"] as Int,
                         profileURL = row["profile_url"] as String?
                     )
                 }
@@ -81,6 +83,7 @@ object UserProfileRepository {
                         givenId = givenId,
                         name = row["name"] as String,
                         nameTag = row["name_tag"] as String,
+                        announceId = row["announce_id"] as Int?,
                         profileURL = row["profile_url"] as String?
                     ))
                 }
@@ -96,8 +99,8 @@ object UserProfileRepository {
             .flatMapMany { dbc -> dbc
                 .createStatement(
                     """
-                        INSERT INTO user_profile (user_id, platform, given_id, name, name_tag, profile_url) VALUES ($1, $2, $3, $4, $5, $6)
-                            ON CONFLICT (user_id) DO UPDATE SET platform = $2, name = $4, name_tag = $5, profile_url = $6
+                        INSERT INTO user_profile (user_id, platform, given_id, name, name_tag, announce_id, profile_url) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                            ON CONFLICT (user_id) DO UPDATE SET platform = $2, name = $4, name_tag = $5, announce_id = $6, profile_url = $7
                     """.trimIndent()
                 )
                 .bind("$1", user.id.uuid)
@@ -105,7 +108,8 @@ object UserProfileRepository {
                 .bind("$3", user.givenId.idLong)
                 .bind("$4", user.name)
                 .bind("$5", user.nameTag)
-                .bindNullable("$6", user.profileURL)
+                .bindNullable("$6", user.announceId)
+                .bindNullable("$7", user.profileURL)
                 .execute()
             }
             .flatMap { it.rowsUpdated }

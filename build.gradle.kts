@@ -5,6 +5,7 @@ plugins {
     idea
     kotlin("jvm") version "1.5.10"
     // id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
+    kotlin("plugin.serialization") version "1.6.21"
 }
 
 allprojects {
@@ -33,6 +34,8 @@ subprojects {
 
 //        implementation("jrenju:jrenju_2.13:0.1.0-SNAPSHOT")
         implementation("com.github.junghyun397.Kvine:jrenju_2.13:e3940c1216")
+
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
 
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.6.0")

@@ -65,7 +65,7 @@ inline fun <T> Option<T>.filter(predicate: (T) -> Boolean) =
         else -> Option.Empty
     }
 
-inline fun <T> Option<T>.getOrElse(onEmpty: () -> T): T =
+inline fun <T> Option<T>.orElseGet(onEmpty: () -> T): T =
     when (this) {
         is Option.Some -> this.value
         is Option.Empty -> onEmpty()
