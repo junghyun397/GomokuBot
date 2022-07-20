@@ -9,6 +9,7 @@ import core.inference.AiLevel
 import core.session.GameResult
 import jrenju.notation.Color
 import jrenju.notation.Pos
+import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.mono
 import utils.assets.LinuxTime
@@ -19,7 +20,7 @@ import java.util.*
 
 object GameRecordRepository {
 
-    fun uploadGameRecord(connection: DatabaseConnection, record: GameRecord) {
+    suspend fun uploadGameRecord(connection: DatabaseConnection, record: GameRecord) {
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
                 .createStatement("CALL upload_game_record($1, $2, $3, $4, $5, $6, $7, $8)")
@@ -34,7 +35,7 @@ object GameRecordRepository {
                 .execute()
             }
             .flatMap { it.rowsUpdated }
-            .subscribe()
+            .awaitFirstOrNull()
     }
 
     suspend fun retrieveGameRecordsByUserUid(connection: DatabaseConnection, userUid: UserUid) =
@@ -59,10 +60,10 @@ object GameRecordRepository {
                     boardStatus = row["board_status"] as ByteArray,
                     history = (row["history"] as IntArray).map { Pos.fromIdx(it) },
                     gameResult = GameResult.build(
-                        row["cause"] as Short,
-                        blackUser,
-                        whiteUser,
-                        Color.apply((row["win_color"] as Short).toInt())
+                        cause = GameResult.Cause.values().find(row["cause"] as Short),
+                        blackUser = blackUser,
+                        whiteUser = whiteUser,
+                        winColor = Color.apply((row["win_color"] as Short).toInt())
                     )!!,
                     guildId = GuildUid(row["guild_id"] as UUID),
                     blackId = blackUser?.id,

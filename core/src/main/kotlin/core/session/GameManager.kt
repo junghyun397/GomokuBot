@@ -17,7 +17,10 @@ import jrenju.notation.Renju
 import jrenju.protocol.SolutionNode
 import scala.Enumeration
 import utils.assets.LinuxTime
-import utils.structs.*
+import utils.structs.Identifiable
+import utils.structs.Option
+import utils.structs.flatMap
+import utils.structs.fold
 import kotlin.random.Random
 
 enum class BoardStyle(override val id: Short, val renderer: BoardRenderer, val sample: BoardRendererSample) : Identifiable {
@@ -75,8 +78,8 @@ sealed interface GameResult {
 
     companion object {
 
-        fun build(causeId: Short, blackUser: User?, whiteUser: User?, winColor: Enumeration.Value?): GameResult? =
-            when (val cause = Cause.values().find(causeId)) {
+        fun build(cause: Cause, blackUser: User?, whiteUser: User?, winColor: Enumeration.Value?): GameResult? =
+            when (cause) {
                 Cause.FIVE_IN_A_ROW, Cause.RESIGN, Cause.TIMEOUT -> when (winColor) {
                     Color.BLACK() -> Win(cause, Color.BLACK(), blackUser ?: aiUser, whiteUser ?: aiUser)
                     Color.WHITE() -> Win(cause, Color.WHITE(), whiteUser ?: aiUser, blackUser ?: aiUser)

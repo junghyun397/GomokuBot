@@ -52,7 +52,7 @@ object DatabaseManager {
                             given_id bigint NOT NULL,
                             name varchar NOT NULL,
                             name_tag varchar NOT NULL,
-                            profile_url varchar NOT NULL,
+                            profile_url varchar,
                             announce_id int,
                             register_date timestamp without time zone DEFAULT now(),
                             FOREIGN KEY (announce_id) REFERENCES announce (announce_id),

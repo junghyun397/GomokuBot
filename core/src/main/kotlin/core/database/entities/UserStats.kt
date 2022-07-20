@@ -14,8 +14,6 @@ data class UserStats(
     val whiteLosses: Int = 0,
     val whiteDraws: Int = 0,
 
-    val announceId: Int = 0,
-
     val date: LinuxTime = LinuxTime()
 ) : Comparable<UserStats> {
 
