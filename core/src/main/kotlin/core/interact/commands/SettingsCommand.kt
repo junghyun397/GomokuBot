@@ -14,6 +14,7 @@ import core.session.entities.NavigateState
 import core.session.entities.NavigationKind
 import kotlinx.coroutines.Deferred
 import utils.assets.LinuxTime
+import utils.structs.IO
 import utils.structs.flatMap
 import utils.structs.map
 
@@ -30,7 +31,7 @@ class SettingsCommand(override val name: String) : Command {
         editPublisher: MessagePublisher<A, B>,
     ) = runCatching {
         val io = producer.produceSettings(publisher, config, 0)
-            .map { it.retrieve() }
+            .flatMap { IO { it.retrieve() } }
             .flatMap { settingsMessage ->
                 SessionManager.addNavigate(
                     bot.sessions,

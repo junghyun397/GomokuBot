@@ -15,6 +15,7 @@ import core.session.entities.GuildConfig
 import core.session.entities.RequestSession
 import kotlinx.coroutines.Deferred
 import utils.assets.LinuxTime
+import utils.structs.IO
 import utils.structs.flatMap
 import utils.structs.map
 
@@ -36,7 +37,7 @@ class StartCommand(override val name: String = "start", val opponent: User?) : C
                 SessionManager.putGameSession(bot.sessions, guild, gameSession)
 
                 val io = producer.produceBeginsPVE(publisher, config.language.container, user, gameSession.ownerHasBlack)
-                    .map { it.launch() }
+                    .flatMap { it.launch() }
                     .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, gameSession) }
                     .map { emptyList<Order>() }
 
@@ -52,7 +53,8 @@ class StartCommand(override val name: String = "start", val opponent: User?) : C
                 SessionManager.putRequestSession(bot.sessions, guild, requestSession)
 
                 val io = producer.produceRequest(publisher, config.language.container, user, opponent)
-                    .map { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.retrieve().messageRef); emptyList<Order>() }
+                    .flatMap { IO { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.retrieve().messageRef) } }
+                    .map { emptyList<Order>()  }
 
                 io to this.asCommandReport("make request to ${this.opponent}", user)
             }

@@ -12,6 +12,7 @@ import core.interact.message.MessagePublisher
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
+import utils.structs.flatMap
 import utils.structs.map
 
 class RankCommand(override val name: String) : Command {
@@ -28,11 +29,12 @@ class RankCommand(override val name: String) : Command {
     ) = runCatching {
         val rankings = UserStatsRepository.fetchRankings(bot.dbConnection)
 
-        val combined = rankings
+        val tuple = rankings
             .map { UserProfileRepository.retrieveUser(bot.dbConnection, it.userId) to it }
 
-        val io = producer.produceRankings(publisher, config.language.container, combined)
-            .map { it.launch(); emptyList<Order>() }
+        val io = producer.produceRankings(publisher, config.language.container, tuple)
+            .flatMap { it.launch() }
+            .map { emptyList<Order>() }
 
         io to this.asCommandReport("succeed", user)
     }

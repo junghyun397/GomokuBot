@@ -12,7 +12,6 @@ import core.interact.message.MessagePublisher
 import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
 import utils.structs.flatMap
-import utils.structs.map
 
 class AnnounceCommand(override val name: String, private val command: Command) : Command {
 
@@ -38,7 +37,7 @@ class AnnounceCommand(override val name: String, private val command: Command) :
                         publisher,
                         config.language.container,
                         announces[config.language] ?: announces[Language.ENG]!!
-                    ).map { it.launch() }
+                    ).flatMap { it.launch() }
                 }
                 .reduce { acc, io -> acc.flatMap { io } }
                 .flatMap { originalIO }

@@ -11,6 +11,7 @@ import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
+import utils.structs.flatMap
 import utils.structs.map
 
 class ApplySettingCommand(
@@ -33,7 +34,8 @@ class ApplySettingCommand(
         SessionManager.updateGuildConfig(bot.sessions, guild, newConfig)
 
         val io = producer.produceConfigApplied(publisher, config.language.container, this.configName, this.configChoice)
-            .map { it.launch(); emptyList<Order>()  }
+            .flatMap { it.launch() }
+            .map { emptyList<Order>() }
 
         io to this.asCommandReport("update $configName as $configChoice", user)
     }

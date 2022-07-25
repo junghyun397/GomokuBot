@@ -31,11 +31,10 @@ object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     private fun composeMissMatchFailure(user: User): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("option mismatch", user) { producer, publisher, _ ->
             producer.produceLanguageNotFound(publisher)
-                .map { it.launch() }
-                .flatMap {
-                    producer.produceLanguageGuide(publisher)
-                        .map { it.launch(); emptyList() }
-                }
+                .flatMap { it.launch() }
+                .flatMap { producer.produceLanguageGuide(publisher) }
+                .flatMap { it.launch() }
+                .map { emptyList() }
         })
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {

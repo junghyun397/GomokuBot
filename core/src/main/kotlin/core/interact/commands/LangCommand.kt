@@ -32,7 +32,7 @@ class LangCommand(override val name: String, private val language: Language) : C
         SessionManager.updateGuildConfig(bot.sessions, guild, thenConfig)
 
         val io = producer.produceLanguageUpdated(publisher, this.language.container)
-            .map { it.launch() }
+            .flatMap { it.launch() }
             .flatMap { buildHelpSequence(bot, thenConfig, publisher, producer, 1) }
             .map { listOf(Order.UpsertCommands(thenConfig.language.container)) }
 

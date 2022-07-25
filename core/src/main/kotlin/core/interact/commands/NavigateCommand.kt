@@ -15,6 +15,7 @@ import core.session.entities.NavigationKind
 import kotlinx.coroutines.Deferred
 import utils.assets.LinuxTime
 import utils.structs.IO
+import utils.structs.flatMap
 import utils.structs.map
 
 class NavigateCommand(
@@ -57,7 +58,8 @@ class NavigateCommand(
                 producer.paginateSettings(editPublisher, config, newState.page)
             else -> throw Exception()
         }
-            .map { it.launch(); emptyList<Order>() }
+            .flatMap { it.launch() }
+            .map { emptyList<Order>()  }
 
         io to this.asCommandReport("navigate ${newState.navigationKind} as ${newState.page}", user)
     }

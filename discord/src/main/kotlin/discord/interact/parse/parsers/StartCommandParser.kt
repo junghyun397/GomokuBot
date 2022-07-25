@@ -14,8 +14,8 @@ import dev.minn.jda.ktx.coroutines.await
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.assets.DISCORD_PLATFORM_ID
-import discord.assets.buildNewProfile
 import discord.assets.extractId
+import discord.assets.extractProfile
 import discord.interact.InteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.DiscordParseFailure
@@ -34,21 +34,27 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
     private suspend fun lookupRequestSent(context: InteractionContext<*>, owner: User): Option<DiscordParseFailure> =
         SessionManager.retrieveRequestSessionByOwner(context.bot.sessions, context.guild, owner.id).asOption().map { session ->
             this.asParseFailure("already sent request session", owner) { producer, publisher, container ->
-                producer.produceRequestAlreadySent(publisher, container, owner, session.opponent).map { it.launch(); emptyList() }
+                producer.produceRequestAlreadySent(publisher, container, owner, session.opponent)
+                    .flatMap { it.launch() }
+                    .map { emptyList() }
             }
         }
 
     private suspend fun lookupRequestOwner(context: InteractionContext<*>, owner: User): Option<DiscordParseFailure> =
         SessionManager.retrieveRequestSession(context.bot.sessions, context.guild, owner.id).asOption().map { session ->
             this.asParseFailure("already has request session", owner) { producer, publisher, container ->
-                producer.produceRequestAlready(publisher, container, session.owner, session.opponent).map { it.launch(); emptyList() }
+                producer.produceRequestAlready(publisher, container, session.owner, session.opponent)
+                    .flatMap { it.launch() }
+                    .map { emptyList() }
             }
         }
 
     private suspend fun lookupRequestOpponent(context: InteractionContext<*>, owner: User, opponent: User): Option<DiscordParseFailure> =
         SessionManager.retrieveRequestSession(context.bot.sessions, context.guild, opponent.id).asOption().map { _ ->
             this.asParseFailure("try to send request session but $opponent already has request session", owner) { producer, publisher, container ->
-                producer.produceOpponentRequestAlready(publisher, container, owner, opponent).map { it.launch(); emptyList() }
+                producer.produceOpponentRequestAlready(publisher, container, owner, opponent)
+                    .flatMap { it.launch() }
+                    .map { emptyList() }
             }
         }
 
@@ -56,7 +62,7 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
         SessionManager.retrieveGameSession(context.bot.sessions, context.guild, user.id).asOption().map { session ->
             this.asParseFailure("already has game session", user) { producer, publisher, container ->
                 producer.produceSessionAlready(publisher, container, session.owner)
-                    .map { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.retrieve().messageRef) }
+                    .flatMap { IO { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.retrieve().messageRef) } }
                     .flatMap { buildBoardSequence(context.bot, context.guild, context.config, producer, publisher, session) }
                     .map { emptyList() }
             }
@@ -65,7 +71,9 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
     private suspend fun lookupSessionOpponent(context: InteractionContext<*>, user: User, opponent: User): Option<DiscordParseFailure> =
         SessionManager.retrieveGameSession(context.bot.sessions, context.guild, opponent.id).asOption().map { _ ->
             this.asParseFailure("try to send request session but $opponent already has game session", user) { producer, publisher, container ->
-                producer.produceOpponentSessionAlready(publisher, container, user, opponent).map { it.launch(); emptyList() }
+                producer.produceOpponentSessionAlready(publisher, container, user, opponent)
+                    .flatMap { it.launch() }
+                    .map { emptyList() }
             }
         }
 
@@ -91,7 +99,7 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
                     Option.Empty
                 else
                     Option(UserProfileRepository.retrieveOrInsertUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, jdaUser.extractId()) {
-                        jdaUser.buildNewProfile()
+                        jdaUser.extractProfile()
                     })
             }
 
@@ -106,7 +114,7 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
             .asOption()
             .map {
                 UserProfileRepository.retrieveOrInsertUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, it.extractId()) {
-                    it.buildNewProfile()
+                    it.extractProfile()
                 }
             }
 
@@ -122,7 +130,7 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
                 val opponentUser = context.jdaGuild.retrieveMemberById(it).await()
 
                 UserProfileRepository.retrieveOrInsertUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, UserId(it)) {
-                    opponentUser.user.buildNewProfile()
+                    opponentUser.user.extractProfile()
                 }
             }
             ?: return Option.Empty

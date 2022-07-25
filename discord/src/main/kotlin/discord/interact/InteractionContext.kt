@@ -9,6 +9,7 @@ import utils.assets.LinuxTime
 
 data class InteractionContext<out E : Event>(
     val bot: BotContext,
+    val discordConfig: DiscordConfig,
     val event: E,
     val user: User,
     val guild: Guild,

@@ -113,9 +113,9 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
         )
 
     override fun renderBoard(board: Board, history: Option<List<Pos?>>) =
-        Either.Right(this.renderImageBoard(board, history))
+        Either.Right(this.renderImageBoard(board, history, true))
 
-    fun renderImageBoard(board: Board, history: Option<List<Pos?>>) =
+    fun renderImageBoard(board: Board, history: Option<List<Pos?>>, enableForbiddenPoints: Boolean) =
         this.protoImage.clone().also { image ->
             image.createGraphics().apply {
                 setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
@@ -150,13 +150,15 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
                             )
                         }
                         Flag.FORBIDDEN_33(), Flag.FORBIDDEN_44(), Flag.FORBIDDEN_6() -> {
-                            color = COLOR_RED
-                            fillOval(
-                                pos.x + FORBIDDEN_DOT_OFFSET,
-                                pos.y + FORBIDDEN_DOT_OFFSET,
-                                LATEST_MOVE_DOT_SIZE,
-                                LATEST_MOVE_DOT_SIZE,
-                            )
+                            if (enableForbiddenPoints) {
+                                color = COLOR_RED
+                                fillOval(
+                                    pos.x + FORBIDDEN_DOT_OFFSET,
+                                    pos.y + FORBIDDEN_DOT_OFFSET,
+                                    LATEST_MOVE_DOT_SIZE,
+                                    LATEST_MOVE_DOT_SIZE,
+                                )
+                            }
                         }
                     } }
 

@@ -42,25 +42,29 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
     private fun composeOrderFailure(context: BotContext, session: GameSession, user: User, player: User): DiscordParseFailure =
         this.asParseFailure("try move but now $player's turn", user) { producer, publisher, container ->
             producer.produceOrderFailure(publisher, container, user, player)
-                .map { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.retrieve().messageRef); emptyList() }
+                .flatMap { IO { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.retrieve().messageRef) } }
+                .map { emptyList() }
         }
 
     private fun composeMissMatchFailure(context: BotContext, session: GameSession, user: User): DiscordParseFailure =
         this.asParseFailure("try move but argument mismatch", user) { producer, publisher, container ->
             producer.produceSetIllegalArgument(publisher, container, user)
-                .map { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.retrieve().messageRef); emptyList() }
+                .flatMap { IO { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.retrieve().messageRef) } }
+                .map { emptyList() }
         }
 
     private fun composeExistFailure(context: BotContext, session: GameSession, user: User, pos: Pos): DiscordParseFailure =
         this.asParseFailure("make move but already exist", user) { producer, publisher, container ->
             producer.produceSetAlreadyExist(publisher, container, user, pos)
-                .map { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.retrieve().messageRef); emptyList() }
+                .flatMap { IO { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.retrieve().messageRef) } }
+                .map { emptyList() }
         }
 
     private fun composeForbiddenMoveFailure(context: BotContext, session: GameSession, user: User, pos: Pos, flag: Byte): DiscordParseFailure =
         this.asParseFailure("make move but forbidden", user) { producer, publisher, container ->
             producer.produceSetForbiddenMove(publisher, container, user, pos, flag)
-                .map { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.retrieve().messageRef); emptyList() }
+                .flatMap { IO { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.retrieve().messageRef) } }
+                .map { emptyList() }
         }
 
     private suspend fun parseActually(context: InteractionContext<*>, user: User, rawRow: String?, rawColumn: String?): Either<Command, DiscordParseFailure> =

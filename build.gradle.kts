@@ -32,8 +32,9 @@ subprojects {
     dependencies {
         implementation(kotlin("stdlib"))
 
-//        implementation("jrenju:jrenju_2.13:0.1.0-SNAPSHOT")
-        implementation("com.github.junghyun397.Kvine:jrenju_2.13:e3940c1216")
+        implementation("jrenju:jrenju_2.13:0.1.0-SNAPSHOT")
+        implementation("utils:utils_2.13:0.1.0-SNAPSHOT")
+//        implementation("com.github.junghyun397.Kvine:jrenju_2.13:e3940c1216")
 
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
 

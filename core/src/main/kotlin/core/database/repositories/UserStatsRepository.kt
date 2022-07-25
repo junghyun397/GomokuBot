@@ -40,16 +40,7 @@ object UserStatsRepository {
     suspend fun fetchRankings(connection: DatabaseConnection): List<UserStats> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
-                .createStatement(
-                    """
-                        SELECT 
-                            *,
-                            RANK () OVER (
-                                ORDER BY black_wins + white_wins DESC 
-                            ) wins_rank
-                        FROM user_stats ORDER BY wins_rank DESC limit 10
-                    """.trimIndent()
-                )
+                .createStatement("SELECT * FROM user_stats ORDER BY black_wins + white_wins DESC LIMIT 10")
                 .execute()
             }
             .flatMap { result -> result
@@ -70,5 +61,15 @@ object UserStatsRepository {
             }
             .collectList()
             .awaitSingle()
+
+//    suspend fun fetchRankings(connection: DatabaseConnection, guildUid: GuildUid): List<UserStats> =
+//        connection.liftConnection()
+//            .flatMapMany { dbc -> dbc
+//                .createStatement(
+//                    """
+//                    """.trimIndent()
+//                )
+//                .execute()
+//            }
 
 }

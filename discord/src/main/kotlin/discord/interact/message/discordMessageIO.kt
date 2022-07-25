@@ -2,7 +2,7 @@ package discord.interact.message
 
 import core.assets.MessageRef
 import core.interact.message.MessageAdaptor
-import core.interact.message.MessageIO
+import core.interact.message.MessageBuilder
 import core.interact.message.MessagePublisher
 import discord.assets.extractMessage
 import net.dv8tion.jda.api.entities.Message
@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageAction
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageUpdateAction
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction
+import utils.structs.IO
 import java.io.InputStream
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -19,11 +20,11 @@ typealias DiscordButtons = List<ActionRow>
 
 typealias DiscordMessagePublisher = MessagePublisher<Message, DiscordButtons>
 
-typealias DiscordMessageAction = MessageIO<Message, DiscordButtons>
+typealias DiscordMessageAction = MessageBuilder<Message, DiscordButtons>
 
 abstract class DiscordMessageActionAdaptor(private val original: RestAction<*>) : DiscordMessageAction {
 
-    override fun launch() = this.original.queue()
+    override fun launch() = IO.lift { this.original.queue() }
 
 }
 
@@ -49,9 +50,11 @@ class WebHookUpdateActionAdaptor(
     override fun addButtons(buttons: DiscordButtons) = WebHookUpdateActionAdaptor(original, this.components + buttons)
 
     override fun launch() =
-        this.original
-            .setActionRows(this.components)
-            .queue()
+        IO.lift {
+            this.original
+                .setActionRows(this.components)
+                .queue()
+        }
 
     override suspend fun retrieve(): DiscordMessageAdaptor = suspendCoroutine { control ->
         this.original
@@ -71,9 +74,11 @@ class MessageActionAdaptor(
     override fun addButtons(buttons: DiscordButtons) = MessageActionAdaptor(original, components + buttons)
 
     override fun launch() =
-        this.original
-            .setActionRows(this.components)
-            .queue()
+        IO.lift {
+            this.original
+                .setActionRows(this.components)
+                .queue()
+        }
 
     override suspend fun retrieve(): DiscordMessageAdaptor = suspendCoroutine { control ->
         this.original

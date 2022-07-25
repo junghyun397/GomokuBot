@@ -327,4 +327,8 @@ sealed interface LanguageContainer {
     fun notYetImplementedEmbedDescription(): String
     fun notYetImplementedEmbedFooter(officialChannel: String): String
 
+    // # RENJU GUIDE
+
+    fun aboutRenjuDocument(): String
+
 }

@@ -51,11 +51,12 @@ class DebugCommand(
         DebugType.ANALYSIS -> {
             SessionManager.retrieveGameSession(bot.sessions, guild, user.id)?.let { session ->
                 producer.produceSessionArchive(publisher, session)
-                    .map {
+                    .flatMap {
                         it.addFile(session.board.toBoardIO().debugText().toInputStream(), "analysis-report-${System.currentTimeMillis()}.txt")
                             .launch()
-                        emptyList<Order>()
-                    } to this.asCommandReport("succeed", user)
+
+                    }
+                    .map { emptyList<Order>() } to this.asCommandReport("succeed", user)
             } ?: (IO { emptyList<Order>() } to this.asCommandReport("failed", user))
         }
         DebugType.SELF_REQUEST -> {
@@ -71,7 +72,9 @@ class DebugCommand(
 
                 SessionManager.putRequestSession(bot.sessions, guild, requestSession)
 
-                val io = producer.produceRequest(publisher, config.language.container, user, user).map { it.launch(); emptyList<Order>() }
+                val io = producer.produceRequest(publisher, config.language.container, user, user)
+                    .flatMap { it.launch() }
+                    .map { emptyList<Order>()  }
 
                 io to this.asCommandReport("succeed", user)
             }

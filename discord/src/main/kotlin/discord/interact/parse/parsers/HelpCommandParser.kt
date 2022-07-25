@@ -38,17 +38,10 @@ object HelpCommandParser : NamedParser, ParsableCommand, BuildableCommand {
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.apply {
-            slash(
+            if (container != Language.ENG.container) slash(
                 container.helpCommand(),
                 container.helpCommandDescription()
             )
-
-            if (container.helpCommand() != "help") {
-                slash(
-                    "help",
-                    Language.ENG.container.helpCommandDescription()
-                )
-            }
         }
 
 }

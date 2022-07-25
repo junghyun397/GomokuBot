@@ -52,7 +52,11 @@ const val UNICODE_LOCK = "\ud83d\udd12" // 🔒
 
 const val UNICODE_SPEAKER = "\ud83d\udce2" // 📢
 
-const val GENERIC_PLATFORM_ID = 0
+const val UNICODE_TROPHY = "\ud83c\udfc6" // 🏆
+const val UNICODE_WHITE_FLAG = "\ud83c\udff3" // 🏳️
+const val UNICODE_PENCIL = "\u270f\ufe0f" // ✏️
+
+const val GENERIC_PLATFORM_ID: Short = 0
 
 val anonymousUser = User(
     id = UserUid(UUID.fromString("d20fa7d1-8107-406d-8fe0-ff5335b2d559")),

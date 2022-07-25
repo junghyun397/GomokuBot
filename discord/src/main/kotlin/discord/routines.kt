@@ -10,6 +10,7 @@ import core.session.SessionManager
 import core.session.entities.AiGameSession
 import core.session.entities.PvpGameSession
 import dev.minn.jda.ktx.coroutines.await
+import discord.interact.DiscordConfig
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.DiscordMessagePublisher
 import discord.interact.message.MessageActionAdaptor
@@ -25,7 +26,7 @@ import utils.structs.flatMap
 import utils.structs.map
 import java.time.Duration
 
-fun scheduleRoutines(logger: Logger, botContext: BotContext, jda: JDA) {
+fun scheduleRoutines(logger: Logger, botContext: BotContext, discordConfig: DiscordConfig, jda: JDA) {
     val exceptionHandler: (Exception) -> Unit  = { logger.error(it.stackTraceToString()) }
 
     schedule(Duration.ofHours(1), exceptionHandler) {
@@ -53,11 +54,11 @@ fun scheduleRoutines(logger: Logger, botContext: BotContext, jda: JDA) {
                         session.owner
                     )
                 }
-                    .map { it.launch() }
+                    .flatMap { it.launch() }
                     .flatMap { buildFinishSequence(botContext, DiscordMessageProducer, publisher, guildSession.config, session, thenSession) }
 
                 CoroutineScope(Dispatchers.Default).launch {
-                    export(botContext, guild, io, null)
+                    export(botContext, discordConfig, guild, io, null)
                 }
             }
         }
@@ -86,7 +87,7 @@ fun scheduleRoutines(logger: Logger, botContext: BotContext, jda: JDA) {
                 CoroutineScope(Dispatchers.Default).launch {
                     try {
                         val original = channel.retrieveMessageById(message.id.idLong).await()
-                        export(botContext, guild, io, original)
+                        export(botContext, discordConfig, guild, io, original)
                     } catch (_: Exception) {}
                 }
             }
@@ -104,7 +105,7 @@ fun scheduleRoutines(logger: Logger, botContext: BotContext, jda: JDA) {
                 CoroutineScope(Dispatchers.Default).launch {
                     try {
                         val original = channel.retrieveMessageById(message.id.idLong).await()
-                        export(botContext, guild, io, original)
+                        export(botContext, discordConfig, guild, io, original)
                     } catch (_: Exception) {}
                 }
             }

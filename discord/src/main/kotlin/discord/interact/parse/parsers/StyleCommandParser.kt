@@ -31,9 +31,10 @@ object StyleCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     private fun composeMissMatchFailure(user: User): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("option mismatch", user) { producer, publisher, container ->
             producer.produceStyleNotFound(publisher, container, user)
-                .map { it.launch() }
+                .flatMap { it.launch() }
                 .flatMap { producer.produceStyleGuide(publisher, container) }
-                .map { it.launch(); emptyList() }
+                .flatMap { it.launch() }
+                .map { emptyList() }
         })
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {

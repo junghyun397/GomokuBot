@@ -69,7 +69,7 @@ open class LanguageKOR : LanguageENG() {
     // ### 1-2-2. RANK:LIST (EMBED)
 
     override fun rankEmbedTitle() = "GomokuBot / 순위"
-    override fun rankEmbedDescription() = "1위부터 10위까지의 승리 순위"
+    override fun rankEmbedDescription() = "1위부터 10위까지의 승리 순위를 확인 해보세요."
     override fun rankEmbedWin() = "승"
     override fun rankEmbedLose() = "패"
     override fun rankEmbedDraw() = "무"

@@ -69,7 +69,7 @@ class SetCommand(override val name: String, private val session: GameSession, pr
                                 is GameResult.Full ->
                                     producer.produceTiePVE(publisher, config.language.container, nextSession.owner)
                             }
-                                .map { it.launch() }
+                                .flatMap { it.launch() }
                                 .flatMap { buildFinishSequence(bot, producer, publisher, config, this.session, nextSession) }
                                 .map { it + Order.ArchiveSession(nextSession, config.archivePolicy) }
 
@@ -89,7 +89,7 @@ class SetCommand(override val name: String, private val session: GameSession, pr
                         is GameResult.Full ->
                             producer.produceTiePVP(publisher, config.language.container, thenSession.owner, thenSession.opponent)
                     }
-                        .map { it.launch() }
+                        .flatMap { it.launch() }
                         .flatMap { buildFinishSequence(bot, producer, publisher, config, this.session, thenSession) }
                         .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
@@ -105,7 +105,7 @@ class SetCommand(override val name: String, private val session: GameSession, pr
                         is GameResult.Full ->
                             producer.produceTiePVE(publisher, config.language.container, thenSession.owner)
                     }
-                        .map { it.launch() }
+                        .flatMap { it.launch() }
                         .flatMap { buildFinishSequence(bot, producer, publisher, config, this.session, thenSession) }
                         .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 

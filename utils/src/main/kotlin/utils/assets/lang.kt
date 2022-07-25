@@ -34,6 +34,3 @@ fun <T: Comparable<T>> Iterable<T>.maxSet(): Array<Int>? {
 
     return maxPoints.toTypedArray()
 }
-
-fun <T> Array<T>.choiceOne(): T =
-    this[Random().nextInt(this.size)]

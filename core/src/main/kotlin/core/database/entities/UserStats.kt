@@ -19,7 +19,7 @@ data class UserStats(
 
     val totalWins get() = this.blackWins + this.whiteWins
 
-    val totalLooses get() = this.blackLosses + this.whiteLosses
+    val totalLosses get() = this.blackLosses + this.whiteLosses
 
     val totalDraws get() = this.blackDraws + this.whiteDraws
 

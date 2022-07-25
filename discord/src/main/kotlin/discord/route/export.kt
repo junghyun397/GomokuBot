@@ -4,7 +4,7 @@ import core.BotContext
 import core.interact.Order
 import core.session.SessionManager
 import discord.assets.JDAGuild
-import discord.assets.OFFICIAL_CHANNEL_ID
+import discord.interact.DiscordConfig
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import net.dv8tion.jda.api.Permission
@@ -13,9 +13,9 @@ import net.dv8tion.jda.api.exceptions.ErrorResponseException
 import utils.structs.IO
 
 suspend fun export(context: InteractionContext<*>, io: IO<List<Order>>, source: Message?) =
-    export(context.bot, context.jdaGuild, io, source)
+    export(context.bot, context.discordConfig, context.jdaGuild, io, source)
 
-suspend fun export(bot: BotContext, jdaGuild: JDAGuild, io: IO<List<Order>>, source: Message?) =
+suspend fun export(bot: BotContext, discordConfig: DiscordConfig, jdaGuild: JDAGuild, io: IO<List<Order>>, source: Message?) =
     io.run().forEach { order ->
         when (order) {
             is Order.UpsertCommands -> GuildManager.upsertCommands(jdaGuild, order.container)
@@ -43,7 +43,7 @@ suspend fun export(bot: BotContext, jdaGuild: JDAGuild, io: IO<List<Order>>, sou
                     GuildManager.removeReactions(it)
                 }
             is Order.ArchiveSession -> GuildManager.archiveSession(
-                jdaGuild.jda.getTextChannelById(OFFICIAL_CHANNEL_ID)!!,
+                jdaGuild.jda.getTextChannelById(discordConfig.archiveChannelId.idLong)!!,
                 order.session, order.policy
             )
         }

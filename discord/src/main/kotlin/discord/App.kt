@@ -4,8 +4,8 @@ import club.minnced.jda.reactor.ReactiveEventManager
 import club.minnced.jda.reactor.on
 import core.BotConfig
 import core.BotContext
-import core.assets.Guild
-import core.assets.GuildUid
+import core.assets.ChannelId
+import core.assets.GuildId
 import core.database.DatabaseManager
 import core.database.LocalCaches
 import core.database.repositories.GuildProfileRepository
@@ -15,6 +15,8 @@ import core.interact.reports.InteractionReport
 import core.session.SessionManager
 import core.session.SessionRepository
 import discord.assets.*
+import discord.interact.DiscordConfig
+import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import discord.route.*
 import kotlinx.coroutines.reactor.mono
@@ -37,7 +39,6 @@ import reactor.util.function.Tuple2
 import utils.assets.LinuxTime
 import utils.log.getLogger
 import utils.structs.forEach
-import java.util.*
 import kotlin.reflect.KClass
 
 private data class Token(val token: String) {
@@ -63,36 +64,40 @@ private data class KvineConfig(val serverAddress: String, val serverPort: Int) {
     }
 }
 
-private inline fun <reified E : Event, R : InteractionReport> leaveLog(combined: Tuple2<InteractionContext<E>, Result<R>>) =
-    combined.t2
+object DiscordConfigBuilder {
+    fun fromEnv() = DiscordConfig(
+        officialServerId = GuildId(System.getenv("GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID").toLong()),
+        archiveChannelId = ChannelId(System.getenv("GOMOKUBOT_DISCORD_ARCHIVE_CHANNEL_ID").toLong()),
+        testerRoleId = System.getenv("GOMOKUBOT_DISCORD_TESTER_ROLE_ID").toLong()
+    )
+}
+
+private inline fun <reified E : Event, R : InteractionReport> leaveLog(tuple: Tuple2<InteractionContext<E>, Result<R>>) =
+    tuple.t2
         .onSuccess{
-            logger.info("${E::class.simpleName} ${combined.t1.guild} " +
-                    "T${(it.terminationTime.timestamp - combined.t1.emittedTime.timestamp)}ms => $it")
+            logger.info("${E::class.simpleName} ${tuple.t1.guild} " +
+                    "T${(it.terminationTime.timestamp - tuple.t1.emittedTime.timestamp)}ms => $it")
         }
         .onFailure {
-            logger.error("${E::class.simpleName} ${combined.t1.guild} " +
-                    "T${(System.currentTimeMillis() - combined.t1.emittedTime.timestamp)}ms => ${it.stackTraceToString()}")
+            logger.error("${E::class.simpleName} ${tuple.t1.guild} " +
+                    "T${(System.currentTimeMillis() - tuple.t1.emittedTime.timestamp)}ms => ${it.stackTraceToString()}")
         }
 
 private fun leaveLog(event: KClass<*>, error: Throwable) =
     logger.error("${event.simpleName} ${error.stackTraceToString()}")
 
-private suspend inline fun <E : Event> retrieveInteractionContext(bot: BotContext, event: E, jdaUser: net.dv8tion.jda.api.entities.User, jdaGuild: net.dv8tion.jda.api.entities.Guild): InteractionContext<E> {
+private suspend inline fun <E : Event> retrieveInteractionContext(bot: BotContext, discordConfig: DiscordConfig, event: E, jdaUser: net.dv8tion.jda.api.entities.User, jdaGuild: net.dv8tion.jda.api.entities.Guild): InteractionContext<E> {
     val user = UserProfileRepository.retrieveOrInsertUser(bot.dbConnection, DISCORD_PLATFORM_ID, jdaUser.extractId()) {
-        jdaUser.buildNewProfile()
+        jdaUser.extractProfile()
     }
 
     val guild = GuildProfileRepository.retrieveOrInsertGuild(bot.dbConnection, DISCORD_PLATFORM_ID, jdaGuild.extractId()) {
-        Guild(
-            id = GuildUid(UUID.randomUUID()),
-            platform = DISCORD_PLATFORM_ID,
-            givenId = jdaGuild.extractId(),
-            name = jdaGuild.name,
-        )
+        jdaGuild.extractProfile()
     }
 
     return InteractionContext(
         bot = bot,
+        discordConfig = discordConfig,
         event = event,
         user = user,
         guild = guild,
@@ -108,6 +113,8 @@ object GomokuBot {
 
         val postgresqlConfig = PostgreSQLConfig.fromEnv()
         val kvineConfig = KvineConfig.fromEnv()
+
+        val discordConfig = DiscordConfigBuilder.fromEnv()
 
         val dbConnection = runBlocking {
             DatabaseManager.newConnectionFrom(postgresqlConfig.serverURL, LocalCaches())
@@ -132,35 +139,35 @@ object GomokuBot {
 
         eventManager.on<SlashCommandInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
-            .flatMap { mono { retrieveInteractionContext(botContext, it, it.user, it.guild!!) } }
+            .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
             .flatMap(::slashCommandRouter)
             .onErrorContinue { error, _ -> leaveLog(SlashCommandInteractionEvent::class, error) }
             .subscribe { leaveLog(it) }
 
         eventManager.on<MessageReceivedEvent>()
             .filter { it.isFromGuild && !it.author.isBot && (it.message.contentRaw.startsWith(COMMAND_PREFIX) || it.message.mentions.isMentioned(it.jda.selfUser)) }
-            .flatMap { mono { retrieveInteractionContext(botContext, it, it.author, it.guild) } }
+            .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.author, it.guild) } }
             .flatMap(::textCommandRouter)
             .onErrorContinue { error, _ -> leaveLog(MessageReceivedEvent::class, error) }
             .subscribe { leaveLog(it) }
 
         eventManager.on<ButtonInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
-            .flatMap { mono { retrieveInteractionContext(botContext, it, it.user, it.guild!!) } }
+            .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
             .flatMap(::buttonInteractionRouter)
             .onErrorContinue { error, _ -> leaveLog(ButtonInteractionEvent::class, error) }
             .subscribe { leaveLog(it) }
 
         eventManager.on<SelectMenuInteractionEvent>()
             .filter { it.isFromGuild && !it.user.isBot }
-            .flatMap { mono { retrieveInteractionContext(botContext, it, it.user, it.guild!!) } }
+            .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
             .flatMap(::buttonInteractionRouter)
             .onErrorContinue { error, _ -> leaveLog(SelectMenuInteractionEvent::class, error) }
             .subscribe { leaveLog(it) }
 
         eventManager.on<MessageReactionAddEvent>()
             .filter { it.isFromGuild && !(it.user?.isBot ?: true) }
-            .flatMap { mono { retrieveInteractionContext(botContext, it, it.user!!, it.guild) } }
+            .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user!!, it.guild) } }
             .flatMap(::reactionRouter)
             .onErrorContinue { error, _ -> leaveLog(MessageReceivedEvent::class, error) }
             .subscribe { leaveLog(it) }
@@ -190,7 +197,9 @@ object GomokuBot {
             .setEnabledIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS)
             .build()
 
-        scheduleRoutines(logger, botContext, jda)
+        GuildManager.initGlobalCommand(jda)
+
+        scheduleRoutines(logger, botContext, discordConfig, jda)
     }
 
 }

@@ -10,7 +10,7 @@ import java.util.*
 
 object GuildProfileRepository {
 
-    suspend fun retrieveOrInsertGuild(connection: DatabaseConnection, platform: Int, givenId: GuildId, produce: () -> Guild): Guild =
+    suspend fun retrieveOrInsertGuild(connection: DatabaseConnection, platform: Short, givenId: GuildId, produce: () -> Guild): Guild =
         this.retrieveGuild(connection, platform, givenId)
             .orElseGet {
                 produce()
@@ -29,7 +29,7 @@ object GuildProfileRepository {
                     }
             }
 
-    suspend fun retrieveGuild(connection: DatabaseConnection, platform: Int, givenId: GuildId): Option<Guild> =
+    suspend fun retrieveGuild(connection: DatabaseConnection, platform: Short, givenId: GuildId): Option<Guild> =
         connection.localCaches.guildProfileGivenIdCache
             .getIfPresent(givenId)
             .asOption()
@@ -54,7 +54,7 @@ object GuildProfileRepository {
                 .map { row, _ ->
                     Guild(
                         id = GuildUid(row["guild_id"] as UUID),
-                        platform = row["platform"] as Int,
+                        platform = row["platform"] as Short,
                         givenId = GuildId(row["given_id"] as Long),
                         name = row["name"] as String
                     )
@@ -62,7 +62,7 @@ object GuildProfileRepository {
             }
             .awaitSingle()
 
-    private suspend fun fetchGuild(connection: DatabaseConnection, platform: Int, givenId: GuildId): Option<Guild> =
+    private suspend fun fetchGuild(connection: DatabaseConnection, platform: Short, givenId: GuildId): Option<Guild> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
                 .createStatement("SELECT * FROM guild_profile WHERE platform = $1 AND given_id = $2")

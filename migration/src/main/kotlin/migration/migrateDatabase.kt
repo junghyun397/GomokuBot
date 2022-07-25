@@ -10,7 +10,7 @@ import core.database.repositories.GuildProfileRepository
 import java.sql.DriverManager
 import java.util.*
 
-const val DISCORD_PLATFORM_ID = 1
+const val DISCORD_PLATFORM_ID: Short = 1
 
 private val unknownGuild = Guild(
     id = GuildUid(UUID.randomUUID()),

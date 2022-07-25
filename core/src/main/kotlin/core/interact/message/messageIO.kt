@@ -1,17 +1,18 @@
 package core.interact.message
 
 import core.assets.MessageRef
+import utils.structs.IO
 import java.io.InputStream
 
-typealias MessagePublisher<A, B> = (A) -> MessageIO<A, B>
+typealias MessagePublisher<A, B> = (A) -> MessageBuilder<A, B>
 
-interface MessageIO<A, B> {
+interface MessageBuilder<A, B> {
 
-    fun addFile(file: InputStream, name: String): MessageIO<A, B>
+    fun addFile(file: InputStream, name: String): MessageBuilder<A, B>
 
-    fun addButtons(buttons: B): MessageIO<A, B>
+    fun addButtons(buttons: B): MessageBuilder<A, B>
 
-    fun launch()
+    fun launch(): IO<Unit>
 
     suspend fun retrieve(): MessageAdaptor<A, B>
 
@@ -25,7 +26,7 @@ abstract class MessageAdaptor<A, B> {
 
     abstract val buttons: B
 
-    abstract fun updateButtons(buttons: B): MessageIO<A, B>
+    abstract fun updateButtons(buttons: B): MessageBuilder<A, B>
 
 }
 

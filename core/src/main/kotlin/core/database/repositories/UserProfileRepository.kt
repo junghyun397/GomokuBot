@@ -11,7 +11,7 @@ import java.util.*
 
 object UserProfileRepository {
 
-    suspend fun retrieveOrInsertUser(connection: DatabaseConnection, platform: Int, givenId: UserId, produce: () -> User): User =
+    suspend fun retrieveOrInsertUser(connection: DatabaseConnection, platform: Short, givenId: UserId, produce: () -> User): User =
         this.retrieveUser(connection, platform, givenId)
             .orElseGet {
                 produce()
@@ -31,7 +31,7 @@ object UserProfileRepository {
                     }
             }
 
-    suspend fun retrieveUser(connection: DatabaseConnection, platform: Int, givenId: UserId): Option<User> =
+    suspend fun retrieveUser(connection: DatabaseConnection, platform: Short, givenId: UserId): Option<User> =
         connection.localCaches.userProfileGivenIdCache
             .getIfPresent(givenId)
             .asOption()
@@ -56,18 +56,18 @@ object UserProfileRepository {
                 .map { row, _ ->
                     User(
                         id = userUid,
-                        platform = row["platform"] as Int,
+                        platform = row["platform"] as Short,
                         givenId = UserId(row["given_id"] as Long),
                         name = row["name"] as String,
                         nameTag = row["name_tag"] as String,
-                        announceId = row["announce_id"] as Int,
+                        announceId = row["announce_id"] as Int?,
                         profileURL = row["profile_url"] as String?
                     )
                 }
             }
             .awaitSingle()
 
-    private suspend fun fetchUser(connection: DatabaseConnection, platform: Int, givenId: UserId): Option<User> =
+    private suspend fun fetchUser(connection: DatabaseConnection, platform: Short, givenId: UserId): Option<User> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
                 .createStatement("SELECT * FROM user_profile WHERE platform = $1 AND given_id = $2")

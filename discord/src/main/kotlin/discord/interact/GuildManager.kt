@@ -2,16 +2,17 @@ package discord.interact
 
 import core.assets.MessageRef
 import core.assets.anonymousUser
+import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.session.ArchivePolicy
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.PvpGameSession
 import dev.minn.jda.ktx.coroutines.await
+import dev.minn.jda.ktx.interactions.commands.slash
+import dev.minn.jda.ktx.interactions.commands.updateCommands
 import dev.minn.jda.ktx.messages.Message
 import discord.assets.JDAGuild
-import discord.assets.OFFICIAL_SERVER_ID
-import discord.assets.TESTER_ROLE_ID
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.DiscordMessagePublisher
 import discord.interact.message.MessageActionAdaptor
@@ -21,7 +22,7 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
 import utils.structs.Option
-import utils.structs.map
+import utils.structs.flatMap
 import java.time.Duration
 
 object GuildManager {
@@ -29,13 +30,13 @@ object GuildManager {
     fun lookupPermission(channel: TextChannel, permission: Permission) =
         channel.guild.selfMember.hasPermission(channel, permission)
 
-    suspend fun hasDebugPermission(user: User): Boolean =
+    suspend fun hasDebugPermission(config: DiscordConfig, user: User): Boolean =
         user.jda
-            .getGuildById(OFFICIAL_SERVER_ID)!!
+            .getGuildById(config.officialServerId.idLong)!!
             .retrieveMemberById(user.idLong)
             .await()
             ?.roles
-            ?.any { it.idLong == TESTER_ROLE_ID }
+            ?.any { it.idLong == config.testerRoleId }
             ?: false
 
     inline fun <T> permissionGrantedRun(channel: TextChannel, permission: Permission, block: () -> T): Option<T> =
@@ -46,9 +47,13 @@ object GuildManager {
         if (this.lookupPermission(channel, permission)) Option.Empty
         else Option(block())
 
-    fun upsertCommands(guild: JDAGuild, container: LanguageContainer) {
-        guild.updateCommands()
+    fun initGlobalCommand(jda: JDA) {
+        jda.updateCommands {
+            slash(Language.ENG.container.helpCommand(), Language.ENG.container.helpCommandDescription())
+        }.queue()
+    }
 
+    fun upsertCommands(guild: JDAGuild, container: LanguageContainer) {
         buildableCommands.fold(guild.updateCommands()) { action, command ->
             command.buildCommandData(action, container)
         }.queue()
@@ -68,7 +73,7 @@ object GuildManager {
         val publisher: DiscordMessagePublisher = { msg -> MessageActionAdaptor(archiveChannel.sendMessage(msg)) }
 
         DiscordMessageProducer.produceSessionArchive(publisher, modSession)
-            .map { it.launch() }
+            .flatMap { it.launch() }
             .run()
     }
 

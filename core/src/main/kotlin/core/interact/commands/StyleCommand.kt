@@ -12,6 +12,7 @@ import core.session.BoardStyle
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
+import utils.structs.flatMap
 import utils.structs.map
 
 class StyleCommand(override val name: String, private val style: BoardStyle) : Command {
@@ -29,7 +30,8 @@ class StyleCommand(override val name: String, private val style: BoardStyle) : C
         SessionManager.updateGuildConfig(bot.sessions, guild, config.copy(boardStyle = style))
 
         val io = producer.produceStyleUpdated(publisher, config.language.container, style.sample.styleName)
-            .map { it.launch(); emptyList<Order>() }
+            .flatMap { it.launch() }
+            .map { emptyList<Order>() }
 
         io to this.asCommandReport("${config.boardStyle.name} to ${style.name}", user)
     }

@@ -5,13 +5,7 @@ import core.inference.WeightSet
 import jrenju.Board
 import jrenju.`BoardIO$`
 import jrenju.protocol.Solution
-import org.junit.Test
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 import java.util.*
-import java.util.concurrent.ForkJoinPool
 
 internal class SolverTest {
 
@@ -39,19 +33,10 @@ internal class SolverTest {
 
     }
 
-    @Test
-    fun dateTime() {
-        val time = LocalDateTime.of(LocalDate.now(), LocalTime.now())
-
-        println(time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd kk:mm")))
-    }
-
     fun aiBenchmark() {
         var solver1Wins = 0
         var solver2Wins = 0
         var draws = 0
-
-        ForkJoinPool.commonPool()
 
         for (i in 0 until 1000) {
             when (this.match(Board.newBoard(), { FocusSolver.findSolution(it) }, { FocusSolver.findSolution(it, TestWeight) })) {
@@ -89,7 +74,7 @@ internal class SolverTest {
                 if (board.winner().isDefined)
                     return@run blackSolver == solver1
 
-                if (board.moves() == 224)
+                if (board.moves() == 221)
                     return@run null
             }
 

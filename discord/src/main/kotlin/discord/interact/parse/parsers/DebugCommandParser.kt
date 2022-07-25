@@ -22,7 +22,7 @@ object DebugCommandParser : NamedParser, ParsableCommand {
         DebugType.values().firstOrNull { it.name == option }
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
-        if (!GuildManager.hasDebugPermission(context.event.author))
+        if (!GuildManager.hasDebugPermission(context.discordConfig, context.event.author))
             return Either.Right(this.asParseFailure("tester permission not granted", context.user) { _, _, _ ->
                 IO { emptyList() }
             })
@@ -39,7 +39,7 @@ object DebugCommandParser : NamedParser, ParsableCommand {
                     context.event.message.contentRaw
                         .split(" ")
                         .take(2)
-                        .fold(0) { acc, s -> acc + s.length }
+                        .sumOf { it.length }
                 )
                 .ifEmpty { null }
         ))

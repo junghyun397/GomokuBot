@@ -4,7 +4,7 @@ import java.util.*
 
 data class Guild(
     val id: GuildUid,
-    val platform: Int,
+    val platform: Short,
     val givenId: GuildId,
     val name: String,
 ) {
@@ -15,7 +15,7 @@ data class Guild(
 
 data class User(
     val id: UserUid,
-    val platform: Int,
+    val platform: Short,
     val givenId: UserId,
     val name: String,
     val nameTag: String,

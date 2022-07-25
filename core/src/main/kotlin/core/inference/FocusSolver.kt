@@ -12,7 +12,6 @@ import jrenju.solve.`LargeMoveGenerator$`
 import jrenju.solve.`SolutionMapper$`
 import jrenju.solve.`VCFSolver$`
 import utils.assets.bound
-import utils.assets.choiceOne
 import utils.assets.maxSet
 import utils.assets.toInt
 import java.util.*
@@ -145,30 +144,31 @@ object FocusSolver {
         BoardOps(board).composeStrips(board.latestMove())
             .flatMap { strip -> this.collectFiveComponentsInStrip(board, strip, board.colorFlag()) }
 
-    private fun evaluateParticle(weightSet: WeightSet, particle: ParticleOps, particleB: ParticleOps, bySelf: Boolean): Int =
-        run {
-            if (particle.fourTotal() > 1)
-                weightSet.doubleFourFork
-            else if (particle.threeTotal() > 0 && particle.fourTotal() > 0)
-                weightSet.threeFourFork
-            else if (particle.threeTotal() > 1)
-                weightSet.doubleThreeFork
-            else 0
-        } + particle.threeTotal() * weightSet.openThree + particle.closedFourTotal() * weightSet.closedFour +
-                run {
-                    if (bySelf)
-                        particle.openFourTotal() * weightSet.openFour
-                    else {
-                        if (particle.blockThreeTotal() > 0)
-                            if (particleB.threeTotal() > 0 || particleB.fourTotal() > 0)
-                                weightSet.treatBlockThreeFork
-                            else
-                                weightSet.blockThree + particle.openFourTotal() * weightSet.blockFourExtra
-                        else
-                            0
-                    }
-                } +
-                particle.fiveTotal() * weightSet.five
+    private fun evaluateParticle(weightSet: WeightSet, particle: ParticleOps, particleB: ParticleOps, bySelf: Boolean): Int {
+        val forkWeight = when {
+            particle.fourTotal() > 1 -> weightSet.doubleFourFork
+            particle.threeTotal() > 0 && particle.fourTotal() > 0 -> weightSet.threeFourFork
+            particle.threeTotal() > 1 -> weightSet.doubleThreeFork
+            else -> 0
+        }
+
+        val treatWeight = particle.threeTotal() * weightSet.openThree + particle.closedFourTotal() * weightSet.closedFour
+
+        val fourWeight = when {
+            bySelf -> particle.openFourTotal() * weightSet.openFour
+            else -> when {
+                particle.blockThreeTotal() > 0 -> when {
+                    particleB.threeTotal() > 0 || particleB.fourTotal() > 0 -> weightSet.treatBlockThreeFork
+                    else -> weightSet.blockThree + particle.openFourTotal() * weightSet.blockFourExtra
+                }
+                else -> 0
+            }
+        }
+
+        val fiveWeight = particle.fiveTotal() * weightSet.five
+
+        return forkWeight + treatWeight + fourWeight + fiveWeight
+    }
 
     fun findSolution(board: Board, weightSet: WeightSet = SolverWeights): Solution {
         val traps = StructOps(board).collectTrapPoints()
@@ -210,7 +210,7 @@ object FocusSolver {
                 return `SolutionMapper$`.`MODULE$`.SequenceToNode(vcfSequence).toSolution()
         }
 
-        return SolutionLeaf(moves[maxSet.choiceOne()])
+        return SolutionLeaf(moves[maxSet.random()])
     }
 
     private fun evaluateBoard(board: Board): MutableList<MutableList<Int>> {

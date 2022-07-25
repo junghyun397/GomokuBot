@@ -39,7 +39,7 @@ class AcceptCommand(override val name: String, private val requestSession: Reque
         SessionManager.removeRequestSession(bot.sessions, guild, this.requestSession.owner.id)
 
         val io = producer.produceBeginsPVP(publisher, config.language.container, gameSession.player, gameSession.nextPlayer)
-            .map { it.launch() }
+            .flatMap { it.launch() }
             .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, gameSession) }
             .map { listOf(Order.DeleteSource) }
 

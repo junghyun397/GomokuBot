@@ -370,6 +370,11 @@ open class LanguageENG : LanguageContainer {
 
     override fun notYetImplementedEmbedDescription() = "This feature is not yet implemented."
 
-    override fun notYetImplementedEmbedFooter(officialChannel: String) = "Get updates on GomokuBot in the support channel($officialChannel)."
+    override fun notYetImplementedEmbedFooter(officialChannel: String) =
+        "Get updates on GomokuBot in the support channel($officialChannel)."
+
+    // RENJU GUIDE
+
+    override fun aboutRenjuDocument() = """""".trimIndent()
 
 }
