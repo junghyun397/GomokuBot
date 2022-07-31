@@ -37,7 +37,7 @@ fun reactionRouter(context: InteractionContext<MessageReactionAddEvent>): Mono<T
         )
             .asOption()
             .map { it to when (it.navigationKind) {
-                NavigationKind.BOARD ->FocusCommandParser
+                NavigationKind.BOARD -> FocusCommandParser
                 NavigationKind.ABOUT, NavigationKind.SETTINGS -> NavigateCommandParser
             } }
             .toMono()

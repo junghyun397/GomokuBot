@@ -2,7 +2,7 @@ package discord.interact.message
 
 import core.assets.MessageRef
 import core.interact.message.MessageAdaptor
-import core.interact.message.MessageBuilder
+import core.interact.message.MessageIO
 import core.interact.message.MessagePublisher
 import discord.assets.extractMessage
 import net.dv8tion.jda.api.entities.Message
@@ -20,7 +20,7 @@ typealias DiscordButtons = List<ActionRow>
 
 typealias DiscordMessagePublisher = MessagePublisher<Message, DiscordButtons>
 
-typealias DiscordMessageAction = MessageBuilder<Message, DiscordButtons>
+typealias DiscordMessageAction = MessageIO<Message, DiscordButtons>
 
 abstract class DiscordMessageActionAdaptor(private val original: RestAction<*>) : DiscordMessageAction {
 

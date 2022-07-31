@@ -33,7 +33,7 @@ class LangCommand(override val name: String, private val language: Language) : C
 
         val io = producer.produceLanguageUpdated(publisher, this.language.container)
             .flatMap { it.launch() }
-            .flatMap { buildHelpSequence(bot, thenConfig, publisher, producer, 1) }
+            .flatMap { buildHelpSequence(bot, thenConfig, publisher, producer) }
             .map { listOf(Order.UpsertCommands(thenConfig.language.container)) }
 
         io to this.asCommandReport("${config.language.name} to ${thenConfig.language.name}", user)

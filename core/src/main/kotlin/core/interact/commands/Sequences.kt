@@ -4,7 +4,7 @@ import core.BotContext
 import core.assets.Guild
 import core.inference.FocusSolver
 import core.interact.Order
-import core.interact.message.MessageBuilder
+import core.interact.message.MessageIO
 import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
 import core.session.FocusPolicy
@@ -21,7 +21,7 @@ import utils.structs.IO
 import utils.structs.flatMap
 
 fun <A, B> buildNextMoveSequence(
-    messageBuilder: MessageBuilder<A, B>,
+    messageIO: MessageIO<A, B>,
     bot: BotContext,
     guild: Guild,
     config: GuildConfig,
@@ -29,7 +29,7 @@ fun <A, B> buildNextMoveSequence(
     publisher: MessagePublisher<A, B>,
     session: GameSession,
     thenSession: GameSession,
-) = IO { SessionManager.appendMessage(bot.sessions, thenSession.messageBufferKey, messageBuilder.retrieve().messageRef) }
+) = IO { SessionManager.appendMessage(bot.sessions, thenSession.messageBufferKey, messageIO.retrieve().messageRef) }
     .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, thenSession) }
     .flatMap { buildSweepSequence(bot, config, session) }
 
@@ -91,14 +91,13 @@ fun <A, B> buildHelpSequence(
     config: GuildConfig,
     publisher: MessagePublisher<A, B>,
     producer: MessageProducer<A, B>,
-    page: Int
-) = producer.produceHelp(publisher, config.language.container, page)
+) = producer.produceHelp(publisher, config.language.container, 0)
     .flatMap { IO { it.retrieve() } }
     .flatMap { helpMessage ->
         SessionManager.addNavigate(
             bot.sessions,
             helpMessage.messageRef,
-            NavigateState(NavigationKind.ABOUT, page, LinuxTime.withExpireOffset(bot.config.navigatorExpireOffset))
+            NavigateState(NavigationKind.ABOUT, 0, LinuxTime.withExpireOffset(bot.config.navigatorExpireOffset))
         )
 
         producer.attachBinaryNavigators(helpMessage)

@@ -20,7 +20,7 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
 
     // INTERFACE
 
-    abstract fun sendString(text: String, publisher: MessagePublisher<A, B>): IO<MessageBuilder<A, B>>
+    abstract fun sendString(text: String, publisher: MessagePublisher<A, B>): IO<MessageIO<A, B>>
 
     abstract fun User.asMentionFormat(): String
 
@@ -103,7 +103,7 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
 
     // GAME
 
-    override fun produceBeginsPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, blackPlayer: User, whitePlayer: User): IO<MessageBuilder<A, B>> =
+    override fun produceBeginsPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, blackPlayer: User, whitePlayer: User): IO<MessageIO<A, B>> =
         container.beginPVP(blackPlayer.asMentionFormat(), whitePlayer.asMentionFormat()) sendBy publisher
 
     override fun produceBeginsPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, ownerHasBlack: Boolean) =

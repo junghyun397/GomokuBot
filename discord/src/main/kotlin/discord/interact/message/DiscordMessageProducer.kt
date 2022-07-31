@@ -327,6 +327,13 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
         }
     }
 
+    private val buildExploreAboutRenjuEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
+        Embed {
+            color = COLOR_NORMAL_HEX
+            description = container.exploreAboutRenju()
+        }
+    }
+
     private val buildAboutRenjuEmbed: (Pair<Int, LanguageContainer>) -> List<MessageEmbed> = memoize { (page, container) ->
         val (h2Title, h2Documents) = this.aboutRenjuDocument(container)[page]
 
@@ -352,15 +359,19 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
 
     private fun buildHelpMessage(publisher: DiscordMessagePublisher, container: LanguageContainer, page: Int) =
         when (page) {
-            0 -> publisher(Message(embeds = listOf(this.buildAboutEmbed(container), this.buildCommandGuideEmbed(container))))
+            0 -> publisher(Message(embeds = listOf(
+                this.buildAboutEmbed(container),
+                this.buildCommandGuideEmbed(container),
+                this.buildExploreAboutRenjuEmbed(container)
+            )))
             else -> publisher(Message(embeds = this.buildAboutRenjuEmbed(page - 1 to container)))
         }
 
     override fun produceHelp(publisher: DiscordMessagePublisher, container: LanguageContainer, page: Int) =
-        IO { publisher(Message(embeds = listOf(this.buildAboutEmbed(container), this.buildCommandGuideEmbed(container)))) }
+        IO { this.buildHelpMessage(publisher, container, page) }
 
-    override fun paginateHelp(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, page: Int): IO<MessageBuilder<Message, DiscordButtons>> =
-        IO { this.buildHelpMessage(publisher, container, page)}
+    override fun paginateHelp(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, page: Int): IO<MessageIO<Message, DiscordButtons>> =
+        IO { this.buildHelpMessage(publisher, container, page) }
 
     private fun buildSettingsMessage(publisher: DiscordMessagePublisher, config: GuildConfig, page: Int) =
         when (page) {
@@ -379,12 +390,12 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
     override fun produceSettings(publisher: MessagePublisher<Message, DiscordButtons>, config: GuildConfig, page: Int) =
         IO { this.buildSettingsMessage(publisher, config, page) }
 
-    override fun paginateSettings(publisher: MessagePublisher<Message, DiscordButtons>, config: GuildConfig, page: Int): IO<MessageBuilder<Message, DiscordButtons>> =
+    override fun paginateSettings(publisher: MessagePublisher<Message, DiscordButtons>, config: GuildConfig, page: Int): IO<MessageIO<Message, DiscordButtons>> =
         IO { this.buildSettingsMessage(publisher, config, page) }
 
     // RANK
 
-    override fun produceRankings(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, rankings: List<Pair<User, UserStats>>): IO<MessageBuilder<Message, DiscordButtons>> =
+    override fun produceRankings(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, rankings: List<Pair<User, UserStats>>): IO<MessageIO<Message, DiscordButtons>> =
         IO { publisher(Message(
             embed = Embed {
                 color = COLOR_NORMAL_HEX

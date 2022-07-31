@@ -1,4 +1,4 @@
-package migration
+package tools.migration
 
 import core.assets.User
 import core.assets.UserId

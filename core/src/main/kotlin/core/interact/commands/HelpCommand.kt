@@ -28,7 +28,7 @@ class HelpCommand(override val name: String, private val sendCombined: Boolean) 
             if (this.sendCombined)
                 buildCombinedHelpSequence(bot, config, publisher, producer, 0)
             else
-                buildHelpSequence(bot, config, publisher, producer, 0)
+                buildHelpSequence(bot, config, publisher, producer)
         }
             .map { emptyList<Order>() }
 

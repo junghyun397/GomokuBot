@@ -1,12 +1,12 @@
 # ENG
-# KOR
-## 렌주란 무엇인가요?
 
-Q. *오목봇에 렌주라니, 이게 무슨 말인가요?* 
+## What is Renju?
 
-A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합니다. 그러므로 GomokuBot은 단순한 오목이 아닌, 아주 간단한 규칙 몇 개가 추가된 렌주를 사용합니다. 
+Q. What do you mean, GomokuBot and Renju?
 
-하지만 걱정하지 마세요. 렌주는 오목과 정말로 비슷합니다. 초심자들 사이의 승부에서는 렌주가 무엇인지 모르더라도 아무 영향이 없을 정도로 똑같습니다.
+A. Gomoku is very simple. But Gomoku is not a fair game. Therefore, GomokuBot uses Renju, which has some very simple rules added, not plain Gomoku.
+
+But don't worry. Renju is really similar to Gomoku. In the game between beginners, it's the same so that, even if they don't know what Renju is, it doesn't affect them at all.
 
 ```fname = intro, forbid = true, lmove = null
    A B C D E F G H I J K L M N O
@@ -28,31 +28,33 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
    A B C D E F G H I J K L M N O
 ```
 
-*흑의 승리입니다!*
+*Black wins!*
 
-렌주는 오목에서 흑에게만 "금수" 규칙을 추가한 변형 게임입니다. 렌주와 금수가 무엇인지 알아보기 전에, 왜 금수를 흑에게만 적용 하는지, 단순한 오목이 얼마나 불공평한 게임인지 알아볼 필요가 있습니다.
+Renju is a variant game that adds **Forbidden moves** that only apply to black in Gomoku. Before diving into Renju and Forbidden moves, you need to understand why Renju only applies Forbidden moves to black, and how unfair a plain Gomoku game is.
 
-오목에 어느정도 능숙하다면, 다른 제약이 없는 오목에서는 먼저 두기 시작하는 흑이 매우 유리하다는 것을 어느정도 파악하고 있었을 것 입니다. 그렇다면 흑이 어느 정도로 유리한 것 일까요? 흑과 백 모두 최선의 수를 둔다면 어떤 결과가 나타나게 되는 것 일까요?
+### Gomoku is a Solved Game.
 
-### 오목은 풀린 게임입니다.
+If you've played Gomoku for a while, you've probably realized that the black you start first with is very advantageous in Gomoku, where there are no other restrictions. So, how good is black? What would be the result if both black and white had their best moves?
 
-아무런 추가 규칙이 없는 단순한 오목은 1980년 Stefan Reisch에 의해 흑과 백 모두 최선의 수를 둔다고 해도 흑은 항상 필승 전략을 찾아낼 수 있음이 증명 됐습니다. 
+A plain Gomoku with no additional rules was proved in 1980 by Stefan Reisch. Even if both black and white have their best moves, black can always find a winning strategy.
 
-즉, 단순한 오목에서는 흑과 백 모두 최선의 수를 둔다고 해도 흑이 **항상** 승리하게 됩니다. 두 플레이어의 수준이 높아질수록 동전 던지기에 가까워지는 셈입니다. 동전 던지기에서 벗어나기 위해서는 흑 선공의 압도적 유리함을 해결할 수 있는 특별한 규칙이 꼭 필요합니다.
+In other words, in a plain Gomoku, black **always** wins, even if both black and white have their best moves. The higher the level of both players, the closer they get to tossing a coin. In order to get out of the coin toss, a special rule is indispensable to solve the overwhelming advantage of black first.
 
-### 렌주룰에는 "금수"가 있습니다.
+### Renju has "Forbidden Moves"
 
-렌주는 흑 선공의 압도적 유리함을 해결하기 위해 "금수" 규칙을 선택했습니다. 금수는 특별한 조건을 만족하는 위치에 흑의 착수를 금지시키는 규칙으로, 3-3 금지와 4-4 금지, 그리고 6목 금지까지 총 3가지의 금지 규칙이 있습니다.
+Renju chose the "Forbidden moves" rule to address the overwhelming advantage of black First. There are three types of forbids: 3-3 forbid, 4-4 forbid, and overline forbid.
 
-복잡해 보인다고 해도 걱정할 필요 없습니다. 초심자들의 게임에서 금수는 꽤 드물게 등장하며, 금수가 무엇인지 모른다고 해도 금수로 승부가 뒤집어 지는 일은 적을 것 입니다.
+If it looks complicated, don't worry. Forbidden moves are fairly rare in beginner's games, and even if they don't know what a Forbidden move is, it's unlikely to change their win or loss.
 
-금수를 정확히 이해하기 위해서는, 오목에서 3과 4를 어떻게 정의하고 있는지부터, 어떤 상황에서 금수가 성립하는지를 이해해야만 합니다. 여기서는 4의 정의부터 시작합니다.
+To understand forbidden moves correctly, we must first understand how Gomoku defines three and four, and in which situations the forbidden move appears. Here we start with the definition of four.
 
-## 4에 대해 알아봅시다.
+## What is "Four"?
 
-**4**는 공백 하나를 포함한 채 일열로 배열된 돌 네 개로, **한 수 더 두어 승리할 수 있는 모양**을 뜻합니다. 한 수 더 두어 승리할 수 있기에, 내가 4를 가지고 있지 않을 때 상대가 4를 만들었다면 곧바로 대응해야 하는 강력한 모양입니다.
+**Four** is **a row of four stones containing one space**, which means a shape that can be won by adding one more stone.
 
-일직선으로 배열된 돌 네 개는 4입니다. 한쪽이 막힌 돌 네 개도 4입니다. 한 칸 떨어진 채 배열된 돌 네 개 역시 4입니다. 한 수를 더 두어 5를 만들 수 있다면 모두 4입니다.
+You can win by making one more move, so if you don't have four, the opponent makes four, you have to block immediately.
+
+The four stones arranged in a straight line are four. Four stone blocks on one side are also four. The four stones arranged one space apart are also four. If you can make a five-in-a-row with a single move, it's all four.
 
 ```fname = four, forbid = false, lmove = null
    A B C D E F G H I J K L M N O
@@ -74,7 +76,7 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
    A B C D E F G H I J K L M N O
 ```
 
-*한 수를 더 둔다면...*
+*When making one more move…*
 
 ```fname = four-expanded, forbid = false, lmove = null
    A B C D E F G H I J K L M N O
@@ -95,14 +97,13 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
  1 . . . . . . . . . . . . . . . 1
    A B C D E F G H I J K L M N O
 ```
+*...You can win!*
 
-*...승리할 수 있습니다!*
+## What is "4-4 Forbid"?
 
-## 4-4 금수에 대해 알아봅시다.
+**4-4 forbid** means **a place where you can make two or more fours with a single move**. Even if you can create three fours in a single move, it is 4-4 forbid.
 
-**4-4 금수**란 **한 수를 두어 4를 두 개 이상 만들 수 있는 자리**를 뜻합니다. 한 수를 두어 4를 세 개 만들 수 있더라도 4-4 금수입니다.
-
-기억해 주세요: 금수는 흑의 압도적 유리함을 해결하기 위해 만들어진 규칙입니다. 따라서 모든 금수는 흑에게만 적용됩니다. 백은 자유롭게 4-4를 만들어 승리할 수 있습니다!
+Remember: forbidden moves are rules designed to solve Black's overwhelming advantage. Therefore, all forbidden moves apply only to black. White is free to make 4-4 fork to win!
 
 ```fname = double-four-forbid, forbid = true, lmove = null
    A B C D E F G H I J K L M N O
@@ -124,9 +125,9 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
    A B C D E F G H I J K L M N O
 ```
 
-*GomokuBot은 금수를 빨간 점으로 표시합니다. 흑은 빨간 점에 돌을 놓을 수 없지만 백은 놓을 수 있습니다.*
+*GomokuBot marks forbidden moves with a red dot. Black cannot place stones on the red dots, but white can.*
 
-흔한 상황은 아니지만 같은 줄에서 4-4금수가 한 개 이상 등장할 수 있습니다. 같은 줄 이라도 한 수를 두어 4를 두 개 이상 만들 수 있다면 4-4금수입니다.
+Although less common, more than one 4-4 forbid can appear on the same line. If you can make more than one four with a single move, even on the same line, it's 4-4 forbid.
 
 ```fname = double-four-forbid-in-a-line, forbid = true, lmove = null
    A B C D E F G H I J K L M N O
@@ -148,13 +149,13 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
    A B C D E F G H I J K L M N O
 ```
 
-## 3에 대해 알아봅시다.
+## What is "Three"?
 
-**3**은 조금 특별합니다. 오목의 직접적인 승리 조건과는 조금 동떨어져 있기 때문입니다. 오목에서는 3을 한 수를 더 두어 **열린4**를 만들 수 있는 모양으로 정의합니다. 오목에서 정의하는 열린 4란 도대체 무엇일까요?
+Three is a little special. That's because it's a bit far from Gomoku's win conditions. Gomoku defines three as a shape that can make a "straight four" in a single move. What exactly is straight four defined by Gomoku?
 
-### 열린 4 - 어떤 4는 다른 4보다 더 강력합니다.
+### Straight Four – Some Fours Are More Strong Than Others.
 
-여기 2페이지 전에 알아본 5가지의 4가 있습니다. 사실 이 중 하나의 4는 나머지 4와 다른 점 하나를 가지고 있습니다. 8열에 늘어선 4는 열린 4이기 때문입니다.
+Here are the five fours we looked at two pages ago. In fact, one of the four has one difference from the other four. This is because the fours in row 8 are **straight fours**.
 
 ```fname = straight-four, forbid = false, lmove = null
    A B C D E F G H I J K L M N O
@@ -176,7 +177,7 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
    A B C D E F G H I J K L M N O
 ```
 
-즉시 방어하지 않는다면 즉시 패배하기에, 4를 즉시 막아야만 합니다. 한 번 막아 봅시다.
+*If you don't block immediately, you lose, so you have to block four right away. Let's defend.*
 
 ```fname = straight-four-had-blocked, forbid = false, lmove = null
    A B C D E F G H I J K L M N O
@@ -198,13 +199,13 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
    A B C D E F G H I J K L M N O
 ```
 
-다른 4는 모두 막을 수 있었지만, 중앙에 있는 4는 한 수로는 막을 수 없었습니다! 두 수를 들여 막아야 하지만, 오목에서는 한 턴에 한 수밖에 두지 못 함으로 결코 방어할 수 없습니다.
+The other four could have been blocked, but the four in row 8 could not be blocked with a single move. You have to move twice to block, but in Gomoku you can't block because you can only move once per turn.
 
-이와 같이 한 수로 방어할 수 없는 강력한 4, **양 옆이 뚫린 채 연속적으로 배열된 돌 4개**를 **열린 4**라고 부릅니다.
+In this way, the strong four that cannot be blocked with a single move, and the four stones arranged in a row with both sides open are called straight four.
 
-### 한 수를 더 두어 열린 4를 만들 수 있다면 3입니다.
+### If You Can Make a Straight Four With a Single Move, It's Three.
 
-오목에서는 **한 수를 더 두어 열린 4를 만들 수 있는 모양**을 **3**으로 정의합니다. 4보다는 약한 모양이지만, 내가 3 또는 4를 가지고 있지 않을 때 상대가 3을 만들었다면 곧바로 대응해야 하는 강력한 모양입니다.
+Gomoku defines **three** as **the shape that can make a straight four in a single move**. Three is a weaker shape than four, but it's a strong shape that should be blocked right away if your opponent makes three when you don't have three or four.
 
 ```fname = three, forbid = false, lmove = null
    A B C D E F G H I J K L M N O
@@ -226,7 +227,9 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
    A B C D E F G H I J K L M N O
 ```
 
-*한 수를 더 둔다면...*
+*When making one more move…*
+
+*…Straight four are here!*
 
 ```fname = three-expanded, forbid = false, lmove = null
    A B C D E F G H I J K L M N O
@@ -248,13 +251,11 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
    A B C D E F G H I J K L M N O
 ```
 
-*...열린 4가 만들어 집니다!*
+## What is "3-3 Forbid"?
 
-## 3-3 금수에 대해 알아봅시다.
+Now that we know what three is defined by Gomoku, we can clearly define 3-3 forbid. **3-3 forbid** means **a position where you can make two or more threes that can make straight four by single move**. Even if you can make three threes with a single move, it's even 3-3 forbid.
 
-이제 오목에서 정의하는 3이 무엇인지 알았으므로, 3-3금수를 명확하게 정의할 수 있습니다. **3-3 금수**란, 한 수를 더 두어 **열린 4** 를 만들 수 있는 **3**을 두 개 이상 만들 수 있는 자리를 뜻합니다. 한 수를 두어 3을 세 개 만들 수 있더라도 3-3 금수입니다.
-
-다시 기억해 주세요: 모든 금수는 흑에게만 적용됩니다. 백은 자유롭게 3-3을 만들어 승리할 수 있습니다.
+*Please remember again. All forbidden moves apply only to black. White is free to make 3-3 to win.*
 
 ```fname = dobule-three-forbid, forbid = true, lmove = null
    A B C D E F G H I J K L M N O
@@ -276,7 +277,7 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
    A B C D E F G H I J K L M N O
 ```
 
-지금까지는 매우 단순한 모양들을 살펴 봤지만, 실전에서는 간혹 복잡하고 미묘한 모양이 등장하기도 합니다. 여기 간단한 예시들이 있습니다. 아래 모양들에는 3-3 금수가 단 하나도 포함되지 않습니다. 
+So far, we have looked at very simple shapes, but in real games, sometimes complex shapes appear. Here are some simple examples. The shapes below do not contain any 3-3 forbids.
 
 ```fname = dobule-three-forbid-pseudo, forbid = false, lmove = null
    A B C D E F G H I J K L M N O
@@ -297,13 +298,16 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
  1 . . . . . . . . . . . . . . . 1
    A B C D E F G H I J K L M N O
 ```
-이 모양들은 모두 3 두 개가 중첩된 모양이 아닌, 사실은 3 하나만으로 이루어진 모양이기 때문입니다. 3처럼 보인다고 해도 열린 4를 만들 수 없다면 3이 아닙니다. 한 번에 3을 두 개 이상 만들 수 없다면 3-3금수가 아닙니다.
 
-어떤 자리를 금수로 판단하기 전에, 금수를 결정하는 모양이 올바른지 꼭 확인해 봐야만 합니다.
+This is because all these shapes are not three overlapping shapes, but actually only three shapes. Even if it looks like three, it's not three if you can't make straight four out of it. If you can't make more than one three in a single move, it's not 3-3 forbid.
 
-## 6목 금수에 대해 알아봅시다.
+## What is "Overline Forbid"?
 
-6목 금수란, 한 수를 더 두어 연속적으로 배열된 6개 이상의 돌을 만들 수 있는 자리를 뜻합니다. 마지막으로 기억해 주세요. 6목 금수 역시 흑에게만 적용되는 규칙으로, 백은 자유롭게 6목 이상을 만들어 승리할 수 있습니다. 
+We're almost there. An **overline forbid** means **a place where you can make 6 or more stones arranged in a row in a single move**.
+
+Even if you can make a 7-in-a-row in a single move, it's an overline forbid. Neither 8-in-a-row nor 9-in-a-row. However, 10-in-a-row is an exception. If someone makes a 10-in-a-row, you must immediately turn off all electronics and leave the area.
+
+*Please remember. Overline forbid is also a rule that only applies to black, and white is free to create more than five-in-a-row to win.*
 
 ```fname = overline-forbid, forbid = true, lmove = null
    A B C D E F G H I J K L M N O
@@ -325,9 +329,9 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
    A B C D E F G H I J K L M N O
 ```
 
-## 오목은 모든 금수를 무시할 수 있습니다.
+## Five-in-a-Row Can Ignore All Forbidden Moves.
 
-좋은 소식이 있습니다: 오목으로 승리할 수 있는 자리에 금수가 만들어 진다고 해도, 오목으로 승리할 수 있다면 그 어떤 금수도 무시한 채 착수할 수 있습니다.
+Here's the good news (only black unfortunately). Even if forbidden point is created on a point that can be won with a five-in-a-row, if you win with a five-in-a-row, you can move ignoring any forbidden moves.
 
 ```fname = five-in-a-row-and-forbid, forbid = false, lmove = null
    A B C D E F G H I J K L M N O
@@ -349,19 +353,17 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
    A B C D E F G H I J K L M N O
 ```
 
-*뒷목 잡을 일은 없겠군요!*
+## Great!
 
-## 훌륭합니다!
+Welcome to the much fairer Gomoku! If you've followed this guide far, you know all the basic Renju rules. Now, even if forbidden moves appear, you will be able to unlock that or use other strategies to continue the game without panicking.
 
-더 공평한 오목의 세계에 도착 하신 것을 정말 환영합니다! 여기까지 따라 왔다면 기본적인 렌주 규칙들을 모두 아셨습니다. 이제는 금수가 등장 하더라도, 당황하지 않은 채 금수의 조건을 해제하거나 다른 전략을 사용해 게임을 이어나갈 수 있을 것 입니다.
+Now start a game with your friends with the ``/start @mention`` command. Even if you don't have friends, the GomokuBot AI will always be with you. Don't forget to configure the GomokuBot with the ``/setting`` command as well.
 
-이제 ``/시작 @멘션`` 명령어로 친구들과 게임을 시작해 보세요. 만약 친구가 없더라도 GomokuBot 인공지능이 언제나 함께 할 것 입니다. ``/설정`` 명령어로 입맛에 맞게 GomokuBot의 행동을 바꾸는 것 역시 잊지 말아주세요.
+In the next chapter, we will learn how to figure out forbidden moves in very complex situations and how to attack and defend using forbidden moves. These are strategies for Renju, all possible only in Renju. It can be a little difficult for beginners.
 
-다음 장 부터는 매우 복잡한 상황에서 금수를 정확히 판단하는 방법과, 금수를 이용한 공격과 방어에 대해 알아봅니다. 모두 렌주에서만 가능한, 렌주를 위한 전략들입니다. 초심자에게는 조금 어려울 수 있습니다.
+## Like a Forbidden Move, But May Not Be a Forbidden Move.
 
-## 금수같지만 금수가 아닐 수 있습니다.
-
-아래와 같은 상황에 대해 생각해 봅시다. 흑은 과연 h9에 둘 수 있을까요? 얼핏 보기에는 h9는 h행에 세로로 배열된 돌 두 개와 9열에 가로로 배열된 돌 두 개에 의해 만들어지는 3-3금수로, 흑은 i9에 둘 수 없어야만 할 것 같습니다.
+Consider the following situation. Will Black be able to move with ``h9``? At first glance, it seems that ``h9`` is a 3-3 forbid made by two stones arranged vertically in column h and two stones arranged horizontally in column 9, and it seems that black should not be able to move with ``i9``.
 
 ```fname = pseudo-forbid-simple, forbid = false, lmove = null
    A B C D E F G H I J K L M N O
@@ -383,11 +385,11 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
    A B C D E F G H I J K L M N O
 ```
 
-이런 상황들이 흔하게 등장 하는 것은 아니지만(사실 실전에서는 정말로, 매우 드물게 등장합니다.), 금수가 무엇인지 완벽히 파악하기 위해서는 꼭 알아 둘 필요가 있습니다.
+While these situations aren't common(in fact, they're really, very rare in real games), but you need to be aware of them in order to fully understand what forbidden moves are.
 
-### 한 수 뒤를 생각 해 보세요.
+### Imagine What Happens Next.
 
-복잡한 상황에서 금수를 판단하기 좋은 방법은 하나씩 놓아 보는 것 입니다. 지금 판단하고자 하는 h9에 돌 하나를 놓아 봅시다.
+In complex situations, a good way to figure out forbidden moves is to move one step at a time. First, let's make move to ``h9``, which is the point that we want to figure out.
 
 ```fname = pseudo-forbid-simple-s1, forbid = true, lmove = h9
    A B C D E F G H I J K L M N O
@@ -409,11 +411,11 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
    A B C D E F G H I J K L M N O
 ```
 
-h행에서는 4-4 금수에 막혀 열린 4를 만들 수 없습니다. h열의 돌 두 개는 한 수를 둠으로써 열린 4를 만들 수 있는 3이 이 아니었던 것 입니다! 다시 기억해 봅시다. 3또는 4가 성립되지 않는다면, 금수 또한 성립되지 않습니다. 그러므로 3을 하나만 만들 수 있는 h9는 3-3금수가 아닙니다.
+In this situation, row h is blocked by 4-4 forbid and cannot create straight four. Two stones in row h were not three that could make a straight four in a single move. Let's remember that again. If three or four is not valid, then forbidden move is also invalid. So ``h9`` that can only make one three is not 3-3 forbidden.
 
-## 금수가 아닌 것 같지만 금수일 수 있습니다.
+## It Doesn't Seem Like a Forbidden Move, But It Could Be a Forbidden Move.
 
-g10은 3-3금수같아 보입니다. 하지만 i8 또한 금수이기에, g10은 3-3금수가 아닌 것 같기도 합니다. 이런 복잡한 상황에서 어떻게 흑이 g10에 둘 수 있는지 판단할 수 있을까요?
+The ``g10`` looks like 3-3 forbid. But since ``i8`` is also forbid, ``g10`` doesn't seem to be forbid 3-3 forbid. How can we figure out how black can move in ``g10`` in this complex situation?
 
 ```fname = pseudo-forbid-complex, forbid = false, lmove = null
    A B C D E F G H I J K L M N O
@@ -435,9 +437,9 @@ g10은 3-3금수같아 보입니다. 하지만 i8 또한 금수이기에, g10은
    A B C D E F G H I J K L M N O
 ```
 
-### 여러 수 뒤를 생각 해 보세요.
+### Imagine a Situation In the Future.
 
-매우 복잡한 금수를 판단하기 가장 좋은 방법 역시 하나씩 놓아 보는 것 입니다. 지금 판단하고자 하는 g10에 돌 하나를 놓아 봅시다.
+A good way to figure out forbidden moves in a very complex situation is also to move them step by step. Let's make move to ``h9``, the point that we want to figure out.
 
 ```fname = pseudo-forbid-complex-s1, forbid = false, lmove = g10
    A B C D E F G H I J K L M N O
@@ -459,9 +461,9 @@ g10은 3-3금수같아 보입니다. 하지만 i8 또한 금수이기에, g10은
    A B C D E F G H I J K L M N O
 ```
 
-얼핏 보기에는 i8은 i행에 세로로 놓인 돌 두 개와 8열에 가로로 놓인 돌 두 개가 합쳐지는 곳으로 3-3금수인 것 같습니다. 그렇다면 대각선으로 열린 4를 만들 수 없을테니, g10은 금수가 아닌 것 일까요?
+At first glance, ``i8`` seems to be 3-3 forbid where two stones placed vertically in row i and two stones placed horizontally in row 8. So black can't make straight four diagonally, so isn't ``g10`` a forbidden point?
 
-그렇다기에는 f행에 세로로 배열된 돌 3개가 꺼림찍하군요. 판단하기에는 아직 이른 것 같습니다. i8에 돌 하나를 더 놓아봅시다.
+That said, the three stones arranged vertically in a row f seem odd. It's too early to judge. Let's make one more move for ``i8``.
 
 ```fname = pseudo-forbid-complex-s2, forbid = true, lmove = i8
    A B C D E F G H I J K L M N O
@@ -483,9 +485,9 @@ g10은 3-3금수같아 보입니다. 하지만 i8 또한 금수이기에, g10은
    A B C D E F G H I J K L M N O
 ```
 
-i8에 돌을 놓아 보니, 8열에서는 4-4금수에 막혀 열린 4를 만들 수 없었습니다. g10에 돌 하나를 둔 뒤의 i8은 3-3 금수가 아니었습니다!
+After making a move on ``i8``, Black is blocked by 4-4 forbid in the 8th row and cannot make a straight four. The ``i8`` after making one move in ``g10`` was not 3-3 forbid!
 
-이제 g10에 돌 하나를 둔 뒤의 i8은 금수가 아님을 알았음으로, 한 수를 놓아 열린 4 두 개를 만들 수 있는 g10은 다시 3-3금수가 맞다고 판단할 수 있습니다.
+Now we can figure out that ``i8`` after moving to ``g10`` is not a forbidden point. Therefore, ``g10``, which can make two straight fours by moving the black once, can figure out that 3-3 forbid is correct.
 
 ```fname = pseudo-forbid-complex-s3, forbid = true, lmove = null
    A B C D E F G H I J K L M N O
@@ -507,11 +509,11 @@ i8에 돌을 놓아 보니, 8열에서는 4-4금수에 막혀 열린 4를 만들
    A B C D E F G H I J K L M N O
 ```
 
-같은 방법으로 i10 역시 3-3금수임을 판단해 낼 수 있습니다.  천천히, 하나씩 판단해 본다면 어렵지 않습니다.
+In the same way, we can figure out that ``i10`` is also a 3-3 forbid. (The ``i10`` is a little more complicated.) Slowly, if you think about it one by one, it's not difficult.
 
-## 금수를 노려 공격할 수 있습니다.
+## White Can Attack By Targeting Forbidden Points.
 
-렌주의 금수는 흑에게 있어 장애물일 뿐이지만, 백에게 있어서는 전략이자 기회입니다. 여기서는 금수의 정의에 집중할 필요가 있습니다. 흑은 오목을 제외한 그 어떤 경우에도 금수에 착수할 수 없습니다. 백이 금수에 착수해 승리할 수 있더라도 예외가 될 수 없습니다.
+Renju's forbidden moves are just a limitation for black, but for white, it's a strategy and an opportunity. Re-focus on the definition of "forbidden moves". Black cannot be placed in a forbidden point in any case except five-in-a-row. Even if White can move to the forbidden point and win, it can't be an exception.
 
 ```fname = forbid-trap-simple, forbid = true, lmove = null
    A B C D E F G H I J K L M N O
@@ -533,7 +535,7 @@ i8에 돌을 놓아 보니, 8열에서는 4-4금수에 막혀 열린 4를 만들
    A B C D E F G H I J K L M N O
 ```
 
-여기 재미있는 상황이 하나 있습니다. 흑은 3-3 금수를 하나 가지고 있으며, 백은 흑의 3-3 금수를 사이에 두고 돌 3개를 늘어 놓아 4공격을 위한 준비를 끝냈습니다. 여기서 백이 흑의 금수를 끼고 4를 만들어 공격한다면, 흑은 어떻게 대처할 수 있을까요? 
+Here's an interesting situation. Black has one 3-3 forbid, and white has 3 stones lined up with 3-3 forbid in between, so white is ready for the four-attack. If white attacks by making four with the black forbidden point, how can black defend itself?
 
 ```fname = forbid-trap-simple-s1, forbid = true, lmove = e3
    A B C D E F G H I J K L M N O
@@ -555,14 +557,13 @@ i8에 돌을 놓아 보니, 8열에서는 4-4금수에 막혀 열린 4를 만들
    A B C D E F G H I J K L M N O
 ```
 
-흑이 3-3 금수를 해제하려면 한 수를 더 놓아 3 하나를 제거해야만 합니다. 하지만 그러기에는 늦은 것 같군요. 매우 안타깝게도, 흑은 백의 4 공격을 막을 방법이 없습니다. 흑은 백이 오목을 만들어 승리하는 것을 보고 있어야만 합니다. 
+In order to remove 3-3 forbid, Black must make one move and remove one three. But it's too late for that. Very unfortunately, Black has no way to block White from attacking Four. Black should be watching White win by creating a five-in-a-row.
 
-## 금수를 유도해 공격할 수 있습니다.
+## White Can Win by Creating a Forbidden Move Trap.
 
-이제 백이 금수를 끼고 공격한다면, 흑은 백이 이기는 것을 보고 있을 수 밖에 없음을 알았습니다. 하지만 언제까지나 우연이나 실수에 기댈 수는 없는 법 입니다. 적절한 상황만 주어진다면, 적극적인 공격을 통해 흑이 금수를 만들도록 유도해 승리할 수 있습니다.
+Now if white attacks with a forbidden point, we know that black is going to have to watch white win. But you can't rely on luck or mistakes forever. Given the right circumstances, aggressive attacks can lead the black to create a forebiden point and win.
 
-여기 정말 안 좋아 보이는 상황이 하나 있습니다. 흑은 f6으로 3을 만들어 공격했습니다. 얼핏 보기에는 백은 흑의 3을 막아야만 하는 것처럼 보입니다. 왼쪽으로 탄탄히 늘어선 흑돌들도 매우 강해 보입니다. 백은 이대로 흑의 공격에 말려들어 패배해야만 할까요?
-
+Here's a situation that looks awful for White. black attacked by making a three with ``f6``. At first glance, white seems to have to block black's three. The black stones that line lower-left also look very strong. Should white be attacked and defeated by black?
 
 ```fname = forbid-trap-complex, forbid = true, lmove = f6
    A B C D E F G H I J K L M N O
@@ -584,9 +585,9 @@ i8에 돌을 놓아 보니, 8열에서는 4-4금수에 막혀 열린 4를 만들
    A B C D E F G H I J K L M N O
 ```
 
-다시 상황을 자세히 살펴봅시다. 백에게는 대각선으로 배열된 돌 3개, 가로로 배열된 돌 3개가 있습니다. 4공격을 두 번 이어나갈 수 있겠군요. 하지만 이것만으로는 의미없는 발작이 될 뿐입니다. 
+Let's take a closer look at the situation again. White has 3 stones arranged diagonally and 3 stones arranged horizontally. Four attacks could go on twice. But it's like having a fit.
 
-이 상황에서 주목해야 할 것은 백은 4를 만들어 흑이 g8에 두어야만 하게 만들 수 있다는 점과, 흑이 g8에 착수한다면 3-3금수가 생긴다는 점 입니다.
+What we need to note in this situation is that white can create four and make black move to ``g9``, and if the black moves to ``g9``, ``g8`` becomes 3-3 forbid.
 
 ```fname = forbid-trap-complex-s1, forbid = true, lmove = f9
    A B C D E F G H I J K L M N O
@@ -608,7 +609,7 @@ i8에 돌을 놓아 보니, 8열에서는 4-4금수에 막혀 열린 4를 만들
    A B C D E F G H I J K L M N O
 ```
 
-*백이 4를 만든다면, 흑은 4를 방어해야만 합니다.*
+*If white makes four, black must block four.*
 
 ```fname = forbid-trap-complex-s2, forbid = true, lmove = g9
    A B C D E F G H I J K L M N O
@@ -630,7 +631,7 @@ i8에 돌을 놓아 보니, 8열에서는 4-4금수에 막혀 열린 4를 만들
    A B C D E F G H I J K L M N O
 ```
 
-*흑은 4를 방어할 수 있었지만, 8열에 가로로 배열된 돌 두 개와 g행에 세로로 배열된 돌 두 개로 3-3금수가 생기고 말았습니다.*
+Black was able to defend four, but two stones arranged horizontally in row 8 and two stones arranged vertically in column g resulted in 3-3 forbid.
 
 ```fname = forbid-trap-complex-s3, forbid = true, lmove = j11
    A B C D E F G H I J K L M N O
@@ -652,13 +653,13 @@ i8에 돌을 놓아 보니, 8열에서는 4-4금수에 막혀 열린 4를 만들
    A B C D E F G H I J K L M N O
 ```
 
-*g8은 3-3금수이기에, 흑은 이어지는 백의 대각선 4공격을 막을 방법이 없습니다. 백의 승리입니다!*
+*Since ``g8`` is a 3-3 forbid, black has no way to stop the subsequent diagonal four attacks of white. White wins!!*
 
-이게 바로 렌주의 묘미입니다! 백은 3-3 금수 뿐만 아니라 4-4 금수, 6목 금수 역시 같은 방법으로 유도해 내 이길 수 있습니다. 흑은 상황을 잘 읽어, 금수 유도에 빠져 게임을 망치지 않도록 특별히 주의해야만 합니다.
+This is the beauty of Renju! White can use 4-4 forbid and overline forbid in the same way to create and win traps. Black should read the situation well and be extra careful not to fall into the trap and ruin the game.
 
-## 금수가 아닌 것으로 만들어 빠져나갈 수 있습니다.
+## Black Can Escape the Trap by Marking It Non-Forbidden Move
 
-여기 흑에게 좋은 소식이 있습니다. 흑은 금수 유도에 걸리지 않은 채 승리할 수 있었습니다. f6은 흑에게 정말로 좋은 자리입니다. 하지만 앞서 확인해 봤듯이, f6에 둔다면 흑은 백의 금수 유도에 걸려 패배하게 될 것입니다. 흑은 어떻게 해야 안전하게 f6에 착수할 수 있을까요?
+Here's a twist. Black was able to win without being trapped. ``f6`` is an excellent point for black. But as we've seen before, if black puts it in ``f6``, Black will be caught in white's trap and defeated. How can black move safely to ``f6``?
 
 ```fname = counter-forbid-trap, forbid = true, lmove = null
    A B C D E F G H I J K L M N O
@@ -680,7 +681,7 @@ i8에 돌을 놓아 보니, 8열에서는 4-4금수에 막혀 열린 4를 만들
    A B C D E F G H I J K L M N O
 ```
 
-여기서는 금수의 조건을 다시 기억해 볼 필요가 있습니다. 3 또는 4가 성립되지 않는다면, 금수 역시 성립되지 않습니다. 흑은 미리 한 수를 더 두어 g9에 둠으로써 생길 금수를 무효화 시킬 수 있습니다.
+Here we need to re-imagine the conditions of forbidden moves. If three or four is not valid, then forbidden moves are also invalid. The black can remove forbidden point that will be generated by moving to ``g9`` in advance.
 
 ```fname = counter-forbid-trap-s1, forbid = true, lmove = e5
    A B C D E F G H I J K L M N O
@@ -702,7 +703,7 @@ i8에 돌을 놓아 보니, 8열에서는 4-4금수에 막혀 열린 4를 만들
    A B C D E F G H I J K L M N O
 ```
 
-*백은 흑의 4를 방어해야만 합니다.*
+*White must defend black's four.*
 
 ```fname = counter-forbid-trap-s2, forbid = true, lmove = e4
    A B C D E F G H I J K L M N O
@@ -724,27 +725,7 @@ i8에 돌을 놓아 보니, 8열에서는 4-4금수에 막혀 열린 4를 만들
    A B C D E F G H I J K L M N O
 ```
 
-이게 전부입니다! 이제 흑은 자유롭게 f6에 둘 수 있습니다. 대각선으로 이어지는 4를 만들 수 있는 자리를 미리 만들었으므로, 백의 금수유도로 만들어질 가로와 세로 두 개의 3 중 세로로 이어지는 3은 이제 더 이상 3이 아닙니다.
-
-```fname = counter-forbid-trap-s3, forbid = true, lmove = f6
-   A B C D E F G H I J K L M N O
-15 . . . . . . . . . . . . . . . 15
-14 . . . . . . . . . . . . . . . 14
-13 . . . . . . . . . . . . . . . 13
-12 . . . . . . . . . . . . . . . 12
-11 . . . . . . . . . . . . . . . 11
-10 . . . . . . . . O . . . . . . 10
- 9 . . . . O . . O O . . . . . . 9
- 8 . . . . X . . X . . . . . . . 8
- 7 . . . . X O . . . . . . . . . 7
- 6 . . . . X[X]X . . . . . . . . 6
- 5 . . . . X . . . . . . . . . . 5
- 4 . . . . O . . . . . . . . . . 4
- 3 . . . . . . . . . . . . . . . 3
- 2 . . . . . . . . . . . . . . . 2
- 1 . . . . . . . . . . . . . . . 1
-   A B C D E F G H I J K L M N O
-```
+That's it! Now Black can move freely with ``f6``. Black has made a place in advance to make a diagonal four, so three of the two horizontal and vertical threes that will be made as White's trap is no longer three.
 
 ```fname = counter-forbid-trap-s4, forbid = true, lmove = g8
    A B C D E F G H I J K L M N O
@@ -766,12 +747,12 @@ i8에 돌을 놓아 보니, 8열에서는 4-4금수에 막혀 열린 4를 만들
    A B C D E F G H I J K L M N O
 ```
 
-항상 가능한 것은 아니지만(실전에서는 정말 드물게 등장하는 상황입니다.), 흑은 금수의 조건을 미리 해제하는 노림수를 놓음으로써 금수 유도에서 빠져나갈 수 있습니다. 포기하기 전에 마지막으로 한 번 다시 생각해 볼 가치는 충분합니다!
+Although not always possible (this is a very rare situation in real games), Black can get out of the trap by making a "vaccine move" that removes the condition of the forbidden moves. Well worth one last thought before giving up!
 
-## 완벽합니다!
+## Perfect!
 
-이제 렌주에 대해 꼭 필요한 만큼 모두 아셨습니다. 오목에 어떤 문제가 있는지 알았으며, 렌주가 오목의 문제를 어떻게 해결했는지 알았습니다. 매우 복잡한 상황에서 렌주를 똑바로 적용하는 법을 알았으며, 렌주를 이용해 공격하는 법도 알았습니다.
+Now you know everything you need to know about Renju. You know what's wrong with Gomoku, and you know how Renju solved Gomoku's problem. You know how to apply the Renju rule correctly in very complex situations, and you know how to use Renju to attack and defend.
 
-렌주는 매우 간단하지만 흥미롭고 무궁무진한 전략을 가진 아주 매력적인 게임입니다. GomokuBot과 함께, 여러분의 친구와 함께 더 복잡한 문제에 도전해 보세요. 분명 재미있을 것 입니다.
+Renju is a very simple but very engaging game with an interesting and endless strategy. With GomokuBot, challenge more complex problems with your friends. It will definitely be fun.
 
-더 궁금한 것이 있다면, [지원 채널](https://discord.gg/vq8pkfF)에 방문해 부담 없이 질문해 주세요. GomokuBot과 함께 즐거운 시간 보내시기 바라겠습니다. - *GomokuBot 개발자 junghyun397 드림.*
+If you have any questions, please feel free to visit the GomokuBot [support channel](https://discord.gg/vq8pkfF). I hope you have a good time with GomokuBot. — *GomokuBot developer junghyun397.*

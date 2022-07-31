@@ -329,6 +329,8 @@ sealed interface LanguageContainer {
 
     // # RENJU GUIDE
 
+    fun exploreAboutRenju(): String
+
     fun aboutRenjuDocument(): String
 
 }

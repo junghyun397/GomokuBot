@@ -1,4 +1,4 @@
-package migration
+package tools.migration
 
 import core.assets.GENERIC_PLATFORM_ID
 import core.assets.Guild
