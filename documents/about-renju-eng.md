@@ -44,9 +44,9 @@ In other words, in a plain Gomoku, black **always** wins, even if both black and
 
 Renju chose the "Forbidden moves" rule to address the overwhelming advantage of black First. There are three types of forbids: 3-3 forbid, 4-4 forbid, and overline forbid.
 
-If it looks complicated, don't worry. Forbidden moves are fairly rare in beginner's games, and even if they don't know what a Forbidden move is, it's unlikely to change their win or loss.
+If it looks complicated, don't worry. Forbidden moves are fairly rare in beginner's games, and even if they don't know what a Forbidden moves is, it's unlikely to change their win or loss.
 
-To understand forbidden moves correctly, we must first understand how Gomoku defines three and four, and in which situations the forbidden move appears. Here we start with the definition of four.
+To understand forbidden moves correctly, we must first understand how Gomoku defines three and four, and in which situations the forbidden moves appears. Here we start with the definition of four.
 
 ## What is "Four"?
 
@@ -331,7 +331,7 @@ Even if you can make a 7-in-a-row in a single move, it's an overline forbid. Nei
 
 ## Five-in-a-Row Can Ignore All Forbidden Moves.
 
-Here's the good news (only black unfortunately). Even if forbidden point is created on a point that can be won with a five-in-a-row, if you win with a five-in-a-row, you can move ignoring any forbidden moves.
+Here's the good news (only black unfortunately). Even if forbidden move is created on a point that can be won with a five-in-a-row, if you win with a five-in-a-row, you can move ignoring any forbidden moves.
 
 ```fname = five-in-a-row-and-forbid, forbid = false, lmove = null
    A B C D E F G H I J K L M N O
@@ -357,13 +357,13 @@ Here's the good news (only black unfortunately). Even if forbidden point is crea
 
 Welcome to the much fairer Gomoku! If you've followed this guide far, you know all the basic Renju rules. Now, even if forbidden moves appear, you will be able to unlock that or use other strategies to continue the game without panicking.
 
-Now start a game with your friends with the ``/start @mention`` command. Even if you don't have friends, the GomokuBot AI will always be with you. Don't forget to configure the GomokuBot with the ``/setting`` command as well.
+Now start a game with your friends with the ``/start @mention`` command. Even if you don't have friends, the GomokuBot AI will always be with you. Don't forget to customize GomokuBot with the ``/setting`` command as well.
 
-In the next chapter, we will learn how to figure out forbidden moves in very complex situations and how to attack and defend using forbidden moves. These are strategies for Renju, all possible only in Renju. It can be a little difficult for beginners.
+In the next chapter, we'll learn how to figure out forbidden moves in very complex situations and how to attack and defend using forbidden moves. These are strategies for Renju, all possible only in Renju. It can be a little difficult for beginners.
 
 ## Like a Forbidden Move, But May Not Be a Forbidden Move.
 
-Consider the following situation. Will Black be able to move with ``h9``? At first glance, it seems that ``h9`` is a 3-3 forbid made by two stones arranged vertically in column h and two stones arranged horizontally in column 9, and it seems that black should not be able to move with ``i9``.
+Consider the following situation. Will black be able to move with ``h9``? At first glance, it seems that ``h9`` is a 3-3 forbid made by two stones arranged vertically in column h and two stones arranged horizontally in row 9, and it seems that black should not be able to move with ``i9``.
 
 ```fname = pseudo-forbid-simple, forbid = false, lmove = null
    A B C D E F G H I J K L M N O
@@ -411,7 +411,7 @@ In complex situations, a good way to figure out forbidden moves is to move one s
    A B C D E F G H I J K L M N O
 ```
 
-In this situation, row h is blocked by 4-4 forbid and cannot create straight four. Two stones in row h were not three that could make a straight four in a single move. Let's remember that again. If three or four is not valid, then forbidden move is also invalid. So ``h9`` that can only make one three is not 3-3 forbidden.
+In this situation, column h is blocked by 4-4 forbid and cannot create straight four. Two stones in column h were not three that could make a straight four in a single move. Let's remember the definition of forbidden moves again. If three or four is not valid, then forbidden move is also invalid. So ``h9`` that can only make one three is not 3-3 forbidden.
 
 ## It Doesn't Seem Like a Forbidden Move, But It Could Be a Forbidden Move.
 
@@ -461,9 +461,9 @@ A good way to figure out forbidden moves in a very complex situation is also to 
    A B C D E F G H I J K L M N O
 ```
 
-At first glance, ``i8`` seems to be 3-3 forbid where two stones placed vertically in row i and two stones placed horizontally in row 8. So black can't make straight four diagonally, so isn't ``g10`` a forbidden point?
+At first glance, ``i8`` seems to be 3-3 forbid where two stones placed vertically in column i and two stones placed horizontally in row 8. So black can't make straight four diagonally, so isn't ``g10`` a forbidden point?
 
-That said, the three stones arranged vertically in a row f seem odd. It's too early to judge. Let's make one more move for ``i8``.
+That said, the three stones arranged vertically in a column f seem odd. It's too early to judge. Let's make one more move for ``i8``.
 
 ```fname = pseudo-forbid-complex-s2, forbid = true, lmove = i8
    A B C D E F G H I J K L M N O
@@ -485,9 +485,9 @@ That said, the three stones arranged vertically in a row f seem odd. It's too ea
    A B C D E F G H I J K L M N O
 ```
 
-After making a move on ``i8``, Black is blocked by 4-4 forbid in the 8th row and cannot make a straight four. The ``i8`` after making one move in ``g10`` was not 3-3 forbid!
+After making a move on ``i8``, Black is blocked by 4-4 forbid in row 8 and cannot make a straight four. The ``i8`` after making one move in ``g10`` was not 3-3 forbid!
 
-Now we can figure out that ``i8`` after moving to ``g10`` is not a forbidden point. Therefore, ``g10``, which can make two straight fours by moving the black once, can figure out that 3-3 forbid is correct.
+Now we can figure out that ``i8`` after moving to ``g10`` is not a forbidden point. Therefore, ``g10``, which can make two straight fours by moving black once, can figure out that 3-3 forbid is correct.
 
 ```fname = pseudo-forbid-complex-s3, forbid = true, lmove = null
    A B C D E F G H I J K L M N O
@@ -513,7 +513,7 @@ In the same way, we can figure out that ``i10`` is also a 3-3 forbid. (The ``i10
 
 ## White Can Attack By Targeting Forbidden Points.
 
-Renju's forbidden moves are just a limitation for black, but for white, it's a strategy and an opportunity. Re-focus on the definition of "forbidden moves". Black cannot be placed in a forbidden point in any case except five-in-a-row. Even if White can move to the forbidden point and win, it can't be an exception.
+Renju's forbidden moves are just a limitation for black, but for white, it's a strategy and an opportunity. Re-focus on the definition of forbidden moves. Black cannot be placed in a forbidden point in any case except five-in-a-row. Even if White can move to the forbidden point and win, it can't be an exception.
 
 ```fname = forbid-trap-simple, forbid = true, lmove = null
    A B C D E F G H I J K L M N O
@@ -557,11 +557,11 @@ Here's an interesting situation. Black has one 3-3 forbid, and white has 3 stone
    A B C D E F G H I J K L M N O
 ```
 
-In order to remove 3-3 forbid, Black must make one move and remove one three. But it's too late for that. Very unfortunately, Black has no way to block White from attacking Four. Black should be watching White win by creating a five-in-a-row.
+In order to remove 3-3 forbid, Black must make one move and remove one three. But it's too late for that. Very unfortunately, Black has no way to block white from attacking four. Black should be watching white win by creating a five-in-a-row.
 
 ## White Can Win by Creating a Forbidden Move Trap.
 
-Now if white attacks with a forbidden point, we know that black is going to have to watch white win. But you can't rely on luck or mistakes forever. Given the right circumstances, aggressive attacks can lead the black to create a forebiden point and win.
+Now, if white attacks with a forbidden point, we know that black is going to have to watch white win. But you can't rely on luck or mistakes forever. Given the right circumstances, aggressive attacks can lead the black to create a forbidden point and win.
 
 Here's a situation that looks awful for White. black attacked by making a three with ``f6``. At first glance, white seems to have to block black's three. The black stones that line lower-left also look very strong. Should white be attacked and defeated by black?
 
@@ -725,7 +725,7 @@ Here we need to re-imagine the conditions of forbidden moves. If three or four i
    A B C D E F G H I J K L M N O
 ```
 
-That's it! Now Black can move freely with ``f6``. Black has made a place in advance to make a diagonal four, so three of the two horizontal and vertical threes that will be made as White's trap is no longer three.
+That's it! Now black can move freely with ``f6``. Black has made a place in advance to make a diagonal four, so three of the two horizontal and vertical threes that will be made as White's trap is no longer three.
 
 ```fname = counter-forbid-trap-s4, forbid = true, lmove = g8
    A B C D E F G H I J K L M N O
@@ -747,7 +747,7 @@ That's it! Now Black can move freely with ``f6``. Black has made a place in adva
    A B C D E F G H I J K L M N O
 ```
 
-Although not always possible (this is a very rare situation in real games), Black can get out of the trap by making a "vaccine move" that removes the condition of the forbidden moves. Well worth one last thought before giving up!
+Although not always possible (this is a very rare situation in real games), Black can get out of the trap by making a "prevention move" that removes the condition of the forbidden moves. Well worth one last thought before giving up!
 
 ## Perfect!
 
