@@ -27,6 +27,8 @@ sealed class GameSession(
 
     abstract val messageBufferKey: String
 
+    abstract val recording: Boolean
+
     abstract val expireOffset: Long
 
     val player get() =
@@ -54,6 +56,7 @@ data class AiGameSession(
     override val history: List<Pos?>,
     override val messageBufferKey: String,
     override val expireOffset: Long,
+    override val recording: Boolean,
     override val expireDate: LinuxTime,
 ) : GameSession(expireDate) {
 
@@ -70,6 +73,7 @@ data class PvpGameSession(
     override val history: List<Pos?>,
     override val messageBufferKey: String,
     override val expireOffset: Long,
+    override val recording: Boolean,
     override val expireDate: LinuxTime,
 ) : GameSession(expireDate)
 
@@ -78,20 +82,19 @@ fun GameSession.nextWith(
     move: Pos,
     gameResult: Option<GameResult>,
     messageBufferKey: String = SessionManager.generateMessageBufferKey(this.owner)
-) =
-    when (this) {
-        is AiGameSession -> this.copy(
-            board = board,
-            history = this.history + move,
-            gameResult = gameResult,
-            expireDate = LinuxTime.withExpireOffset(this.expireOffset),
-            messageBufferKey = messageBufferKey
-        )
-        is PvpGameSession -> this.copy(
-            board = board,
-            history = this.history + move,
-            gameResult = gameResult,
-            expireDate = LinuxTime.withExpireOffset(this.expireOffset),
-            messageBufferKey = messageBufferKey
-        )
-    }
+) = when (this) {
+    is AiGameSession -> this.copy(
+        board = board,
+        history = this.history + move,
+        gameResult = gameResult,
+        expireDate = LinuxTime.withExpireOffset(this.expireOffset),
+        messageBufferKey = messageBufferKey
+    )
+    is PvpGameSession -> this.copy(
+        board = board,
+        history = this.history + move,
+        gameResult = gameResult,
+        expireDate = LinuxTime.withExpireOffset(this.expireOffset),
+        messageBufferKey = messageBufferKey
+    )
+}

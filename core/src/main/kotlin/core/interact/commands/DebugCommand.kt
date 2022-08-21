@@ -50,7 +50,7 @@ class DebugCommand(
     ) = runCatching { when (debugType) {
         DebugType.ANALYSIS -> {
             SessionManager.retrieveGameSession(bot.sessions, guild, user.id)?.let { session ->
-                producer.produceSessionArchive(publisher, session)
+                producer.produceSessionArchive(publisher, session, session.gameResult)
                     .flatMap {
                         it.addFile(session.board.toBoardIO().debugText().toInputStream(), "analysis-report-${System.currentTimeMillis()}.txt")
                             .launch()
@@ -90,6 +90,7 @@ class DebugCommand(
                 history = List(board.moves()) { null },
                 messageBufferKey = SessionManager.generateMessageBufferKey(user),
                 expireOffset = bot.config.gameExpireOffset,
+                recording = false,
                 expireDate = LinuxTime.withExpireOffset(bot.config.gameExpireOffset)
             )
 
@@ -135,6 +136,7 @@ class DebugCommand(
                 history = List(vcfCase.moves()) { null },
                 messageBufferKey = SessionManager.generateMessageBufferKey(user),
                 expireOffset = bot.config.gameExpireOffset,
+                recording = false,
                 expireDate = LinuxTime.withExpireOffset(bot.config.gameExpireOffset)
             )
 

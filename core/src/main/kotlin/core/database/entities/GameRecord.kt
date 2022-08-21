@@ -9,6 +9,8 @@ import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import jrenju.notation.Pos
 import utils.assets.LinuxTime
+import utils.structs.Option
+import utils.structs.getOrException
 
 @Suppress("ArrayInDataClass")
 data class GameRecord(
@@ -26,28 +28,32 @@ data class GameRecord(
     val date: LinuxTime
 )
 
-fun GameSession.asGameRecord(guildUid: GuildUid, gameResult: GameResult) =
-    GameRecord(
-        boardStatus = board.boardField(),
-        history = history.map { it!! },
+private val INVALID_POS: Pos = Pos.fromIdx(-1)
 
-        gameResult = gameResult,
+fun GameSession.extractGameRecord(guildUid: GuildUid) =
+    when {
+        this.gameResult.isEmpty || !this.recording || this.history.any { it == null } -> Option.Empty
+        else -> Option(GameRecord(
+            boardStatus = board.boardField(),
+            history = history.map { it ?: INVALID_POS },
 
-        guildId = guildUid,
-        blackId = when {
-            ownerHasBlack -> owner
-            else -> opponent
-        }.let { if (it.id == aiUser.id) null else it.id },
-        whiteId = when {
-            ownerHasBlack -> opponent
-            else -> owner
-        }.let { if (it.id == aiUser.id) null else it.id },
+            gameResult = gameResult.getOrException(),
 
-        aiLevel = when (this) {
-            is AiGameSession -> this.aiLevel
-            else -> null
-        },
+            guildId = guildUid,
+            blackId = when {
+                ownerHasBlack -> owner
+                else -> opponent
+            }.let { if (it.id == aiUser.id) null else it.id },
+            whiteId = when {
+                ownerHasBlack -> opponent
+                else -> owner
+            }.let { if (it.id == aiUser.id) null else it.id },
 
-        date = LinuxTime()
-    )
+            aiLevel = when (this) {
+                is AiGameSession -> this.aiLevel
+                else -> null
+            },
 
+            date = LinuxTime()
+        ))
+    }

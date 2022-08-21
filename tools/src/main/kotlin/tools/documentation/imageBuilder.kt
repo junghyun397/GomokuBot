@@ -14,7 +14,7 @@ fun generateImage(boardSource: String, lastMove: String, fName: String, fPath: S
         Pos.fromCartesian(if (lastMove == "null") "a1" else lastMove).get().idx()
     ).get()
 
-    val (inputStream, _) = ImageBoardRenderer.renderImageBoard(
+    val inputStream = ImageBoardRenderer.renderImageBoard(
         board,
         if (lastMove == "null") Option(emptyList()) else Option.Empty,
         enableForbiddenPoints

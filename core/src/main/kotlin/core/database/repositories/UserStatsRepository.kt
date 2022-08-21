@@ -1,5 +1,6 @@
 package core.database.repositories
 
+import core.assets.GuildUid
 import core.assets.UserUid
 import core.database.DatabaseConnection
 import core.database.entities.UserStats
@@ -30,7 +31,7 @@ object UserStatsRepository {
                         whiteLosses = row["white_losses"] as Int,
                         whiteDraws = row["white_draws"] as Int,
 
-                        date = LinuxTime(row["last_update"] as Long)
+                        last_update = LinuxTime(row["last_update"] as Long)
                     )
                 }
             }
@@ -55,21 +56,36 @@ object UserStatsRepository {
                         whiteLosses = row["white_losses"] as Int,
                         whiteDraws = row["white_draws"] as Int,
 
-                        date = LinuxTime((row["last_update"] as LocalDateTime).toInstant(ZoneOffset.UTC).toEpochMilli())
+                        last_update = LinuxTime((row["last_update"] as LocalDateTime).toInstant(ZoneOffset.UTC).toEpochMilli())
                     )
                 }
             }
             .collectList()
             .awaitSingle()
 
-//    suspend fun fetchRankings(connection: DatabaseConnection, guildUid: GuildUid): List<UserStats> =
-//        connection.liftConnection()
-//            .flatMapMany { dbc -> dbc
-//                .createStatement(
-//                    """
-//                    """.trimIndent()
-//                )
-//                .execute()
-//            }
+    suspend fun fetchRankings(connection: DatabaseConnection, guildUid: GuildUid): List<UserStats> =
+        connection.liftConnection()
+            .flatMapMany { dbc -> dbc
+                .createStatement("SELECT * FROM user_stats ORDER BY black_wins + white_wins DESC LIMIT 10")
+                .execute()
+            }
+            .flatMap { result -> result
+                .map { row, _ ->
+                    UserStats(
+                        userId = UserUid(row["user_id"] as UUID),
+                        blackWins = row["black_wins"] as Int,
+                        blackLosses = row["black_losses"] as Int,
+                        blackDraws = row["black_draws"] as Int,
+
+                        whiteWins = row["white_wins"] as Int,
+                        whiteLosses = row["white_losses"] as Int,
+                        whiteDraws = row["white_draws"] as Int,
+
+                        last_update = LinuxTime((row["last_update"] as LocalDateTime).toInstant(ZoneOffset.UTC).toEpochMilli())
+                    )
+                }
+            }
+            .collectList()
+            .awaitSingle()
 
 }

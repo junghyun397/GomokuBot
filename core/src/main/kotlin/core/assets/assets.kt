@@ -64,7 +64,7 @@ val anonymousUser = User(
     givenId = UserId(0L),
     name = "Anon",
     nameTag = "Anon#0000",
-    announceId = -1,
+    announceId = null,
     profileURL = null,
 )
 
@@ -84,7 +84,7 @@ fun forbiddenFlagToText(flag: Byte) =
 fun Board.toBoardIO(): BoardIO.BoardToText = `BoardIO$`.`MODULE$`.BoardToText(this)
 
 inline fun <reified T : Any> Statement.bindNullable(name: String, value: T?): Statement =
-    if (value != null)
-        bind(name, value)
-    else
-        bindNull(name, T::class.java)
+    when (value) {
+        null -> bindNull(name, T::class.java)
+        else -> bind(name, value)
+    }

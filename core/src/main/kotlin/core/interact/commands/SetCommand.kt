@@ -3,7 +3,7 @@ package core.interact.commands
 import core.BotContext
 import core.assets.Guild
 import core.assets.User
-import core.database.entities.asGameRecord
+import core.database.entities.extractGameRecord
 import core.database.repositories.GameRecordRepository
 import core.interact.Order
 import core.interact.message.MessageAdaptor
@@ -21,6 +21,7 @@ import jrenju.notation.Pos
 import kotlinx.coroutines.Deferred
 import utils.structs.flatMap
 import utils.structs.fold
+import utils.structs.forEach
 import utils.structs.map
 
 class SetCommand(override val name: String, private val session: GameSession, private val pos: Pos) : Command {
@@ -61,7 +62,9 @@ class SetCommand(override val name: String, private val session: GameSession, pr
                         },
                         onDefined = { result ->
                             SessionManager.removeGameSession(bot.sessions, guild, this.session.owner.id)
-                            GameRecordRepository.uploadGameRecord(bot.dbConnection, nextSession.asGameRecord(guild.id, result))
+                            nextSession.extractGameRecord(guild.id).forEach { record ->
+                                GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
+                            }
 
                             val io = when (result) {
                                 is GameResult.Win ->
@@ -81,7 +84,9 @@ class SetCommand(override val name: String, private val session: GameSession, pr
             onDefined = { result -> when (thenSession) {
                 is PvpGameSession -> {
                     SessionManager.removeGameSession(bot.sessions, guild, this.session.owner.id)
-                    GameRecordRepository.uploadGameRecord(bot.dbConnection, thenSession.asGameRecord(guild.id, result))
+                    thenSession.extractGameRecord(guild.id).forEach { record ->
+                        GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
+                    }
 
                     val io = when (result) {
                         is GameResult.Win ->
@@ -97,7 +102,9 @@ class SetCommand(override val name: String, private val session: GameSession, pr
                 }
                 is AiGameSession -> {
                     SessionManager.removeGameSession(bot.sessions, guild, this.session.owner.id)
-                    GameRecordRepository.uploadGameRecord(bot.dbConnection, thenSession.asGameRecord(guild.id, result))
+                    thenSession.extractGameRecord(guild.id).forEach { record ->
+                        GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
+                    }
 
                     val io = when (result) {
                         is GameResult.Win ->

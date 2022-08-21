@@ -5,12 +5,14 @@ import core.database.entities.Announce
 import core.database.entities.UserStats
 import core.interact.i18n.LanguageContainer
 import core.interact.message.graphics.BoardRenderer
+import core.session.GameResult
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
 import jrenju.Board
 import jrenju.notation.Pos
 import kotlinx.coroutines.flow.Flow
 import utils.structs.IO
+import utils.structs.Option
 
 interface MessageProducer<A, B> {
 
@@ -25,7 +27,7 @@ interface MessageProducer<A, B> {
 
     fun produceBoard(publisher: MessagePublisher<A, B>, container: LanguageContainer, renderer: BoardRenderer, session: GameSession): IO<MessageIO<A, B>>
 
-    fun produceSessionArchive(publisher: MessagePublisher<A, B>, session: GameSession): IO<MessageIO<A, B>>
+    fun produceSessionArchive(publisher: MessagePublisher<A, B>, session: GameSession, result: Option<GameResult>): IO<MessageIO<A, B>>
 
     fun attachFocusButtons(boardAction: MessageIO<A, B>, session: GameSession, focus: Pos): MessageIO<A, B>
 

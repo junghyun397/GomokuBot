@@ -3,7 +3,7 @@ package core.interact.commands
 import core.BotContext
 import core.assets.Guild
 import core.assets.User
-import core.database.entities.asGameRecord
+import core.database.entities.extractGameRecord
 import core.database.repositories.GameRecordRepository
 import core.interact.Order
 import core.interact.message.MessageAdaptor
@@ -19,6 +19,7 @@ import core.session.entities.GuildConfig
 import core.session.entities.PvpGameSession
 import kotlinx.coroutines.Deferred
 import utils.structs.flatMap
+import utils.structs.forEach
 import utils.structs.map
 
 class ResignCommand(override val name: String, private val session: GameSession) : Command {
@@ -36,7 +37,9 @@ class ResignCommand(override val name: String, private val session: GameSession)
         val (finishedSession, result) = GameManager.resignSession(this.session, GameResult.Cause.RESIGN, user)
 
         SessionManager.removeGameSession(bot.sessions, guild, session.owner.id)
-        GameRecordRepository.uploadGameRecord(bot.dbConnection, finishedSession.asGameRecord(guild.id, result))
+        finishedSession.extractGameRecord(guild.id).forEach { record ->
+            GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
+        }
 
         val io = when (finishedSession) {
             is AiGameSession ->

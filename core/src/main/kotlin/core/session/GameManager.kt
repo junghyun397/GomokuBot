@@ -102,6 +102,7 @@ object GameManager {
             board = `EmptyBoard$`.`MODULE$`,
             history = emptyList(),
             messageBufferKey = SessionManager.generateMessageBufferKey(owner),
+            recording = true,
             expireOffset = expireOffset,
             expireDate = LinuxTime.withExpireOffset(expireOffset),
         )
@@ -119,6 +120,7 @@ object GameManager {
             board = board,
             history = if (ownerHasBlack) emptyList() else listOf(Renju.BOARD_CENTER_POS()),
             messageBufferKey = SessionManager.generateMessageBufferKey(owner),
+            recording = true,
             expireOffset = expireOffset,
             expireDate = LinuxTime.withExpireOffset(expireOffset),
         )

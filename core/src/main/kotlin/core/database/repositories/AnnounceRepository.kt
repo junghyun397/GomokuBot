@@ -13,10 +13,10 @@ import java.util.*
 object AnnounceRepository {
 
     fun getLatestAnnounceId(connection: DatabaseConnection): Int? =
-        if (connection.localCaches.announceCache.isNotEmpty())
-            connection.localCaches.announceCache.lastKey()
-        else
-            null
+        when {
+            connection.localCaches.announceCache.isNotEmpty() -> connection.localCaches.announceCache.lastKey()
+            else -> null
+        }
 
     fun getAnnouncesSince(connection: DatabaseConnection, announceIndex: Int): List<Map<Language, Announce>> =
         connection.localCaches.announceCache

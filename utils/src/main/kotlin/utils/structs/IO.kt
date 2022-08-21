@@ -24,7 +24,7 @@ interface IO<out A> {
 
         fun <A, B> zip(a: IO<A>, b: IO<B>) =
             object : IO<Pair<A, B>> {
-                override suspend fun run() = a.run() to b.run()
+                override suspend fun run() = Pair(a.run(), b.run())
             }
 
         fun <A, B, C> zip(a: IO<A>, b: IO<B>, c: IO<C>) =
