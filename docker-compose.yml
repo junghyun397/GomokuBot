@@ -1,0 +1,48 @@
+version: "3"
+
+services:
+
+  database:
+    container_name: gomokubot-postgres
+    image: postgres:latest
+    ports:
+      - "54329:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment:
+      - "POSTGRES_USER=gomokubot"
+      - "POSTGRES_DB=gomokubot"
+      - "POSTGRES_PASSWORD=acomplexpassword"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: always
+
+  gomokubot:
+    container_name: gomokubot-discord-app
+    image: gomokubot-discord:latest
+    ports:
+      - "80:80"
+    volumes:
+      - logs:/app/logs
+    environment:
+      - "GOMOKUBOT_KVINE_ADDRESS=localhost"
+      - "GOMOKUBOT_KVINE_PORT=2001"
+
+      - "GOMOKUBOT_DB_URL=r2dbc:postgresql://gomokubot:acomplexpassword@gomokubot-postgres/gomokubot"
+
+      - "GOMOKUBOT_DISCORD_TOKEN=${GOMOKUBOT_DISCORD_TOKEN}"
+      - "GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID=${GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID}"
+      - "GOMOKUBOT_DISCORD_ARCHIVE_CHANNEL_ID=${GOMOKUBOT_DISCORD_ARCHIVE_CHANNEL_ID}"
+      - "GOMOKUBOT_DISCORD_TESTER_ROLE_ID=${GOMOKUBOT_DISCORD_TESTER_ROLE_ID}"
+    depends_on:
+      database:
+        condition: service_healthy
+
+volumes:
+  db:
+    driver: local
+  logs:
+    driver: local
