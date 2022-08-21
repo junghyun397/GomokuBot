@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageEmbed
+import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.exceptions.ContextException
 import net.dv8tion.jda.api.exceptions.ErrorResponseException
 import net.dv8tion.jda.api.interactions.components.ActionRow
@@ -172,8 +173,9 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
         )
     }
 
-    override fun produceSessionArchive(publisher: DiscordMessagePublisher, session: GameSession): IO<DiscordMessageAction> {
-        val (imageStream, fName) = ImageBoardRenderer.renderImageBoard(session.board, Option(session.history), true)
+    override fun produceSessionArchive(publisher: DiscordMessagePublisher, session: GameSession, result: Option<GameResult>): IO<DiscordMessageAction> {
+        val imageStream = ImageBoardRenderer.renderImageBoard(session.board, Option(session.history), true)
+        val fName = ImageBoardRenderer.retrieveFileName()
 
         return IO { publisher(Message(
             embed = Embed {
@@ -181,7 +183,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
 
                 buildBoardAuthor(Language.ENG.container, session)
 
-                session.gameResult.fold(
+                result.fold(
                     onDefined = { buildResultFields(Language.ENG.container, session, it) },
                     onEmpty = { buildStatusFields(Language.ENG.container, session) },
                 )
@@ -213,7 +215,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
             try {
                 coroutineScope {
                     flow
-                        .map { message.original.addReaction(it) }
+                        .map { message.original.addReaction(Emoji.fromUnicode(it)) }
                         .collect {
                             if (checkTerminated())
                                 this@coroutineScope.cancel()

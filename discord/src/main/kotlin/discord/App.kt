@@ -35,17 +35,11 @@ import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEve
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
+import reactor.core.publisher.Flux
 import reactor.util.function.Tuple2
 import utils.assets.LinuxTime
 import utils.log.getLogger
 import utils.structs.forEach
-import kotlin.reflect.KClass
-
-private data class Token(val token: String) {
-    companion object {
-        fun fromEnv() = Token(token = System.getenv("GOMOKUBOT_DISCORD_TOKEN"))
-    }
-}
 
 private data class PostgreSQLConfig(val serverURL: String) {
     companion object {
@@ -66,6 +60,7 @@ private data class KvineConfig(val serverAddress: String, val serverPort: Int) {
 
 object DiscordConfigBuilder {
     fun fromEnv() = DiscordConfig(
+        token = System.getenv("GOMOKUBOT_DISCORD_TOKEN"),
         officialServerId = GuildId(System.getenv("GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID").toLong()),
         archiveChannelId = ChannelId(System.getenv("GOMOKUBOT_DISCORD_ARCHIVE_CHANNEL_ID").toLong()),
         testerRoleId = System.getenv("GOMOKUBOT_DISCORD_TESTER_ROLE_ID").toLong()
@@ -82,9 +77,6 @@ private inline fun <reified E : Event, R : InteractionReport> leaveLog(tuple: Tu
             logger.error("${E::class.simpleName} ${tuple.t1.guild} " +
                     "T${(System.currentTimeMillis() - tuple.t1.emittedTime.timestamp)}ms => ${it.stackTraceToString()}")
         }
-
-private fun leaveLog(event: KClass<*>, error: Throwable) =
-    logger.error("${event.simpleName} ${error.stackTraceToString()}")
 
 private suspend inline fun <E : Event> retrieveInteractionContext(bot: BotContext, discordConfig: DiscordConfig, event: E, jdaUser: net.dv8tion.jda.api.entities.User, jdaGuild: net.dv8tion.jda.api.entities.Guild): InteractionContext<E> {
     val user = UserProfileRepository.retrieveOrInsertUser(bot.dbConnection, DISCORD_PLATFORM_ID, jdaUser.extractId()) {
@@ -137,69 +129,75 @@ object GomokuBot {
 
         val eventManager = ReactiveEventManager()
 
-        eventManager.on<SlashCommandInteractionEvent>()
-            .filter { it.isFromGuild && !it.user.isBot }
-            .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
-            .flatMap(::slashCommandRouter)
-            .onErrorContinue { error, _ -> leaveLog(SlashCommandInteractionEvent::class, error) }
-            .subscribe { leaveLog(it) }
-
-        eventManager.on<MessageReceivedEvent>()
-            .filter { it.isFromGuild && !it.author.isBot && (it.message.contentRaw.startsWith(COMMAND_PREFIX) || it.message.mentions.isMentioned(it.jda.selfUser)) }
-            .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.author, it.guild) } }
-            .flatMap(::textCommandRouter)
-            .onErrorContinue { error, _ -> leaveLog(MessageReceivedEvent::class, error) }
-            .subscribe { leaveLog(it) }
-
-        eventManager.on<ButtonInteractionEvent>()
-            .filter { it.isFromGuild && !it.user.isBot }
-            .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
-            .flatMap(::buttonInteractionRouter)
-            .onErrorContinue { error, _ -> leaveLog(ButtonInteractionEvent::class, error) }
-            .subscribe { leaveLog(it) }
-
-        eventManager.on<SelectMenuInteractionEvent>()
-            .filter { it.isFromGuild && !it.user.isBot }
-            .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
-            .flatMap(::buttonInteractionRouter)
-            .onErrorContinue { error, _ -> leaveLog(SelectMenuInteractionEvent::class, error) }
-            .subscribe { leaveLog(it) }
-
-        eventManager.on<MessageReactionAddEvent>()
-            .filter { it.isFromGuild && !(it.user?.isBot ?: true) }
-            .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user!!, it.guild) } }
-            .flatMap(::reactionRouter)
-            .onErrorContinue { error, _ -> leaveLog(MessageReceivedEvent::class, error) }
-            .subscribe { leaveLog(it) }
-
-        eventManager.on<GuildJoinEvent>()
-            .flatMap { guildJoinRouter(botContext, it) }
-            .onErrorContinue { error, _ -> leaveLog(GuildJoinEvent::class, error) }
-            .subscribe { println("join $it") }
-
-        eventManager.on<GuildLeaveEvent>()
-            .flatMap { mono { GuildProfileRepository.retrieveGuild(botContext.dbConnection, DISCORD_PLATFORM_ID, it.guild.extractId()) } }
-            .onErrorContinue { error, _ -> leaveLog(GuildLeaveEvent::class, error) }
-            .subscribe { guild -> guild.forEach { logger.info("leave $it") } }
-
-        eventManager.on<ReadyEvent>()
-            .subscribe { logger.info("jda ready, complete loading.") }
-
-        eventManager.on<ShutdownEvent>()
-            .subscribe { logger.info("jda shutdown.") }
-
-        logger.info("reactive event manager ready.")
-
-        val jda = JDABuilder.createLight(Token.fromEnv().token)
+        val jda = JDABuilder.createLight(discordConfig.token)
+            .useSharding(0, 1)
             .setEventManager(eventManager)
             .setActivity(Activity.playing("/help or ${COMMAND_PREFIX}help or @GomokuBot"))
             .setStatus(OnlineStatus.ONLINE)
-            .setEnabledIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS)
+            .setEnabledIntents(
+                GatewayIntent.GUILD_MESSAGES,
+                GatewayIntent.GUILD_MESSAGE_REACTIONS,
+                GatewayIntent.MESSAGE_CONTENT
+            )
             .build()
+
+        logger.info("jda ready.")
+
+        Flux.merge(
+            eventManager.on<SlashCommandInteractionEvent>()
+                .filter { it.isFromGuild && !it.user.isBot }
+                .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
+                .flatMap(::slashCommandRouter)
+                .doOnNext { leaveLog(it) },
+
+            eventManager.on<MessageReceivedEvent>()
+                .filter { it.isFromGuild && !it.author.isBot && (it.message.contentRaw.startsWith(COMMAND_PREFIX) || it.message.mentions.isMentioned(it.jda.selfUser)) }
+                .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.author, it.guild) } }
+                .flatMap(::textCommandRouter)
+                .doOnNext { leaveLog(it) },
+
+            eventManager.on<ButtonInteractionEvent>()
+                .filter { it.isFromGuild && !it.user.isBot }
+                .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
+                .flatMap(::buttonInteractionRouter)
+                .doOnNext { leaveLog(it) },
+
+            eventManager.on<SelectMenuInteractionEvent>()
+                .filter { it.isFromGuild && !it.user.isBot }
+                .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
+                .flatMap(::buttonInteractionRouter)
+                .doOnNext { leaveLog(it) },
+
+            eventManager.on<MessageReactionAddEvent>()
+                .filter { it.isFromGuild && !(it.user?.isBot ?: true) }
+                .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user!!, it.guild) } }
+                .flatMap(::reactionRouter)
+                .doOnNext { leaveLog(it) },
+
+            eventManager.on<GuildJoinEvent>()
+                .flatMap { guildJoinRouter(botContext, it) }
+                .doOnNext { println("join $it") },
+
+            eventManager.on<GuildLeaveEvent>()
+                .flatMap { mono { GuildProfileRepository.retrieveGuild(botContext.dbConnection, DISCORD_PLATFORM_ID, it.guild.extractId()) } }
+                .doOnNext { guild -> guild.forEach { logger.info("leave $it") } },
+
+            eventManager.on<ReadyEvent>()
+                .doOnNext { logger.info("jda ready, complete loading.") },
+
+            eventManager.on<ShutdownEvent>()
+                .doOnNext { logger.info("jda shutdown.") },
+
+            scheduleRoutines(botContext, discordConfig, jda)
+        )
+            .onErrorContinue { error, _ -> logger.error(error.stackTraceToString()) }
+            .subscribe()
+
+        logger.info("reactive event manager ready.")
 
         GuildManager.initGlobalCommand(jda)
 
-        scheduleRoutines(logger, botContext, discordConfig, jda)
+        logger.info("discord global command uploaded.")
     }
 
 }

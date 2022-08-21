@@ -2,8 +2,6 @@
 
 package discord.route
 
-import core.assets.UNICODE_CHECK
-import core.assets.UNICODE_CROSS
 import core.database.repositories.AnnounceRepository
 import core.database.repositories.GuildProfileRepository
 import core.database.repositories.UserProfileRepository
@@ -13,6 +11,8 @@ import core.interact.i18n.LanguageContainer
 import core.interact.reports.CommandReport
 import dev.minn.jda.ktx.coroutines.await
 import discord.assets.COMMAND_PREFIX
+import discord.assets.EMOJI_CHECK
+import discord.assets.EMOJI_CROSS
 import discord.assets.extractProfile
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
@@ -43,13 +43,13 @@ import java.util.concurrent.TimeUnit
 @JvmName("buildPermissionNodeSlash")
 private fun buildPermissionNode(tuple: Tuple2<InteractionContext<SlashCommandInteractionEvent>, Option<ParsableCommand>>) =
     tuple.mapT2 { parsable ->
-        buildPermissionNode(tuple.t1, tuple.t1.event.textChannel, tuple.t1.event.user, parsable.getOrException())
+        buildPermissionNode(tuple.t1, tuple.t1.event.channel.asTextChannel(), tuple.t1.event.user, parsable.getOrException())
     }
 
 @JvmName("buildPermissionNodeText")
 private fun buildPermissionNode(tuple: Tuple3<InteractionContext<MessageReceivedEvent>, Option<ParsableCommand>, List<String>>) =
     tuple.mapT2 { parsable ->
-        buildPermissionNode(tuple.t1, tuple.t1.event.textChannel, tuple.t1.event.author, parsable.getOrException())
+        buildPermissionNode(tuple.t1, tuple.t1.event.channel.asTextChannel(), tuple.t1.event.author, parsable.getOrException())
     }
 
 private fun buildPermissionNode(context: InteractionContext<*>, channel: TextChannel, jdaUser: User, parsableCommand: ParsableCommand) =
@@ -93,7 +93,10 @@ private fun buildUpdateProfileNode(tuple: Tuple2<InteractionContext<SlashCommand
 private fun buildUpdateProfileNode(tuple: Tuple2<InteractionContext<MessageReceivedEvent>, Either<Command, DiscordParseFailure>>) =
     buildUpdateProfileNode(tuple, tuple.t1.event.author)
 
-private fun <T : Event> buildUpdateProfileNode(tuple: Tuple2<InteractionContext<T>, Either<Command, DiscordParseFailure>>, jdaUser: User, ): Mono<Tuple2<InteractionContext<T>, Either<Command, DiscordParseFailure>>> {
+private fun <T : Event> buildUpdateProfileNode(
+    tuple: Tuple2<InteractionContext<T>, Either<Command, DiscordParseFailure>>,
+    jdaUser: User,
+): Mono<Tuple2<InteractionContext<T>, Either<Command, DiscordParseFailure>>> {
     val user = jdaUser.extractProfile(tuple.t1.user.id)
     val guild = tuple.t1.jdaGuild.extractProfile(tuple.t1.guild.id)
 
@@ -134,10 +137,10 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
             container = context.config.language.container
         ).toMono()
     )
-        .filter { (_, parsable) -> parsable.isDefined }
+        .filter { (_, maybeParsable) -> maybeParsable.isDefined }
         .map(::buildPermissionNode)
-        .flatMap { (context, combined) -> Mono.zip(context.toMono(), mono {
-            combined.flatMapLeft { parsable ->
+        .flatMap { (context, tuple) -> Mono.zip(context.toMono(), mono {
+            tuple.flatMapLeft { parsable ->
                 parsable.parseSlash(context)
             }
         }) }
@@ -200,18 +203,18 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
             payload.toMono()
         )
     }
-        .filter { (_, parsable, _) -> parsable.isDefined }
+        .filter { (_, maybeParsable, _) -> maybeParsable.isDefined }
         .map(::buildPermissionNode)
-        .flatMap { (context, combined, payload) -> Mono.zip(context.toMono(), mono {
-            combined.flatMapLeft { parsable ->
+        .flatMap { (context, tuple, payload) -> Mono.zip(context.toMono(), mono {
+            tuple.flatMapLeft { parsable ->
                 parsable.parseText(context, payload)
             }
         }) }
         .doOnNext { (context, parsed) ->
-            GuildManager.permissionGrantedRun(context.event.textChannel, Permission.MESSAGE_ADD_REACTION) {
+            GuildManager.permissionGrantedRun(context.event.channel.asTextChannel(), Permission.MESSAGE_ADD_REACTION) {
                 parsed.fold(
-                    onLeft = { context.event.message.addReaction(UNICODE_CHECK).queue() },
-                    onRight = { context.event.message.addReaction(UNICODE_CROSS).queue() }
+                    onLeft = { context.event.message.addReaction(EMOJI_CHECK).queue() },
+                    onRight = { context.event.message.addReaction(EMOJI_CROSS).queue() }
                 )
             }
         }

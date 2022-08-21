@@ -10,7 +10,6 @@ import core.interact.i18n.Language
 import core.interact.reports.ServerJoinReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
-import dev.minn.jda.ktx.coroutines.await
 import discord.assets.DISCORD_PLATFORM_ID
 import discord.assets.extractId
 import discord.interact.GuildManager
@@ -18,26 +17,19 @@ import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.MessageActionAdaptor
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.Permission
-import net.dv8tion.jda.api.Region
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
+import net.dv8tion.jda.api.interactions.DiscordLocale
 import reactor.core.publisher.Mono
 import utils.structs.orElseGet
 import java.util.*
 
-private fun matchLocale(locale: Locale): Language =
+private fun matchLocale(locale: DiscordLocale): Language =
     when (locale) {
-        Locale.KOREA, Locale.KOREAN -> Language.KOR
-        Locale.JAPAN, Locale.JAPANESE -> Language.JPN
+        DiscordLocale.KOREAN -> Language.KOR
+        DiscordLocale.JAPANESE -> Language.JPN
+        DiscordLocale.VIETNAMESE -> Language.VNM
         else -> Language.ENG
     }
-
-private fun matchRegion(regions: EnumSet<Region>): Language =
-    if (Region.SOUTH_KOREA in regions || Region.VIP_SOUTH_KOREA in regions)
-        Language.KOR
-    else if (Region.JAPAN in regions || Region.VIP_JAPAN in regions)
-        Language.JPN
-    else
-        Language.ENG
 
 fun guildJoinRouter(bot: BotContext, event: GuildJoinEvent): Mono<ServerJoinReport> =
     mono {
@@ -51,17 +43,7 @@ fun guildJoinRouter(bot: BotContext, event: GuildJoinEvent): Mono<ServerJoinRepo
         }
 
         val config = GuildConfigRepository.fetchGuildConfig(bot.dbConnection, guild.id)
-            .orElseGet {
-                val matchedLanguage = run {
-                    val language = matchLocale(event.guild.locale)
-
-                    if (language == Language.ENG)
-                        matchRegion(event.guild.retrieveRegions().await())
-                    else language
-                }
-
-                GuildConfig(language = matchedLanguage)
-            }
+            .orElseGet { GuildConfig(language = matchLocale(event.guild.locale)) }
 
         SessionManager.updateGuildConfig(bot.sessions, guild, config)
 
@@ -81,5 +63,5 @@ fun guildJoinRouter(bot: BotContext, event: GuildJoinEvent): Mono<ServerJoinRepo
             }
         }?.isDefined
 
-        ServerJoinReport(guild, commandInserted, helpSent, event.guild.locale.displayName, config.language)
+        ServerJoinReport(guild, commandInserted, helpSent, event.guild.locale.languageName, config.language)
     }

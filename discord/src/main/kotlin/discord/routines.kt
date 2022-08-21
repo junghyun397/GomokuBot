@@ -9,27 +9,23 @@ import core.session.GameResult
 import core.session.SessionManager
 import core.session.entities.AiGameSession
 import core.session.entities.PvpGameSession
-import dev.minn.jda.ktx.coroutines.await
 import discord.interact.DiscordConfig
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.DiscordMessagePublisher
 import discord.interact.message.MessageActionAdaptor
 import discord.route.export
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.reactor.asFlux
 import net.dv8tion.jda.api.JDA
-import org.slf4j.Logger
+import reactor.core.publisher.Flux
 import utils.lang.schedule
 import utils.structs.IO
 import utils.structs.flatMap
 import utils.structs.map
 import java.time.Duration
 
-fun scheduleRoutines(logger: Logger, botContext: BotContext, discordConfig: DiscordConfig, jda: JDA) {
-    val exceptionHandler: (Exception) -> Unit  = { logger.error(it.stackTraceToString()) }
-
-    schedule(Duration.ofHours(1), exceptionHandler) {
+fun scheduleRoutines(botContext: BotContext, discordConfig: DiscordConfig, jda: JDA): Flux<Unit> {
+    val expireSessionFlow = schedule(Duration.ofHours(1)) {
         SessionManager.cleanExpiredGameSession(botContext.sessions).forEach { (_, guildSession, _, session) ->
             val message = SessionManager.viewTailMessage(botContext.sessions, session.messageBufferKey)
 
@@ -57,16 +53,14 @@ fun scheduleRoutines(logger: Logger, botContext: BotContext, discordConfig: Disc
                     .flatMap { it.launch() }
                     .flatMap { buildFinishSequence(botContext, DiscordMessageProducer, publisher, guildSession.config, session, thenSession) }
 
-                CoroutineScope(Dispatchers.Default).launch {
-                    export(botContext, discordConfig, guild, io, null)
-                }
+                export(botContext, discordConfig, guild, io, message)
             }
         }
 
         SessionManager.cleanEmptySessions(botContext.sessions)
     }
 
-    schedule(Duration.ofMinutes(5), exceptionHandler) {
+    val expireRequestSessionFlow = schedule(Duration.ofMinutes(5)) {
         SessionManager.cleanExpiredRequestSessions(botContext.sessions).forEach { (_, guildSession, _, session) ->
             val message = SessionManager.viewTailMessage(botContext.sessions, session.messageBufferKey)
 
@@ -84,17 +78,12 @@ fun scheduleRoutines(logger: Logger, botContext: BotContext, discordConfig: Disc
                 )
                     .map { it.launch(); listOf(Order.DeleteSource) }
 
-                CoroutineScope(Dispatchers.Default).launch {
-                    try {
-                        val original = channel.retrieveMessageById(message.id.idLong).await()
-                        export(botContext, discordConfig, guild, io, original)
-                    } catch (_: Exception) {}
-                }
+                export(botContext, discordConfig, guild, io, message)
             }
         }
     }
 
-    schedule(Duration.ofSeconds(5), exceptionHandler) {
+    val expireNavigateFlow = schedule(Duration.ofSeconds(5)) {
         SessionManager.cleanExpiredNavigators(botContext.sessions).forEach { (message, _) ->
             val guild = jda.getGuildById(message.guildId.idLong)
             val channel = guild?.getTextChannelById(message.channelId.idLong)
@@ -102,19 +91,14 @@ fun scheduleRoutines(logger: Logger, botContext: BotContext, discordConfig: Disc
             if (guild != null && channel != null) {
                 val io = IO { listOf(Order.RemoveNavigators(message)) }
 
-                CoroutineScope(Dispatchers.Default).launch {
-                    try {
-                        val original = channel.retrieveMessageById(message.id.idLong).await()
-                        export(botContext, discordConfig, guild, io, original)
-                    } catch (_: Exception) {}
-                }
+                export(botContext, discordConfig, guild, io, message)
             }
         }
     }
 
-    schedule(Duration.ofMinutes(10), exceptionHandler) {
-        CoroutineScope(Dispatchers.Default).launch {
-            AnnounceRepository.updateAnnounceCache(botContext.dbConnection)
-        }
+    val announceFlow = schedule(Duration.ofMinutes(10)) {
+        AnnounceRepository.updateAnnounceCache(botContext.dbConnection)
     }
+
+    return merge(expireSessionFlow, expireRequestSessionFlow, expireNavigateFlow, announceFlow).asFlux()
 }

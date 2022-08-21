@@ -7,6 +7,7 @@ import core.session.SessionManager
 import core.session.entities.NavigationKind
 import dev.minn.jda.ktx.coroutines.await
 import discord.assets.extractId
+import discord.assets.extractMessageRef
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageAdaptor
 import discord.interact.message.DiscordMessageProducer
@@ -27,14 +28,15 @@ import utils.structs.*
 fun reactionRouter(context: InteractionContext<MessageReactionAddEvent>): Mono<Tuple2<InteractionContext<MessageReactionAddEvent>, Result<CommandReport>>> =
     Mono.zip(
         context.toMono(),
-        SessionManager.getNavigateState(
-            context.bot.sessions,
-            MessageRef(
-                id = MessageId(context.event.messageIdLong),
-                guildId = context.guild.givenId,
-                channelId = context.event.textChannel.extractId()
+        SessionManager
+            .getNavigateState(
+                context.bot.sessions,
+                MessageRef(
+                    id = MessageId(context.event.messageIdLong),
+                    guildId = context.guild.givenId,
+                    channelId = context.event.channel.extractId()
+                )
             )
-        )
             .asOption()
             .map { it to when (it.navigationKind) {
                 NavigationKind.BOARD -> FocusCommandParser
@@ -54,8 +56,8 @@ fun reactionRouter(context: InteractionContext<MessageReactionAddEvent>): Mono<T
                 }
             } }
         ) }
-        .filter { (_, command) -> command.isDefined }
-        .doOnNext {  (context, _) ->
+        .filter { (_, maybeCommand) -> maybeCommand.isDefined }
+        .doOnNext { (context, _) ->
             context.event.reaction.removeReaction(context.event.user!!).queue()
         }
         .flatMap { (context, command) ->
@@ -74,7 +76,7 @@ fun reactionRouter(context: InteractionContext<MessageReactionAddEvent>): Mono<T
         }
         .flatMap { (context, message, result) ->
             Mono.zip(context.toMono(), mono { result.map { (io, report) ->
-                export(context, io, message)
+                export(context, io, message.extractMessageRef())
                 report
             } })
         }

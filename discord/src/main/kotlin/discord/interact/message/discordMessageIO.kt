@@ -4,7 +4,7 @@ import core.assets.MessageRef
 import core.interact.message.MessageAdaptor
 import core.interact.message.MessageIO
 import core.interact.message.MessagePublisher
-import discord.assets.extractMessage
+import discord.assets.extractMessageRef
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.requests.RestAction
@@ -103,7 +103,7 @@ class ReplyActionAdaptor(private val original: ReplyCallbackAction) : DiscordMes
 class DiscordMessageAdaptor(override val original: Message) : MessageAdaptor<Message, DiscordButtons>() {
 
     override val messageRef: MessageRef
-        get() = this.original.extractMessage()
+        get() = this.original.extractMessageRef()
 
     override val buttons: DiscordButtons
         get() = this.original.actionRows

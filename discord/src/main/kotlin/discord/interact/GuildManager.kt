@@ -1,10 +1,12 @@
 package discord.interact
 
 import core.assets.MessageRef
+import core.assets.aiUser
 import core.assets.anonymousUser
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.session.ArchivePolicy
+import core.session.GameResult
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.PvpGameSession
@@ -23,7 +25,7 @@ import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
 import utils.structs.Option
 import utils.structs.flatMap
-import java.time.Duration
+import utils.structs.map
 
 object GuildManager {
 
@@ -59,6 +61,12 @@ object GuildManager {
         }.queue()
     }
 
+    private fun core.assets.User.switchToAnonymousUser() =
+        when (this) {
+            aiUser -> aiUser
+            else -> anonymousUser
+        }
+
     suspend fun archiveSession(archiveChannel: TextChannel, session: GameSession, archivePolicy: ArchivePolicy) {
         if (archivePolicy == ArchivePolicy.PRIVACY) return
 
@@ -70,9 +78,22 @@ object GuildManager {
             else -> session
         }
 
+        val modResult = when (archivePolicy) {
+            ArchivePolicy.BY_ANONYMOUS -> modSession.gameResult.map { result ->
+                when (result) {
+                    is GameResult.Win -> result.copy(
+                        winner = result.winner.switchToAnonymousUser(),
+                        looser = result.looser.switchToAnonymousUser()
+                    )
+                    else -> result
+                }
+            }
+            else -> modSession.gameResult
+        }
+
         val publisher: DiscordMessagePublisher = { msg -> MessageActionAdaptor(archiveChannel.sendMessage(msg)) }
 
-        DiscordMessageProducer.produceSessionArchive(publisher, modSession)
+        DiscordMessageProducer.produceSessionArchive(publisher, modSession, modResult)
             .flatMap { it.launch() }
             .run()
     }
@@ -95,11 +116,7 @@ object GuildManager {
 
     fun removeReactions(message: net.dv8tion.jda.api.entities.Message) {
         if (message.reactions.isNotEmpty())
-            message
-                .reactions
-                .map { it.removeReaction() }
-                .reduce { acc, removeAction -> acc.delay(Duration.ofMillis(500)).and(removeAction) }
-                .queue()
+            message.clearReactions().queue()
     }
 
 }

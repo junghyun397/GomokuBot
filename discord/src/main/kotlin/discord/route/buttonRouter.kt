@@ -3,6 +3,7 @@
 package discord.route
 
 import core.interact.reports.CommandReport
+import discord.assets.extractMessageRef
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageAdaptor
 import discord.interact.message.DiscordMessageProducer
@@ -44,15 +45,15 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
             )
         }.toMono()
     )
-        .flatMap { (context, parsable) -> Mono.zip(
+        .flatMap { (context, maybeParsable) -> Mono.zip(
             context.toMono(),
-            mono { parsable.flatMap { parsable ->
+            mono { maybeParsable.flatMap { parsable ->
                 parsable.parseButton(context)
             } }
         ) }
         .filter { (_, parsable) -> parsable.isDefined }
         .doOnNext { (context, _) -> context.event.deferReply().queue() }
-        .flatMap { (context, command) -> Mono.zip(context.toMono(), mono { command.getOrException()
+        .flatMap { (context, maybeCommand) -> Mono.zip(context.toMono(), mono { maybeCommand.getOrException()
             .execute(
                 bot = context.bot,
                 config = context.config,
@@ -65,6 +66,6 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
             )
         }) }
         .flatMap { (context, result) -> Mono.zip(context.toMono(), mono { result.map { (io, report) ->
-            export(context, io, context.event.message)
+            export(context, io, context.event.message.extractMessageRef())
             report
         } }) }
