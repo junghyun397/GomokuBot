@@ -86,6 +86,12 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
     protected val aboutRenjuDocument: (LanguageContainer) -> MarkdownLikeDocument = memoize { container ->
         parseMarkdownLikeDocument(container.aboutRenjuDocument())
     }
+
+    // RANK
+
+    override fun produceUserNotFound(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
+        publisher sends container.rankErrorNotFound()
+
     // LANG
 
     protected val languageList =

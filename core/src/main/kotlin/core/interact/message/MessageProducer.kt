@@ -79,6 +79,8 @@ interface MessageProducer<A, B> {
 
     fun produceRankings(publisher: MessagePublisher<A, B>, container: LanguageContainer, rankings: List<Pair<User, UserStats>>): IO<MessageIO<A, B>>
 
+    fun produceUserNotFound(publisher: MessagePublisher<A, B>, container: LanguageContainer): IO<MessageIO<A, B>>
+
     // RATING
 
     fun produceRating(publisher: MessagePublisher<A, B>, container: LanguageContainer): IO<MessageIO<A, B>>

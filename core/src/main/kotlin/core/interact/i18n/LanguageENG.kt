@@ -67,6 +67,16 @@ open class LanguageENG : LanguageContainer {
 
     override fun rankCommand() = "rank"
     override fun rankCommandDescription() = "Get a ranking from 1st to 10th."
+    override fun rankCommandSubGlobal() = "global"
+    override fun rankCommandSubGlobalDescription() = "Get the Gomokubot overall ranking."
+    override fun rankCommandSubServer() = "server"
+    override fun rankCommandSubServerDescription() = "Get an internal server ranking."
+    override fun rankCommandSubUser() = "user"
+    override fun rankCommandSubUserDescription() = "Get user-opponents ranking."
+    override fun rankCommandOptionPlayer() = "player"
+    override fun rankCommandOptionPlayerDescription() = "Specific a player to check the opponent ranking."
+
+    override fun rankErrorNotFound() = "User record not found. Please specify a user who has played GomokuBot PvP."
 
     // ### 1-2-2. RANK:LIST (EMBED)
 

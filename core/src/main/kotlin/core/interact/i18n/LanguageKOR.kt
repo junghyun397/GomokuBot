@@ -67,6 +67,16 @@ open class LanguageKOR : LanguageENG() {
 
     override fun rankCommand() = "순위"
     override fun rankCommandDescription() = "1위부터 10위까지의 순위를 알아봅니다."
+    override fun rankCommandSubGlobal() = "전체"
+    override fun rankCommandSubGlobalDescription() = "GomokuBot 전체 순위을 알아봅니다."
+    override fun rankCommandSubServer() = "서버"
+    override fun rankCommandSubServerDescription() = "서버 내부 순위를 알아봅니다."
+    override fun rankCommandSubUser() = "유저"
+    override fun rankCommandSubUserDescription() = "유저-상대 순위를 알아봅니다."
+    override fun rankCommandOptionPlayer() = "유저"
+    override fun rankCommandOptionPlayerDescription() = "상대 순위를 알아볼 유저를 지정해 주세요."
+
+    override fun rankErrorNotFound() = "유저 기록을 찾을 수 없습니다. GomokuBot PvP 플레이 기록이 있는 유저를 지정해 주세요."
 
     // ### 1-2-2. RANK:LIST (EMBED)
 

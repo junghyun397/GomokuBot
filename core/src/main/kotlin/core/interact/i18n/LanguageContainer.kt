@@ -71,6 +71,16 @@ sealed interface LanguageContainer {
 
     fun rankCommand(): String
     fun rankCommandDescription(): String
+    fun rankCommandSubGlobal(): String
+    fun rankCommandSubGlobalDescription(): String
+    fun rankCommandSubServer(): String
+    fun rankCommandSubServerDescription(): String
+    fun rankCommandSubUser(): String
+    fun rankCommandSubUserDescription(): String
+    fun rankCommandOptionPlayer(): String
+    fun rankCommandOptionPlayerDescription(): String
+
+    fun rankErrorNotFound(): String
 
     // ### 1-2-2. RANK:LIST (EMBED)
 

@@ -15,7 +15,20 @@ import kotlinx.coroutines.Deferred
 import utils.structs.flatMap
 import utils.structs.map
 
-class RankCommand(override val name: String) : Command {
+sealed class RankScope {
+
+    object Global : RankScope()
+
+    object Guild : RankScope()
+
+    class User(val target: core.assets.User) : RankScope()
+
+}
+
+class RankCommand(
+    override val name: String,
+    private val scope: RankScope,
+) : Command {
 
     override suspend fun <A, B> execute(
         bot: BotContext,
@@ -27,7 +40,11 @@ class RankCommand(override val name: String) : Command {
         publisher: MessagePublisher<A, B>,
         editPublisher: MessagePublisher<A, B>,
     ) = runCatching {
-        val rankings = UserStatsRepository.fetchRankings(bot.dbConnection)
+        val rankings = when (this.scope) {
+            is RankScope.Global -> UserStatsRepository.fetchRankings(bot.dbConnection)
+            is RankScope.Guild -> UserStatsRepository.fetchRankings(bot.dbConnection, guild.id)
+            is RankScope.User -> UserStatsRepository.fetchRankings(bot.dbConnection, scope.target.id)
+        }
 
         val tuple = rankings
             .map { UserProfileRepository.retrieveUser(bot.dbConnection, it.userId) to it }
