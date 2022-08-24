@@ -40,18 +40,17 @@ suspend fun export(bot: BotContext, discordConfig: DiscordConfig, jdaGuild: JDAG
                             }
                         } catch (_: ErrorResponseException) {}
                     } }
-            is Order.RemoveNavigators -> {
+            is Order.RemoveNavigators ->
                 jdaGuild.getTextChannelById(order.messageRef.channelId.idLong)?.also { channel ->
                     channel.clearReactionsById(order.messageRef.id.idLong).queue()
-                }
 
-                if (order.reduceComponents) {
-                    GuildManager.retrieveJDAMessage(jdaGuild.jda, order.messageRef)?.let { originalMessage ->
-                        GuildManager.retainFirstEmbed(originalMessage)
-                        GuildManager.removeComponents(originalMessage)
+                    if (order.reduceComponents) {
+                        GuildManager.retrieveJDAMessage(jdaGuild.jda, order.messageRef)?.let { originalMessage ->
+                            GuildManager.retainFirstEmbed(originalMessage)
+                            GuildManager.removeComponents(originalMessage)
+                        }
                     }
                 }
-            }
             is Order.ArchiveSession -> GuildManager.archiveSession(
                 jdaGuild.jda.getTextChannelById(discordConfig.archiveChannelId.idLong)!!,
                 order.session, order.policy

@@ -24,7 +24,7 @@ typealias DiscordMessageAction = MessageIO<Message, DiscordButtons>
 
 abstract class DiscordMessageActionAdaptor(private val original: RestAction<*>) : DiscordMessageAction {
 
-    override fun launch() = IO.lift { this.original.queue() }
+    override fun launch() = IO.effect { this.original.queue() }
 
 }
 
@@ -35,7 +35,8 @@ class WebHookActionAdaptor(private val original: WebhookMessageAction<Message>) 
     override fun addButtons(buttons: DiscordButtons) = WebHookActionAdaptor(original.addActionRows(buttons))
 
     override suspend fun retrieve(): DiscordMessageAdaptor = suspendCoroutine { control ->
-        this.original.queue { control.resume(DiscordMessageAdaptor(it)) }
+        this.original
+            .queue { control.resume(DiscordMessageAdaptor(it)) }
     }
 
 }
@@ -50,7 +51,7 @@ class WebHookUpdateActionAdaptor(
     override fun addButtons(buttons: DiscordButtons) = WebHookUpdateActionAdaptor(original, this.components + buttons)
 
     override fun launch() =
-        IO.lift {
+        IO.effect {
             this.original
                 .setActionRows(this.components)
                 .queue()
@@ -74,7 +75,7 @@ class MessageActionAdaptor(
     override fun addButtons(buttons: DiscordButtons) = MessageActionAdaptor(original, components + buttons)
 
     override fun launch() =
-        IO.lift {
+        IO.effect {
             this.original
                 .setActionRows(this.components)
                 .queue()
@@ -95,7 +96,8 @@ class ReplyActionAdaptor(private val original: ReplyCallbackAction) : DiscordMes
     override fun addButtons(buttons: DiscordButtons) = ReplyActionAdaptor(original.addActionRows(buttons))
 
     override suspend fun retrieve(): DiscordMessageAdaptor = suspendCoroutine { control ->
-        this.original.queue { hook -> hook.retrieveOriginal().queue { control.resume(DiscordMessageAdaptor(it)) } }
+        this.original
+            .queue { hook -> hook.retrieveOriginal().queue { control.resume(DiscordMessageAdaptor(it)) } }
     }
 
 }

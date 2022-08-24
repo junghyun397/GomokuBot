@@ -8,14 +8,16 @@ interface IO<out A> {
 
     companion object {
 
-        val unitIO = IO { }
+        val unitIO = object : IO<Unit> {
+            override suspend fun run() = Unit
+        }
 
         inline fun <A> unit(crossinline block: suspend () -> A) =
             object : IO<A> {
                 override suspend fun run() = block()
             }
 
-        inline fun lift(block: () -> Unit): IO<Unit> {
+        inline fun effect(block: () -> Unit): IO<Unit> {
             block()
             return unitIO
         }

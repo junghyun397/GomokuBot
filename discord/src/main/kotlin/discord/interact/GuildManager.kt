@@ -68,7 +68,7 @@ object GuildManager {
         }
 
     suspend fun archiveSession(archiveChannel: TextChannel, session: GameSession, archivePolicy: ArchivePolicy) {
-        if (archivePolicy == ArchivePolicy.PRIVACY) return
+        if (session.board.moves() < 20 || archivePolicy == ArchivePolicy.PRIVACY) return
 
         val modSession = when (archivePolicy) {
             ArchivePolicy.BY_ANONYMOUS -> when (session) {
@@ -113,10 +113,5 @@ object GuildManager {
     fun removeComponents(message: net.dv8tion.jda.api.entities.Message) =
         message.editMessageComponents()
             .queue()
-
-    fun removeReactions(message: net.dv8tion.jda.api.entities.Message) {
-        if (message.reactions.isNotEmpty())
-            message.clearReactions().queue()
-    }
 
 }
