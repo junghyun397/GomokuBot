@@ -57,11 +57,13 @@ private fun buildPermissionNode(context: InteractionContext<*>, channel: TextCha
         DiscordParseFailure(parsableCommand.name, "message permission not granted in $channel", context.user) { _, _, container ->
             IO {
                 jdaUser.openPrivateChannel()
-                    .flatMap { privateChannel -> DiscordMessageProducer.sendPermissionNotGrantedEmbed(
-                        publisher = { msg -> privateChannel.sendMessage(msg) },
-                        container = container,
-                        channelName = channel.name
-                    ) }
+                    .flatMap { privateChannel ->
+                        DiscordMessageProducer.sendPermissionNotGrantedEmbed(
+                            publisher = { msg -> privateChannel.sendMessage(msg) },
+                            container = container,
+                            channelName = channel.name
+                        )
+                    }
                     .delay(1, TimeUnit.MINUTES)
                     .flatMap(Message::delete)
                     .queue()
@@ -75,15 +77,11 @@ private fun buildPermissionNode(context: InteractionContext<*>, channel: TextCha
     )
 
 private fun <T : Event> buildAnnounceNode(tuple: Tuple2<InteractionContext<T>, Either<Command, DiscordParseFailure>>) =
-    if (
-        tuple.t2.isLeft &&
-        (tuple.t1.user.announceId ?: -1) < (AnnounceRepository.getLatestAnnounceId(tuple.t1.bot.dbConnection) ?: -1)
-    )
-        tuple.mapT2 { parsed -> parsed
-            .mapLeft { AnnounceCommand("a+", it) }
-        }
-    else
-        tuple
+    when {
+        tuple.t2.isLeft && (tuple.t1.user.announceId ?: -1) < (AnnounceRepository.getLatestAnnounceId(tuple.t1.bot.dbConnection) ?: -1) ->
+            tuple.mapT2 { parsed -> parsed.mapLeft { AnnounceCommand("a+", it) } }
+        else -> tuple
+    }
 
 @JvmName("buildUpdateProfileNodeSlash")
 private fun buildUpdateProfileNode(tuple: Tuple2<InteractionContext<SlashCommandInteractionEvent>, Either<Command, DiscordParseFailure>>) =
@@ -97,8 +95,8 @@ private fun <T : Event> buildUpdateProfileNode(
     tuple: Tuple2<InteractionContext<T>, Either<Command, DiscordParseFailure>>,
     jdaUser: User,
 ): Mono<Tuple2<InteractionContext<T>, Either<Command, DiscordParseFailure>>> {
-    val user = jdaUser.extractProfile(tuple.t1.user.id)
-    val guild = tuple.t1.jdaGuild.extractProfile(tuple.t1.guild.id)
+    val user = jdaUser.extractProfile(uid = tuple.t1.user.id, announceId = tuple.t1.user.announceId)
+    val guild = tuple.t1.jdaGuild.extractProfile(uid = tuple.t1.guild.id)
 
     return when {
         user != tuple.t1.user -> mono {

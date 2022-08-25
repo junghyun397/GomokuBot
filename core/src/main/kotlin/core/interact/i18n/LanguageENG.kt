@@ -70,7 +70,7 @@ open class LanguageENG : LanguageContainer {
     override fun rankCommandSubGlobal() = "global"
     override fun rankCommandSubGlobalDescription() = "Get the Gomokubot overall ranking."
     override fun rankCommandSubServer() = "server"
-    override fun rankCommandSubServerDescription() = "Get an internal server ranking."
+    override fun rankCommandSubServerDescription() = "Get internal server ranking."
     override fun rankCommandSubUser() = "user"
     override fun rankCommandSubUserDescription() = "Get user-opponents ranking."
     override fun rankCommandOptionPlayer() = "player"

@@ -21,5 +21,5 @@ fun net.dv8tion.jda.api.entities.Channel.extractId() = ChannelId(this.idLong)
 fun net.dv8tion.jda.api.entities.Guild.extractProfile(uid: GuildUid = GuildUid(UUID.randomUUID())) =
     Guild(uid, DISCORD_PLATFORM_ID, this.extractId(), this.name)
 
-fun net.dv8tion.jda.api.entities.User.extractProfile(uid: UserUid = UserUid(UUID.randomUUID())) =
-    User(uid, DISCORD_PLATFORM_ID, this.extractId(), this.name, this.asTag, null, this.avatarUrl)
+fun net.dv8tion.jda.api.entities.User.extractProfile(uid: UserUid = UserUid(UUID.randomUUID()), announceId: Int? = null) =
+    User(uid, DISCORD_PLATFORM_ID, this.extractId(), this.name, this.asTag, announceId, this.avatarUrl)
