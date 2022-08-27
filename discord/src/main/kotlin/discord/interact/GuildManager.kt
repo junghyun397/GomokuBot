@@ -104,14 +104,19 @@ object GuildManager {
             ?.retrieveMessageById(messageRef.id.idLong)
             ?.await()
 
-    fun retainFirstEmbed(message: net.dv8tion.jda.api.entities.Message) {
+    fun retainFirstEmbed(message: net.dv8tion.jda.api.entities.Message) =
         message.editMessage(Message(embed = message.embeds.first()))
             .retainFiles(message.attachments) // TODO: JDA v10 API
             .queue()
-    }
 
     fun removeComponents(message: net.dv8tion.jda.api.entities.Message) =
         message.editMessageComponents()
+            .queue()
+
+    fun clearReaction(message: net.dv8tion.jda.api.entities.Message) =
+        message.reactions
+            .map { it.removeReaction(message.jda.selfUser) }
+            .reduce { acc, action -> acc.and(action) }
             .queue()
 
 }

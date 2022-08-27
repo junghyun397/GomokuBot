@@ -18,7 +18,7 @@ import discord.interact.parse.parsers.NavigateCommandParser
 import kotlinx.coroutines.async
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.Permission
-import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
+import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.util.function.Tuple2
@@ -28,7 +28,7 @@ import utils.lang.component2
 import utils.lang.component3
 import utils.structs.*
 
-fun reactionRouter(context: InteractionContext<MessageReactionAddEvent>): Mono<Tuple2<InteractionContext<MessageReactionAddEvent>, Result<CommandReport>>> =
+fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mono<Tuple2<InteractionContext<GenericMessageReactionEvent>, Result<CommandReport>>> =
     Mono.zip(
         context.toMono(),
         SessionManager
@@ -41,7 +41,6 @@ fun reactionRouter(context: InteractionContext<MessageReactionAddEvent>): Mono<T
                 )
             )
             .asOption()
-            .filter { GuildManager.lookupPermission(context.event.channel.asTextChannel(), Permission.MESSAGE_MANAGE) }
             .map { it and when (it.navigationKind) {
                 NavigationKind.BOARD -> FocusCommandParser
                 NavigationKind.ABOUT, NavigationKind.SETTINGS -> NavigateCommandParser
@@ -60,14 +59,11 @@ fun reactionRouter(context: InteractionContext<MessageReactionAddEvent>): Mono<T
                 }
             } }
         ) }
-        .doOnNext { (context, maybeCommand) ->
-            if (maybeCommand.isEmpty) {
-                context.event.channel.asTextChannel().clearReactionsById(context.event.messageIdLong).queue()
-            }
-        }
         .filter { (_, maybeCommand) -> maybeCommand.isDefined }
         .doOnNext { (context, _) ->
-            context.event.reaction.removeReaction(context.event.user!!).queue()
+            GuildManager.permissionGrantedRun(context.event.channel.asTextChannel(), Permission.MESSAGE_MANAGE) {
+                context.event.reaction.removeReaction(context.event.user!!).queue()
+            }
         }
         .flatMap { (context, command) ->
             Mono.zip(context.toMono(), command.getOrException().second.toMono(), mono { command.getOrException().first

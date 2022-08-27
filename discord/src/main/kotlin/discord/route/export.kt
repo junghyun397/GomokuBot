@@ -8,8 +8,9 @@ import discord.assets.JDAGuild
 import discord.interact.DiscordConfig
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
-import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.exceptions.ErrorResponseException
+import net.dv8tion.jda.api.requests.RestAction
+import net.dv8tion.jda.api.requests.restaction.AuditableRestAction
 import utils.structs.IO
 
 suspend fun export(context: InteractionContext<*>, io: IO<List<Order>>, source: MessageRef?) =
@@ -29,23 +30,18 @@ suspend fun export(bot: BotContext, discordConfig: DiscordConfig, jdaGuild: JDAG
                     ?.groupBy { it.channelId }
                     ?.forEach { (channelId, messageRefs) -> jdaGuild.getTextChannelById(channelId.idLong)?.let { channel ->
                         try {
-                            GuildManager.permissionGrantedRun(channel, Permission.MESSAGE_MANAGE) {
-                                when {
-                                    messageRefs.size < 2 ->
-                                        channel.deleteMessageById(messageRefs.first().id.idLong.toString())
-                                    else ->
-                                        channel.deleteMessagesByIds(messageRefs.map { it.id.idLong.toString() })
-                                }
-                                    .queue()
-                            }
+                            messageRefs
+                                .map { channel.deleteMessageById(it.id.idLong) }
+                                .reduce<RestAction<Void>, AuditableRestAction<Void>> { acc, action -> acc.and(action) }
+                                .queue()
                         } catch (_: ErrorResponseException) {}
                     } }
             is Order.RemoveNavigators ->
-                jdaGuild.getTextChannelById(order.messageRef.channelId.idLong)?.also { channel ->
-                    channel.clearReactionsById(order.messageRef.id.idLong).queue()
+                jdaGuild.getTextChannelById(order.messageRef.channelId.idLong)?.run {
+                    GuildManager.retrieveJDAMessage(jdaGuild.jda, order.messageRef)?.let { originalMessage ->
+                        GuildManager.clearReaction(originalMessage)
 
-                    if (order.reduceComponents) {
-                        GuildManager.retrieveJDAMessage(jdaGuild.jda, order.messageRef)?.let { originalMessage ->
+                        if (order.reduceComponents) {
                             GuildManager.retainFirstEmbed(originalMessage)
                             GuildManager.removeComponents(originalMessage)
                         }

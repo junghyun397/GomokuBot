@@ -24,6 +24,7 @@ import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.entities.Activity
+import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.ReadyEvent
 import net.dv8tion.jda.api.events.ShutdownEvent
@@ -34,6 +35,7 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
+import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
 import reactor.core.publisher.Flux
 import reactor.util.function.Tuple2
@@ -145,13 +147,13 @@ object GomokuBot {
 
         Flux.merge(
             eventManager.on<SlashCommandInteractionEvent>()
-                .filter { it.isFromGuild && !it.user.isBot }
+                .filter { it.isFromGuild && it.channel.type == ChannelType.TEXT && !it.user.isBot }
                 .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
                 .flatMap(::slashCommandRouter)
                 .doOnNext { leaveLog(it) },
 
             eventManager.on<MessageReceivedEvent>()
-                .filter { it.isFromGuild && !it.author.isBot && (it.message.contentRaw.startsWith(COMMAND_PREFIX) || it.message.mentions.isMentioned(it.jda.selfUser)) }
+                .filter { it.isFromGuild && it.channel.type == ChannelType.TEXT && !it.author.isBot && (it.message.contentRaw.startsWith(COMMAND_PREFIX) || it.message.mentions.isMentioned(it.jda.selfUser)) }
                 .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.author, it.guild) } }
                 .flatMap(::textCommandRouter)
                 .doOnNext { leaveLog(it) },
@@ -169,6 +171,12 @@ object GomokuBot {
                 .doOnNext { leaveLog(it) },
 
             eventManager.on<MessageReactionAddEvent>()
+                .filter { it.isFromGuild && !(it.user?.isBot ?: true) }
+                .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user!!, it.guild) } }
+                .flatMap(::reactionRouter)
+                .doOnNext { leaveLog(it) },
+
+            eventManager.on<MessageReactionRemoveEvent>()
                 .filter { it.isFromGuild && !(it.user?.isBot ?: true) }
                 .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user!!, it.guild) } }
                 .flatMap(::reactionRouter)
