@@ -21,14 +21,14 @@ dependencies {
 
     implementation("io.r2dbc:r2dbc-postgresql:0.8.12.RELEASE")
 
-    runtimeOnly("io.netty:netty-all:4.1.77.Final")
-    runtimeOnly("io.netty:netty-tcnative-boringssl-static:2.0.53.Final")
+    runtimeOnly("io.netty:netty-all:4.1.79.Final")
+    runtimeOnly("io.netty:netty-tcnative-boringssl-static:2.0.54.Final")
 
-    implementation("io.grpc:grpc-stub:1.47.0")
+    implementation("io.grpc:grpc-stub:1.48.0")
     implementation("io.grpc:grpc-kotlin-stub:$grpcKotlinVersion")
     implementation("io.grpc:grpc-protobuf:$grpcVersion")
     implementation("com.google.protobuf:protobuf-kotlin:$protobufVersion")
-    implementation("io.grpc:grpc-netty:1.47.0")
+    implementation("io.grpc:grpc-netty:1.48.0")
 }
 
 protobuf {

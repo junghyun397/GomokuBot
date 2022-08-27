@@ -27,6 +27,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
+import utils.lang.and
 import utils.structs.*
 
 object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), ParsableCommand, EmbeddableCommand, BuildableCommand {
@@ -107,7 +108,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
         val (rawColumn, rawRow) = payload
             .drop(1)
             .take(2)
-            .let { if (it.size != 2) null to null else it.component1() to it.component2() }
+            .let { if (it.size != 2) null and null else it.component1() and it.component2() }
 
         return this.parseActually(context, context.user, rawRow, rawColumn)
     }
@@ -115,7 +116,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
     override suspend fun parseButton(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
         val (column, row) = context.event.componentId
             .drop(2)
-            .let { this.matchColumn(it.take(1)) to this.matchRow(it.drop(1)) }
+            .let { this.matchColumn(it.take(1)) and this.matchRow(it.drop(1)) }
 
         if (row == null || column == null) return Option.Empty
 

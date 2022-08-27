@@ -36,6 +36,7 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
 import net.dv8tion.jda.api.requests.RestAction
 import utils.assets.toEnumString
+import utils.lang.and
 import utils.lang.memoize
 import utils.structs.IO
 import utils.structs.Option
@@ -366,7 +367,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
                 this.buildCommandGuideEmbed(container),
                 this.buildExploreAboutRenjuEmbed(container)
             )))
-            else -> publisher(Message(embeds = this.buildAboutRenjuEmbed(page - 1 to container)))
+            else -> publisher(Message(embeds = this.buildAboutRenjuEmbed(page - 1 and container)))
         }
 
     override fun produceHelp(publisher: DiscordMessagePublisher, container: LanguageContainer, page: Int) =

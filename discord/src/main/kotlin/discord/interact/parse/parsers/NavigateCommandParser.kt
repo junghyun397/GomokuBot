@@ -26,7 +26,7 @@ object NavigateCommandParser : NavigableCommand {
         return if (isForward == null)
             Option.Empty
         else
-            Option(NavigateCommand("*n", state, isForward))
+            Option(NavigateCommand("navigate", state, isForward))
     }
 
 }

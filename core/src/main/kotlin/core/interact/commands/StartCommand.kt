@@ -15,6 +15,7 @@ import core.session.entities.GuildConfig
 import core.session.entities.RequestSession
 import kotlinx.coroutines.Deferred
 import utils.assets.LinuxTime
+import utils.lang.and
 import utils.structs.IO
 import utils.structs.flatMap
 import utils.structs.map
@@ -41,7 +42,7 @@ class StartCommand(override val name: String = "start", val opponent: User?) : C
                     .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, gameSession) }
                     .map { emptyList<Order>() }
 
-                io to this.asCommandReport("start game session with AI", user)
+                io and this.asCommandReport("start game session with AI", user)
             }
             else -> {
                 val requestSession = RequestSession(
@@ -56,7 +57,7 @@ class StartCommand(override val name: String = "start", val opponent: User?) : C
                     .flatMap { IO { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.retrieve().messageRef) } }
                     .map { emptyList<Order>()  }
 
-                io to this.asCommandReport("make request to ${this.opponent}", user)
+                io and this.asCommandReport("make request to ${this.opponent}", user)
             }
         }
     }

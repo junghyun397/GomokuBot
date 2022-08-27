@@ -79,7 +79,7 @@ private fun buildPermissionNode(context: InteractionContext<*>, channel: TextCha
 private fun <T : Event> buildAnnounceNode(tuple: Tuple2<InteractionContext<T>, Either<Command, DiscordParseFailure>>) =
     when {
         tuple.t2.isLeft && (tuple.t1.user.announceId ?: -1) < (AnnounceRepository.getLatestAnnounceId(tuple.t1.bot.dbConnection) ?: -1) ->
-            tuple.mapT2 { parsed -> parsed.mapLeft { AnnounceCommand("a+", it) } }
+            tuple.mapT2 { parsed -> parsed.mapLeft { AnnounceCommand("announce+", it) } }
         else -> tuple
     }
 

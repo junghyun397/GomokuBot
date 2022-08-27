@@ -11,6 +11,7 @@ import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
 import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
+import utils.lang.and
 import utils.structs.flatMap
 
 class AnnounceCommand(override val name: String, private val command: Command) : Command {
@@ -44,7 +45,7 @@ class AnnounceCommand(override val name: String, private val command: Command) :
 
             val report = originalReport.copy(commandName = "$name${originalReport.commandName}")
 
-            io to report
+            io and report
         }
 
 }

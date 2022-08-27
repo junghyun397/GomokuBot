@@ -10,6 +10,7 @@ import core.interact.message.MessagePublisher
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
+import utils.lang.and
 import utils.structs.IO
 
 class RatingCommand(override val name: String) : Command {
@@ -24,7 +25,7 @@ class RatingCommand(override val name: String) : Command {
         publisher: MessagePublisher<A, B>,
         editPublisher: MessagePublisher<A, B>,
     ) = runCatching {
-        IO { emptyList<Order>() } to this.asCommandReport("succeed", user)
+        IO { emptyList<Order>() } and this.asCommandReport("succeed", user)
     }
 
 }

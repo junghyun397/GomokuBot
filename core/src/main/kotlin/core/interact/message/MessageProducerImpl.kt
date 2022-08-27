@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.flowOf
 import scala.Enumeration
 import utils.assets.MarkdownLikeDocument
 import utils.assets.parseMarkdownLikeDocument
+import utils.lang.and
 import utils.lang.memoize
 import utils.structs.IO
 
@@ -64,7 +65,7 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
                         if (pos.idx() == Renju.BOARD_CENTER_POS().idx()) ButtonFlag.HIGHLIGHTED
                         else ButtonFlag.FREE
                 }
-                "${(97 + pos.col()).toChar()}${pos.row() + 1}" to flag
+                "${(97 + pos.col()).toChar()}${pos.row() + 1}" and flag
             }
         }
     }

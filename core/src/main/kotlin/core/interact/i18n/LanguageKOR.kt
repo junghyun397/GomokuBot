@@ -610,7 +610,7 @@ h행에서는 4-4 금수에 막혀 열린 4를 만들 수 없습니다. h행의 
 
 렌주는 매우 간단하지만 흥미롭고 무궁무진한 전략을 가진 아주 매력적인 게임입니다. GomokuBot과 함께, 여러분의 친구와 함께 더 복잡한 문제에 도전해 보세요. 분명 재미있을 것입니다.
 
-더 궁금한 것이 있다면, [지원 채널](https://discord.gg/vq8pkfF)에 방문해 부담 없이 질문해 주세요. GomokuBot과 함께 즐거운 시간 보내시기를 바랍니다. - *GomokuBot 개발자 junghyun397
+더 궁금한 것이 있다면, [지원 채널](https://discord.gg/vq8pkfF)에 방문해 부담 없이 질문해 주세요. GomokuBot과 함께 즐거운 시간 보내시기를 바랍니다. - *GomokuBot 개발자 junghyun397*
     """.trimIndent()
 
 }

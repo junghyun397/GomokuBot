@@ -17,6 +17,7 @@ import core.session.entities.NavigationKind
 import jrenju.notation.Pos
 import jrenju.notation.Renju
 import utils.assets.LinuxTime
+import utils.lang.and
 import utils.structs.IO
 import utils.structs.flatMap
 
@@ -50,7 +51,7 @@ fun <A, B> buildBoardSequence(
             )
         }
 
-        IO { producer.attachFocusButtons(action, session, focus).retrieve() to focus }
+        IO { producer.attachFocusButtons(action, session, focus).retrieve() and focus }
     }
     .flatMap { (message, pos) ->
         SessionManager.addNavigate(
@@ -130,7 +131,7 @@ fun <A, B> buildCombinedHelpSequence(
             )
         )
 
-        aboutMessage to settingsMessage
+        aboutMessage and settingsMessage
     } }
     .flatMap { (aboutMessage, settingsMessage) ->
         producer.attachBinaryNavigators(aboutMessage)

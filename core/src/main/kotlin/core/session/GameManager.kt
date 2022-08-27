@@ -17,6 +17,7 @@ import jrenju.notation.Renju
 import jrenju.protocol.SolutionNode
 import scala.Enumeration
 import utils.assets.LinuxTime
+import utils.lang.and
 import utils.structs.Identifiable
 import utils.structs.Option
 import utils.structs.flatMap
@@ -171,14 +172,14 @@ object GameManager {
             .fold(
                 onDefined = {
                     when (it) {
-                        is SolutionNode -> it.idx() to Option(it)
-                        else -> it.idx() to Option.Empty
+                        is SolutionNode -> it.idx() and Option(it)
+                        else -> it.idx() and Option.Empty
                     }
                 },
                 onEmpty = {
                     when (val solution = session.aiLevel.solver(kvineClient, session.board, Pos.fromIdx(session.board.latestMove()))) {
-                        is SolutionNode -> solution.idx() to Option(solution)
-                        else -> solution.idx() to Option.Empty
+                        is SolutionNode -> solution.idx() and Option(solution)
+                        else -> solution.idx() and Option.Empty
                     }
                 },
             )
@@ -213,17 +214,17 @@ object GameManager {
             is AiGameSession -> {
                 val result = GameResult.Win(cause, session.board.color(), aiUser, session.owner)
 
-                session.copy(gameResult = Option(result)) to result
+                session.copy(gameResult = Option(result)) and result
             }
             is PvpGameSession -> {
                 val (winner, looser) = if (user?.id == session.owner.id)
-                    session.opponent to session.owner
+                    session.opponent and session.owner
                 else
-                    session.owner to session.opponent
+                    session.owner and session.opponent
 
                 val result = GameResult.Win(cause, session.board.color(), winner, looser)
 
-                session.copy(gameResult = Option(result)) to result
+                session.copy(gameResult = Option(result)) and result
             }
         }
 

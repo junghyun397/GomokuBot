@@ -10,6 +10,7 @@ import core.interact.message.MessagePublisher
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
+import utils.lang.and
 import utils.structs.map
 
 class HelpCommand(override val name: String, private val sendCombined: Boolean) : Command {
@@ -32,7 +33,7 @@ class HelpCommand(override val name: String, private val sendCombined: Boolean) 
         }
             .map { emptyList<Order>() }
 
-        io to this.asCommandReport("succeed", user)
+        io and this.asCommandReport("succeed", user)
     }
 
 }

@@ -15,6 +15,7 @@ import core.session.entities.GuildConfig
 import core.session.entities.NavigateState
 import jrenju.notation.Pos
 import kotlinx.coroutines.Deferred
+import utils.lang.and
 import utils.structs.IO
 
 enum class Direction {
@@ -58,13 +59,13 @@ class FocusCommand(
         SessionManager.addNavigate(bot.sessions, originalMessage.messageRef, this.navigateState.copy(page = newFocus.idx()))
 
 //        return@runCatching producer.produceBoard(editPublisher, config.language.container, config.boardStyle.renderer, this.session)
-//            .map { producer.attachFocusButtons(it, this.session, newFocus).launch(); emptyList<Order>() } to this.asCommandReport("move focus $direction", user)
+//            .map { producer.attachFocusButtons(it, this.session, newFocus).launch(); emptyList<Order>() } and this.asCommandReport("move focus $direction", user)
 
         val action = originalMessage.updateButtons(
             producer.generateFocusedButtons(producer.generateFocusedField(this.session.board, newFocus))
         )
 
-        IO { action.launch(); emptyList<Order>() } to this.asCommandReport("move focus $direction", user)
+        IO { action.launch(); emptyList<Order>() } and this.asCommandReport("move focus $direction", user)
     }
 
 }

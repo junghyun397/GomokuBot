@@ -12,6 +12,7 @@ import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
+import utils.lang.and
 import utils.structs.flatMap
 import utils.structs.map
 
@@ -36,7 +37,7 @@ class LangCommand(override val name: String, private val language: Language) : C
             .flatMap { buildHelpSequence(bot, thenConfig, publisher, producer) }
             .map { listOf(Order.UpsertCommands(thenConfig.language.container)) }
 
-        io to this.asCommandReport("${config.language.name} to ${thenConfig.language.name}", user)
+        io and this.asCommandReport("${config.language.name} to ${thenConfig.language.name}", user)
     }
 
 }

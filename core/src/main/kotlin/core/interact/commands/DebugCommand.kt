@@ -21,6 +21,7 @@ import jrenju.notation.Pos
 import jrenju.notation.Renju
 import kotlinx.coroutines.Deferred
 import utils.assets.LinuxTime
+import utils.lang.and
 import utils.lang.toInputStream
 import utils.structs.IO
 import utils.structs.Option
@@ -56,13 +57,13 @@ class DebugCommand(
                             .launch()
 
                     }
-                    .map { emptyList<Order>() } to this.asCommandReport("succeed", user)
-            } ?: (IO { emptyList<Order>() } to this.asCommandReport("failed", user))
+                    .map { emptyList<Order>() } and this.asCommandReport("succeed", user)
+            } ?: (IO { emptyList<Order>() } and this.asCommandReport("failed", user))
         }
         DebugType.SELF_REQUEST -> {
             if (SessionManager.retrieveGameSession(bot.sessions, guild, user.id) != null ||
                 SessionManager.retrieveRequestSession(bot.sessions, guild, user.id) != null)
-                IO { emptyList<Order>() } to this.asCommandReport("failed", user)
+                IO { emptyList<Order>() } and this.asCommandReport("failed", user)
             else {
                 val requestSession = RequestSession(
                     user, user,
@@ -76,7 +77,7 @@ class DebugCommand(
                     .flatMap { it.launch() }
                     .map { emptyList<Order>()  }
 
-                io to this.asCommandReport("succeed", user)
+                io and this.asCommandReport("succeed", user)
             }
         }
         DebugType.INJECT -> {
@@ -100,10 +101,10 @@ class DebugCommand(
                 .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, session) }
                 .map { emptyList<Order>() }
 
-            io to this.asCommandReport("succeed", user)
+            io and this.asCommandReport("succeed", user)
         }
         DebugType.STATUS -> {
-            IO { emptyList<Order>() } to this.asCommandReport("succeed", user)
+            IO { emptyList<Order>() } and this.asCommandReport("succeed", user)
         }
         DebugType.VCF -> {
             val vcfCase = """
@@ -146,7 +147,7 @@ class DebugCommand(
                 .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, session) }
                 .map { emptyList<Order>() }
 
-            io to this.asCommandReport("succeed", user)
+            io and this.asCommandReport("succeed", user)
         }
     } }
 

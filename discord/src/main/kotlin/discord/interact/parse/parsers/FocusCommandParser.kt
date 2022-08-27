@@ -2,6 +2,7 @@ package discord.interact.parse.parsers
 
 import core.interact.commands.Direction
 import core.interact.commands.FocusCommand
+import core.interact.parse.NamedParser
 import core.session.SessionManager
 import core.session.entities.NavigateState
 import discord.assets.*
@@ -9,12 +10,15 @@ import discord.interact.InteractionContext
 import discord.interact.parse.NavigableCommand
 import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
+import utils.lang.and
 import utils.structs.Option
 import utils.structs.asOption
 import utils.structs.flatMap
 import utils.structs.map
 
-object FocusCommandParser : NavigableCommand {
+object FocusCommandParser : NamedParser, NavigableCommand {
+
+    override val name = "focus"
 
     private fun matchDirection(emoji: UnicodeEmoji) =
         when (emoji) {
@@ -32,9 +36,9 @@ object FocusCommandParser : NavigableCommand {
             .flatMap { session ->
                 when (val direction = this.matchDirection(context.event.reaction.emoji.asUnicode())) {
                     null -> Option.Empty
-                    else -> Option(session to direction)
+                    else -> Option(session and direction)
                 }
             }
-            .map { FocusCommand("*f", state, it.first, it.second) }
+            .map { (session, direction) -> FocusCommand(this.name, state, session, direction) }
 
 }

@@ -11,6 +11,7 @@ import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
+import utils.lang.and
 import utils.structs.flatMap
 import utils.structs.map
 
@@ -37,7 +38,7 @@ class ApplySettingCommand(
             .flatMap { it.launch() }
             .map { emptyList<Order>() }
 
-        io to this.asCommandReport("update $configName as $configChoice", user)
+        io and this.asCommandReport("update $configName as $configChoice", user)
     }
 
 }

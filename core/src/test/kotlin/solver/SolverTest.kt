@@ -5,6 +5,7 @@ import core.inference.WeightSet
 import jrenju.Board
 import jrenju.`BoardIO$`
 import jrenju.protocol.Solution
+import utils.lang.and
 import java.util.*
 
 internal class SolverTest {
@@ -54,9 +55,9 @@ internal class SolverTest {
 
         val (blackSolver, whiteSolver) = run {
             if (Random().nextBoolean())
-                solver1 to solver2
+                solver1 and solver2
             else
-                solver2 to solver1
+                solver2 and solver1
         }
 
         @Suppress("UNREACHABLE_CODE") val result: Boolean? = run {

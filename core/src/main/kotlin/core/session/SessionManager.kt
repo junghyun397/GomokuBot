@@ -4,6 +4,7 @@ import core.assets.*
 import core.database.repositories.GuildConfigRepository
 import core.session.entities.*
 import utils.assets.LinuxTime
+import utils.lang.and
 import utils.structs.Quadruple
 import utils.structs.fold
 
@@ -55,7 +56,7 @@ object SessionManager {
 
     suspend fun putRequestSession(repo: SessionRepository, guild: Guild, requestSession: RequestSession) {
         this.mapGuildSession(repo, guild) {
-            it.copy(requestSessions = it.requestSessions + (requestSession.owner.id to requestSession))
+            it.copy(requestSessions = it.requestSessions + (requestSession.owner.id and requestSession))
         }
     }
 
@@ -77,7 +78,7 @@ object SessionManager {
 
     suspend fun putGameSession(repo: SessionRepository, guild: Guild, gameSession: GameSession) {
         this.mapGuildSession(repo, guild) {
-            it.copy(gameSessions = it.gameSessions + (gameSession.owner.id to gameSession))
+            it.copy(gameSessions = it.gameSessions + (gameSession.owner.id and gameSession))
         }
     }
 

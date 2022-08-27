@@ -15,6 +15,7 @@ import jrenju.notation.Pos
 import kotlinx.coroutines.reactive.awaitLast
 import reactor.kotlin.core.publisher.toFlux
 import utils.assets.LinuxTime
+import utils.lang.and
 import utils.structs.getOrException
 import java.sql.Connection
 
@@ -68,16 +69,16 @@ suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysq
 
         val (blackUser, whiteUser) = when (results.getString("reason")) {
             "WIN" -> when (winColor) {
-                Color.BLACK() -> user to null
-                else -> null to user
+                Color.BLACK() -> user and null
+                else -> null and user
             }
             "LOSE", "RESIGN", "TIMEOUT" -> when (winColor) {
-                Color.BLACK() -> null to user
-                else -> user to null
+                Color.BLACK() -> null and user
+                else -> user and null
             }
             "FULL" -> when (board.color()) {
-                Color.BLACK() -> null to user
-                else -> user to null
+                Color.BLACK() -> null and user
+                else -> user and null
             }
             else -> throw IllegalStateException()
         }

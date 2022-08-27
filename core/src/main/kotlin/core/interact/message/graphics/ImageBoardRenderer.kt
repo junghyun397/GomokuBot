@@ -5,6 +5,7 @@ import jrenju.Board
 import jrenju.notation.Flag
 import jrenju.notation.Pos
 import jrenju.notation.Renju
+import utils.lang.and
 import utils.lang.clone
 import utils.lang.toInputStream
 import utils.structs.Either
@@ -117,7 +118,7 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
         "board-${System.currentTimeMillis()}.png"
 
     override fun renderBoard(board: Board, history: Option<List<Pos?>>) =
-        Either.Right(this.renderImageBoard(board, history, true) to this.retrieveFileName())
+        Either.Right(this.renderImageBoard(board, history, true) and this.retrieveFileName())
 
     fun renderImageBoard(board: Board, history: Option<List<Pos?>>, enableForbiddenPoints: Boolean): InputStream {
         val image = this.prototypeImage.clone()
@@ -128,7 +129,7 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
             board.boardField()
                 .withIndex()
                 .filter { it.value != Flag.FREE() }
-                .map { Pos.fromIdx(it.index).asBoardPos() to it.value }
+                .map { Pos.fromIdx(it.index).asBoardPos() and it.value }
                 .forEach { (pos, flag) -> when (flag) {
                     Flag.BLACK() -> {
                         color = COLOR_GREY
@@ -191,7 +192,7 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
                     histories
                         .withIndex()
                         .filter { it.value != null }
-                        .map { it.index + 1 to it.value!!.asBoardPos() }
+                        .map { it.index + 1 and it.value!!.asBoardPos() }
                         .forEach { (sequence, pos) ->
                             val textWidth = fontMetrics.stringWidth(sequence.toString())
 

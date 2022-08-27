@@ -2,6 +2,10 @@
 
 ## Quick Start
 
+```shell
+gradlew build
+```
+
 ### gomokubot-discord
 
 ```shell

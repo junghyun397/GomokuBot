@@ -8,6 +8,7 @@ import core.session.entities.NavigationKind
 import dev.minn.jda.ktx.coroutines.await
 import discord.assets.extractId
 import discord.assets.extractMessageRef
+import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageAdaptor
 import discord.interact.message.DiscordMessageProducer
@@ -16,10 +17,12 @@ import discord.interact.parse.parsers.FocusCommandParser
 import discord.interact.parse.parsers.NavigateCommandParser
 import kotlinx.coroutines.async
 import kotlinx.coroutines.reactor.mono
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.util.function.Tuple2
+import utils.lang.and
 import utils.lang.component1
 import utils.lang.component2
 import utils.lang.component3
@@ -38,7 +41,8 @@ fun reactionRouter(context: InteractionContext<MessageReactionAddEvent>): Mono<T
                 )
             )
             .asOption()
-            .map { it to when (it.navigationKind) {
+            .filter { GuildManager.lookupPermission(context.event.channel.asTextChannel(), Permission.MESSAGE_MANAGE) }
+            .map { it and when (it.navigationKind) {
                 NavigationKind.BOARD -> FocusCommandParser
                 NavigationKind.ABOUT, NavigationKind.SETTINGS -> NavigateCommandParser
             } }
@@ -56,6 +60,11 @@ fun reactionRouter(context: InteractionContext<MessageReactionAddEvent>): Mono<T
                 }
             } }
         ) }
+        .doOnNext { (context, maybeCommand) ->
+            if (maybeCommand.isEmpty) {
+                context.event.channel.asTextChannel().clearReactionsById(context.event.messageIdLong).queue()
+            }
+        }
         .filter { (_, maybeCommand) -> maybeCommand.isDefined }
         .doOnNext { (context, _) ->
             context.event.reaction.removeReaction(context.event.user!!).queue()

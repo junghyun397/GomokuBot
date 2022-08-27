@@ -1,5 +1,7 @@
 package tools.documentation
 
+import utils.lang.and
+
 fun main() {
     print("source: ")
     val source = generateSequence(::readLine)
@@ -9,7 +11,7 @@ fun main() {
     val result = Regex("```(\n|.)*?```")
         .findAll(source)
         .map { matchResult ->
-            matchResult.value to matchResult.value
+            matchResult.value and matchResult.value
                 .drop(3)
                 .takeWhile { it != '\n' }
                 .split(",")

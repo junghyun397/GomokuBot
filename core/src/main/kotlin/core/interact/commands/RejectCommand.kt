@@ -12,6 +12,7 @@ import core.session.SessionManager
 import core.session.entities.GuildConfig
 import core.session.entities.RequestSession
 import kotlinx.coroutines.Deferred
+import utils.lang.and
 import utils.structs.flatMap
 import utils.structs.map
 
@@ -33,7 +34,7 @@ class RejectCommand(override val name: String, private val requestSession: Reque
             .flatMap { it.launch() }
             .map { listOf(Order.DeleteSource)  }
 
-        io to this.asCommandReport("reject ${requestSession.owner}'s request", user)
+        io and this.asCommandReport("reject ${requestSession.owner}'s request", user)
     }
 
 }

@@ -13,6 +13,7 @@ import core.session.SessionManager
 import core.session.entities.GuildConfig
 import core.session.entities.RequestSession
 import kotlinx.coroutines.Deferred
+import utils.lang.and
 import utils.structs.flatMap
 import utils.structs.map
 
@@ -43,7 +44,7 @@ class AcceptCommand(override val name: String, private val requestSession: Reque
             .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, gameSession) }
             .map { listOf(Order.DeleteSource) }
 
-        io to this.asCommandReport("accepted", user)
+        io and this.asCommandReport("accepted", user)
     }
 
 }

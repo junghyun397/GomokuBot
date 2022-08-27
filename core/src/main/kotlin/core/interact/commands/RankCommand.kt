@@ -12,6 +12,7 @@ import core.interact.message.MessagePublisher
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
 import kotlinx.coroutines.Deferred
+import utils.lang.and
 import utils.structs.flatMap
 import utils.structs.map
 
@@ -47,13 +48,13 @@ class RankCommand(
         }
 
         val tuple = rankings
-            .map { UserProfileRepository.retrieveUser(bot.dbConnection, it.userId) to it }
+            .map { UserProfileRepository.retrieveUser(bot.dbConnection, it.userId) and it }
 
         val io = producer.produceRankings(publisher, config.language.container, tuple)
             .flatMap { it.launch() }
             .map { emptyList<Order>() }
 
-        io to this.asCommandReport("succeed", user)
+        io and this.asCommandReport("succeed", user)
     }
 
 }

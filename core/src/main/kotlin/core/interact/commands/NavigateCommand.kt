@@ -14,6 +14,7 @@ import core.session.entities.NavigateState
 import core.session.entities.NavigationKind
 import kotlinx.coroutines.Deferred
 import utils.assets.LinuxTime
+import utils.lang.and
 import utils.structs.IO
 import utils.structs.flatMap
 import utils.structs.map
@@ -47,7 +48,7 @@ class NavigateCommand(
         )
 
         if (this.navigateState.page == newState.page)
-            return@runCatching IO { emptyList<Order>() } to this.asCommandReport("navigate bounded", user)
+            return@runCatching IO { emptyList<Order>() } and this.asCommandReport("navigate bounded", user)
 
         SessionManager.addNavigate(bot.sessions, originalMessage.messageRef, newState)
 
@@ -61,7 +62,7 @@ class NavigateCommand(
             .flatMap { it.launch() }
             .map { emptyList<Order>()  }
 
-        io to this.asCommandReport("navigate ${newState.navigationKind} as ${newState.page}", user)
+        io and this.asCommandReport("navigate ${newState.navigationKind} as ${newState.page}", user)
     }
 
 }

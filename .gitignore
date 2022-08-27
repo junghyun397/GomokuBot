@@ -6,3 +6,4 @@ out/
 local.properties
 .env
 logs/
+*.tar

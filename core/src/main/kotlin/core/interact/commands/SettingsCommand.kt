@@ -14,6 +14,7 @@ import core.session.entities.NavigateState
 import core.session.entities.NavigationKind
 import kotlinx.coroutines.Deferred
 import utils.assets.LinuxTime
+import utils.lang.and
 import utils.structs.IO
 import utils.structs.flatMap
 import utils.structs.map
@@ -43,7 +44,7 @@ class SettingsCommand(override val name: String) : Command {
             }
             .map { emptyList<Order>() }
 
-        io to this.asCommandReport("succeed", user)
+        io and this.asCommandReport("succeed", user)
     }
 
 }

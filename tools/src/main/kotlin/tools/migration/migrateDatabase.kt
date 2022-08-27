@@ -20,23 +20,19 @@ private val unknownGuild = Guild(
 )
 
 suspend fun main() {
-    val (gomokuBotConnection, mysqlConnection) = run {
-        val gomokuBotConnection = DatabaseManager.newConnectionFrom(System.getenv("GOMOKUBOT_DB_URL"), LocalCaches())
-            .also { connection ->
-                DatabaseManager.initDatabase(connection)
-                DatabaseManager.initCaches(connection)
-            }
+    val gomokuBotConnection = DatabaseManager.newConnectionFrom(System.getenv("GOMOKUBOT_DB_URL"), LocalCaches())
+        .also { connection ->
+            DatabaseManager.initDatabase(connection)
+            DatabaseManager.initCaches(connection)
+        }
 
-        val mysqlConnection = DriverManager.getConnection(
-            System.getenv("MYSQL_URL"),
-            Properties().apply {
-                put("user", System.getenv("MYSQL_USR"))
-                put("password", System.getenv("MYSQL_PWD"))
-            }
-        )
-
-        gomokuBotConnection to mysqlConnection
-    }
+    val mysqlConnection = DriverManager.getConnection(
+        System.getenv("MYSQL_URL"),
+        Properties().apply {
+            put("user", System.getenv("MYSQL_USR"))
+            put("password", System.getenv("MYSQL_PWD"))
+        }
+    )
 
     val genericGuild = GuildProfileRepository.retrieveOrInsertGuild(gomokuBotConnection, unknownGuild.platform, unknownGuild.givenId) {
         unknownGuild
