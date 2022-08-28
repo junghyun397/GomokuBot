@@ -2,25 +2,24 @@
 
 package discord.route
 
+import core.assets.VOID_MESSAGE_REF
 import core.database.repositories.AnnounceRepository
 import core.database.repositories.GuildProfileRepository
 import core.database.repositories.UserProfileRepository
 import core.interact.commands.AnnounceCommand
 import core.interact.commands.Command
+import core.interact.commands.ResponseFlag
 import core.interact.i18n.LanguageContainer
+import core.interact.message.DiPublisherSet
+import core.interact.message.MonoPublisherSet
 import core.interact.reports.CommandReport
-import dev.minn.jda.ktx.coroutines.await
-import discord.assets.COMMAND_PREFIX
-import discord.assets.EMOJI_CHECK
-import discord.assets.EMOJI_CROSS
-import discord.assets.extractProfile
+import discord.assets.*
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import discord.interact.message.*
 import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
 import discord.interact.parse.parsers.*
-import kotlinx.coroutines.async
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Message
@@ -79,7 +78,7 @@ private fun buildPermissionNode(context: InteractionContext<*>, channel: TextCha
 private fun <T : Event> buildAnnounceNode(tuple: Tuple2<InteractionContext<T>, Either<Command, DiscordParseFailure>>) =
     when {
         tuple.t2.isLeft && (tuple.t1.user.announceId ?: -1) < (AnnounceRepository.getLatestAnnounceId(tuple.t1.bot.dbConnection) ?: -1) ->
-            tuple.mapT2 { parsed -> parsed.mapLeft { AnnounceCommand("announce+", it) } }
+            tuple.mapT2 { parsed -> parsed.mapLeft { AnnounceCommand(it) } }
         else -> tuple
     }
 
@@ -143,7 +142,7 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
             }
         }) }
         .doOnNext { (context, parsed) ->
-            if (parsed.isLeft) context.event.deferReply().queue()
+            parsed.onLeft { if (it.responseFlag == ResponseFlag.DEFER) context.event.deferReply() }
         }
         .flatMap(::buildUpdateProfileNode)
         .map(::buildAnnounceNode)
@@ -155,16 +154,30 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
                     guild = context.guild,
                     user = context.user,
                     producer = DiscordMessageProducer,
-                    message = async { DiscordMessageAdaptor(context.event.hook.retrieveOriginal().await()) },
-                    publisher = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
-                    editPublisher = { msg -> WebHookUpdateActionAdaptor(context.event.hook.editOriginal(msg)) },
+                    messageRef = VOID_MESSAGE_REF,
+                    publishers = when (command.responseFlag) {
+                        ResponseFlag.DEFER -> DiPublisherSet(
+                            plain = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
+                            windowed = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg).setEphemeral(true)) },
+                        )
+                        else -> DiPublisherSet(
+                            plain = TransMessagePublisher(
+                                head = { msg -> ReplyActionAdaptor(context.event.reply(msg)) },
+                                tail = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) }
+                            ),
+                            windowed = { msg -> ReplyActionAdaptor(context.event.reply(msg).setEphemeral(true)) },
+                        )
+                    }
                 )
             },
             onRight = { parseFailure ->
                 parseFailure.notice(
                     config = context.config,
                     producer = DiscordMessageProducer,
-                    publisher = { msg -> ReplyActionAdaptor(context.event.reply(msg)) }
+                    publisher = TransMessagePublisher(
+                        head = { msg -> ReplyActionAdaptor(context.event.reply(msg).setEphemeral(true)) },
+                        tail = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg).setEphemeral(true)) }
+                    )
                 )
             }
         ) }) }
@@ -212,7 +225,7 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
             GuildManager.permissionGrantedRun(context.event.channel.asTextChannel(), Permission.MESSAGE_ADD_REACTION) {
                 parsed.fold(
                     onLeft = { context.event.message.addReaction(EMOJI_CHECK).queue() },
-                    onRight = { context.event.message.addReaction(EMOJI_CROSS).queue() }
+                    onRight = { context.event.message.addReaction(EMOJI_CROSS).queue() },
                 )
             }
         }
@@ -225,17 +238,18 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
                     config = context.config,
                     guild = context.guild,
                     user = context.user,
-                    message = async { DiscordMessageAdaptor(context.event.message) },
                     producer = DiscordMessageProducer,
-                    publisher = { msg -> MessageActionAdaptor(context.event.message.reply(msg)) },
-                    editPublisher = { msg -> MessageActionAdaptor(context.event.message.editMessage(msg)) }
+                    messageRef = context.event.message.extractMessageRef(),
+                    publishers = MonoPublisherSet(
+                        publisher = { msg -> MessageActionAdaptor(context.event.message.reply(msg)) },
+                    ),
                 )
             },
             onRight = { parseFailure ->
                 parseFailure.notice(
                     config = context.config,
                     producer = DiscordMessageProducer,
-                    publisher = { msg -> MessageActionAdaptor(context.event.message.reply(msg)) }
+                    publisher = { msg -> MessageActionAdaptor(context.event.message.reply(msg)) },
                 )
             }
         ) }) }

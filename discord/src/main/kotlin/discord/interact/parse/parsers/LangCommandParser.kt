@@ -42,7 +42,7 @@ object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
             matchLang(it)
         } ?: return this.composeMissMatchFailure(context.user)
 
-        return Either.Left(LangCommand(context.config.language.container.languageCommand(), lang))
+        return Either.Left(LangCommand(lang))
     }
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
@@ -52,7 +52,7 @@ object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
             ?.let { matchLang(it) }
             ?: return this.composeMissMatchFailure(context.user)
 
-        return Either.Left(LangCommand(context.config.language.container.languageCommand(), lang))
+        return Either.Left(LangCommand(lang))
     }
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

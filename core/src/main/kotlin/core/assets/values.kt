@@ -29,6 +29,8 @@ data class User(
 
 data class MessageRef(val id: MessageId, val guildId: GuildId, val channelId: ChannelId)
 
+val VOID_MESSAGE_REF = MessageRef(MessageId(-1), GuildId(-1), ChannelId(-1))
+
 @JvmInline value class GuildUid(val uuid: UUID)
 
 @JvmInline value class UserUid(val uuid: UUID)

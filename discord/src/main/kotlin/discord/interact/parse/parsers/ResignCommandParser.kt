@@ -20,12 +20,12 @@ object ResignCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsa
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>) =
         this.retrieveSession(context.bot, context.guild, context.user).mapLeft {
-            ResignCommand(context.config.language.container.resignCommand(), it)
+            ResignCommand(it)
         }
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>) =
         this.retrieveSession(context.bot, context.guild, context.user).mapLeft {
-            ResignCommand(context.config.language.container.resignCommand(), it)
+            ResignCommand(it)
         }
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

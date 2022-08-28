@@ -211,8 +211,13 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
     override fun attachFocusButtons(boardAction: DiscordMessageAction, session: GameSession, focus: Pos): DiscordMessageAction =
         boardAction.addButtons(this.generateFocusedButtons(this.generateFocusedField(session.board, focus)))
 
+    override fun attachFocusButtons(publisher: ComponentPublisher<Message, DiscordButtons>, session: GameSession, focus: Pos) =
+        IO { publisher(this.generateFocusedButtons(this.generateFocusedField(session.board, focus))) }
+
     override fun attachNavigators(flow: Flow<String>, message: MessageAdaptor<Message, DiscordButtons>, checkTerminated: suspend () -> Boolean) =
         IO {
+            if (message.original.isEphemeral) return@IO
+
             try {
                 coroutineScope {
                     flow

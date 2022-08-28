@@ -9,7 +9,7 @@ class LanguageSKO : LanguageKOR() {
 
     override fun helpAboutEmbedTitle() = "GomokuBot / 助言"
     override fun helpAboutEmbedDescription(platform: String) =
-        "GomokuBot은Discord에서五目을滿喫할수있게해주는資料開放DiscordBot입니다. 收集된棋譜資料는强化學習模型訓鍊에使用됩니다. :)"
+        "GomokuBot은${platform}에서五目을滿喫할수있게해주는資料開放DiscordBot입니다. 收集된棋譜資料는强化學習模型訓鍊에使用됩니다. :)"
     override fun helpAboutEmbedDeveloper() = "開發者"
     override fun helpAboutEmbedRepository() = "Git 貯藏所"
     override fun helpAboutEmbedVersion() = "版"

@@ -22,18 +22,12 @@ object HelpCommandParser : NamedParser, ParsableCommand, BuildableCommand {
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>) =
         Either.Left(
-            HelpCommand(
-                context.config.language.container.helpCommand(),
-                this.checkCrossLanguageCommand(context.config.language.container, context.event.name.lowercase())
-            )
+            HelpCommand(this.checkCrossLanguageCommand(context.config.language.container, context.event.name.lowercase()))
         )
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>) =
         Either.Left(
-            HelpCommand(
-                context.config.language.container.helpCommand(),
-                this.checkCrossLanguageCommand(context.config.language.container, payload[0].lowercase())
-            )
+            HelpCommand(this.checkCrossLanguageCommand(context.config.language.container, payload[0].lowercase()))
         )
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

@@ -17,11 +17,9 @@ import utils.structs.map
 object ApplySettingCommandParser : EmbeddableCommand {
 
     override suspend fun parseButton(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
-        val (kind, choice) = run {
-            if (context.event !is SelectMenuInteractionEvent)
-                context.event.componentId.split("-").drop(1)
-            else
-                context.event.interaction.selectedOptions.first().value.split("-")
+        val (kind, choice) = when(context.event) {
+            is SelectMenuInteractionEvent -> context.event.interaction.selectedOptions.first().value.split("-")
+            else -> context.event.componentId.split("-").drop(1)
         }
 
         return runCatching { when (kind) {
@@ -92,7 +90,7 @@ object ApplySettingCommandParser : EmbeddableCommand {
         } }
             .asOption()
             .map { (newConfig, kindName, choiceName) ->
-                ApplySettingCommand("p", newConfig, kindName, choiceName)
+                ApplySettingCommand(newConfig, kindName, choiceName)
             }
     }
 

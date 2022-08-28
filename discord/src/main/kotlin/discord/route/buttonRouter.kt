@@ -2,19 +2,17 @@
 
 package discord.route
 
+import core.interact.commands.ResponseFlag
+import core.interact.message.PolyPublisherSet
 import core.interact.reports.CommandReport
 import discord.assets.extractMessageRef
 import discord.interact.InteractionContext
-import discord.interact.message.DiscordMessageAdaptor
-import discord.interact.message.DiscordMessageProducer
-import discord.interact.message.WebHookActionAdaptor
-import discord.interact.message.WebHookUpdateActionAdaptor
+import discord.interact.message.*
 import discord.interact.parse.EmbeddableCommand
 import discord.interact.parse.parsers.AcceptCommandParser
 import discord.interact.parse.parsers.ApplySettingCommandParser
 import discord.interact.parse.parsers.RejectCommandParser
 import discord.interact.parse.parsers.SetCommandParser
-import kotlinx.coroutines.async
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import reactor.core.publisher.Mono
@@ -51,18 +49,36 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
                 parsable.parseButton(context)
             } }
         ) }
-        .filter { (_, parsable) -> parsable.isDefined }
-        .doOnNext { (context, _) -> context.event.deferReply().queue() }
-        .flatMap { (context, maybeCommand) -> Mono.zip(context.toMono(), mono { maybeCommand.getOrException()
+        .filter { (_, maybeCommand) -> maybeCommand.isDefined }
+        .map { tuple -> tuple.mapT2 { it.getOrException() } }
+        .doOnNext { (context, command) ->
+            if (command.responseFlag == ResponseFlag.DEFER) context.event.deferReply().queue()
+        }
+        .flatMap { (context, command) -> Mono.zip(context.toMono(), mono { command
             .execute(
                 bot = context.bot,
                 config = context.config,
                 guild = context.guild,
                 user = context.user,
                 producer = DiscordMessageProducer,
-                message = async { DiscordMessageAdaptor(context.event.message) },
-                publisher = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
-                editPublisher = { msg -> WebHookUpdateActionAdaptor(context.event.hook.editOriginal(msg)) },
+                messageRef = context.event.message.extractMessageRef(),
+                publishers = when (command.responseFlag) {
+                    ResponseFlag.DEFER -> PolyPublisherSet(
+                        plain = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
+                        windowed = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg).setEphemeral(true)) },
+                        edit = { msg -> WebHookEditActionAdaptor(context.event.hook.editOriginal(msg)) },
+                        component = { components -> WebHookComponentEditActionAdaptor(context.event.hook.editOriginalComponents(components)) }
+                    )
+                    else -> PolyPublisherSet(
+                        plain = TransMessagePublisher(
+                            head = { msg -> ReplyActionAdaptor(context.event.reply(msg)) },
+                            tail = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
+                        ),
+                        windowed = { msg -> ReplyActionAdaptor(context.event.reply(msg).setEphemeral(true)) },
+                        edit = { msg -> MessageEditCallbackAdaptor(context.event.editMessage(msg)) },
+                        component = { components -> MessageEditCallbackAdaptor(context.event.editComponents(components)) }
+                    )
+                }
             )
         }) }
         .flatMap { (context, result) -> Mono.zip(context.toMono(), mono { result.map { (io, report) ->

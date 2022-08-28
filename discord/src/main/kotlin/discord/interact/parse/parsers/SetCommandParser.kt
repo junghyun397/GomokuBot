@@ -43,28 +43,32 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
     private fun composeOrderFailure(context: BotContext, session: GameSession, user: User, player: User): DiscordParseFailure =
         this.asParseFailure("try move but now $player's turn", user) { producer, publisher, container ->
             producer.produceOrderFailure(publisher, container, user, player)
-                .flatMap { IO { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.retrieve().messageRef) } }
+                .flatMap { IO { it.retrieve() } }
+                .flatMapOption { IO { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.messageRef) } }
                 .map { emptyList() }
         }
 
     private fun composeMissMatchFailure(context: BotContext, session: GameSession, user: User): DiscordParseFailure =
         this.asParseFailure("try move but argument mismatch", user) { producer, publisher, container ->
             producer.produceSetIllegalArgument(publisher, container, user)
-                .flatMap { IO { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.retrieve().messageRef) } }
+                .flatMap { IO { it.retrieve() } }
+                .flatMapOption { IO { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.messageRef) } }
                 .map { emptyList() }
         }
 
     private fun composeExistFailure(context: BotContext, session: GameSession, user: User, pos: Pos): DiscordParseFailure =
         this.asParseFailure("make move but already exist", user) { producer, publisher, container ->
             producer.produceSetAlreadyExist(publisher, container, user, pos)
-                .flatMap { IO { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.retrieve().messageRef) } }
+                .flatMap { IO { it.retrieve() } }
+                .flatMapOption { IO { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.messageRef) } }
                 .map { emptyList() }
         }
 
     private fun composeForbiddenMoveFailure(context: BotContext, session: GameSession, user: User, pos: Pos, flag: Byte): DiscordParseFailure =
         this.asParseFailure("make move but forbidden", user) { producer, publisher, container ->
             producer.produceSetForbiddenMove(publisher, container, user, pos, flag)
-                .flatMap { IO { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.retrieve().messageRef) } }
+                .flatMap { IO { it.retrieve() } }
+                .flatMapOption { IO { SessionManager.appendMessage(context.sessions, session.messageBufferKey, it.messageRef) } }
                 .map { emptyList() }
         }
 
@@ -91,9 +95,9 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
                         if (session.board.nextColor() == Color.BLACK())
                             Either.Right(this.composeForbiddenMoveFailure(context.bot, session, user, pos, session.board.boardField()[pos.idx()]))
                         else
-                            Either.Left(SetCommand("s", session, pos))
+                            Either.Left(SetCommand(session, pos))
                 } },
-                onEmpty = { Either.Left(SetCommand("s", session, pos)) }
+                onEmpty = { Either.Left(SetCommand(session, pos)) }
             )
         }
 
@@ -130,7 +134,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordButtons>(), Parsable
         if (session.player.id != userId)
             return Option.Empty
 
-        return Option(SetCommand("s", session, pos))
+        return Option(SetCommand(session, pos))
     }
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

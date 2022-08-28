@@ -76,7 +76,8 @@ fun scheduleRoutines(botContext: BotContext, discordConfig: DiscordConfig, jda: 
                     session.owner,
                     session.opponent
                 )
-                    .map { it.launch(); listOf(Order.DeleteSource) }
+                    .flatMap { it.launch() }
+                    .map { listOf(Order.DeleteSource) }
 
                 export(botContext, discordConfig, guild, io, message)
             }

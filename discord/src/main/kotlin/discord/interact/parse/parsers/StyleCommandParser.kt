@@ -42,7 +42,7 @@ object StyleCommandParser : NamedParser, ParsableCommand, BuildableCommand {
             matchStyle(it)
         } ?: return this.composeMissMatchFailure(context.user)
 
-        return Either.Left(StyleCommand(context.config.language.container.styleCommand(), style))
+        return Either.Left(StyleCommand(style))
     }
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
@@ -52,7 +52,7 @@ object StyleCommandParser : NamedParser, ParsableCommand, BuildableCommand {
             ?.let { matchStyle(it) }
             ?: return this.composeMissMatchFailure(context.user)
 
-        return Either.Left(StyleCommand(context.config.language.container.styleCommand(), style))
+        return Either.Left(StyleCommand(style))
     }
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

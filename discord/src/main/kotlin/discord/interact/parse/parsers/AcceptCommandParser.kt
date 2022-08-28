@@ -12,7 +12,7 @@ object AcceptCommandParser : EmbeddableCommand {
 
     override suspend fun parseButton(context: InteractionContext<GenericComponentInteractionCreateEvent>) =
         SessionManager.retrieveRequestSessionByOpponent(context.bot.sessions, context.guild, context.user.id)
-            ?.let { Option.Some(AcceptCommand("accept", it)) }
+            ?.let { Option.Some(AcceptCommand(it)) }
             ?: Option.Empty
 
 }

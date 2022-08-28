@@ -4,13 +4,13 @@ package core.interact.commands
 
 import core.BotContext
 import core.assets.Guild
+import core.assets.MessageRef
 import core.assets.User
 import core.assets.toBoardIO
 import core.inference.AiLevel
 import core.interact.Order
-import core.interact.message.MessageAdaptor
 import core.interact.message.MessageProducer
-import core.interact.message.MessagePublisher
+import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.AiGameSession
@@ -19,7 +19,6 @@ import core.session.entities.RequestSession
 import jrenju.BoardIO
 import jrenju.notation.Pos
 import jrenju.notation.Renju
-import kotlinx.coroutines.Deferred
 import utils.assets.LinuxTime
 import utils.lang.and
 import utils.lang.toInputStream
@@ -33,10 +32,13 @@ enum class DebugType {
 }
 
 class DebugCommand(
-    override val name: String,
     private val debugType: DebugType,
     private val payload: String?,
 ) : Command {
+
+    override val name = "debug"
+
+    override val responseFlag = ResponseFlag.DEFER
 
     @Suppress("DuplicatedCode")
     override suspend fun <A, B> execute(
@@ -45,13 +47,12 @@ class DebugCommand(
         guild: Guild,
         user: User,
         producer: MessageProducer<A, B>,
-        message: Deferred<MessageAdaptor<A, B>>,
-        publisher: MessagePublisher<A, B>,
-        editPublisher: MessagePublisher<A, B>,
+        messageRef: MessageRef,
+        publishers: PublisherSet<A, B>,
     ) = runCatching { when (debugType) {
         DebugType.ANALYSIS -> {
             SessionManager.retrieveGameSession(bot.sessions, guild, user.id)?.let { session ->
-                producer.produceSessionArchive(publisher, session, session.gameResult)
+                producer.produceSessionArchive(publishers.plain, session, session.gameResult)
                     .flatMap {
                         it.addFile(session.board.toBoardIO().debugText().toInputStream(), "analysis-report-${System.currentTimeMillis()}.txt")
                             .launch()
@@ -73,7 +74,7 @@ class DebugCommand(
 
                 SessionManager.putRequestSession(bot.sessions, guild, requestSession)
 
-                val io = producer.produceRequest(publisher, config.language.container, user, user)
+                val io = producer.produceRequest(publishers.plain, config.language.container, user, user)
                     .flatMap { it.launch() }
                     .map { emptyList<Order>()  }
 
@@ -97,8 +98,8 @@ class DebugCommand(
 
             SessionManager.putGameSession(bot.sessions, guild, session)
 
-            val io = producer.produceNextMovePVE(publisher, config.language.container, user, session.board.latestPos().get())
-                .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, session) }
+            val io = producer.produceNextMovePVE(publishers.plain, config.language.container, user, session.board.latestPos().get())
+                .flatMap { buildBoardSequence(bot, guild, config, producer, publishers.plain, session) }
                 .map { emptyList<Order>() }
 
             io and this.asCommandReport("succeed", user)
@@ -143,8 +144,8 @@ class DebugCommand(
 
             SessionManager.putGameSession(bot.sessions, guild, session)
 
-            val io = producer.produceNextMovePVE(publisher, config.language.container, user, session.board.latestPos().get())
-                .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, session) }
+            val io = producer.produceNextMovePVE(publishers.plain, config.language.container, user, session.board.latestPos().get())
+                .flatMap { buildBoardSequence(bot, guild, config, producer, publishers.plain, session) }
                 .map { emptyList<Order>() }
 
             io and this.asCommandReport("succeed", user)

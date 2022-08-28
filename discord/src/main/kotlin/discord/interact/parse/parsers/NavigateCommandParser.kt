@@ -22,7 +22,7 @@ object NavigateCommandParser : NavigableCommand {
     override suspend fun parseReaction(context: InteractionContext<GenericMessageReactionEvent>, state: NavigateState) =
         when (val isForward = this.matchIsForward(context.event.reaction.emoji.asUnicode())) {
             null -> Option.Empty
-            else -> Option(NavigateCommand("navigate", state, isForward))
+            else -> Option(NavigateCommand(state, isForward))
         }
 
 }

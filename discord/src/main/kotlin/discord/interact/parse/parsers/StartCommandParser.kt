@@ -62,7 +62,8 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
         SessionManager.retrieveGameSession(context.bot.sessions, context.guild, user.id).asOption().map { session ->
             this.asParseFailure("already has game session", user) { producer, publisher, container ->
                 producer.produceSessionAlready(publisher, container, session.owner)
-                    .flatMap { IO { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.retrieve().messageRef) } }
+                    .flatMap { IO { it.retrieve() } }
+                    .flatMapOption { IO { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef) } }
                     .flatMap { buildBoardSequence(context.bot, context.guild, context.config, producer, publisher, session) }
                     .map { emptyList() }
             }

@@ -2,19 +2,22 @@ package core.interact.commands
 
 import core.BotContext
 import core.assets.Guild
+import core.assets.MessageRef
 import core.assets.User
 import core.database.repositories.AnnounceRepository
 import core.database.repositories.UserProfileRepository
 import core.interact.i18n.Language
-import core.interact.message.MessageAdaptor
 import core.interact.message.MessageProducer
-import core.interact.message.MessagePublisher
+import core.interact.message.PublisherSet
 import core.session.entities.GuildConfig
-import kotlinx.coroutines.Deferred
 import utils.lang.and
 import utils.structs.flatMap
 
-class AnnounceCommand(override val name: String, private val command: Command) : Command {
+class AnnounceCommand(private val command: Command) : Command {
+
+    override val name = "announce+"
+
+    override val responseFlag = this.command.responseFlag
 
     override suspend fun <A, B> execute(
         bot: BotContext,
@@ -22,11 +25,10 @@ class AnnounceCommand(override val name: String, private val command: Command) :
         guild: Guild,
         user: User,
         producer: MessageProducer<A, B>,
-        message: Deferred<MessageAdaptor<A, B>>,
-        publisher: MessagePublisher<A, B>,
-        editPublisher: MessagePublisher<A, B>
+        messageRef: MessageRef,
+        publishers: PublisherSet<A, B>
     ) = this.command
-        .execute(bot, config, guild, user, producer, message, publisher, editPublisher)
+        .execute(bot, config, guild, user, producer, messageRef, publishers)
         .map { (originalIO, originalReport) ->
             val thenUser = user.copy(announceId = AnnounceRepository.getLatestAnnounceId(bot.dbConnection))
 
@@ -35,7 +37,7 @@ class AnnounceCommand(override val name: String, private val command: Command) :
             val io = AnnounceRepository.getAnnouncesSince(bot.dbConnection, user.announceId ?: -1)
                 .map { announces ->
                     producer.produceAnnounce(
-                        publisher,
+                        publishers.plain,
                         config.language.container,
                         announces[config.language] ?: announces[Language.ENG]!!
                     ).flatMap { it.launch() }

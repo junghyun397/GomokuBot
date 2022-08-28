@@ -2,13 +2,13 @@ package core.interact.commands
 
 import core.BotContext
 import core.assets.Guild
+import core.assets.MessageRef
 import core.assets.User
 import core.database.entities.extractGameRecord
 import core.database.repositories.GameRecordRepository
 import core.interact.Order
-import core.interact.message.MessageAdaptor
 import core.interact.message.MessageProducer
-import core.interact.message.MessagePublisher
+import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.GameManager
 import core.session.GameResult
@@ -17,12 +17,15 @@ import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
 import core.session.entities.PvpGameSession
-import kotlinx.coroutines.Deferred
 import utils.structs.flatMap
 import utils.structs.forEach
 import utils.structs.map
 
-class ResignCommand(override val name: String, private val session: GameSession) : Command {
+class ResignCommand(private val session: GameSession) : Command {
+
+    override val name = "resign"
+
+    override val responseFlag = ResponseFlag.IMMEDIATELY
 
     override suspend fun <A, B> execute(
         bot: BotContext,
@@ -30,9 +33,8 @@ class ResignCommand(override val name: String, private val session: GameSession)
         guild: Guild,
         user: User,
         producer: MessageProducer<A, B>,
-        message: Deferred<MessageAdaptor<A, B>>,
-        publisher: MessagePublisher<A, B>,
-        editPublisher: MessagePublisher<A, B>,
+        messageRef: MessageRef,
+        publishers: PublisherSet<A, B>,
     ) = runCatching {
         val (finishedSession, result) = GameManager.resignSession(this.session, GameResult.Cause.RESIGN, user)
 
@@ -43,12 +45,12 @@ class ResignCommand(override val name: String, private val session: GameSession)
 
         val io = when (finishedSession) {
             is AiGameSession ->
-                producer.produceSurrenderedPVE(publisher, config.language.container, finishedSession.owner)
+                producer.produceSurrenderedPVE(publishers.plain, config.language.container, finishedSession.owner)
             is PvpGameSession ->
-                producer.produceSurrenderedPVP(publisher, config.language.container, result.winner, result.looser)
+                producer.produceSurrenderedPVP(publishers.plain, config.language.container, result.winner, result.looser)
         }
             .flatMap { it.launch() }
-            .flatMap { producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, finishedSession) }
+            .flatMap { producer.produceBoard(publishers.plain, config.language.container, config.boardStyle.renderer, finishedSession) }
             .flatMap { it.launch() }
             .map {
                 listOf(

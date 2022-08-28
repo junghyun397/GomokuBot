@@ -17,10 +17,10 @@ object SettingsCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     override val name = "config"
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>) =
-        Either.Left(SettingsCommand(context.config.language.container.settingsCommand()))
+        Either.Left(SettingsCommand())
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>) =
-        Either.Left(SettingsCommand(context.config.language.container.settingsCommand()))
+        Either.Left(SettingsCommand())
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.apply {

@@ -33,7 +33,7 @@ object DebugCommandParser : NamedParser, ParsableCommand {
             })
 
         return Either.Left(DebugCommand(
-            "debug", type,
+            type,
             context.event.message.contentRaw
                 .drop(
                     context.event.message.contentRaw

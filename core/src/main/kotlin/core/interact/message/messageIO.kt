@@ -2,9 +2,55 @@ package core.interact.message
 
 import core.assets.MessageRef
 import utils.structs.IO
+import utils.structs.Option
 import java.io.InputStream
 
 typealias MessagePublisher<A, B> = (A) -> MessageIO<A, B>
+
+typealias ComponentPublisher<A, B> = (B) -> MessageIO<A, B>
+
+interface PublisherSet<A, B> {
+
+    val plain: MessagePublisher<A, B>
+
+    val windowed: MessagePublisher<A, B>
+
+    val edit: MessagePublisher<A, B>
+
+    val component: ComponentPublisher<A, B>
+
+}
+
+data class PolyPublisherSet<A, B>(
+    override val plain: MessagePublisher<A, B>,
+    override val windowed: MessagePublisher<A, B>,
+    override val edit: MessagePublisher<A, B>,
+    override val component: ComponentPublisher<A, B>
+) : PublisherSet<A, B>
+
+data class DiPublisherSet<A, B>(
+    override val plain: MessagePublisher<A, B>,
+    override val windowed: MessagePublisher<A, B>,
+) : PublisherSet<A, B> {
+
+    override val component: ComponentPublisher<A, B> get() = throw IllegalStateException()
+
+    override val edit: MessagePublisher<A, B> get() = throw IllegalStateException()
+}
+
+data class MonoPublisherSet<A, B>(
+    private val publisher: MessagePublisher<A, B>
+) : PublisherSet<A, B> {
+
+    override val plain: MessagePublisher<A, B> get() = this.publisher
+
+    override val windowed: MessagePublisher<A, B> get() = this.publisher
+
+    override val edit: MessagePublisher<A, B> get() = this.publisher
+
+    override val component: ComponentPublisher<A, B> get() { throw IllegalStateException() }
+
+}
 
 interface MessageIO<A, B> {
 
@@ -14,7 +60,7 @@ interface MessageIO<A, B> {
 
     fun launch(): IO<Unit>
 
-    suspend fun retrieve(): MessageAdaptor<A, B>
+    suspend fun retrieve(): Option<MessageAdaptor<A, B>>
 
 }
 

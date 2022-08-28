@@ -29,7 +29,7 @@ object RankCommandParser : NamedParser, ParsableCommand, BuildableCommand {
         maybeTarget
             .flatMap { UserProfileRepository.retrieveUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, it.extractId()) }
             .fold(
-                onDefined = { Either.Left(RankCommand(context.config.language.container.rankCommand(), RankScope.User(it))) },
+                onDefined = { Either.Left(RankCommand(RankScope.User(it))) },
                 onEmpty = { Either.Right(this.asParseFailure("target user not found", context.user) { producer, publisher, container ->
                     producer.produceUserNotFound(publisher, container)
                         .flatMap { it.launch() }
@@ -40,25 +40,25 @@ object RankCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
         when (context.event.subcommandName) {
             context.config.language.container.rankCommandSubServer() ->
-                Either.Left(RankCommand(context.config.language.container.rankCommand(), RankScope.Guild))
+                Either.Left(RankCommand(RankScope.Guild))
             context.config.language.container.rankCommandSubUser() ->
                 context.event.getOption(context.config.language.container.rankCommandOptionPlayer())
                     ?.asUser
                     .asOption()
                     .let { this.parseActually(context, it) }
-            else -> Either.Left(RankCommand(context.config.language.container.rankCommand(), RankScope.Global))
+            else -> Either.Left(RankCommand(RankScope.Global))
         }
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> =
         when (payload.getOrNull(1)) {
             context.config.language.container.rankCommandSubServer() ->
-                Either.Left(RankCommand(context.config.language.container.rankCommand(), RankScope.Guild))
+                Either.Left(RankCommand(RankScope.Guild))
             context.config.language.container.rankCommandSubUser() ->
                 context.event.message.mentions.members.firstOrNull()
                     ?.user
                     .asOption()
                     .let { this.parseActually(context, it) }
-            else -> Either.Left(RankCommand(context.config.language.container.rankCommand(), RankScope.Global))
+            else -> Either.Left(RankCommand(RankScope.Global))
         }
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

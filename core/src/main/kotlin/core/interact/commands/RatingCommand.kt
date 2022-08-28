@@ -2,18 +2,21 @@ package core.interact.commands
 
 import core.BotContext
 import core.assets.Guild
+import core.assets.MessageRef
 import core.assets.User
 import core.interact.Order
-import core.interact.message.MessageAdaptor
 import core.interact.message.MessageProducer
-import core.interact.message.MessagePublisher
+import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
-import kotlinx.coroutines.Deferred
 import utils.lang.and
 import utils.structs.IO
 
-class RatingCommand(override val name: String) : Command {
+class RatingCommand() : Command {
+
+    override val name = "rating"
+
+    override val responseFlag = ResponseFlag.IMMEDIATELY
 
     override suspend fun <A, B> execute(
         bot: BotContext,
@@ -21,9 +24,8 @@ class RatingCommand(override val name: String) : Command {
         guild: Guild,
         user: User,
         producer: MessageProducer<A, B>,
-        message: Deferred<MessageAdaptor<A, B>>,
-        publisher: MessagePublisher<A, B>,
-        editPublisher: MessagePublisher<A, B>,
+        messageRef: MessageRef,
+        publishers: PublisherSet<A, B>,
     ) = runCatching {
         IO { emptyList<Order>() } and this.asCommandReport("succeed", user)
     }

@@ -2,24 +2,28 @@ package core.interact.commands
 
 import core.BotContext
 import core.assets.Guild
+import core.assets.MessageRef
 import core.assets.User
 import core.interact.Order
-import core.interact.message.MessageAdaptor
 import core.interact.message.MessageProducer
-import core.interact.message.MessagePublisher
+import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import core.session.entities.NavigateState
 import core.session.entities.NavigationKind
-import kotlinx.coroutines.Deferred
 import utils.assets.LinuxTime
 import utils.lang.and
 import utils.structs.IO
 import utils.structs.flatMap
+import utils.structs.flatMapOption
 import utils.structs.map
 
-class SettingsCommand(override val name: String) : Command {
+class SettingsCommand : Command {
+
+    override val name = "setting"
+
+    override val responseFlag = ResponseFlag.IMMEDIATELY
 
     override suspend fun <A, B> execute(
         bot: BotContext,
@@ -27,13 +31,12 @@ class SettingsCommand(override val name: String) : Command {
         guild: Guild,
         user: User,
         producer: MessageProducer<A, B>,
-        message: Deferred<MessageAdaptor<A, B>>,
-        publisher: MessagePublisher<A, B>,
-        editPublisher: MessagePublisher<A, B>,
+        messageRef: MessageRef,
+        publishers: PublisherSet<A, B>,
     ) = runCatching {
-        val io = producer.produceSettings(publisher, config, 0)
+        val io = producer.produceSettings(publishers.plain, config, 0)
             .flatMap { IO { it.retrieve() } }
-            .flatMap { settingsMessage ->
+            .flatMapOption { settingsMessage ->
                 SessionManager.addNavigate(
                     bot.sessions,
                     settingsMessage.messageRef,

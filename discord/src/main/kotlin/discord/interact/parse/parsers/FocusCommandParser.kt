@@ -39,6 +39,6 @@ object FocusCommandParser : NamedParser, NavigableCommand {
                     else -> Option(session and direction)
                 }
             }
-            .map { (session, direction) -> FocusCommand(this.name, state, session, direction) }
+            .map { (session, direction) -> FocusCommand(state, session, direction) }
 
 }

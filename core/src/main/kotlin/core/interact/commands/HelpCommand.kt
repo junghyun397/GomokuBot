@@ -2,18 +2,21 @@ package core.interact.commands
 
 import core.BotContext
 import core.assets.Guild
+import core.assets.MessageRef
 import core.assets.User
 import core.interact.Order
-import core.interact.message.MessageAdaptor
 import core.interact.message.MessageProducer
-import core.interact.message.MessagePublisher
+import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
-import kotlinx.coroutines.Deferred
 import utils.lang.and
 import utils.structs.map
 
-class HelpCommand(override val name: String, private val sendCombined: Boolean) : Command {
+class HelpCommand(private val sendCombined: Boolean) : Command {
+
+    override val name = "help"
+
+    override val responseFlag = ResponseFlag.IMMEDIATELY
 
     override suspend fun <A, B> execute(
         bot: BotContext,
@@ -21,15 +24,14 @@ class HelpCommand(override val name: String, private val sendCombined: Boolean) 
         guild: Guild,
         user: User,
         producer: MessageProducer<A, B>,
-        message: Deferred<MessageAdaptor<A, B>>,
-        publisher: MessagePublisher<A, B>,
-        editPublisher: MessagePublisher<A, B>,
+        messageRef: MessageRef,
+        publishers: PublisherSet<A, B>,
     ) = runCatching {
         val io = run {
             if (this.sendCombined)
-                buildCombinedHelpSequence(bot, config, publisher, producer, 0)
+                buildCombinedHelpSequence(bot, config, publishers.plain, producer, 0)
             else
-                buildHelpSequence(bot, config, publisher, producer)
+                buildHelpSequence(bot, config, publishers.plain, producer)
         }
             .map { emptyList<Order>() }
 

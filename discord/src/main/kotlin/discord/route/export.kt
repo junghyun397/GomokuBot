@@ -10,7 +10,6 @@ import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import net.dv8tion.jda.api.exceptions.ErrorResponseException
 import net.dv8tion.jda.api.requests.RestAction
-import net.dv8tion.jda.api.requests.restaction.AuditableRestAction
 import utils.structs.IO
 
 suspend fun export(context: InteractionContext<*>, io: IO<List<Order>>, source: MessageRef?) =
@@ -31,10 +30,10 @@ suspend fun export(bot: BotContext, discordConfig: DiscordConfig, jdaGuild: JDAG
                     ?.forEach { (channelId, messageRefs) -> jdaGuild.getTextChannelById(channelId.idLong)?.let { channel ->
                         try {
                             messageRefs
-                                .map { channel.deleteMessageById(it.id.idLong) }
-                                .reduce<RestAction<Void>, AuditableRestAction<Void>> { acc, action -> acc.and(action) }
+                                .map { channel.deleteMessageById(it.id.idLong).mapToResult() }
+                                .reduce<RestAction<*>, RestAction<*>> { acc, action -> acc.and(action) }
                                 .queue()
-                        } catch (_: ErrorResponseException) {}
+                        } catch (_: ErrorResponseException) { }
                     } }
             is Order.RemoveNavigators ->
                 jdaGuild.getTextChannelById(order.messageRef.channelId.idLong)?.run {

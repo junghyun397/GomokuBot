@@ -14,6 +14,7 @@ import core.inference.KvineClient
 import core.interact.reports.InteractionReport
 import core.session.SessionManager
 import core.session.SessionRepository
+import dev.minn.jda.ktx.coroutines.await
 import discord.assets.*
 import discord.interact.DiscordConfig
 import discord.interact.GuildManager
@@ -23,6 +24,7 @@ import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.OnlineStatus
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.events.Event
@@ -40,6 +42,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent
 import reactor.core.publisher.Flux
 import reactor.util.function.Tuple2
 import utils.assets.LinuxTime
+import utils.lang.and
 import utils.log.getLogger
 import utils.structs.forEach
 
@@ -177,14 +180,19 @@ object GomokuBot {
                 .doOnNext { leaveLog(it) },
 
             eventManager.on<MessageReactionRemoveEvent>()
-                .filter { it.isFromGuild && !(it.user?.isBot ?: true) }
-                .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user!!, it.guild) } }
+                .flatMap { mono { it and it.guild.retrieveMemberById(it.userId).await().user } }
+                .filter { (event, user) ->
+                    event.isFromGuild
+                        && !GuildManager.lookupPermission(event.channel.asTextChannel(), Permission.MESSAGE_MANAGE)
+                        && !user.isBot
+                }
+                .flatMap { (event, user) -> mono { retrieveInteractionContext(botContext, discordConfig, event, user, event.guild) } }
                 .flatMap(::reactionRouter)
                 .doOnNext { leaveLog(it) },
 
             eventManager.on<GuildJoinEvent>()
                 .flatMap { guildJoinRouter(botContext, it) }
-                .doOnNext { println("join $it") },
+                .doOnNext { logger.info(it.toString()) },
 
             eventManager.on<GuildLeaveEvent>()
                 .flatMap { mono { GuildProfileRepository.retrieveGuild(botContext.dbConnection, DISCORD_PLATFORM_ID, it.guild.extractId()) } }

@@ -2,32 +2,36 @@ package core.interact.commands
 
 import core.BotContext
 import core.assets.Guild
+import core.assets.MessageRef
 import core.assets.User
 import core.inference.FocusSolver
 import core.interact.Order
-import core.interact.message.MessageAdaptor
 import core.interact.message.MessageProducer
-import core.interact.message.MessagePublisher
+import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
 import core.session.entities.NavigateState
 import jrenju.notation.Pos
-import kotlinx.coroutines.Deferred
 import utils.lang.and
 import utils.structs.IO
+import utils.structs.flatMap
+import utils.structs.map
 
 enum class Direction {
     LEFT, DOWN, UP, RIGHT, FOCUS
 }
 
 class FocusCommand(
-    override val name: String,
     private val navigateState: NavigateState,
     private val session: GameSession,
     private val direction: Direction,
 ) : Command {
+
+    override val name = "focus"
+
+    override val responseFlag = ResponseFlag.IMMEDIATELY
 
     override suspend fun <A, B> execute(
         bot: BotContext,
@@ -35,12 +39,9 @@ class FocusCommand(
         guild: Guild,
         user: User,
         producer: MessageProducer<A, B>,
-        message: Deferred<MessageAdaptor<A, B>>,
-        publisher: MessagePublisher<A, B>,
-        editPublisher: MessagePublisher<A, B>
+        messageRef: MessageRef,
+        publishers: PublisherSet<A, B>
     ) = runCatching {
-        val originalMessage = message.await()
-
         val newFocus = run {
             val step = producer.focusWidth / 2 + 1
 
@@ -56,16 +57,18 @@ class FocusCommand(
             }
         }
 
-        SessionManager.addNavigate(bot.sessions, originalMessage.messageRef, this.navigateState.copy(page = newFocus.idx()))
+        when(newFocus.idx()) {
+            this.navigateState.page -> IO { emptyList<Order>() } and this.asCommandReport("focus bounded", user)
+            else -> {
+                SessionManager.addNavigate(bot.sessions, messageRef, this.navigateState.copy(page = newFocus.idx()))
 
-//        return@runCatching producer.produceBoard(editPublisher, config.language.container, config.boardStyle.renderer, this.session)
-//            .map { producer.attachFocusButtons(it, this.session, newFocus).launch(); emptyList<Order>() } and this.asCommandReport("move focus $direction", user)
+                val action = producer.attachFocusButtons(publishers.component, session, newFocus)
+                    .flatMap { it.launch() }
+                    .map { emptyList<Order>() }
 
-        val action = originalMessage.updateButtons(
-            producer.generateFocusedButtons(producer.generateFocusedField(this.session.board, newFocus))
-        )
-
-        IO { action.launch(); emptyList<Order>() } and this.asCommandReport("move focus $direction", user)
+                action and this.asCommandReport("move focus $direction", user)
+            }
+        }
     }
 
 }

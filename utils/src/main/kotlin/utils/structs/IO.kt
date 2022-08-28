@@ -17,10 +17,10 @@ interface IO<out A> {
                 override suspend fun run() = block()
             }
 
-        inline fun effect(block: () -> Unit): IO<Unit> {
-            block()
-            return unitIO
-        }
+        inline fun effect(crossinline block: () -> Unit) =
+            object : IO<Unit> {
+                override suspend fun run() = block()
+            }
 
         inline operator fun <A> invoke(crossinline block: suspend () -> A) = unit(block)
 
@@ -51,4 +51,12 @@ fun <A, B> IO<A>.map(mapper: (A) -> B): IO<B> =
 fun <A, B> IO<A>.flatMap(mapper: (A) -> IO<B>): IO<B> =
     object : IO<B> {
         override suspend fun run() = mapper(this@flatMap.run()).run()
+    }
+
+fun <A, B> IO<Option<A>>.flatMapOption(mapper: (A) -> IO<B>): IO<Option<B>> =
+    object : IO<Option<B>> {
+        override suspend fun run() = this@flatMapOption.run().fold(
+            onDefined = { Option(mapper(it).run()) },
+            onEmpty = { Option.Empty }
+        )
     }

@@ -1,3 +1,5 @@
+@file:Suppress("FunctionName")
+
 package discord.interact.message
 
 import core.assets.MessageRef
@@ -10,8 +12,10 @@ import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageAction
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageUpdateAction
+import net.dv8tion.jda.api.requests.restaction.interactions.MessageEditCallbackAction
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction
 import utils.structs.IO
+import utils.structs.Option
 import java.io.InputStream
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -21,6 +25,20 @@ typealias DiscordButtons = List<ActionRow>
 typealias DiscordMessagePublisher = MessagePublisher<Message, DiscordButtons>
 
 typealias DiscordMessageAction = MessageIO<Message, DiscordButtons>
+
+fun TransMessagePublisher(head: DiscordMessagePublisher, tail: DiscordMessagePublisher): DiscordMessagePublisher {
+    var consumeHead = false
+
+    return { msg ->
+        when (consumeHead) {
+            true -> tail(msg)
+            else -> {
+                consumeHead = true
+                head(msg)
+            }
+        }
+    }
+}
 
 abstract class DiscordMessageActionAdaptor(private val original: RestAction<*>) : DiscordMessageAction {
 
@@ -34,21 +52,26 @@ class WebHookActionAdaptor(private val original: WebhookMessageAction<Message>) 
 
     override fun addButtons(buttons: DiscordButtons) = WebHookActionAdaptor(original.addActionRows(buttons))
 
-    override suspend fun retrieve(): DiscordMessageAdaptor = suspendCoroutine { control ->
+    override suspend fun retrieve(): Option<DiscordMessageAdaptor> = suspendCoroutine { control ->
         this.original
-            .queue { control.resume(DiscordMessageAdaptor(it)) }
+            .mapToResult()
+            .queue { maybeMessage ->
+                maybeMessage
+                    .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
+                    .onFailure { Option.Empty }
+            }
     }
 
 }
 
-class WebHookUpdateActionAdaptor(
+class WebHookEditActionAdaptor(
     private val original: WebhookMessageUpdateAction<Message>,
     private val components: List<ActionRow> = emptyList()
 ) : DiscordMessageActionAdaptor(original) {
 
-    override fun addFile(file: InputStream, name: String) = WebHookUpdateActionAdaptor(original.addFile(file, name), this.components)
+    override fun addFile(file: InputStream, name: String) = WebHookEditActionAdaptor(original.addFile(file, name), this.components)
 
-    override fun addButtons(buttons: DiscordButtons) = WebHookUpdateActionAdaptor(original, this.components + buttons)
+    override fun addButtons(buttons: DiscordButtons) = WebHookEditActionAdaptor(original, this.components + buttons)
 
     override fun launch() =
         IO.effect {
@@ -57,10 +80,41 @@ class WebHookUpdateActionAdaptor(
                 .queue()
         }
 
-    override suspend fun retrieve(): DiscordMessageAdaptor = suspendCoroutine { control ->
+    override suspend fun retrieve(): Option<DiscordMessageAdaptor> = suspendCoroutine { control ->
         this.original
             .setActionRows(this.components)
-            .queue { control.resume(DiscordMessageAdaptor(it)) }
+            .mapToResult()
+            .queue { maybeMessage ->
+                maybeMessage
+                    .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
+                    .onFailure { Option.Empty }
+            }
+    }
+
+}
+
+class WebHookComponentEditActionAdaptor(
+    private val original: WebhookMessageUpdateAction<Message>,
+) : DiscordMessageActionAdaptor(original) {
+
+    override fun addFile(file: InputStream, name: String) = WebHookComponentEditActionAdaptor(original.addFile(file, name))
+
+    override fun addButtons(buttons: DiscordButtons) = this
+
+    override fun launch() =
+        IO.effect {
+            this.original
+                .queue()
+        }
+
+    override suspend fun retrieve(): Option<DiscordMessageAdaptor> = suspendCoroutine { control ->
+        this.original
+            .mapToResult()
+            .queue { maybeMessage ->
+                maybeMessage
+                    .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
+                    .onFailure { Option.Empty }
+            }
     }
 
 }
@@ -81,10 +135,41 @@ class MessageActionAdaptor(
                 .queue()
         }
 
-    override suspend fun retrieve(): DiscordMessageAdaptor = suspendCoroutine { control ->
+    override suspend fun retrieve(): Option<DiscordMessageAdaptor> = suspendCoroutine { control ->
         this.original
             .setActionRows(this.components)
-            .queue { control.resume(DiscordMessageAdaptor(it)) }
+            .mapToResult()
+            .queue { maybeMessage ->
+                maybeMessage
+                    .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
+                    .onFailure { Option.Empty }
+            }
+    }
+
+}
+
+class MessageComponentActionAdaptor(
+    private val original: net.dv8tion.jda.api.requests.restaction.MessageAction,
+) : DiscordMessageActionAdaptor(original) {
+
+    override fun addFile(file: InputStream, name: String) = MessageComponentActionAdaptor(original.addFile(file, name))
+
+    override fun addButtons(buttons: DiscordButtons) = this
+
+    override fun launch() =
+        IO.effect {
+            this.original
+                .queue()
+        }
+
+    override suspend fun retrieve(): Option<DiscordMessageAdaptor> = suspendCoroutine { control ->
+        this.original
+            .mapToResult()
+            .queue { maybeMessage ->
+                maybeMessage
+                    .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
+                    .onFailure { Option.Empty }
+            }
     }
 
 }
@@ -95,9 +180,38 @@ class ReplyActionAdaptor(private val original: ReplyCallbackAction) : DiscordMes
 
     override fun addButtons(buttons: DiscordButtons) = ReplyActionAdaptor(original.addActionRows(buttons))
 
-    override suspend fun retrieve(): DiscordMessageAdaptor = suspendCoroutine { control ->
+    override suspend fun retrieve(): Option<DiscordMessageAdaptor> = suspendCoroutine { control ->
         this.original
-            .queue { hook -> hook.retrieveOriginal().queue { control.resume(DiscordMessageAdaptor(it)) } }
+            .queue { hook -> hook
+                .retrieveOriginal()
+                .mapToResult()
+                .queue { maybeMessage ->
+                    maybeMessage
+                        .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
+                        .onFailure { control.resume(Option.Empty) }
+                }
+            }
+    }
+
+}
+
+class MessageEditCallbackAdaptor(private val original: MessageEditCallbackAction) : DiscordMessageActionAdaptor(original) {
+
+    override fun addFile(file: InputStream, name: String) = MessageEditCallbackAdaptor(original.addFile(file, name))
+
+    override fun addButtons(buttons: DiscordButtons) = MessageEditCallbackAdaptor(original.setActionRows(buttons))
+
+    override suspend fun retrieve(): Option<DiscordMessageAdaptor> = suspendCoroutine { control ->
+        this.original
+            .queue { hook -> hook
+                .retrieveOriginal()
+                .mapToResult()
+                .queue { maybeMessage ->
+                    maybeMessage
+                        .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
+                        .onFailure { control.resume(Option.Empty) }
+                }
+            }
     }
 
 }

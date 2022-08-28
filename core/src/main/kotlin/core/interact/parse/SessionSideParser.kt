@@ -3,10 +3,10 @@ package core.interact.parse
 import core.BotContext
 import core.assets.Guild
 import core.assets.User
-import core.interact.Order
 import core.session.SessionManager
 import core.session.entities.GameSession
 import utils.structs.Either
+import utils.structs.flatMap
 import utils.structs.map
 
 abstract class SessionSideParser<A, B> : NamedParser {
@@ -15,7 +15,8 @@ abstract class SessionSideParser<A, B> : NamedParser {
         SessionManager.retrieveGameSession(context.sessions, guild, user.id)?.let { Either.Left(it) }
             ?: Either.Right(ParseFailure(this.name, "$user session not found", user) { producer, publisher, container ->
                 producer.produceSessionNotFound(publisher, container, user)
-                    .map { it.launch(); emptyList<Order>() }
+                    .flatMap { it.launch() }
+                    .map { emptyList() }
             })
 
 }

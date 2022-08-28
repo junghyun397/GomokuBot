@@ -2,16 +2,15 @@ package core.interact.commands
 
 import core.BotContext
 import core.assets.Guild
+import core.assets.MessageRef
 import core.assets.User
 import core.database.repositories.UserProfileRepository
 import core.database.repositories.UserStatsRepository
 import core.interact.Order
-import core.interact.message.MessageAdaptor
 import core.interact.message.MessageProducer
-import core.interact.message.MessagePublisher
+import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
-import kotlinx.coroutines.Deferred
 import utils.lang.and
 import utils.structs.flatMap
 import utils.structs.map
@@ -26,10 +25,11 @@ sealed class RankScope {
 
 }
 
-class RankCommand(
-    override val name: String,
-    private val scope: RankScope,
-) : Command {
+class RankCommand(private val scope: RankScope) : Command {
+
+    override val name = "rank"
+
+    override val responseFlag = ResponseFlag.DEFER
 
     override suspend fun <A, B> execute(
         bot: BotContext,
@@ -37,9 +37,8 @@ class RankCommand(
         guild: Guild,
         user: User,
         producer: MessageProducer<A, B>,
-        message: Deferred<MessageAdaptor<A, B>>,
-        publisher: MessagePublisher<A, B>,
-        editPublisher: MessagePublisher<A, B>,
+        messageRef: MessageRef,
+        publishers: PublisherSet<A, B>,
     ) = runCatching {
         val rankings = when (this.scope) {
             is RankScope.Global -> UserStatsRepository.fetchRankings(bot.dbConnection)
@@ -50,7 +49,7 @@ class RankCommand(
         val tuple = rankings
             .map { UserProfileRepository.retrieveUser(bot.dbConnection, it.userId) and it }
 
-        val io = producer.produceRankings(publisher, config.language.container, tuple)
+        val io = producer.produceRankings(publishers.plain, config.language.container, tuple)
             .flatMap { it.launch() }
             .map { emptyList<Order>() }
 

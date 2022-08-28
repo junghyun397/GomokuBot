@@ -31,6 +31,8 @@ interface MessageProducer<A, B> {
 
     fun attachFocusButtons(boardAction: MessageIO<A, B>, session: GameSession, focus: Pos): MessageIO<A, B>
 
+    fun attachFocusButtons(publisher: ComponentPublisher<A, B>, session: GameSession, focus: Pos): IO<MessageIO<A, B>>
+
     fun attachNavigators(flow: Flow<String>, message: MessageAdaptor<A, B>, checkTerminated: suspend () -> Boolean): IO<Unit>
 
     fun attachFocusNavigators(message: MessageAdaptor<A, B>, checkTerminated: suspend () -> Boolean): IO<Unit>

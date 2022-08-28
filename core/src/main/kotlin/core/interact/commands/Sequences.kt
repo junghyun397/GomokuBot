@@ -18,8 +18,7 @@ import jrenju.notation.Pos
 import jrenju.notation.Renju
 import utils.assets.LinuxTime
 import utils.lang.and
-import utils.structs.IO
-import utils.structs.flatMap
+import utils.structs.*
 
 fun <A, B> buildNextMoveSequence(
     messageIO: MessageIO<A, B>,
@@ -30,7 +29,10 @@ fun <A, B> buildNextMoveSequence(
     publisher: MessagePublisher<A, B>,
     session: GameSession,
     thenSession: GameSession,
-) = IO { SessionManager.appendMessage(bot.sessions, thenSession.messageBufferKey, messageIO.retrieve().messageRef) }
+) = IO {
+    messageIO.retrieve()
+        .forEach { SessionManager.appendMessage(bot.sessions, thenSession.messageBufferKey, it.messageRef) }
+}
     .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, thenSession) }
     .flatMap { buildSweepSequence(bot, config, session) }
 
@@ -51,9 +53,9 @@ fun <A, B> buildBoardSequence(
             )
         }
 
-        IO { producer.attachFocusButtons(action, session, focus).retrieve() and focus }
+        IO { producer.attachFocusButtons(action, session, focus).retrieve().map { it and focus } }
     }
-    .flatMap { (message, pos) ->
+    .flatMapOption { (message, pos) ->
         SessionManager.addNavigate(
             bot.sessions, message.messageRef, NavigateState(NavigationKind.BOARD, pos.idx(), session.expireDate)
         )
@@ -94,7 +96,7 @@ fun <A, B> buildHelpSequence(
     producer: MessageProducer<A, B>,
 ) = producer.produceHelp(publisher, config.language.container, 0)
     .flatMap { IO { it.retrieve() } }
-    .flatMap { helpMessage ->
+    .flatMapOption { helpMessage ->
         SessionManager.addNavigate(
             bot.sessions,
             helpMessage.messageRef,
@@ -112,12 +114,14 @@ fun <A, B> buildCombinedHelpSequence(
     settingsPage: Int
 ) = IO.zip(producer.produceHelp(publisher, config.language.container, 0), producer.produceSettings(publisher, config, settingsPage))
     .flatMap { (helpIO, settingsIO) -> IO {
-        val aboutMessage = helpIO.retrieve()
-        val settingsMessage = settingsIO.retrieve()
-
+        helpIO.retrieve().flatMap { helpMessage ->
+            settingsIO.retrieve().map { helpMessage and it }
+        }
+    } }
+    .flatMapOption { (helpMessage, settingsMessage) ->
         SessionManager.addNavigate(
             bot.sessions,
-            aboutMessage.messageRef,
+            helpMessage.messageRef,
             NavigateState(NavigationKind.ABOUT, 0, LinuxTime.withExpireOffset(bot.config.navigatorExpireOffset))
         )
 
@@ -131,9 +135,6 @@ fun <A, B> buildCombinedHelpSequence(
             )
         )
 
-        aboutMessage and settingsMessage
-    } }
-    .flatMap { (aboutMessage, settingsMessage) ->
-        producer.attachBinaryNavigators(aboutMessage)
+        producer.attachBinaryNavigators(helpMessage)
             .flatMap { producer.attachBinaryNavigators(settingsMessage) }
     }
