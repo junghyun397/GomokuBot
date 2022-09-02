@@ -151,10 +151,12 @@ object SessionManager {
             .filter { it.value.requestSessions.isEmpty() && it.value.gameSessions.isEmpty() }
             .forEach { repo.sessions.remove(it.key) }
 
-    fun cleanExpiredNavigators(repo: SessionRepository) =
-        LinuxTime().let { referenceTime ->
-            repo.navigates
-                .filterValues { referenceTime.timestamp > it.expireDate.timestamp }
-        }.onEach { repo.navigates.remove(it.key) }
+    fun cleanExpiredNavigators(repo: SessionRepository): Map<MessageRef, NavigateState> {
+        val referenceTime = LinuxTime()
+
+        return repo.navigates
+            .filterValues { referenceTime.timestamp > it.expireDate.timestamp }
+            .onEach { repo.navigates.remove(it.key) }
+    }
 
 }

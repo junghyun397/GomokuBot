@@ -29,10 +29,9 @@ fun <A, B> buildNextMoveSequence(
     publisher: MessagePublisher<A, B>,
     session: GameSession,
     thenSession: GameSession,
-) = IO {
-    messageIO.retrieve()
-        .forEach { SessionManager.appendMessage(bot.sessions, thenSession.messageBufferKey, it.messageRef) }
-}
+) = messageIO
+    .retrieve()
+    .flatMapOption { IO { SessionManager.appendMessage(bot.sessions, thenSession.messageBufferKey, it.messageRef) } }
     .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, thenSession) }
     .flatMap { buildSweepSequence(bot, config, session) }
 
@@ -43,18 +42,21 @@ fun <A, B> buildBoardSequence(
     producer: MessageProducer<A, B>,
     publisher: MessagePublisher<A, B>,
     session: GameSession,
-) = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, session)
-    .flatMap { action ->
-        val focus = when (config.focusPolicy) {
-            FocusPolicy.INTELLIGENCE -> FocusSolver.resolveFocus(session.board, producer.focusWidth)
-            FocusPolicy.FALLOWING -> session.board.latestPos().fold(
-                { Renju.BOARD_CENTER_POS() },
-                { Pos(it.row().coerceIn(producer.focusRange), it.col().coerceIn(producer.focusRange)) }
-            )
-        }
-
-        IO { producer.attachFocusButtons(action, session, focus).retrieve().map { it and focus } }
+) = run {
+    val focus = when (config.focusPolicy) {
+        FocusPolicy.INTELLIGENCE -> FocusSolver.resolveFocus(session.board, producer.focusWidth)
+        FocusPolicy.FALLOWING -> session.board.latestPos().fold(
+            { Renju.BOARD_CENTER_POS() },
+            { Pos(it.row().coerceIn(producer.focusRange), it.col().coerceIn(producer.focusRange)) }
+        )
     }
+
+    val boardMessageIO = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, session)
+
+    producer.attachFocusButtons(boardMessageIO, session, focus)
+        .retrieve()
+        .mapOption { it and focus }
+}
     .flatMapOption { (message, pos) ->
         SessionManager.addNavigate(
             bot.sessions, message.messageRef, NavigateState(NavigationKind.BOARD, pos.idx(), session.expireDate)
@@ -86,7 +88,7 @@ fun <A, B> buildFinishSequence(
     session: GameSession,
     thenSession: GameSession
 ) = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, thenSession)
-    .flatMap { it.launch() }
+    .launch()
     .flatMap { buildSweepSequence(bot, config, session) }
 
 fun <A, B> buildHelpSequence(
@@ -95,12 +97,12 @@ fun <A, B> buildHelpSequence(
     publisher: MessagePublisher<A, B>,
     producer: MessageProducer<A, B>,
 ) = producer.produceHelp(publisher, config.language.container, 0)
-    .flatMap { IO { it.retrieve() } }
+    .retrieve()
     .flatMapOption { helpMessage ->
         SessionManager.addNavigate(
             bot.sessions,
             helpMessage.messageRef,
-            NavigateState(NavigationKind.ABOUT, 0, LinuxTime.withExpireOffset(bot.config.navigatorExpireOffset))
+            NavigateState(NavigationKind.ABOUT, 0, LinuxTime.withOffset(bot.config.navigatorExpireOffset))
         )
 
         producer.attachBinaryNavigators(helpMessage)
@@ -112,17 +114,20 @@ fun <A, B> buildCombinedHelpSequence(
     publisher: MessagePublisher<A, B>,
     producer: MessageProducer<A, B>,
     settingsPage: Int
-) = IO.zip(producer.produceHelp(publisher, config.language.container, 0), producer.produceSettings(publisher, config, settingsPage))
-    .flatMap { (helpIO, settingsIO) -> IO {
-        helpIO.retrieve().flatMap { helpMessage ->
-            settingsIO.retrieve().map { helpMessage and it }
-        }
-    } }
+) = IO.zip(
+    producer.produceHelp(publisher, config.language.container, 0).retrieve(),
+    producer.produceSettings(publisher, config, settingsPage).retrieve(),
+)
+    .map { (maybeHelp, maybeSettings) -> Option.zip(maybeHelp, maybeSettings) }
     .flatMapOption { (helpMessage, settingsMessage) ->
         SessionManager.addNavigate(
             bot.sessions,
             helpMessage.messageRef,
-            NavigateState(NavigationKind.ABOUT, 0, LinuxTime.withExpireOffset(bot.config.navigatorExpireOffset))
+            NavigateState(
+                NavigationKind.ABOUT,
+                0,
+                LinuxTime.withOffset(bot.config.navigatorExpireOffset)
+            )
         )
 
         SessionManager.addNavigate(
@@ -131,7 +136,7 @@ fun <A, B> buildCombinedHelpSequence(
             NavigateState(
                 NavigationKind.SETTINGS,
                 settingsPage,
-                LinuxTime.withExpireOffset(bot.config.navigatorExpireOffset)
+                LinuxTime.withOffset(bot.config.navigatorExpireOffset)
             )
         )
 

@@ -43,15 +43,15 @@ import utils.structs.Option
 import utils.structs.fold
 import java.time.format.DateTimeFormatter
 
-object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
+object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>() {
 
     override val focusWidth = 5
     override val focusRange = 2 .. Renju.BOARD_WIDTH_MAX_IDX() - 2
 
     // INTERFACE
 
-    override fun sendString(text: String, publisher: MessagePublisher<Message, DiscordButtons>) =
-        IO { publisher(Message(text)) }
+    override fun sendString(text: String, publisher: MessagePublisher<Message, DiscordComponents>) =
+        publisher(Message(text))
 
     override fun User.asMentionFormat() = "<@${this.givenId.idLong}>"
 
@@ -127,10 +127,10 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
         }
     }
 
-    override fun produceBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, session: GameSession): IO<DiscordMessageAction> {
+    override fun produceBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, session: GameSession): DiscordMessageIO {
         val barColor = session.gameResult.fold(onDefined = { COLOR_RED_HEX }, onEmpty = { COLOR_GREEN_HEX })
         return renderer.renderBoard(session.board, if (session.gameResult.isDefined) Option(session.history) else Option.Empty).fold(
-            onLeft = { textBoard -> IO {
+            onLeft = { textBoard ->
                 publisher(Message(
                     embeds = mutableListOf<MessageEmbed>().apply {
                         add(Embed {
@@ -149,8 +149,8 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
                             add(this@DiscordMessageProducer.buildNextMoveEmbed(container))
                     }
                 ))
-            } },
-            onRight = { (imageStream, fName) -> IO {
+            },
+            onRight = { (imageStream, fName) ->
                 publisher(Message(
                     embeds = mutableListOf<MessageEmbed>().apply {
                         add(Embed {
@@ -170,15 +170,15 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
                             add(this@DiscordMessageProducer.buildNextMoveEmbed(container))
                     }
                 )).addFile(imageStream, fName)
-            } }
+            }
         )
     }
 
-    override fun produceSessionArchive(publisher: DiscordMessagePublisher, session: GameSession, result: Option<GameResult>): IO<DiscordMessageAction> {
+    override fun produceSessionArchive(publisher: DiscordMessagePublisher, session: GameSession, result: Option<GameResult>): DiscordMessageIO {
         val imageStream = ImageBoardRenderer.renderImageBoard(session.board, Option(session.history), true)
         val fName = ImageBoardRenderer.retrieveFileName()
 
-        return IO { publisher(Message(
+        return publisher(Message(
             embed = Embed {
                 color = COLOR_NORMAL_HEX
 
@@ -192,7 +192,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
                 image = "attachment://${fName}"
 
             }
-        )).addFile(imageStream, fName) }
+        )).addFile(imageStream, fName)
     }
 
     override fun generateFocusedButtons(focusedFields: FocusedFields) =
@@ -208,13 +208,13 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
             } }
         ) }.reversed() // cartesian coordinate system
 
-    override fun attachFocusButtons(boardAction: DiscordMessageAction, session: GameSession, focus: Pos): DiscordMessageAction =
+    override fun attachFocusButtons(boardAction: DiscordMessageIO, session: GameSession, focus: Pos): DiscordMessageIO =
         boardAction.addButtons(this.generateFocusedButtons(this.generateFocusedField(session.board, focus)))
 
-    override fun attachFocusButtons(publisher: ComponentPublisher<Message, DiscordButtons>, session: GameSession, focus: Pos) =
-        IO { publisher(this.generateFocusedButtons(this.generateFocusedField(session.board, focus))) }
+    override fun attachFocusButtons(publisher: ComponentPublisher<Message, DiscordComponents>, session: GameSession, focus: Pos) =
+        publisher(this.generateFocusedButtons(this.generateFocusedField(session.board, focus)))
 
-    override fun attachNavigators(flow: Flow<String>, message: MessageAdaptor<Message, DiscordButtons>, checkTerminated: suspend () -> Boolean) =
+    override fun attachNavigators(flow: Flow<String>, message: MessageAdaptor<Message, DiscordComponents>, checkTerminated: suspend () -> Boolean) =
         IO {
             if (message.original.isEphemeral) return@IO
 
@@ -376,10 +376,10 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
         }
 
     override fun produceHelp(publisher: DiscordMessagePublisher, container: LanguageContainer, page: Int) =
-        IO { this.buildHelpMessage(publisher, container, page) }
+        this.buildHelpMessage(publisher, container, page)
 
-    override fun paginateHelp(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, page: Int): IO<MessageIO<Message, DiscordButtons>> =
-        IO { this.buildHelpMessage(publisher, container, page) }
+    override fun paginateHelp(publisher: MessagePublisher<Message, DiscordComponents>, container: LanguageContainer, page: Int) =
+        this.buildHelpMessage(publisher, container, page)
 
     private fun buildSettingsMessage(publisher: DiscordMessagePublisher, config: GuildConfig, page: Int) =
         when (page) {
@@ -395,16 +395,16 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
             else -> throw IllegalStateException()
         }
 
-    override fun produceSettings(publisher: MessagePublisher<Message, DiscordButtons>, config: GuildConfig, page: Int) =
-        IO { this.buildSettingsMessage(publisher, config, page) }
+    override fun produceSettings(publisher: MessagePublisher<Message, DiscordComponents>, config: GuildConfig, page: Int) =
+        this.buildSettingsMessage(publisher, config, page)
 
-    override fun paginateSettings(publisher: MessagePublisher<Message, DiscordButtons>, config: GuildConfig, page: Int): IO<MessageIO<Message, DiscordButtons>> =
-        IO { this.buildSettingsMessage(publisher, config, page) }
+    override fun paginateSettings(publisher: MessagePublisher<Message, DiscordComponents>, config: GuildConfig, page: Int) =
+        this.buildSettingsMessage(publisher, config, page)
 
     // RANK
 
-    override fun produceRankings(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, rankings: List<Pair<User, UserStats>>): IO<MessageIO<Message, DiscordButtons>> =
-        IO { publisher(Message(
+    override fun produceRankings(publisher: MessagePublisher<Message, DiscordComponents>, container: LanguageContainer, rankings: List<Pair<User, UserStats>>) =
+        publisher(Message(
             embed = Embed {
                 color = COLOR_NORMAL_HEX
                 title = container.rankEmbedTitle()
@@ -427,7 +427,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
                     }
                 }
             }
-        )) }
+        ))
 
     // RATING
 
@@ -450,7 +450,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
     }
 
     override fun produceLanguageGuide(publisher: DiscordMessagePublisher) =
-        IO { publisher(Message(embed = languageEmbed)) }
+        publisher(Message(embed = languageEmbed))
 
     // SETTINGS
 
@@ -637,12 +637,12 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
     // STYLE
 
     override fun produceStyleGuide(publisher: DiscordMessagePublisher, container: LanguageContainer) =
-        IO { publisher(Message(embed = this.buildStyleGuideEmbed(container))) }
+        publisher(Message(embed = this.buildStyleGuideEmbed(container)))
 
     // REQUEST
 
     override fun produceRequest(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
-        IO { publisher(Message(
+        publisher(Message(
             embed = Embed {
                 color = COLOR_GREEN_HEX
                 title = container.requestEmbedTitle()
@@ -653,12 +653,21 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
                 Button.of(ButtonStyle.DANGER, "r-${owner.givenId.idLong}", container.requestEmbedButtonReject()),
                 Button.of(ButtonStyle.SUCCESS, "a-${owner.givenId.idLong}", container.requestEmbedButtonAccept())
             ))
-        ) }
+        )
+
+    override fun produceRequestInvalidated(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
+        publisher(Message(
+            embed = Embed {
+                color = COLOR_RED_HEX
+                title = "~~${container.requestEmbedTitle()}~~"
+                description = "~~${container.requestEmbedDescription(owner.asMentionFormat(), opponent.asMentionFormat())}~~"
+            }
+        ))
 
     // UTILS
 
-    override fun produceAnnounce(publisher: MessagePublisher<Message, DiscordButtons>, container: LanguageContainer, announce: Announce) =
-        IO { publisher(Message(
+    override fun produceAnnounce(publisher: MessagePublisher<Message, DiscordComponents>, container: LanguageContainer, announce: Announce) =
+        publisher(Message(
             embed = Embed {
                 color = COLOR_NORMAL_HEX
                 title = "$UNICODE_SPEAKER ${announce.title}"
@@ -668,10 +677,10 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
                     name = container.announceWrittenOn("$UNICODE_ALARM_CLOCK ${announce.date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd kk:mm"))} UTC")
                 }
             }
-        )) }
+        ))
 
     override fun produceNotYetImplemented(publisher: DiscordMessagePublisher, container: LanguageContainer, officialChannel: String) =
-        IO { publisher(Message(
+        publisher(Message(
             embed = Embed {
                 color = COLOR_RED_HEX
                 title = "$UNICODE_CONSTRUCTION ${container.somethingWrongEmbedTitle()}"
@@ -680,7 +689,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordButtons>() {
                     name = "$UNICODE_MAILBOX ${container.notYetImplementedEmbedFooter(officialChannel)}"
                 }
             }
-        )) }
+        ))
 
     fun sendPermissionNotGrantedEmbed(publisher: (Message) -> RestAction<Message>, container: LanguageContainer, channelName: String) =
         publisher(Message(

@@ -53,11 +53,8 @@ class DebugCommand(
         DebugType.ANALYSIS -> {
             SessionManager.retrieveGameSession(bot.sessions, guild, user.id)?.let { session ->
                 producer.produceSessionArchive(publishers.plain, session, session.gameResult)
-                    .flatMap {
-                        it.addFile(session.board.toBoardIO().debugText().toInputStream(), "analysis-report-${System.currentTimeMillis()}.txt")
-                            .launch()
-
-                    }
+                    .addFile(session.board.toBoardIO().debugText().toInputStream(), "analysis-report-${System.currentTimeMillis()}.txt")
+                    .launch()
                     .map { emptyList<Order>() } and this.asCommandReport("succeed", user)
             } ?: (IO { emptyList<Order>() } and this.asCommandReport("failed", user))
         }
@@ -69,13 +66,13 @@ class DebugCommand(
                 val requestSession = RequestSession(
                     user, user,
                     SessionManager.generateMessageBufferKey(user),
-                    LinuxTime.withExpireOffset(bot.config.gameExpireOffset)
+                    LinuxTime.withOffset(bot.config.gameExpireOffset)
                 )
 
                 SessionManager.putRequestSession(bot.sessions, guild, requestSession)
 
                 val io = producer.produceRequest(publishers.plain, config.language.container, user, user)
-                    .flatMap { it.launch() }
+                    .launch()
                     .map { emptyList<Order>()  }
 
                 io and this.asCommandReport("succeed", user)
@@ -93,19 +90,30 @@ class DebugCommand(
                 messageBufferKey = SessionManager.generateMessageBufferKey(user),
                 expireOffset = bot.config.gameExpireOffset,
                 recording = false,
-                expireDate = LinuxTime.withExpireOffset(bot.config.gameExpireOffset)
+                expireDate = LinuxTime.withOffset(bot.config.gameExpireOffset)
             )
 
             SessionManager.putGameSession(bot.sessions, guild, session)
 
             val io = producer.produceNextMovePVE(publishers.plain, config.language.container, user, session.board.latestPos().get())
+                .launch()
                 .flatMap { buildBoardSequence(bot, guild, config, producer, publishers.plain, session) }
                 .map { emptyList<Order>() }
 
             io and this.asCommandReport("succeed", user)
         }
         DebugType.STATUS -> {
-            IO { emptyList<Order>() } and this.asCommandReport("succeed", user)
+            val message = """
+                games = ${bot.sessions.sessions.map { (_, session) -> session.gameSessions.size }.sum()}
+                requests = ${bot.sessions.sessions.map { (_, session) -> session.requestSessions.size }.sum()}
+                navigates = ${bot.sessions.navigates.size}
+            """.trimIndent()
+
+            val io = producer.produceDebugMessage(publishers.plain, message)
+                .launch()
+                .map { emptyList<Order>() }
+
+            io and this.asCommandReport("succeed", user)
         }
         DebugType.VCF -> {
             val vcfCase = """
@@ -139,12 +147,13 @@ class DebugCommand(
                 messageBufferKey = SessionManager.generateMessageBufferKey(user),
                 expireOffset = bot.config.gameExpireOffset,
                 recording = false,
-                expireDate = LinuxTime.withExpireOffset(bot.config.gameExpireOffset)
+                expireDate = LinuxTime.withOffset(bot.config.gameExpireOffset)
             )
 
             SessionManager.putGameSession(bot.sessions, guild, session)
 
             val io = producer.produceNextMovePVE(publishers.plain, config.language.container, user, session.board.latestPos().get())
+                .launch()
                 .flatMap { buildBoardSequence(bot, guild, config, producer, publishers.plain, session) }
                 .map { emptyList<Order>() }
 

@@ -49,9 +49,11 @@ class ResignCommand(private val session: GameSession) : Command {
             is PvpGameSession ->
                 producer.produceSurrenderedPVP(publishers.plain, config.language.container, result.winner, result.looser)
         }
-            .flatMap { it.launch() }
-            .flatMap { producer.produceBoard(publishers.plain, config.language.container, config.boardStyle.renderer, finishedSession) }
-            .flatMap { it.launch() }
+            .launch()
+            .flatMap {
+                producer.produceBoard(publishers.plain, config.language.container, config.boardStyle.renderer, finishedSession)
+                    .launch()
+            }
             .map {
                 listOf(
                     Order.BulkDelete(this.session.messageBufferKey),

@@ -142,7 +142,7 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
             }
         }) }
         .doOnNext { (context, parsed) ->
-            parsed.onLeft { if (it.responseFlag == ResponseFlag.DEFER) context.event.deferReply() }
+            parsed.onLeft { if (it.responseFlag == ResponseFlag.DEFER) context.event.deferReply().queue() }
         }
         .flatMap(::buildUpdateProfileNode)
         .map(::buildAnnounceNode)

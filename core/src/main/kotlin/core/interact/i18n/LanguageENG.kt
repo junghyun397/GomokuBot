@@ -134,8 +134,8 @@ open class LanguageENG : LanguageContainer {
 
     // ### 2-2-3. STYLE:ERROR:NOTFOUND (MESSAGE)
 
-    override fun styleErrorNotfound(user: String) =
-        "$user, There is an error in the specification style code. Please enter in ``/style`` ``style code`` format."
+    override fun styleErrorNotfound() =
+        "There is an error in the specification style code. Please enter in ``/style`` ``style code`` format."
 
     // ### 2-2-4. STYLE:SUCCEED:CHANGED (MESSAGE)
 
@@ -211,8 +211,8 @@ open class LanguageENG : LanguageContainer {
 
     // # 3. SESSION
 
-    override fun sessionNotFound(user: String): String =
-        "$user, There is no game in progress. Start a new game with the ``/start`` command."
+    override fun sessionNotFound(): String =
+        "There is no game in progress. Start a new game with the ``/start`` command."
 
     // ## 3-1. START
 
@@ -225,16 +225,16 @@ open class LanguageENG : LanguageContainer {
 
     // ### 3-1-2. START:ERROR:ALREADY (MESSAGE)
 
-    override fun startErrorSessionAlready(user: String) =
-        "$user, There is already a game in progress. Please finish the game in progress first."
-    override fun startErrorOpponentSessionAlready(owner: String, opponent: String) =
-        "$owner, $opponent is already playing another game. Please wait until $opponent's game is over."
-    override fun startErrorRequestAlreadySent(owner: String, opponent: String) =
-        "$owner, a game request sent to $opponent is still pending. Please wait for $opponent's response."
-    override fun startErrorRequestAlready(user: String, opponent: String) =
-        "$user, You have not yet responded to the game request sent by $opponent. Please respond to $opponent's game request first."
-    override fun startErrorOpponentRequestAlready(owner: String, opponent: String) =
-        "$owner, There is one other game request that $opponent has not yet responded to. Please wait until $opponent responds to another game request."
+    override fun startErrorSessionAlready() =
+        "There is already a game in progress. Please finish the game in progress first."
+    override fun startErrorOpponentSessionAlready(opponent: String) =
+        "$opponent is already playing another game. Please wait until $opponent's game is over."
+    override fun startErrorRequestAlreadySent(opponent: String) =
+        "A game request sent to $opponent is still pending. Please wait for $opponent's response."
+    override fun startErrorRequestAlready(opponent: String) =
+        "You have not yet responded to the game request sent by $opponent. Please respond to $opponent's game request first."
+    override fun startErrorOpponentRequestAlready(opponent: String) =
+        "There is one other game request that $opponent has not yet responded to. Please wait until $opponent responds to another game request."
 
     // ## 3-2. SET
 
@@ -248,18 +248,18 @@ open class LanguageENG : LanguageContainer {
 
     // ### 3-2-2. SET:ERROR:ARGUMENT (MESSAGE)
 
-    override fun setErrorIllegalArgument(player: String) =
-        "$player, There is an error in the command format. Please enter in ``/s`` ``alphabet`` ``number`` format."
+    override fun setErrorIllegalArgument() =
+        "There is an error in the command format. Please enter in ``/s`` ``alphabet`` ``number`` format."
 
     // ### 3-2-3. SET:ERROR:EXIST (MESSAGE)
 
-    override fun setErrorExist(player: String, move: String) =
-        "$player, There is already a stone in $move. Please move to another place."
+    override fun setErrorExist(move: String) =
+        "There is already a stone in $move. Please move to another place."
 
     // ### 3-2-4. SET:ERROR:FORBIDDEN (MESSAGE)
 
-    override fun setErrorForbidden(player: String, move: String, forbiddenKind: String) =
-        "$player, ``$move`` is ``$forbiddenKind`` forbidden move. Please move to another place."
+    override fun setErrorForbidden(move: String, forbiddenKind: String) =
+        "``$move`` is ``$forbiddenKind`` forbidden move. Please move to another place."
 
     // ## 3-3. RESIGN
 
@@ -274,7 +274,7 @@ open class LanguageENG : LanguageContainer {
 
     // ### 3-4-1. REQUEST:ABOUT (EMBED)
 
-    override fun requestEmbedTitle() = "How about a round of Gomoku?"
+    override fun requestEmbedTitle() = "How about a game of Gomoku?"
     override fun requestEmbedDescription(owner: String, opponent: String) =
         "$owner sent a game request to $opponent. Please respond by pressing the button."
     override fun requestEmbedButtonAccept() = "Accept"
@@ -312,16 +312,16 @@ open class LanguageENG : LanguageContainer {
 
     // ### 4-2-1. PROCES:NEXT (MESSAGE)
 
-    override fun processNextPVE(owner: String, latestMove: String) =
-        "$owner, Please make the next move. AI placed $latestMove."
+    override fun processNextPVE(latestMove: String) =
+        "Please make the next move. AI placed $latestMove."
 
-    override fun processNextPVP(player: String, priorPlayer: String, latestMove: String) =
-        "$player, Please make the next move. $priorPlayer placed $latestMove."
+    override fun processNextPVP(priorPlayer: String, latestMove: String) =
+        "Please make the next move. $priorPlayer placed $latestMove."
 
     // ### 4-2-2. PROCESS:ERROR:ORDER (MESSAGE)
 
-    override fun processErrorOrder(user: String, player: String) =
-        "$user, Now it's $player's turn. Please wait until $player makes the next move."
+    override fun processErrorOrder(player: String) =
+        "Now it's $player's turn. Please wait until $player makes the next move."
 
     // ## 4-3. END
 

@@ -30,7 +30,7 @@ class LanguageVNM : LanguageENG() {
     override fun styleEmbedDescription() =
         "Skin A có thể không hiển thị chính xác với một số thiết bị. Chọn các skin có sẵn còn lại và sử dụng"
     override fun styleEmbedSuggestion(styleName: String) = "Nhập lệnh ``~skin`` ``$styleName`` để chọn skin này"
-    override fun styleErrorNotfound(user: String) = "Cú pháp chỉnh skin không hợp lệ."
+    override fun styleErrorNotfound() = "Cú pháp chỉnh skin không hợp lệ."
     override fun styleUpdated(styleName: String) = "Skin chơi ca-rô đã chuyển sang skin ``$styleName`` !"
 
     override fun rankEmbedTitle() = "GomokuBot / Bảng xếp hạng"
@@ -41,19 +41,19 @@ class LanguageVNM : LanguageENG() {
     override fun languageUpdated() =
         "Đã chỉnh ngôn ngữ sang Tiếng Việt :flag_vn: !\n`Translated by`: `Dongvan Technologies`"
 
-    override fun startErrorSessionAlready(user: String) =
-        "$user, bạn đánh chưa xong ván trước, vui lòng hoàn thành nốt ván đó. :thinking:"
-    override fun setErrorIllegalArgument(player: String) =
+    override fun startErrorSessionAlready() =
+        "bạn đánh chưa xong ván trước, vui lòng hoàn thành nốt ván đó. :thinking:"
+    override fun setErrorIllegalArgument() =
         "player, bạn đã nhập sai lệnh đánh. Sử dụng lệnh `~s` `alphabet` `number` để đánh. :thinking:"
-    override fun setErrorExist(player: String, move: String) = "$player, có người đã đánh chỗ đó rồi! :thinking:"
+    override fun setErrorExist(move: String) = "có người đã đánh chỗ đó rồi! :thinking:"
 
     override fun beginPVP(blackPlayer: String, whitePlayer: String) =
         "Ván mới đã được bắt đầu giữa `$blackPlayer` và `$whitePlayer`! `$blackPlayer` là người đánh trước."
 
-    override fun processNextPVP(player: String, priorPlayer: String, latestMove: String) =
-        "`$player`, tới lượt đánh của bạn. `$priorPlayer` đã đánh ở ô $latestMove"
+    override fun processNextPVP(priorPlayer: String, latestMove: String) =
+        "tới lượt đánh của bạn. `$priorPlayer` đã đánh ở ô $latestMove"
 
-    override fun processErrorOrder(user: String, player: String) =
+    override fun processErrorOrder(player: String) =
         "`$player` đang suy nghĩ. Chờ `$player` đánh rồi mới đến lượt của bạn. :thinking:"
     override fun endPVPWin(winner: String, looser: String, latestMove: String) =
         "`$winner` đã thắng `$looser`. Vị trí mà người thắng đánh cuối cùng là ô $latestMove!"

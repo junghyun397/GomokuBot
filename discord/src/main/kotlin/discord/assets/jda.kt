@@ -1,6 +1,7 @@
 package discord.assets
 
 import core.assets.*
+import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import java.util.*
 
 const val DISCORD_PLATFORM_ID: Short = 1
@@ -9,6 +10,9 @@ typealias JDAGuild = net.dv8tion.jda.api.entities.Guild
 
 fun net.dv8tion.jda.api.entities.Message.extractMessageRef() =
     MessageRef(this.extractId(), this.guild.extractId(), this.channel.extractId())
+
+fun GenericMessageReactionEvent.extractMessageRef() =
+    MessageRef(MessageId(this.messageIdLong), this.guild.extractId(), this.channel.extractId())
 
 fun net.dv8tion.jda.api.entities.Guild.extractId() = GuildId(this.idLong)
 

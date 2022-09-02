@@ -32,7 +32,7 @@ object RankCommandParser : NamedParser, ParsableCommand, BuildableCommand {
                 onDefined = { Either.Left(RankCommand(RankScope.User(it))) },
                 onEmpty = { Either.Right(this.asParseFailure("target user not found", context.user) { producer, publisher, container ->
                     producer.produceUserNotFound(publisher, container)
-                        .flatMap { it.launch() }
+                        .launch()
                         .map { emptyList() }
                 }) }
             )

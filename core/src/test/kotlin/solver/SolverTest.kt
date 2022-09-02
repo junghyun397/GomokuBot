@@ -6,6 +6,8 @@ import jrenju.Board
 import jrenju.`BoardIO$`
 import jrenju.protocol.Solution
 import utils.lang.and
+import utils.structs.Option
+import utils.structs.flatMap
 import java.util.*
 
 internal class SolverTest {
@@ -32,6 +34,19 @@ internal class SolverTest {
         override val threeFourFork = 105
         override val doubleFourFork = 150
 
+    }
+
+    fun combineTwoOptions() {
+        val maybeA = Option("A")
+        val maybeB = Option("B")
+
+        // Option[A] -> Option[B] -> Option[Pair[A, B]] ???
+
+        when {
+            maybeA is Option.Some && maybeB is Option.Some -> Option(maybeA.value)
+        }
+
+        maybeB.flatMap { maybeA }
     }
 
     fun aiBenchmark() {

@@ -38,12 +38,15 @@ class AcceptCommand(private val requestSession: RequestSession) : Command {
         )
 
         SessionManager.putGameSession(bot.sessions, guild, gameSession)
-
         SessionManager.removeRequestSession(bot.sessions, guild, this.requestSession.owner.id)
 
-        val io = producer.produceBeginsPVP(publishers.plain, config.language.container, gameSession.player, gameSession.nextPlayer)
-            .flatMap { it.launch() }
-            .flatMap { buildBoardSequence(bot, guild, config, producer, publishers.plain, gameSession) }
+        val beginIO = producer.produceBeginsPVP(publishers.plain, config.language.container, gameSession.player, gameSession.nextPlayer)
+            .launch()
+
+        val boardIO = buildBoardSequence(bot, guild, config, producer, publishers.plain, gameSession)
+
+        val io = beginIO
+            .flatMap { boardIO }
             .map { listOf(Order.DeleteSource) }
 
         io and this.asCommandReport("accepted", user)

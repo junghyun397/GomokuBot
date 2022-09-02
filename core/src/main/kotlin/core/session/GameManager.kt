@@ -105,7 +105,7 @@ object GameManager {
             messageBufferKey = SessionManager.generateMessageBufferKey(owner),
             recording = true,
             expireOffset = expireOffset,
-            expireDate = LinuxTime.withExpireOffset(expireOffset),
+            expireDate = LinuxTime.withOffset(expireOffset),
         )
 
     fun generateAiSession(expireOffset: Long, owner: User, aiLevel: AiLevel): GameSession {
@@ -123,7 +123,7 @@ object GameManager {
             messageBufferKey = SessionManager.generateMessageBufferKey(owner),
             recording = true,
             expireOffset = expireOffset,
-            expireDate = LinuxTime.withExpireOffset(expireOffset),
+            expireDate = LinuxTime.withOffset(expireOffset),
         )
     }
 

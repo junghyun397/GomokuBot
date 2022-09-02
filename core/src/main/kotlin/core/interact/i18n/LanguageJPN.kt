@@ -30,19 +30,19 @@ class LanguageJPN : LanguageENG() {
 
     override fun languageUpdated() = "言語設定を日本語:flag_jp:に変更しました\n`Translated by`: `S1RO`"
 
-    override fun startErrorSessionAlready(user: String) =
-        "$user さん, ゲーム生成に失敗しました。今のゲームを終了してください。 :thinking:"
-    override fun setErrorIllegalArgument(player: String) =
+    override fun startErrorSessionAlready() =
+        "ゲーム生成に失敗しました。今のゲームを終了してください。 :thinking:"
+    override fun setErrorIllegalArgument() =
         "さん, 間違いコマンドです。`~s アルファベット 数字` 形式に書いてください。 :thinking:"
-    override fun setErrorExist(player: String, move: String) = "$player さん, そこにはすでに碁石があります。 :thinking:"
+    override fun setErrorExist(move: String) = "さん, そこにはすでに碁石があります。 :thinking:"
 
     override fun beginPVP(blackPlayer: String, whitePlayer: String) =
         "`$blackPlayer`と `$whitePlayer`のマッチが開始しました。先攻は `$blackPlayer`です。"
 
-    override fun processNextPVP(player: String, priorPlayer: String, latestMove: String) =
-        "`$player`さん, 次の手を置いてください。 `$priorPlayer`は $latestMove に置きました。"
+    override fun processNextPVP(priorPlayer: String, latestMove: String) =
+        "次の手を置いてください。 `$priorPlayer`は $latestMove に置きました。"
 
-    override fun processErrorOrder(user: String, player: String) =
+    override fun processErrorOrder(player: String) =
         "今は`$player`'さんの番です。`$player`さんの次の番を待ってください。 :thinking:"
     override fun endPVPWin(winner: String, looser: String, latestMove: String) =
         "`$winner`さんが $latestMove に置いて`$looser`さんに勝ちました。"

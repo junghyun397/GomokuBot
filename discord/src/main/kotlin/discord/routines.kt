@@ -9,6 +9,7 @@ import core.session.GameResult
 import core.session.SessionManager
 import core.session.entities.AiGameSession
 import core.session.entities.PvpGameSession
+import dev.minn.jda.ktx.coroutines.await
 import discord.interact.DiscordConfig
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.DiscordMessagePublisher
@@ -19,9 +20,7 @@ import kotlinx.coroutines.reactor.asFlux
 import net.dv8tion.jda.api.JDA
 import reactor.core.publisher.Flux
 import utils.lang.schedule
-import utils.structs.IO
-import utils.structs.flatMap
-import utils.structs.map
+import utils.structs.*
 import java.time.Duration
 
 fun scheduleRoutines(botContext: BotContext, discordConfig: DiscordConfig, jda: JDA): Flux<Unit> {
@@ -50,7 +49,7 @@ fun scheduleRoutines(botContext: BotContext, discordConfig: DiscordConfig, jda: 
                         session.owner
                     )
                 }
-                    .flatMap { it.launch() }
+                    .launch()
                     .flatMap { buildFinishSequence(botContext, DiscordMessageProducer, publisher, guildSession.config, session, thenSession) }
 
                 export(botContext, discordConfig, guild, io, message)
@@ -68,18 +67,46 @@ fun scheduleRoutines(botContext: BotContext, discordConfig: DiscordConfig, jda: 
             val channel = message?.let { jda.getTextChannelById(it.channelId.idLong) }
 
             if (message != null && guild != null && channel != null) {
-                val publisher: DiscordMessagePublisher = { msg -> MessageActionAdaptor(channel.sendMessage(msg)) }
+                val maybeRequestMessage = channel.retrieveMessageById(message.id.idLong)
+                    .mapToResult()
+                    .map { when {
+                        it.isSuccess -> Option(it.get())
+                        it.isFailure -> Option.Empty
+                        else -> throw IllegalStateException()
+                    } }
+                    .await()
 
-                val io = DiscordMessageProducer.produceRequestExpired(
+                val editIO = maybeRequestMessage.fold(
+                    onDefined = {
+                        val editPublisher: DiscordMessagePublisher = { msg -> MessageActionAdaptor(channel.editMessageById(message.id.idLong, msg)) }
+
+                        DiscordMessageProducer.produceRequestInvalidated(
+                            editPublisher,
+                            guildSession.config.language.container,
+                            session.owner,
+                            session.opponent,
+                        ).launch()
+                    },
+                    onEmpty = { IO { } }
+                )
+
+                val publisher: DiscordMessagePublisher = maybeRequestMessage.fold(
+                    onDefined = { { msg -> MessageActionAdaptor(it.reply(msg)) } },
+                    onEmpty = { { msg -> MessageActionAdaptor(channel.sendMessage(msg)) } }
+                )
+
+                val noticeIO = DiscordMessageProducer.produceRequestExpired(
                     publisher,
                     guildSession.config.language.container,
                     session.owner,
-                    session.opponent
-                )
-                    .flatMap { it.launch() }
-                    .map { listOf(Order.DeleteSource) }
+                    session.opponent,
+                ).launch()
 
-                export(botContext, discordConfig, guild, io, message)
+                val io = editIO
+                    .flatMap { noticeIO }
+                    .map { emptyList<Order>() }
+
+                export(botContext, discordConfig, guild, io, null)
             }
         }
     }

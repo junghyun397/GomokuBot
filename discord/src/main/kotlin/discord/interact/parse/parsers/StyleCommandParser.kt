@@ -30,10 +30,8 @@ object StyleCommandParser : NamedParser, ParsableCommand, BuildableCommand {
 
     private fun composeMissMatchFailure(user: User): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("option mismatch", user) { producer, publisher, container ->
-            producer.produceStyleNotFound(publisher, container, user)
-                .flatMap { it.launch() }
-                .flatMap { producer.produceStyleGuide(publisher, container) }
-                .flatMap { it.launch() }
+            producer.produceStyleNotFound(publisher, container).launch()
+                .flatMap { producer.produceStyleGuide(publisher, container).launch() }
                 .map { emptyList() }
         })
 

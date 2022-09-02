@@ -14,8 +14,6 @@ import core.session.entities.NavigateState
 import core.session.entities.NavigationKind
 import utils.assets.LinuxTime
 import utils.lang.and
-import utils.structs.IO
-import utils.structs.flatMap
 import utils.structs.flatMapOption
 import utils.structs.map
 
@@ -35,12 +33,12 @@ class SettingsCommand : Command {
         publishers: PublisherSet<A, B>,
     ) = runCatching {
         val io = producer.produceSettings(publishers.plain, config, 0)
-            .flatMap { IO { it.retrieve() } }
+            .retrieve()
             .flatMapOption { settingsMessage ->
                 SessionManager.addNavigate(
                     bot.sessions,
                     settingsMessage.messageRef,
-                    NavigateState(NavigationKind.SETTINGS, 0, LinuxTime.withExpireOffset(bot.config.navigatorExpireOffset))
+                    NavigateState(NavigationKind.SETTINGS, 0, LinuxTime.withOffset(bot.config.navigatorExpireOffset))
                 )
 
                 producer.attachBinaryNavigators(settingsMessage)

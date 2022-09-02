@@ -41,7 +41,7 @@ class StartCommand(val opponent: User?) : Command {
                 SessionManager.putGameSession(bot.sessions, guild, gameSession)
 
                 val io = producer.produceBeginsPVE(publishers.plain, config.language.container, user, gameSession.ownerHasBlack)
-                    .flatMap { it.launch() }
+                    .launch()
                     .flatMap { buildBoardSequence(bot, guild, config, producer, publishers.plain, gameSession) }
                     .map { emptyList<Order>() }
 
@@ -51,13 +51,13 @@ class StartCommand(val opponent: User?) : Command {
                 val requestSession = RequestSession(
                     user, opponent,
                     SessionManager.generateMessageBufferKey(user),
-                    LinuxTime.withExpireOffset(bot.config.requestExpireOffset),
+                    LinuxTime.withOffset(bot.config.requestExpireOffset),
                 )
 
                 SessionManager.putRequestSession(bot.sessions, guild, requestSession)
 
                 val io = producer.produceRequest(publishers.plain, config.language.container, user, opponent)
-                    .flatMap { IO { it.retrieve() } }
+                    .retrieve()
                     .flatMapOption { IO { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.messageRef) } }
                     .map { emptyList<Order>()  }
 

@@ -2,6 +2,8 @@
 
 package utils.structs
 
+import utils.lang.and
+
 sealed class Option<out T> {
 
     val isDefined: Boolean get() = this is Some
@@ -19,6 +21,12 @@ sealed class Option<out T> {
 
         operator fun <T> invoke(value: T) =
             unit(value)
+
+        fun <A, B> zip(a: Option<A>, b: Option<B>) =
+            when {
+                a is Some && b is Some -> Some(a.value and b.value)
+                else -> Empty
+            }
 
     }
 

@@ -142,7 +142,7 @@ object GomokuBot {
             .setEnabledIntents(
                 GatewayIntent.GUILD_MESSAGES,
                 GatewayIntent.GUILD_MESSAGE_REACTIONS,
-                GatewayIntent.MESSAGE_CONTENT
+                GatewayIntent.MESSAGE_CONTENT,
             )
             .build()
 
@@ -153,42 +153,50 @@ object GomokuBot {
                 .filter { it.isFromGuild && it.channel.type == ChannelType.TEXT && !it.user.isBot }
                 .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
                 .flatMap(::slashCommandRouter)
-                .doOnNext { leaveLog(it) },
+                .doOnNext(::leaveLog),
 
             eventManager.on<MessageReceivedEvent>()
                 .filter { it.isFromGuild && it.channel.type == ChannelType.TEXT && !it.author.isBot && (it.message.contentRaw.startsWith(COMMAND_PREFIX) || it.message.mentions.isMentioned(it.jda.selfUser)) }
                 .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.author, it.guild) } }
                 .flatMap(::textCommandRouter)
-                .doOnNext { leaveLog(it) },
+                .doOnNext(::leaveLog),
 
             eventManager.on<ButtonInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
                 .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
                 .flatMap(::buttonInteractionRouter)
-                .doOnNext { leaveLog(it) },
+                .doOnNext(::leaveLog),
 
             eventManager.on<SelectMenuInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
                 .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
                 .flatMap(::buttonInteractionRouter)
-                .doOnNext { leaveLog(it) },
+                .doOnNext(::leaveLog),
 
             eventManager.on<MessageReactionAddEvent>()
                 .filter { it.isFromGuild && !(it.user?.isBot ?: true) }
                 .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user!!, it.guild) } }
                 .flatMap(::reactionRouter)
-                .doOnNext { leaveLog(it) },
+                .doOnNext(::leaveLog),
 
             eventManager.on<MessageReactionRemoveEvent>()
-                .flatMap { mono { it and it.guild.retrieveMemberById(it.userId).await().user } }
-                .filter { (event, user) ->
-                    event.isFromGuild
-                        && !GuildManager.lookupPermission(event.channel.asTextChannel(), Permission.MESSAGE_MANAGE)
-                        && !user.isBot
+                .filter {
+                    it.isFromGuild
+                            && it.channel.type == ChannelType.TEXT
+                            && sessionRepository.navigates.containsKey(it.extractMessageRef())
+                            && !GuildManager.lookupPermission(it.channel.asTextChannel(), Permission.MESSAGE_MANAGE)
                 }
-                .flatMap { (event, user) -> mono { retrieveInteractionContext(botContext, discordConfig, event, user, event.guild) } }
+                .flatMap { mono {
+                    it and it.guild
+                        .retrieveMemberById(it.userId)
+                        .mapToResult()
+                        .map { maybeMember -> maybeMember.map { it.user } }
+                        .await()
+                } }
+                .filter { (_, maybeUser) -> maybeUser.isSuccess && !maybeUser.get().isBot }
+                .flatMap { (event, user) -> mono { retrieveInteractionContext(botContext, discordConfig, event, user.get(), event.guild) } }
                 .flatMap(::reactionRouter)
-                .doOnNext { leaveLog(it) },
+                .doOnNext(::leaveLog),
 
             eventManager.on<GuildJoinEvent>()
                 .flatMap { guildJoinRouter(botContext, it) }

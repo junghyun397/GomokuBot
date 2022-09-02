@@ -40,7 +40,7 @@ class AnnounceCommand(private val command: Command) : Command {
                         publishers.plain,
                         config.language.container,
                         announces[config.language] ?: announces[Language.ENG]!!
-                    ).flatMap { it.launch() }
+                    ).launch()
                 }
                 .reduce { acc, io -> acc.flatMap { io } }
                 .flatMap { originalIO }

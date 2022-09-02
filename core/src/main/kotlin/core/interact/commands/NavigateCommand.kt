@@ -15,7 +15,6 @@ import core.session.entities.NavigationKind
 import utils.assets.LinuxTime
 import utils.lang.and
 import utils.structs.IO
-import utils.structs.flatMap
 import utils.structs.map
 
 class NavigateCommand(
@@ -58,7 +57,7 @@ class NavigateCommand(
                 producer.paginateSettings(publishers.edit, config, newState.page)
             else -> throw Exception()
         }
-            .flatMap { it.launch() }
+            .launch()
             .map { emptyList<Order>()  }
 
         io and this.asCommandReport("navigate ${newState.navigationKind} as ${newState.page}", user)

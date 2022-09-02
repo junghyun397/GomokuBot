@@ -110,7 +110,7 @@ class LanguagePRK : LanguageKOR() {
 
     // ### 2-2-3. STYLE:ERROR:NOTFOUND (MESSAGE)
 
-    override fun styleErrorNotfound(user: String) = "$user 동무, 스타일 지정에 오류가 있습니다. ``/스타일`` ``스타일 부호`` 형식으로 입력해 주세요."
+    override fun styleErrorNotfound() = "동무, 스타일 지정에 오류가 있습니다. ``/스타일`` ``스타일 부호`` 형식으로 입력해 주세요."
 
     // ### 2-2-4. STYLE:SUCCEED:CHANGED (MESSAGE)
 
@@ -185,8 +185,8 @@ class LanguagePRK : LanguageKOR() {
 
     // # 3. SESSION
 
-    override fun sessionNotFound(user: String): String =
-        "$user 동무, 진행 중인 놀음을 찾을 수 없습니다. 먼저 ``/시작`` 시킴말로 놀음을 시작해 주세요."
+    override fun sessionNotFound(): String =
+        "진행 중인 놀음을 찾을 수 없습니다. 먼저 ``/시작`` 시킴말로 놀음을 시작해 주세요."
 
     // ## 3-1. START
 
@@ -199,16 +199,16 @@ class LanguagePRK : LanguageKOR() {
 
     // ### 3-1-2. START:ERROR:ALREADY (MESSAGE)
 
-    override fun startErrorSessionAlready(user: String) =
-        "$user 동무, 이미 진행 중인 놀음이 있습니다. 진행 중인 놀음을 먼저 마무리해 주세요."
-    override fun startErrorOpponentSessionAlready(owner: String, opponent: String) =
-        "$owner 동무, $opponent 동무은 이미 다른 놀음을 진행 중 입니다. $opponent 동무의 놀음이 끝날 때까지 기다리시오."
-    override fun startErrorRequestAlreadySent(owner: String, opponent: String) =
-        "$owner 동무, $opponent 동무에게 보낸 쌈박질 요청이 아직 남아 있습니다. $opponent 동무의 응답을 기다리시오."
-    override fun startErrorRequestAlready(user: String, opponent: String) =
-        "$user 동무, $opponent 동무이 보낸 쌈박질 요청에 아직 응답하지 않았습니다. $opponent 동무의 쌈박질 요청에 먼저 대답하시오."
-    override fun startErrorOpponentRequestAlready(owner: String, opponent: String) =
-        "$owner 동무, $opponent 동무에게는 아직 응답하지 않은 다른 쌈박질 요청이 있소. $opponent 동무가 다른 쌈박질 요청에 대답 할 때 까지 가다리시오."
+    override fun startErrorSessionAlready() =
+        "이미 진행 중인 놀음이 있습니다. 진행 중인 놀음을 먼저 마무리해 주세요."
+    override fun startErrorOpponentSessionAlready(opponent: String) =
+        "$opponent 동무은 이미 다른 놀음을 진행 중 입니다. $opponent 동무의 놀음이 끝날 때까지 기다리시오."
+    override fun startErrorRequestAlreadySent(opponent: String) =
+        "$opponent 동무에게 보낸 쌈박질 요청이 아직 남아 있습니다. $opponent 동무의 응답을 기다리시오."
+    override fun startErrorRequestAlready(opponent: String) =
+        "$opponent 동무이 보낸 쌈박질 요청에 아직 응답하지 않았습니다. $opponent 동무의 쌈박질 요청에 먼저 대답하시오."
+    override fun startErrorOpponentRequestAlready(opponent: String) =
+        "$opponent 동무에게는 아직 응답하지 않은 다른 쌈박질 요청이 있소. $opponent 동무가 다른 쌈박질 요청에 대답 할 때 까지 가다리시오."
 
     // ## 3-2. SET
 
@@ -222,18 +222,18 @@ class LanguagePRK : LanguageKOR() {
 
     // ### 3-2-2. SET:ERROR:ARGUMENT (MESSAGE)
 
-    override fun setErrorIllegalArgument(player: String) =
-        "$player 동무, 시킴말 꼴에 오류가 있소. ``/s`` ``미제말`` ``숫자`` 꼴로 립력하시오."
+    override fun setErrorIllegalArgument() =
+        "시킴말 꼴에 오류가 있소. ``/s`` ``미제말`` ``숫자`` 꼴로 립력하시오."
 
     // ### 3-2-3. SET:ERROR:EXIST (MESSAGE)
 
-    override fun setErrorExist(player: String, move: String) =
-        "$player 동무, ${move}에는 이미 돌이 놓여있소. 다른 곳에 돌을 놓으시오."
+    override fun setErrorExist(move: String) =
+        "${move}에는 이미 돌이 놓여있소. 다른 곳에 돌을 놓으시오."
 
     // ### 3-2-4. SET:ERROR:FORBIDDEN (MESSAGE)
 
-    override fun setErrorForbidden(player: String, move: String, forbiddenKind: String) =
-        "$player 동무, ``${move}`` 자리는 ``${forbiddenKind}금수``요. 다른 곳에 돌을 놓으시오."
+    override fun setErrorForbidden(move: String, forbiddenKind: String) =
+        "``${move}`` 자리는 ``${forbiddenKind}금수``요. 다른 곳에 돌을 놓으시오."
 
     // ## 3-3. RESIGN
 
@@ -285,16 +285,16 @@ class LanguagePRK : LanguageKOR() {
 
     // ### 4-2-1. PROCESS:NEXT (MESSAGE)
 
-    override fun processNextPVE(owner: String, latestMove: String) =
-        "$owner 동무, 다음 수를 놓으시오. 콤퓨타는 ${latestMove}에 놓았습니다."
+    override fun processNextPVE(latestMove: String) =
+        "다음 수를 놓으시오. 콤퓨타는 ${latestMove}에 놓았습니다."
 
-    override fun processNextPVP(player: String, priorPlayer: String, latestMove: String) =
-        "$player 동무, 다음 수를 놓으시오. $priorPlayer 동무는 ${latestMove}에 놓았소."
+    override fun processNextPVP(priorPlayer: String, latestMove: String) =
+        "다음 수를 놓으시오. $priorPlayer 동무는 ${latestMove}에 놓았소."
 
     // ### 4-2-2. PROCESS:ERROR:ORDER (MESSAGE)
 
-    override fun processErrorOrder(user: String, player: String) =
-        "$user 동무, 지금은 $player 동무의 차례요. $player 동무이 다음 수를 놓을 때까지 기다리시오."
+    override fun processErrorOrder(player: String) =
+        "지금은 $player 동무의 차례요. $player 동무이 다음 수를 놓을 때까지 기다리시오."
 
     // ## 4-3. END
 

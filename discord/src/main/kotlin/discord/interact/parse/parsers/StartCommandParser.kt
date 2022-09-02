@@ -34,8 +34,8 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
     private suspend fun lookupRequestSent(context: InteractionContext<*>, owner: User): Option<DiscordParseFailure> =
         SessionManager.retrieveRequestSessionByOwner(context.bot.sessions, context.guild, owner.id).asOption().map { session ->
             this.asParseFailure("already sent request session", owner) { producer, publisher, container ->
-                producer.produceRequestAlreadySent(publisher, container, owner, session.opponent)
-                    .flatMap { it.launch() }
+                producer.produceRequestAlreadySent(publisher, container, session.opponent)
+                    .launch()
                     .map { emptyList() }
             }
         }
@@ -43,17 +43,17 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
     private suspend fun lookupRequestOwner(context: InteractionContext<*>, owner: User): Option<DiscordParseFailure> =
         SessionManager.retrieveRequestSession(context.bot.sessions, context.guild, owner.id).asOption().map { session ->
             this.asParseFailure("already has request session", owner) { producer, publisher, container ->
-                producer.produceRequestAlready(publisher, container, session.owner, session.opponent)
-                    .flatMap { it.launch() }
+                producer.produceRequestAlready(publisher, container, session.owner)
+                    .launch()
                     .map { emptyList() }
             }
         }
 
     private suspend fun lookupRequestOpponent(context: InteractionContext<*>, owner: User, opponent: User): Option<DiscordParseFailure> =
-        SessionManager.retrieveRequestSession(context.bot.sessions, context.guild, opponent.id).asOption().map { _ ->
+        SessionManager.retrieveRequestSession(context.bot.sessions, context.guild, opponent.id).asOption().map {
             this.asParseFailure("try to send request session but $opponent already has request session", owner) { producer, publisher, container ->
-                producer.produceOpponentRequestAlready(publisher, container, owner, opponent)
-                    .flatMap { it.launch() }
+                producer.produceOpponentRequestAlready(publisher, container, opponent)
+                    .launch()
                     .map { emptyList() }
             }
         }
@@ -61,8 +61,8 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
     private suspend fun lookupSessionOwner(context: InteractionContext<*>, user: User): Option<DiscordParseFailure> =
         SessionManager.retrieveGameSession(context.bot.sessions, context.guild, user.id).asOption().map { session ->
             this.asParseFailure("already has game session", user) { producer, publisher, container ->
-                producer.produceSessionAlready(publisher, container, session.owner)
-                    .flatMap { IO { it.retrieve() } }
+                producer.produceSessionAlready(publisher, container)
+                    .retrieve()
                     .flatMapOption { IO { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef) } }
                     .flatMap { buildBoardSequence(context.bot, context.guild, context.config, producer, publisher, session) }
                     .map { emptyList() }
@@ -70,10 +70,10 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
         }
 
     private suspend fun lookupSessionOpponent(context: InteractionContext<*>, user: User, opponent: User): Option<DiscordParseFailure> =
-        SessionManager.retrieveGameSession(context.bot.sessions, context.guild, opponent.id).asOption().map { _ ->
+        SessionManager.retrieveGameSession(context.bot.sessions, context.guild, opponent.id).asOption().map {
             this.asParseFailure("try to send request session but $opponent already has game session", user) { producer, publisher, container ->
-                producer.produceOpponentSessionAlready(publisher, container, user, opponent)
-                    .flatMap { it.launch() }
+                producer.produceOpponentSessionAlready(publisher, container, opponent)
+                    .launch()
                     .map { emptyList() }
             }
         }

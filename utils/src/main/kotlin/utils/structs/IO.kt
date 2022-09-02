@@ -8,10 +8,6 @@ interface IO<out A> {
 
     companion object {
 
-        val unitIO = object : IO<Unit> {
-            override suspend fun run() = Unit
-        }
-
         inline fun <A> unit(crossinline block: suspend () -> A) =
             object : IO<A> {
                 override suspend fun run() = block()
@@ -51,6 +47,11 @@ fun <A, B> IO<A>.map(mapper: (A) -> B): IO<B> =
 fun <A, B> IO<A>.flatMap(mapper: (A) -> IO<B>): IO<B> =
     object : IO<B> {
         override suspend fun run() = mapper(this@flatMap.run()).run()
+    }
+
+fun <A, B> IO<Option<A>>.mapOption(mapper: (A) -> B): IO<Option<B>> =
+    object : IO<Option<B>> {
+        override suspend fun run() = this@mapOption.run().map { mapper(it) }
     }
 
 fun <A, B> IO<Option<A>>.flatMapOption(mapper: (A) -> IO<B>): IO<Option<B>> =

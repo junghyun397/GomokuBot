@@ -136,7 +136,7 @@ sealed interface LanguageContainer {
 
     // ### 2-2-3. STYLE:ERROR:NOTFOUND (MESSAGE)
 
-    fun styleErrorNotfound(user: String): String
+    fun styleErrorNotfound(): String
 
     // ### 2-2-4. STYLE:SUCCESS:UPDATED (MESSAGE)
 
@@ -198,7 +198,7 @@ sealed interface LanguageContainer {
 
     // # 3. SESSION
 
-    fun sessionNotFound(user: String): String
+    fun sessionNotFound(): String
 
     // ## 3-1. START
 
@@ -211,11 +211,11 @@ sealed interface LanguageContainer {
 
     // ### 3-1-2. START:ERROR:ALREADY (MESSAGE)
 
-    fun startErrorSessionAlready(user: String): String
-    fun startErrorOpponentSessionAlready(owner: String, opponent: String): String
-    fun startErrorRequestAlreadySent(owner: String, opponent: String): String
-    fun startErrorRequestAlready(user: String, opponent: String): String
-    fun startErrorOpponentRequestAlready(owner: String, opponent: String): String
+    fun startErrorSessionAlready(): String
+    fun startErrorOpponentSessionAlready(opponent: String): String
+    fun startErrorRequestAlreadySent(opponent: String): String
+    fun startErrorRequestAlready(opponent: String): String
+    fun startErrorOpponentRequestAlready(opponent: String): String
 
     // ## 3-2. SET
 
@@ -229,15 +229,15 @@ sealed interface LanguageContainer {
 
     // ### 3-2-2. SET:ERROR:ARGUMENT (MESSAGE)
 
-    fun setErrorIllegalArgument(player: String): String
+    fun setErrorIllegalArgument(): String
 
     // ### 3-2-3. SET:ERROR:EXIST (MESSAGE)
 
-    fun setErrorExist(player: String, move: String): String
+    fun setErrorExist(move: String): String
 
     // ### 3-2-4. SET:ERROR:FORBIDDEN (MESSAGE)
 
-    fun setErrorForbidden(player: String, move: String, forbiddenKind: String): String
+    fun setErrorForbidden(move: String, forbiddenKind: String): String
 
     // ## 3-3. RESIGN
 
@@ -281,13 +281,13 @@ sealed interface LanguageContainer {
 
     // ### 4-2-1. PROCESS:NEXT (MESSAGE)
 
-    fun processNextPVE(owner: String, latestMove: String): String
+    fun processNextPVE(latestMove: String): String
 
-    fun processNextPVP(player: String, priorPlayer: String, latestMove: String): String
+    fun processNextPVP(priorPlayer: String, latestMove: String): String
 
     // ### 4-2-2. PROCESS:ERROR:ORDER (MESSAGE)
 
-    fun processErrorOrder(user: String, player: String): String
+    fun processErrorOrder(player: String): String
 
     // ## 4-3. END
 

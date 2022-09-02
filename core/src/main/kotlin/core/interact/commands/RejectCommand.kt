@@ -32,9 +32,15 @@ class RejectCommand(private val requestSession: RequestSession) : Command {
     ) = runCatching {
         SessionManager.removeRequestSession(bot.sessions, guild, requestSession.owner.id)
 
-        val io = producer.produceRequestRejected(publishers.plain, config.language.container, requestSession.owner, requestSession.opponent)
-            .flatMap { it.launch() }
-            .map { listOf(Order.DeleteSource)  }
+        val editIO = producer.produceRequestInvalidated(publishers.edit, config.language.container, this.requestSession.owner, this.requestSession.opponent)
+            .launch()
+
+        val noticeIO = producer.produceRequestRejected(publishers.plain, config.language.container, requestSession.owner, requestSession.opponent)
+            .launch()
+
+        val io = editIO
+            .flatMap { noticeIO }
+            .map { emptyList<Order>() }
 
         io and this.asCommandReport("reject ${requestSession.owner}'s request", user)
     }

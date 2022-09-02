@@ -54,8 +54,8 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
         .doOnNext { (context, command) ->
             if (command.responseFlag == ResponseFlag.DEFER) context.event.deferReply().queue()
         }
-        .flatMap { (context, command) -> Mono.zip(context.toMono(), mono { command
-            .execute(
+        .flatMap { (context, command) -> Mono.zip(context.toMono(), mono {
+            command.execute(
                 bot = context.bot,
                 config = context.config,
                 guild = context.guild,
@@ -69,14 +69,19 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
                         edit = { msg -> WebHookEditActionAdaptor(context.event.hook.editOriginal(msg)) },
                         component = { components -> WebHookComponentEditActionAdaptor(context.event.hook.editOriginalComponents(components)) }
                     )
-                    else -> PolyPublisherSet(
-                        plain = TransMessagePublisher(
-                            head = { msg -> ReplyActionAdaptor(context.event.reply(msg)) },
-                            tail = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
+                    else -> TransMessagePublisherSet(
+                        head = PolyPublisherSet(
+                            plain = { msg -> ReplyActionAdaptor(context.event.reply(msg)) },
+                            windowed = { msg -> ReplyActionAdaptor(context.event.reply(msg).setEphemeral(true)) },
+                            edit = { msg -> MessageEditCallbackAdaptor(context.event.editMessage(msg)) },
+                            component = { components -> MessageEditCallbackAdaptor(context.event.editComponents(components)) }
                         ),
-                        windowed = { msg -> ReplyActionAdaptor(context.event.reply(msg).setEphemeral(true)) },
-                        edit = { msg -> MessageEditCallbackAdaptor(context.event.editMessage(msg)) },
-                        component = { components -> MessageEditCallbackAdaptor(context.event.editComponents(components)) }
+                        tail = PolyPublisherSet(
+                            plain = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
+                            windowed = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg).setEphemeral(true)) },
+                            edit = { msg -> WebHookEditActionAdaptor(context.event.hook.editOriginal(msg)) },
+                            component = { components -> WebHookComponentEditActionAdaptor(context.event.hook.editOriginalComponents(components)) }
+                        )
                     )
                 }
             )

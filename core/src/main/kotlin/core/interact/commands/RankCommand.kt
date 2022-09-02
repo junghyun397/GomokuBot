@@ -12,7 +12,6 @@ import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
 import utils.lang.and
-import utils.structs.flatMap
 import utils.structs.map
 
 sealed class RankScope {
@@ -50,7 +49,7 @@ class RankCommand(private val scope: RankScope) : Command {
             .map { UserProfileRepository.retrieveUser(bot.dbConnection, it.userId) and it }
 
         val io = producer.produceRankings(publishers.plain, config.language.container, tuple)
-            .flatMap { it.launch() }
+            .launch()
             .map { emptyList<Order>() }
 
         io and this.asCommandReport("succeed", user)

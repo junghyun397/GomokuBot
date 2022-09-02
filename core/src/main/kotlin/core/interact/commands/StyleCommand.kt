@@ -12,7 +12,6 @@ import core.session.BoardStyle
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import utils.lang.and
-import utils.structs.flatMap
 import utils.structs.map
 
 class StyleCommand(private val style: BoardStyle) : Command {
@@ -33,7 +32,7 @@ class StyleCommand(private val style: BoardStyle) : Command {
         SessionManager.updateGuildConfig(bot.sessions, guild, config.copy(boardStyle = style))
 
         val io = producer.produceStyleUpdated(publishers.windowed, config.language.container, style.sample.styleName)
-            .flatMap { it.launch() }
+            .launch()
             .map { emptyList<Order>() }
 
         io and this.asCommandReport("${config.boardStyle.name} to ${style.name}", user)

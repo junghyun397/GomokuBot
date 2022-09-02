@@ -14,7 +14,6 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import utils.structs.Either
-import utils.structs.flatMap
 import utils.structs.map
 
 object RatingCommandParser : NamedParser, ParsableCommand, BuildableCommand {
@@ -24,14 +23,14 @@ object RatingCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("not yet implemented", context.user) { producer, publisher, container ->
             producer.produceNotYetImplemented(publisher, container, "https://discord.gg/vq8pkfF")
-                .flatMap { it.launch() }
+                .launch()
                 .map { emptyList() }
         })
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("not yet implemented", context.user) { producer, publisher, container ->
             producer.produceNotYetImplemented(publisher, container, "https://discord.gg/vq8pkfF")
-                .flatMap { it.launch() }
+                .launch()
                 .map { emptyList() }
         })
 

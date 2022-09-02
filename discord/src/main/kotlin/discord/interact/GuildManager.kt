@@ -21,22 +21,27 @@ import discord.interact.message.MessageActionAdaptor
 import discord.interact.parse.buildableCommands
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.GuildChannel
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
 import utils.structs.Option
-import utils.structs.flatMap
 import utils.structs.map
 
 object GuildManager {
 
-    fun lookupPermission(channel: TextChannel, permission: Permission) =
+    fun lookupPermission(channel: GuildChannel, permission: Permission) =
         channel.guild.selfMember.hasPermission(channel, permission)
 
     suspend fun hasDebugPermission(config: DiscordConfig, user: User): Boolean =
         user.jda
             .getGuildById(config.officialServerId.idLong)!!
             .retrieveMemberById(user.idLong)
+            .mapToResult()
             .await()
+            .let { when {
+                it.isSuccess -> it.get()
+                else -> null
+            } }
             ?.roles
             ?.any { it.idLong == config.testerRoleId }
             ?: false
@@ -94,7 +99,7 @@ object GuildManager {
         val publisher: DiscordMessagePublisher = { msg -> MessageActionAdaptor(archiveChannel.sendMessage(msg)) }
 
         DiscordMessageProducer.produceSessionArchive(publisher, modSession, modResult)
-            .flatMap { it.launch() }
+            .launch()
             .run()
     }
 

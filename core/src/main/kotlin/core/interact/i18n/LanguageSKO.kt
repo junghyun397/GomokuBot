@@ -31,16 +31,16 @@ class LanguageSKO : LanguageKOR() {
     override fun languageUpdated() =
         "言語設定이韓國語:flag_kr:로改變했습니다!\n`Translated by`: `1,2,3,4-TetraMethylBenzene(Kawaii-cirno)`"
 
-    override fun startErrorSessionAlready(user: String) =
-        "$user 님, 遊戱生成에失敗했습니다. 滿喫하고계신遊戱를完了해주세요. :thinking:"
+    override fun startErrorSessionAlready() =
+        "遊戱生成에失敗했습니다. 滿喫하고계신遊戱를完了해주세요. :thinking:"
 
     override fun beginPVP(blackPlayer: String, whitePlayer: String) =
         "$blackPlayer 님과의對決이開始되었습니다! 先攻은 $blackPlayer 님입니다."
 
-    override fun processNextPVP(player: String, priorPlayer: String, latestMove: String) =
-        "$player 님, 다음手를置하여주세요. " + priorPlayer + "는 " + latestMove + "에置하였습니다."
+    override fun processNextPVP(priorPlayer: String, latestMove: String) =
+        "다음手를置하여주세요. " + priorPlayer + "는 " + latestMove + "에置하였습니다."
 
-    override fun processErrorOrder(user: String, player: String) =
+    override fun processErrorOrder(player: String) =
         "只今은 $player 님의次例입니다. $player 님의다음手를待機해주세요. :thinking:"
     override fun endPVPWin(winner: String, looser: String, latestMove: String) =
         winner + " 님이" + latestMove + "에置함으로서 " + looser + " 님에게勝利하였습니다!"

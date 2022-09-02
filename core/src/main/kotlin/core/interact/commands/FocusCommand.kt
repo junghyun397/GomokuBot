@@ -16,7 +16,6 @@ import core.session.entities.NavigateState
 import jrenju.notation.Pos
 import utils.lang.and
 import utils.structs.IO
-import utils.structs.flatMap
 import utils.structs.map
 
 enum class Direction {
@@ -63,7 +62,7 @@ class FocusCommand(
                 SessionManager.addNavigate(bot.sessions, messageRef, this.navigateState.copy(page = newFocus.idx()))
 
                 val action = producer.attachFocusButtons(publishers.component, session, newFocus)
-                    .flatMap { it.launch() }
+                    .launch()
                     .map { emptyList<Order>() }
 
                 action and this.asCommandReport("move focus $direction", user)

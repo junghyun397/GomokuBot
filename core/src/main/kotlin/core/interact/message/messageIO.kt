@@ -33,9 +33,9 @@ data class DiPublisherSet<A, B>(
     override val windowed: MessagePublisher<A, B>,
 ) : PublisherSet<A, B> {
 
-    override val component: ComponentPublisher<A, B> get() = throw IllegalStateException()
+    override val component: ComponentPublisher<A, B> get() = throw IllegalAccessError()
 
-    override val edit: MessagePublisher<A, B> get() = throw IllegalStateException()
+    override val edit: MessagePublisher<A, B> get() = throw IllegalAccessError()
 }
 
 data class MonoPublisherSet<A, B>(
@@ -48,7 +48,7 @@ data class MonoPublisherSet<A, B>(
 
     override val edit: MessagePublisher<A, B> get() = this.publisher
 
-    override val component: ComponentPublisher<A, B> get() { throw IllegalStateException() }
+    override val component: ComponentPublisher<A, B> get() { throw IllegalAccessError() }
 
 }
 
@@ -60,7 +60,7 @@ interface MessageIO<A, B> {
 
     fun launch(): IO<Unit>
 
-    suspend fun retrieve(): Option<MessageAdaptor<A, B>>
+    fun retrieve(): IO<Option<MessageAdaptor<A, B>>>
 
 }
 

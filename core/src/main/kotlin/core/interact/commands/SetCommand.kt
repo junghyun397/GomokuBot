@@ -48,8 +48,9 @@ class SetCommand(
                 is PvpGameSession -> {
                     SessionManager.putGameSession(bot.sessions, guild, thenSession)
 
-                    val io = producer.produceNextMovePVP(publishers.plain, config.language.container, thenSession.player, thenSession.nextPlayer, this.pos)
-                        .flatMap { buildNextMoveSequence(it, bot, guild, config, producer, publishers.plain, this.session, thenSession) }
+                    val nextMoveIO = producer.produceNextMovePVP(publishers.plain, config.language.container, thenSession.player, thenSession.nextPlayer, this.pos)
+
+                    val io = buildNextMoveSequence(nextMoveIO, bot, guild, config, producer, publishers.plain, this.session, thenSession)
 
                     io to this.asCommandReport("make move ${pos.toCartesian()}", user)
                 }
@@ -60,8 +61,9 @@ class SetCommand(
                         onEmpty = {
                             SessionManager.putGameSession(bot.sessions, guild, nextSession)
 
-                            val io = producer.produceNextMovePVE(publishers.plain, config.language.container, nextSession.owner, nextSession.board.latestPos().get())
-                                .flatMap { buildNextMoveSequence(it, bot, guild, config, producer, publishers.plain, this.session, nextSession) }
+                            val nextMoveIO = producer.produceNextMovePVE(publishers.plain, config.language.container, nextSession.owner, nextSession.board.latestPos().get())
+
+                            val io = buildNextMoveSequence(nextMoveIO, bot, guild, config, producer, publishers.plain, this.session, nextSession)
 
                             io to this.asCommandReport("make move ${pos.toCartesian()}", user)
                         },
@@ -77,7 +79,7 @@ class SetCommand(
                                 is GameResult.Full ->
                                     producer.produceTiePVE(publishers.plain, config.language.container, nextSession.owner)
                             }
-                                .flatMap { it.launch() }
+                                .launch()
                                 .flatMap { buildFinishSequence(bot, producer, publishers.plain, config, this.session, nextSession) }
                                 .map { it + Order.ArchiveSession(nextSession, config.archivePolicy) }
 
@@ -99,7 +101,7 @@ class SetCommand(
                         is GameResult.Full ->
                             producer.produceTiePVP(publishers.plain, config.language.container, thenSession.owner, thenSession.opponent)
                     }
-                        .flatMap { it.launch() }
+                        .launch()
                         .flatMap { buildFinishSequence(bot, producer, publishers.plain, config, this.session, thenSession) }
                         .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
@@ -117,7 +119,7 @@ class SetCommand(
                         is GameResult.Full ->
                             producer.produceTiePVE(publishers.plain, config.language.container, thenSession.owner)
                     }
-                        .flatMap { it.launch() }
+                        .launch()
                         .flatMap { buildFinishSequence(bot, producer, publishers.plain, config, this.session, thenSession) }
                         .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 

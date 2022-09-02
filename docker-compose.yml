@@ -21,7 +21,7 @@ services:
     restart: always
 
   gomokubot:
-    container_name: gomokubot-discord-app
+    container_name: gomokubot-discord
     image: gomokubot-discord:latest
     ports:
       - "80:80"

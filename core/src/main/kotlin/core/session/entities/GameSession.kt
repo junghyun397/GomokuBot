@@ -87,14 +87,14 @@ fun GameSession.nextWith(
         board = board,
         history = this.history + move,
         gameResult = gameResult,
-        expireDate = LinuxTime.withExpireOffset(this.expireOffset),
+        expireDate = LinuxTime.withOffset(this.expireOffset),
         messageBufferKey = messageBufferKey
     )
     is PvpGameSession -> this.copy(
         board = board,
         history = this.history + move,
         gameResult = gameResult,
-        expireDate = LinuxTime.withExpireOffset(this.expireOffset),
+        expireDate = LinuxTime.withOffset(this.expireOffset),
         messageBufferKey = messageBufferKey
     )
 }
