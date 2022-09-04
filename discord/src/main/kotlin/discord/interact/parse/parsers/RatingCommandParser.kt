@@ -21,14 +21,14 @@ object RatingCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     override val name = "rating"
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
-        Either.Right(this.asParseFailure("not yet implemented", context.user) { producer, publisher, container ->
+        Either.Right(this.asParseFailure("not yet implemented", context.guild, context.user) { producer, publisher, container ->
             producer.produceNotYetImplemented(publisher, container, "https://discord.gg/vq8pkfF")
                 .launch()
                 .map { emptyList() }
         })
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> =
-        Either.Right(this.asParseFailure("not yet implemented", context.user) { producer, publisher, container ->
+        Either.Right(this.asParseFailure("not yet implemented", context.guild, context.user) { producer, publisher, container ->
             producer.produceNotYetImplemented(publisher, container, "https://discord.gg/vq8pkfF")
                 .launch()
                 .map { emptyList() }

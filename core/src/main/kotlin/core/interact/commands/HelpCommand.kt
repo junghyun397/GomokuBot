@@ -12,7 +12,7 @@ import core.session.entities.GuildConfig
 import utils.lang.and
 import utils.structs.map
 
-class HelpCommand(private val sendCombined: Boolean) : Command {
+class HelpCommand(private val sendSettings: Boolean) : Command {
 
     override val name = "help"
 
@@ -27,15 +27,14 @@ class HelpCommand(private val sendCombined: Boolean) : Command {
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        val io = run {
-            if (this.sendCombined)
-                buildCombinedHelpSequence(bot, config, publishers.plain, producer, 0)
-            else
-                buildHelpSequence(bot, config, publishers.plain, producer)
+        val io = if (this.sendSettings) {
+            buildCombinedHelpSequence(bot, config, publishers.plain, producer, 0)
+        } else {
+            buildHelpSequence(bot, config, publishers.plain, producer)
         }
             .map { emptyList<Order>() }
 
-        io and this.asCommandReport("succeed", user)
+        io and this.asCommandReport("succeed", guild, user)
     }
 
 }

@@ -52,7 +52,7 @@ class SetCommand(
 
                     val io = buildNextMoveSequence(nextMoveIO, bot, guild, config, producer, publishers.plain, this.session, thenSession)
 
-                    io to this.asCommandReport("make move ${pos.toCartesian()}", user)
+                    io to this.asCommandReport("make move ${pos.toCartesian()}", guild, user)
                 }
                 is AiGameSession -> {
                     val nextSession = GameManager.makeAiMove(bot.kvineClient, thenSession, Pos.fromIdx(thenSession.board.latestMove()))
@@ -65,7 +65,7 @@ class SetCommand(
 
                             val io = buildNextMoveSequence(nextMoveIO, bot, guild, config, producer, publishers.plain, this.session, nextSession)
 
-                            io to this.asCommandReport("make move ${pos.toCartesian()}", user)
+                            io to this.asCommandReport("make move ${pos.toCartesian()}", guild, user)
                         },
                         onDefined = { result ->
                             SessionManager.removeGameSession(bot.sessions, guild, this.session.owner.id)
@@ -83,7 +83,7 @@ class SetCommand(
                                 .flatMap { buildFinishSequence(bot, producer, publishers.plain, config, this.session, nextSession) }
                                 .map { it + Order.ArchiveSession(nextSession, config.archivePolicy) }
 
-                            io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", user)
+                            io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", guild, user)
                         }
                     )
                 }
@@ -105,7 +105,7 @@ class SetCommand(
                         .flatMap { buildFinishSequence(bot, producer, publishers.plain, config, this.session, thenSession) }
                         .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
-                    io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", user)
+                    io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", guild, user)
                 }
                 is AiGameSession -> {
                     SessionManager.removeGameSession(bot.sessions, guild, this.session.owner.id)
@@ -123,7 +123,7 @@ class SetCommand(
                         .flatMap { buildFinishSequence(bot, producer, publishers.plain, config, this.session, thenSession) }
                         .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
-                    io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", user)
+                    io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", guild, user)
                 }
             } }
         )

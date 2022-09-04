@@ -52,7 +52,7 @@ class RankCommand(private val scope: RankScope) : Command {
             .launch()
             .map { emptyList<Order>() }
 
-        io and this.asCommandReport("succeed", user)
+        io and this.asCommandReport("$scope scope", guild, user)
     }
 
 }

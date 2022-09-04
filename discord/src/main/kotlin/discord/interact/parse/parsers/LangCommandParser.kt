@@ -1,5 +1,6 @@
 package discord.interact.parse.parsers
 
+import core.assets.Guild
 import core.assets.User
 import core.interact.commands.Command
 import core.interact.commands.LangCommand
@@ -28,8 +29,8 @@ object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     private fun matchLang(option: String): Language? =
         Language.values().firstOrNull { it.container.languageCode() == option }
 
-    private fun composeMissMatchFailure(user: User): Either<Command, DiscordParseFailure> =
-        Either.Right(this.asParseFailure("option mismatch", user) { producer, publisher, _ ->
+    private fun composeMissMatchFailure(guild: Guild, user: User): Either<Command, DiscordParseFailure> =
+        Either.Right(this.asParseFailure("option mismatch", guild, user) { producer, publisher, _ ->
             producer.produceLanguageNotFound(publisher).launch()
                 .flatMap { producer.produceLanguageGuide(publisher).launch() }
                 .map { emptyList() }
@@ -38,7 +39,7 @@ object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {
         val lang = context.event.getOption(context.config.language.container.languageCommandOptionCode())?.asString?.uppercase()?.let {
             matchLang(it)
-        } ?: return this.composeMissMatchFailure(context.user)
+        } ?: return this.composeMissMatchFailure(context.guild, context.user)
 
         return Either.Left(LangCommand(lang))
     }
@@ -48,7 +49,7 @@ object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
             .getOrNull(1)
             ?.uppercase()
             ?.let { matchLang(it) }
-            ?: return this.composeMissMatchFailure(context.user)
+            ?: return this.composeMissMatchFailure(context.guild, context.user)
 
         return Either.Left(LangCommand(lang))
     }

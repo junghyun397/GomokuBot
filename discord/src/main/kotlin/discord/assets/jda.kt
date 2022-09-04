@@ -1,8 +1,18 @@
 package discord.assets
 
 import core.assets.*
+import net.dv8tion.jda.api.events.Event
+import net.dv8tion.jda.api.events.guild.GuildJoinEvent
+import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
+import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
+import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent
 import java.util.*
+import kotlin.reflect.KClass
 
 const val DISCORD_PLATFORM_ID: Short = 1
 
@@ -27,3 +37,16 @@ fun net.dv8tion.jda.api.entities.Guild.extractProfile(uid: GuildUid = GuildUid(U
 
 fun net.dv8tion.jda.api.entities.User.extractProfile(uid: UserUid = UserUid(UUID.randomUUID()), announceId: Int? = null) =
     User(uid, DISCORD_PLATFORM_ID, this.extractId(), this.name, this.asTag, announceId, this.avatarUrl)
+
+fun <T : Event>getEventAbbreviation(source: KClass<T>) =
+    when (source)  {
+        SlashCommandInteractionEvent::class -> "SCE"
+        MessageReceivedEvent::class -> "MRE"
+        ButtonInteractionEvent::class -> "BIE"
+        SelectMenuInteractionEvent::class -> "SME"
+        MessageReactionAddEvent::class -> "MRA"
+        MessageReactionRemoveEvent::class -> "MRR"
+        GuildJoinEvent::class -> "GJE"
+        GuildLeaveEvent::class -> "GLE"
+        else -> "UNK"
+    }

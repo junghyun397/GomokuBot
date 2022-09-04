@@ -12,7 +12,8 @@ import core.interact.commands.ResponseFlag
 import core.interact.i18n.LanguageContainer
 import core.interact.message.DiPublisherSet
 import core.interact.message.MonoPublisherSet
-import core.interact.reports.CommandReport
+import core.interact.reports.ErrorReport
+import core.interact.reports.InteractionReport
 import discord.assets.*
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
@@ -53,7 +54,7 @@ private fun buildPermissionNode(tuple: Tuple3<InteractionContext<MessageReceived
 
 private fun buildPermissionNode(context: InteractionContext<*>, channel: TextChannel, jdaUser: User, parsableCommand: ParsableCommand) =
     GuildManager.permissionNotGrantedRun(channel, Permission.MESSAGE_SEND) {
-        DiscordParseFailure(parsableCommand.name, "message permission not granted in $channel", context.user) { _, _, container ->
+        DiscordParseFailure(parsableCommand.name, "message permission not granted in $channel", context.guild, context.user) { _, _, container ->
             IO {
                 jdaUser.openPrivateChannel()
                     .flatMap { privateChannel ->
@@ -126,7 +127,7 @@ private fun matchCommand(command: String, container: LanguageContainer): Option<
         else -> Option.Empty
     }
 
-fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>): Mono<Tuple2<InteractionContext<SlashCommandInteractionEvent>, Result<CommandReport>>> =
+fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>): Mono<InteractionReport> =
     Mono.zip(
         context.toMono(),
         matchCommand(
@@ -182,13 +183,23 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
             }
         ) }) }
         .flatMap { (context, result) ->
-            Mono.zip(context.toMono(), mono { result.map { (io, report) ->
-                export(context, io, null)
-                report
-            } })
+            mono {
+                result.fold(
+                    onSuccess = { (io, report) ->
+                        export(context, io, null)
+                        report
+                    },
+                    onFailure = { throwable ->
+                        ErrorReport(throwable, context.guild)
+                    }
+                ).apply {
+                    interactionSource = getEventAbbreviation(context.event::class)
+                    emittedTime = context.emittedTime
+                }
+            }
         }
 
-fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<Tuple2<InteractionContext<MessageReceivedEvent>, Result<CommandReport>>> =
+fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<InteractionReport> =
     run {
         val messageRaw = context.event.message.contentRaw
 
@@ -254,8 +265,18 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<T
             }
         ) }) }
         .flatMap { (context, result) ->
-            Mono.zip(context.toMono(), mono { result.map { (io, report) ->
-                export(context, io, null)
-                report
-            } })
+            mono {
+                result.fold(
+                    onSuccess = { (io, report) ->
+                        export(context, io, null)
+                        report
+                    },
+                    onFailure = { throwable ->
+                        ErrorReport(throwable, context.guild)
+                    }
+                ).apply {
+                    interactionSource = getEventAbbreviation(context.event::class)
+                    emittedTime = context.emittedTime
+                }
+            }
         }

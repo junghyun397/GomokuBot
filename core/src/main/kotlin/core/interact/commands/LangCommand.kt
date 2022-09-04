@@ -39,7 +39,7 @@ class LangCommand(private val language: Language) : Command {
             .flatMap { buildHelpSequence(bot, thenConfig, publishers.plain, producer) }
             .map { listOf(Order.UpsertCommands(thenConfig.language.container)) }
 
-        io and this.asCommandReport("${config.language.name} to ${thenConfig.language.name}", user)
+        io and this.asCommandReport("set language ${config.language.name} to ${thenConfig.language.name}", guild, user)
     }
 
 }

@@ -3,10 +3,12 @@ package discord.route
 import core.assets.MessageId
 import core.assets.MessageRef
 import core.interact.message.PolyPublisherSet
-import core.interact.reports.CommandReport
+import core.interact.reports.ErrorReport
+import core.interact.reports.InteractionReport
 import core.session.SessionManager
 import core.session.entities.NavigationKind
 import discord.assets.extractId
+import discord.assets.getEventAbbreviation
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageProducer
@@ -20,7 +22,6 @@ import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
-import reactor.util.function.Tuple2
 import utils.lang.and
 import utils.lang.component1
 import utils.lang.component2
@@ -30,7 +31,7 @@ import utils.structs.flatMap
 import utils.structs.getOrException
 import utils.structs.map
 
-fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mono<Tuple2<InteractionContext<GenericMessageReactionEvent>, Result<CommandReport>>> =
+fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mono<InteractionReport> =
     Mono.zip(
         context.toMono(),
         run {
@@ -98,9 +99,19 @@ fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mo
                 }
             )
         }
-        .flatMap { (context, message, result) ->
-            Mono.zip(context.toMono(), mono { result.map { (io, report) ->
-                export(context, io, message)
-                report
-            } })
+        .flatMap { (context, messageRef, result) ->
+            mono {
+                result.fold(
+                    onSuccess = { (io, report) ->
+                        export(context, io, messageRef)
+                        report
+                    },
+                    onFailure = { throwable ->
+                        ErrorReport(throwable, context.guild)
+                    }
+                ).apply {
+                    interactionSource = getEventAbbreviation(context.event::class)
+                    emittedTime = context.emittedTime
+                }
+            }
         }

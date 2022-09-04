@@ -4,8 +4,10 @@ package discord.route
 
 import core.interact.commands.ResponseFlag
 import core.interact.message.PolyPublisherSet
-import core.interact.reports.CommandReport
+import core.interact.reports.ErrorReport
+import core.interact.reports.InteractionReport
 import discord.assets.extractMessageRef
+import discord.assets.getEventAbbreviation
 import discord.interact.InteractionContext
 import discord.interact.message.*
 import discord.interact.parse.EmbeddableCommand
@@ -17,7 +19,6 @@ import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
-import reactor.util.function.Tuple2
 import utils.lang.component1
 import utils.lang.component2
 import utils.structs.Option
@@ -34,7 +35,7 @@ private fun matchAction(prefix: String): Option<EmbeddableCommand> =
         else -> Option.Empty
     }
 
-fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteractionCreateEvent>): Mono<Tuple2<InteractionContext<GenericComponentInteractionCreateEvent>, Result<CommandReport>>> =
+fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteractionCreateEvent>): Mono<InteractionReport> =
     Mono.zip(
         context.toMono(),
         context.event.component.id.asOption().flatMap {
@@ -86,7 +87,19 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
                 }
             )
         }) }
-        .flatMap { (context, result) -> Mono.zip(context.toMono(), mono { result.map { (io, report) ->
-            export(context, io, context.event.message.extractMessageRef())
-            report
-        } }) }
+        .flatMap { (context, result) ->
+            mono {
+                result.fold(
+                    onSuccess = { (io, report) ->
+                        export(context, io, context.event.message.extractMessageRef())
+                        report
+                    },
+                    onFailure = { throwable ->
+                        ErrorReport(throwable, context.guild)
+                    }
+                ).apply {
+                    interactionSource = getEventAbbreviation(context.event::class)
+                    emittedTime = context.emittedTime
+                }
+            }
+        }

@@ -56,8 +56,5 @@ fun <A, B> IO<Option<A>>.mapOption(mapper: (A) -> B): IO<Option<B>> =
 
 fun <A, B> IO<Option<A>>.flatMapOption(mapper: (A) -> IO<B>): IO<Option<B>> =
     object : IO<Option<B>> {
-        override suspend fun run() = this@flatMapOption.run().fold(
-            onDefined = { Option(mapper(it).run()) },
-            onEmpty = { Option.Empty }
-        )
+        override suspend fun run() = this@flatMapOption.run().map { mapper(it).run() }
     }

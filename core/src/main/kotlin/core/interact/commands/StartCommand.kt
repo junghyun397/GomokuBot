@@ -45,7 +45,7 @@ class StartCommand(val opponent: User?) : Command {
                     .flatMap { buildBoardSequence(bot, guild, config, producer, publishers.plain, gameSession) }
                     .map { emptyList<Order>() }
 
-                io and this.asCommandReport("start game session with AI", user)
+                io and this.asCommandReport("start game session with AI", guild, user)
             }
             else -> {
                 val requestSession = RequestSession(
@@ -61,7 +61,7 @@ class StartCommand(val opponent: User?) : Command {
                     .flatMapOption { IO { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.messageRef) } }
                     .map { emptyList<Order>()  }
 
-                io and this.asCommandReport("make request to ${this.opponent}", user)
+                io and this.asCommandReport("make request to ${this.opponent}", guild, user)
             }
         }
     }

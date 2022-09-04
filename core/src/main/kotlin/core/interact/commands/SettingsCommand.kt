@@ -45,7 +45,7 @@ class SettingsCommand : Command {
             }
             .map { emptyList<Order>() }
 
-        io and this.asCommandReport("succeed", user)
+        io and this.asCommandReport("succeed", guild, user)
     }
 
 }

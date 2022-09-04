@@ -46,7 +46,7 @@ class NavigateCommand(
         )
 
         if (this.navigateState.page == newState.page)
-            return@runCatching IO { emptyList<Order>() } and this.asCommandReport("navigate bounded", user)
+            return@runCatching IO { emptyList<Order>() } and this.asCommandReport("navigate bounded", guild, user)
 
         SessionManager.addNavigate(bot.sessions, messageRef, newState)
 
@@ -60,7 +60,7 @@ class NavigateCommand(
             .launch()
             .map { emptyList<Order>()  }
 
-        io and this.asCommandReport("navigate ${newState.navigationKind} as ${newState.page}", user)
+        io and this.asCommandReport("navigate ${newState.navigationKind} as ${newState.page}", guild, user)
     }
 
 }

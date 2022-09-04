@@ -39,6 +39,7 @@ class ResignCommand(private val session: GameSession) : Command {
         val (finishedSession, result) = GameManager.resignSession(this.session, GameResult.Cause.RESIGN, user)
 
         SessionManager.removeGameSession(bot.sessions, guild, session.owner.id)
+
         finishedSession.extractGameRecord(guild.id).forEach { record ->
             GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
         }
@@ -61,7 +62,7 @@ class ResignCommand(private val session: GameSession) : Command {
                 )
             }
 
-        io to this.asCommandReport("terminate session by surrendered", user)
+        io to this.asCommandReport("surrendered, terminate session by $result", guild, user)
     }
 
 }

@@ -1,5 +1,6 @@
 package core.interact.parse
 
+import core.assets.Guild
 import core.assets.User
 import core.interact.Order
 import core.interact.i18n.LanguageContainer
@@ -13,6 +14,7 @@ import utils.structs.IO
 class ParseFailure<A, B>(
     val name: String,
     val comment: String,
+    val guild: Guild,
     val user: User,
     private val onFailure: (MessageProducer<A, B>, MessagePublisher<A, B>, LanguageContainer) -> IO<List<Order>>
 ) {
@@ -22,8 +24,8 @@ class ParseFailure<A, B>(
 
 }
 
-fun <A, B> NamedParser.asParseFailure(comment: String, user: User, onFailure: (MessageProducer<A, B>, MessagePublisher<A, B>, LanguageContainer) -> IO<List<Order>>) =
-    ParseFailure(this.name, comment, user, onFailure)
+fun <A, B> NamedParser.asParseFailure(comment: String, guild: Guild, user: User, onFailure: (MessageProducer<A, B>, MessagePublisher<A, B>, LanguageContainer) -> IO<List<Order>>) =
+    ParseFailure(this.name, comment, guild, user, onFailure)
 
 fun ParseFailure<*, *>.asCommandReport() =
-    CommandReport("PARSE-FAILURE-${this.name}", this.comment, this.user)
+    CommandReport("PARSE-FAILURE-${this.name}", this.comment, this.guild, this.user)

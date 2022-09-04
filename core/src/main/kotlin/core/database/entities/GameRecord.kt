@@ -43,11 +43,11 @@ fun GameSession.extractGameRecord(guildUid: GuildUid) =
             blackId = when {
                 ownerHasBlack -> owner
                 else -> opponent
-            }.let { if (it.id == aiUser.id) null else it.id },
+            }.takeIf { it.id != aiUser.id }?.id,
             whiteId = when {
                 ownerHasBlack -> opponent
                 else -> owner
-            }.let { if (it.id == aiUser.id) null else it.id },
+            }.takeIf { it.id != aiUser.id }?.id,
 
             aiLevel = when (this) {
                 is AiGameSession -> this.aiLevel

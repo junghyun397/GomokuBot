@@ -35,7 +35,7 @@ class StyleCommand(private val style: BoardStyle) : Command {
             .launch()
             .map { emptyList<Order>() }
 
-        io and this.asCommandReport("${config.boardStyle.name} to ${style.name}", user)
+        io and this.asCommandReport("set style ${config.boardStyle.name} to ${style.name}", guild, user)
     }
 
 }

@@ -55,31 +55,34 @@ class DebugCommand(
                 producer.produceSessionArchive(publishers.plain, session, session.gameResult)
                     .addFile(session.board.toBoardIO().debugText().toInputStream(), "analysis-report-${System.currentTimeMillis()}.txt")
                     .launch()
-                    .map { emptyList<Order>() } and this.asCommandReport("succeed", user)
-            } ?: (IO { emptyList<Order>() } and this.asCommandReport("failed", user))
+                    .map { emptyList<Order>() } and this.asCommandReport("succeed", guild, user)
+            } ?: (IO { emptyList<Order>() } and this.asCommandReport("failed", guild, user))
         }
         DebugType.SELF_REQUEST -> {
-            if (SessionManager.retrieveGameSession(bot.sessions, guild, user.id) != null ||
-                SessionManager.retrieveRequestSession(bot.sessions, guild, user.id) != null)
-                IO { emptyList<Order>() } and this.asCommandReport("failed", user)
-            else {
-                val requestSession = RequestSession(
-                    user, user,
-                    SessionManager.generateMessageBufferKey(user),
-                    LinuxTime.withOffset(bot.config.gameExpireOffset)
-                )
+            when {
+                SessionManager.retrieveGameSession(bot.sessions, guild, user.id) != null ||
+                        SessionManager.retrieveRequestSession(bot.sessions, guild, user.id) != null ->
+                    IO { emptyList<Order>() } and this.asCommandReport("failed", guild, user)
+                else -> {
+                    val requestSession = RequestSession(
+                        user, user,
+                        SessionManager.generateMessageBufferKey(user),
+                        LinuxTime.withOffset(bot.config.gameExpireOffset)
+                    )
 
-                SessionManager.putRequestSession(bot.sessions, guild, requestSession)
+                    SessionManager.putRequestSession(bot.sessions, guild, requestSession)
 
-                val io = producer.produceRequest(publishers.plain, config.language.container, user, user)
-                    .launch()
-                    .map { emptyList<Order>()  }
+                    val io = producer.produceRequest(publishers.plain, config.language.container, user, user)
+                        .launch()
+                        .map { emptyList<Order>()  }
 
-                io and this.asCommandReport("succeed", user)
+                    io and this.asCommandReport("succeed", guild, user)
+                }
             }
         }
         DebugType.INJECT -> {
             val board = BoardIO.fromBoardText(this.payload, Renju.BOARD_CENTER_POS().idx()).get()
+
             val session = AiGameSession(
                 owner = user,
                 aiLevel = AiLevel.AMOEBA,
@@ -100,7 +103,7 @@ class DebugCommand(
                 .flatMap { buildBoardSequence(bot, guild, config, producer, publishers.plain, session) }
                 .map { emptyList<Order>() }
 
-            io and this.asCommandReport("succeed", user)
+            io and this.asCommandReport("succeed", guild, user)
         }
         DebugType.STATUS -> {
             val message = """
@@ -113,7 +116,7 @@ class DebugCommand(
                 .launch()
                 .map { emptyList<Order>() }
 
-            io and this.asCommandReport("succeed", user)
+            io and this.asCommandReport("succeed", guild, user)
         }
         DebugType.VCF -> {
             val vcfCase = """
@@ -157,7 +160,7 @@ class DebugCommand(
                 .flatMap { buildBoardSequence(bot, guild, config, producer, publishers.plain, session) }
                 .map { emptyList<Order>() }
 
-            io and this.asCommandReport("succeed", user)
+            io and this.asCommandReport("succeed", guild, user)
         }
     } }
 

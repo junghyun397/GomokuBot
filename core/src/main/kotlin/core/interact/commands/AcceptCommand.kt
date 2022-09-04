@@ -34,7 +34,7 @@ class AcceptCommand(private val requestSession: RequestSession) : Command {
         val gameSession = GameManager.generatePvpSession(
             bot.config.gameExpireOffset,
             this.requestSession.owner,
-            this.requestSession.opponent
+            this.requestSession.opponent,
         )
 
         SessionManager.putGameSession(bot.sessions, guild, gameSession)
@@ -49,7 +49,7 @@ class AcceptCommand(private val requestSession: RequestSession) : Command {
             .flatMap { boardIO }
             .map { listOf(Order.DeleteSource) }
 
-        io and this.asCommandReport("accepted", user)
+        io and this.asCommandReport("accept ${requestSession.owner}'s request", guild, user)
     }
 
 }

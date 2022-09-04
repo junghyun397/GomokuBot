@@ -38,7 +38,7 @@ class ApplySettingCommand(
             .launch()
             .map { emptyList<Order>() }
 
-        io and this.asCommandReport("update $configName as $configChoice", user)
+        io and this.asCommandReport("update $configName as $configChoice", guild, user)
     }
 
 }

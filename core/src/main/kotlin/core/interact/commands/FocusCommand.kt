@@ -57,7 +57,7 @@ class FocusCommand(
         }
 
         when(newFocus.idx()) {
-            this.navigateState.page -> IO { emptyList<Order>() } and this.asCommandReport("focus bounded", user)
+            this.navigateState.page -> IO { emptyList<Order>() } and this.asCommandReport("focus bounded", guild, user)
             else -> {
                 SessionManager.addNavigate(bot.sessions, messageRef, this.navigateState.copy(page = newFocus.idx()))
 
@@ -65,7 +65,7 @@ class FocusCommand(
                     .launch()
                     .map { emptyList<Order>() }
 
-                action and this.asCommandReport("move focus $direction", user)
+                action and this.asCommandReport("move focus $direction", guild, user)
             }
         }
     }

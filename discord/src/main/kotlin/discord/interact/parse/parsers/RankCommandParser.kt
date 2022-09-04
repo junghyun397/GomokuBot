@@ -30,7 +30,7 @@ object RankCommandParser : NamedParser, ParsableCommand, BuildableCommand {
             .flatMap { UserProfileRepository.retrieveUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, it.extractId()) }
             .fold(
                 onDefined = { Either.Left(RankCommand(RankScope.User(it))) },
-                onEmpty = { Either.Right(this.asParseFailure("target user not found", context.user) { producer, publisher, container ->
+                onEmpty = { Either.Right(this.asParseFailure("target user not found", context.guild, context.user) { producer, publisher, container ->
                     producer.produceUserNotFound(publisher, container)
                         .launch()
                         .map { emptyList() }

@@ -11,6 +11,7 @@ import core.database.LocalCaches
 import core.database.repositories.GuildProfileRepository
 import core.database.repositories.UserProfileRepository
 import core.inference.KvineClient
+import core.interact.reports.ErrorReport
 import core.interact.reports.InteractionReport
 import core.session.SessionManager
 import core.session.SessionRepository
@@ -40,11 +41,9 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
 import reactor.core.publisher.Flux
-import reactor.util.function.Tuple2
 import utils.assets.LinuxTime
 import utils.lang.and
 import utils.log.getLogger
-import utils.structs.forEach
 
 private data class PostgreSQLConfig(val serverURL: String) {
     companion object {
@@ -72,18 +71,14 @@ object DiscordConfigBuilder {
     )
 }
 
-private inline fun <reified E : Event, R : InteractionReport> leaveLog(tuple: Tuple2<InteractionContext<E>, Result<R>>) =
-    tuple.t2
-        .onSuccess{
-            logger.info("${E::class.simpleName} ${tuple.t1.guild} " +
-                    "T${(it.terminationTime.timestamp - tuple.t1.emittedTime.timestamp)}ms => $it")
-        }
-        .onFailure {
-            logger.error("${E::class.simpleName} ${tuple.t1.guild} " +
-                    "T${(System.currentTimeMillis() - tuple.t1.emittedTime.timestamp)}ms => ${it.stackTraceToString()}")
-        }
+fun leaveLog(report: InteractionReport) {
+    when (report) {
+        is ErrorReport -> logger.error(report.toString())
+        else -> logger.info(report.toString())
+    }
+}
 
-private suspend inline fun <E : Event> retrieveInteractionContext(bot: BotContext, discordConfig: DiscordConfig, event: E, jdaUser: net.dv8tion.jda.api.entities.User, jdaGuild: net.dv8tion.jda.api.entities.Guild): InteractionContext<E> {
+private suspend inline fun <E : Event> buildInteractionContext(bot: BotContext, discordConfig: DiscordConfig, event: E, jdaUser: net.dv8tion.jda.api.entities.User, jdaGuild: net.dv8tion.jda.api.entities.Guild): InteractionContext<E> {
     val user = UserProfileRepository.retrieveOrInsertUser(bot.dbConnection, DISCORD_PLATFORM_ID, jdaUser.extractId()) {
         jdaUser.extractProfile()
     }
@@ -146,38 +141,37 @@ object GomokuBot {
             )
             .build()
 
-        logger.info("jda ready.")
+        eventManager.on<ReadyEvent>()
+            .subscribe { logger.info("jda ready, complete loading.") }
+
+        eventManager.on<ShutdownEvent>()
+            .subscribe { logger.info("jda shutdown.") }
 
         Flux.merge(
             eventManager.on<SlashCommandInteractionEvent>()
                 .filter { it.isFromGuild && it.channel.type == ChannelType.TEXT && !it.user.isBot }
-                .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
-                .flatMap(::slashCommandRouter)
-                .doOnNext(::leaveLog),
+                .flatMap { mono { buildInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
+                .flatMap(::slashCommandRouter),
 
             eventManager.on<MessageReceivedEvent>()
                 .filter { it.isFromGuild && it.channel.type == ChannelType.TEXT && !it.author.isBot && (it.message.contentRaw.startsWith(COMMAND_PREFIX) || it.message.mentions.isMentioned(it.jda.selfUser)) }
-                .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.author, it.guild) } }
-                .flatMap(::textCommandRouter)
-                .doOnNext(::leaveLog),
+                .flatMap { mono { buildInteractionContext(botContext, discordConfig, it, it.author, it.guild) } }
+                .flatMap(::textCommandRouter),
 
             eventManager.on<ButtonInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
-                .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
-                .flatMap(::buttonInteractionRouter)
-                .doOnNext(::leaveLog),
+                .flatMap { mono { buildInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
+                .flatMap(::buttonInteractionRouter),
 
             eventManager.on<SelectMenuInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
-                .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
-                .flatMap(::buttonInteractionRouter)
-                .doOnNext(::leaveLog),
+                .flatMap { mono { buildInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
+                .flatMap(::buttonInteractionRouter),
 
             eventManager.on<MessageReactionAddEvent>()
                 .filter { it.isFromGuild && !(it.user?.isBot ?: true) }
-                .flatMap { mono { retrieveInteractionContext(botContext, discordConfig, it, it.user!!, it.guild) } }
-                .flatMap(::reactionRouter)
-                .doOnNext(::leaveLog),
+                .flatMap { mono { buildInteractionContext(botContext, discordConfig, it, it.user!!, it.guild) } }
+                .flatMap(::reactionRouter),
 
             eventManager.on<MessageReactionRemoveEvent>()
                 .filter {
@@ -194,28 +188,19 @@ object GomokuBot {
                         .await()
                 } }
                 .filter { (_, maybeUser) -> maybeUser.isSuccess && !maybeUser.get().isBot }
-                .flatMap { (event, user) -> mono { retrieveInteractionContext(botContext, discordConfig, event, user.get(), event.guild) } }
-                .flatMap(::reactionRouter)
-                .doOnNext(::leaveLog),
+                .flatMap { (event, user) -> mono { buildInteractionContext(botContext, discordConfig, event, user.get(), event.guild) } }
+                .flatMap(::reactionRouter),
 
             eventManager.on<GuildJoinEvent>()
-                .flatMap { guildJoinRouter(botContext, it) }
-                .doOnNext { logger.info(it.toString()) },
+                .flatMap { guildJoinRouter(botContext, it) },
 
             eventManager.on<GuildLeaveEvent>()
-                .flatMap { mono { GuildProfileRepository.retrieveGuild(botContext.dbConnection, DISCORD_PLATFORM_ID, it.guild.extractId()) } }
-                .doOnNext { guild -> guild.forEach { logger.info("leave $it") } },
-
-            eventManager.on<ReadyEvent>()
-                .doOnNext { logger.info("jda ready, complete loading.") },
-
-            eventManager.on<ShutdownEvent>()
-                .doOnNext { logger.info("jda shutdown.") },
+                .flatMap { guildLeaveRouter(botContext, it) },
 
             scheduleRoutines(botContext, discordConfig, jda)
         )
             .onErrorContinue { error, _ -> logger.error(error.stackTraceToString()) }
-            .subscribe()
+            .subscribe(::leaveLog)
 
         logger.info("reactive event manager ready.")
 

@@ -42,7 +42,7 @@ class RejectCommand(private val requestSession: RequestSession) : Command {
             .flatMap { noticeIO }
             .map { emptyList<Order>() }
 
-        io and this.asCommandReport("reject ${requestSession.owner}'s request", user)
+        io and this.asCommandReport("reject ${requestSession.owner}'s request", guild, user)
     }
 
 }
