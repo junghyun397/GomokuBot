@@ -40,12 +40,12 @@ fun net.dv8tion.jda.api.entities.User.extractProfile(uid: UserUid = UserUid(UUID
 
 fun <T : Event>getEventAbbreviation(source: KClass<T>) =
     when (source)  {
-        SlashCommandInteractionEvent::class -> "SCE"
+        SlashCommandInteractionEvent::class -> "SCIE"
         MessageReceivedEvent::class -> "MRE"
         ButtonInteractionEvent::class -> "BIE"
-        SelectMenuInteractionEvent::class -> "SME"
-        MessageReactionAddEvent::class -> "MRA"
-        MessageReactionRemoveEvent::class -> "MRR"
+        SelectMenuInteractionEvent::class -> "SMIE"
+        MessageReactionAddEvent::class -> "MRAE"
+        MessageReactionRemoveEvent::class -> "MRRE"
         GuildJoinEvent::class -> "GJE"
         GuildLeaveEvent::class -> "GLE"
         else -> "UNK"

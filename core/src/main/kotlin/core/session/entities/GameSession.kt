@@ -11,44 +11,43 @@ import jrenju.protocol.SolutionNode
 import utils.assets.LinuxTime
 import utils.structs.Option
 
-sealed class GameSession(
-    override val expireDate: LinuxTime,
-) : Expirable {
+sealed interface GameSession : Expirable {
 
-    abstract val owner: User
-    abstract val opponent: User
-    abstract val ownerHasBlack: Boolean
+    val createDate: LinuxTime
 
-    abstract val board: Board
+    override val expireDate: LinuxTime
 
-    abstract val gameResult: Option<GameResult>
+    val owner: User
+    val opponent: User
+    val ownerHasBlack: Boolean
 
-    abstract val history: List<Pos?>
+    val board: Board
 
-    abstract val messageBufferKey: String
+    val gameResult: Option<GameResult>
 
-    abstract val recording: Boolean
+    val history: List<Pos?>
 
-    abstract val expireOffset: Long
+    val messageBufferKey: String
 
-    val player get() =
-        if (this.ownerHasBlack xor !this.board.isNextColorBlack)
-            this.owner
-        else
-            this.opponent
+    val recording: Boolean
 
-    val nextPlayer get() =
-        if (this.ownerHasBlack xor !this.board.isNextColorBlack)
-            this.opponent
-        else
-            this.owner
+    val expireOffset: Long
+
+    val player get() = when {
+        this.ownerHasBlack xor !this.board.isNextColorBlack -> this.owner
+        else -> this.opponent
+    }
+
+    val nextPlayer get() = when {
+        this.ownerHasBlack xor !this.board.isNextColorBlack -> this.opponent
+        else -> this.owner
+    }
 
 }
 
 data class AiGameSession(
     val aiLevel: AiLevel,
     val solution: Option<SolutionNode>,
-
     override val owner: User,
     override val ownerHasBlack: Boolean,
     override val board: Board,
@@ -58,7 +57,8 @@ data class AiGameSession(
     override val expireOffset: Long,
     override val recording: Boolean,
     override val expireDate: LinuxTime,
-) : GameSession(expireDate) {
+    override val createDate: LinuxTime = LinuxTime()
+) : GameSession {
 
     override val opponent = aiUser
 
@@ -75,7 +75,8 @@ data class PvpGameSession(
     override val expireOffset: Long,
     override val recording: Boolean,
     override val expireDate: LinuxTime,
-) : GameSession(expireDate)
+    override val createDate: LinuxTime = LinuxTime()
+) : GameSession
 
 fun GameSession.nextWith(
     board: Board,

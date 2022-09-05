@@ -66,7 +66,7 @@ fun scheduleRoutines(botContext: BotContext, discordConfig: DiscordConfig, jda: 
                 export(botContext, discordConfig, guild, io, message)
             }
 
-            val report = CommandReport("expire-game", "expired, terminate session by $result", guildSession.guild, session.owner, "UNK", emittedTime)
+            val report = CommandReport("expire-game", "expired, terminate session by $result", guildSession.guild, session.owner, "SCH", emittedTime)
 
             emit(report)
         }
@@ -124,7 +124,7 @@ fun scheduleRoutines(botContext: BotContext, discordConfig: DiscordConfig, jda: 
                 export(botContext, discordConfig, guild, io, null)
             }
 
-            val report = CommandReport("expire-request", "expired, $session rejected", guildSession.guild, session.owner, "ROUT", emittedTime)
+            val report = CommandReport("expire-request", "expired, $session rejected", guildSession.guild, session.owner, "SCH", emittedTime)
 
             emit(report)
         }

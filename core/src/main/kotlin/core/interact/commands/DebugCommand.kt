@@ -28,7 +28,7 @@ import utils.structs.flatMap
 import utils.structs.map
 
 enum class DebugType {
-    ANALYSIS, SELF_REQUEST, VCF, INJECT, STATUS
+    ANALYSIS, SELF_REQUEST, VCF, INJECT, STATUS, SESSIONS
 }
 
 class DebugCommand(
@@ -113,6 +113,22 @@ class DebugCommand(
             """.trimIndent()
 
             val io = producer.produceDebugMessage(publishers.plain, message)
+                .launch()
+                .map { emptyList<Order>() }
+
+            io and this.asCommandReport("succeed", guild, user)
+        }
+        DebugType.SESSIONS -> {
+            val sessionMessage = bot.sessions.sessions
+                .flatMap { (_, session) -> session.gameSessions.values }
+                .map { it.toString() }
+                .let { sessions -> when {
+                    sessions.isEmpty() -> ""
+                    else -> sessions.reduce { acc, s -> "$acc\n$s" }
+                } }
+
+            val io = producer.produceDebugMessage(publishers.plain, "report here")
+                .addFile(sessionMessage.byteInputStream(), "sessions.txt")
                 .launch()
                 .map { emptyList<Order>() }
 
