@@ -50,7 +50,7 @@ class SetCommand(
 
                     val nextMoveIO = producer.produceNextMovePVP(publishers.plain, config.language.container, thenSession.player, thenSession.nextPlayer, this.pos)
 
-                    val io = buildNextMoveSequence(nextMoveIO, bot, guild, config, producer, publishers.plain, this.session, thenSession)
+                    val io = buildNextMoveProcedure(nextMoveIO, bot, guild, config, producer, publishers.plain, this.session, thenSession)
 
                     io to this.asCommandReport("make move ${pos.toCartesian()}", guild, user)
                 }
@@ -63,7 +63,7 @@ class SetCommand(
 
                             val nextMoveIO = producer.produceNextMovePVE(publishers.plain, config.language.container, nextSession.owner, nextSession.board.latestPos().get())
 
-                            val io = buildNextMoveSequence(nextMoveIO, bot, guild, config, producer, publishers.plain, this.session, nextSession)
+                            val io = buildNextMoveProcedure(nextMoveIO, bot, guild, config, producer, publishers.plain, this.session, nextSession)
 
                             io to this.asCommandReport("make move ${pos.toCartesian()}", guild, user)
                         },
@@ -80,7 +80,7 @@ class SetCommand(
                                     producer.produceTiePVE(publishers.plain, config.language.container, nextSession.owner)
                             }
                                 .launch()
-                                .flatMap { buildFinishSequence(bot, producer, publishers.plain, config, this.session, nextSession) }
+                                .flatMap { buildFinishProcedure(bot, producer, publishers.plain, config, this.session, nextSession) }
                                 .map { it + Order.ArchiveSession(nextSession, config.archivePolicy) }
 
                             io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", guild, user)
@@ -102,7 +102,7 @@ class SetCommand(
                             producer.produceTiePVP(publishers.plain, config.language.container, thenSession.owner, thenSession.opponent)
                     }
                         .launch()
-                        .flatMap { buildFinishSequence(bot, producer, publishers.plain, config, this.session, thenSession) }
+                        .flatMap { buildFinishProcedure(bot, producer, publishers.plain, config, this.session, thenSession) }
                         .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
                     io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", guild, user)
@@ -120,7 +120,7 @@ class SetCommand(
                             producer.produceTiePVE(publishers.plain, config.language.container, thenSession.owner)
                     }
                         .launch()
-                        .flatMap { buildFinishSequence(bot, producer, publishers.plain, config, this.session, thenSession) }
+                        .flatMap { buildFinishProcedure(bot, producer, publishers.plain, config, this.session, thenSession) }
                         .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
                     io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", guild, user)

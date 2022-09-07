@@ -131,11 +131,11 @@ open class LanguageKOR : LanguageENG() {
 
     // ### 2-2-4. STYLE:SUCCEED:CHANGED (MESSAGE)
 
-    override fun styleUpdated(styleName: String) = "스타일 설정이 스타일 ``${styleName}``로 바뀌었습니다!"
+    override fun styleUpdated(styleName: String) = "스타일 설정이 스타일 ``${styleName}``로 바뀌었습니다."
 
     // ## 2-3. POLICY
 
-    override fun settingApplied(choice: String) = "$choice 설정이 이 서버에 적용되었습니다."
+    override fun settingApplied(kind: String, choice: String) = "$kind 설정이 ${choice}로 바뀌었습니다."
 
     // ### 2-3-1. STYLE
 

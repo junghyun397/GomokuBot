@@ -5,7 +5,7 @@ import core.assets.Guild
 import core.assets.GuildUid
 import core.database.repositories.GuildConfigRepository
 import core.database.repositories.GuildProfileRepository
-import core.interact.commands.buildCombinedHelpSequence
+import core.interact.commands.buildCombinedHelpProcedure
 import core.interact.i18n.Language
 import core.interact.reports.ErrorReport
 import core.interact.reports.InteractionReport
@@ -63,7 +63,7 @@ fun guildJoinRouter(bot: BotContext, event: GuildJoinEvent): Mono<ServerJoinRepo
 
         val helpSent = event.guild.systemChannel?.run {
             GuildManager.permissionGrantedRun(this, Permission.MESSAGE_SEND) {
-                buildCombinedHelpSequence(
+                buildCombinedHelpProcedure(
                     bot = bot,
                     config = config,
                     publisher = { msg -> MessageActionAdaptor(this.sendMessage(msg)) },

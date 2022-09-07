@@ -4,7 +4,6 @@ import core.assets.User
 import core.assets.aiUser
 import core.inference.AiLevel
 import core.session.GameResult
-import core.session.SessionManager
 import jrenju.Board
 import jrenju.notation.Pos
 import jrenju.protocol.SolutionNode
@@ -43,6 +42,8 @@ sealed interface GameSession : Expirable {
         else -> this.owner
     }
 
+    fun next(board: Board, move: Pos, gameResult: Option<GameResult>, messageBufferKey: String): GameSession
+
 }
 
 data class AiGameSession(
@@ -62,6 +63,15 @@ data class AiGameSession(
 
     override val opponent = aiUser
 
+    override fun next(board: Board, move: Pos, gameResult: Option<GameResult>, messageBufferKey: String) =
+        this.copy(
+            board = board,
+            history = this.history + move,
+            gameResult = gameResult,
+            expireDate = LinuxTime.withOffset(this.expireOffset),
+            messageBufferKey = messageBufferKey
+        )
+
 }
 
 data class PvpGameSession(
@@ -76,26 +86,15 @@ data class PvpGameSession(
     override val recording: Boolean,
     override val expireDate: LinuxTime,
     override val createDate: LinuxTime = LinuxTime()
-) : GameSession
+) : GameSession {
 
-fun GameSession.nextWith(
-    board: Board,
-    move: Pos,
-    gameResult: Option<GameResult>,
-    messageBufferKey: String = SessionManager.generateMessageBufferKey(this.owner)
-) = when (this) {
-    is AiGameSession -> this.copy(
-        board = board,
-        history = this.history + move,
-        gameResult = gameResult,
-        expireDate = LinuxTime.withOffset(this.expireOffset),
-        messageBufferKey = messageBufferKey
-    )
-    is PvpGameSession -> this.copy(
-        board = board,
-        history = this.history + move,
-        gameResult = gameResult,
-        expireDate = LinuxTime.withOffset(this.expireOffset),
-        messageBufferKey = messageBufferKey
-    )
+    override fun next(board: Board, move: Pos, gameResult: Option<GameResult>, messageBufferKey: String) =
+        this.copy(
+            board = board,
+            history = this.history + move,
+            gameResult = gameResult,
+            expireDate = LinuxTime.withOffset(this.expireOffset),
+            messageBufferKey = messageBufferKey
+        )
+
 }

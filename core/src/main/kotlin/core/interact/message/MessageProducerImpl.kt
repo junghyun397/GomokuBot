@@ -157,8 +157,8 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
 
     // CONFIG
 
-    override fun produceConfigApplied(publisher: MessagePublisher<A, B>, container: LanguageContainer, configKind: String, configChoice: String) =
-        publisher sends container.settingApplied(configChoice.asHighlightFormat())
+    override fun produceSettingApplied(publisher: MessagePublisher<A, B>, container: LanguageContainer, configKind: String, configChoice: String) =
+        publisher sends container.settingApplied(configKind, configChoice.asHighlightFormat())
 
     // SESSION
 

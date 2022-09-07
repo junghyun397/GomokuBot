@@ -88,6 +88,7 @@ object FocusSolver {
 
     private fun collectFiveComponentsInStrip(board: Board, strip: L1Strip, color: Byte): List<Int> {
         val components = mutableListOf<Int>()
+
         for (idx in 0 until strip.size()) {
             val absoluteIdx = when (strip.direction()) {
                 Direction.X() -> Pos.rowColToIdx(Pos.idxToRow(strip.startIdx()), Pos.idxToCol(strip.startIdx()) + idx)
@@ -105,34 +106,27 @@ object FocusSolver {
                 components.clear()
 
             if (components.size == 5) {
-                return when (strip.direction()) {
-                    Direction.X() -> components.apply {
-                        val centerRow = Pos.idxToRow(components[2])
-                        val centerCol = Pos.idxToCol(components[2])
+                return components.apply {
+                    when (strip.direction()) {
+                        Direction.X() -> {
+                            val centerRow = Pos.idxToRow(this[2])
+                            val centerCol = Pos.idxToCol(this[2])
 
-                        if (centerRow < Renju.BOARD_WIDTH() - 2)
-                            add(Pos.rowColToIdx(centerRow + 2, centerCol))
-                        if (centerRow < Renju.BOARD_WIDTH() - 1)
-                            add(Pos.rowColToIdx(centerRow + 1, centerCol))
-                        if (centerRow > 0)
-                            add(Pos.rowColToIdx(centerRow - 1, centerCol))
-                        if (centerRow > 1)
-                            add(Pos.rowColToIdx(centerRow - 2, centerCol))
-                    }
-                    Direction.Y() -> components.apply {
-                        val centerRow = Pos.idxToRow(components[2])
-                        val centerCol = Pos.idxToCol(components[2])
+                            if (centerRow < Renju.BOARD_WIDTH() - 2) add(Pos.rowColToIdx(centerRow + 2, centerCol))
+                            if (centerRow < Renju.BOARD_WIDTH() - 1) add(Pos.rowColToIdx(centerRow + 1, centerCol))
+                            if (centerRow > 0) add(Pos.rowColToIdx(centerRow - 1, centerCol))
+                            if (centerRow > 1) add(Pos.rowColToIdx(centerRow - 2, centerCol))
+                        }
+                        Direction.Y() -> {
+                            val centerRow = Pos.idxToRow(this[2])
+                            val centerCol = Pos.idxToCol(this[2])
 
-                        if (centerCol < Renju.BOARD_WIDTH() - 2)
-                            add(Pos.rowColToIdx(centerRow, centerCol + 2))
-                        if (centerCol < Renju.BOARD_WIDTH() - 1)
-                            add(Pos.rowColToIdx(centerRow, centerCol + 1))
-                        if (centerCol > 0)
-                            add(Pos.rowColToIdx(centerRow, centerCol - 1))
-                        if (centerCol > 1)
-                            add(Pos.rowColToIdx(centerRow, centerCol - 2))
+                            if (centerCol < Renju.BOARD_WIDTH() - 2) add(Pos.rowColToIdx(centerRow, centerCol + 2))
+                            if (centerCol < Renju.BOARD_WIDTH() - 1) add(Pos.rowColToIdx(centerRow, centerCol + 1))
+                            if (centerCol > 0) add(Pos.rowColToIdx(centerRow, centerCol - 1))
+                            if (centerCol > 1) add(Pos.rowColToIdx(centerRow, centerCol - 2))
+                        }
                     }
-                    else -> components
                 }
             }
         }
@@ -187,13 +181,12 @@ object FocusSolver {
                 this.evaluateParticle(weightSet, selfParticle, opponentParticle, true) +
                         this.evaluateParticle(weightSet, opponentParticle, selfParticle, false) +
                         this.hasNeighborhood(board, idx).toInt() * weightSet.neighborhoodExtra +
-                        run {
-                            if (traps._1.contains(idx)) {
-                                if (selfParticle.threeTotal() > 0 || selfParticle.fourTotal() > 0)
-                                    weightSet.treatThreeSideTrapFork
-                                else
-                                    weightSet.threeSideTrap
-                            } else 0
+                        when {
+                            traps._1.contains(idx) -> when {
+                                selfParticle.threeTotal() > 0 || selfParticle.fourTotal() > 0 -> weightSet.treatThreeSideTrapFork
+                                else -> weightSet.threeSideTrap
+                            }
+                            else -> 0
                         } +
                         traps._2.contains(idx).toInt() * weightSet.fourSideTrap
             }
@@ -260,7 +253,7 @@ object FocusSolver {
                 }
 
                 val prefix = evaluated
-                    .map { it.runningFold(0) { acc, weight -> acc + weight } }
+                    .map { row -> row.runningFold(0) { acc, weight -> acc + weight } }
                     .runningFold(Collections.nCopies(Renju.BOARD_WIDTH() + 1, 0)) { acc, col ->
                         acc.zip(col).map { it.first + it.second }
                     }

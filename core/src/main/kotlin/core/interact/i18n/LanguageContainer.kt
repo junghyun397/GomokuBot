@@ -144,9 +144,11 @@ sealed interface LanguageContainer {
 
     // ## 2-3. SETTINGS
 
-    fun settingApplied(choice: String): String
+    fun settingApplied(kind: String, choice: String): String
 
     // ### 2-3-1. STYLE
+
+    fun style(): String
 
     fun styleSelectImage(): String
     fun styleSelectImageDescription(): String
@@ -162,6 +164,8 @@ sealed interface LanguageContainer {
 
     // ### 2-3-2. FOCUS
 
+    fun focus(): String
+
     fun focusEmbedTitle(): String
     fun focusEmbedDescription(): String
 
@@ -173,6 +177,8 @@ sealed interface LanguageContainer {
 
     // ### 2-3-3. SWEEP
 
+    fun sweep(): String
+
     fun sweepEmbedTitle(): String
     fun sweepEmbedDescription(): String
 
@@ -183,6 +189,8 @@ sealed interface LanguageContainer {
     fun sweepSelectLeaveDescription(): String
 
     // ### 2-3-4. ARCHIVE
+
+    fun archive(): String
 
     fun archiveEmbedTitle(): String
     fun archiveEmbedDescription(): String

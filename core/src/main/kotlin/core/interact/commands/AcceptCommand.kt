@@ -43,7 +43,7 @@ class AcceptCommand(private val requestSession: RequestSession) : Command {
         val beginIO = producer.produceBeginsPVP(publishers.plain, config.language.container, gameSession.player, gameSession.nextPlayer)
             .launch()
 
-        val boardIO = buildBoardSequence(bot, guild, config, producer, publishers.plain, gameSession)
+        val boardIO = buildBoardProcedure(bot, guild, config, producer, publishers.plain, gameSession)
 
         val io = beginIO
             .flatMap { boardIO }

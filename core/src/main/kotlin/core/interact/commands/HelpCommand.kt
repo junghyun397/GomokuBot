@@ -27,10 +27,9 @@ class HelpCommand(private val sendSettings: Boolean) : Command {
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        val io = if (this.sendSettings) {
-            buildCombinedHelpSequence(bot, config, publishers.plain, producer, 0)
-        } else {
-            buildHelpSequence(bot, config, publishers.plain, producer)
+        val io = when (this.sendSettings) {
+            true -> buildCombinedHelpProcedure(bot, config, publishers.plain, producer, 0)
+            else -> buildHelpProcedure(bot, config, publishers.plain, producer)
         }
             .map { emptyList<Order>() }
 

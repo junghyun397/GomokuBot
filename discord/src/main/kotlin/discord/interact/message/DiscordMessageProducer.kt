@@ -28,8 +28,6 @@ import kotlinx.coroutines.flow.map
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.emoji.Emoji
-import net.dv8tion.jda.api.exceptions.ContextException
-import net.dv8tion.jda.api.exceptions.ErrorResponseException
 import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.interactions.components.ItemComponent
 import net.dv8tion.jda.api.interactions.components.buttons.Button
@@ -221,15 +219,14 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
             try {
                 coroutineScope {
                     flow
-                        .map { message.original.addReaction(Emoji.fromUnicode(it)) }
-                        .collect {
-                            if (checkTerminated())
-                                this@coroutineScope.cancel()
-                            else {
-                                try { it.queue() }
-                                catch (_: ErrorResponseException) { this@coroutineScope.cancel() }
-                                catch (_: ContextException) { this@coroutineScope.cancel() } // JDA bug?
-                                delay(500)
+                        .map { message.original.addReaction(Emoji.fromUnicode(it)).mapToResult() }
+                        .collect { action ->
+                            when {
+                                checkTerminated() -> cancel()
+                                else -> {
+                                    action.queue()
+                                    delay(500) // sync on rate limit?
+                                }
                             }
                         }
                 }

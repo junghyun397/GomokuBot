@@ -100,7 +100,7 @@ class DebugCommand(
 
             val io = producer.produceNextMovePVE(publishers.plain, config.language.container, user, session.board.latestPos().get())
                 .launch()
-                .flatMap { buildBoardSequence(bot, guild, config, producer, publishers.plain, session) }
+                .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, session) }
                 .map { emptyList<Order>() }
 
             io and this.asCommandReport("succeed", guild, user)
@@ -173,7 +173,7 @@ class DebugCommand(
 
             val io = producer.produceNextMovePVE(publishers.plain, config.language.container, user, session.board.latestPos().get())
                 .launch()
-                .flatMap { buildBoardSequence(bot, guild, config, producer, publishers.plain, session) }
+                .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, session) }
                 .map { emptyList<Order>() }
 
             io and this.asCommandReport("succeed", guild, user)

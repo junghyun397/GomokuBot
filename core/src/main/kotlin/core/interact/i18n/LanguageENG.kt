@@ -144,9 +144,11 @@ open class LanguageENG : LanguageContainer {
 
     // ## 2-3. POLICY
 
-    override fun settingApplied(choice: String) = "$choice Setting has been applied to this server."
+    override fun settingApplied(kind: String, choice: String) = "$kind setting has been changed to $choice."
 
     // ### 2-3-1. STYLE
+
+    override fun style() = "Style"
 
     override fun styleSelectImage() = "Image"
     override fun styleSelectImageDescription() =
@@ -164,6 +166,8 @@ open class LanguageENG : LanguageContainer {
 
     // ### 2-3-2. FOCUS
 
+    override fun focus() = "Focus"
+
     override fun focusEmbedTitle() = "GomokuBot / Focus"
     override fun focusEmbedDescription() =
         "GomokuBot uses a small-sized \"Button Board\" for intuitive input. Please set how the GomokuBot should zoom in on the board."
@@ -178,6 +182,8 @@ open class LanguageENG : LanguageContainer {
 
     // ### 2-3-3. SWEEP
 
+    override fun sweep() = "Sweep"
+
     override fun sweepEmbedTitle() = "GomokuBot / Sweep"
     override fun sweepEmbedDescription() =
         "GomokuBot sends very, very many messages. Please set what to do with the message sent by GomokuBot."
@@ -191,6 +197,8 @@ open class LanguageENG : LanguageContainer {
         "Do not delete any messages. Except for the Navigators."
 
     // ### 2-3-4. ARCHIVE
+
+    override fun archive() = "Archive"
 
     override fun archiveEmbedTitle() = "GomokuBot / Archive"
     override fun archiveEmbedDescription() =

@@ -20,7 +20,7 @@ import utils.assets.LinuxTime
 import utils.lang.and
 import utils.structs.*
 
-fun <A, B> buildNextMoveSequence(
+fun <A, B> buildNextMoveProcedure(
     messageIO: MessageIO<A, B>,
     bot: BotContext,
     guild: Guild,
@@ -29,20 +29,20 @@ fun <A, B> buildNextMoveSequence(
     publisher: MessagePublisher<A, B>,
     session: GameSession,
     thenSession: GameSession,
-) = messageIO
+): IO<List<Order>> = messageIO
     .retrieve()
     .flatMapOption { IO { SessionManager.appendMessage(bot.sessions, thenSession.messageBufferKey, it.messageRef) } }
-    .flatMap { buildBoardSequence(bot, guild, config, producer, publisher, thenSession) }
-    .flatMap { buildSweepSequence(bot, config, session) }
+    .flatMap { buildBoardProcedure(bot, guild, config, producer, publisher, thenSession) }
+    .flatMap { buildSweepProcedure(bot, config, session) }
 
-fun <A, B> buildBoardSequence(
+fun <A, B> buildBoardProcedure(
     bot: BotContext,
     guild: Guild,
     config: GuildConfig,
     producer: MessageProducer<A, B>,
     publisher: MessagePublisher<A, B>,
     session: GameSession,
-) = run {
+): IO<Option<Unit>> = run {
     val focus = when (config.focusPolicy) {
         FocusPolicy.INTELLIGENCE -> FocusSolver.resolveFocus(session.board, producer.focusWidth)
         FocusPolicy.FALLOWING -> session.board.latestPos().fold(
@@ -63,15 +63,15 @@ fun <A, B> buildBoardSequence(
         )
         SessionManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.messageRef)
         producer.attachFocusNavigators(message) {
-            SessionManager.retrieveGameSession(bot.sessions, guild, session.owner.id) != session
+            SessionManager.retrieveGameSession(bot.sessions, guild, session.owner.id)?.board?.moves() != session.board.moves()
         }
     }
 
-private fun buildSweepSequence(
+private fun buildSweepProcedure(
     bot: BotContext,
     config: GuildConfig,
     session: GameSession
-) = when (config.sweepPolicy) {
+): IO<List<Order>> = when (config.sweepPolicy) {
     SweepPolicy.RELAY -> IO { listOf(Order.BulkDelete(session.messageBufferKey)) }
     SweepPolicy.LEAVE -> {
         SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
@@ -80,23 +80,23 @@ private fun buildSweepSequence(
     }
 }
 
-fun <A, B> buildFinishSequence(
+fun <A, B> buildFinishProcedure(
     bot: BotContext,
     producer: MessageProducer<A, B>,
     publisher: MessagePublisher<A, B>,
     config: GuildConfig,
     session: GameSession,
     thenSession: GameSession
-) = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, thenSession)
+): IO<List<Order>> = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, thenSession)
     .launch()
-    .flatMap { buildSweepSequence(bot, config, session) }
+    .flatMap { buildSweepProcedure(bot, config, session) }
 
-fun <A, B> buildHelpSequence(
+fun <A, B> buildHelpProcedure(
     bot: BotContext,
     config: GuildConfig,
     publisher: MessagePublisher<A, B>,
     producer: MessageProducer<A, B>,
-) = producer.produceHelp(publisher, config.language.container, 0)
+): IO<Option<Unit>> = producer.produceHelp(publisher, config.language.container, 0)
     .retrieve()
     .flatMapOption { helpMessage ->
         SessionManager.addNavigate(
@@ -108,13 +108,13 @@ fun <A, B> buildHelpSequence(
         producer.attachBinaryNavigators(helpMessage)
     }
 
-fun <A, B> buildCombinedHelpSequence(
+fun <A, B> buildCombinedHelpProcedure(
     bot: BotContext,
     config: GuildConfig,
     publisher: MessagePublisher<A, B>,
     producer: MessageProducer<A, B>,
     settingsPage: Int
-) = IO.zip(
+): IO<Option<Unit>> = IO.zip(
     producer.produceHelp(publisher, config.language.container, 0).retrieve(),
     producer.produceSettings(publisher, config, settingsPage).retrieve(),
 )

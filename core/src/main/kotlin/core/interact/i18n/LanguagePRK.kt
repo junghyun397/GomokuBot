@@ -118,7 +118,7 @@ class LanguagePRK : LanguageKOR() {
 
     // ## 2-3. POLICY
 
-    override fun settingApplied(choice: String) = "$choice 설정이 이 봉사기에 적용되었습니다."
+    override fun settingApplied(kind: String, choice: String) = "$choice 설정이 이 봉사기에 적용되었습니다."
 
     // ### 2-3-1. STYLE
 

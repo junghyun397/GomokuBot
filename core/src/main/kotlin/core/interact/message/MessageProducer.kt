@@ -105,7 +105,7 @@ interface MessageProducer<A, B> {
 
     // CONFIG
 
-    fun produceConfigApplied(publisher: MessagePublisher<A, B>, container: LanguageContainer, configKind: String, configChoice: String): MessageIO<A, B>
+    fun produceSettingApplied(publisher: MessagePublisher<A, B>, container: LanguageContainer, configKind: String, configChoice: String): MessageIO<A, B>
 
     // SESSION
 

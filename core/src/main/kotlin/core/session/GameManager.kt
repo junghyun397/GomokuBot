@@ -8,7 +8,6 @@ import core.interact.message.graphics.*
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.PvpGameSession
-import core.session.entities.nextWith
 import jrenju.Board
 import jrenju.`EmptyBoard$`
 import jrenju.notation.Color
@@ -143,16 +142,16 @@ object GameManager {
         val thenBoard = session.board.makeMove(pos)
 
         if (session.board.moves() + 1 >= Renju.BOARD_SIZE())
-            return session.nextWith(
+            return session.next(
                 thenBoard, pos,
                 Option(GameResult.Full),
                 session.messageBufferKey
             )
 
         return thenBoard.winner().fold(
-            { session.nextWith(thenBoard, pos, Option.Empty) },
+            { session.next(thenBoard, pos, Option.Empty, SessionManager.generateMessageBufferKey(session.owner)) },
             {
-                session.nextWith(
+                session.next(
                     thenBoard, pos,
                     Option(GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, thenBoard.color(), session.player, session.nextPlayer)),
                     session.messageBufferKey

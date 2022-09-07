@@ -5,7 +5,7 @@ import core.database.entities.extractGameRecord
 import core.database.repositories.AnnounceRepository
 import core.database.repositories.GameRecordRepository
 import core.interact.Order
-import core.interact.commands.buildFinishSequence
+import core.interact.commands.buildFinishProcedure
 import core.interact.reports.CommandReport
 import core.interact.reports.InteractionReport
 import core.session.GameManager
@@ -60,7 +60,7 @@ fun scheduleRoutines(botContext: BotContext, discordConfig: DiscordConfig, jda: 
                     )
                 }
                     .launch()
-                    .flatMap { buildFinishSequence(botContext, DiscordMessageProducer, publisher, guildSession.config, session, finishedSession) }
+                    .flatMap { buildFinishProcedure(botContext, DiscordMessageProducer, publisher, guildSession.config, session, finishedSession) }
                     .map { it + Order.ArchiveSession(finishedSession, guildSession.config.archivePolicy) }
 
                 export(botContext, discordConfig, guild, io, message)

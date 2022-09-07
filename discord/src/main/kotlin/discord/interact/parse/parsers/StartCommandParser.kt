@@ -5,7 +5,7 @@ import core.assets.UserId
 import core.database.repositories.UserProfileRepository
 import core.interact.commands.Command
 import core.interact.commands.StartCommand
-import core.interact.commands.buildBoardSequence
+import core.interact.commands.buildBoardProcedure
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.NamedParser
 import core.interact.parse.asParseFailure
@@ -64,7 +64,7 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
                 producer.produceSessionAlready(publisher, container)
                     .retrieve()
                     .flatMapOption { IO { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef) } }
-                    .flatMap { buildBoardSequence(context.bot, context.guild, context.config, producer, publisher, session) }
+                    .flatMap { buildBoardProcedure(context.bot, context.guild, context.config, producer, publisher, session) }
                     .map { emptyList() }
             }
         }

@@ -42,7 +42,7 @@ class StartCommand(val opponent: User?) : Command {
 
                 val io = producer.produceBeginsPVE(publishers.plain, config.language.container, user, gameSession.ownerHasBlack)
                     .launch()
-                    .flatMap { buildBoardSequence(bot, guild, config, producer, publishers.plain, gameSession) }
+                    .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, gameSession) }
                     .map { emptyList<Order>() }
 
                 io and this.asCommandReport("start game session with AI", guild, user)
