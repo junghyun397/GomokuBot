@@ -133,6 +133,8 @@ interface MessageProducer<A, B> {
 
     fun produceSetForbiddenMove(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos, forbiddenFlag: Byte): MessageIO<A, B>
 
+    fun produceSetEditMode(publisher: MessagePublisher<A, B>, container: LanguageContainer): MessageIO<A, B>
+
     // REQUEST
 
     fun produceRequest(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): MessageIO<A, B>

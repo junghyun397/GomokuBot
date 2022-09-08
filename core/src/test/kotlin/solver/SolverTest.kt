@@ -6,13 +6,11 @@ import jrenju.Board
 import jrenju.`BoardIO$`
 import jrenju.protocol.Solution
 import utils.lang.and
-import utils.structs.Option
-import utils.structs.flatMap
 import java.util.*
 
 internal class SolverTest {
 
-    object TestWeight : WeightSet() {
+    object TestWeight : WeightSet {
 
         override val neighborhoodExtra = 2
 
@@ -34,19 +32,6 @@ internal class SolverTest {
         override val threeFourFork = 105
         override val doubleFourFork = 150
 
-    }
-
-    fun combineTwoOptions() {
-        val maybeA = Option("A")
-        val maybeB = Option("B")
-
-        // Option[A] -> Option[B] -> Option[Pair[A, B]] ???
-
-        when {
-            maybeA is Option.Some && maybeB is Option.Some -> Option(maybeA.value)
-        }
-
-        maybeB.flatMap { maybeA }
     }
 
     fun aiBenchmark() {
@@ -75,7 +60,7 @@ internal class SolverTest {
                 solver2 and solver1
         }
 
-        @Suppress("UNREACHABLE_CODE") val result: Boolean? = run {
+        val result: Boolean? = run {
             while (true) {
                 board = board.makeMove(whiteSolver(board).idx())
 
@@ -94,7 +79,7 @@ internal class SolverTest {
                     return@run null
             }
 
-            throw Exception()
+            return null
         }
 
         println(`BoardIO$`.`MODULE$`.BoardToText(board).boardText())

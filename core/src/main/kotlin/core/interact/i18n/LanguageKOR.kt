@@ -139,6 +139,8 @@ open class LanguageKOR : LanguageENG() {
 
     // ### 2-3-1. STYLE
 
+    override fun style() = "스타일"
+
     override fun styleSelectImage() = "이미지"
     override fun styleSelectImageDescription() =
         "오목 판을 이미지로 표시합니다. 플랫폼 서버 상태에 따라 약간의 지연이 생길 수 있습니다."
@@ -155,6 +157,8 @@ open class LanguageKOR : LanguageENG() {
 
     // ### 2-3-2. FOCUS
 
+    override fun focus() = "확대"
+
     override fun focusEmbedTitle() = "GomokuBot / 확대"
     override fun focusEmbedDescription() =
         "GomokuBot은 직관적인 입력을 돕기 위해 작은 크기의 \"버튼 판\"을 사용합니다. GomokuBot이 어떤 부분을 어떻게 확대할지 정해주세요."
@@ -169,6 +173,8 @@ open class LanguageKOR : LanguageENG() {
 
     // ### 2-3-3. SWEEP
 
+    override fun sweep() = "청소"
+
     override fun sweepEmbedTitle() = "GomokuBot / 청소"
     override fun sweepEmbedDescription() =
         "GomokuBot은 아주, 아주 많은 양의 메시지를 보냅니다. GomokuBot이 보낸 메시지를 어떻게 처리할지 정해주세요."
@@ -181,7 +187,13 @@ open class LanguageKOR : LanguageENG() {
     override fun sweepSelectLeaveDescription() =
         "그 어떤 메시지도 삭제하지 않습니다."
 
+    override fun sweepSelectEdit() = "편집하기"
+    override fun sweepSelectEditDescription() =
+        "처음 보낸 메시지를 편집합니다."
+
     // ### 2-3-4. ARCHIVE
+
+    override fun archive() = "공유"
 
     override fun archiveEmbedTitle() = "GomokuBot / 공유"
     override fun archiveEmbedDescription() =
@@ -251,6 +263,11 @@ open class LanguageKOR : LanguageENG() {
 
     override fun setErrorForbidden(move: String, forbiddenKind: String) =
         "``$move``은(는) ``${forbiddenKind}금수`` 입니다. 다른 곳에 돌을 놓아주세요."
+
+    // ### 3.2.5. SET:ERROR:EDITMODE (MESSAGE)
+
+    override fun setErrorEditMode() =
+        "편집 모드에서는 ``set``명령어를 쓸 수 없습니다. 버튼과 리액션을 통해 다음 수를 놓아주세요."
 
     // ## 3-3. RESIGN
 

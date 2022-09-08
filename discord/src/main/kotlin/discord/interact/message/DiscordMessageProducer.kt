@@ -566,7 +566,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
             }
 
             field {
-                name = "$UNICODE_PENCIL ${container.sweepSelectEdit()}"
+                name = "$UNICODE_RECYCLE ${container.sweepSelectEdit()}"
                 value = container.sweepSelectEditDescription()
                 inline = false
             }
@@ -590,7 +590,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
             option(
                 label = config.language.container.sweepSelectEdit(),
                 value = SweepPolicy.EDIT.toEnumString(),
-                emoji = EMOJI_PENCIL,
+                emoji = EMOJI_RECYCLE,
                 default = config.sweepPolicy == SweepPolicy.EDIT
             )
         }

@@ -1,10 +1,12 @@
 package discord.interact.parse.parsers
 
 import core.assets.User
+import core.interact.Order
 import core.interact.commands.Command
 import core.interact.commands.ResponseFlag
 import core.interact.commands.SetCommand
 import core.interact.i18n.LanguageContainer
+import core.interact.message.MessageAdaptor
 import core.interact.parse.SessionSideParser
 import core.interact.parse.asParseFailure
 import core.session.GameManager
@@ -45,60 +47,72 @@ object SetCommandParser : SessionSideParser<Message, DiscordComponents>(), Parsa
             ?.takeIf { it in 1 .. Renju.BOARD_WIDTH() }
             ?.let { it - 1 }
 
-    private fun composeOrderFailure(context: InteractionContext<*>, session: GameSession, player: User): DiscordParseFailure =
+    private fun buildAppendMessageProcedure(maybeMessage: Option<MessageAdaptor<Message, DiscordComponents>>, context: InteractionContext<*>, session: GameSession): IO<List<Order>> =
+        maybeMessage.fold(
+            onDefined = { IO { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef); emptyList() } },
+            onEmpty = { IO { emptyList() } }
+        )
+
+    private fun buildSetModeFailure(context: InteractionContext<*>, session: GameSession): DiscordParseFailure =
+        this.asParseFailure("use set command but guild in edit mode", context.guild, context.user) { producer, publisher, container ->
+            producer.produceSetEditMode(publisher, container)
+                .retrieve()
+                .flatMap { this.buildAppendMessageProcedure(it, context, session) }
+        }
+
+    private fun buildOrderFailure(context: InteractionContext<*>, session: GameSession, player: User): DiscordParseFailure =
         this.asParseFailure("try move but now $player's turn", context.guild, context.user) { producer, publisher, container ->
             producer.produceOrderFailure(publisher, container, player)
                 .retrieve()
-                .flatMapOption { IO { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef) } }
-                .map { emptyList() }
+                .flatMap { this.buildAppendMessageProcedure(it, context, session) }
         }
 
-    private fun composeMissMatchFailure(context: InteractionContext<*>, session: GameSession): DiscordParseFailure =
+    private fun buildMissMatchFailure(context: InteractionContext<*>, session: GameSession): DiscordParseFailure =
         this.asParseFailure("try move but argument mismatch", context.guild, context.user) { producer, publisher, container ->
             producer.produceSetIllegalArgument(publisher, container)
                 .retrieve()
-                .flatMapOption { IO { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef) } }
-                .map { emptyList() }
+                .flatMap { this.buildAppendMessageProcedure(it, context, session) }
         }
 
-    private fun composeExistFailure(context: InteractionContext<*>, session: GameSession, pos: Pos): DiscordParseFailure =
+    private fun buildExistFailure(context: InteractionContext<*>, session: GameSession, pos: Pos): DiscordParseFailure =
         this.asParseFailure("make move but already exist", context.guild, context.user) { producer, publisher, container ->
             producer.produceSetAlreadyExist(publisher, container, pos)
                 .retrieve()
-                .flatMapOption { IO { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef) } }
-                .map { emptyList() }
+                .flatMap { this.buildAppendMessageProcedure(it, context, session) }
         }
 
-    private fun composeForbiddenMoveFailure(context: InteractionContext<*>, session: GameSession, pos: Pos, flag: Byte): DiscordParseFailure =
+    private fun buildForbiddenMoveFailure(context: InteractionContext<*>, session: GameSession, pos: Pos, flag: Byte): DiscordParseFailure =
         this.asParseFailure("make move but forbidden", context.guild, context.user) { producer, publisher, container ->
             producer.produceSetForbiddenMove(publisher, container, pos, flag)
                 .retrieve()
-                .flatMapOption { IO { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef) } }
-                .map { emptyList() }
+                .flatMap { this.buildAppendMessageProcedure(it, context, session) }
         }
 
     private suspend fun parseActually(context: InteractionContext<*>, user: User, rawRow: String?, rawColumn: String?): Either<Command, DiscordParseFailure> =
         this.retrieveSession(context.bot, context.guild, user).flatMapLeft { session ->
+            if (context.config.sweepPolicy == SweepPolicy.EDIT)
+                return Either.Right(this.buildSetModeFailure(context, session))
+
             if (session.player.id != user.id)
-                return Either.Right(this.composeOrderFailure(context, session, session.player))
+                return@flatMapLeft Either.Right(this.buildOrderFailure(context, session, session.player))
 
             if (rawRow == null || rawColumn == null)
-                return Either.Right(composeMissMatchFailure(context, session))
+                return@flatMapLeft Either.Right(buildMissMatchFailure(context, session))
 
             val row = this.matchRow(rawRow)
             val column = this.matchColumn(rawColumn.lowercase())
 
             if (row == null || column == null)
-                return Either.Right(composeMissMatchFailure(context, session))
+                return@flatMapLeft Either.Right(buildMissMatchFailure(context, session))
 
             val pos = Pos(row, column)
 
-            return GameManager.validateMove(session, pos).fold(
+            return@flatMapLeft GameManager.validateMove(session, pos).fold(
                 onDefined = { when (it) {
-                    RejectReason.EXIST -> Either.Right(this.composeExistFailure(context, session, pos))
+                    RejectReason.EXIST -> Either.Right(this.buildExistFailure(context, session, pos))
                     RejectReason.FORBIDDEN ->
                         if (session.board.nextColor() == Color.BLACK())
-                            Either.Right(this.composeForbiddenMoveFailure(context, session, pos, session.board.boardField()[pos.idx()]))
+                            Either.Right(this.buildForbiddenMoveFailure(context, session, pos, session.board.boardField()[pos.idx()]))
                         else
                             Either.Left(SetCommand(session, pos, ResponseFlag.Defer()))
                 } },

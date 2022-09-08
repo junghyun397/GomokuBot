@@ -250,6 +250,10 @@ sealed interface LanguageContainer {
 
     fun setErrorForbidden(move: String, forbiddenKind: String): String
 
+    // ### 3.2.5. SET:ERROR:EDITMODE (MESSAGE)
+
+    fun setErrorEditMode(): String
+
     // ## 3-3. RESIGN
 
     // ### 3-3-1. RESIGN (COMMAND)

@@ -197,7 +197,8 @@ open class LanguageENG : LanguageContainer {
         "Do not delete any messages. Except for the Navigators."
 
     override fun sweepSelectEdit() = "Edit"
-    override fun sweepSelectEditDescription() = "Send no more messages, edit the first message sent."
+    override fun sweepSelectEditDescription() =
+        "Send no more messages, edit the first message sent."
 
     // ### 2-3-4. ARCHIVE
 
@@ -271,6 +272,11 @@ open class LanguageENG : LanguageContainer {
 
     override fun setErrorForbidden(move: String, forbiddenKind: String) =
         "``$move`` is ``$forbiddenKind`` forbidden move. Please move to another place."
+
+    // ### 3.2.5. SET:ERROR:EDITMODE (MESSAGE)
+
+    override fun setErrorEditMode() =
+        "``set`` command cannot be used in edit mode. Make the next move through buttons and reactions."
 
     // ## 3-3. RESIGN
 

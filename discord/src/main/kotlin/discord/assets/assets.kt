@@ -34,6 +34,7 @@ val EMOJI_GEM = Emoji.fromUnicode(UNICODE_GEM) // 💎
 val EMOJI_MAG = Emoji.fromUnicode(UNICODE_MAG) // 🔍
 val EMOJI_BROOM = Emoji.fromUnicode(UNICODE_BROOM) // 🧹
 val EMOJI_CABINET = Emoji.fromUnicode(UNICODE_CABINET) // 🗄
+val EMOJI_RECYCLE = Emoji.fromUnicode(UNICODE_RECYCLE) // ♻
 
 val EMOJI_SILHOUETTE = Emoji.fromUnicode(UNICODE_SILHOUETTE) // 👤
 val EMOJI_SMILING = Emoji.fromUnicode(UNICODE_SMILING) // 🙂

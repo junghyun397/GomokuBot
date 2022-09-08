@@ -196,6 +196,9 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
     override fun produceSetForbiddenMove(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos, forbiddenFlag: Byte) =
         publisher sends container.setErrorForbidden(pos.toCartesian().asHighlightFormat(), forbiddenFlagToText(forbiddenFlag).asHighlightFormat())
 
+    override fun produceSetEditMode(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
+        publisher sends container.setErrorEditMode()
+
     // STYLE
 
     override fun produceStyleNotFound(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
