@@ -218,10 +218,9 @@ class MessageEditCallbackAdaptor(private val original: MessageEditCallbackAction
 
 }
 
-class DiscordMessageAdaptor(override val original: Message) : MessageAdaptor<Message, DiscordComponents>() {
+class DiscordMessageAdaptor(override val original: Message) : MessageAdaptor<Message, DiscordComponents> {
 
-    override val messageRef: MessageRef
-        get() = this.original.extractMessageRef()
+    override val messageRef: MessageRef by lazy { this.original.extractMessageRef() }
 
     override val buttons: DiscordComponents
         get() = this.original.actionRows

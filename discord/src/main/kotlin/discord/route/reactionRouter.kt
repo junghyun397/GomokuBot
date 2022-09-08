@@ -1,13 +1,12 @@
 package discord.route
 
-import core.assets.MessageId
-import core.assets.MessageRef
 import core.interact.message.PolyPublisherSet
 import core.interact.reports.ErrorReport
 import core.interact.reports.InteractionReport
 import core.session.SessionManager
-import core.session.entities.NavigationKind
-import discord.assets.extractId
+import core.session.entities.BoardNavigateState
+import core.session.entities.PageNavigateState
+import discord.assets.extractMessageRef
 import discord.assets.getEventAbbreviation
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
@@ -22,52 +21,33 @@ import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
+import reactor.util.function.Tuples
 import utils.lang.and
 import utils.lang.component1
 import utils.lang.component2
-import utils.lang.component3
 import utils.structs.asOption
 import utils.structs.flatMap
 import utils.structs.getOrException
 import utils.structs.map
 
 fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mono<InteractionReport> =
-    Mono.zip(
-        context.toMono(),
-        run {
-            val messageRef = MessageRef(
-                id = MessageId(context.event.messageIdLong),
-                guildId = context.guild.givenId,
-                channelId = context.event.channel.extractId()
-            )
+    mono {
+        val messageRef = context.event.extractMessageRef()
 
-            SessionManager
-                .getNavigateState(context.bot.sessions, messageRef)
-                .asOption()
-                .map { state ->
-                    Triple(
-                        state,
-                        when (state.navigationKind) {
-                            NavigationKind.BOARD -> FocusCommandParser
-                            NavigationKind.ABOUT, NavigationKind.SETTINGS -> NavigateCommandParser
-                        },
-                        messageRef
-                    )
-                }
-        }.toMono()
-    )
-        .flatMap { (context, maybeParsable) -> Mono.zip(
-            context.toMono(),
-            mono {
-                maybeParsable.flatMap { (state, parsable, messageRef) ->
-                    parsable.parseReaction(context, state).map { command ->
-                        command and messageRef
-                    }
+        val maybeParser = SessionManager.getNavigateState(context.bot.sessions, messageRef)
+            .asOption()
+            .map { state ->
+                state and when (state) {
+                    is BoardNavigateState -> FocusCommandParser
+                    is PageNavigateState -> NavigateCommandParser
                 }
             }
-        ) }
-        .filter { (_, maybeTuple) -> maybeTuple.isDefined }
-        .map { tuple -> tuple.mapT2 { it.getOrException() } }
+
+        return@mono Tuples.of(context, maybeParser.flatMap { (state, parser) ->
+            parser.parseReaction(context, state)
+        })
+    }
+        .filter { (_, maybeCommand) -> maybeCommand.isDefined }
         .doOnNext { (context, _) ->
             if (context.event is MessageReactionAddEvent) {
                 GuildManager.permissionGrantedRun(context.event.channel.asTextChannel(), Permission.MESSAGE_MANAGE) {
@@ -75,14 +55,13 @@ fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mo
                 }
             }
         }
-        .flatMap { (context, tuple) ->
-            val (command, messageRef) = tuple
-
+        .flatMap { (context, command) ->
             Mono.zip(
                 context.toMono(),
-                messageRef.toMono(),
                 mono {
-                    command.execute(
+                    val messageRef = context.event.extractMessageRef()
+
+                    command.getOrException().execute(
                         bot = context.bot,
                         config = context.config,
                         guild = context.guild,
@@ -99,11 +78,11 @@ fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mo
                 }
             )
         }
-        .flatMap { (context, messageRef, result) ->
+        .flatMap { (context, result) ->
             mono {
                 result.fold(
                     onSuccess = { (io, report) ->
-                        export(context, io, messageRef)
+                        export(context, io, context.event.extractMessageRef())
                         report
                     },
                     onFailure = { throwable ->

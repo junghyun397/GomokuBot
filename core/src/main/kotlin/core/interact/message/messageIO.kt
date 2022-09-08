@@ -25,7 +25,7 @@ data class PolyPublisherSet<A, B>(
     override val plain: MessagePublisher<A, B>,
     override val windowed: MessagePublisher<A, B>,
     override val edit: MessagePublisher<A, B>,
-    override val component: ComponentPublisher<A, B>
+    override val component: ComponentPublisher<A, B>,
 ) : PublisherSet<A, B>
 
 data class DiPublisherSet<A, B>(
@@ -39,7 +39,7 @@ data class DiPublisherSet<A, B>(
 }
 
 data class MonoPublisherSet<A, B>(
-    private val publisher: MessagePublisher<A, B>
+    private val publisher: MessagePublisher<A, B>,
 ) : PublisherSet<A, B> {
 
     override val plain: MessagePublisher<A, B> get() = this.publisher
@@ -64,15 +64,15 @@ interface MessageIO<A, B> {
 
 }
 
-abstract class MessageAdaptor<A, B> {
+interface MessageAdaptor<A, B> {
 
-    abstract val messageRef: MessageRef
+    val messageRef: MessageRef
 
-    abstract val original: A
+    val original: A
 
-    abstract val buttons: B
+    val buttons: B
 
-    abstract fun updateButtons(buttons: B): MessageIO<A, B>
+    fun updateButtons(buttons: B): MessageIO<A, B>
 
 }
 

@@ -10,9 +10,9 @@ import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.SessionManager
+import core.session.entities.BoardNavigateState
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
-import core.session.entities.NavigateState
 import jrenju.notation.Pos
 import utils.lang.and
 import utils.structs.IO
@@ -23,7 +23,7 @@ enum class Direction {
 }
 
 class FocusCommand(
-    private val navigateState: NavigateState,
+    private val navigateState: BoardNavigateState,
     private val session: GameSession,
     private val direction: Direction,
 ) : Command {

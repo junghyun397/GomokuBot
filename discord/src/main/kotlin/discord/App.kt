@@ -169,7 +169,11 @@ object GomokuBot {
                 .flatMap(::buttonInteractionRouter),
 
             eventManager.on<MessageReactionAddEvent>()
-                .filter { it.isFromGuild && !(it.user?.isBot ?: true) }
+                .filter {
+                    it.isFromGuild
+                            && !(it.user?.isBot ?: true)
+                            && SessionManager.getNavigateState(botContext.sessions, it.extractMessageRef()) != null
+                }
                 .flatMap { mono { buildInteractionContext(botContext, discordConfig, it, it.user!!, it.guild) } }
                 .flatMap(::reactionRouter),
 

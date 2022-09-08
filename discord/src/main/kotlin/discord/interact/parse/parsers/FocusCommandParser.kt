@@ -4,6 +4,7 @@ import core.interact.commands.Direction
 import core.interact.commands.FocusCommand
 import core.interact.parse.NamedParser
 import core.session.SessionManager
+import core.session.entities.BoardNavigateState
 import core.session.entities.NavigateState
 import discord.assets.*
 import discord.interact.InteractionContext
@@ -32,6 +33,7 @@ object FocusCommandParser : NamedParser, NavigableCommand {
 
     override suspend fun parseReaction(context: InteractionContext<GenericMessageReactionEvent>, state: NavigateState) =
         SessionManager.retrieveGameSession(context.bot.sessions, context.guild, context.user.id)
+            ?.takeIf { state is BoardNavigateState }
             .asOption()
             .flatMap { session ->
                 when (val direction = this.matchDirection(context.event.reaction.emoji.asUnicode())) {
@@ -39,6 +41,6 @@ object FocusCommandParser : NamedParser, NavigableCommand {
                     else -> Option(session and direction)
                 }
             }
-            .map { (session, direction) -> FocusCommand(state, session, direction) }
+            .map { (session, direction) -> FocusCommand(state as BoardNavigateState, session, direction) }
 
 }

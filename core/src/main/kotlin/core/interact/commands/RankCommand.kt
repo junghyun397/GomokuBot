@@ -14,13 +14,13 @@ import core.session.entities.GuildConfig
 import utils.lang.and
 import utils.structs.map
 
-sealed class RankScope {
+sealed interface RankScope {
 
-    object Global : RankScope()
+    object Global : RankScope
 
-    object Guild : RankScope()
+    object Guild : RankScope
 
-    class User(val target: core.assets.User) : RankScope()
+    class User(val target: core.assets.User) : RankScope
 
 }
 

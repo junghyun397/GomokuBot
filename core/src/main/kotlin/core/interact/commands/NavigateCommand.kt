@@ -10,15 +10,15 @@ import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
-import core.session.entities.NavigateState
 import core.session.entities.NavigationKind
+import core.session.entities.PageNavigateState
 import utils.assets.LinuxTime
 import utils.lang.and
 import utils.structs.IO
 import utils.structs.map
 
 class NavigateCommand(
-    private val navigateState: NavigateState,
+    private val navigateState: PageNavigateState,
     private val isForward: Boolean
 ) : Command {
 
@@ -38,9 +38,9 @@ class NavigateCommand(
         val newState = this.navigateState.copy(
             page = run {
                 if (this.isForward)
-                    (this.navigateState.page + 1).coerceIn(this.navigateState.navigationKind.range)
+                    (this.navigateState.page + 1).coerceIn(this.navigateState.navigateKind.range)
                 else
-                    (this.navigateState.page - 1).coerceIn(this.navigateState.navigationKind.range)
+                    (this.navigateState.page - 1).coerceIn(this.navigateState.navigateKind.range)
             },
             expireDate = LinuxTime(this.navigateState.expireDate.timestamp + bot.config.gameExpireOffset)
         )
@@ -50,7 +50,7 @@ class NavigateCommand(
 
         SessionManager.addNavigate(bot.sessions, messageRef, newState)
 
-        val io = when (this.navigateState.navigationKind) {
+        val io = when (this.navigateState.navigateKind) {
             NavigationKind.ABOUT ->
                 producer.paginateHelp(publishers.edit, config.language.container, newState.page)
             NavigationKind.SETTINGS ->
@@ -60,7 +60,7 @@ class NavigateCommand(
             .launch()
             .map { emptyList<Order>()  }
 
-        io and this.asCommandReport("navigate ${newState.navigationKind} as ${newState.page}", guild, user)
+        io and this.asCommandReport("navigate ${newState.navigateKind} as ${newState.page}", guild, user)
     }
 
 }

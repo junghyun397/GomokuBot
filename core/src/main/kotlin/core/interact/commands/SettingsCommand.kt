@@ -10,8 +10,8 @@ import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
-import core.session.entities.NavigateState
 import core.session.entities.NavigationKind
+import core.session.entities.PageNavigateState
 import utils.assets.LinuxTime
 import utils.lang.and
 import utils.structs.flatMapOption
@@ -38,7 +38,12 @@ class SettingsCommand : Command {
                 SessionManager.addNavigate(
                     bot.sessions,
                     settingsMessage.messageRef,
-                    NavigateState(NavigationKind.SETTINGS, 0, LinuxTime.withOffset(bot.config.navigatorExpireOffset))
+                    PageNavigateState(
+                        settingsMessage.messageRef,
+                        NavigationKind.SETTINGS,
+                        0,
+                        LinuxTime.withOffset(bot.config.navigatorExpireOffset)
+                    )
                 )
 
                 producer.attachBinaryNavigators(settingsMessage)

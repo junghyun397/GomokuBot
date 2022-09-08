@@ -10,10 +10,7 @@ import core.interact.message.MessagePublisher
 import core.session.FocusPolicy
 import core.session.SessionManager
 import core.session.SweepPolicy
-import core.session.entities.GameSession
-import core.session.entities.GuildConfig
-import core.session.entities.NavigateState
-import core.session.entities.NavigationKind
+import core.session.entities.*
 import jrenju.notation.Pos
 import jrenju.notation.Renju
 import utils.assets.LinuxTime
@@ -65,9 +62,7 @@ fun <A, B> buildBoardProcedure(
         .mapOption { it and focus }
 }
     .flatMapOption { (message, pos) ->
-        SessionManager.addNavigate(
-            bot.sessions, message.messageRef, NavigateState(NavigationKind.BOARD, pos.idx(), session.expireDate)
-        )
+        SessionManager.addNavigate(bot.sessions, message.messageRef, BoardNavigateState(pos.idx(), session.expireDate))
         SessionManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.messageRef)
         producer.attachFocusNavigators(message) {
             SessionManager.retrieveGameSession(bot.sessions, guild, session.owner.id)?.board?.moves() != session.board.moves()
@@ -117,7 +112,12 @@ fun <A, B> buildHelpProcedure(
         SessionManager.addNavigate(
             bot.sessions,
             helpMessage.messageRef,
-            NavigateState(NavigationKind.ABOUT, 0, LinuxTime.withOffset(bot.config.navigatorExpireOffset))
+            PageNavigateState(
+                helpMessage.messageRef,
+                NavigationKind.ABOUT,
+                0,
+                LinuxTime.withOffset(bot.config.navigatorExpireOffset)
+            )
         )
 
         producer.attachBinaryNavigators(helpMessage)
@@ -138,7 +138,8 @@ fun <A, B> buildCombinedHelpProcedure(
         SessionManager.addNavigate(
             bot.sessions,
             helpMessage.messageRef,
-            NavigateState(
+            PageNavigateState(
+                helpMessage.messageRef,
                 NavigationKind.ABOUT,
                 0,
                 LinuxTime.withOffset(bot.config.navigatorExpireOffset)
@@ -148,7 +149,8 @@ fun <A, B> buildCombinedHelpProcedure(
         SessionManager.addNavigate(
             bot.sessions,
             settingsMessage.messageRef,
-            NavigateState(
+            PageNavigateState(
+                settingsMessage.messageRef,
                 NavigationKind.SETTINGS,
                 settingsPage,
                 LinuxTime.withOffset(bot.config.navigatorExpireOffset)
