@@ -20,7 +20,7 @@ import kotlin.math.min
 
 object FocusSolver {
 
-    object FocusWeights : WeightSet() {
+    object FocusWeights : WeightSet {
 
         const val latestMove = 500
         const val centerExtra = 1
@@ -49,7 +49,7 @@ object FocusSolver {
 
     }
 
-    object SolverWeights : WeightSet() {
+    object SolverWeights : WeightSet {
 
         override val neighborhoodExtra = 2
 

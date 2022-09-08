@@ -1,25 +1,25 @@
 package core.inference
 
-abstract class WeightSet {
+interface WeightSet {
 
-    abstract val neighborhoodExtra: Int
+    val neighborhoodExtra: Int
 
-    abstract val closedFour: Int
-    abstract val openThree: Int
+    val closedFour: Int
+    val openThree: Int
 
-    abstract val blockThree: Int
-    abstract val openFour: Int
-    abstract val five: Int
+    val blockThree: Int
+    val openFour: Int
+    val five: Int
 
-    abstract val blockFourExtra: Int
-    abstract val treatBlockThreeFork: Int
+    val blockFourExtra: Int
+    val treatBlockThreeFork: Int
 
-    abstract val threeSideTrap: Int
-    abstract val fourSideTrap: Int
-    abstract val treatThreeSideTrapFork: Int
+    val threeSideTrap: Int
+    val fourSideTrap: Int
+    val treatThreeSideTrapFork: Int
 
-    abstract val doubleThreeFork: Int
-    abstract val threeFourFork: Int
-    abstract val doubleFourFork: Int
+    val doubleThreeFork: Int
+    val threeFourFork: Int
+    val doubleFourFork: Int
 
 }

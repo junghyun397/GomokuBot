@@ -4,15 +4,15 @@ package utils.structs
 
 import utils.lang.and
 
-sealed class Option<out T> {
+sealed interface Option<out T> {
 
     val isDefined: Boolean get() = this is Some
 
     val isEmpty: Boolean get() = this is Empty
 
-    data class Some<out T>(val value: T) : Option<T>()
+    data class Some<out T>(val value: T) : Option<T>
 
-    object Empty : Option<Nothing>()
+    object Empty : Option<Nothing>
 
     companion object {
 
