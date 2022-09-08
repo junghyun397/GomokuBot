@@ -23,7 +23,7 @@ class ApplySettingCommand(
 
     override val name = "apply-setting"
 
-    override val responseFlag = ResponseFlag.IMMEDIATELY
+    override val responseFlag = ResponseFlag.Immediately
 
     private fun getKindNamePair(container: LanguageContainer) = when (diff) {
             is BoardStyle -> when (diff) {
@@ -62,6 +62,10 @@ class ApplySettingCommand(
                 SweepPolicy.LEAVE -> Pair(
                     container.sweep(),
                     container.sweepSelectLeave()
+                )
+                SweepPolicy.EDIT -> Pair(
+                    container.sweep(),
+                    container.sweepSelectEdit()
                 )
             }
             is ArchivePolicy -> when (diff) {

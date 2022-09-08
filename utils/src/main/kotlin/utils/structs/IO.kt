@@ -8,6 +8,10 @@ interface IO<out A> {
 
     companion object {
 
+        val empty = object : IO<Unit> {
+            override suspend fun run() = Unit
+        }
+
         inline fun <A> unit(crossinline block: suspend () -> A) =
             object : IO<A> {
                 override suspend fun run() = block()

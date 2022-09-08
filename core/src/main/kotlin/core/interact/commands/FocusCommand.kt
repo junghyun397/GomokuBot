@@ -30,7 +30,7 @@ class FocusCommand(
 
     override val name = "focus"
 
-    override val responseFlag = ResponseFlag.IMMEDIATELY
+    override val responseFlag = ResponseFlag.Defer
 
     override suspend fun <A, B> execute(
         bot: BotContext,

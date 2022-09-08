@@ -24,7 +24,7 @@ class NavigateCommand(
 
     override val name = "navigate"
 
-    override val responseFlag = ResponseFlag.IMMEDIATELY
+    override val responseFlag = ResponseFlag.Immediately
 
     override suspend fun <A, B> execute(
         bot: BotContext,

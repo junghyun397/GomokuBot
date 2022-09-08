@@ -25,7 +25,7 @@ class ResignCommand(private val session: GameSession) : Command {
 
     override val name = "resign"
 
-    override val responseFlag = ResponseFlag.IMMEDIATELY
+    override val responseFlag = ResponseFlag.Immediately
 
     override suspend fun <A, B> execute(
         bot: BotContext,
@@ -57,7 +57,7 @@ class ResignCommand(private val session: GameSession) : Command {
             }
             .map {
                 listOf(
-                    Order.BulkDelete(this.session.messageBufferKey),
+                    Order.BulkDelete(SessionManager.checkoutMessages(bot.sessions, this.session.messageBufferKey).orEmpty()),
                     Order.ArchiveSession(finishedSession, config.archivePolicy)
                 )
             }

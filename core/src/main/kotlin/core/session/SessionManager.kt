@@ -38,7 +38,7 @@ object SessionManager {
         }
     }
 
-    suspend fun hasRequestSession(repo: SessionRepository, guild: Guild, user1: UserUid, user2: UserUid) =
+    suspend fun hasRequestSession(repo: SessionRepository, guild: Guild, user1: UserUid, user2: UserUid): Boolean =
         this.retrieveGuildSession(repo, guild).requestSessions
             .values
             .firstOrNull { it.owner.id == user1 || it.owner.id == user2 || it.opponent.id == user1 || it.opponent.id == user2 } != null
@@ -66,7 +66,7 @@ object SessionManager {
         }
     }
 
-    suspend fun hasGameSession(repo: SessionRepository, guild: Guild, user1: UserUid, user2: UserUid) =
+    suspend fun hasGameSession(repo: SessionRepository, guild: Guild, user1: UserUid, user2: UserUid): Boolean =
         this.retrieveGuildSession(repo, guild).gameSessions
             .values
             .firstOrNull { it.owner.id == user1 || it.owner.id == user2 || it.opponent.id == user1 || it.opponent.id == user2 } != null
@@ -88,16 +88,18 @@ object SessionManager {
         }
     }
 
-    fun generateMessageBufferKey(owner: User) =
+    fun generateMessageBufferKey(owner: User): String =
         String(owner.name.toCharArray() + System.currentTimeMillis().toString().toCharArray())
 
-    fun appendMessageHead(repo: SessionRepository, key: String, messageRef: MessageRef) =
+    fun appendMessageHead(repo: SessionRepository, key: String, messageRef: MessageRef) {
         repo.messageBuffer.getOrPut(key) { mutableListOf() }
             .add(0, messageRef)
+    }
 
-    fun appendMessage(repo: SessionRepository, key: String, messageRef: MessageRef) =
+    fun appendMessage(repo: SessionRepository, key: String, messageRef: MessageRef) {
         repo.messageBuffer.getOrPut(key) { mutableListOf() }
             .add(messageRef)
+    }
 
     fun viewHeadMessage(repo: SessionRepository, key: String): MessageRef? =
         repo.messageBuffer[key]?.first()
@@ -133,23 +135,24 @@ object SessionManager {
                 }
         }
 
-    fun cleanExpiredRequestSessions(repo: SessionRepository) =
+    fun cleanExpiredRequestSessions(repo: SessionRepository): Sequence<Quadruple<GuildUid, GuildSession, UserUid, RequestSession>> =
         this.cleanExpired(repo,
             extract = { it.requestSessions },
             mutate = { original, exclude -> original.copy(requestSessions = original.requestSessions - exclude) }
         )
 
-    fun cleanExpiredGameSession(repo: SessionRepository) =
+    fun cleanExpiredGameSession(repo: SessionRepository): Sequence<Quadruple<GuildUid, GuildSession, UserUid, GameSession>> =
         this.cleanExpired(repo,
             extract = { it.gameSessions },
             mutate = { original, exclude -> original.copy(gameSessions = original.gameSessions - exclude) }
         )
 
-    fun cleanEmptySessions(repo: SessionRepository) =
+    fun cleanEmptySessions(repo: SessionRepository) {
         repo.sessions
             .asSequence()
             .filter { it.value.requestSessions.isEmpty() && it.value.gameSessions.isEmpty() }
             .forEach { repo.sessions.remove(it.key) }
+    }
 
     fun cleanExpiredNavigators(repo: SessionRepository): Map<MessageRef, NavigateState> {
         val referenceTime = LinuxTime()

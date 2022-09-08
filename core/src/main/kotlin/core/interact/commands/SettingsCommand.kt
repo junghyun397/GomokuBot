@@ -21,7 +21,7 @@ class SettingsCommand : Command {
 
     override val name = "setting"
 
-    override val responseFlag = ResponseFlag.IMMEDIATELY
+    override val responseFlag = ResponseFlag.Immediately
 
     override suspend fun <A, B> execute(
         bot: BotContext,

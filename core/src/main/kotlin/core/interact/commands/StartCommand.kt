@@ -24,7 +24,7 @@ class StartCommand(val opponent: User?) : Command {
 
     override val name: String = "start"
 
-    override val responseFlag = ResponseFlag.IMMEDIATELY
+    override val responseFlag = ResponseFlag.Immediately
 
     override suspend fun <A, B> execute(
         bot: BotContext,

@@ -143,7 +143,7 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
             }
         }) }
         .doOnNext { (context, parsed) ->
-            parsed.onLeft { if (it.responseFlag == ResponseFlag.DEFER) context.event.deferReply().queue() }
+            parsed.onLeft { if (it.responseFlag is ResponseFlag.Defer) context.event.deferReply().queue() }
         }
         .flatMap(::buildUpdateProfileNode)
         .map(::buildAnnounceNode)
@@ -157,7 +157,7 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
                     producer = DiscordMessageProducer,
                     messageRef = VOID_MESSAGE_REF,
                     publishers = when (command.responseFlag) {
-                        ResponseFlag.DEFER -> DiPublisherSet(
+                        is ResponseFlag.Defer -> DiPublisherSet(
                             plain = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
                             windowed = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg).setEphemeral(true)) },
                         )

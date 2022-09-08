@@ -28,7 +28,7 @@ class RankCommand(private val scope: RankScope) : Command {
 
     override val name = "rank"
 
-    override val responseFlag = ResponseFlag.DEFER
+    override val responseFlag = ResponseFlag.Defer
 
     override suspend fun <A, B> execute(
         bot: BotContext,

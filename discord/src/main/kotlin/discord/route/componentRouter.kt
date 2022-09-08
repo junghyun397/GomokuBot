@@ -53,7 +53,14 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
         .filter { (_, maybeCommand) -> maybeCommand.isDefined }
         .map { tuple -> tuple.mapT2 { it.getOrException() } }
         .doOnNext { (context, command) ->
-            if (command.responseFlag == ResponseFlag.DEFER) context.event.deferReply().queue()
+            val responseFlag = command.responseFlag
+
+            if (responseFlag is ResponseFlag.Defer) {
+                when (responseFlag.edit) {
+                    true -> context.event.deferEdit().queue()
+                    else -> context.event.deferReply().queue()
+                }
+            }
         }
         .flatMap { (context, command) -> Mono.zip(context.toMono(), mono {
             command.execute(
@@ -64,7 +71,7 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
                 producer = DiscordMessageProducer,
                 messageRef = context.event.message.extractMessageRef(),
                 publishers = when (command.responseFlag) {
-                    ResponseFlag.DEFER -> PolyPublisherSet(
+                    is ResponseFlag.Defer -> PolyPublisherSet(
                         plain = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
                         windowed = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg).setEphemeral(true)) },
                         edit = { msg -> WebHookEditActionAdaptor(context.event.hook.editOriginal(msg)) },

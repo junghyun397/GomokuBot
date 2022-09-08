@@ -19,7 +19,7 @@ class LangCommand(private val language: Language) : Command {
 
     override val name = "lang"
 
-    override val responseFlag = ResponseFlag.IMMEDIATELY
+    override val responseFlag = ResponseFlag.Immediately
 
     override suspend fun <A, B> execute(
         bot: BotContext,

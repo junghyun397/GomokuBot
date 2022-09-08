@@ -38,7 +38,7 @@ class DebugCommand(
 
     override val name = "debug"
 
-    override val responseFlag = ResponseFlag.DEFER
+    override val responseFlag = ResponseFlag.Defer
 
     @Suppress("DuplicatedCode")
     override suspend fun <A, B> execute(

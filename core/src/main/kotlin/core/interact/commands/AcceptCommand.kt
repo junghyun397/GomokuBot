@@ -20,7 +20,7 @@ class AcceptCommand(private val requestSession: RequestSession) : Command {
 
     override val name = "accept"
 
-    override val responseFlag = ResponseFlag.IMMEDIATELY
+    override val responseFlag = ResponseFlag.Immediately
 
     override suspend fun <A, B> execute(
         bot: BotContext,

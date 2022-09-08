@@ -19,7 +19,7 @@ class RejectCommand(private val requestSession: RequestSession) : Command {
 
     override val name = "reject"
 
-    override val responseFlag = ResponseFlag.IMMEDIATELY
+    override val responseFlag = ResponseFlag.Immediately
 
     override suspend fun <A, B> execute(
         bot: BotContext,

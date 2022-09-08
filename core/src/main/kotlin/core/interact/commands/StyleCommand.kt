@@ -18,7 +18,7 @@ class StyleCommand(private val style: BoardStyle) : Command {
 
     override val name = "style"
 
-    override val responseFlag = ResponseFlag.IMMEDIATELY
+    override val responseFlag = ResponseFlag.Immediately
 
     override suspend fun <A, B> execute(
         bot: BotContext,

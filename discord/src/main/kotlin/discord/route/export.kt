@@ -1,9 +1,7 @@
 package discord.route
 
-import core.BotContext
 import core.assets.MessageRef
 import core.interact.Order
-import core.session.SessionManager
 import discord.assets.JDAGuild
 import discord.interact.DiscordConfig
 import discord.interact.GuildManager
@@ -13,9 +11,9 @@ import net.dv8tion.jda.api.requests.RestAction
 import utils.structs.IO
 
 suspend fun export(context: InteractionContext<*>, io: IO<List<Order>>, source: MessageRef?) =
-    export(context.bot, context.discordConfig, context.jdaGuild, io, source)
+    export(context.discordConfig, context.jdaGuild, io, source)
 
-suspend fun export(bot: BotContext, discordConfig: DiscordConfig, jdaGuild: JDAGuild, io: IO<List<Order>>, source: MessageRef?) =
+suspend fun export(discordConfig: DiscordConfig, jdaGuild: JDAGuild, io: IO<List<Order>>, source: MessageRef?) =
     io.run().forEach { order ->
         when (order) {
             is Order.UpsertCommands -> GuildManager.upsertCommands(jdaGuild, order.container)
@@ -25,9 +23,9 @@ suspend fun export(bot: BotContext, discordConfig: DiscordConfig, jdaGuild: JDAG
                 }
             }
             is Order.BulkDelete ->
-                SessionManager.checkoutMessages(bot.sessions, order.key)
-                    ?.groupBy { it.channelId }
-                    ?.forEach { (channelId, messageRefs) -> jdaGuild.getTextChannelById(channelId.idLong)?.let { channel ->
+                order.messageRefs
+                    .groupBy { it.channelId }
+                    .forEach { (channelId, messageRefs) -> jdaGuild.getTextChannelById(channelId.idLong)?.let { channel ->
                         try {
                             messageRefs
                                 .map { channel.deleteMessageById(it.id.idLong).mapToResult() }
