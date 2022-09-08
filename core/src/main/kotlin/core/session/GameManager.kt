@@ -35,7 +35,7 @@ enum class FocusPolicy(override val id: Short) : Identifiable {
 }
 
 enum class SweepPolicy(override val id: Short) : Identifiable {
-    RELAY(0), LEAVE(1)
+    RELAY(0), LEAVE(1), EDIT(2)
 }
 
 enum class ArchivePolicy(override val id: Short) : Identifiable {

@@ -188,6 +188,9 @@ sealed interface LanguageContainer {
     fun sweepSelectLeave(): String
     fun sweepSelectLeaveDescription(): String
 
+    fun sweepSelectEdit(): String
+    fun sweepSelectEditDescription(): String
+
     // ### 2-3-4. ARCHIVE
 
     fun archive(): String

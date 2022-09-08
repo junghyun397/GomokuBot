@@ -2,6 +2,7 @@ package discord.interact.parse.parsers
 
 import core.assets.User
 import core.interact.commands.Command
+import core.interact.commands.ResponseFlag
 import core.interact.commands.SetCommand
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.SessionSideParser
@@ -9,6 +10,7 @@ import core.interact.parse.asParseFailure
 import core.session.GameManager
 import core.session.RejectReason
 import core.session.SessionManager
+import core.session.SweepPolicy
 import core.session.entities.GameSession
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
@@ -98,9 +100,9 @@ object SetCommandParser : SessionSideParser<Message, DiscordComponents>(), Parsa
                         if (session.board.nextColor() == Color.BLACK())
                             Either.Right(this.composeForbiddenMoveFailure(context, session, pos, session.board.boardField()[pos.idx()]))
                         else
-                            Either.Left(SetCommand(session, pos))
+                            Either.Left(SetCommand(session, pos, ResponseFlag.Defer()))
                 } },
-                onEmpty = { Either.Left(SetCommand(session, pos)) }
+                onEmpty = { Either.Left(SetCommand(session, pos, ResponseFlag.Defer())) }
             )
         }
 
@@ -139,7 +141,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordComponents>(), Parsa
         if (session.player.id != userId)
             return Option.Empty
 
-        return Option(SetCommand(session, pos))
+        return Option(SetCommand(session, pos, ResponseFlag.Defer(context.config.sweepPolicy == SweepPolicy.EDIT)))
     }
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

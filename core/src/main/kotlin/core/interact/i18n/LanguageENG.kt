@@ -196,6 +196,9 @@ open class LanguageENG : LanguageContainer {
     override fun sweepSelectLeaveDescription() =
         "Do not delete any messages. Except for the Navigators."
 
+    override fun sweepSelectEdit() = "Edit"
+    override fun sweepSelectEditDescription() = "Send no more messages, edit the first message sent."
+
     // ### 2-3-4. ARCHIVE
 
     override fun archive() = "Archive"

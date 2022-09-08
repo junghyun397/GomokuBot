@@ -13,24 +13,21 @@ import core.interact.reports.asCommandReport
 import core.session.GameManager
 import core.session.GameResult
 import core.session.SessionManager
+import core.session.SweepPolicy
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
 import core.session.entities.PvpGameSession
 import jrenju.notation.Pos
-import utils.structs.flatMap
-import utils.structs.fold
-import utils.structs.forEach
-import utils.structs.map
+import utils.structs.*
 
 class SetCommand(
     private val session: GameSession,
     private val pos: Pos,
+    override val responseFlag: ResponseFlag,
 ) : Command {
 
     override val name = "set"
-
-    override val responseFlag = ResponseFlag.DEFER
 
     override suspend fun <A, B> execute(
         bot: BotContext,
@@ -43,14 +40,25 @@ class SetCommand(
     ) = runCatching {
         val thenSession = GameManager.makeMove(this.session, this.pos)
 
+        val publisher = when (config.sweepPolicy) {
+            SweepPolicy.EDIT -> publishers.edit
+            else -> publishers.plain
+        }
+
         thenSession.gameResult.fold(
             onEmpty = { when (thenSession) {
                 is PvpGameSession -> {
                     SessionManager.putGameSession(bot.sessions, guild, thenSession)
 
-                    val nextMoveIO = producer.produceNextMovePVP(publishers.plain, config.language.container, thenSession.player, thenSession.nextPlayer, this.pos)
+                    val guideIO = when (config.sweepPolicy) {
+                        SweepPolicy.EDIT -> IO.empty
+                        else -> producer.produceNextMovePVP(publishers.plain, config.language.container, thenSession.player, thenSession.nextPlayer, this.pos)
+                            .retrieve()
+                            .flatMap { buildAppendGameMessageProcedure(it, bot, thenSession) }
+                    }
 
-                    val io = buildNextMoveProcedure(nextMoveIO, bot, guild, config, producer, publishers.plain, this.session, thenSession)
+                    val io = guideIO
+                        .flatMap { buildNextMoveProcedure(bot, guild, config, producer, publisher, this.session, thenSession) }
 
                     io to this.asCommandReport("make move ${pos.toCartesian()}", guild, user)
                 }
@@ -61,14 +69,21 @@ class SetCommand(
                         onEmpty = {
                             SessionManager.putGameSession(bot.sessions, guild, nextSession)
 
-                            val nextMoveIO = producer.produceNextMovePVE(publishers.plain, config.language.container, nextSession.owner, nextSession.board.latestPos().get())
+                            val guideIO = when (config.sweepPolicy) {
+                                SweepPolicy.EDIT -> IO.empty
+                                else -> producer.produceNextMovePVE(publisher, config.language.container, nextSession.owner, nextSession.board.latestPos().get())
+                                    .retrieve()
+                                    .flatMap { buildAppendGameMessageProcedure(it, bot, thenSession) }
+                            }
 
-                            val io = buildNextMoveProcedure(nextMoveIO, bot, guild, config, producer, publishers.plain, this.session, nextSession)
+                            val io = guideIO
+                                .flatMap { buildNextMoveProcedure(bot, guild, config, producer, publisher, this.session, nextSession) }
 
                             io to this.asCommandReport("make move ${pos.toCartesian()}", guild, user)
                         },
                         onDefined = { result ->
                             SessionManager.removeGameSession(bot.sessions, guild, this.session.owner.id)
+
                             nextSession.extractGameRecord(guild.id).forEach { record ->
                                 GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
                             }
@@ -80,7 +95,7 @@ class SetCommand(
                                     producer.produceTiePVE(publishers.plain, config.language.container, nextSession.owner)
                             }
                                 .launch()
-                                .flatMap { buildFinishProcedure(bot, producer, publishers.plain, config, this.session, nextSession) }
+                                .flatMap { buildFinishProcedure(bot, producer, publisher, config, this.session, nextSession) }
                                 .map { it + Order.ArchiveSession(nextSession, config.archivePolicy) }
 
                             io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", guild, user)
@@ -91,6 +106,7 @@ class SetCommand(
             onDefined = { result -> when (thenSession) {
                 is PvpGameSession -> {
                     SessionManager.removeGameSession(bot.sessions, guild, this.session.owner.id)
+
                     thenSession.extractGameRecord(guild.id).forEach { record ->
                         GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
                     }
@@ -102,7 +118,7 @@ class SetCommand(
                             producer.produceTiePVP(publishers.plain, config.language.container, thenSession.owner, thenSession.opponent)
                     }
                         .launch()
-                        .flatMap { buildFinishProcedure(bot, producer, publishers.plain, config, this.session, thenSession) }
+                        .flatMap { buildFinishProcedure(bot, producer, publisher, config, this.session, thenSession) }
                         .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
                     io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", guild, user)
@@ -120,7 +136,7 @@ class SetCommand(
                             producer.produceTiePVE(publishers.plain, config.language.container, thenSession.owner)
                     }
                         .launch()
-                        .flatMap { buildFinishProcedure(bot, producer, publishers.plain, config, this.session, thenSession) }
+                        .flatMap { buildFinishProcedure(bot, producer, publisher, config, this.session, thenSession) }
                         .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
                     io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", guild, user)

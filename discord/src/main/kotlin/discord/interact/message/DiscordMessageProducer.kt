@@ -564,6 +564,12 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
                 value = container.sweepSelectLeaveDescription()
                 inline = false
             }
+
+            field {
+                name = "$UNICODE_PENCIL ${container.sweepSelectEdit()}"
+                value = container.sweepSelectEditDescription()
+                inline = false
+            }
         }
     }
 
@@ -580,6 +586,12 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
                 value = SweepPolicy.LEAVE.toEnumString(),
                 emoji = EMOJI_CABINET,
                 default = config.sweepPolicy == SweepPolicy.LEAVE
+            )
+            option(
+                label = config.language.container.sweepSelectEdit(),
+                value = SweepPolicy.EDIT.toEnumString(),
+                emoji = EMOJI_PENCIL,
+                default = config.sweepPolicy == SweepPolicy.EDIT
             )
         }
 
