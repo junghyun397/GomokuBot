@@ -113,7 +113,7 @@ class SetCommand(
 
                     val io = when (result) {
                         is GameResult.Win ->
-                            producer.produceWinPVP(publishers.plain, config.language.container, thenSession.player, thenSession.nextPlayer, this.pos)
+                            producer.produceWinPVP(publishers.plain, config.language.container, thenSession.nextPlayer, thenSession.player, this.pos)
                         is GameResult.Full ->
                             producer.produceTiePVP(publishers.plain, config.language.container, thenSession.owner, thenSession.opponent)
                     }
