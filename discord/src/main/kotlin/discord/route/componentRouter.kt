@@ -18,9 +18,6 @@ import discord.interact.parse.parsers.SetCommandParser
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.toMono
-import utils.lang.component1
-import utils.lang.component2
 import utils.structs.Option
 import utils.structs.asOption
 import utils.structs.flatMap
@@ -36,24 +33,17 @@ private fun matchAction(prefix: String): Option<EmbeddableCommand> =
     }
 
 fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteractionCreateEvent>): Mono<InteractionReport> =
-    Mono.zip(
-        context.toMono(),
-        context.event.component.id.asOption().flatMap {
-            matchAction(
-                prefix = it.split("-").first()
-            )
-        }.toMono()
-    )
-        .flatMap { (context, maybeParsable) -> Mono.zip(
-            context.toMono(),
-            mono { maybeParsable.flatMap { parsable ->
+    mono {
+        context.event.component.id
+            .asOption()
+            .flatMap { matchAction(it.split("-").first()) }
+            .flatMap { parsable ->
                 parsable.parseButton(context)
-            } }
-        ) }
-        .filter { (_, maybeCommand) -> maybeCommand.isDefined }
-        .map { tuple -> tuple.mapT2 { it.getOrException() } }
-        .doOnNext { (context, command) ->
-            val responseFlag = command.responseFlag
+            }
+    }
+        .filter { it.isDefined }
+        .doOnNext { command ->
+            val responseFlag = command.getOrException().responseFlag
 
             if (responseFlag is ResponseFlag.Defer) {
                 when (responseFlag.edit) {
@@ -62,15 +52,17 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
                 }
             }
         }
-        .flatMap { (context, command) -> Mono.zip(context.toMono(), mono {
-            command.execute(
+        .flatMap { command -> mono {
+            val messageRef = context.event.message.extractMessageRef()
+
+            command.getOrException().execute(
                 bot = context.bot,
                 config = context.config,
                 guild = context.guild,
                 user = context.user,
                 producer = DiscordMessageProducer,
-                messageRef = context.event.message.extractMessageRef(),
-                publishers = when (command.responseFlag) {
+                messageRef = messageRef,
+                publishers = when (command.getOrException().responseFlag) {
                     is ResponseFlag.Defer -> PolyPublisherSet(
                         plain = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
                         windowed = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg).setEphemeral(true)) },
@@ -92,21 +84,16 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
                         )
                     )
                 }
-            )
-        }) }
-        .flatMap { (context, result) ->
-            mono {
-                result.fold(
-                    onSuccess = { (io, report) ->
-                        export(context, io, context.event.message.extractMessageRef())
-                        report
-                    },
-                    onFailure = { throwable ->
-                        ErrorReport(throwable, context.guild)
-                    }
-                ).apply {
-                    interactionSource = getEventAbbreviation(context.event::class)
-                    emittedTime = context.emittedTime
+            ).fold(
+                onSuccess = { (io, report) ->
+                    export(context, io, messageRef)
+                    report
+                },
+                onFailure = { throwable ->
+                    ErrorReport(throwable, context.guild)
                 }
+            ).apply {
+                interactionSource = getEventAbbreviation(context.event::class)
+                emittedTime = context.emittedTime
             }
-        }
+        } }

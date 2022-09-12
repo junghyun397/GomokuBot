@@ -27,27 +27,27 @@ class AnnounceCommand(private val command: Command) : Command {
         producer: MessageProducer<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
-    ) = this.command
-        .execute(bot, config, guild, user, producer, messageRef, publishers)
-        .map { (originalIO, originalReport) ->
-            val thenUser = user.copy(announceId = AnnounceRepository.getLatestAnnounceId(bot.dbConnection))
+    ) = runCatching {
+        val thenUser = user.copy(announceId = AnnounceRepository.getLatestAnnounceId(bot.dbConnection))
 
-            UserProfileRepository.upsertUser(bot.dbConnection, thenUser)
+        UserProfileRepository.upsertUser(bot.dbConnection, thenUser)
 
-            val io = AnnounceRepository.getAnnouncesSince(bot.dbConnection, user.announceId ?: -1)
-                .map { announces ->
-                    producer.produceAnnounce(
-                        publishers.plain,
-                        config.language.container,
-                        announces[config.language] ?: announces[Language.ENG]!!
-                    ).launch()
-                }
-                .reduce { acc, io -> acc.flatMap { io } }
-                .flatMap { originalIO }
+        val io = AnnounceRepository.getAnnouncesSince(bot.dbConnection, user.announceId ?: -1)
+            .map { announces ->
+                producer.produceAnnounce(
+                    publishers.plain,
+                    config.language.container,
+                    announces[config.language] ?: announces[Language.ENG]!!
+                ).launch()
+            }
+            .reduce { acc, io -> acc.flatMap { io } }
 
-            val report = originalReport.copy(commandName = "$name${originalReport.commandName}")
-
-            io and report
-        }
+        this.command
+            .execute(bot, config, guild, user, producer, messageRef, publishers)
+            .map { (originalIO, originalReport) ->
+                io.flatMap { originalIO } and originalReport.copy(commandName = "$name${originalReport.commandName}")
+            }
+            .getOrThrow()
+    }
 
 }

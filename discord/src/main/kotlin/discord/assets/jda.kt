@@ -38,7 +38,7 @@ fun net.dv8tion.jda.api.entities.Guild.extractProfile(uid: GuildUid = GuildUid(U
 fun net.dv8tion.jda.api.entities.User.extractProfile(uid: UserUid = UserUid(UUID.randomUUID()), announceId: Int? = null) =
     User(uid, DISCORD_PLATFORM_ID, this.extractId(), this.name, this.asTag, announceId, this.avatarUrl)
 
-fun <T : Event>getEventAbbreviation(source: KClass<T>) =
+fun <T : Event> getEventAbbreviation(source: KClass<T>) =
     when (source)  {
         SlashCommandInteractionEvent::class -> "SCIE"
         MessageReceivedEvent::class -> "MRE"

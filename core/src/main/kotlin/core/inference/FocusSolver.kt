@@ -12,7 +12,7 @@ import jrenju.solve.`LargeMoveGenerator$`
 import jrenju.solve.`SolutionMapper$`
 import jrenju.solve.`VCFSolver$`
 import utils.assets.bound
-import utils.assets.maxSet
+import utils.assets.maxIndexes
 import utils.assets.toInt
 import java.util.*
 import kotlin.math.max
@@ -172,29 +172,25 @@ object FocusSolver {
         if (moves.size == 1)
             return SolutionLeaf(moves.first())
 
-        val eval = moves
-            .map { idx ->
-                val particlePair = board.getParticlePair(idx)
-                val selfParticle = particlePair.apply(board.nextColorFlag())
-                val opponentParticle = particlePair.apply(board.colorFlag())
+        val eval = moves.map { idx ->
+            val particlePair = board.getParticlePair(idx)
+            val selfParticle = particlePair.apply(board.nextColorFlag())
+            val opponentParticle = particlePair.apply(board.colorFlag())
 
-                this.evaluateParticle(weightSet, selfParticle, opponentParticle, true) +
-                        this.evaluateParticle(weightSet, opponentParticle, selfParticle, false) +
-                        this.hasNeighborhood(board, idx).toInt() * weightSet.neighborhoodExtra +
-                        when {
-                            traps._1.contains(idx) -> when {
-                                selfParticle.threeTotal() > 0 || selfParticle.fourTotal() > 0 -> weightSet.treatThreeSideTrapFork
-                                else -> weightSet.threeSideTrap
-                            }
-                            else -> 0
-                        } +
-                        traps._2.contains(idx).toInt() * weightSet.fourSideTrap
-            }
+            this.evaluateParticle(weightSet, selfParticle, opponentParticle, true) +
+                    this.evaluateParticle(weightSet, opponentParticle, selfParticle, false) +
+                    this.hasNeighborhood(board, idx).toInt() * weightSet.neighborhoodExtra +
+                    when {
+                        traps._1.contains(idx) -> when {
+                            selfParticle.threeTotal() > 0 || selfParticle.fourTotal() > 0 -> weightSet.treatThreeSideTrapFork
+                            else -> weightSet.threeSideTrap
+                        }
+                        else -> 0
+                    } +
+                    traps._2.contains(idx).toInt() * weightSet.fourSideTrap
+        }
 
-        if (moves.isEmpty())
-            println(`BoardIO$`.`MODULE$`.BoardToText(board).debugText())
-
-        val maxSet = eval.maxSet()!!
+        val maxIndexes = eval.maxIndexes()!!
 
         if (moves.size > 2) {
             val vcfSequence = `VCFSolver$`.`MODULE$`.VCFFinder(board).findVCFSequence(LRUMemo.empty(), Int.MAX_VALUE)
@@ -203,7 +199,7 @@ object FocusSolver {
                 return `SolutionMapper$`.`MODULE$`.SequenceToNode(vcfSequence).toSolution()
         }
 
-        return SolutionLeaf(moves[maxSet.random()])
+        return SolutionLeaf(moves[maxIndexes.random()])
     }
 
     private fun evaluateBoard(board: Board): MutableList<MutableList<Int>> {
@@ -279,6 +275,12 @@ object FocusSolver {
 
                 Pos(max(kernelHalf, maxRow + kernelHalf), max(kernelHalf, maxCol + kernelHalf))
             }
+        )
+
+    fun resolveCenter(board: Board, range: IntRange): Pos =
+        board.latestPos().fold(
+            { Renju.BOARD_CENTER_POS() },
+            { Pos(it.row().coerceIn(range), it.col().coerceIn(range)) }
         )
 
 }

@@ -11,8 +11,6 @@ import core.session.FocusPolicy
 import core.session.SessionManager
 import core.session.SweepPolicy
 import core.session.entities.*
-import jrenju.notation.Pos
-import jrenju.notation.Renju
 import utils.assets.LinuxTime
 import utils.lang.and
 import utils.structs.*
@@ -49,10 +47,7 @@ fun <A, B> buildBoardProcedure(
 ): IO<Option<Unit>> = run {
     val focus = when (config.focusPolicy) {
         FocusPolicy.INTELLIGENCE -> FocusSolver.resolveFocus(session.board, producer.focusWidth)
-        FocusPolicy.FALLOWING -> session.board.latestPos().fold(
-            { Renju.BOARD_CENTER_POS() },
-            { Pos(it.row().coerceIn(producer.focusRange), it.col().coerceIn(producer.focusRange)) }
-        )
+        FocusPolicy.FALLOWING -> FocusSolver.resolveCenter(session.board, producer.focusRange)
     }
 
     val boardMessageIO = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, session)
@@ -93,13 +88,13 @@ fun <A, B> buildFinishProcedure(
 ): IO<List<Order>> = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, thenSession)
     .launch()
     .flatMap { buildSweepProcedure(bot, config, session) }
-    .map { originalOrder -> when {
-        thenSession.gameResult.isDefined && config.sweepPolicy == SweepPolicy.EDIT ->
-            SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
-                ?.let { originalOrder + Order.RemoveNavigators(it) }
-                ?: originalOrder
-        else -> originalOrder
-    } }
+    .map { originalOrder ->
+        originalOrder
+            .takeIf { thenSession.gameResult.isDefined && config.sweepPolicy == SweepPolicy.EDIT }
+            ?.let { SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey) }
+            ?.let { originalOrder + Order.RemoveNavigators(it) }
+            ?: originalOrder
+    }
 
 fun <A, B> buildHelpProcedure(
     bot: BotContext,

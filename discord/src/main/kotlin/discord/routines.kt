@@ -88,8 +88,7 @@ fun scheduleRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): F
                     .mapToResult()
                     .map { when {
                         it.isSuccess -> Option(it.get())
-                        it.isFailure -> Option.Empty
-                        else -> throw IllegalStateException()
+                        else -> Option.Empty
                     } }
                     .await()
 
@@ -133,14 +132,14 @@ fun scheduleRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): F
     }
 
     val expireNavigateFlow = schedule<InteractionReport>(bot.config.navigateExpireCycle) {
-        SessionManager.cleanExpiredNavigators(bot.sessions).forEach { (message, _) ->
-            val guild = jda.getGuildById(message.guildId.idLong)
-            val channel = guild?.getTextChannelById(message.channelId.idLong)
+        SessionManager.cleanExpiredNavigators(bot.sessions).forEach { (messageRef, _) ->
+            val guild = jda.getGuildById(messageRef.guildId.idLong)
+            val channel = guild?.getTextChannelById(messageRef.channelId.idLong)
 
             if (guild != null && channel != null) {
-                val io = IO { listOf(Order.RemoveNavigators(message)) }
+                val io = IO { listOf(Order.RemoveNavigators(messageRef)) }
 
-                export(discordConfig, guild, io, message)
+                export(discordConfig, guild, io, messageRef)
             }
         }
     }

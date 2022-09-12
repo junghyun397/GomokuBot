@@ -16,11 +16,11 @@ import utils.structs.map
 
 sealed interface RankScope {
 
-    object Global : RankScope
+    object Global : RankScope { override fun toString() = "RankScope.Global" }
 
-    object Guild : RankScope
+    object Guild : RankScope { override fun toString() = "RankScope.Guild" }
 
-    class User(val target: core.assets.User) : RankScope
+    data class User(val target: core.assets.User) : RankScope
 
 }
 

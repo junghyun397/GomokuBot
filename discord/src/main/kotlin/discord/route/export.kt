@@ -6,8 +6,6 @@ import discord.assets.JDAGuild
 import discord.interact.DiscordConfig
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
-import net.dv8tion.jda.api.exceptions.ErrorResponseException
-import net.dv8tion.jda.api.requests.RestAction
 import utils.structs.IO
 
 suspend fun export(context: InteractionContext<*>, io: IO<List<Order>>, source: MessageRef?) =
@@ -22,17 +20,7 @@ suspend fun export(discordConfig: DiscordConfig, jdaGuild: JDAGuild, io: IO<List
                     channel.deleteMessageById(source.id.idLong)
                 }
             }
-            is Order.BulkDelete ->
-                order.messageRefs
-                    .groupBy { it.channelId }
-                    .forEach { (channelId, messageRefs) -> jdaGuild.getTextChannelById(channelId.idLong)?.let { channel ->
-                        try {
-                            messageRefs
-                                .map { channel.deleteMessageById(it.id.idLong).mapToResult() }
-                                .reduce<RestAction<*>, RestAction<*>> { acc, action -> acc.and(action) }
-                                .queue()
-                        } catch (_: ErrorResponseException) { }
-                    } }
+            is Order.BulkDelete -> GuildManager.bulkDelete(jdaGuild, order.messageRefs)
             is Order.RemoveNavigators ->
                 jdaGuild.getTextChannelById(order.messageRef.channelId.idLong)?.run {
                     GuildManager.retrieveJDAMessage(jdaGuild.jda, order.messageRef)?.let { originalMessage ->

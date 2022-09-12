@@ -1,46 +1,25 @@
+@file:Suppress("UNREACHABLE_CODE")
+
 package solver
 
 import core.inference.FocusSolver
-import core.inference.WeightSet
 import jrenju.Board
 import jrenju.`BoardIO$`
 import jrenju.protocol.Solution
+import org.junit.Test
 import utils.lang.and
 import java.util.*
 
 internal class SolverTest {
 
-    object TestWeight : WeightSet {
-
-        override val neighborhoodExtra = 2
-
-        override val closedFour = 2
-        override val openThree = 3
-
-        override val blockThree = 0
-        override val openFour = 150
-        override val five = 200
-
-        override val blockFourExtra = 100
-        override val treatBlockThreeFork = 110
-
-        override val threeSideTrap = 10
-        override val fourSideTrap = 150
-        override val treatThreeSideTrapFork = 50
-
-        override val doubleThreeFork = 50
-        override val threeFourFork = 105
-        override val doubleFourFork = 150
-
-    }
-
+    @Test
     fun aiBenchmark() {
         var solver1Wins = 0
         var solver2Wins = 0
         var draws = 0
 
-        for (i in 0 until 1000) {
-            when (this.match(Board.newBoard(), { FocusSolver.findSolution(it) }, { FocusSolver.findSolution(it, TestWeight) })) {
+        for (i in 0 until 1) {
+            when (this.match(Board.newBoard(), { FocusSolver.findSolution(it) }, { FocusSolver.findSolution(it) })) {
                 true -> solver1Wins += 1
                 false -> solver2Wins += 1
                 null -> draws += 1

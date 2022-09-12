@@ -27,7 +27,7 @@ object FocusCommandParser : NamedParser, NavigableCommand {
             EMOJI_DOWN -> Direction.DOWN
             EMOJI_UP -> Direction.UP
             EMOJI_RIGHT -> Direction.RIGHT
-            EMOJI_FOCUS -> Direction.FOCUS
+            EMOJI_FOCUS -> Direction.CENTER
             else -> null
         }
 

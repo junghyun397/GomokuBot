@@ -19,7 +19,7 @@ import utils.structs.IO
 import utils.structs.map
 
 enum class Direction {
-    LEFT, DOWN, UP, RIGHT, FOCUS
+    LEFT, DOWN, UP, RIGHT, CENTER
 }
 
 class FocusCommand(
@@ -52,7 +52,7 @@ class FocusCommand(
                 Direction.DOWN -> Pos((row - step).coerceIn(producer.focusRange), col)
                 Direction.UP -> Pos((row + step).coerceIn(producer.focusRange), col)
                 Direction.RIGHT -> Pos(row, (col + step).coerceIn(producer.focusRange))
-                Direction.FOCUS -> FocusSolver.resolveFocus(this.session.board, producer.focusWidth)
+                Direction.CENTER -> FocusSolver.resolveCenter(this.session.board, producer.focusRange)
             }
         }
 

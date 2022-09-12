@@ -24,6 +24,7 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.GuildChannel
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.requests.RestAction
 import utils.structs.Option
 import utils.structs.map
 
@@ -50,9 +51,9 @@ object GuildManager {
         if (this.lookupPermission(channel, permission)) Option(block())
         else Option.Empty
 
-    inline fun <T> permissionNotGrantedRun(channel: TextChannel, permission: Permission, block: () -> T): Option<T> =
-        if (this.lookupPermission(channel, permission)) Option.Empty
-        else Option(block())
+    inline fun <T> permissionDependedRun(channel: TextChannel, permission: Permission, onGranted: () -> T, onMissed: () -> T): T =
+        if (this.lookupPermission(channel, permission)) onGranted()
+        else onMissed()
 
     fun initGlobalCommand(jda: JDA) {
         jda.updateCommands {
@@ -107,21 +108,56 @@ object GuildManager {
         jda.getGuildById(messageRef.guildId.idLong)
             ?.getTextChannelById(messageRef.channelId.idLong)
             ?.retrieveMessageById(messageRef.id.idLong)
+            ?.mapToResult()
             ?.await()
+            ?.let { result ->
+                when {
+                    result.isSuccess -> result.get()
+                    else -> null
+                }
+            }
+
+    fun bulkDelete(jdaGuild: JDAGuild, messageRefs: List<MessageRef>) =
+        messageRefs
+            .groupBy { it.channelId }
+            .map { (channelId, messageRefs) -> jdaGuild.getTextChannelById(channelId.idLong)?.let { channel ->
+                this.permissionDependedRun(
+                    channel, Permission.MESSAGE_MANAGE,
+                    onGranted = {
+                        messageRefs
+                            .map { channel.deleteMessageById(it.id.idLong) }
+                            .reduce<RestAction<*>, RestAction<*>> { acc, action -> acc.and(action) }
+                    },
+                    onMissed = {
+                        channel.deleteMessagesByIds(messageRefs.map { it.id.idLong.toString() })
+                    }
+                )
+            } }
+            .filterNotNull()
+            .reduce { acc, restAction -> acc.and(restAction) }
+            .mapToResult()
+            .queue(null, null)
 
     fun retainFirstEmbed(message: net.dv8tion.jda.api.entities.Message) =
         message.editMessage(Message(embed = message.embeds.first()))
-            .retainFiles(message.attachments) // TODO: JDA v10 API
+            .retainFiles(message.attachments)
             .queue()
 
     fun removeComponents(message: net.dv8tion.jda.api.entities.Message) =
         message.editMessageComponents()
             .queue()
 
-    fun clearReaction(message: net.dv8tion.jda.api.entities.Message) =
-        message.reactions
-            .map { it.removeReaction(message.jda.selfUser) }
-            .reduce { acc, action -> acc.and(action) }
-            .queue()
+    fun clearReaction(message: net.dv8tion.jda.api.entities.Message) {
+        this.permissionDependedRun(
+            message.channel.asTextChannel(), Permission.MESSAGE_MANAGE,
+            onMissed = {
+                message.reactions
+                    .map { it.removeReaction(message.jda.selfUser) }
+                    .takeIf { it.isNotEmpty() }
+                    ?.reduce { acc, action -> acc.and(action) }
+            },
+            onGranted = { message.clearReactions() }
+        )?.queue()
+    }
 
 }
