@@ -1,6 +1,5 @@
 package utils.assets
 
-import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.math.max
 
@@ -35,5 +34,3 @@ fun <T: Comparable<T>> Iterable<T>.maxIndexes(): Array<Int>? {
 
     return maxPoints.toTypedArray()
 }
-
-val ISO_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")

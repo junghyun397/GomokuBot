@@ -16,13 +16,13 @@ sealed interface Option<out T> {
 
     companion object {
 
-        fun <T> unit(value: T) =
+        fun <T> unit(value: T): Option<T> =
             Some(value)
 
-        operator fun <T> invoke(value: T) =
+        operator fun <T> invoke(value: T): Option<T> =
             unit(value)
 
-        fun <A, B> zip(a: Option<A>, b: Option<B>) =
+        fun <A, B> zip(a: Option<A>, b: Option<B>): Option<Pair<A, B>> =
             when {
                 a is Some && b is Some -> Some(a.value and b.value)
                 else -> Empty
@@ -67,7 +67,7 @@ inline fun <T> Option<T>.forEach(block: (T) -> Unit) {
         block((this as Option.Some).value)
 }
 
-inline fun <T> Option<T>.filter(predicate: (T) -> Boolean) =
+inline fun <T> Option<T>.filter(predicate: (T) -> Boolean): Option<T> =
     when {
         this is Option.Some && predicate(this.value) -> this
         else -> Option.Empty

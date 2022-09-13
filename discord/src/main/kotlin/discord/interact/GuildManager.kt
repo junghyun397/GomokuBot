@@ -39,10 +39,8 @@ object GuildManager {
             .retrieveMemberById(user.idLong)
             .mapToResult()
             .await()
-            .let { when {
-                it.isSuccess -> it.get()
-                else -> null
-            } }
+            .takeIf { it.isSuccess }
+            ?.get()
             ?.roles
             ?.any { it.idLong == config.testerRoleId }
             ?: false
@@ -117,26 +115,34 @@ object GuildManager {
                 }
             }
 
-    fun bulkDelete(jdaGuild: JDAGuild, messageRefs: List<MessageRef>) =
+    fun bulkDelete(jdaGuild: JDAGuild, messageRefs: List<MessageRef>) {
         messageRefs
             .groupBy { it.channelId }
-            .map { (channelId, messageRefs) -> jdaGuild.getTextChannelById(channelId.idLong)?.let { channel ->
-                this.permissionDependedRun(
-                    channel, Permission.MESSAGE_MANAGE,
-                    onGranted = {
-                        messageRefs
-                            .map { channel.deleteMessageById(it.id.idLong) }
-                            .reduce<RestAction<*>, RestAction<*>> { acc, action -> acc.and(action) }
-                    },
-                    onMissed = {
-                        channel.deleteMessagesByIds(messageRefs.map { it.id.idLong.toString() })
-                    }
-                )
-            } }
+            .map { (channelId, messageRefs) ->
+                jdaGuild.getTextChannelById(channelId.idLong)?.let { channel ->
+                    this.permissionDependedRun(
+                        channel, Permission.MESSAGE_MANAGE,
+                        onMissed = {
+                            messageRefs
+                                .map { channel.deleteMessageById(it.id.idLong) }
+                                .reduce<RestAction<*>, RestAction<*>> { acc, action -> acc.and(action) }
+                        },
+                        onGranted = {
+                            channel.deleteMessagesByIds(messageRefs.map { it.id.idLong.toString() })
+                        }
+                    )
+                }
+            }
             .filterNotNull()
             .reduce { acc, restAction -> acc.and(restAction) }
-            .mapToResult()
-            .queue(null, null)
+            .queue()
+    }
+
+    fun deleteSingle(jdaGuild: JDAGuild, messageRef: MessageRef) {
+        val maybeChannel = jdaGuild.getTextChannelById(messageRef.channelId.idLong)
+
+        maybeChannel?.deleteMessageById(messageRef.id.idLong)?.queue()
+    }
 
     fun retainFirstEmbed(message: net.dv8tion.jda.api.entities.Message) =
         message.editMessage(Message(embed = message.embeds.first()))

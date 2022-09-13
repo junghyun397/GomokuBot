@@ -60,5 +60,5 @@ val ASCII_LOGO = """
         / /_/ / /_/ / /  / / /_/ / /| / /_/ / /_/ / /_/ / / /
         \____/\____/_/  /_/\____/_/ |_\____/_____/\____/ /_/
         
-        Powered by [Kotlin, Project Reactor, R2DBC, PostgreSQL, gRPC, JDA]
+        Powered by [Kotlin, Project Reactor, R2DBC, PostgreSQL, gRPC, JDA and Kvine]
 """.trimIndent()

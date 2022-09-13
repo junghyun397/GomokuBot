@@ -56,10 +56,10 @@ inline fun <L, R, T> Either<L, R>.flatMapRight(mapper: (R) -> Either<L, T>): Eit
         is Either.Right -> mapper(this.value)
     }
 
-inline fun <L, R> Either<L, R>.onLeft(onLeft: (L) -> Unit) = this.also {
+inline fun <L, R> Either<L, R>.onLeft(onLeft: (L) -> Unit): Either<L, R> = this.also {
     if (this is Either.Left) onLeft(this.value)
 }
 
-inline fun <L, R> Either<L, R>.onRight(onRight: (R) -> Unit) = this.also {
+inline fun <L, R> Either<L, R>.onRight(onRight: (R) -> Unit): Either<L, R> = this.also {
     if (this is Either.Right) onRight(this.value)
 }

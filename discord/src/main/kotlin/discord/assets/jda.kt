@@ -18,28 +18,28 @@ const val DISCORD_PLATFORM_ID: Short = 1
 
 typealias JDAGuild = net.dv8tion.jda.api.entities.Guild
 
-fun net.dv8tion.jda.api.entities.Message.extractMessageRef() =
+fun net.dv8tion.jda.api.entities.Message.extractMessageRef(): MessageRef =
     MessageRef(this.extractId(), this.guild.extractId(), this.channel.extractId())
 
-fun GenericMessageReactionEvent.extractMessageRef() =
+fun GenericMessageReactionEvent.extractMessageRef(): MessageRef =
     MessageRef(MessageId(this.messageIdLong), this.guild.extractId(), this.channel.extractId())
 
-fun net.dv8tion.jda.api.entities.Guild.extractId() = GuildId(this.idLong)
+fun net.dv8tion.jda.api.entities.Guild.extractId(): GuildId = GuildId(this.idLong)
 
-fun net.dv8tion.jda.api.entities.User.extractId() = UserId(this.idLong)
+fun net.dv8tion.jda.api.entities.User.extractId(): UserId = UserId(this.idLong)
 
-fun net.dv8tion.jda.api.entities.Message.extractId() = MessageId(this.idLong)
+fun net.dv8tion.jda.api.entities.Message.extractId(): MessageId = MessageId(this.idLong)
 
-fun net.dv8tion.jda.api.entities.Channel.extractId() = ChannelId(this.idLong)
+fun net.dv8tion.jda.api.entities.Channel.extractId(): ChannelId = ChannelId(this.idLong)
 
-fun net.dv8tion.jda.api.entities.Guild.extractProfile(uid: GuildUid = GuildUid(UUID.randomUUID())) =
+fun net.dv8tion.jda.api.entities.Guild.extractProfile(uid: GuildUid = GuildUid(UUID.randomUUID())): Guild =
     Guild(uid, DISCORD_PLATFORM_ID, this.extractId(), this.name)
 
-fun net.dv8tion.jda.api.entities.User.extractProfile(uid: UserUid = UserUid(UUID.randomUUID()), announceId: Int? = null) =
+fun net.dv8tion.jda.api.entities.User.extractProfile(uid: UserUid = UserUid(UUID.randomUUID()), announceId: Int? = null): User =
     User(uid, DISCORD_PLATFORM_ID, this.extractId(), this.name, this.asTag, announceId, this.avatarUrl)
 
-fun <T : Event> getEventAbbreviation(source: KClass<T>) =
-    when (source)  {
+fun <T : Event> getEventAbbreviation(source: KClass<T>): String =
+    when (source) {
         SlashCommandInteractionEvent::class -> "SCIE"
         MessageReceivedEvent::class -> "MRE"
         ButtonInteractionEvent::class -> "BIE"

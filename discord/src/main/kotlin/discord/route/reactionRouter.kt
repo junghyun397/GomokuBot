@@ -7,6 +7,7 @@ import core.session.SessionManager
 import core.session.entities.BoardNavigateState
 import core.session.entities.PageNavigateState
 import discord.assets.extractMessageRef
+import discord.assets.getEventAbbreviation
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageProducer
@@ -74,7 +75,10 @@ fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mo
                     onFailure = { throwable ->
                         ErrorReport(throwable, context.guild)
                     }
-                )
+                ).apply {
+                    interactionSource = getEventAbbreviation(context.event::class)
+                    emittedTime = context.emittedTime
+                }
             }
         }
 }

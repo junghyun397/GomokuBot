@@ -337,7 +337,7 @@ open class LanguageKOR : LanguageENG() {
     override fun endPVPWin(winner: String, looser: String, latestMove: String) =
         "$winner 님이 ${latestMove}에 돌을 놓음으로써 $looser 님을 이겼습니다."
     override fun endPVPResign(winner: String, looser: String) =
-        "$looser 님이 항복을 선언 함으로써 $winner 님을 이겼습니다."
+        "$looser 님이 항복을 선언 함으로써 $winner 님이 이겼습니다."
     override fun endPVPTie(owner: String, opponent: String) =
         "이제 더 이상 돌을 놓을 공간이 없으므로, $opponent 님과 $opponent 님의 게임은 무승부로 끝났습니다."
     override fun endPVPTimeOut(winner: String, looser: String) =

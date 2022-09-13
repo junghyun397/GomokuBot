@@ -24,17 +24,17 @@ interface IO<out A> {
 
         inline operator fun <A> invoke(crossinline block: suspend () -> A) = unit(block)
 
-        fun <A, B> zip(a: IO<A>, b: IO<B>) =
+        fun <A, B> zip(a: IO<A>, b: IO<B>): IO<Pair<A, B>> =
             object : IO<Pair<A, B>> {
                 override suspend fun run() = Pair(a.run(), b.run())
             }
 
-        fun <A, B, C> zip(a: IO<A>, b: IO<B>, c: IO<C>) =
+        fun <A, B, C> zip(a: IO<A>, b: IO<B>, c: IO<C>): IO<Triple<A, B, C>> =
             object : IO<Triple<A, B, C>> {
                 override suspend fun run() = Triple(a.run(), b.run(), c.run())
             }
 
-        fun <A, B, C, D> zip(a: IO<A>, b: IO<B>, c: IO<C>, d: IO<D>) =
+        fun <A, B, C, D> zip(a: IO<A>, b: IO<B>, c: IO<C>, d: IO<D>): IO<Quadruple<A, B, C, D>> =
             object : IO<Quadruple<A, B, C, D>> {
                 override suspend fun run() = Quadruple(a.run(), b.run(), c.run(), d.run())
             }

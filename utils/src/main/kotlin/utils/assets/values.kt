@@ -2,6 +2,7 @@ package utils.assets
 
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 @JvmInline value class URL(val ref: String)
 
@@ -15,7 +16,9 @@ import java.time.ZoneOffset
 
     companion object {
 
-        fun withOffset(offset: Long) = LinuxTime(System.currentTimeMillis() + offset)
+        private val ISO_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
+
+        fun withOffset(offset: Long): LinuxTime = LinuxTime(System.currentTimeMillis() + offset)
 
     }
 

@@ -8,18 +8,15 @@ import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import utils.structs.IO
 
-suspend fun export(context: InteractionContext<*>, io: IO<List<Order>>, source: MessageRef?) =
+suspend fun export(context: InteractionContext<*>, io: IO<List<Order>>, source: MessageRef?) {
     export(context.discordConfig, context.jdaGuild, io, source)
+}
 
-suspend fun export(discordConfig: DiscordConfig, jdaGuild: JDAGuild, io: IO<List<Order>>, source: MessageRef?) =
+suspend fun export(discordConfig: DiscordConfig, jdaGuild: JDAGuild, io: IO<List<Order>>, source: MessageRef?) {
     io.run().forEach { order ->
         when (order) {
             is Order.UpsertCommands -> GuildManager.upsertCommands(jdaGuild, order.container)
-            is Order.DeleteSource -> source?.also { messageRef ->
-                jdaGuild.getTextChannelById(messageRef.channelId.idLong)?.also { channel ->
-                    channel.deleteMessageById(source.id.idLong)
-                }
-            }
+            is Order.DeleteSource -> source?.let { GuildManager.deleteSingle(jdaGuild, it) }
             is Order.BulkDelete -> GuildManager.bulkDelete(jdaGuild, order.messageRefs)
             is Order.RemoveNavigators ->
                 jdaGuild.getTextChannelById(order.messageRef.channelId.idLong)?.run {
@@ -38,3 +35,4 @@ suspend fun export(discordConfig: DiscordConfig, jdaGuild: JDAGuild, io: IO<List
             )
         }
     }
+}
