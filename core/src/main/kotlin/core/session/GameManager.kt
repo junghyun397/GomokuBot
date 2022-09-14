@@ -185,33 +185,45 @@ object GameManager {
 
         val thenBoard = session.board.makeMove(aiMove)
 
-        return if (thenBoard.winner().isDefined) {
-            val gameResult = GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, thenBoard.color(), aiUser, session.owner)
+        return when {
+            thenBoard.winner().isDefined -> {
+                val gameResult = GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, thenBoard.color(), aiUser, session.owner)
 
-            session.copy(
+                session.copy(
+                    board = thenBoard,
+                    gameResult = Option(gameResult),
+                    history = session.history + Pos.fromIdx(aiMove),
+                )
+            }
+            thenBoard.moves() == Renju.BOARD_SIZE() -> {
+                val gameResult = GameResult.Full
+
+                session.copy(
+                    board = thenBoard,
+                    gameResult = Option(gameResult),
+                    history = session.history + Pos.fromIdx(aiMove)
+                )
+            }
+            else -> session.copy(
                 board = thenBoard,
-                gameResult = Option(gameResult),
                 history = session.history + Pos.fromIdx(aiMove),
+                solution = solutionNode
             )
-        } else if (thenBoard.moves() == Renju.BOARD_SIZE()) {
-            val gameResult = GameResult.Full
-
-            session.copy(
-                board = thenBoard,
-                gameResult = Option(gameResult),
-                history = session.history + Pos.fromIdx(aiMove)
-            )
-        } else session.copy(
-            board = thenBoard,
-            history = session.history + Pos.fromIdx(aiMove),
-            solution = solutionNode
-        )
+        }
     }
 
-    fun resignSession(session: GameSession, cause: GameResult.Cause, user: User?) =
-        when (session) {
+    fun resignSession(session: GameSession, cause: GameResult.Cause, user: User?): Pair<GameSession, GameResult.Win> {
+        val winColor = when (session.board) {
+            is `EmptyBoard$` -> when (session.ownerHasBlack) {
+                true -> Color.WHITE()
+                else -> Color.BLACK()
+            }
+            else -> session.board.color()
+        }
+
+        return when (session) {
             is AiGameSession -> {
-                val result = GameResult.Win(cause, session.board.color(), aiUser, session.owner)
+                val result = GameResult.Win(cause, winColor, aiUser, session.owner)
 
                 session.copy(gameResult = Option(result)) and result
             }
@@ -221,10 +233,11 @@ object GameManager {
                 else
                     session.owner and session.opponent
 
-                val result = GameResult.Win(cause, session.board.color(), winner, looser)
+                val result = GameResult.Win(cause, winColor, winner, looser)
 
                 session.copy(gameResult = Option(result)) and result
             }
         }
+    }
 
 }
