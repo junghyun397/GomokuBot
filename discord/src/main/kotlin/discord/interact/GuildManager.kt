@@ -116,24 +116,34 @@ object GuildManager {
             }
 
     fun bulkDelete(jdaGuild: JDAGuild, messageRefs: List<MessageRef>) {
+        if (messageRefs.isEmpty()) return
+
         messageRefs
             .groupBy { it.channelId }
-            .map { (channelId, messageRefs) ->
-                jdaGuild.getTextChannelById(channelId.idLong)?.let { channel ->
-                    this.permissionDependedRun(
-                        channel, Permission.MESSAGE_MANAGE,
-                        onMissed = {
-                            messageRefs
-                                .map { channel.deleteMessageById(it.id.idLong) }
-                                .reduce<RestAction<*>, RestAction<*>> { acc, action -> acc.and(action) }
-                        },
-                        onGranted = {
-                            channel.deleteMessagesByIds(messageRefs.map { it.id.idLong.toString() })
-                        }
-                    )
+            .flatMap { (channelId, messageRefs) ->
+                when (val channel = jdaGuild.getTextChannelById(channelId.idLong)) {
+                    null -> emptyList<RestAction<*>>()
+                    else -> {
+                        this.permissionDependedRun(
+                            channel, Permission.MESSAGE_MANAGE,
+                            onMissed = {
+                                messageRefs
+                                    .map { channel.deleteMessageById(it.id.idLong) }
+                            },
+                            onGranted = {
+                                messageRefs
+                                    .chunked(100)
+                                    .map { messageRefs ->
+                                        when (messageRefs.size) {
+                                            1 -> channel.deleteMessageById(messageRefs.first().id.idLong)
+                                            else -> channel.deleteMessagesByIds(messageRefs.map { it.id.idLong.toString() })
+                                        }
+                                    }
+                            }
+                        )
+                    }
                 }
             }
-            .filterNotNull()
             .reduce { acc, restAction -> acc.and(restAction) }
             .queue()
     }
