@@ -47,7 +47,7 @@ import utils.log.getLogger
 
 private data class PostgreSQLConfig(val serverURL: String) {
     companion object {
-        fun fromEnv() = PostgreSQLConfig(
+        fun fromEnv(): PostgreSQLConfig = PostgreSQLConfig(
             serverURL = System.getenv("GOMOKUBOT_DB_URL")
         )
     }
@@ -55,7 +55,7 @@ private data class PostgreSQLConfig(val serverURL: String) {
 
 private data class KvineConfig(val serverAddress: String, val serverPort: Int) {
     companion object {
-        fun fromEnv() = KvineConfig(
+        fun fromEnv(): KvineConfig = KvineConfig(
             serverAddress = System.getenv("GOMOKUBOT_KVINE_ADDRESS"),
             serverPort = System.getenv("GOMOKUBOT_KVINE_PORT").toInt()
         )
@@ -63,7 +63,7 @@ private data class KvineConfig(val serverAddress: String, val serverPort: Int) {
 }
 
 object DiscordConfigBuilder {
-    fun fromEnv() = DiscordConfig(
+    fun fromEnv(): DiscordConfig = DiscordConfig(
         token = System.getenv("GOMOKUBOT_DISCORD_TOKEN"),
         officialServerId = GuildId(System.getenv("GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID").toLong()),
         archiveChannelId = ChannelId(System.getenv("GOMOKUBOT_DISCORD_ARCHIVE_CHANNEL_ID").toLong()),
@@ -78,7 +78,7 @@ fun leaveLog(report: InteractionReport) {
     }
 }
 
-private suspend inline fun <E : Event> buildInteractionContext(bot: BotContext, discordConfig: DiscordConfig, event: E, jdaUser: net.dv8tion.jda.api.entities.User, jdaGuild: net.dv8tion.jda.api.entities.Guild): InteractionContext<E> {
+private suspend fun <E : Event> buildInteractionContext(bot: BotContext, discordConfig: DiscordConfig, event: E, jdaUser: JDAUser, jdaGuild: JDAGuild): InteractionContext<E> {
     val user = UserProfileRepository.retrieveOrInsertUser(bot.dbConnection, DISCORD_PLATFORM_ID, jdaUser.extractId()) {
         jdaUser.extractProfile()
     }
@@ -94,7 +94,7 @@ private suspend inline fun <E : Event> buildInteractionContext(bot: BotContext, 
         user = user,
         guild = guild,
         config = SessionManager.retrieveGuildConfig(bot.sessions, guild),
-        emittedTime = LinuxTime()
+        emittedTime = LinuxTime.now()
     )
 }
 
@@ -154,7 +154,12 @@ object GomokuBot {
                 .flatMap(::slashCommandRouter),
 
             eventManager.on<MessageReceivedEvent>()
-                .filter { it.isFromGuild && it.channel.type == ChannelType.TEXT && !it.author.isBot && (it.message.contentRaw.startsWith(COMMAND_PREFIX) || it.message.mentions.isMentioned(it.jda.selfUser)) }
+                .filter {
+                    it.isFromGuild
+                            && it.channel.type == ChannelType.TEXT
+                            && !it.author.isBot
+                            && (it.message.contentRaw.startsWith(COMMAND_PREFIX) || it.message.mentions.isMentioned(it.jda.selfUser))
+                }
                 .flatMap { mono { buildInteractionContext(botContext, discordConfig, it, it.author, it.guild) } }
                 .flatMap(::textCommandRouter),
 
@@ -171,8 +176,9 @@ object GomokuBot {
             eventManager.on<MessageReactionAddEvent>()
                 .filter {
                     it.isFromGuild
-                            && !(it.user?.isBot ?: true)
-                            && SessionManager.getNavigateState(botContext.sessions, it.extractMessageRef()) != null
+                            && it.channel.type == ChannelType.TEXT
+                            && NAVIGATE_EMOJIS.contains(it.emoji)
+                            && !(it.user?.isBot ?: false)
                 }
                 .flatMap { mono { buildInteractionContext(botContext, discordConfig, it, it.user!!, it.guild) } }
                 .flatMap(::reactionRouter),
@@ -181,8 +187,9 @@ object GomokuBot {
                 .filter {
                     it.isFromGuild
                             && it.channel.type == ChannelType.TEXT
-                            && sessionRepository.navigates.containsKey(it.extractMessageRef())
+                            && NAVIGATE_EMOJIS.contains(it.emoji)
                             && !GuildManager.lookupPermission(it.channel.asTextChannel(), Permission.MESSAGE_MANAGE)
+                            && !(it.user?.isBot ?: false)
                 }
                 .flatMap { mono {
                     it and it.guild

@@ -41,7 +41,7 @@ private fun matchLocale(locale: DiscordLocale): Language =
 
 fun guildJoinRouter(bot: BotContext, event: GuildJoinEvent): Mono<ServerJoinReport> =
     mono {
-        val emittedTime = LinuxTime()
+        val emittedTime = LinuxTime.now()
 
         val guild = GuildProfileRepository.retrieveOrInsertGuild(bot.dbConnection, DISCORD_PLATFORM_ID, event.guild.extractId()) {
             Guild(
@@ -78,7 +78,7 @@ fun guildJoinRouter(bot: BotContext, event: GuildJoinEvent): Mono<ServerJoinRepo
 
 fun guildLeaveRouter(bot: BotContext, event: GuildLeaveEvent): Mono<InteractionReport> =
     mono {
-        val emittedTime = LinuxTime()
+        val emittedTime = LinuxTime.now()
 
         val maybeGuild = GuildProfileRepository.retrieveGuild(bot.dbConnection, DISCORD_PLATFORM_ID, event.guild.extractId())
 

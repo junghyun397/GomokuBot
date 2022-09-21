@@ -14,7 +14,7 @@ data class UserStats(
     val whiteLosses: Int = 0,
     val whiteDraws: Int = 0,
 
-    val last_update: LinuxTime = LinuxTime()
+    val last_update: LinuxTime = LinuxTime.now()
 ) : Comparable<UserStats> {
 
     val totalWins get() = this.blackWins + this.whiteWins

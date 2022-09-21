@@ -10,7 +10,7 @@ import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.SessionManager
-import core.session.entities.BoardNavigateState
+import core.session.entities.BoardNavigationState
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
 import jrenju.notation.Pos
@@ -23,7 +23,7 @@ enum class Direction {
 }
 
 class FocusCommand(
-    private val navigateState: BoardNavigateState,
+    private val navigationState: BoardNavigationState,
     private val session: GameSession,
     private val direction: Direction,
 ) : Command {
@@ -44,8 +44,8 @@ class FocusCommand(
         val newFocus = run {
             val step = producer.focusWidth / 2 + 1
 
-            val row = Pos.idxToRow(this.navigateState.page)
-            val col = Pos.idxToCol(this.navigateState.page)
+            val row = Pos.idxToRow(this.navigationState.page)
+            val col = Pos.idxToCol(this.navigationState.page)
 
             when (this.direction) {
                 Direction.LEFT -> Pos(row, (col - step).coerceIn(producer.focusRange))
@@ -57,9 +57,9 @@ class FocusCommand(
         }
 
         when(newFocus.idx()) {
-            this.navigateState.page -> IO { emptyList<Order>() } and this.asCommandReport("focus bounded", guild, user)
+            this.navigationState.page -> IO { emptyList<Order>() } and this.asCommandReport("focus bounded", guild, user)
             else -> {
-                SessionManager.addNavigate(bot.sessions, messageRef, this.navigateState.copy(page = newFocus.idx()))
+                SessionManager.addNavigate(bot.sessions, messageRef, this.navigationState.copy(page = newFocus.idx()))
 
                 val action = producer.attachFocusButtons(publishers.component, session, newFocus)
                     .launch()

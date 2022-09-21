@@ -4,8 +4,6 @@ import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
-import core.database.entities.extractGameRecord
-import core.database.repositories.GameRecordRepository
 import core.interact.Order
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
@@ -19,7 +17,10 @@ import core.session.entities.GameSession
 import core.session.entities.GuildConfig
 import core.session.entities.PvpGameSession
 import jrenju.notation.Pos
-import utils.structs.*
+import utils.structs.IO
+import utils.structs.flatMap
+import utils.structs.fold
+import utils.structs.map
 
 class SetCommand(
     private val session: GameSession,
@@ -63,7 +64,7 @@ class SetCommand(
                     io to this.asCommandReport("make move ${pos.toCartesian()}", guild, user)
                 }
                 is AiGameSession -> {
-                    val nextSession = GameManager.makeAiMove(bot.kvineClient, thenSession, Pos.fromIdx(thenSession.board.latestMove()))
+                    val nextSession = GameManager.makeAiMove(bot.kvineClient, thenSession)
 
                     nextSession.gameResult.fold(
                         onEmpty = {
@@ -82,11 +83,7 @@ class SetCommand(
                             io to this.asCommandReport("make move ${pos.toCartesian()}", guild, user)
                         },
                         onDefined = { result ->
-                            SessionManager.removeGameSession(bot.sessions, guild, this.session.owner.id)
-
-                            nextSession.extractGameRecord(guild.id).forEach { record ->
-                                GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
-                            }
+                            GameManager.finishSession(bot, guild, nextSession, result)
 
                             val io = when (result) {
                                 is GameResult.Win ->
@@ -103,45 +100,38 @@ class SetCommand(
                     )
                 }
             } },
-            onDefined = { result -> when (thenSession) {
-                is PvpGameSession -> {
-                    SessionManager.removeGameSession(bot.sessions, guild, this.session.owner.id)
+            onDefined = { result ->
+                GameManager.finishSession(bot, guild, thenSession, result)
 
-                    thenSession.extractGameRecord(guild.id).forEach { record ->
-                        GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
+                when (thenSession) {
+                    is PvpGameSession -> {
+                        val io = when (result) {
+                            is GameResult.Win ->
+                                producer.produceWinPVP(publishers.plain, config.language.container, thenSession.nextPlayer, thenSession.player, this.pos)
+                            is GameResult.Full ->
+                                producer.produceTiePVP(publishers.plain, config.language.container, thenSession.owner, thenSession.opponent)
+                        }
+                            .launch()
+                            .flatMap { buildFinishProcedure(bot, producer, publisher, config, this.session, thenSession) }
+                            .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
+
+                        io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", guild, user)
                     }
+                    is AiGameSession -> {
+                        val io = when (result) {
+                            is GameResult.Win ->
+                                producer.produceWinPVE(publishers.plain, config.language.container, thenSession.owner, this.pos)
+                            is GameResult.Full ->
+                                producer.produceTiePVE(publishers.plain, config.language.container, thenSession.owner)
+                        }
+                            .launch()
+                            .flatMap { buildFinishProcedure(bot, producer, publisher, config, this.session, thenSession) }
+                            .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
-                    val io = when (result) {
-                        is GameResult.Win ->
-                            producer.produceWinPVP(publishers.plain, config.language.container, thenSession.nextPlayer, thenSession.player, this.pos)
-                        is GameResult.Full ->
-                            producer.produceTiePVP(publishers.plain, config.language.container, thenSession.owner, thenSession.opponent)
+                        io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", guild, user)
                     }
-                        .launch()
-                        .flatMap { buildFinishProcedure(bot, producer, publisher, config, this.session, thenSession) }
-                        .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
-
-                    io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", guild, user)
                 }
-                is AiGameSession -> {
-                    SessionManager.removeGameSession(bot.sessions, guild, this.session.owner.id)
-                    thenSession.extractGameRecord(guild.id).forEach { record ->
-                        GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
-                    }
-
-                    val io = when (result) {
-                        is GameResult.Win ->
-                            producer.produceWinPVE(publishers.plain, config.language.container, thenSession.owner, this.pos)
-                        is GameResult.Full ->
-                            producer.produceTiePVE(publishers.plain, config.language.container, thenSession.owner)
-                    }
-                        .launch()
-                        .flatMap { buildFinishProcedure(bot, producer, publisher, config, this.session, thenSession) }
-                        .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
-
-                    io to this.asCommandReport("make move ${pos.toCartesian()}, terminate session by $result", guild, user)
-                }
-            } }
+            }
         )
     }
 

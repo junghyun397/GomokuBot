@@ -329,11 +329,11 @@ open class LanguageENG : LanguageContainer {
 
     // ### 4-2-1. PROCES:NEXT (MESSAGE)
 
-    override fun processNextPVE(latestMove: String) =
-        "Please make the next move. AI placed $latestMove."
+    override fun processNextPVE(lastMove: String) =
+        "Please make the next move. AI placed $lastMove."
 
-    override fun processNextPVP(priorPlayer: String, latestMove: String) =
-        "Please make the next move. $priorPlayer placed $latestMove."
+    override fun processNextPVP(priorPlayer: String, lastMove: String) =
+        "Please make the next move. $priorPlayer placed $lastMove."
 
     // ### 4-2-2. PROCESS:ERROR:ORDER (MESSAGE)
 
@@ -344,8 +344,8 @@ open class LanguageENG : LanguageContainer {
 
     // ### 4-3-1. END:PVP (MESSAGE)
 
-    override fun endPVPWin(winner: String, looser: String, latestMove: String) =
-        "$winner wins by $looser placed in $latestMove!"
+    override fun endPVPWin(winner: String, looser: String, lastMove: String) =
+        "$winner wins by $looser placed in $lastMove!"
     override fun endPVPResign(winner: String, looser: String) =
         "$winner wins by $looser resignation!"
     override fun endPVPTie(owner: String, opponent: String) =
@@ -372,7 +372,7 @@ open class LanguageENG : LanguageContainer {
     override fun boardFinished() = "Finished"
 
     override fun boardMoves() = "Moves"
-    override fun boardLatestMove() = "Last Move"
+    override fun boardLastMove() = "Last Move"
 
     override fun boardResult() = "Result"
 

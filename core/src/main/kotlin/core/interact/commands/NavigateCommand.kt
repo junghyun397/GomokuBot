@@ -11,14 +11,14 @@ import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import core.session.entities.NavigationKind
-import core.session.entities.PageNavigateState
+import core.session.entities.PageNavigationState
 import utils.assets.LinuxTime
 import utils.lang.and
 import utils.structs.IO
 import utils.structs.map
 
 class NavigateCommand(
-    private val navigateState: PageNavigateState,
+    private val navigationState: PageNavigationState,
     private val isForward: Boolean
 ) : Command {
 
@@ -35,22 +35,22 @@ class NavigateCommand(
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {
-        val newState = this.navigateState.copy(
+        val newState = this.navigationState.copy(
             page = run {
                 if (this.isForward)
-                    (this.navigateState.page + 1).coerceIn(this.navigateState.navigateKind.range)
+                    (this.navigationState.page + 1).coerceIn(this.navigationState.navigateKind.range)
                 else
-                    (this.navigateState.page - 1).coerceIn(this.navigateState.navigateKind.range)
+                    (this.navigationState.page - 1).coerceIn(this.navigationState.navigateKind.range)
             },
-            expireDate = LinuxTime(this.navigateState.expireDate.timestamp + bot.config.gameExpireOffset)
+            expireDate = LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
         )
 
-        if (this.navigateState.page == newState.page)
+        if (this.navigationState.page == newState.page)
             return@runCatching IO { emptyList<Order>() } and this.asCommandReport("navigate bounded", guild, user)
 
         SessionManager.addNavigate(bot.sessions, messageRef, newState)
 
-        val io = when (this.navigateState.navigateKind) {
+        val io = when (this.navigationState.navigateKind) {
             NavigationKind.ABOUT ->
                 producer.paginateHelp(publishers.edit, config.language.container, newState.page)
             NavigationKind.SETTINGS ->

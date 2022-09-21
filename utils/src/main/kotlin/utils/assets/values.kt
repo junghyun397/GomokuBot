@@ -6,7 +6,7 @@ import java.time.format.DateTimeFormatter
 
 @JvmInline value class URL(val ref: String)
 
-@JvmInline value class LinuxTime(val timestamp: Long = System.currentTimeMillis()) {
+@JvmInline value class LinuxTime(val timestamp: Long) {
 
     operator fun compareTo(other: LinuxTime): Int = (timestamp - other.timestamp).toInt()
 
@@ -16,9 +16,11 @@ import java.time.format.DateTimeFormatter
 
     companion object {
 
-        private val ISO_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
+        fun now(): LinuxTime = LinuxTime(System.currentTimeMillis())
 
-        fun withOffset(offset: Long): LinuxTime = LinuxTime(System.currentTimeMillis() + offset)
+        fun nowWithOffset(offset: Long): LinuxTime = LinuxTime(System.currentTimeMillis() + offset)
+
+        private val ISO_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
     }
 

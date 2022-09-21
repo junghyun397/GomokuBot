@@ -112,7 +112,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordComponents>(), Parsa
                     RejectReason.EXIST -> Either.Right(this.buildExistFailure(context, session, pos))
                     RejectReason.FORBIDDEN ->
                         if (session.board.nextColor() == Color.BLACK())
-                            Either.Right(this.buildForbiddenMoveFailure(context, session, pos, session.board.boardField()[pos.idx()]))
+                            Either.Right(this.buildForbiddenMoveFailure(context, session, pos, session.board.field()[pos.idx()]))
                         else
                             Either.Left(SetCommand(session, pos, ResponseFlag.Defer()))
                 } },

@@ -136,7 +136,7 @@ object UserStatsRepository {
                     whiteWins = whiteWins,
                     whiteLosses = whiteLosses,
                     whiteDraws = whiteTotal - whiteWins - whiteLosses,
-                    last_update = LinuxTime()
+                    last_update = LinuxTime.now()
                 )
             }
             .sortedDescending()

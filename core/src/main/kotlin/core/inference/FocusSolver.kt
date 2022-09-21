@@ -6,10 +6,10 @@ import jrenju.notation.Flag
 import jrenju.notation.Pos
 import jrenju.notation.Renju
 import jrenju.protocol.Solution
+import jrenju.protocol.`Solution$`
 import jrenju.protocol.SolutionLeaf
 import jrenju.solve.LRUMemo
 import jrenju.solve.`LargeMoveGenerator$`
-import jrenju.solve.`SolutionMapper$`
 import jrenju.solve.`VCFSolver$`
 import utils.assets.bound
 import utils.assets.maxIndexes
@@ -22,7 +22,7 @@ object FocusSolver {
 
     object FocusWeights : WeightSet {
 
-        const val latestMove = 500
+        const val lastMove = 500
         const val centerExtra = 1
 
         override val neighborhoodExtra = 2
@@ -75,7 +75,7 @@ object FocusSolver {
 
     private fun isStoneExist(board: Board, row: Int, col: Int) =
         row in 0 until Renju.BOARD_WIDTH() && col in 0 until Renju.BOARD_WIDTH()
-                && Flag.isExist(board.boardField()[Pos.rowColToIdx(row, col)])
+                && Flag.isExist(board.field()[Pos.rowColToIdx(row, col)])
 
     private fun hasNeighborhood(board: Board, idx: Int): Boolean {
         val row = Pos.idxToRow(idx)
@@ -100,7 +100,7 @@ object FocusSolver {
 
             val flag = strip.stripField()[idx]
 
-            if (board.getParticlePair(absoluteIdx).apply(color).fiveAt(strip.direction()) || flag == color)
+            if (board.getFieldStatus(absoluteIdx).apply(color).fiveAt(strip.direction()) || flag == color)
                 components.add(absoluteIdx)
             else
                 components.clear()
@@ -135,7 +135,7 @@ object FocusSolver {
     }
 
     private fun collectFiveComponents(board: Board) =
-        BoardOps(board).composeStrips(board.latestMove())
+        BoardOps(board).composeStrips(board.lastMove())
             .flatMap { strip -> this.collectFiveComponentsInStrip(board, strip, board.colorFlag()) }
 
     private fun evaluateParticle(weightSet: WeightSet, particle: ParticleOps, particleB: ParticleOps, bySelf: Boolean): Int {
@@ -173,7 +173,7 @@ object FocusSolver {
             return SolutionLeaf(moves.first())
 
         val eval = moves.map { idx ->
-            val particlePair = board.getParticlePair(idx)
+            val particlePair = board.getFieldStatus(idx)
             val selfParticle = particlePair.apply(board.nextColorFlag())
             val opponentParticle = particlePair.apply(board.colorFlag())
 
@@ -193,10 +193,10 @@ object FocusSolver {
         val maxIndexes = eval.maxIndexes()!!
 
         if (moves.size > 2) {
-            val vcfSequence = `VCFSolver$`.`MODULE$`.VCFFinder(board).findVCFSequence(LRUMemo.empty(), Int.MAX_VALUE)
+            val vcfSequence = `VCFSolver$`.`MODULE$`.findVCFSequence(board, LRUMemo.empty(), Int.MAX_VALUE)
 
             if (!vcfSequence.isEmpty)
-                return `SolutionMapper$`.`MODULE$`.SequenceToNode(vcfSequence).toSolution()
+                return `Solution$`.`MODULE$`.fromIterable(vcfSequence).get()
         }
 
         return SolutionLeaf(moves[maxIndexes.random()])
@@ -207,12 +207,12 @@ object FocusSolver {
 
         return (0 until Renju.BOARD_SIZE())
             .map { idx ->
-                val flag = board.boardField()[idx]
+                val flag = board.field()[idx]
 
                 if (Flag.isForbid(flag, board.nextColorFlag()))
                     0
                 else {
-                    val particlePair = board.getParticlePair(idx)
+                    val particlePair = board.getFieldStatus(idx)
                     val selfParticle = particlePair.apply(board.nextColorFlag())
                     val opponentParticle = particlePair.apply(board.colorFlag())
 
@@ -236,7 +236,7 @@ object FocusSolver {
 
                 val evaluated = this.evaluateBoard(board)
 
-                evaluated[latestPos.row()][latestPos.col()] += FocusWeights.latestMove
+                evaluated[latestPos.row()][latestPos.col()] += FocusWeights.lastMove
 
                 for (row in (latestPos.row() - kernelHalf).bound() .. min(Renju.BOARD_WIDTH_MAX_IDX(), latestPos.row() + kernelHalf))
                     for (col in (latestPos.col() - kernelHalf).bound() .. min(Renju.BOARD_WIDTH_MAX_IDX(), latestPos.col() + kernelHalf))

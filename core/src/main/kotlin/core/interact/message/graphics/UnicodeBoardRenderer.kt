@@ -57,11 +57,11 @@ object UnicodeBoardRenderer : BoardRenderer, BoardRendererSample {
         Either.Left(this.renderUnicodeBoard(board))
 
     private fun renderUnicodeBoard(board: Board) =
-        board.boardField()
+        board.field()
             .mapIndexed { index, flag ->
                 when (flag) {
-                    Flag.BLACK() -> if (board.latestMove() == index) LAST_BLACK else BLACK
-                    Flag.WHITE() -> if (board.latestMove() == index) LAST_WHITE else WHITE
+                    Flag.BLACK() -> if (board.lastMove() == index) LAST_BLACK else BLACK
+                    Flag.WHITE() -> if (board.lastMove() == index) LAST_WHITE else WHITE
                     Flag.FORBIDDEN_33() -> FORBIDDEN_33
                     Flag.FORBIDDEN_44() -> FORBIDDEN_44
                     Flag.FORBIDDEN_6() -> FORBIDDEN_6

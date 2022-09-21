@@ -9,7 +9,7 @@ import core.database.repositories.UserProfileRepository
 import core.inference.AiLevel
 import core.session.GameResult
 import jrenju.Board
-import jrenju.`EmptyBoard$`
+import jrenju.`EmptyScalaBoard$`
 import jrenju.notation.Color
 import jrenju.notation.Pos
 import kotlinx.coroutines.reactive.awaitLast
@@ -44,7 +44,7 @@ suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysq
             .map { (row, col) -> Pos.rowColToIdx(row.toInt(), col.toInt()) }
             .map { Pos.fromIdx(it) }
 
-        val board = history.fold(`EmptyBoard$`.`MODULE$` as Board) { board, pos -> board.makeMove(pos) }
+        val board = history.fold<Pos, Board>(`EmptyScalaBoard$`.`MODULE$`) { board, pos -> board.makeMove(pos) }
 
         val winColor = when {
             board.moves() == 0 -> Color.BLACK()
@@ -91,7 +91,7 @@ suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysq
         )!!
 
         val record = GameRecord(
-            boardStatus = board.boardField(),
+            boardStatus = board.field(),
             history = history,
             gameResult = gameResult,
             guildId = genericGuild.id,

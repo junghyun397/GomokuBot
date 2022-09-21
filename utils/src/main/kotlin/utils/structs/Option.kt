@@ -22,6 +22,10 @@ sealed interface Option<out T> {
         operator fun <T> invoke(value: T): Option<T> =
             unit(value)
 
+        inline fun <A> cond(cond: Boolean, produce: () -> A): Option<A> =
+            if (cond) Some(produce())
+            else Empty
+
         fun <A, B> zip(a: Option<A>, b: Option<B>): Option<Pair<A, B>> =
             when {
                 a is Some && b is Some -> Some(a.value and b.value)
@@ -63,8 +67,13 @@ inline fun <T, R> Option<T>.fold(onDefined: (T) -> R, onEmpty: () -> R): R =
     }
 
 inline fun <T> Option<T>.forEach(block: (T) -> Unit) {
-    if (this.isDefined)
-        block((this as Option.Some).value)
+    if (this is Option.Some)
+        block(this.value)
+}
+
+inline fun <T> Option<T>.onEach(block: (T) -> Unit): Option<T> = this.also {
+    if (this is Option.Some)
+        block(this.value)
 }
 
 inline fun <T> Option<T>.filter(predicate: (T) -> Boolean): Option<T> =

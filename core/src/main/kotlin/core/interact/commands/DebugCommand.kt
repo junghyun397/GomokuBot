@@ -13,6 +13,7 @@ import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.SessionManager
+import core.session.Token
 import core.session.entities.AiGameSession
 import core.session.entities.GuildConfig
 import core.session.entities.RequestSession
@@ -53,7 +54,7 @@ class DebugCommand(
         DebugType.ANALYSIS -> {
             SessionManager.retrieveGameSession(bot.sessions, guild, user.id)?.let { session ->
                 producer.produceSessionArchive(publishers.plain, session, session.gameResult)
-                    .addFile(session.board.toBoardIO().debugText().toInputStream(), "analysis-report-${System.currentTimeMillis()}.txt")
+                    .addFile(session.board.toBoardIO().debugString().toInputStream(), "analysis-report-${System.currentTimeMillis()}.txt")
                     .launch()
                     .map { emptyList<Order>() } and this.asCommandReport("succeed", guild, user)
             } ?: (IO { emptyList<Order>() } and this.asCommandReport("failed", guild, user))
@@ -67,7 +68,7 @@ class DebugCommand(
                     val requestSession = RequestSession(
                         user, user,
                         SessionManager.generateMessageBufferKey(user),
-                        LinuxTime.withOffset(bot.config.gameExpireOffset)
+                        LinuxTime.nowWithOffset(bot.config.gameExpireOffset)
                     )
 
                     SessionManager.putRequestSession(bot.sessions, guild, requestSession)
@@ -86,6 +87,7 @@ class DebugCommand(
             val session = AiGameSession(
                 owner = user,
                 aiLevel = AiLevel.AMOEBA,
+                kvineToken = Token(""),
                 solution = Option.Empty,
                 ownerHasBlack = board.isNextColorBlack,
                 board = board,
@@ -93,7 +95,7 @@ class DebugCommand(
                 messageBufferKey = SessionManager.generateMessageBufferKey(user),
                 expireOffset = bot.config.gameExpireOffset,
                 recording = false,
-                expireDate = LinuxTime.withOffset(bot.config.gameExpireOffset)
+                expireDate = LinuxTime.nowWithOffset(bot.config.gameExpireOffset)
             )
 
             SessionManager.putGameSession(bot.sessions, guild, session)
@@ -159,6 +161,7 @@ class DebugCommand(
             val session = AiGameSession(
                 owner = user,
                 aiLevel = AiLevel.AMOEBA,
+                kvineToken = Token(""),
                 solution = Option.Empty,
                 ownerHasBlack = false,
                 board = vcfCase,
@@ -166,7 +169,7 @@ class DebugCommand(
                 messageBufferKey = SessionManager.generateMessageBufferKey(user),
                 expireOffset = bot.config.gameExpireOffset,
                 recording = false,
-                expireDate = LinuxTime.withOffset(bot.config.gameExpireOffset)
+                expireDate = LinuxTime.nowWithOffset(bot.config.gameExpireOffset)
             )
 
             SessionManager.putGameSession(bot.sessions, guild, session)

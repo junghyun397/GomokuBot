@@ -39,13 +39,13 @@ class LanguageJPN : LanguageENG() {
     override fun beginPVP(blackPlayer: String, whitePlayer: String) =
         "`$blackPlayer`と `$whitePlayer`のマッチが開始しました。先攻は `$blackPlayer`です。"
 
-    override fun processNextPVP(priorPlayer: String, latestMove: String) =
-        "次の手を置いてください。 `$priorPlayer`は $latestMove に置きました。"
+    override fun processNextPVP(priorPlayer: String, lastMove: String) =
+        "次の手を置いてください。 `$priorPlayer`は $lastMove に置きました。"
 
     override fun processErrorOrder(player: String) =
         "今は`$player`'さんの番です。`$player`さんの次の番を待ってください。 :thinking:"
-    override fun endPVPWin(winner: String, looser: String, latestMove: String) =
-        "`$winner`さんが $latestMove に置いて`$looser`さんに勝ちました。"
+    override fun endPVPWin(winner: String, looser: String, lastMove: String) =
+        "`$winner`さんが $lastMove に置いて`$looser`さんに勝ちました。"
     override fun endPVPResign(winner: String, looser: String) =
         "`$looser`さんが降伏を宣言して`$winner`さんが勝ちました。"
 
@@ -58,6 +58,6 @@ class LanguageJPN : LanguageENG() {
     override fun boardInProgress() = "進行中"
     override fun boardFinished() = "終了"
     override fun boardMoves() = "ターン進行度"
-    override fun boardLatestMove() = "最近着手位置"
+    override fun boardLastMove() = "最近着手位置"
 
 }

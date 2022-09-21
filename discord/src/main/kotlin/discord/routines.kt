@@ -30,7 +30,7 @@ import utils.structs.*
 fun scheduleRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flux<InteractionReport> {
     val expireSessionFlow = schedule<InteractionReport>(bot.config.gameExpireCycle) {
         SessionManager.cleanExpiredGameSession(bot.sessions).forEach { (_, guildSession, _, session) ->
-            val emittedTime = LinuxTime()
+            val emittedTime = LinuxTime.now()
 
             val (finishedSession, result) = GameManager.resignSession(session, GameResult.Cause.TIMEOUT, session.player)
 
@@ -76,7 +76,7 @@ fun scheduleRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): F
 
     val expireRequestSessionFlow = schedule<InteractionReport>(bot.config.requestExpireCycle) {
         SessionManager.cleanExpiredRequestSessions(bot.sessions).forEach { (_, guildSession, _, session) ->
-            val emittedTime = LinuxTime()
+            val emittedTime = LinuxTime.now()
 
             val message = SessionManager.viewTailMessage(bot.sessions, session.messageBufferKey)
 
@@ -86,10 +86,7 @@ fun scheduleRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): F
             if (message != null && guild != null && channel != null) {
                 val maybeRequestMessage = channel.retrieveMessageById(message.id.idLong)
                     .mapToResult()
-                    .map { when {
-                        it.isSuccess -> Option(it.get())
-                        else -> Option.Empty
-                    } }
+                    .map { Option.cond(it.isSuccess) { it.get() } }
                     .await()
 
                 val editIO = maybeRequestMessage.fold(
@@ -132,16 +129,7 @@ fun scheduleRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): F
     }
 
     val expireNavigateFlow = schedule<InteractionReport>(bot.config.navigateExpireCycle) {
-        SessionManager.cleanExpiredNavigators(bot.sessions).forEach { (messageRef, _) ->
-            val guild = jda.getGuildById(messageRef.guildId.idLong)
-            val channel = guild?.getTextChannelById(messageRef.channelId.idLong)
-
-            if (guild != null && channel != null) {
-                val io = IO { listOf(Order.RemoveNavigators(messageRef)) }
-
-                export(discordConfig, guild, io, messageRef)
-            }
-        }
+        SessionManager.cleanExpiredNavigators(bot.sessions)
     }
 
     val announceFlow = schedule<InteractionReport>(bot.config.announceUpdateCycle) {

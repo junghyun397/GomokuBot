@@ -82,7 +82,7 @@ fun forbiddenFlagToText(flag: Byte) =
         else -> "UNKNOWN"
     }
 
-fun Board.toBoardIO(): BoardIO.BoardToText = `BoardIO$`.`MODULE$`.BoardToText(this)
+fun Board.toBoardIO(): BoardIO.BoardToString = `BoardIO$`.`MODULE$`.BoardToString(this)
 
 inline fun <reified T : Any> Statement.bindNullable(name: String, value: T?): Statement =
     when (value) {

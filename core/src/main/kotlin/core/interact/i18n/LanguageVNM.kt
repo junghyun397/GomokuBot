@@ -50,13 +50,13 @@ class LanguageVNM : LanguageENG() {
     override fun beginPVP(blackPlayer: String, whitePlayer: String) =
         "Ván mới đã được bắt đầu giữa `$blackPlayer` và `$whitePlayer`! `$blackPlayer` là người đánh trước."
 
-    override fun processNextPVP(priorPlayer: String, latestMove: String) =
-        "tới lượt đánh của bạn. `$priorPlayer` đã đánh ở ô $latestMove"
+    override fun processNextPVP(priorPlayer: String, lastMove: String) =
+        "tới lượt đánh của bạn. `$priorPlayer` đã đánh ở ô $lastMove"
 
     override fun processErrorOrder(player: String) =
         "`$player` đang suy nghĩ. Chờ `$player` đánh rồi mới đến lượt của bạn. :thinking:"
-    override fun endPVPWin(winner: String, looser: String, latestMove: String) =
-        "`$winner` đã thắng `$looser`. Vị trí mà người thắng đánh cuối cùng là ô $latestMove!"
+    override fun endPVPWin(winner: String, looser: String, lastMove: String) =
+        "`$winner` đã thắng `$looser`. Vị trí mà người thắng đánh cuối cùng là ô $lastMove!"
     override fun endPVPResign(winner: String, looser: String) =
         "`$winner` đã thắng `$looser` vì `$looser` đã xin dừng cuộc chơi!"
 
@@ -69,6 +69,6 @@ class LanguageVNM : LanguageENG() {
     override fun boardInProgress() = "Đang xử lý"
     override fun boardFinished() = "Đã xong"
     override fun boardMoves() = "Số lượt đánh của cả hai đối thủ"
-    override fun boardLatestMove() = "Ô đánh trước của đối thủ:"
+    override fun boardLastMove() = "Ô đánh trước của đối thủ:"
 
 }

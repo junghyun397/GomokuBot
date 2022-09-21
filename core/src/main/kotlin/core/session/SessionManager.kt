@@ -110,30 +110,31 @@ object SessionManager {
     fun checkoutMessages(repo: SessionRepository, key: String): List<MessageRef>? =
         repo.messageBuffer.remove(key)
 
-    fun addNavigate(repo: SessionRepository, messageRef: MessageRef, state: NavigateState) {
+    fun addNavigate(repo: SessionRepository, messageRef: MessageRef, state: NavigationState) {
         repo.navigates[messageRef] = state
     }
 
-    fun getNavigateState(repo: SessionRepository, messageRef: MessageRef): NavigateState? =
+    fun getnavigationState(repo: SessionRepository, messageRef: MessageRef): NavigationState? =
         repo.navigates[messageRef]
 
     private inline fun <T : Expirable> cleanExpired(
         repo: SessionRepository,
         crossinline extract: (GuildSession) -> Map<UserUid, T>,
         crossinline mutate: (GuildSession, Set<UserUid>) -> GuildSession
-    ): Sequence<Quadruple<GuildUid, GuildSession, UserUid, T>> =
-        LinuxTime().let { referenceTime ->
-            repo.sessions
-                .asSequence()
-                .flatMap { (guildId, session) ->
-                    extract(session)
-                        .filter { referenceTime.timestamp > it.value.expireDate.timestamp }
-                        .map { (userId, expired) -> Quadruple(guildId, session, userId, expired) }
-                        .also { expires ->
-                            repo.sessions[guildId] = mutate(repo.sessions[guildId]!!, expires.map { it.third }.toSet())
-                        }
-                }
-        }
+    ): Sequence<Quadruple<GuildUid, GuildSession, UserUid, T>> {
+        val referenceTime = LinuxTime.now()
+
+        return repo.sessions
+            .asSequence()
+            .flatMap { (guildId, session) ->
+                extract(session)
+                    .filter { referenceTime.timestamp > it.value.expireDate.timestamp }
+                    .map { (userId, expired) -> Quadruple(guildId, session, userId, expired) }
+                    .also { expires ->
+                        repo.sessions[guildId] = mutate(repo.sessions[guildId]!!, expires.map { it.third }.toSet())
+                    }
+            }
+    }
 
     fun cleanExpiredRequestSessions(repo: SessionRepository): Sequence<Quadruple<GuildUid, GuildSession, UserUid, RequestSession>> =
         this.cleanExpired(repo,
@@ -154,12 +155,12 @@ object SessionManager {
             .forEach { repo.sessions.remove(it.key) }
     }
 
-    fun cleanExpiredNavigators(repo: SessionRepository): Map<MessageRef, NavigateState> {
-        val referenceTime = LinuxTime()
+    fun cleanExpiredNavigators(repo: SessionRepository): Map<MessageRef, NavigationState> {
+        val referenceTime = LinuxTime.now()
 
         return repo.navigates
             .filterValues { referenceTime.timestamp > it.expireDate.timestamp }
-            .onEach { repo.navigates.remove(it.key) }
+            .also { repo.navigates - it.keys }
     }
 
 }

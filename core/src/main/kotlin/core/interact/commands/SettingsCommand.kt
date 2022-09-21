@@ -11,7 +11,7 @@ import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import core.session.entities.NavigationKind
-import core.session.entities.PageNavigateState
+import core.session.entities.PageNavigationState
 import utils.assets.LinuxTime
 import utils.lang.and
 import utils.structs.flatMapOption
@@ -38,11 +38,11 @@ class SettingsCommand : Command {
                 SessionManager.addNavigate(
                     bot.sessions,
                     settingsMessage.messageRef,
-                    PageNavigateState(
+                    PageNavigationState(
                         settingsMessage.messageRef,
                         NavigationKind.SETTINGS,
                         0,
-                        LinuxTime.withOffset(bot.config.navigatorExpireOffset)
+                        LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
                     )
                 )
 

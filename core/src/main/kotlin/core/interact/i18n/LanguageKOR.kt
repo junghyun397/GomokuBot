@@ -319,11 +319,11 @@ open class LanguageKOR : LanguageENG() {
 
     // ### 4-2-1. PROCESS:NEXT (MESSAGE)
 
-    override fun processNextPVE(latestMove: String) =
-        "다음 수를 놓아주세요. AI는 ${latestMove}에 놓았습니다."
+    override fun processNextPVE(lastMove: String) =
+        "다음 수를 놓아주세요. AI는 ${lastMove}에 놓았습니다."
 
-    override fun processNextPVP(priorPlayer: String, latestMove: String) =
-        "다음 수를 놓아주세요. $priorPlayer 님은 ${latestMove}에 놓았습니다."
+    override fun processNextPVP(priorPlayer: String, lastMove: String) =
+        "다음 수를 놓아주세요. $priorPlayer 님은 ${lastMove}에 놓았습니다."
 
     // ### 4-2-2. PROCESS:ERROR:ORDER (MESSAGE)
 
@@ -334,8 +334,8 @@ open class LanguageKOR : LanguageENG() {
 
     // ### 4-3-1. END:PVP (MESSAGE)
 
-    override fun endPVPWin(winner: String, looser: String, latestMove: String) =
-        "$winner 님이 ${latestMove}에 돌을 놓음으로써 $looser 님을 이겼습니다."
+    override fun endPVPWin(winner: String, looser: String, lastMove: String) =
+        "$winner 님이 ${lastMove}에 돌을 놓음으로써 $looser 님을 이겼습니다."
     override fun endPVPResign(winner: String, looser: String) =
         "$looser 님이 항복을 선언 함으로써 $winner 님이 이겼습니다."
     override fun endPVPTie(owner: String, opponent: String) =
@@ -362,7 +362,7 @@ open class LanguageKOR : LanguageENG() {
     override fun boardFinished() = "종료"
 
     override fun boardMoves() = "진행도"
-    override fun boardLatestMove() = "마지막 위치"
+    override fun boardLastMove() = "마지막 위치"
 
     override fun boardResult() = "결과"
 

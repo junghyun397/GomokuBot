@@ -1,13 +1,30 @@
 package utils.assets
 
+import java.nio.ByteBuffer
 import java.util.*
 import kotlin.math.max
 
-fun Int.bound() = max(0, this)
+fun Int.bound(): Int = max(0, this)
 
-fun Boolean.toInt() = if (this) 1 else 0
+fun Int.toBytes(): ByteArray =
+    ByteBuffer.allocate(4)
+        .apply {
+            putInt(this@toBytes)
+        }
+        .array()
 
-fun <T : Enum<*>> T.toEnumString() = "${this.javaClass.simpleName}-$this"
+fun List<Byte>.getFirstInt(): Int {
+    var result = this[0].toInt() shl 12
+    result = result or (this[1].toInt() shl 8)
+    result = result or (this[2].toInt() shl 4)
+    result = result or this[3].toInt()
+
+    return result
+}
+
+fun Boolean.toInt(): Int = if (this) 1 else 0
+
+fun <T : Enum<*>> T.toEnumString(): String = "${this.javaClass.simpleName}-$this"
 
 fun <T: Comparable<T>> Iterable<T>.maxIndexes(): Array<Int>? {
     val iterator = this.iterator()

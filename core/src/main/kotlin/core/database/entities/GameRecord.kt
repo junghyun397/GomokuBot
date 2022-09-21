@@ -30,11 +30,10 @@ data class GameRecord(
 
 private val INVALID_POS: Pos = Pos.fromIdx(-1)
 
-fun GameSession.extractGameRecord(guildUid: GuildUid) =
-    when {
-        this.gameResult.isEmpty || !this.recording || this.history.any { it == null } -> Option.Empty
-        else -> Option(GameRecord(
-            boardStatus = board.boardField(),
+fun GameSession.extractGameRecord(guildUid: GuildUid): Option<GameRecord> =
+    Option.cond(this.gameResult.isEmpty || !this.recording || this.history.contains(null)) {
+        GameRecord(
+            boardStatus = board.field(),
             history = history.map { it ?: INVALID_POS },
 
             gameResult = gameResult.getOrException(),
@@ -54,6 +53,6 @@ fun GameSession.extractGameRecord(guildUid: GuildUid) =
                 else -> null
             },
 
-            date = LinuxTime()
-        ))
+            date = LinuxTime.now()
+        )
     }

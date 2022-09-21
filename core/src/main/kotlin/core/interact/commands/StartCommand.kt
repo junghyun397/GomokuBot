@@ -37,7 +37,8 @@ class StartCommand(val opponent: User?) : Command {
     ) = runCatching {
         when(this.opponent) {
             null -> {
-                val gameSession = GameManager.generateAiSession(bot.config.gameExpireOffset, user, AiLevel.AMOEBA)
+                val gameSession = GameManager.generateAiSession(bot, user, AiLevel.AMOEBA)
+
                 SessionManager.putGameSession(bot.sessions, guild, gameSession)
 
                 val io = producer.produceBeginsPVE(publishers.plain, config.language.container, user, gameSession.ownerHasBlack)
@@ -51,7 +52,7 @@ class StartCommand(val opponent: User?) : Command {
                 val requestSession = RequestSession(
                     user, opponent,
                     SessionManager.generateMessageBufferKey(user),
-                    LinuxTime.withOffset(bot.config.requestExpireOffset),
+                    LinuxTime.nowWithOffset(bot.config.requestExpireOffset),
                 )
 
                 SessionManager.putRequestSession(bot.sessions, guild, requestSession)
@@ -59,7 +60,7 @@ class StartCommand(val opponent: User?) : Command {
                 val io = producer.produceRequest(publishers.plain, config.language.container, user, opponent)
                     .retrieve()
                     .flatMapOption { IO { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.messageRef) } }
-                    .map { emptyList<Order>()  }
+                    .map { emptyList<Order>() }
 
                 io and this.asCommandReport("make request to ${this.opponent}", guild, user)
             }

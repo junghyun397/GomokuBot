@@ -114,19 +114,19 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
             COORDINATE_SIZE + (Renju.BOARD_WIDTH() - this.row() - 1) * POINT_SIZE
         )
 
-    fun retrieveFileName(): String =
+    fun newFileName(): String =
         "board-${System.currentTimeMillis()}.png"
 
     override fun renderBoard(board: Board, history: Option<List<Pos?>>) =
-        Either.Right(this.renderImageBoard(board, history, true) and this.retrieveFileName())
+        Either.Right(this.renderImageBoard(board, history))
 
-    fun renderImageBoard(board: Board, history: Option<List<Pos?>>, enableForbiddenPoints: Boolean): InputStream {
+    fun renderImageBoard(board: Board, history: Option<List<Pos?>> = Option.Empty, enableForbiddenPoints: Boolean = true): InputStream {
         val image = this.prototypeImage.clone()
 
         image.createGraphics().apply {
             setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
-            board.boardField()
+            board.field()
                 .withIndex()
                 .filter { it.value != Flag.FREE() }
                 .map { Pos.fromIdx(it.index).asBoardPos() and it.value }

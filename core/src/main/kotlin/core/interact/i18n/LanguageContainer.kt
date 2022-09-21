@@ -296,9 +296,9 @@ sealed interface LanguageContainer {
 
     // ### 4-2-1. PROCESS:NEXT (MESSAGE)
 
-    fun processNextPVE(latestMove: String): String
+    fun processNextPVE(lastMove: String): String
 
-    fun processNextPVP(priorPlayer: String, latestMove: String): String
+    fun processNextPVP(priorPlayer: String, lastMove: String): String
 
     // ### 4-2-2. PROCESS:ERROR:ORDER (MESSAGE)
 
@@ -308,7 +308,7 @@ sealed interface LanguageContainer {
 
     // ### 4-3-1. END:PVP (MESSAGE)
 
-    fun endPVPWin(winner: String, looser: String, latestMove: String): String
+    fun endPVPWin(winner: String, looser: String, lastMove: String): String
     fun endPVPResign(winner: String, looser: String): String
     fun endPVPTie(owner: String, opponent: String): String
     fun endPVPTimeOut(winner: String, looser: String): String
@@ -327,7 +327,7 @@ sealed interface LanguageContainer {
     fun boardFinished(): String
 
     fun boardMoves(): String
-    fun boardLatestMove(): String
+    fun boardLastMove(): String
 
     fun boardResult(): String
 

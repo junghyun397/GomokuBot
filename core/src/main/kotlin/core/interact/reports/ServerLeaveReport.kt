@@ -7,7 +7,7 @@ data class ServerLeaveReport(
     override val guild: Guild,
     override var interactionSource: String? = null,
     override var emittedTime: LinuxTime? = null,
-    override val terminationTime: LinuxTime = LinuxTime(),
+    override val terminationTime: LinuxTime = LinuxTime.now(),
 ) : AbstractInteractionReport() {
 
     override fun toString() = "${super.toString()}\t leave\t goodbye"

@@ -16,6 +16,8 @@ import kotlin.reflect.KClass
 
 const val DISCORD_PLATFORM_ID: Short = 1
 
+typealias JDAUser = net.dv8tion.jda.api.entities.User
+
 typealias JDAGuild = net.dv8tion.jda.api.entities.Guild
 
 fun net.dv8tion.jda.api.entities.Message.extractMessageRef(): MessageRef =

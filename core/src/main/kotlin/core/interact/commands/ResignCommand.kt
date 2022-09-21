@@ -4,8 +4,6 @@ import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
-import core.database.entities.extractGameRecord
-import core.database.repositories.GameRecordRepository
 import core.interact.Order
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
@@ -18,7 +16,6 @@ import core.session.entities.GameSession
 import core.session.entities.GuildConfig
 import core.session.entities.PvpGameSession
 import utils.structs.flatMap
-import utils.structs.forEach
 import utils.structs.map
 
 class ResignCommand(private val session: GameSession) : Command {
@@ -38,11 +35,7 @@ class ResignCommand(private val session: GameSession) : Command {
     ) = runCatching {
         val (finishedSession, result) = GameManager.resignSession(this.session, GameResult.Cause.RESIGN, user)
 
-        SessionManager.removeGameSession(bot.sessions, guild, session.owner.id)
-
-        finishedSession.extractGameRecord(guild.id).forEach { record ->
-            GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
-        }
+        GameManager.finishSession(bot, guild, finishedSession, result)
 
         val io = when (finishedSession) {
             is AiGameSession ->

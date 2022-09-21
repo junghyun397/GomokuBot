@@ -4,6 +4,7 @@ import core.assets.User
 import core.assets.aiUser
 import core.inference.AiLevel
 import core.session.GameResult
+import core.session.Token
 import jrenju.Board
 import jrenju.notation.Pos
 import jrenju.protocol.SolutionNode
@@ -49,6 +50,7 @@ sealed interface GameSession : Expirable {
 data class AiGameSession(
     val aiLevel: AiLevel,
     val solution: Option<SolutionNode>,
+    val kvineToken: Token,
     override val owner: User,
     override val ownerHasBlack: Boolean,
     override val board: Board,
@@ -58,7 +60,7 @@ data class AiGameSession(
     override val expireOffset: Long,
     override val recording: Boolean,
     override val expireDate: LinuxTime,
-    override val createDate: LinuxTime = LinuxTime()
+    override val createDate: LinuxTime = LinuxTime.now()
 ) : GameSession {
 
     override val opponent = aiUser
@@ -68,7 +70,7 @@ data class AiGameSession(
             board = board,
             history = this.history + move,
             gameResult = gameResult,
-            expireDate = LinuxTime.withOffset(this.expireOffset),
+            expireDate = LinuxTime.nowWithOffset(this.expireOffset),
             messageBufferKey = messageBufferKey
         )
 
@@ -85,7 +87,7 @@ data class PvpGameSession(
     override val expireOffset: Long,
     override val recording: Boolean,
     override val expireDate: LinuxTime,
-    override val createDate: LinuxTime = LinuxTime()
+    override val createDate: LinuxTime = LinuxTime.now()
 ) : GameSession {
 
     override fun next(board: Board, move: Pos, gameResult: Option<GameResult>, messageBufferKey: String) =
@@ -93,7 +95,7 @@ data class PvpGameSession(
             board = board,
             history = this.history + move,
             gameResult = gameResult,
-            expireDate = LinuxTime.withOffset(this.expireOffset),
+            expireDate = LinuxTime.nowWithOffset(this.expireOffset),
             messageBufferKey = messageBufferKey
         )
 

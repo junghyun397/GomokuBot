@@ -51,11 +51,11 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
         return (-half .. half).map { rowOffset ->
             (-half .. half).map { colOffset ->
                 val pos = Pos(focus.row() + rowOffset, focus.col() + colOffset)
-                val flag = if (pos.idx() == board.latestMove()) when (board.boardField()[board.latestMove()]) {
+                val flag = if (pos.idx() == board.lastMove()) when (board.field()[board.lastMove()]) {
                     Flag.BLACK() -> ButtonFlag.BLACK_RECENT
                     Flag.WHITE() -> ButtonFlag.WHITE_RECENT
                     else -> ButtonFlag.FREE
-                } else when (board.boardField()[pos.idx()]) {
+                } else when (board.field()[pos.idx()]) {
                     Flag.BLACK() -> ButtonFlag.BLACK
                     Flag.WHITE() -> ButtonFlag.WHITE
                     Flag.FORBIDDEN_33(), Flag.FORBIDDEN_44(), Flag.FORBIDDEN_6() ->
@@ -119,14 +119,14 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
             else -> container.beginPVEAiBlack(owner.asMentionFormat())
         }
 
-    override fun produceNextMovePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, previousPlayer: User, nextPlayer: User, latestMove: Pos) =
+    override fun produceNextMovePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, previousPlayer: User, nextPlayer: User, lastMove: Pos) =
         publisher sends container.processNextPVP(
             nextPlayer.asMentionFormat(),
-            latestMove.toCartesian().asHighlightFormat()
+            lastMove.toCartesian().asHighlightFormat()
         )
 
-    override fun produceWinPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, looser: User, latestMove: Pos) =
-        publisher sends container.endPVPWin(winner.asMentionFormat(), looser.asMentionFormat(), latestMove.toCartesian().asHighlightFormat())
+    override fun produceWinPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, looser: User, lastMove: Pos) =
+        publisher sends container.endPVPWin(winner.asMentionFormat(), looser.asMentionFormat(), lastMove.toCartesian().asHighlightFormat())
 
     override fun produceTiePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User) =
         publisher sends container.endPVPTie(owner.asMentionFormat(), opponent.asMentionFormat())
@@ -137,14 +137,14 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
     override fun produceTimeoutPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, looser: User) =
         publisher sends container.endPVPTimeOut(winner.asMentionFormat(), looser.asMentionFormat())
 
-    override fun produceNextMovePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, latestMove: Pos) =
-        publisher sends container.processNextPVE(latestMove.toCartesian().asHighlightFormat())
+    override fun produceNextMovePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, lastMove: Pos) =
+        publisher sends container.processNextPVE(lastMove.toCartesian().asHighlightFormat())
 
-    override fun produceWinPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, latestMove: Pos) =
-        publisher sends container.endPVEWin(owner.asMentionFormat(), latestMove.toCartesian().asHighlightFormat())
+    override fun produceWinPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, lastMove: Pos) =
+        publisher sends container.endPVEWin(owner.asMentionFormat(), lastMove.toCartesian().asHighlightFormat())
 
-    override fun produceLosePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, latestMove: Pos) =
-        publisher sends container.endPVELose(owner.asMentionFormat(), latestMove.toCartesian().asHighlightFormat())
+    override fun produceLosePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, lastMove: Pos) =
+        publisher sends container.endPVELose(owner.asMentionFormat(), lastMove.toCartesian().asHighlightFormat())
 
     override fun produceTiePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User) =
         publisher sends container.endPVETie(owner.asMentionFormat())

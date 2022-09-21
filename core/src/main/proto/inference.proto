@@ -1,36 +1,79 @@
 syntax = "proto3";
-import "google/protobuf/empty.proto";
 
 option java_outer_classname = "InferenceProto";
 
 package inference;
 
+message Empty { }
+
+enum Color {
+  EMPTY = 0;
+  BLACK = 1;
+  WHITE = 2;
+}
+
+message Status {
+  bytes board = 1;
+  int32 moves = 2;
+  int32 lastMove = 3;
+}
+
+message Begins {
+
+  message AiPreset {
+    int32 maxNodes = 1;
+    int32 maxDepth = 2;
+    int32 aiVCFDepth = 3;
+    int32 playerVCFDepth = 4;
+  }
+
+  AiPreset aiPreset = 1;
+  Color aiColor = 2;
+  Status initStatus = 3;
+
+}
+
+message Token {
+  string token = 1;
+}
+
+message Update {
+  Token token = 1;
+  Status status = 2;
+}
+
+message Solution {
+  bytes solution = 1;
+}
+
+message Report {
+
+  message Result {
+
+    enum Cause {
+      FIVE_IN_A_ROW = 0;
+      RESIGN = 1;
+      TIMEOUT = 2;
+      DRAW = 3;
+    }
+
+    Color winColor = 2;
+    Cause cause = 1;
+
+  }
+
+  Token token = 1;
+  Status status = 2;
+  Result result = 3;
+
+}
+
 service Inference {
-  rpc Session(stream Request) returns (stream Response);
-}
 
-message Request {
-  message State {
-    bytes board = 1;
-    uint32 turns = 2;
-  }
+  rpc begins(Begins) returns (Token);
 
-  State state = 1;
-}
+  rpc update(Update) returns (Solution);
 
-enum Method {
-  SHALLOW_INFERENCE = 0;
-  CACHED_SOLUTION = 1;
-  DEEP_INFERENCE = 2;
-  DEEP_SOLUTION = 3;
-}
+  rpc report(Report) returns (Empty);
 
-message Response {
-  message Solution {
-    bytes board = 1;
-    uint32 turns = 2;
-  }
-
-  Solution solution = 1;
-  Method method = 2;
 }

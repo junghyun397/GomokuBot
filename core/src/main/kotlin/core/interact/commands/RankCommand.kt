@@ -18,7 +18,7 @@ sealed interface RankScope {
 
     object Global : RankScope { override fun toString() = "RankScope.Global" }
 
-    object Guild : RankScope { override fun toString() = "RankScope.Guild" }
+    data class Guild(val target: core.assets.Guild) : RankScope
 
     data class User(val target: core.assets.User) : RankScope
 
@@ -41,7 +41,7 @@ class RankCommand(private val scope: RankScope) : Command {
     ) = runCatching {
         val rankings = when (this.scope) {
             is RankScope.Global -> UserStatsRepository.fetchRankings(bot.dbConnection)
-            is RankScope.Guild -> UserStatsRepository.fetchRankings(bot.dbConnection, guild.id)
+            is RankScope.Guild -> UserStatsRepository.fetchRankings(bot.dbConnection, scope.target.id)
             is RankScope.User -> UserStatsRepository.fetchRankings(bot.dbConnection, scope.target.id)
         }
 

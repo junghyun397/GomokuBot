@@ -1,15 +1,20 @@
 package core.session
 
+import core.BotContext
+import core.assets.Guild
 import core.assets.User
 import core.assets.aiUser
+import core.database.entities.extractGameRecord
+import core.database.repositories.GameRecordRepository
 import core.inference.AiLevel
+import core.inference.FocusSolver
 import core.inference.KvineClient
 import core.interact.message.graphics.*
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.PvpGameSession
-import jrenju.Board
-import jrenju.`EmptyBoard$`
+import jrenju.`EmptyScalaBoard$`
+import jrenju.`ScalaBoard$`
 import jrenju.notation.Color
 import jrenju.notation.Pos
 import jrenju.notation.Renju
@@ -17,10 +22,7 @@ import jrenju.protocol.SolutionNode
 import scala.Enumeration
 import utils.assets.LinuxTime
 import utils.lang.and
-import utils.structs.Identifiable
-import utils.structs.Option
-import utils.structs.flatMap
-import utils.structs.fold
+import utils.structs.*
 import kotlin.random.Random
 
 enum class BoardStyle(override val id: Short, val renderer: BoardRenderer, val sample: BoardRendererSample) : Identifiable {
@@ -45,6 +47,8 @@ enum class ArchivePolicy(override val id: Short) : Identifiable {
 enum class RejectReason(override val id: Short) : Identifiable {
     EXIST(0), FORBIDDEN(1)
 }
+
+@JvmInline value class Token(val token: String)
 
 sealed interface GameResult {
 
@@ -94,35 +98,43 @@ sealed interface GameResult {
 
 object GameManager {
 
-    fun generatePvpSession(expireOffset: Long, owner: User, opponent: User): GameSession =
+    fun generatePvpSession(bot: BotContext, owner: User, opponent: User): GameSession =
         PvpGameSession(
             owner = owner,
             opponent = opponent,
             ownerHasBlack = Random(System.currentTimeMillis()).nextBoolean(),
-            board = `EmptyBoard$`.`MODULE$`,
+            board = `EmptyScalaBoard$`.`MODULE$`,
             history = emptyList(),
             messageBufferKey = SessionManager.generateMessageBufferKey(owner),
             recording = true,
-            expireOffset = expireOffset,
-            expireDate = LinuxTime.withOffset(expireOffset),
+            expireOffset = bot.config.gameExpireOffset,
+            expireDate = LinuxTime.nowWithOffset(bot.config.gameExpireOffset),
         )
 
-    fun generateAiSession(expireOffset: Long, owner: User, aiLevel: AiLevel): GameSession {
+    suspend fun generateAiSession(bot: BotContext, owner: User, aiLevel: AiLevel): GameSession {
         val ownerHasBlack = Random(System.currentTimeMillis()).nextBoolean()
 
-        val board = if (ownerHasBlack) `EmptyBoard$`.`MODULE$` else Board.newBoard()
+        val board = if (ownerHasBlack) `EmptyScalaBoard$`.`MODULE$` else `ScalaBoard$`.`MODULE$`.newBoard()
+
+        val aiColor = if (ownerHasBlack) Color.WHITE() else Color.BLACK()
+
+        val token = when (aiLevel) {
+            AiLevel.AMOEBA -> Token("")
+            else -> bot.kvineClient.begins(aiLevel.aiPreset, aiColor, board)
+        }
 
         return AiGameSession(
             owner = owner,
             aiLevel = aiLevel,
+            kvineToken = token,
             solution = Option.Empty,
             ownerHasBlack = ownerHasBlack,
             board = board,
             history = if (ownerHasBlack) emptyList() else listOf(Renju.BOARD_CENTER_POS()),
             messageBufferKey = SessionManager.generateMessageBufferKey(owner),
             recording = true,
-            expireOffset = expireOffset,
-            expireDate = LinuxTime.withOffset(expireOffset),
+            expireOffset = bot.config.gameExpireOffset,
+            expireDate = LinuxTime.nowWithOffset(bot.config.gameExpireOffset),
         )
     }
 
@@ -160,10 +172,10 @@ object GameManager {
         )
     }
 
-    fun makeAiMove(kvineClient: KvineClient, session: AiGameSession, latestMove: Pos): AiGameSession {
+    suspend fun makeAiMove(kvineClient: KvineClient, session: AiGameSession): AiGameSession {
         val (aiMove, solutionNode) = session.solution
             .flatMap { solutionNode ->
-                solutionNode.child().get(latestMove.idx()).fold(
+                solutionNode.child().get(session.board.lastMove()).fold(
                     { Option.Empty },
                     { Option(it) }
                 )
@@ -176,7 +188,12 @@ object GameManager {
                     }
                 },
                 onEmpty = {
-                    when (val solution = session.aiLevel.solver(kvineClient, session.board, Pos.fromIdx(session.board.latestMove()))) {
+                    val solution = when (session.aiLevel) {
+                        AiLevel.AMOEBA -> FocusSolver.findSolution(session.board)
+                        else -> kvineClient.update(session.kvineToken, session.board)
+                    }
+
+                    when (solution) {
                         is SolutionNode -> solution.idx() and Option(solution)
                         else -> solution.idx() and Option.Empty
                     }
@@ -214,7 +231,7 @@ object GameManager {
 
     fun resignSession(session: GameSession, cause: GameResult.Cause, user: User?): Pair<GameSession, GameResult.Win> {
         val winColor = when (session.board) {
-            is `EmptyBoard$` -> when (session.ownerHasBlack) {
+            is `EmptyScalaBoard$` -> when (session.ownerHasBlack) {
                 true -> Color.WHITE()
                 else -> Color.BLACK()
             }
@@ -237,6 +254,18 @@ object GameManager {
 
                 session.copy(gameResult = Option(result)) and result
             }
+        }
+    }
+
+    suspend fun finishSession(bot: BotContext, guild: Guild, session: GameSession, result: GameResult) {
+        SessionManager.removeGameSession(bot.sessions, guild, session.owner.id)
+
+        session.extractGameRecord(guild.id).forEach { record ->
+            GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
+        }
+
+        if (session is AiGameSession && session.aiLevel != AiLevel.AMOEBA) {
+            bot.kvineClient.report(session.kvineToken, session.board, result)
         }
     }
 

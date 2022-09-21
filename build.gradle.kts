@@ -34,7 +34,8 @@ subprojects {
 
 //        implementation("jrenju:jrenju_2.13:0.1.0-SNAPSHOT") // maven m2
 //        implementation("utils:utils_2.13:0.1.0-SNAPSHOT") // maven m2
-        implementation("com.github.junghyun397.Kvine:jrenju_2.13:8a73d261cc")
+//        implementation("jrenju:jrenju_2.13") // gradle sourceControl
+        implementation("com.github.junghyun397.Kvine:jrenju_2.13:0f2075eb70") // jitpack
 
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
 

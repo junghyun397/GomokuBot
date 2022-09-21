@@ -10,12 +10,14 @@ import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.session.entities.GuildConfig
 import utils.lang.and
-import utils.structs.Either
-import utils.structs.fold
+import utils.structs.Option
+import utils.structs.forEach
+import utils.structs.orElseGet
 
 class UpdateProfileCommand(
     private val command: Command,
-    private val newProfile: Either<User, Guild>,
+    private val newUser: Option<User>,
+    private val newGuild: Option<Guild>,
 ) : Command {
 
     override val name = "update-profile+"
@@ -31,26 +33,22 @@ class UpdateProfileCommand(
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {
-        val thenUser = this.newProfile.fold(
-            onLeft = {
-                UserProfileRepository.upsertUser(bot.dbConnection, it)
-                it
-            },
-            onRight = { user }
-        )
+        this.newUser.forEach {
+            UserProfileRepository.upsertUser(bot.dbConnection, it)
+        }
 
-        val thenGuild = this.newProfile.fold(
-            onLeft = { guild },
-            onRight = {
-                GuildProfileRepository.upsertGuild(bot.dbConnection, it)
-                it
-            }
-        )
+        val thenUser = this.newUser.orElseGet { user }
+
+        this.newGuild.forEach {
+            GuildProfileRepository.upsertGuild(bot.dbConnection, it)
+        }
+
+        val thenGuild = this.newGuild.orElseGet { guild }
 
         this.command
             .execute(bot, config, thenGuild, thenUser, producer, messageRef, publishers)
             .map { (originalIO, originalReport) ->
-                originalIO and originalReport.copy(commandName = "$name${originalReport.commandName}")
+                originalIO and originalReport.copy(guild = thenGuild, user = thenUser, commandName = "$name${originalReport.commandName}")
             }
             .getOrThrow()
     }

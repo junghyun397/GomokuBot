@@ -2,6 +2,9 @@
 
 package utils.structs
 
+import kotlinx.coroutines.reactor.mono
+import reactor.core.publisher.Mono
+
 interface IO<out A> {
 
     suspend fun run(): A
@@ -62,3 +65,6 @@ fun <A, B> IO<Option<A>>.flatMapOption(mapper: (A) -> IO<B>): IO<Option<B>> =
     object : IO<Option<B>> {
         override suspend fun run() = this@flatMapOption.run().map { mapper(it).run() }
     }
+
+fun <A> IO<A>.toMono(): Mono<A> =
+    mono { this@toMono.run() }

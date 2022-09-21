@@ -32,7 +32,7 @@ class AcceptCommand(private val requestSession: RequestSession) : Command {
         publishers: PublisherSet<A, B>,
     ) = runCatching {
         val gameSession = GameManager.generatePvpSession(
-            bot.config.gameExpireOffset,
+            bot,
             this.requestSession.owner,
             this.requestSession.opponent,
         )

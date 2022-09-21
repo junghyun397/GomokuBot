@@ -4,16 +4,16 @@ import core.interact.commands.Direction
 import core.interact.commands.FocusCommand
 import core.interact.parse.NamedParser
 import core.session.SessionManager
-import core.session.entities.BoardNavigateState
-import core.session.entities.NavigateState
+import core.session.entities.BoardNavigationState
+import core.session.entities.NavigationState
 import discord.assets.*
 import discord.interact.InteractionContext
 import discord.interact.parse.NavigableCommand
 import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import utils.lang.and
-import utils.structs.Option
 import utils.structs.asOption
+import utils.structs.filter
 import utils.structs.flatMap
 import utils.structs.map
 
@@ -31,16 +31,15 @@ object FocusCommandParser : NamedParser, NavigableCommand {
             else -> null
         }
 
-    override suspend fun parseReaction(context: InteractionContext<GenericMessageReactionEvent>, state: NavigateState) =
+    override suspend fun parseReaction(context: InteractionContext<GenericMessageReactionEvent>, state: NavigationState) =
         SessionManager.retrieveGameSession(context.bot.sessions, context.guild, context.user.id)
-            ?.takeIf { state is BoardNavigateState }
             .asOption()
+            .filter { state is BoardNavigationState }
             .flatMap { session ->
-                when (val direction = this.matchDirection(context.event.reaction.emoji.asUnicode())) {
-                    null -> Option.Empty
-                    else -> Option(session and direction)
-                }
+                this.matchDirection(context.event.reaction.emoji.asUnicode())
+                    .asOption()
+                    .map { session and it }
             }
-            .map { (session, direction) -> FocusCommand(state as BoardNavigateState, session, direction) }
+            .map { (session, direction) -> FocusCommand(state as BoardNavigationState, session, direction) }
 
 }

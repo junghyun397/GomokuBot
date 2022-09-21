@@ -68,11 +68,11 @@ private fun <T : Event> buildUpdateProfileNode(context: InteractionContext<T>, c
     val user = jdaUser.extractProfile(uid = context.user.id, announceId = context.user.announceId)
     val guild = context.jdaGuild.extractProfile(uid = context.guild.id)
 
+    val thenUser = Option.cond(user != context.user) { user }
+    val thenGuild = Option.cond(guild != context.guild) { guild }
+
     return when {
-        user != context.user ->
-            UpdateProfileCommand(command, Either.Left(user))
-        guild != context.guild ->
-            UpdateProfileCommand(command, Either.Right(guild))
+        thenUser.isDefined || thenGuild.isDefined -> UpdateProfileCommand(command, thenUser, thenGuild)
         else -> command
     }
 }

@@ -9,7 +9,7 @@ import utils.structs.Option
 open class TextBoardRenderer : BoardRenderer {
 
     protected fun renderBoardText(board: Board) =
-        board.toBoardIO().boardText()!!
+        board.toBoardIO().boardString()!!
 
     override fun renderBoard(board: Board, history: Option<List<Pos?>>) =
         Either.Left("```\n${this.renderBoardText(board).replace(".", " ")}```")

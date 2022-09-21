@@ -37,13 +37,13 @@ class LanguageSKO : LanguageKOR() {
     override fun beginPVP(blackPlayer: String, whitePlayer: String) =
         "$blackPlayer 님과의對決이開始되었습니다! 先攻은 $blackPlayer 님입니다."
 
-    override fun processNextPVP(priorPlayer: String, latestMove: String) =
-        "다음手를置하여주세요. " + priorPlayer + "는 " + latestMove + "에置하였습니다."
+    override fun processNextPVP(priorPlayer: String, lastMove: String) =
+        "다음手를置하여주세요. " + priorPlayer + "는 " + lastMove + "에置하였습니다."
 
     override fun processErrorOrder(player: String) =
         "只今은 $player 님의次例입니다. $player 님의다음手를待機해주세요. :thinking:"
-    override fun endPVPWin(winner: String, looser: String, latestMove: String) =
-        winner + " 님이" + latestMove + "에置함으로서 " + looser + " 님에게勝利하였습니다!"
+    override fun endPVPWin(winner: String, looser: String, lastMove: String) =
+        winner + " 님이" + lastMove + "에置함으로서 " + looser + " 님에게勝利하였습니다!"
     override fun endPVPResign(winner: String, looser: String) =
         "$looser 님이降伏을宣言함으로서 $winner 님이勝利하였습니다!"
 
@@ -56,6 +56,6 @@ class LanguageSKO : LanguageKOR() {
     override fun boardInProgress() = "進行中"
     override fun boardFinished() = "終了됨"
     override fun boardMoves() = "次例進行度"
-    override fun boardLatestMove() = "最近着手位置"
+    override fun boardLastMove() = "最近着手位置"
 
 }

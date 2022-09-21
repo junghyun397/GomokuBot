@@ -57,7 +57,7 @@ fun <A, B> buildBoardProcedure(
         .mapOption { it and focus }
 }
     .flatMapOption { (message, pos) ->
-        SessionManager.addNavigate(bot.sessions, message.messageRef, BoardNavigateState(pos.idx(), session.expireDate))
+        SessionManager.addNavigate(bot.sessions, message.messageRef, BoardNavigationState(pos.idx(), session.expireDate))
         SessionManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.messageRef)
         producer.attachFocusNavigators(message) {
             SessionManager.retrieveGameSession(bot.sessions, guild, session.owner.id)?.board?.moves() != session.board.moves()
@@ -107,11 +107,11 @@ fun <A, B> buildHelpProcedure(
         SessionManager.addNavigate(
             bot.sessions,
             helpMessage.messageRef,
-            PageNavigateState(
+            PageNavigationState(
                 helpMessage.messageRef,
                 NavigationKind.ABOUT,
                 0,
-                LinuxTime.withOffset(bot.config.navigatorExpireOffset)
+                LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
             )
         )
 
@@ -133,22 +133,22 @@ fun <A, B> buildCombinedHelpProcedure(
         SessionManager.addNavigate(
             bot.sessions,
             helpMessage.messageRef,
-            PageNavigateState(
+            PageNavigationState(
                 helpMessage.messageRef,
                 NavigationKind.ABOUT,
                 0,
-                LinuxTime.withOffset(bot.config.navigatorExpireOffset)
+                LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
             )
         )
 
         SessionManager.addNavigate(
             bot.sessions,
             settingsMessage.messageRef,
-            PageNavigateState(
+            PageNavigationState(
                 settingsMessage.messageRef,
                 NavigationKind.SETTINGS,
                 settingsPage,
-                LinuxTime.withOffset(bot.config.navigatorExpireOffset)
+                LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
             )
         )
 
