@@ -1,5 +1,6 @@
 package discord.interact.message
 
+import core.BotConfig
 import core.assets.*
 import core.database.entities.Announce
 import core.database.entities.UserStats
@@ -11,12 +12,15 @@ import core.interact.message.graphics.ImageBoardRenderer
 import core.session.*
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
+import core.session.entities.NavigationKind
+import core.session.entities.PageNavigationState
 import dev.minn.jda.ktx.interactions.components.SelectMenu
 import dev.minn.jda.ktx.interactions.components.option
 import dev.minn.jda.ktx.messages.Embed
 import dev.minn.jda.ktx.messages.InlineEmbed
 import dev.minn.jda.ktx.messages.Message
 import discord.assets.*
+import discord.interact.GuildManager
 import jrenju.notation.Pos
 import jrenju.notation.Renju
 import kotlinx.coroutines.CancellationException
@@ -25,6 +29,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.emoji.Emoji
@@ -33,12 +38,12 @@ import net.dv8tion.jda.api.interactions.components.ItemComponent
 import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
 import net.dv8tion.jda.api.requests.RestAction
+import utils.assets.LinuxTime
+import utils.assets.toBytes
 import utils.assets.toEnumString
 import utils.lang.and
 import utils.lang.memoize
-import utils.structs.IO
-import utils.structs.Option
-import utils.structs.fold
+import utils.structs.*
 import java.time.format.DateTimeFormatter
 
 object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>() {
@@ -60,6 +65,33 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
     // FORMAT
 
     private fun ItemComponent.liftToButtons() = listOf(ActionRow.of(this))
+
+    fun encodePageNavigationState(base: Int, navigationState: PageNavigationState): Int =
+        this.encodePageNavigationState(base, navigationState.navigateKind, navigationState.page)
+
+    fun encodePageNavigationState(base: Int, kind: NavigationKind, page: Int): Int {
+        val baseBytes = base.toBytes()
+            .drop(1)
+            .map { it.toUByte().toInt() }
+
+        val headByte: Int = page shr 1
+        val tailByte: Int = headByte + (headByte and 0x1)
+
+        return ((baseBytes[0] + kind.id) shl 16) or ((baseBytes[1] + headByte) shl 8) or (baseBytes[2] + tailByte)
+    }
+
+    fun decodePageNavigationState(base: Int, code: Int, config: BotConfig, messageRef: MessageRef): Option<PageNavigationState> {
+        val bytes = base.toBytes()
+            .zip(code.toBytes()) { a, b -> b - a }
+            .drop(1)
+
+        val kind = NavigationKind.values().find(bytes.first().toShort())
+        val page = bytes[1] + bytes[2]
+
+        return Option.cond(kind != NavigationKind.BOARD && page in kind.range) {
+            PageNavigationState(messageRef, kind, page, LinuxTime.nowWithOffset(config.navigatorExpireOffset))
+        }
+    }
 
     // BOARD
 
@@ -89,7 +121,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
                 }
 
                 field {
-                    name = container.boardLatestMove()
+                    name = container.boardLastMove()
                     value = session.board.latestPos().get().toCartesian().asHighlightFormat()
                     inline = true
                 }
@@ -127,7 +159,8 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
 
     override fun produceBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, session: GameSession): DiscordMessageIO {
         val barColor = session.gameResult.fold(onDefined = { COLOR_RED_HEX }, onEmpty = { COLOR_GREEN_HEX })
-        return renderer.renderBoard(session.board, if (session.gameResult.isDefined) Option(session.history) else Option.Empty).fold(
+
+        return renderer.renderBoard(session.board, session.gameResult.map { session.history }).fold(
             onLeft = { textBoard ->
                 publisher(Message(
                     embeds = mutableListOf<MessageEmbed>().apply {
@@ -148,7 +181,9 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
                     }
                 ))
             },
-            onRight = { (imageStream, fName) ->
+            onRight = { imageStream ->
+                val fName = ImageBoardRenderer.newFileName()
+
                 publisher(Message(
                     embeds = mutableListOf<MessageEmbed>().apply {
                         add(Embed {
@@ -161,7 +196,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
                                 onEmpty = { buildStatusFields(container, session) },
                             )
 
-                            image = "attachment://${fName}"
+                            image = "attachment://$fName"
                         })
 
                         if (session.gameResult.isEmpty)
@@ -174,7 +209,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
 
     override fun produceSessionArchive(publisher: DiscordMessagePublisher, session: GameSession, result: Option<GameResult>): DiscordMessageIO {
         val imageStream = ImageBoardRenderer.renderImageBoard(session.board, Option(session.history), true)
-        val fName = ImageBoardRenderer.retrieveFileName()
+        val fName = ImageBoardRenderer.newFileName()
 
         return publisher(Message(
             embed = Embed {
@@ -214,7 +249,11 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
 
     override fun attachNavigators(flow: Flow<String>, message: MessageAdaptor<Message, DiscordComponents>, checkTerminated: suspend () -> Boolean) =
         IO {
-            if (message.original.isEphemeral) return@IO
+            if (
+                message.original.isEphemeral ||
+                !GuildManager.lookupPermission(message.original.guildChannel, Permission.MESSAGE_ADD_REACTION)
+            )
+                return@IO
 
             try {
                 coroutineScope {
@@ -238,7 +277,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
 
     private val buildAboutEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
-            color = COLOR_NORMAL_HEX
+            color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.ABOUT, 0)
             title = container.helpAboutEmbedTitle()
             description = container.helpAboutEmbedDescription("Discord")
             thumbnail =
@@ -273,7 +312,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
 
     private val buildCommandGuideEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
-            color = COLOR_NORMAL_HEX
+            color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.ABOUT, 0)
             title = container.helpCommandEmbedTitle()
 
             field {
@@ -334,7 +373,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
 
     private val buildExploreAboutRenjuEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
-            color = COLOR_NORMAL_HEX
+            color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.ABOUT, 0)
             description = container.exploreAboutRenju()
         }
     }
@@ -346,7 +385,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
             .flatMapIndexed { h2Index, (h3Title, blocks) -> blocks
                 .mapIndexed { blockIndex, block ->
                     Embed {
-                        color = COLOR_NORMAL_HEX
+                        color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.ABOUT, page)
                         title = when {
                             h2Index == 0 && blockIndex == 0 -> h2Title.asBoldFormat()
                             blockIndex == 0 -> h3Title
@@ -433,7 +472,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
     // LANG
 
     private val languageEmbed = Embed {
-        color = COLOR_NORMAL_HEX
+        color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.SETTINGS, 0)
         title = "GomokuBot / Language"
         description = "The default language is set based on the server region. Please apply the proper language for this server."
 
@@ -453,9 +492,9 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
 
     private val buildStyleGuideEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
+            color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.SETTINGS, 1)
             title = container.styleEmbedTitle()
             description = container.styleEmbedDescription()
-            color = COLOR_NORMAL_HEX
 
             field {
                 name = "$UNICODE_IMAGE ${container.styleSelectImage()} (``${BoardStyle.IMAGE.sample.styleShortcut}``)"
@@ -513,9 +552,9 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
 
     private val buildFocusPolicyGuideEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
+            color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.SETTINGS, 2)
             title = container.focusEmbedTitle()
             description = container.focusEmbedDescription()
-            color = COLOR_NORMAL_HEX
 
             field {
                 name = "$UNICODE_ZAP ${container.focusSelectIntelligence()}"
@@ -549,9 +588,9 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
 
     private val buildSweepPolicyGuideEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
+            color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.SETTINGS, 3)
             title = container.sweepEmbedTitle()
             description = container.sweepEmbedDescription()
-            color = COLOR_NORMAL_HEX
 
             field {
                 name = "$UNICODE_BROOM ${container.sweepSelectRelay()}"
@@ -597,9 +636,9 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
 
     private val buildArchivePolicyGuideEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
+            color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.SETTINGS, 4)
             title = container.archiveEmbedTitle()
             description = container.archiveEmbedDescription()
-            color = COLOR_NORMAL_HEX
 
             field {
                 name = "$UNICODE_SILHOUETTE ${container.archiveSelectByAnonymous()}"

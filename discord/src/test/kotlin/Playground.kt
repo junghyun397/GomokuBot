@@ -24,9 +24,9 @@ class Playground {
     fun bitTwiddling() {
         val ps = PageNavigationState(VOID_MESSAGE_REF, NavigationKind.ABOUT, 12, LinuxTime.now())
 
-        val ec = DiscordMessageProducer.encodePagenavigationState(COLOR_NORMAL_HEX, ps)
+        val ec = DiscordMessageProducer.encodePageNavigationState(COLOR_NORMAL_HEX, ps)
 
-        val dc = DiscordMessageProducer.decodePagenavigationState(COLOR_NORMAL_HEX, ec, BotConfig(), VOID_MESSAGE_REF).getOrException()
+        val dc = DiscordMessageProducer.decodePageNavigationState(COLOR_NORMAL_HEX, ec, BotConfig(), VOID_MESSAGE_REF).getOrException()
 
         println(ps)
         println(ec.toHexString())
