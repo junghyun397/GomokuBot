@@ -177,7 +177,7 @@ object GomokuBot {
                 .filter {
                     it.isFromGuild
                             && it.channel.type == ChannelType.TEXT
-                            && NAVIGATE_EMOJIS.contains(it.emoji)
+                            && NAVIGATION_EMOJIS.contains(it.emoji)
                             && !(it.user?.isBot ?: false)
                 }
                 .flatMap { mono { buildInteractionContext(botContext, discordConfig, it, it.user!!, it.guild) } }
@@ -187,7 +187,7 @@ object GomokuBot {
                 .filter {
                     it.isFromGuild
                             && it.channel.type == ChannelType.TEXT
-                            && NAVIGATE_EMOJIS.contains(it.emoji)
+                            && NAVIGATION_EMOJIS.contains(it.emoji)
                             && !GuildManager.lookupPermission(it.channel.asTextChannel(), Permission.MESSAGE_MANAGE)
                             && !(it.user?.isBot ?: false)
                 }

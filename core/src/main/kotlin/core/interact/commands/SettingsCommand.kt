@@ -35,7 +35,7 @@ class SettingsCommand : Command {
         val io = producer.produceSettings(publishers.plain, config, 0)
             .retrieve()
             .flatMapOption { settingsMessage ->
-                SessionManager.addNavigate(
+                SessionManager.addNavigation(
                     bot.sessions,
                     settingsMessage.messageRef,
                     PageNavigationState(

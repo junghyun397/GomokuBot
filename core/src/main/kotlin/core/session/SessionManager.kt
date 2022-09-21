@@ -110,7 +110,7 @@ object SessionManager {
     fun checkoutMessages(repo: SessionRepository, key: String): List<MessageRef>? =
         repo.messageBuffer.remove(key)
 
-    fun addNavigate(repo: SessionRepository, messageRef: MessageRef, state: NavigationState) {
+    fun addNavigation(repo: SessionRepository, messageRef: MessageRef, state: NavigationState) {
         repo.navigates[messageRef] = state
     }
 

@@ -57,7 +57,7 @@ fun <A, B> buildBoardProcedure(
         .mapOption { it and focus }
 }
     .flatMapOption { (message, pos) ->
-        SessionManager.addNavigate(bot.sessions, message.messageRef, BoardNavigationState(pos.idx(), session.expireDate))
+        SessionManager.addNavigation(bot.sessions, message.messageRef, BoardNavigationState(pos.idx(), session.expireDate))
         SessionManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.messageRef)
         producer.attachFocusNavigators(message) {
             SessionManager.retrieveGameSession(bot.sessions, guild, session.owner.id)?.board?.moves() != session.board.moves()
@@ -104,7 +104,7 @@ fun <A, B> buildHelpProcedure(
 ): IO<Option<Unit>> = producer.produceHelp(publisher, config.language.container, 0)
     .retrieve()
     .flatMapOption { helpMessage ->
-        SessionManager.addNavigate(
+        SessionManager.addNavigation(
             bot.sessions,
             helpMessage.messageRef,
             PageNavigationState(
@@ -130,7 +130,7 @@ fun <A, B> buildCombinedHelpProcedure(
 )
     .map { (maybeHelp, maybeSettings) -> Option.zip(maybeHelp, maybeSettings) }
     .flatMapOption { (helpMessage, settingsMessage) ->
-        SessionManager.addNavigate(
+        SessionManager.addNavigation(
             bot.sessions,
             helpMessage.messageRef,
             PageNavigationState(
@@ -141,7 +141,7 @@ fun <A, B> buildCombinedHelpProcedure(
             )
         )
 
-        SessionManager.addNavigate(
+        SessionManager.addNavigation(
             bot.sessions,
             settingsMessage.messageRef,
             PageNavigationState(

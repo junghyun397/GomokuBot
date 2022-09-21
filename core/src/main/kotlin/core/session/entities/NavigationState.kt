@@ -23,7 +23,7 @@ enum class NavigationKind(override val id: Short, val range: IntRange, val emoji
 
 sealed interface NavigationState : Expirable {
 
-    val navigateKind: NavigationKind
+    val kind: NavigationKind
 
     val page: Int
 
@@ -31,7 +31,7 @@ sealed interface NavigationState : Expirable {
 
 data class PageNavigationState(
     private val messageRef: MessageRef,
-    override val navigateKind: NavigationKind,
+    override val kind: NavigationKind,
     override val page: Int,
     override val expireDate: LinuxTime,
 ) : NavigationState
@@ -41,6 +41,6 @@ data class BoardNavigationState(
     override val expireDate: LinuxTime,
 ): NavigationState {
 
-    override val navigateKind = NavigationKind.BOARD
+    override val kind = NavigationKind.BOARD
 
 }

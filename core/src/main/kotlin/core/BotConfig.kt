@@ -11,7 +11,7 @@ data class BotConfig(
     val requestExpireCycle: Duration = Duration.ofMinutes(1),
 
     val navigatorExpireOffset: Long = Duration.ofDays(1).toMillis(),
-    val navigateExpireCycle: Duration = Duration.ofMinutes(1),
+    val navigatorExpireCycle: Duration = Duration.ofMinutes(1),
 
     val announceUpdateCycle: Duration = Duration.ofMinutes(20),
 

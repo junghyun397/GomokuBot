@@ -17,12 +17,12 @@ import utils.lang.and
 import utils.structs.IO
 import utils.structs.map
 
-class NavigateCommand(
+class NavigationCommand(
     private val navigationState: PageNavigationState,
     private val isForward: Boolean
 ) : Command {
 
-    override val name = "navigate"
+    override val name = "navigation"
 
     override val responseFlag = ResponseFlag.Immediately
 
@@ -38,19 +38,19 @@ class NavigateCommand(
         val newState = this.navigationState.copy(
             page = run {
                 if (this.isForward)
-                    (this.navigationState.page + 1).coerceIn(this.navigationState.navigateKind.range)
+                    (this.navigationState.page + 1).coerceIn(this.navigationState.kind.range)
                 else
-                    (this.navigationState.page - 1).coerceIn(this.navigationState.navigateKind.range)
+                    (this.navigationState.page - 1).coerceIn(this.navigationState.kind.range)
             },
             expireDate = LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
         )
 
         if (this.navigationState.page == newState.page)
-            return@runCatching IO { emptyList<Order>() } and this.asCommandReport("navigate bounded", guild, user)
+            return@runCatching IO { emptyList<Order>() } and this.asCommandReport("navigate ${navigationState.kind} bounded", guild, user)
 
-        SessionManager.addNavigate(bot.sessions, messageRef, newState)
+        SessionManager.addNavigation(bot.sessions, messageRef, newState)
 
-        val io = when (this.navigationState.navigateKind) {
+        val io = when (this.navigationState.kind) {
             NavigationKind.ABOUT ->
                 producer.paginateHelp(publishers.edit, config.language.container, newState.page)
             NavigationKind.SETTINGS ->
@@ -60,7 +60,7 @@ class NavigateCommand(
             .launch()
             .map { emptyList<Order>()  }
 
-        io and this.asCommandReport("navigate ${newState.navigateKind} as ${newState.page}", guild, user)
+        io and this.asCommandReport("navigate ${newState.kind} as ${newState.page}", guild, user)
     }
 
 }

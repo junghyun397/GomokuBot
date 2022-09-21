@@ -59,7 +59,7 @@ class FocusCommand(
         when(newFocus.idx()) {
             this.navigationState.page -> IO { emptyList<Order>() } and this.asCommandReport("focus bounded", guild, user)
             else -> {
-                SessionManager.addNavigate(bot.sessions, messageRef, this.navigationState.copy(page = newFocus.idx()))
+                SessionManager.addNavigation(bot.sessions, messageRef, this.navigationState.copy(page = newFocus.idx()))
 
                 val action = producer.attachFocusButtons(publishers.component, session, newFocus)
                     .launch()

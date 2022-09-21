@@ -67,7 +67,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
     private fun ItemComponent.liftToButtons() = listOf(ActionRow.of(this))
 
     fun encodePageNavigationState(base: Int, navigationState: PageNavigationState): Int =
-        this.encodePageNavigationState(base, navigationState.navigateKind, navigationState.page)
+        this.encodePageNavigationState(base, navigationState.kind, navigationState.page)
 
     fun encodePageNavigationState(base: Int, kind: NavigationKind, page: Int): Int {
         val baseBytes = base.toBytes()

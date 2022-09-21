@@ -19,7 +19,7 @@ import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.MessageActionAdaptor
 import discord.interact.message.MessageComponentActionAdaptor
 import discord.interact.parse.parsers.FocusCommandParser
-import discord.interact.parse.parsers.NavigateCommandParser
+import discord.interact.parse.parsers.NavigationCommandParser
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Message
@@ -33,7 +33,7 @@ private fun recoverNavigationState(bot: BotContext, message: Message, messageRef
     message.embeds.firstOrNull()
         .asOption()
         .flatMap { DiscordMessageProducer.decodePageNavigationState(COLOR_NORMAL_HEX, it.colorRaw, bot.config, messageRef) }
-        .onEach { SessionManager.addNavigate(bot.sessions, messageRef, it) }
+        .onEach { SessionManager.addNavigation(bot.sessions, messageRef, it) }
 
 fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mono<InteractionReport> {
     val messageRef = context.event.extractMessageRef()
@@ -45,7 +45,7 @@ fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mo
         .map { state ->
             state and when (state) {
                 is BoardNavigationState -> FocusCommandParser
-                is PageNavigationState -> NavigateCommandParser
+                is PageNavigationState -> NavigationCommandParser
             }
         }
 

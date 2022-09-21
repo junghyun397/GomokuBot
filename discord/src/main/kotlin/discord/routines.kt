@@ -128,7 +128,7 @@ fun scheduleRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): F
         }
     }
 
-    val expireNavigateFlow = schedule<InteractionReport>(bot.config.navigateExpireCycle) {
+    val expireNavigateFlow = schedule<InteractionReport>(bot.config.navigatorExpireCycle) {
         SessionManager.cleanExpiredNavigators(bot.sessions)
     }
 

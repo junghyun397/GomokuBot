@@ -1,6 +1,6 @@
 package discord.interact.parse.parsers
 
-import core.interact.commands.NavigateCommand
+import core.interact.commands.NavigationCommand
 import core.session.entities.NavigationState
 import core.session.entities.PageNavigationState
 import discord.assets.EMOJI_LEFT
@@ -13,7 +13,7 @@ import utils.structs.asOption
 import utils.structs.flatMap
 import utils.structs.map
 
-object NavigateCommandParser : NavigableCommand {
+object NavigationCommandParser : NavigableCommand {
 
     private fun matchIsForward(emoji: UnicodeEmoji) =
         when (emoji) {
@@ -29,7 +29,7 @@ object NavigateCommandParser : NavigableCommand {
             .flatMap {
                 this.matchIsForward(context.event.reaction.emoji.asUnicode())
                     .asOption()
-                    .map { NavigateCommand(state as PageNavigationState, it) }
+                    .map { NavigationCommand(state as PageNavigationState, it) }
             }
 
 
