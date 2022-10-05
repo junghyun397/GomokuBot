@@ -1,6 +1,6 @@
 package tools.documentation
 
-import jrenju.notation.Renju
+import renju.notation.Renju
 import java.nio.file.Paths
 
 private fun main() {

@@ -1,6 +1,7 @@
 package discord.assets
 
 import core.assets.*
+import discord.interact.message.MessageActionAdaptor
 import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
@@ -39,6 +40,9 @@ fun net.dv8tion.jda.api.entities.Guild.extractProfile(uid: GuildUid = GuildUid(U
 
 fun net.dv8tion.jda.api.entities.User.extractProfile(uid: UserUid = UserUid(UUID.randomUUID()), announceId: Int? = null): User =
     User(uid, DISCORD_PLATFORM_ID, this.extractId(), this.name, this.asTag, announceId, this.avatarUrl)
+
+fun net.dv8tion.jda.api.entities.Guild.editMessageByMessageRef(ref: MessageRef, newContent: net.dv8tion.jda.api.entities.Message): MessageActionAdaptor =
+    MessageActionAdaptor(this.getTextChannelById(ref.channelId.idLong)!!.editMessageById(ref.id.idLong, newContent))
 
 fun <T : Event> getEventAbbreviation(source: KClass<T>): String =
     when (source) {

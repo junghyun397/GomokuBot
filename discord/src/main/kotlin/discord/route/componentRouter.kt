@@ -3,9 +3,10 @@
 package discord.route
 
 import core.interact.commands.ResponseFlag
-import core.interact.message.PolyPublisherSet
+import core.interact.message.AdaptivePublisherSet
 import core.interact.reports.ErrorReport
 import core.interact.reports.InteractionReport
+import discord.assets.editMessageByMessageRef
 import discord.assets.extractMessageRef
 import discord.assets.getEventAbbreviation
 import discord.interact.InteractionContext
@@ -18,6 +19,7 @@ import discord.interact.parse.parsers.SetCommandParser
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import reactor.core.publisher.Mono
+import utils.assets.LinuxTime
 import utils.structs.Option
 import utils.structs.asOption
 import utils.structs.flatMap
@@ -36,7 +38,9 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
     mono {
         context.event.component.id
             .asOption()
-            .flatMap { matchAction(it.split("-").first()) }
+            .flatMap { rawId ->
+                matchAction(rawId.split("-").first())
+            }
             .flatMap { parsable ->
                 parsable.parseButton(context)
             }
@@ -63,24 +67,29 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
                 producer = DiscordMessageProducer,
                 messageRef = messageRef,
                 publishers = when (command.getOrException().responseFlag) {
-                    is ResponseFlag.Defer -> PolyPublisherSet(
+                    is ResponseFlag.Defer -> AdaptivePublisherSet(
                         plain = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
                         windowed = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg).setEphemeral(true)) },
-                        edit = { msg -> WebHookEditActionAdaptor(context.event.hook.editOriginal(msg)) },
+                        editSelf = { msg -> WebHookEditActionAdaptor(context.event.hook.editOriginal(msg)) },
+                        editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg) } },
                         component = { components -> WebHookComponentEditActionAdaptor(context.event.hook.editOriginalComponents(components)) }
                     )
                     else -> TransMessagePublisherSet(
-                        head = PolyPublisherSet(
+                        head = AdaptivePublisherSet(
                             plain = { msg -> ReplyActionAdaptor(context.event.reply(msg)) },
                             windowed = { msg -> ReplyActionAdaptor(context.event.reply(msg).setEphemeral(true)) },
-                            edit = { msg -> MessageEditCallbackAdaptor(context.event.editMessage(msg)) },
-                            component = { components -> MessageEditCallbackAdaptor(context.event.editComponents(components)) }
+                            editSelf = { msg -> MessageEditCallbackAdaptor(context.event.editMessage(msg)) },
+                            editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg) } },
+                            component = { components -> MessageEditCallbackAdaptor(context.event.editComponents(components)) },
+                            selfRef = messageRef
                         ),
-                        tail = PolyPublisherSet(
+                        tail = AdaptivePublisherSet(
                             plain = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
                             windowed = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg).setEphemeral(true)) },
-                            edit = { msg -> WebHookEditActionAdaptor(context.event.hook.editOriginal(msg)) },
-                            component = { components -> WebHookComponentEditActionAdaptor(context.event.hook.editOriginalComponents(components)) }
+                            editSelf = { msg -> WebHookEditActionAdaptor(context.event.hook.editOriginal(msg)) },
+                            editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg) } },
+                            component = { components -> WebHookComponentEditActionAdaptor(context.event.hook.editOriginalComponents(components)) },
+                            selfRef = messageRef
                         )
                     )
                 }
@@ -95,5 +104,6 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
             ).apply {
                 interactionSource = getEventAbbreviation(context.event::class)
                 emittedTime = context.emittedTime
+                apiTime = LinuxTime.now()
             }
         } }

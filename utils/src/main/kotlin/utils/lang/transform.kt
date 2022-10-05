@@ -1,9 +1,12 @@
 package utils.lang
 
+import utils.assets.LinuxTime
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.util.*
 import javax.imageio.ImageIO
 
@@ -19,6 +22,8 @@ fun BufferedImage.toInputStream(): InputStream {
 fun String.toInputStream(): InputStream = this.byteInputStream(Charsets.UTF_8)
 
 fun Iterable<Char>.asString(): String = String(this.toList().toCharArray())
+
+fun LocalDateTime.toLinuxTime(): LinuxTime = LinuxTime(this.toInstant(ZoneOffset.UTC).toEpochMilli())
 
 fun encodeBase64(source: ByteArray): String = String(Base64.getEncoder().encode(source))
 

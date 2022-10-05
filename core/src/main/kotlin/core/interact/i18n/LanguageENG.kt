@@ -180,6 +180,18 @@ open class LanguageENG : LanguageContainer {
     override fun focusSelectFallowingDescription() =
         "Always focus on the last move."
 
+    override fun hint() = "Hint"
+
+    override fun hintEmbedTitle()= "GomokuBot / Hint"
+    override fun hintEmbedDescription() =
+        "Gomoku has important moves decide whether lose or not. Please set how GomokuBot emphasizes important moves."
+
+    override fun hintSelectFive() = "Five"
+    override fun hintSelectFiveDescription() = "Highlight the move to create a five-in-a-row."
+
+    override fun hintSelectOff() = "Off"
+    override fun hintSelectOffDescription() = "Do not highlight any moves."
+
     // ### 2-3-3. SWEEP
 
     override fun sweep() = "Sweep"
@@ -273,11 +285,6 @@ open class LanguageENG : LanguageContainer {
     override fun setErrorForbidden(move: String, forbiddenKind: String) =
         "``$move`` is ``$forbiddenKind`` forbidden move. Please move to another place."
 
-    // ### 3.2.5. SET:ERROR:EDITMODE (MESSAGE)
-
-    override fun setErrorEditMode() =
-        "``set`` command cannot be used in edit mode. Make the next move through buttons and reactions."
-
     // ## 3-3. RESIGN
 
     // ### 3-3-1. RESIGN (COMMAND)
@@ -355,10 +362,10 @@ open class LanguageENG : LanguageContainer {
 
     // ### 4-3-2. END:AI (MESSAGE)
 
-    override fun endPVEWin(player: String, latestPos: String) =
-        "$player, You won to AI by placed in $latestPos."
-    override fun endPVELose(player: String, latestPos: String) =
-        "$player, You lose to AI by AI placed in $latestPos."
+    override fun endPVEWin(player: String, lastPos: String) =
+        "$player, You won to AI by placed in $lastPos."
+    override fun endPVELose(player: String, lastPos: String) =
+        "$player, You lose to AI by AI placed in $lastPos."
     override fun endPVEResign(player: String) =
         "$player, You lose to AI by resignation."
     override fun endPVETie(player: String) =

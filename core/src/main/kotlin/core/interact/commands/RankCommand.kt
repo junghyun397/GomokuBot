@@ -4,6 +4,7 @@ import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
+import core.assets.aiUser
 import core.database.repositories.UserProfileRepository
 import core.database.repositories.UserStatsRepository
 import core.interact.Order
@@ -41,14 +42,19 @@ class RankCommand(private val scope: RankScope) : Command {
     ) = runCatching {
         val rankings = when (this.scope) {
             is RankScope.Global -> UserStatsRepository.fetchRankings(bot.dbConnection)
+                .map { UserProfileRepository.retrieveUser(bot.dbConnection, it.userId) and it }
             is RankScope.Guild -> UserStatsRepository.fetchRankings(bot.dbConnection, scope.target.id)
+                .map { UserProfileRepository.retrieveUser(bot.dbConnection, it.userId) and it }
             is RankScope.User -> UserStatsRepository.fetchRankings(bot.dbConnection, scope.target.id)
+                .map { stats ->
+                    when (stats.userId) {
+                        aiUser.id -> aiUser and stats
+                        else -> UserProfileRepository.retrieveUser(bot.dbConnection, stats.userId) and stats
+                    }
+                }
         }
 
-        val tuple = rankings
-            .map { UserProfileRepository.retrieveUser(bot.dbConnection, it.userId) and it }
-
-        val io = producer.produceRankings(publishers.plain, config.language.container, tuple)
+        val io = producer.produceRankings(publishers.plain, config.language.container, rankings)
             .launch()
             .map { emptyList<Order>() }
 

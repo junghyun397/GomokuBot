@@ -29,7 +29,7 @@ class LanguagePRK : LanguageKOR() {
 
     override fun helpAboutEmbedTitle() = "GomokuBot / 도움말"
     override fun helpAboutEmbedDescription(platform: String) =
-        "이제 **$platform**에서도 **오목**을 즐겨 보세요. **GomokuBot**이 함께 하겠습니다." +
+        "이제 **$platform**에서도 **오목**을 즐겨 보시오. **GomokuBot** 동무가 함께하오." +
                 " ― GomokuBot은 ${platform}에서 오목([렌주](https://www.renju.net/rules/)) 기능을 제공하는 오픈소스 콤퓨타 오목 봇입니다. " +
                 "수집된 기보 자료는 강화학습 모델 훈련에 사용됩니다."
     override fun helpAboutEmbedDeveloper() = "개발자"
@@ -311,10 +311,10 @@ class LanguagePRK : LanguageKOR() {
 
     // ### 4-3-2. END:AI (MESSAGE)
 
-    override fun endPVEWin(player: String, latestPos: String) =
-        "$latestPos 에 돌을 놓음으로써 콤퓨타을 이겼습니다. 축하합니다, $player 동무!"
-    override fun endPVELose(player: String, latestPos: String) =
-        "$player 동무, 콤퓨타이 $latestPos 에 돌을 놓음으로써 콤퓨타에 패배했습니다. 언제든지 다시 도전해 주세요."
+    override fun endPVEWin(player: String, lastPos: String) =
+        "$lastPos 에 돌을 놓음으로써 콤퓨타을 이겼습니다. 축하합니다, $player 동무!"
+    override fun endPVELose(player: String, lastPos: String) =
+        "$player 동무, 콤퓨타이 $lastPos 에 돌을 놓음으로써 콤퓨타에 패배했습니다. 언제든지 다시 도전해 주세요."
     override fun endPVEResign(player: String) =
         "$player 동무, 콤퓨타 상대로 항복을 선언 함으로써 콤퓨타에 패배하셨습니다. 언제든지 다시 도전해 주세요."
     override fun endPVETie(player: String) =

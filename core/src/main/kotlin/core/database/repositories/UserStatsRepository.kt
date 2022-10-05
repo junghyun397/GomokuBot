@@ -1,16 +1,18 @@
 package core.database.repositories
 
 import core.assets.GuildUid
+import core.assets.Notation
 import core.assets.UserUid
+import core.assets.aiUser
 import core.database.DatabaseConnection
+import core.database.DatabaseManager.shortAnyCastToByte
 import core.database.entities.UserStats
-import jrenju.notation.Color
 import kotlinx.coroutines.reactive.awaitSingle
-import reactor.core.publisher.Flux
-import scala.Enumeration
+import renju.notation.Color
+import renju.notation.Result
 import utils.assets.LinuxTime
+import utils.lang.toLinuxTime
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.util.*
 
 object UserStatsRepository {
@@ -34,7 +36,7 @@ object UserStatsRepository {
                         whiteLosses = row["white_losses"] as Int,
                         whiteDraws = row["white_draws"] as Int,
 
-                        last_update = LinuxTime(row["last_update"] as Long)
+                        last_update = (row["last_update"] as LocalDateTime).toLinuxTime()
                     )
                 }
             }
@@ -59,7 +61,7 @@ object UserStatsRepository {
                         whiteLosses = row["white_losses"] as Int,
                         whiteDraws = row["white_draws"] as Int,
 
-                        last_update = LinuxTime((row["last_update"] as LocalDateTime).toInstant(ZoneOffset.UTC).toEpochMilli())
+                        last_update = (row["last_update"] as LocalDateTime).toLinuxTime()
                     )
                 }
             }
@@ -78,22 +80,24 @@ object UserStatsRepository {
                     val maybeBlackId = row["black_id"] as UUID?
                     val maybeWhiteId = row["white_id"] as UUID?
 
-                    val winColor = Color.apply((row["win_color"] as Short).toInt())
+                    val recordResult = Notation.ResultInstance.fromFlag(row["win_color"].shortAnyCastToByte())
 
                     when {
-                        maybeBlackId != null -> Triple(UserUid(maybeBlackId), Color.BLACK(), winColor)
-                        maybeWhiteId != null -> Triple(UserUid(maybeWhiteId), Color.WHITE(), winColor)
+                        maybeBlackId != null -> Triple(UserUid(maybeBlackId), Notation.Color.Black, recordResult)
+                        maybeWhiteId != null -> Triple(UserUid(maybeWhiteId), Notation.Color.White, recordResult)
                         else -> throw IllegalStateException()
                     }
                 }
             }
-            .awaitUserStats()
+            .collectList()
+            .map { records -> this.buildUserStats(records).sortedDescending() }
+            .awaitSingle()
 
     suspend fun fetchRankings(connection: DatabaseConnection, userUid: UserUid): List<UserStats> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
                 .createStatement(
-                    "SELECT * FROM game_record WHERE ((black_id = $1 AND black_id IS NOT NULL) OR (white_id = $1 AND white_id IS NOT NULL)) AND ai_level IS NULL"
+                    "SELECT * FROM game_record WHERE ((black_id = $1 AND white_id IS NOT NULL) OR (white_id = $1 AND black_id IS NOT NULL)) AND ai_level IS NULL"
                 )
                 .bind("$1", userUid.uuid)
                 .execute()
@@ -103,30 +107,42 @@ object UserStatsRepository {
                     val maybeBlackId = row["black_id"] as UUID
                     val maybeWhiteId = row["white_id"] as UUID
 
-                    val winColor = Color.apply((row["win_color"] as Short).toInt())
+                    val recordResult = Notation.ResultInstance.fromFlag(row["win_color"].shortAnyCastToByte())
 
                     when {
-                        maybeBlackId != userUid.uuid -> Triple(UserUid(maybeBlackId), Color.BLACK(), winColor)
-                        maybeWhiteId != userUid.uuid -> Triple(UserUid(maybeWhiteId), Color.WHITE(), winColor)
+                        maybeBlackId != userUid.uuid -> Triple(UserUid(maybeBlackId), Notation.Color.Black, recordResult)
+                        maybeWhiteId != userUid.uuid -> Triple(UserUid(maybeWhiteId), Notation.Color.White, recordResult)
                         else -> throw IllegalStateException()
                     }
                 }
             }
-            .awaitUserStats()
+            .collectList()
+            .awaitSingle()
+            .let { records ->
+                val userStats = this.buildUserStats(records)
 
-    private suspend fun Flux<Triple<UserUid, Enumeration.Value, Enumeration.Value>>.awaitUserStats() = this
-        .collectList()
-        .map { records -> records
+                val aiStats = this.fetchUserStats(connection, userUid).reversed().copy(userId = aiUser.id)
+
+                val unionRanking = when (aiStats.isEmpty) {
+                    true -> userStats
+                    else -> userStats + aiStats
+                }
+
+                unionRanking.sortedDescending()
+            }
+
+    private fun buildUserStats(records: List<Triple<UserUid, Color, Result>>): List<UserStats> =
+        records
             .groupBy { (id, _, _) -> id }
             .map { (id, tuples) ->
-                val blackTotal = tuples.count { (_, color, _) -> color == Color.BLACK() }
+                val blackTotal = tuples.count { (_, color, _) -> color == Notation.Color.Black }
                 val whiteTotal = tuples.size - blackTotal
 
-                val blackWins = tuples.count { (_, color, winColor) -> color == Color.BLACK() && winColor == Color.BLACK() }
-                val whiteWins = tuples.count { (_, color, winColor) -> color == Color.WHITE() && winColor == Color.WHITE() }
+                val blackWins = tuples.count { (_, color, result) -> color == Notation.Color.Black && result.flag() == Notation.FlagInstance.BLACK() }
+                val whiteWins = tuples.count { (_, color, result) -> color == Notation.Color.White && result.flag() == Notation.FlagInstance.WHITE() }
 
-                val blackLosses = tuples.count { (_, color, winColor) -> color == Color.BLACK() && winColor == Color.WHITE() }
-                val whiteLosses = tuples.count { (_, color, winColor) -> color == Color.WHITE() && winColor == Color.BLACK() }
+                val blackLosses = tuples.count { (_, color, result) -> color == Notation.Color.Black && result.flag() == Notation.FlagInstance.WHITE() }
+                val whiteLosses = tuples.count { (_, color, result) -> color == Notation.Color.White && result.flag() == Notation.FlagInstance.BLACK() }
 
                 UserStats(
                     userId = id,
@@ -139,8 +155,5 @@ object UserStatsRepository {
                     last_update = LinuxTime.now()
                 )
             }
-            .sortedDescending()
-        }
-        .awaitSingle()
 
 }

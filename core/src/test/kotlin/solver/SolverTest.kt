@@ -3,10 +3,11 @@
 package solver
 
 import core.inference.FocusSolver
-import jrenju.Board
-import jrenju.`BoardIO$`
-import jrenju.protocol.Solution
 import org.junit.Test
+import renju.Board
+import renju.`BoardIO$`
+import renju.ScalaBoard
+import renju.protocol.Solution
 import utils.lang.and
 import java.util.*
 
@@ -19,7 +20,7 @@ internal class SolverTest {
         var draws = 0
 
         for (i in 0 until 1) {
-            when (this.match(Board.newBoard(), { FocusSolver.findSolution(it) }, { FocusSolver.findSolution(it) })) {
+            when (this.match(ScalaBoard.newBoard(), { FocusSolver.findSolution(it) }, { FocusSolver.findSolution(it) })) {
                 true -> solver1Wins += 1
                 false -> solver2Wins += 1
                 null -> draws += 1
@@ -61,7 +62,7 @@ internal class SolverTest {
             return null
         }
 
-        println(`BoardIO$`.`MODULE$`.BoardToText(board).boardText())
+        println(`BoardIO$`.`MODULE$`.BoardToString(board).boardString())
 
         return result
     }

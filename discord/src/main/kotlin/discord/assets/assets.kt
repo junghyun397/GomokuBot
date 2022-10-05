@@ -34,13 +34,16 @@ val EMOJI_IMAGE = Emoji.fromUnicode(UNICODE_IMAGE) // 🖼
 val EMOJI_T = Emoji.fromUnicode(UNICODE_T) // 🇹
 val EMOJI_GEM = Emoji.fromUnicode(UNICODE_GEM) // 💎
 
+val EMOJI_LIGHT = Emoji.fromUnicode(UNICODE_LIGHT)
+val EMOJI_NOTEBOOK = Emoji.fromUnicode(UNICODE_NOTEBOOK)
+
 val EMOJI_MAG = Emoji.fromUnicode(UNICODE_MAG) // 🔍
 val EMOJI_BROOM = Emoji.fromUnicode(UNICODE_BROOM) // 🧹
 val EMOJI_CABINET = Emoji.fromUnicode(UNICODE_CABINET) // 🗄
 val EMOJI_RECYCLE = Emoji.fromUnicode(UNICODE_RECYCLE) // ♻
 
 val EMOJI_SILHOUETTE = Emoji.fromUnicode(UNICODE_SILHOUETTE) // 👤
-val EMOJI_SMILING = Emoji.fromUnicode(UNICODE_SMILING) // 🙂
+val EMOJI_ID_CARD = Emoji.fromUnicode(UNICODE_ID_CARD) // 🪪
 val EMOJI_LOCK = Emoji.fromUnicode(UNICODE_LOCK) // 🔒
 
 val EMOJI_SPEAKER = Emoji.fromUnicode(UNICODE_SPEAKER) // 📢

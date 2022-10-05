@@ -1,10 +1,7 @@
 package core.assets
 
 import io.r2dbc.spi.Statement
-import jrenju.Board
-import jrenju.BoardIO
-import jrenju.`BoardIO$`
-import jrenju.notation.Flag
+import renju.notation.Flag
 import java.awt.Color
 import java.util.*
 
@@ -42,13 +39,16 @@ const val UNICODE_IMAGE = "\ud83d\uddbc" // 🖼
 const val UNICODE_T = "\ud83c\uddf9" // 🇹
 const val UNICODE_GEM = "\ud83d\udc8e" // 💎
 
+const val UNICODE_LIGHT = "\ud83d\udca1" // 💡
+const val UNICODE_NOTEBOOK = "\ud83d\udcd3" // 📓
+
 const val UNICODE_MAG = "\ud83d\udd0d" // 🔍
 const val UNICODE_BROOM = "\ud83e\uddf9" // 🧹
 const val UNICODE_CABINET = "\ud83d\uddc4" // 🗄
 const val UNICODE_RECYCLE = "\u267b" // ♻
 
 const val UNICODE_SILHOUETTE = "\ud83d\udc64" // 👤
-const val UNICODE_SMILING = "\ud83d\ude42" // 🙂
+const val UNICODE_ID_CARD = "\ud83e\udeaa" // 🪪
 const val UNICODE_LOCK = "\ud83d\udd12" // 🔒
 
 const val UNICODE_SPEAKER = "\ud83d\udce2" // 📢
@@ -81,8 +81,6 @@ fun forbiddenFlagToText(flag: Byte) =
         Flag.FORBIDDEN_6() -> "≥6"
         else -> "UNKNOWN"
     }
-
-fun Board.toBoardIO(): BoardIO.BoardToString = `BoardIO$`.`MODULE$`.BoardToString(this)
 
 inline fun <reified T : Any> Statement.bindNullable(name: String, value: T?): Statement =
     when (value) {

@@ -1,19 +1,20 @@
 package core.database.repositories
 
 import core.assets.GuildUid
+import core.assets.Notation
 import core.assets.UserUid
 import core.assets.bindNullable
 import core.database.DatabaseConnection
+import core.database.DatabaseManager.shortAnyCastToByte
 import core.database.entities.GameRecord
 import core.inference.AiLevel
 import core.session.GameResult
 import io.r2dbc.spi.Row
-import jrenju.notation.Color
-import jrenju.notation.Pos
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.mono
-import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import renju.notation.Pos
 import utils.assets.LinuxTime
 import utils.structs.find
 import java.time.LocalDateTime
@@ -50,7 +51,9 @@ object GameRecordRepository {
             .flatMap { result -> result
                 .map { row, _ -> row }
             }
-            .awaitGameRecord(connection)
+            .flatMap { row -> this.buildGameRecord(connection, row) }
+            .collectList()
+            .awaitSingle()
 
     suspend fun retrieveGameRecordsByUserUid(connection: DatabaseConnection, userUid: UserUid) =
         connection.liftConnection()
@@ -62,19 +65,15 @@ object GameRecordRepository {
             .flatMap { result -> result
                 .map { row, _ -> row }
             }
-            .awaitGameRecord(connection)
+            .flatMap { row -> this.buildGameRecord(connection, row) }
+            .collectList()
+            .awaitSingle()
 
-    private suspend fun Flux<Row>.awaitGameRecord(connection: DatabaseConnection) = this
-        .flatMap { row ->
-            mono {
-                Triple(
-                    row,
-                    (row["black_id"] as UUID?)?.let { UserProfileRepository.retrieveUser(connection, UserUid(it)) },
-                    (row["white_id"] as UUID?)?.let { UserProfileRepository.retrieveUser(connection, UserUid(it)) }
-                )
-            }
-        }
-        .map { (row, blackUser, whiteUser) ->
+    private fun buildGameRecord(connection: DatabaseConnection, row: Row): Mono<GameRecord> =
+        mono {
+            val blackUser = (row["black_id"] as UUID?)?.let { UserProfileRepository.retrieveUser(connection, UserUid(it)) }
+            val whiteUser = (row["white_id"] as UUID?)?.let { UserProfileRepository.retrieveUser(connection, UserUid(it)) }
+
             GameRecord(
                 boardStatus = row["board_status"] as ByteArray,
                 history = (row["history"] as IntArray).map { Pos.fromIdx(it) },
@@ -82,7 +81,7 @@ object GameRecordRepository {
                     cause = GameResult.Cause.values().find(row["cause"] as Short),
                     blackUser = blackUser,
                     whiteUser = whiteUser,
-                    winColor = Color.apply((row["win_color"] as Short).toInt())
+                    gameResult = Notation.ResultInstance.fromFlag(row["win_color"].shortAnyCastToByte())
                 )!!,
                 guildId = GuildUid(row["guild_id"] as UUID),
                 blackId = blackUser?.id,
@@ -91,7 +90,5 @@ object GameRecordRepository {
                 date = LinuxTime((row["create_date"] as LocalDateTime).toInstant(ZoneOffset.UTC).toEpochMilli()),
             )
         }
-        .collectList()
-        .awaitSingle()
 
 }

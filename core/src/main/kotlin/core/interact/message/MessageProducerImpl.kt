@@ -1,16 +1,15 @@
 package core.interact.message
 
 import core.assets.*
+import core.inference.FocusSolver
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.session.entities.GameSession
-import jrenju.Board
-import jrenju.notation.Color
-import jrenju.notation.Flag
-import jrenju.notation.Pos
-import jrenju.notation.Renju
 import kotlinx.coroutines.flow.flowOf
-import scala.Enumeration
+import renju.Board
+import renju.notation.Color
+import renju.notation.Flag
+import renju.notation.Pos
 import utils.assets.MarkdownLikeDocument
 import utils.assets.parseMarkdownLikeDocument
 import utils.lang.and
@@ -34,38 +33,43 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
     protected infix fun MessagePublisher<A, B>.sends(message: String) =
         this@MessageProducerImpl.sendString(message, this)
 
-    protected fun unicodeStone(color: Enumeration.Value) =
-        if (color == Color.BLACK()) UNICODE_BLACK_CIRCLE else UNICODE_WHITE_CIRCLE
+    protected fun unicodeStone(color: Color) =
+        if (color == Notation.Color.Black) UNICODE_BLACK_CIRCLE else UNICODE_WHITE_CIRCLE
 
-    protected fun User.withColor(color: Enumeration.Value) =
+    protected fun User.withColor(color: Color) =
         "${this.name}${this@MessageProducerImpl.unicodeStone(color)}"
 
     protected fun GameSession.ownerWithColor() =
-        if (this.ownerHasBlack) this.owner.withColor(Color.BLACK()) else this.owner.withColor(Color.WHITE())
+        if (this.ownerHasBlack) this.owner.withColor(Notation.Color.Black) else this.owner.withColor(Notation.Color.White)
 
     protected fun GameSession.opponentWithColor() =
-        if (this.ownerHasBlack) this.opponent.withColor(Color.WHITE()) else opponent.withColor(Color.BLACK())
+        if (this.ownerHasBlack) this.opponent.withColor(Notation.Color.White) else opponent.withColor(Notation.Color.Black)
 
-    override fun generateFocusedField(board: Board, focus: Pos): FocusedFields {
+    override fun generateFocusedField(board: Board, focusInfo: FocusSolver.FocusInfo): FocusedFields {
         val half = this.focusWidth / 2
+
         return (-half .. half).map { rowOffset ->
             (-half .. half).map { colOffset ->
-                val pos = Pos(focus.row() + rowOffset, focus.col() + colOffset)
-                val flag = if (pos.idx() == board.lastMove()) when (board.field()[board.lastMove()]) {
-                    Flag.BLACK() -> ButtonFlag.BLACK_RECENT
-                    Flag.WHITE() -> ButtonFlag.WHITE_RECENT
-                    else -> ButtonFlag.FREE
-                } else when (board.field()[pos.idx()]) {
-                    Flag.BLACK() -> ButtonFlag.BLACK
-                    Flag.WHITE() -> ButtonFlag.WHITE
-                    Flag.FORBIDDEN_33(), Flag.FORBIDDEN_44(), Flag.FORBIDDEN_6() ->
-                        if (board.nextColor() == Color.BLACK()) ButtonFlag.FORBIDDEN
-                        else ButtonFlag.FREE
-                    else ->
-                        if (pos.idx() == Renju.BOARD_CENTER_POS().idx()) ButtonFlag.HIGHLIGHTED
-                        else ButtonFlag.FREE
+                val absolutePos = Pos(focusInfo.focus.row() + rowOffset, focusInfo.focus.col() + colOffset)
+
+                val buttonFlag = when (val idx = absolutePos.idx()) {
+                    board.lastMove() -> when (board.field()[board.lastMove()]) {
+                        Flag.BLACK() -> ButtonFlag.BLACK_RECENT
+                        Flag.WHITE() -> ButtonFlag.WHITE_RECENT
+                        else -> throw IllegalStateException()
+                    }
+                    else -> when (board.field()[idx]) {
+                        Flag.BLACK() -> ButtonFlag.BLACK
+                        Flag.WHITE() -> ButtonFlag.WHITE
+                        Flag.FORBIDDEN_33(), Flag.FORBIDDEN_44(), Flag.FORBIDDEN_6() -> ButtonFlag.FORBIDDEN
+                        else -> when(absolutePos) {
+                            in focusInfo.highlights -> ButtonFlag.HIGHLIGHTED
+                            else -> ButtonFlag.FREE
+                        }
+                    }
                 }
-                "${(97 + pos.col()).toChar()}${pos.row() + 1}" and flag
+
+                absolutePos.toString() and buttonFlag
             }
         }
     }
@@ -122,11 +126,11 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
     override fun produceNextMovePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, previousPlayer: User, nextPlayer: User, lastMove: Pos) =
         publisher sends container.processNextPVP(
             nextPlayer.asMentionFormat(),
-            lastMove.toCartesian().asHighlightFormat()
+            lastMove.toString().asHighlightFormat()
         )
 
     override fun produceWinPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, looser: User, lastMove: Pos) =
-        publisher sends container.endPVPWin(winner.asMentionFormat(), looser.asMentionFormat(), lastMove.toCartesian().asHighlightFormat())
+        publisher sends container.endPVPWin(winner.asMentionFormat(), looser.asMentionFormat(), lastMove.toString().asHighlightFormat())
 
     override fun produceTiePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User) =
         publisher sends container.endPVPTie(owner.asMentionFormat(), opponent.asMentionFormat())
@@ -138,13 +142,13 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
         publisher sends container.endPVPTimeOut(winner.asMentionFormat(), looser.asMentionFormat())
 
     override fun produceNextMovePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, lastMove: Pos) =
-        publisher sends container.processNextPVE(lastMove.toCartesian().asHighlightFormat())
+        publisher sends container.processNextPVE(lastMove.toString().asHighlightFormat())
 
     override fun produceWinPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, lastMove: Pos) =
-        publisher sends container.endPVEWin(owner.asMentionFormat(), lastMove.toCartesian().asHighlightFormat())
+        publisher sends container.endPVEWin(owner.asMentionFormat(), lastMove.toString().asHighlightFormat())
 
     override fun produceLosePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, lastMove: Pos) =
-        publisher sends container.endPVELose(owner.asMentionFormat(), lastMove.toCartesian().asHighlightFormat())
+        publisher sends container.endPVELose(owner.asMentionFormat(), lastMove.toString().asHighlightFormat())
 
     override fun produceTiePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User) =
         publisher sends container.endPVETie(owner.asMentionFormat())
@@ -191,13 +195,10 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
         publisher sends container.setErrorIllegalArgument()
 
     override fun produceSetAlreadyExist(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos) =
-        publisher sends container.setErrorExist(pos.toCartesian().asHighlightFormat())
+        publisher sends container.setErrorExist(pos.toString().asHighlightFormat())
 
     override fun produceSetForbiddenMove(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos, forbiddenFlag: Byte) =
-        publisher sends container.setErrorForbidden(pos.toCartesian().asHighlightFormat(), forbiddenFlagToText(forbiddenFlag).asHighlightFormat())
-
-    override fun produceSetEditMode(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
-        publisher sends container.setErrorEditMode()
+        publisher sends container.setErrorForbidden(pos.toString().asHighlightFormat(), forbiddenFlagToText(forbiddenFlag).asHighlightFormat())
 
     // STYLE
 

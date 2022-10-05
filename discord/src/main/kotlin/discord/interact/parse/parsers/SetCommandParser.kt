@@ -1,5 +1,6 @@
 package discord.interact.parse.parsers
 
+import core.assets.Notation
 import core.assets.User
 import core.interact.Order
 import core.interact.commands.Command
@@ -10,7 +11,7 @@ import core.interact.message.MessageAdaptor
 import core.interact.parse.SessionSideParser
 import core.interact.parse.asParseFailure
 import core.session.GameManager
-import core.session.RejectReason
+import core.session.InvalidKind
 import core.session.SessionManager
 import core.session.SweepPolicy
 import core.session.entities.GameSession
@@ -22,14 +23,13 @@ import discord.interact.parse.BuildableCommand
 import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.EmbeddableCommand
 import discord.interact.parse.ParsableCommand
-import jrenju.notation.Color
-import jrenju.notation.Pos
-import jrenju.notation.Renju
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
+import renju.notation.Pos
+import renju.notation.Renju
 import utils.lang.and
 import utils.structs.*
 
@@ -52,13 +52,6 @@ object SetCommandParser : SessionSideParser<Message, DiscordComponents>(), Parsa
             onDefined = { IO { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef); emptyList() } },
             onEmpty = { IO { emptyList() } }
         )
-
-    private fun buildSetModeFailure(context: InteractionContext<*>, session: GameSession): DiscordParseFailure =
-        this.asParseFailure("use set command but guild in edit mode", context.guild, context.user) { producer, publisher, container ->
-            producer.produceSetEditMode(publisher, container)
-                .retrieve()
-                .flatMap { this.buildAppendMessageProcedure(it, context, session) }
-        }
 
     private fun buildOrderFailure(context: InteractionContext<*>, session: GameSession, player: User): DiscordParseFailure =
         this.asParseFailure("try move but now $player's turn", context.guild, context.user) { producer, publisher, container ->
@@ -88,11 +81,8 @@ object SetCommandParser : SessionSideParser<Message, DiscordComponents>(), Parsa
                 .flatMap { this.buildAppendMessageProcedure(it, context, session) }
         }
 
-    private suspend fun parseActually(context: InteractionContext<*>, user: User, rawRow: String?, rawColumn: String?): Either<Command, DiscordParseFailure> =
+    private suspend fun parseRawCommand(context: InteractionContext<*>, user: User, rawRow: String?, rawColumn: String?): Either<Command, DiscordParseFailure> =
         this.retrieveSession(context.bot, context.guild, user).flatMapLeft { session ->
-            if (context.config.sweepPolicy == SweepPolicy.EDIT)
-                return Either.Right(this.buildSetModeFailure(context, session))
-
             if (session.player.id != user.id)
                 return@flatMapLeft Either.Right(this.buildOrderFailure(context, session, session.player))
 
@@ -107,24 +97,39 @@ object SetCommandParser : SessionSideParser<Message, DiscordComponents>(), Parsa
 
             val pos = Pos(row, column)
 
-            return@flatMapLeft GameManager.validateMove(session, pos).fold(
-                onDefined = { when (it) {
-                    RejectReason.EXIST -> Either.Right(this.buildExistFailure(context, session, pos))
-                    RejectReason.FORBIDDEN ->
-                        if (session.board.nextColor() == Color.BLACK())
-                            Either.Right(this.buildForbiddenMoveFailure(context, session, pos, session.board.field()[pos.idx()]))
-                        else
-                            Either.Left(SetCommand(session, pos, ResponseFlag.Defer()))
-                } },
-                onEmpty = { Either.Left(SetCommand(session, pos, ResponseFlag.Defer())) }
-            )
+            val ref = when (context.config.sweepPolicy) {
+                SweepPolicy.EDIT -> SessionManager.viewHeadMessage(context.bot.sessions, session.messageBufferKey)
+                else -> null
+            }
+
+            GameManager.validateMove(session, pos)
+                .flatMap { invalidKind ->
+                    when (invalidKind) {
+                        InvalidKind.EXIST -> Option(this.buildExistFailure(context, session, pos))
+                        InvalidKind.FORBIDDEN -> when(session.board.nextColor()) {
+                            Notation.Color.Black -> Option(this.buildForbiddenMoveFailure(context, session, pos, session.board.field()[pos.idx()]))
+                            else -> Option.Empty
+                        }
+                    }
+                }
+                .fold(
+                    onDefined = { Either.Right(it) },
+                    onEmpty = {
+                        val responseFlag = when (context.config.sweepPolicy) {
+                            SweepPolicy.EDIT -> ResponseFlag.DeferWindowed
+                            else -> ResponseFlag.Defer
+                        }
+
+                        Either.Left(SetCommand(session, pos, ref, responseFlag))
+                    }
+                )
         }
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {
         val rawColumn = context.event.getOption(context.config.language.container.setCommandOptionColumn())?.asString
         val rawRow = context.event.getOption(context.config.language.container.setCommandOptionRow())?.asString
 
-        return this.parseActually(context, context.user, rawRow, rawColumn)
+        return this.parseRawCommand(context, context.user, rawRow, rawColumn)
     }
 
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
@@ -135,7 +140,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordComponents>(), Parsa
             ?.let { it.component1() and it.component2() }
             ?: (null and null)
 
-        return this.parseActually(context, context.user, rawRow, rawColumn)
+        return this.parseRawCommand(context, context.user, rawRow, rawColumn)
     }
 
     override suspend fun parseButton(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
@@ -155,7 +160,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordComponents>(), Parsa
         if (session.player.id != userId)
             return Option.Empty
 
-        return Option(SetCommand(session, pos, ResponseFlag.Defer(context.config.sweepPolicy == SweepPolicy.EDIT)))
+        return Option(SetCommand(session, pos, null, ResponseFlag.Defer(context.config.sweepPolicy == SweepPolicy.EDIT)))
     }
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

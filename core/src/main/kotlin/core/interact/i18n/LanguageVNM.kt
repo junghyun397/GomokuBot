@@ -60,8 +60,8 @@ class LanguageVNM : LanguageENG() {
     override fun endPVPResign(winner: String, looser: String) =
         "`$winner` đã thắng `$looser` vì `$looser` đã xin dừng cuộc chơi!"
 
-    override fun endPVEWin(player: String, latestPos: String) = "Bạn thắng máy bằng cách đánh ở ô $latestPos. Chúc mừng! :tada:"
-    override fun endPVELose(player: String, latestPos: String) = "Bạn đã thua máy. Máy đã đánh ở ô gần nhất là $latestPos."
+    override fun endPVEWin(player: String, lastPos: String) = "Bạn thắng máy bằng cách đánh ở ô $lastPos. Chúc mừng! :tada:"
+    override fun endPVELose(player: String, lastPos: String) = "Bạn đã thua máy. Máy đã đánh ở ô gần nhất là $lastPos."
     override fun endPVEResign(player: String) = "Bạn đã thua vì đã xin dừng cuộc chơi."
 
     override fun endPVPTie(owner: String, opponent: String) = "Ván này hoà vì hết ô để đánh."

@@ -8,7 +8,8 @@ data class ErrorReport(
     override val guild: Guild,
     override var interactionSource: String? = null,
     override var emittedTime: LinuxTime? = null,
-    override val terminationTime: LinuxTime = LinuxTime.now(),
+    override val commandTime: LinuxTime = LinuxTime.now(),
+    override var apiTime: LinuxTime? = LinuxTime.now(),
 ) : AbstractInteractionReport() {
 
     override fun toString() = "${super.toString()} error\t ${throwable.stackTraceToString()}"

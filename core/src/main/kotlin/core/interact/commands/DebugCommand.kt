@@ -5,8 +5,8 @@ package core.interact.commands
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
+import core.assets.Notation
 import core.assets.User
-import core.assets.toBoardIO
 import core.inference.AiLevel
 import core.interact.Order
 import core.interact.message.MessageProducer
@@ -17,9 +17,9 @@ import core.session.Token
 import core.session.entities.AiGameSession
 import core.session.entities.GuildConfig
 import core.session.entities.RequestSession
-import jrenju.BoardIO
-import jrenju.notation.Pos
-import jrenju.notation.Renju
+import renju.BoardIO
+import renju.notation.Pos
+import renju.notation.Renju
 import utils.assets.LinuxTime
 import utils.lang.and
 import utils.lang.toInputStream
@@ -54,7 +54,10 @@ class DebugCommand(
         DebugType.ANALYSIS -> {
             SessionManager.retrieveGameSession(bot.sessions, guild, user.id)?.let { session ->
                 producer.produceSessionArchive(publishers.plain, session, session.gameResult)
-                    .addFile(session.board.toBoardIO().debugString().toInputStream(), "analysis-report-${System.currentTimeMillis()}.txt")
+                    .addFile(
+                        Notation.BoardIOInstance.BoardToString(session.board).debugString().toInputStream(),
+                        "analysis-report-${System.currentTimeMillis()}.txt"
+                    )
                     .launch()
                     .map { emptyList<Order>() } and this.asCommandReport("succeed", guild, user)
             } ?: (IO { emptyList<Order>() } and this.asCommandReport("failed", guild, user))
@@ -100,7 +103,7 @@ class DebugCommand(
 
             SessionManager.putGameSession(bot.sessions, guild, session)
 
-            val io = producer.produceNextMovePVE(publishers.plain, config.language.container, user, session.board.latestPos().get())
+            val io = producer.produceNextMovePVE(publishers.plain, config.language.container, user, session.board.lastPos().get())
                 .launch()
                 .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, session) }
                 .map { emptyList<Order>() }
@@ -123,6 +126,7 @@ class DebugCommand(
         DebugType.SESSIONS -> {
             val sessionMessage = bot.sessions.sessions
                 .flatMap { (_, session) -> session.gameSessions.values }
+                .sortedBy { it.createDate.timestamp }
                 .map { it.toString() }
                 .let { sessions -> when {
                     sessions.isEmpty() -> ""
@@ -174,7 +178,7 @@ class DebugCommand(
 
             SessionManager.putGameSession(bot.sessions, guild, session)
 
-            val io = producer.produceNextMovePVE(publishers.plain, config.language.container, user, session.board.latestPos().get())
+            val io = producer.produceNextMovePVE(publishers.plain, config.language.container, user, session.board.lastPos().get())
                 .launch()
                 .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, session) }
                 .map { emptyList<Order>() }

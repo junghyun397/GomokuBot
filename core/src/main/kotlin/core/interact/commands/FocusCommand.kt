@@ -4,7 +4,6 @@ import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
-import core.inference.FocusSolver
 import core.interact.Order
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
@@ -13,7 +12,7 @@ import core.session.SessionManager
 import core.session.entities.BoardNavigationState
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
-import jrenju.notation.Pos
+import renju.notation.Pos
 import utils.lang.and
 import utils.structs.IO
 import utils.structs.map
@@ -52,16 +51,18 @@ class FocusCommand(
                 Direction.DOWN -> Pos((row - step).coerceIn(producer.focusRange), col)
                 Direction.UP -> Pos((row + step).coerceIn(producer.focusRange), col)
                 Direction.RIGHT -> Pos(row, (col + step).coerceIn(producer.focusRange))
-                Direction.CENTER -> FocusSolver.resolveCenter(this.session.board, producer.focusRange)
+                Direction.CENTER -> this.navigationState.focusInfo.focus
             }
         }
+
+        val newFocusInfo = this.navigationState.focusInfo.copy(focus = newFocus)
 
         when(newFocus.idx()) {
             this.navigationState.page -> IO { emptyList<Order>() } and this.asCommandReport("focus bounded", guild, user)
             else -> {
                 SessionManager.addNavigation(bot.sessions, messageRef, this.navigationState.copy(page = newFocus.idx()))
 
-                val action = producer.attachFocusButtons(publishers.component, session, newFocus)
+                val action = producer.attachFocusButtons(publishers.component, session, newFocusInfo)
                     .launch()
                     .map { emptyList<Order>() }
 

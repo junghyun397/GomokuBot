@@ -5,9 +5,9 @@ import core.assets.aiUser
 import core.inference.AiLevel
 import core.session.GameResult
 import core.session.Token
-import jrenju.Board
-import jrenju.notation.Pos
-import jrenju.protocol.SolutionNode
+import renju.Board
+import renju.notation.Pos
+import renju.protocol.SolutionNode
 import utils.assets.LinuxTime
 import utils.structs.Option
 

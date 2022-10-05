@@ -7,7 +7,7 @@ import core.inference.AiLevel
 import core.session.GameResult
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
-import jrenju.notation.Pos
+import renju.notation.Pos
 import utils.assets.LinuxTime
 import utils.structs.Option
 import utils.structs.getOrException
@@ -31,7 +31,7 @@ data class GameRecord(
 private val INVALID_POS: Pos = Pos.fromIdx(-1)
 
 fun GameSession.extractGameRecord(guildUid: GuildUid): Option<GameRecord> =
-    Option.cond(this.gameResult.isEmpty || !this.recording || this.history.contains(null)) {
+    Option.cond(this.gameResult.isEmpty || this.recording || this.history.contains(null)) {
         GameRecord(
             boardStatus = board.field(),
             history = history.map { it ?: INVALID_POS },
@@ -40,13 +40,13 @@ fun GameSession.extractGameRecord(guildUid: GuildUid): Option<GameRecord> =
 
             guildId = guildUid,
             blackId = when {
-                ownerHasBlack -> owner
-                else -> opponent
-            }.takeIf { it.id != aiUser.id }?.id,
+                ownerHasBlack -> owner.id
+                else -> opponent.id
+            }.takeIf { it != aiUser.id },
             whiteId = when {
-                ownerHasBlack -> opponent
-                else -> owner
-            }.takeIf { it.id != aiUser.id }?.id,
+                ownerHasBlack -> opponent.id
+                else -> owner.id
+            }.takeIf { it != aiUser.id },
 
             aiLevel = when (this) {
                 is AiGameSession -> this.aiLevel

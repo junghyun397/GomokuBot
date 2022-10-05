@@ -2,10 +2,7 @@ package discord.interact.parse.parsers
 
 import core.interact.commands.ApplySettingCommand
 import core.interact.commands.Command
-import core.session.ArchivePolicy
-import core.session.BoardStyle
-import core.session.FocusPolicy
-import core.session.SweepPolicy
+import core.session.*
 import discord.interact.InteractionContext
 import discord.interact.parse.EmbeddableCommand
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
@@ -33,6 +30,11 @@ object ApplySettingCommandParser : EmbeddableCommand {
                 val focus = FocusPolicy.valueOf(choice)
 
                 focus and context.config.copy(focusPolicy = focus)
+            }
+            HintPolicy::class.simpleName -> {
+                val hint = HintPolicy.valueOf(choice)
+
+                hint and context.config.copy(hintPolicy = hint)
             }
             SweepPolicy::class.simpleName -> {
                 val sweep = SweepPolicy.valueOf(choice)

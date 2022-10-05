@@ -2,9 +2,9 @@ package core.database
 
 import core.database.repositories.AnnounceRepository
 import io.r2dbc.spi.ConnectionFactories
-import jrenju.notation.Flag
 import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitLast
+import renju.notation.Flag
 
 object DatabaseManager {
 
@@ -43,6 +43,7 @@ object DatabaseManager {
                             focus_policy smallint NOT NULL,
                             sweep_policy smallint NOT NULL,
                             archive_policy smallint NOT NULL,
+                            hint_policy smallint NOT NULL,
                             FOREIGN KEY (guild_id) REFERENCES guild_profile (guild_id)
                         );
                         
@@ -139,5 +140,7 @@ object DatabaseManager {
     suspend fun initCaches(connection: DatabaseConnection) {
         AnnounceRepository.updateAnnounceCache(connection)
     }
+
+    internal fun Any?.shortAnyCastToByte(): Byte = (this as Short).toByte()
 
 }

@@ -175,6 +175,19 @@ sealed interface LanguageContainer {
     fun focusSelectFallowing(): String
     fun focusSelectFallowingDescription(): String
 
+    // ### HINT
+
+    fun hint(): String
+
+    fun hintEmbedTitle(): String
+    fun hintEmbedDescription(): String
+
+    fun hintSelectFive(): String
+    fun hintSelectFiveDescription(): String
+
+    fun hintSelectOff(): String
+    fun hintSelectOffDescription(): String
+
     // ### 2-3-3. SWEEP
 
     fun sweep(): String
@@ -250,10 +263,6 @@ sealed interface LanguageContainer {
 
     fun setErrorForbidden(move: String, forbiddenKind: String): String
 
-    // ### 3.2.5. SET:ERROR:EDITMODE (MESSAGE)
-
-    fun setErrorEditMode(): String
-
     // ## 3-3. RESIGN
 
     // ### 3-3-1. RESIGN (COMMAND)
@@ -315,8 +324,8 @@ sealed interface LanguageContainer {
 
     // ### 4-3-2. END:AI (MESSAGE)
 
-    fun endPVEWin(player: String, latestPos: String): String
-    fun endPVELose(player: String, latestPos: String): String
+    fun endPVEWin(player: String, lastPos: String): String
+    fun endPVELose(player: String, lastPos: String): String
     fun endPVEResign(player: String): String
     fun endPVETie(player: String): String
     fun endPVETimeOut(player: String): String

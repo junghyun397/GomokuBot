@@ -3,14 +3,15 @@ package core.interact.message
 import core.assets.User
 import core.database.entities.Announce
 import core.database.entities.UserStats
+import core.inference.FocusSolver
 import core.interact.i18n.LanguageContainer
 import core.interact.message.graphics.BoardRenderer
 import core.session.GameResult
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
-import jrenju.Board
-import jrenju.notation.Pos
 import kotlinx.coroutines.flow.Flow
+import renju.Board
+import renju.notation.Pos
 import utils.structs.IO
 import utils.structs.Option
 
@@ -21,7 +22,7 @@ interface MessageProducer<A, B> {
 
     // BOARD
 
-    fun generateFocusedField(board: Board, focus: Pos): FocusedFields
+    fun generateFocusedField(board: Board, focusInfo: FocusSolver.FocusInfo): FocusedFields
 
     fun generateFocusedButtons(focusedFields: FocusedFields): B
 
@@ -29,9 +30,9 @@ interface MessageProducer<A, B> {
 
     fun produceSessionArchive(publisher: MessagePublisher<A, B>, session: GameSession, result: Option<GameResult>): MessageIO<A, B>
 
-    fun attachFocusButtons(boardAction: MessageIO<A, B>, session: GameSession, focus: Pos): MessageIO<A, B>
+    fun attachFocusButtons(boardAction: MessageIO<A, B>, session: GameSession, focusInfo: FocusSolver.FocusInfo): MessageIO<A, B>
 
-    fun attachFocusButtons(publisher: ComponentPublisher<A, B>, session: GameSession, focus: Pos): MessageIO<A, B>
+    fun attachFocusButtons(publisher: ComponentPublisher<A, B>, session: GameSession, focusInfo: FocusSolver.FocusInfo): MessageIO<A, B>
 
     fun attachNavigators(flow: Flow<String>, message: MessageAdaptor<A, B>, checkTerminated: suspend () -> Boolean): IO<Unit>
 
@@ -132,8 +133,6 @@ interface MessageProducer<A, B> {
     fun produceSetAlreadyExist(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos): MessageIO<A, B>
 
     fun produceSetForbiddenMove(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos, forbiddenFlag: Byte): MessageIO<A, B>
-
-    fun produceSetEditMode(publisher: MessagePublisher<A, B>, container: LanguageContainer): MessageIO<A, B>
 
     // REQUEST
 

@@ -52,9 +52,9 @@ class NavigationCommand(
 
         val io = when (this.navigationState.kind) {
             NavigationKind.ABOUT ->
-                producer.paginateHelp(publishers.edit, config.language.container, newState.page)
+                producer.paginateHelp(publishers.edit(messageRef), config.language.container, newState.page)
             NavigationKind.SETTINGS ->
-                producer.paginateSettings(publishers.edit, config, newState.page)
+                producer.paginateSettings(publishers.edit(messageRef), config, newState.page)
             else -> throw Exception()
         }
             .launch()

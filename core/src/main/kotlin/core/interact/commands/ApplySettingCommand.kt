@@ -26,64 +26,37 @@ class ApplySettingCommand(
     override val responseFlag = ResponseFlag.Immediately
 
     private fun getKindNamePair(container: LanguageContainer) = when (diff) {
-            is BoardStyle -> when (diff) {
-                BoardStyle.IMAGE -> Pair(
-                    container.style(),
-                    container.styleSelectImage()
-                )
-                BoardStyle.TEXT -> Pair(
-                    container.style(),
-                    container.styleSelectText()
-                )
-                BoardStyle.SOLID_TEXT -> Pair(
-                    container.style(),
-                    container.styleSelectSolidText()
-                )
-                BoardStyle.UNICODE -> Pair(
-                    container.style(),
-                    container.styleSelectUnicodeText()
-                )
-            }
-            is FocusPolicy -> when (diff) {
-                FocusPolicy.INTELLIGENCE -> Pair(
-                    container.focus(),
-                    container.focusSelectIntelligence()
-                )
-                FocusPolicy.FALLOWING -> Pair(
-                    container.focus(),
-                    container.focusSelectFallowing()
-                )
-            }
-            is SweepPolicy -> when (diff) {
-                SweepPolicy.RELAY -> Pair(
-                    container.sweep(),
-                    container.sweepSelectRelay()
-                )
-                SweepPolicy.LEAVE -> Pair(
-                    container.sweep(),
-                    container.sweepSelectLeave()
-                )
-                SweepPolicy.EDIT -> Pair(
-                    container.sweep(),
-                    container.sweepSelectEdit()
-                )
-            }
-            is ArchivePolicy -> when (diff) {
-                ArchivePolicy.BY_ANONYMOUS -> Pair(
-                    container.archive(),
-                    container.archiveSelectByAnonymous()
-                )
-                ArchivePolicy.WITH_PROFILE -> Pair(
-                    container.archive(),
-                    container.archiveSelectWithProfile()
-                )
-                ArchivePolicy.PRIVACY -> Pair(
-                    container.archive(),
-                    container.archiveSelectPrivacy()
-                )
-            }
-            else -> throw IllegalStateException()
+        is BoardStyle -> container.style() and when (diff) {
+            BoardStyle.IMAGE -> container.styleSelectImage()
+            BoardStyle.TEXT -> container.styleSelectText()
+            BoardStyle.SOLID_TEXT -> container.styleSelectSolidText()
+            BoardStyle.UNICODE -> container.styleSelectUnicodeText()
         }
+
+        is FocusPolicy -> container.focus() and when (diff) {
+            FocusPolicy.INTELLIGENCE -> container.focusSelectIntelligence()
+            FocusPolicy.FALLOWING -> container.focusSelectFallowing()
+        }
+
+        is HintPolicy -> container.hint() and when (diff) {
+            HintPolicy.FIVE -> container.hintSelectFive()
+            HintPolicy.OFF -> container.hintSelectOff()
+        }
+
+        is SweepPolicy -> container.sweep() and when (diff) {
+            SweepPolicy.RELAY -> container.sweepSelectRelay()
+            SweepPolicy.LEAVE -> container.sweepSelectLeave()
+            SweepPolicy.EDIT -> container.sweepSelectEdit()
+        }
+
+        is ArchivePolicy -> container.archive() and when (diff) {
+            ArchivePolicy.BY_ANONYMOUS -> container.archiveSelectByAnonymous()
+            ArchivePolicy.WITH_PROFILE -> container.archiveSelectWithProfile()
+            ArchivePolicy.PRIVACY -> container.archiveSelectPrivacy()
+        }
+
+        else -> throw IllegalStateException()
+    }
 
     override suspend fun <A, B> execute(
         bot: BotContext,

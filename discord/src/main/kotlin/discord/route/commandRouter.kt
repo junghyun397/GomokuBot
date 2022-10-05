@@ -9,7 +9,7 @@ import core.interact.commands.Command
 import core.interact.commands.ResponseFlag
 import core.interact.commands.UpdateProfileCommand
 import core.interact.i18n.LanguageContainer
-import core.interact.message.DiPublisherSet
+import core.interact.message.AdaptivePublisherSet
 import core.interact.message.MonoPublisherSet
 import core.interact.reports.ErrorReport
 import core.interact.reports.InteractionReport
@@ -29,6 +29,7 @@ import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import reactor.core.publisher.Mono
+import utils.assets.LinuxTime
 import utils.structs.*
 import java.util.concurrent.TimeUnit
 
@@ -112,9 +113,11 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
         .filter { it.isDefined }
         .map { it.getOrException() }
         .doOnNext { parsed ->
-            parsed.onLeft {
-                if (it.responseFlag is ResponseFlag.Defer)
-                    context.event.deferReply().queue()
+            parsed.onLeft { command ->
+                val responseFlag = command.responseFlag
+
+                if (responseFlag is ResponseFlag.Defer)
+                    context.event.deferReply().setEphemeral(responseFlag.windowed).queue()
             }
         }
         .flatMap { parsed -> mono {
@@ -128,16 +131,18 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
                         producer = DiscordMessageProducer,
                         messageRef = VOID_MESSAGE_REF,
                         publishers = when (command.responseFlag) {
-                            is ResponseFlag.Defer -> DiPublisherSet(
+                            is ResponseFlag.Defer -> AdaptivePublisherSet(
                                 plain = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
-                                windowed = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg).setEphemeral(true)) },
+                                windowed = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
+                                editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg) } },
                             )
-                            else -> DiPublisherSet(
+                            else -> AdaptivePublisherSet(
                                 plain = TransMessagePublisher(
                                     head = { msg -> ReplyActionAdaptor(context.event.reply(msg)) },
                                     tail = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) }
                                 ),
                                 windowed = { msg -> ReplyActionAdaptor(context.event.reply(msg).setEphemeral(true)) },
+                                editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg) } }
                             )
                         }
                     )
@@ -219,6 +224,7 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<I
                         messageRef = context.event.message.extractMessageRef(),
                         publishers = MonoPublisherSet(
                             publisher = { msg -> MessageActionAdaptor(context.event.message.reply(msg)) },
+                            editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg) } },
                         ),
                     )
                 },
@@ -240,6 +246,7 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<I
             ).apply {
                 interactionSource = getEventAbbreviation(context.event::class)
                 emittedTime = context.emittedTime
+                apiTime = LinuxTime.now()
             }
         } }
 }

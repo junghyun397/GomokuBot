@@ -1,19 +1,18 @@
 package core.inference
 
-import jrenju.*
-import jrenju.notation.Direction
-import jrenju.notation.Flag
-import jrenju.notation.Pos
-import jrenju.notation.Renju
-import jrenju.protocol.Solution
-import jrenju.protocol.`Solution$`
-import jrenju.protocol.SolutionLeaf
-import jrenju.solve.LRUMemo
-import jrenju.solve.`LargeMoveGenerator$`
-import jrenju.solve.`VCFSolver$`
+import core.assets.Notation
+import core.assets.intToStruct
+import engine.move.LargeMoveGenerator
+import engine.search.vcf.VCFSolver
+import renju.*
+import renju.notation.Pos
+import renju.notation.Renju
+import renju.protocol.Solution
+import renju.protocol.SolutionLeaf
 import utils.assets.bound
 import utils.assets.maxIndexes
 import utils.assets.toInt
+import utils.lang.and
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
@@ -22,7 +21,7 @@ object FocusSolver {
 
     object FocusWeights : WeightSet {
 
-        const val lastMove = 500
+        const val lastMove = 1000
         const val centerExtra = 1
 
         override val neighborhoodExtra = 2
@@ -32,7 +31,7 @@ object FocusSolver {
 
         override val blockThree = 10
         override val openFour = 150
-        override val five = 200
+        override val five = 400
 
         override val blockFourExtra = 0
         override val treatBlockThreeFork = this.blockThree
@@ -45,7 +44,8 @@ object FocusSolver {
         override val threeFourFork = 50
         override val doubleFourFork = 50
 
-        const val fiveComponent = 200
+        const val fiveComponent = 400
+        const val fiveGuide = 200
 
     }
 
@@ -75,7 +75,7 @@ object FocusSolver {
 
     private fun isStoneExist(board: Board, row: Int, col: Int) =
         row in 0 until Renju.BOARD_WIDTH() && col in 0 until Renju.BOARD_WIDTH()
-                && Flag.isExist(board.field()[Pos.rowColToIdx(row, col)])
+                && Notation.FlagInstance.isExist(board.field()[Pos.rowColToIdx(row, col)])
 
     private fun hasNeighborhood(board: Board, idx: Int): Boolean {
         val row = Pos.idxToRow(idx)
@@ -86,80 +86,84 @@ object FocusSolver {
                 isStoneExist(board, row - 1, col - 1) || isStoneExist(board, row - 1, col) || isStoneExist(board, row - 1, col + 1))
     }
 
-    private fun collectFiveComponentsInStrip(board: Board, strip: L1Strip, color: Byte): List<Int> {
+    private fun collectFiveComponentsInStrip(board: Board, strip: L1Strip, color: Byte): Pair<List<Int>, List<Int>> {
         val components = mutableListOf<Int>()
 
         for (idx in 0 until strip.size()) {
             val absoluteIdx = when (strip.direction()) {
-                Direction.X() -> Pos.rowColToIdx(Pos.idxToRow(strip.startIdx()), Pos.idxToCol(strip.startIdx()) + idx)
-                Direction.Y() -> Pos.rowColToIdx(Pos.idxToRow(strip.startIdx()) + idx, Pos.idxToCol(strip.startIdx()))
-                Direction.DEG45() -> Pos.rowColToIdx(Pos.idxToRow(strip.startIdx()) + idx, Pos.idxToCol(strip.startIdx()) + idx)
-                Direction.DEG315() -> Pos.rowColToIdx(Pos.idxToRow(strip.startIdx()) + idx, Pos.idxToCol(strip.startIdx()) - idx)
+                Notation.Direction.X -> Pos.rowColToIdx(Pos.idxToRow(strip.startIdx()), Pos.idxToCol(strip.startIdx()) + idx)
+                Notation.Direction.Y -> Pos.rowColToIdx(Pos.idxToRow(strip.startIdx()) + idx, Pos.idxToCol(strip.startIdx()))
+                Notation.Direction.IncreaseUp -> Pos.rowColToIdx(Pos.idxToRow(strip.startIdx()) + idx, Pos.idxToCol(strip.startIdx()) + idx)
+                Notation.Direction.DescentUp -> Pos.rowColToIdx(Pos.idxToRow(strip.startIdx()) + idx, Pos.idxToCol(strip.startIdx()) - idx)
                 else -> throw IllegalStateException()
             }
 
             val flag = strip.stripField()[idx]
 
-            if (board.getFieldStatus(absoluteIdx).apply(color).fiveAt(strip.direction()) || flag == color)
+            if (intToStruct(board.getFieldStatus(absoluteIdx).apply(color)).fiveAt(strip.direction()) || flag == color)
                 components.add(absoluteIdx)
             else
                 components.clear()
 
             if (components.size == 5) {
-                return components.apply {
-                    when (strip.direction()) {
-                        Direction.X() -> {
-                            val centerRow = Pos.idxToRow(this[2])
-                            val centerCol = Pos.idxToCol(this[2])
+                return components and when (strip.direction()) {
+                    Notation.Direction.X -> mutableListOf<Int>().apply {
+                        val centerRow = Pos.idxToRow(components[2])
+                        val centerCol = Pos.idxToCol(components[2])
 
-                            if (centerRow < Renju.BOARD_WIDTH() - 2) add(Pos.rowColToIdx(centerRow + 2, centerCol))
-                            if (centerRow < Renju.BOARD_WIDTH() - 1) add(Pos.rowColToIdx(centerRow + 1, centerCol))
-                            if (centerRow > 0) add(Pos.rowColToIdx(centerRow - 1, centerCol))
-                            if (centerRow > 1) add(Pos.rowColToIdx(centerRow - 2, centerCol))
-                        }
-                        Direction.Y() -> {
-                            val centerRow = Pos.idxToRow(this[2])
-                            val centerCol = Pos.idxToCol(this[2])
-
-                            if (centerCol < Renju.BOARD_WIDTH() - 2) add(Pos.rowColToIdx(centerRow, centerCol + 2))
-                            if (centerCol < Renju.BOARD_WIDTH() - 1) add(Pos.rowColToIdx(centerRow, centerCol + 1))
-                            if (centerCol > 0) add(Pos.rowColToIdx(centerRow, centerCol - 1))
-                            if (centerCol > 1) add(Pos.rowColToIdx(centerRow, centerCol - 2))
-                        }
+                        if (centerRow < Renju.BOARD_WIDTH() - 2) add(Pos.rowColToIdx(centerRow + 2, centerCol))
+                        if (centerRow < Renju.BOARD_WIDTH() - 1) add(Pos.rowColToIdx(centerRow + 1, centerCol))
+                        if (centerRow > 0) add(Pos.rowColToIdx(centerRow - 1, centerCol))
+                        if (centerRow > 1) add(Pos.rowColToIdx(centerRow - 2, centerCol))
                     }
+
+                    Notation.Direction.Y -> mutableListOf<Int>().apply {
+                        val centerRow = Pos.idxToRow(components[2])
+                        val centerCol = Pos.idxToCol(components[2])
+
+                        if (centerCol < Renju.BOARD_WIDTH() - 2) add(Pos.rowColToIdx(centerRow, centerCol + 2))
+                        if (centerCol < Renju.BOARD_WIDTH() - 1) add(Pos.rowColToIdx(centerRow, centerCol + 1))
+                        if (centerCol > 0) add(Pos.rowColToIdx(centerRow, centerCol - 1))
+                        if (centerCol > 1) add(Pos.rowColToIdx(centerRow, centerCol - 2))
+                    }
+
+                    else -> emptyList()
                 }
             }
         }
 
-        return emptyList()
+        return emptyList<Int>() and emptyList()
     }
 
-    private fun collectFiveComponents(board: Board) =
-        BoardOps(board).composeStrips(board.lastMove())
-            .flatMap { strip -> this.collectFiveComponentsInStrip(board, strip, board.colorFlag()) }
+    private fun collectFiveComponents(board: Board): Pair<List<Int>, List<Int>> {
+        val components = BoardOps(board).composeStrips(board.lastMove())
+            .map { strip -> this.collectFiveComponentsInStrip(board, strip, board.colorFlag()) }
 
-    private fun evaluateParticle(weightSet: WeightSet, particle: ParticleOps, particleB: ParticleOps, bySelf: Boolean): Int {
+        return components.flatMap { (components, _) -> components } and components.flatMap { (_, guides) -> guides }
+    }
+
+    private fun evaluateParticle(weightSet: WeightSet, selfStruct: Struct, opponentStruct: Struct, bySelf: Boolean): Int {
         val forkWeight = when {
-            particle.fourTotal() > 1 -> weightSet.doubleFourFork
-            particle.threeTotal() > 0 && particle.fourTotal() > 0 -> weightSet.threeFourFork
-            particle.threeTotal() > 1 -> weightSet.doubleThreeFork
+            selfStruct.fourTotal() > 1 -> weightSet.doubleFourFork
+            selfStruct.threeTotal() > 0 && selfStruct.fourTotal() > 0 -> weightSet.threeFourFork
+            selfStruct.threeTotal() > 1 -> weightSet.doubleThreeFork
             else -> 0
         }
 
-        val treatWeight = particle.threeTotal() * weightSet.openThree + particle.closedFourTotal() * weightSet.closedFour
+        val treatWeight = selfStruct.threeTotal() * weightSet.openThree + selfStruct.closedFourTotal() * weightSet.closedFour
 
         val fourWeight = when {
-            bySelf -> particle.openFourTotal() * weightSet.openFour
+            bySelf -> selfStruct.openFourTotal() * weightSet.openFour
             else -> when {
-                particle.blockThreeTotal() > 0 -> when {
-                    particleB.threeTotal() > 0 || particleB.fourTotal() > 0 -> weightSet.treatBlockThreeFork
-                    else -> weightSet.blockThree + particle.openFourTotal() * weightSet.blockFourExtra
+                selfStruct.blockThreeTotal() > 0 -> when {
+                    opponentStruct.threeTotal() > 0 || opponentStruct.fourTotal() > 0 -> weightSet.treatBlockThreeFork
+                    else -> weightSet.blockThree + selfStruct.openFourTotal() * weightSet.blockFourExtra
                 }
                 else -> 0
             }
         }
 
-        val fiveWeight = particle.fiveTotal() * weightSet.five
+        val fiveWeight = selfStruct.fiveTotal() * weightSet.five
 
         return forkWeight + treatWeight + fourWeight + fiveWeight
     }
@@ -167,22 +171,22 @@ object FocusSolver {
     fun findSolution(board: Board, weightSet: WeightSet = SolverWeights): Solution {
         val traps = StructOps(board).collectTrapPoints()
 
-        val moves = `LargeMoveGenerator$`.`MODULE$`.collectValidMoves(board)
+        val moves = LargeMoveGenerator.collectValidMoves(board)
 
         if (moves.size == 1)
             return SolutionLeaf(moves.first())
 
         val eval = moves.map { idx ->
-            val particlePair = board.getFieldStatus(idx)
-            val selfParticle = particlePair.apply(board.nextColorFlag())
-            val opponentParticle = particlePair.apply(board.colorFlag())
+            val fieldStatus = board.getFieldStatus(idx)
+            val selfStruct = intToStruct(fieldStatus.apply(board.nextColorFlag()))
+            val opponentStruct = intToStruct(fieldStatus.apply(board.colorFlag()))
 
-            this.evaluateParticle(weightSet, selfParticle, opponentParticle, true) +
-                    this.evaluateParticle(weightSet, opponentParticle, selfParticle, false) +
+            this.evaluateParticle(weightSet, selfStruct, opponentStruct, true) +
+                    this.evaluateParticle(weightSet, opponentStruct, selfStruct, false) +
                     this.hasNeighborhood(board, idx).toInt() * weightSet.neighborhoodExtra +
                     when {
                         traps._1.contains(idx) -> when {
-                            selfParticle.threeTotal() > 0 || selfParticle.fourTotal() > 0 -> weightSet.treatThreeSideTrapFork
+                            selfStruct.threeTotal() > 0 || selfStruct.fourTotal() > 0 -> weightSet.treatThreeSideTrapFork
                             else -> weightSet.threeSideTrap
                         }
                         else -> 0
@@ -193,58 +197,72 @@ object FocusSolver {
         val maxIndexes = eval.maxIndexes()!!
 
         if (moves.size > 2) {
-            val vcfSequence = `VCFSolver$`.`MODULE$`.findVCFSequence(board, LRUMemo.empty(), Int.MAX_VALUE)
+            val vcfSequence = VCFSolver.findVCFSequence(board)
 
-            if (!vcfSequence.isEmpty)
-                return `Solution$`.`MODULE$`.fromIterable(vcfSequence).get()
+            if (vcfSequence.nonEmpty())
+                return Solution.fromIterable(vcfSequence).get()
         }
 
         return SolutionLeaf(moves[maxIndexes.random()])
     }
 
     private fun evaluateBoard(board: Board): MutableList<MutableList<Int>> {
-        val fiveComponents = this.collectFiveComponents(board)
+        val (fiveComponents, fiveGuides) = this.collectFiveComponents(board)
 
         return (0 until Renju.BOARD_SIZE())
             .map { idx ->
                 val flag = board.field()[idx]
 
-                if (Flag.isForbid(flag, board.nextColorFlag()))
+                if (Notation.FlagInstance.isForbid(flag, board.nextColorFlag()))
                     0
                 else {
-                    val particlePair = board.getFieldStatus(idx)
-                    val selfParticle = particlePair.apply(board.nextColorFlag())
-                    val opponentParticle = particlePair.apply(board.colorFlag())
+                    val fieldStatus = board.getFieldStatus(idx)
+                    val selfStruct = intToStruct(fieldStatus.apply(board.nextColorFlag()))
+                    val opponentStruct = intToStruct(fieldStatus.apply(board.colorFlag()))
 
-                    this.evaluateParticle(FocusWeights, selfParticle, opponentParticle, true) +
-                            this.evaluateParticle(FocusWeights, opponentParticle, selfParticle, true) +
+                    this.evaluateParticle(FocusWeights, selfStruct, opponentStruct, true) +
+                            this.evaluateParticle(FocusWeights, opponentStruct, selfStruct, true) +
                             this.hasNeighborhood(board, idx).toInt() * FocusWeights.neighborhoodExtra +
-                            fiveComponents.contains(idx).toInt() * FocusWeights.fiveComponent
+                            fiveComponents.contains(idx).toInt() * FocusWeights.fiveComponent +
+                            fiveGuides.contains(idx).toInt() * FocusWeights.fiveGuide
                 }
             }
             .chunked(Renju.BOARD_WIDTH()) { it.toMutableList() }
             .toMutableList()
     }
 
+    data class FocusInfo(val focus: Pos, val highlights: List<Pos>)
+
     // Prefix Sum Algorithm, O(N)
-    fun resolveFocus(board: Board, kernelWidth: Int): Pos =
-        board.latestPos().fold(
-            { Renju.BOARD_CENTER_POS() },
-            { latestPos ->
+    fun resolveFocus(board: Board, kernelWidth: Int, buildHighlights: Boolean): FocusInfo =
+        board.lastPos().fold(
+            { FocusInfo(Renju.BOARD_CENTER_POS(), listOf(Renju.BOARD_CENTER_POS())) },
+            { lastPos ->
                 val kernelHalf = kernelWidth / 2
                 val kernelQuarter = kernelWidth / 4
 
                 val evaluated = this.evaluateBoard(board)
 
-                evaluated[latestPos.row()][latestPos.col()] += FocusWeights.lastMove
+                val highlights = when (buildHighlights) {
+                    true -> evaluated
+                        .asSequence()
+                        .flatten()
+                        .withIndex()
+                        .filter { (_, value) -> value >= FocusWeights.five }
+                        .map { (index, _) -> Pos.fromIdx(index) }
+                        .toList()
+                    else -> emptyList()
+                }
 
-                for (row in (latestPos.row() - kernelHalf).bound() .. min(Renju.BOARD_WIDTH_MAX_IDX(), latestPos.row() + kernelHalf))
-                    for (col in (latestPos.col() - kernelHalf).bound() .. min(Renju.BOARD_WIDTH_MAX_IDX(), latestPos.col() + kernelHalf))
+                evaluated[lastPos.row()][lastPos.col()] += FocusWeights.lastMove
+
+                for (row in (lastPos.row() - kernelHalf).bound() .. min(Renju.BOARD_WIDTH_MAX_IDX(), lastPos.row() + kernelHalf))
+                    for (col in (lastPos.col() - kernelHalf).bound() .. min(Renju.BOARD_WIDTH_MAX_IDX(), lastPos.col() + kernelHalf))
                         evaluated[row][col] += FocusWeights.centerExtra
 
                 if (board.moves() < 5) {
-                    for (row in (latestPos.row() - kernelQuarter).bound() .. min(Renju.BOARD_WIDTH_MAX_IDX(), latestPos.row() + kernelQuarter))
-                        for (col in (latestPos.col() - kernelQuarter).bound() .. min(Renju.BOARD_WIDTH_MAX_IDX(), latestPos.col() + kernelQuarter))
+                    for (row in (lastPos.row() - kernelQuarter).bound() .. min(Renju.BOARD_WIDTH_MAX_IDX(), lastPos.row() + kernelQuarter))
+                        for (col in (lastPos.col() - kernelQuarter).bound() .. min(Renju.BOARD_WIDTH_MAX_IDX(), lastPos.col() + kernelQuarter))
                             evaluated[row][col] += FocusWeights.centerExtra
                 }
 
@@ -258,8 +276,8 @@ object FocusSolver {
                 val step = Renju.BOARD_WIDTH() - kernelWidth
 
                 var maxScore = 0
-                var maxRow = latestPos.row()
-                var maxCol = latestPos.col()
+                var maxRow = lastPos.row()
+                var maxCol = lastPos.col()
 
                 for (row in (0 .. step))
                     for (col in (0 .. step)) {
@@ -273,14 +291,14 @@ object FocusSolver {
                         }
                     }
 
-                Pos(max(kernelHalf, maxRow + kernelHalf), max(kernelHalf, maxCol + kernelHalf))
+                FocusInfo(Pos(max(kernelHalf, maxRow + kernelHalf), max(kernelHalf, maxCol + kernelHalf)), highlights)
             }
         )
 
-    fun resolveCenter(board: Board, range: IntRange): Pos =
-        board.latestPos().fold(
-            { Renju.BOARD_CENTER_POS() },
-            { Pos(it.row().coerceIn(range), it.col().coerceIn(range)) }
+    fun resolveCenter(board: Board, range: IntRange): FocusInfo =
+        board.lastPos().fold(
+            { FocusInfo(Renju.BOARD_CENTER_POS(), listOf(Renju.BOARD_CENTER_POS())) },
+            { FocusInfo(Pos(it.row().coerceIn(range), it.col().coerceIn(range)), listOf(Renju.BOARD_CENTER_POS())) }
         )
 
 }

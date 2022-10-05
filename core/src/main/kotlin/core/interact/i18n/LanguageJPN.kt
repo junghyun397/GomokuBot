@@ -49,8 +49,8 @@ class LanguageJPN : LanguageENG() {
     override fun endPVPResign(winner: String, looser: String) =
         "`$looser`さんが降伏を宣言して`$winner`さんが勝ちました。"
 
-    override fun endPVEWin(player: String, latestPos: String) = latestPos + "に置いてAIに勝ちました。おめでとうございます。"
-    override fun endPVELose(player: String, latestPos: String) = "AIが" + latestPos + "に置いて負けました。"
+    override fun endPVEWin(player: String, lastPos: String) = lastPos + "に置いてAIに勝ちました。おめでとうございます。"
+    override fun endPVELose(player: String, lastPos: String) = "AIが" + lastPos + "に置いて負けました。"
     override fun endPVEResign(player: String) = "降伏を宣言してAIに負けました。"
 
     override fun endPVPTie(owner: String, opponent: String) = "もう碁石を置く所が無くて無勝負に処理されました。"

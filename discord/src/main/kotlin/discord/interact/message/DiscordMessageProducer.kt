@@ -4,6 +4,7 @@ import core.BotConfig
 import core.assets.*
 import core.database.entities.Announce
 import core.database.entities.UserStats
+import core.inference.FocusSolver
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.interact.message.*
@@ -21,8 +22,6 @@ import dev.minn.jda.ktx.messages.InlineEmbed
 import dev.minn.jda.ktx.messages.Message
 import discord.assets.*
 import discord.interact.GuildManager
-import jrenju.notation.Pos
-import jrenju.notation.Renju
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
@@ -38,6 +37,7 @@ import net.dv8tion.jda.api.interactions.components.ItemComponent
 import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
 import net.dv8tion.jda.api.requests.RestAction
+import renju.notation.Renju
 import utils.assets.LinuxTime
 import utils.assets.toBytes
 import utils.assets.toEnumString
@@ -113,7 +113,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
 
     private fun InlineEmbed.buildStatusFields(container: LanguageContainer, session: GameSession) =
         this.apply {
-            session.board.latestPos().foreach {
+            session.board.lastPos().foreach {
                 field {
                     name = container.boardMoves()
                     value = session.board.moves().toString().asHighlightFormat()
@@ -122,7 +122,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
 
                 field {
                     name = container.boardLastMove()
-                    value = session.board.latestPos().get().toCartesian().asHighlightFormat()
+                    value = session.board.lastPos().get().toString().asHighlightFormat()
                     inline = true
                 }
             }
@@ -241,11 +241,11 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
             } }
         ) }.reversed() // cartesian coordinate system
 
-    override fun attachFocusButtons(boardAction: DiscordMessageIO, session: GameSession, focus: Pos): DiscordMessageIO =
-        boardAction.addButtons(this.generateFocusedButtons(this.generateFocusedField(session.board, focus)))
+    override fun attachFocusButtons(boardAction: MessageIO<Message, DiscordComponents>, session: GameSession, focusInfo: FocusSolver.FocusInfo): MessageIO<Message, DiscordComponents> =
+        boardAction.addButtons(this.generateFocusedButtons(this.generateFocusedField(session.board, focusInfo)))
 
-    override fun attachFocusButtons(publisher: ComponentPublisher<Message, DiscordComponents>, session: GameSession, focus: Pos) =
-        publisher(this.generateFocusedButtons(this.generateFocusedField(session.board, focus)))
+    override fun attachFocusButtons(publisher: ComponentPublisher<Message, DiscordComponents>, session: GameSession, focusInfo: FocusSolver.FocusInfo): MessageIO<Message, DiscordComponents> =
+        publisher(this.generateFocusedButtons(this.generateFocusedField(session.board, focusInfo)))
 
     override fun attachNavigators(flow: Flow<String>, message: MessageAdaptor<Message, DiscordComponents>, checkTerminated: suspend () -> Boolean) =
         IO {
@@ -293,7 +293,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
             }
             field {
                 name = container.helpAboutEmbedVersion()
-                value = "NG 1.0"
+                value = "NG 1.1"
             }
             field {
                 name = container.helpAboutEmbedSupport()
@@ -424,9 +424,11 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
                 .addButtons(this.buildStylePolicyMenu(config).liftToButtons())
             2 -> publisher(Message(embed = this.buildFocusPolicyGuideEmbed(config.language.container)))
                 .addButtons(this.buildFocusPolicyMenu(config).liftToButtons())
-            3 -> publisher(Message(embed = this.buildSweepPolicyGuideEmbed(config.language.container)))
+            3 -> publisher(Message(embed = this.buildHintPolicyGuideEmbed(config.language.container)))
+                .addButtons(this.buildHintPolicyMenu(config).liftToButtons())
+            4 -> publisher(Message(embed = this.buildSweepPolicyGuideEmbed(config.language.container)))
                 .addButtons(this.buildSweepPolicyMenu(config).liftToButtons())
-            4 -> publisher(Message(embed = this.buildArchivePolicyGuideEmbed(config.language.container)))
+            5 -> publisher(Message(embed = this.buildArchivePolicyGuideEmbed(config.language.container)))
                 .addButtons(this.buildArchivePolicyMenu(config).liftToButtons())
             else -> throw IllegalStateException()
         }
@@ -586,9 +588,45 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
             )
         }
 
-    private val buildSweepPolicyGuideEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
+    private val buildHintPolicyGuideEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
             color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.SETTINGS, 3)
+            title = container.hintEmbedTitle()
+            description = container.hintEmbedDescription()
+
+            field {
+                name = "$UNICODE_LIGHT ${container.hintSelectFive()}"
+                value = container.hintSelectFiveDescription()
+                inline = false
+            }
+
+            field {
+                name = "$UNICODE_NOTEBOOK ${container.hintSelectOff()}"
+                value = container.hintSelectOffDescription()
+                inline = false
+            }
+        }
+    }
+
+    private fun buildHintPolicyMenu(config: GuildConfig) =
+        SelectMenu("p") {
+            option(
+                label = config.language.container.hintSelectFive(),
+                value = HintPolicy.FIVE.toEnumString(),
+                emoji = EMOJI_LIGHT,
+                default = config.hintPolicy == HintPolicy.FIVE
+            )
+            option(
+                label = config.language.container.hintSelectOff(),
+                value = HintPolicy.OFF.toEnumString(),
+                emoji = EMOJI_NOTEBOOK,
+                default = config.hintPolicy == HintPolicy.OFF
+            )
+        }
+
+    private val buildSweepPolicyGuideEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
+        Embed {
+            color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.SETTINGS, 4)
             title = container.sweepEmbedTitle()
             description = container.sweepEmbedDescription()
 
@@ -636,7 +674,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
 
     private val buildArchivePolicyGuideEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
-            color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.SETTINGS, 4)
+            color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.SETTINGS, 5)
             title = container.archiveEmbedTitle()
             description = container.archiveEmbedDescription()
 
@@ -647,7 +685,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
             }
 
             field {
-                name = "$UNICODE_SMILING ${container.archiveSelectWithProfile()}"
+                name = "$UNICODE_ID_CARD ${container.archiveSelectWithProfile()}"
                 value = container.archiveSelectWithProfileDescription()
                 inline = false
             }
@@ -671,7 +709,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
             option(
                 label = config.language.container.archiveSelectWithProfile(),
                 value = ArchivePolicy.WITH_PROFILE.toEnumString(),
-                emoji = EMOJI_SMILING,
+                emoji = EMOJI_ID_CARD,
                 default = config.archivePolicy == ArchivePolicy.WITH_PROFILE
             )
             option(

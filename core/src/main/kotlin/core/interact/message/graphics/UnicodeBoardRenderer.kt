@@ -1,9 +1,9 @@
 package core.interact.message.graphics
 
-import jrenju.Board
-import jrenju.notation.Flag
-import jrenju.notation.Pos
-import jrenju.notation.Renju
+import renju.Board
+import renju.notation.Flag
+import renju.notation.Pos
+import renju.notation.Renju
 import utils.lang.asString
 import utils.structs.Either
 import utils.structs.Option

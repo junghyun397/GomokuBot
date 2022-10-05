@@ -47,8 +47,8 @@ class LanguageSKO : LanguageKOR() {
     override fun endPVPResign(winner: String, looser: String) =
         "$looser 님이降伏을宣言함으로서 $winner 님이勝利하였습니다!"
 
-    override fun endPVEWin(player: String, latestPos: String) = latestPos +  "에置함으로서人工知能에게勝利하셨습니다. 祝賀합니다!"
-    override fun endPVELose(player: String, latestPos: String) = "人工知能이" + latestPos + "에置함으로서敗北하셨습니다."
+    override fun endPVEWin(player: String, lastPos: String) = lastPos +  "에置함으로서人工知能에게勝利하셨습니다. 祝賀합니다!"
+    override fun endPVELose(player: String, lastPos: String) = "人工知能이" + lastPos + "에置함으로서敗北하셨습니다."
     override fun endPVEResign(player: String) = "降伏을宣言함으로서人工知能에게敗北하였습니다."
 
     override fun endPVPTie(owner: String, opponent: String) = "더以上棋를置할位가無하여無勝負處理되었습니다."

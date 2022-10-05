@@ -10,7 +10,7 @@ plugins {
 
 allprojects {
     group = "do1phin"
-    version = "1.0-SNAPSHOT"
+    version = "1.1-SNAPSHOT"
 
     repositories {
         mavenCentral()
@@ -32,10 +32,11 @@ subprojects {
     dependencies {
         implementation(kotlin("stdlib"))
 
-//        implementation("jrenju:jrenju_2.13:0.1.0-SNAPSHOT") // maven m2
-//        implementation("utils:utils_2.13:0.1.0-SNAPSHOT") // maven m2
-//        implementation("jrenju:jrenju_2.13") // gradle sourceControl
-        implementation("com.github.junghyun397.Kvine:jrenju_2.13:0f2075eb70") // jitpack
+//        implementation("renju:renju_sjs1_2.13:0.1.0-SNAPSHOT") // maven m2
+//        implementation("engine:engine_3:0.1.0-SNAPSHOT") // maven m2
+//        implementation("jrenju:jrenju_sjs1_2.13") // gradle sourceControl
+        implementation("com.github.junghyun397.kvine:renju_sjs1_2.13:f25c6ddbc9") // jitpack
+        implementation("com.github.junghyun397.kvine:engine_3:f25c6ddbc9") // jitpack
 
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
 

@@ -96,12 +96,11 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
             .flatMap {
                 val jdaUser = it.asUser
 
-                if (jdaUser.isBot)
-                    Option.Empty
-                else
-                    Option(UserProfileRepository.retrieveOrInsertUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, jdaUser.extractId()) {
+                Option.cond(jdaUser.isBot) {
+                    UserProfileRepository.retrieveOrInsertUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, jdaUser.extractId()) {
                         jdaUser.extractProfile()
-                    })
+                    }
+                }
             }
 
         return this.parseActually(context, owner, opponent)

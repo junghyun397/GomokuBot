@@ -1,6 +1,7 @@
 package tools.migration
 
 import core.assets.Guild
+import core.assets.Notation
 import core.assets.UserId
 import core.assets.bindNullable
 import core.database.DatabaseConnection
@@ -8,12 +9,13 @@ import core.database.entities.GameRecord
 import core.database.repositories.UserProfileRepository
 import core.inference.AiLevel
 import core.session.GameResult
-import jrenju.Board
-import jrenju.`EmptyScalaBoard$`
-import jrenju.notation.Color
-import jrenju.notation.Pos
 import kotlinx.coroutines.reactive.awaitLast
 import reactor.kotlin.core.publisher.toFlux
+import renju.Board
+import renju.`EmptyScalaBoard$`
+import renju.notation.Flag
+import renju.notation.Pos
+import renju.notation.Result
 import utils.assets.LinuxTime
 import utils.lang.and
 import utils.structs.getOrException
@@ -47,15 +49,15 @@ suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysq
         val board = history.fold<Pos, Board>(`EmptyScalaBoard$`.`MODULE$`) { board, pos -> board.makeMove(pos) }
 
         val winColor = when {
-            board.moves() == 0 -> Color.BLACK()
+            board.moves() == 0 -> Notation.Color.Black.flag()
             else -> when (cause) {
                 GameResult.Cause.FIVE_IN_A_ROW -> {
                     if (board.winner().isEmpty)
                         continue
                     else
-                        Color.apply((board.winner().get() as Byte).toInt())
+                        (board.winner().get() as Result.FiveInRow).winner().flag()
                 }
-                GameResult.Cause.RESIGN, GameResult.Cause.TIMEOUT -> board.color()
+                GameResult.Cause.RESIGN, GameResult.Cause.TIMEOUT -> board.color().flag()
                 GameResult.Cause.DRAW -> null
             }
         }
@@ -69,15 +71,15 @@ suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysq
 
         val (blackUser, whiteUser) = when (results.getString("reason")) {
             "WIN" -> when (winColor) {
-                Color.BLACK() -> user and null
+                Flag.BLACK() -> user and null
                 else -> null and user
             }
             "LOSE", "RESIGN", "TIMEOUT" -> when (winColor) {
-                Color.BLACK() -> null and user
+                Flag.WHITE() -> null and user
                 else -> user and null
             }
             "FULL" -> when (board.color()) {
-                Color.BLACK() -> null and user
+                Notation.Color.Black -> null and user
                 else -> user and null
             }
             else -> throw IllegalStateException()
@@ -87,7 +89,7 @@ suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysq
             cause = cause,
             blackUser = blackUser,
             whiteUser = whiteUser,
-            winColor = winColor
+            winColor = null
         )!!
 
         val record = GameRecord(

@@ -3,7 +3,7 @@ package discord.route
 import core.BotContext
 import core.assets.COLOR_NORMAL_HEX
 import core.assets.MessageRef
-import core.interact.message.PolyPublisherSet
+import core.interact.message.AdaptivePublisherSet
 import core.interact.reports.ErrorReport
 import core.interact.reports.InteractionReport
 import core.session.SessionManager
@@ -26,6 +26,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import reactor.core.publisher.Mono
+import utils.assets.LinuxTime
 import utils.lang.and
 import utils.structs.*
 
@@ -71,11 +72,12 @@ fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mo
                     user = context.user,
                     producer = DiscordMessageProducer,
                     messageRef = messageRef,
-                    publishers = PolyPublisherSet(
+                    publishers = AdaptivePublisherSet(
                         plain = { msg -> MessageActionAdaptor(context.event.channel.sendMessage(msg)) },
                         windowed = { msg -> MessageActionAdaptor(context.event.channel.sendMessage(msg)) },
-                        edit = { msg -> MessageActionAdaptor(context.event.channel.editMessageById(messageRef.id.idLong, msg)) },
-                        component = { components -> MessageComponentActionAdaptor(context.event.channel.editMessageComponentsById(messageRef.id.idLong, components)) }
+                        editSelf = { msg -> MessageActionAdaptor(context.event.channel.editMessageById(messageRef.id.idLong, msg)) },
+                        component = { components -> MessageComponentActionAdaptor(context.event.channel.editMessageComponentsById(messageRef.id.idLong, components)) },
+                        selfRef = messageRef,
                     ),
                 ).fold(
                     onSuccess = { (io, report) ->
@@ -88,6 +90,7 @@ fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mo
                 ).apply {
                     interactionSource = getEventAbbreviation(context.event::class)
                     emittedTime = context.emittedTime
+                    apiTime = LinuxTime.now()
                 }
             }
         }

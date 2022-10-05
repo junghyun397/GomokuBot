@@ -1,7 +1,7 @@
 package core.interact.message.graphics
 
-import jrenju.Board
-import jrenju.notation.Pos
+import renju.Board
+import renju.notation.Pos
 import utils.structs.Either
 import utils.structs.Option
 import java.io.InputStream

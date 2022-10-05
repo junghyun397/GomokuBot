@@ -7,10 +7,12 @@ interface InteractionReport {
 
     val guild: Guild
 
-    val terminationTime: LinuxTime
+    val commandTime: LinuxTime
 
     var interactionSource: String?
 
     var emittedTime: LinuxTime?
+
+    var apiTime: LinuxTime?
 
 }

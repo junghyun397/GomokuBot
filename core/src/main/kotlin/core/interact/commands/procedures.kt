@@ -8,11 +8,11 @@ import core.interact.message.MessageAdaptor
 import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
 import core.session.FocusPolicy
+import core.session.HintPolicy
 import core.session.SessionManager
 import core.session.SweepPolicy
 import core.session.entities.*
 import utils.assets.LinuxTime
-import utils.lang.and
 import utils.structs.*
 
 fun <A, B> buildAppendGameMessageProcedure(
@@ -44,25 +44,25 @@ fun <A, B> buildBoardProcedure(
     producer: MessageProducer<A, B>,
     publisher: MessagePublisher<A, B>,
     session: GameSession,
-): IO<Option<Unit>> = run {
-    val focus = when (config.focusPolicy) {
-        FocusPolicy.INTELLIGENCE -> FocusSolver.resolveFocus(session.board, producer.focusWidth)
+): IO<Option<Unit>> {
+    val focusInfo = when (config.focusPolicy) {
+        FocusPolicy.INTELLIGENCE -> FocusSolver.resolveFocus(session.board, producer.focusWidth, config.hintPolicy == HintPolicy.FIVE)
         FocusPolicy.FALLOWING -> FocusSolver.resolveCenter(session.board, producer.focusRange)
     }
 
     val boardMessageIO = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, session)
 
-    producer.attachFocusButtons(boardMessageIO, session, focus)
+    return producer.attachFocusButtons(boardMessageIO, session, focusInfo)
         .retrieve()
-        .mapOption { it and focus }
-}
-    .flatMapOption { (message, pos) ->
-        SessionManager.addNavigation(bot.sessions, message.messageRef, BoardNavigationState(pos.idx(), session.expireDate))
-        SessionManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.messageRef)
-        producer.attachFocusNavigators(message) {
-            SessionManager.retrieveGameSession(bot.sessions, guild, session.owner.id)?.board?.moves() != session.board.moves()
+        .flatMapOption { message ->
+            SessionManager.addNavigation(bot.sessions, message.messageRef, BoardNavigationState(focusInfo.focus.idx(), focusInfo, session.expireDate))
+            SessionManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.messageRef)
+            producer.attachFocusNavigators(message) {
+                SessionManager.retrieveGameSession(bot.sessions, guild, session.owner.id)?.board?.moves() != session.board.moves()
+            }
         }
-    }
+}
+
 
 private fun buildSweepProcedure(
     bot: BotContext,

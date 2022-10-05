@@ -1,15 +1,15 @@
 package core.interact.message.graphics
 
-import core.assets.toBoardIO
-import jrenju.Board
-import jrenju.notation.Pos
+import core.assets.Notation
+import renju.Board
+import renju.notation.Pos
 import utils.structs.Either
 import utils.structs.Option
 
 open class TextBoardRenderer : BoardRenderer {
 
     protected fun renderBoardText(board: Board) =
-        board.toBoardIO().boardString()!!
+        Notation.BoardIOInstance.BoardToString(board).boardString()!!
 
     override fun renderBoard(board: Board, history: Option<List<Pos?>>) =
         Either.Left("```\n${this.renderBoardText(board).replace(".", " ")}```")

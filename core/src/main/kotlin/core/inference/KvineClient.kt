@@ -1,18 +1,18 @@
 package core.inference
 
 import com.google.protobuf.kotlin.toByteString
+import core.assets.Notation
 import core.session.GameResult
 import core.session.Token
+import engine.util.SolutionExtension
 import inference.InferenceGrpcKt
 import inference.InferenceProto
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
-import jrenju.Board
-import jrenju.notation.Color
-import jrenju.protocol.AiPreset
-import jrenju.protocol.Solution
-import jrenju.protocol.`Solution$`
-import scala.Enumeration
+import renju.Board
+import renju.notation.Color
+import renju.protocol.AiPreset
+import renju.protocol.Solution
 import java.io.Closeable
 import java.util.concurrent.TimeUnit
 
@@ -24,7 +24,7 @@ class KvineClient(private val channel: ManagedChannel) : Closeable {
 
     private fun Board.toProtoStatus(): InferenceProto.Status =
         InferenceProto.Status.newBuilder()
-            .setBoard(this.field().toByteString())
+            .setBoard((this.field()).toByteString())
             .setMoves(this.moves())
             .setLastMove(this.lastMove())
             .build()
@@ -37,10 +37,10 @@ class KvineClient(private val channel: ManagedChannel) : Closeable {
             .setPlayerVCFDepth(this.playerVcfDepth())
             .build()
 
-    private fun Enumeration.Value.toProtoColor(): InferenceProto.Color =
+    private fun Color.toProtoColor(): InferenceProto.Color =
         when (this) {
-            Color.BLACK() -> InferenceProto.Color.BLACK
-            Color.WHITE() -> InferenceProto.Color.WHITE
+            Notation.Color.Black -> InferenceProto.Color.BLACK
+            Notation.Color.White -> InferenceProto.Color.WHITE
             else -> InferenceProto.Color.EMPTY
         }
 
@@ -67,9 +67,9 @@ class KvineClient(private val channel: ManagedChannel) : Closeable {
         Token(this.token)
 
     private fun InferenceProto.Solution.parseSolution(): Solution =
-        `Solution$`.`MODULE$`.fromBinary(this.solution.toByteArray()).get()
+        SolutionExtension.binaryToSolution(this.solution.toByteArray()).get()
 
-    suspend fun begins(aiPreset: AiPreset, aiColor: Enumeration.Value, board: Board): Token {
+    suspend fun begins(aiPreset: AiPreset, aiColor: Color, board: Board): Token {
         val request = InferenceProto.Begins.newBuilder()
             .setAiPreset(aiPreset.toProtoAiPreset())
             .setAiColor(aiColor.toProtoColor())

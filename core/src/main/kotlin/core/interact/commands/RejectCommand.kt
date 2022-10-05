@@ -32,7 +32,7 @@ class RejectCommand(private val requestSession: RequestSession) : Command {
     ) = runCatching {
         SessionManager.removeRequestSession(bot.sessions, guild, requestSession.owner.id)
 
-        val editIO = producer.produceRequestInvalidated(publishers.edit, config.language.container, this.requestSession.owner, this.requestSession.opponent)
+        val editIO = producer.produceRequestInvalidated(publishers.edit(messageRef), config.language.container, this.requestSession.owner, this.requestSession.opponent)
             .launch()
 
         val noticeIO = producer.produceRequestRejected(publishers.plain, config.language.container, requestSession.owner, requestSession.opponent)

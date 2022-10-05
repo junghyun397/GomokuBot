@@ -127,7 +127,7 @@ open class LanguageKOR : LanguageENG() {
 
     // ### 2-2-3. STYLE:ERROR:NOTFOUND (MESSAGE)
 
-    override fun styleErrorNotfound() = "스타일 지정에 오류가 있습니다. ``/스타일`` ``스타일 코드`` 형식으로 입력해 주세요."
+    override fun styleErrorNotfound() = "스타일 지정이 잘못됐습니다. ``/스타일`` ``스타일 코드`` 형식으로 입력해 주세요."
 
     // ### 2-2-4. STYLE:SUCCEED:CHANGED (MESSAGE)
 
@@ -170,6 +170,18 @@ open class LanguageKOR : LanguageENG() {
     override fun focusSelectFallowing() = "추종적"
     override fun focusSelectFallowingDescription() =
         "항상 마지막 수를 가운데 둡니다."
+
+    override fun hint() = "힌트"
+
+    override fun hintEmbedTitle()= "GomokuBot / 힌트"
+    override fun hintEmbedDescription() =
+        "오목에는 승패를 가르는 중요한 자리가 있습니다. GomokuBot이 중요한 자리를 어떻게 강조할지 정해주세요."
+
+    override fun hintSelectFive() = "승리"
+    override fun hintSelectFiveDescription() = "오목을 만들어 이길 수 있는 자리를 강조합니다."
+
+    override fun hintSelectOff() = "꺼짐"
+    override fun hintSelectOffDescription() = "그 어떤 자리도 강조하지 않습니다."
 
     // ### 2-3-3. SWEEP
 
@@ -252,7 +264,7 @@ open class LanguageKOR : LanguageENG() {
     // ### 3-2-2. SET:ERROR:ARGUMENT (MESSAGE)
 
     override fun setErrorIllegalArgument() =
-        "명령어 형식에 오류가 있습니다. ``/s`` ``알파벳`` ``숫자`` 꼴로 입력해 주세요."
+        "잘못된 명령어 형식입니다. ``/s`` ``알파벳`` ``숫자`` 꼴로 입력해 주세요."
 
     // ### 3-2-3. SET:ERROR:EXIST (MESSAGE)
 
@@ -263,11 +275,6 @@ open class LanguageKOR : LanguageENG() {
 
     override fun setErrorForbidden(move: String, forbiddenKind: String) =
         "``$move``은(는) ``${forbiddenKind}금수`` 입니다. 다른 곳에 돌을 놓아주세요."
-
-    // ### 3.2.5. SET:ERROR:EDITMODE (MESSAGE)
-
-    override fun setErrorEditMode() =
-        "편집 모드에서는 ``set``명령어를 쓸 수 없습니다. 버튼과 리액션을 통해 다음 수를 놓아주세요."
 
     // ## 3-3. RESIGN
 
@@ -345,10 +352,10 @@ open class LanguageKOR : LanguageENG() {
 
     // ### 4-3-2. END:AI (MESSAGE)
 
-    override fun endPVEWin(player: String, latestPos: String) =
-        "$latestPos 에 돌을 놓음으로써 인공지능을 이겼습니다. 축하합니다, $player 님!"
-    override fun endPVELose(player: String, latestPos: String) =
-        "$player 님, 인공지능이 $latestPos 에 돌을 놓음으로써 인공지능에 패배했습니다. 언제든지 다시 도전해 주세요."
+    override fun endPVEWin(player: String, lastPos: String) =
+        "$lastPos 에 돌을 놓음으로써 인공지능을 이겼습니다. 축하합니다, $player 님!"
+    override fun endPVELose(player: String, lastPos: String) =
+        "$player 님, 인공지능이 $lastPos 에 돌을 놓음으로써 인공지능에 패배했습니다. 언제든지 다시 도전해 주세요."
     override fun endPVEResign(player: String) =
         "$player 님, 인공지능 상대로 항복을 선언 함으로써 인공지능에 패배하셨습니다. 언제든지 다시 도전해 주세요."
     override fun endPVETie(player: String) =

@@ -12,7 +12,8 @@ data class CommandReport(
     val user: User,
     override var interactionSource: String? = null,
     override var emittedTime: LinuxTime? = null,
-    override val terminationTime: LinuxTime = LinuxTime.now(),
+    override val commandTime: LinuxTime = LinuxTime.now(),
+    override var apiTime: LinuxTime? = null
 ) : AbstractInteractionReport() {
 
     override fun toString() = "${super.toString()}/$user\t $commandName\t $comment"

@@ -1,10 +1,10 @@
 package core.interact.message.graphics
 
 import core.assets.*
-import jrenju.Board
-import jrenju.notation.Flag
-import jrenju.notation.Pos
-import jrenju.notation.Renju
+import renju.Board
+import renju.notation.Flag
+import renju.notation.Pos
+import renju.notation.Renju
 import utils.lang.and
 import utils.lang.clone
 import utils.lang.toInputStream
@@ -128,8 +128,8 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
 
             board.field()
                 .withIndex()
-                .filter { it.value != Flag.FREE() }
-                .map { Pos.fromIdx(it.index).asBoardPos() and it.value }
+                .filter { it.value != Flag.EMPTY() }
+                .map { Pos.fromIdx(it.index).asBoardPos() and it.value}
                 .forEach { (pos, flag) -> when (flag) {
                     Flag.BLACK() -> {
                         color = COLOR_GREY
@@ -170,10 +170,10 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
 
             history.fold(
                 onEmpty = {
-                    board.latestPos()
+                    board.lastPos()
                         .map { it.asBoardPos() }
                         .foreach { pos ->
-                            color = if (board.color() == jrenju.notation.Color.BLACK()) COLOR_WHITE else COLOR_BLACK
+                            color = if (board.color() == Notation.Color.Black) COLOR_WHITE else COLOR_BLACK
                             fillOval(
                                 pos.x + LATEST_MOVE_DOT_OFFSET,
                                 pos.y + LATEST_MOVE_DOT_OFFSET,

@@ -2,6 +2,7 @@ package core.session
 
 import core.BotContext
 import core.assets.Guild
+import core.assets.Notation
 import core.assets.User
 import core.assets.aiUser
 import core.database.entities.extractGameRecord
@@ -13,13 +14,13 @@ import core.interact.message.graphics.*
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.PvpGameSession
-import jrenju.`EmptyScalaBoard$`
-import jrenju.`ScalaBoard$`
-import jrenju.notation.Color
-import jrenju.notation.Pos
-import jrenju.notation.Renju
-import jrenju.protocol.SolutionNode
-import scala.Enumeration
+import renju.`EmptyScalaBoard$`
+import renju.ScalaBoard
+import renju.notation.Color
+import renju.notation.Pos
+import renju.notation.Renju
+import renju.notation.Result
+import renju.protocol.SolutionNode
 import utils.assets.LinuxTime
 import utils.lang.and
 import utils.structs.*
@@ -36,6 +37,10 @@ enum class FocusPolicy(override val id: Short) : Identifiable {
     INTELLIGENCE(0), FALLOWING(1)
 }
 
+enum class HintPolicy(override val id: Short) : Identifiable {
+    OFF(0), FIVE(1)
+}
+
 enum class SweepPolicy(override val id: Short) : Identifiable {
     RELAY(0), LEAVE(1), EDIT(2)
 }
@@ -44,7 +49,7 @@ enum class ArchivePolicy(override val id: Short) : Identifiable {
     WITH_PROFILE(0), BY_ANONYMOUS(1), PRIVACY(2)
 }
 
-enum class RejectReason(override val id: Short) : Identifiable {
+enum class InvalidKind(override val id: Short) : Identifiable {
     EXIST(0), FORBIDDEN(1)
 }
 
@@ -62,11 +67,11 @@ sealed interface GameResult {
         FIVE_IN_A_ROW(0), RESIGN(1), TIMEOUT(2), DRAW(3)
     }
 
-    data class Win(override val cause: Cause, val winColor: Enumeration.Value, val winner: User, val looser: User) : GameResult {
+    data class Win(override val cause: Cause, val winColor: Color, val winner: User, val looser: User) : GameResult {
 
         override val message get() = "$winner wins over $looser by $cause"
 
-        override val winColorId = this.winColor.id().toShort()
+        override val winColorId = this.winColor.flag().toShort()
 
     }
 
@@ -82,11 +87,13 @@ sealed interface GameResult {
 
     companion object {
 
-        fun build(cause: Cause, blackUser: User?, whiteUser: User?, winColor: Enumeration.Value?): GameResult? =
+        fun build(cause: Cause, blackUser: User?, whiteUser: User?, gameResult: Result): GameResult? =
             when (cause) {
-                Cause.FIVE_IN_A_ROW, Cause.RESIGN, Cause.TIMEOUT -> when (winColor) {
-                    Color.BLACK() -> Win(cause, Color.BLACK(), blackUser ?: aiUser, whiteUser ?: aiUser)
-                    Color.WHITE() -> Win(cause, Color.WHITE(), whiteUser ?: aiUser, blackUser ?: aiUser)
+                Cause.FIVE_IN_A_ROW, Cause.RESIGN, Cause.TIMEOUT -> when (gameResult.flag()) {
+                    Notation.FlagInstance.BLACK() ->
+                        Win(cause, Notation.Color.Black, blackUser ?: aiUser, whiteUser ?: aiUser)
+                    Notation.FlagInstance.WHITE() ->
+                        Win(cause, Notation.Color.White, whiteUser ?: aiUser, blackUser ?: aiUser)
                     else -> null
                 }
                 Cause.DRAW -> Full
@@ -112,14 +119,16 @@ object GameManager {
         )
 
     suspend fun generateAiSession(bot: BotContext, owner: User, aiLevel: AiLevel): GameSession {
-        val ownerHasBlack = Random(System.currentTimeMillis()).nextBoolean()
+        val ownerHasBlack = java.util.Random().nextBoolean()
 
-        val board = if (ownerHasBlack) `EmptyScalaBoard$`.`MODULE$` else `ScalaBoard$`.`MODULE$`.newBoard()
+        val board = if (ownerHasBlack) `EmptyScalaBoard$`.`MODULE$` else ScalaBoard.newBoard()
 
-        val aiColor = if (ownerHasBlack) Color.WHITE() else Color.BLACK()
+        val history = if (ownerHasBlack) emptyList() else listOf(Renju.BOARD_CENTER_POS())
+
+        val aiColor = if (ownerHasBlack) Notation.Color.White else Notation.Color.Black
 
         val token = when (aiLevel) {
-            AiLevel.AMOEBA -> Token("")
+            AiLevel.AMOEBA -> Token("AMOEBA")
             else -> bot.kvineClient.begins(aiLevel.aiPreset, aiColor, board)
         }
 
@@ -130,7 +139,7 @@ object GameManager {
             solution = Option.Empty,
             ownerHasBlack = ownerHasBlack,
             board = board,
-            history = if (ownerHasBlack) emptyList() else listOf(Renju.BOARD_CENTER_POS()),
+            history = history,
             messageBufferKey = SessionManager.generateMessageBufferKey(owner),
             recording = true,
             expireOffset = bot.config.gameExpireOffset,
@@ -138,13 +147,13 @@ object GameManager {
         )
     }
 
-    fun validateMove(session: GameSession, pos: Pos): Option<RejectReason> =
+    fun validateMove(session: GameSession, pos: Pos): Option<InvalidKind> =
         session.board.validateMove(pos.idx()).fold(
             { Option.Empty },
             {
                 when (it) {
-                    jrenju.notation.RejectReason.EXIST() -> Option(RejectReason.EXIST)
-                    jrenju.notation.RejectReason.FORBIDDEN() -> Option(RejectReason.FORBIDDEN)
+                    Notation.InvalidKind.Exist -> Option(InvalidKind.EXIST)
+                    Notation.InvalidKind.Forbidden -> Option(InvalidKind.FORBIDDEN)
                     else -> throw IllegalStateException()
                 }
             }
@@ -162,12 +171,14 @@ object GameManager {
 
         return thenBoard.winner().fold(
             { session.next(thenBoard, pos, Option.Empty, SessionManager.generateMessageBufferKey(session.owner)) },
-            {
-                session.next(
-                    thenBoard, pos,
-                    Option(GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, thenBoard.color(), session.player, session.nextPlayer)),
-                    session.messageBufferKey
-                )
+            { result ->
+                val gameResult = when (result) {
+                    is Result.FiveInRow ->
+                        GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, result.winner(), session.player, session.nextPlayer)
+                    else -> GameResult.Full
+                }
+
+                session.next(thenBoard, pos, Option(gameResult), session.messageBufferKey)
             }
         )
     }
@@ -202,9 +213,20 @@ object GameManager {
 
         val thenBoard = session.board.makeMove(aiMove)
 
-        return when {
-            thenBoard.winner().isDefined -> {
-                val gameResult = GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, thenBoard.color(), aiUser, session.owner)
+        return thenBoard.winner().fold(
+            {
+                session.copy(
+                    board = thenBoard,
+                    history = session.history + Pos.fromIdx(aiMove),
+                    solution = solutionNode
+                )
+            },
+            { result ->
+                val gameResult = when (result) {
+                    is Result.FiveInRow ->
+                        GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, result.winner(), aiUser, session.owner)
+                    else -> GameResult.Full
+                }
 
                 session.copy(
                     board = thenBoard,
@@ -212,28 +234,14 @@ object GameManager {
                     history = session.history + Pos.fromIdx(aiMove),
                 )
             }
-            thenBoard.moves() == Renju.BOARD_SIZE() -> {
-                val gameResult = GameResult.Full
-
-                session.copy(
-                    board = thenBoard,
-                    gameResult = Option(gameResult),
-                    history = session.history + Pos.fromIdx(aiMove)
-                )
-            }
-            else -> session.copy(
-                board = thenBoard,
-                history = session.history + Pos.fromIdx(aiMove),
-                solution = solutionNode
-            )
-        }
+        )
     }
 
     fun resignSession(session: GameSession, cause: GameResult.Cause, user: User?): Pair<GameSession, GameResult.Win> {
         val winColor = when (session.board) {
             is `EmptyScalaBoard$` -> when (session.ownerHasBlack) {
-                true -> Color.WHITE()
-                else -> Color.BLACK()
+                true -> Notation.Color.White
+                else -> Notation.Color.Black
             }
             else -> session.board.color()
         }

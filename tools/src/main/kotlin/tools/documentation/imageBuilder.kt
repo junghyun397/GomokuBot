@@ -1,15 +1,15 @@
 package tools.documentation
 
 import core.interact.message.graphics.ImageBoardRenderer
-import jrenju.`BoardIO$`
-import jrenju.notation.Pos
+import renju.BoardIO
+import renju.notation.Pos
 import utils.structs.Option
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
 fun generateImage(boardSource: String, lastMove: String, fName: String, fPath: String, enableForbiddenPoints: Boolean) {
-    val board = `BoardIO$`.`MODULE$`.fromBoardText(
+    val board = BoardIO.fromBoardText(
         boardSource,
         Pos.fromCartesian(if (lastMove == "null") "a1" else lastMove).get().idx()
     ).get()

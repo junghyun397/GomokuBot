@@ -6,13 +6,15 @@ sealed interface ResponseFlag {
 
     object Immediately : ResponseFlag
 
-    data class Defer(val edit: Boolean = false) : ResponseFlag
+    data class Defer(val edit: Boolean = false, val windowed: Boolean = false) : ResponseFlag
 
     companion object {
 
         val Defer = Defer()
 
-        val DeferEdit = Defer(true)
+        val DeferWindowed = Defer(windowed = true)
+
+        val DeferEdit = Defer(edit = true)
 
     }
 
