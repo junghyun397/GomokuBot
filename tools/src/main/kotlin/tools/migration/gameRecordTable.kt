@@ -86,10 +86,10 @@ suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysq
         }
 
         val gameResult = GameResult.build(
+            gameResult = Notation.ResultInstance.fromFlag(winColor!!),
             cause = cause,
             blackUser = blackUser,
-            whiteUser = whiteUser,
-            winColor = null
+            whiteUser = whiteUser
         )!!
 
         val record = GameRecord(

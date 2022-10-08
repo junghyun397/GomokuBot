@@ -87,7 +87,7 @@ sealed interface GameResult {
 
     companion object {
 
-        fun build(cause: Cause, blackUser: User?, whiteUser: User?, gameResult: Result): GameResult? =
+        fun build(gameResult: Result, cause: Cause, blackUser: User?, whiteUser: User?): GameResult? =
             when (cause) {
                 Cause.FIVE_IN_A_ROW, Cause.RESIGN, Cause.TIMEOUT -> when (gameResult.flag()) {
                     Notation.FlagInstance.BLACK() ->

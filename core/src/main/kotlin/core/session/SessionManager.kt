@@ -104,9 +104,6 @@ object SessionManager {
     fun viewHeadMessage(repo: SessionRepository, key: String): MessageRef? =
         repo.messageBuffer[key]?.first()
 
-    fun viewTailMessage(repo: SessionRepository, key: String): MessageRef? =
-        repo.messageBuffer[key]?.last()
-
     fun checkoutMessages(repo: SessionRepository, key: String): List<MessageRef>? =
         repo.messageBuffer.remove(key)
 

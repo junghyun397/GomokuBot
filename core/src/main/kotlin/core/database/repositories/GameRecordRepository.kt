@@ -78,10 +78,10 @@ object GameRecordRepository {
                 boardStatus = row["board_status"] as ByteArray,
                 history = (row["history"] as IntArray).map { Pos.fromIdx(it) },
                 gameResult = GameResult.build(
+                    gameResult = Notation.ResultInstance.fromFlag(row["win_color"].shortAnyCastToByte()),
                     cause = GameResult.Cause.values().find(row["cause"] as Short),
                     blackUser = blackUser,
-                    whiteUser = whiteUser,
-                    gameResult = Notation.ResultInstance.fromFlag(row["win_color"].shortAnyCastToByte())
+                    whiteUser = whiteUser
                 )!!,
                 guildId = GuildUid(row["guild_id"] as UUID),
                 blackId = blackUser?.id,

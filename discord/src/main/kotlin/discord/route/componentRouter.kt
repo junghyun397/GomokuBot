@@ -46,8 +46,9 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
             }
     }
         .filter { it.isDefined }
+        .map { it.getOrException() }
         .doOnNext { command ->
-            val responseFlag = command.getOrException().responseFlag
+            val responseFlag = command.responseFlag
 
             if (responseFlag is ResponseFlag.Defer) {
                 when (responseFlag.edit) {
@@ -59,14 +60,14 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
         .flatMap { command -> mono {
             val messageRef = context.event.message.extractMessageRef()
 
-            command.getOrException().execute(
+            command.execute(
                 bot = context.bot,
                 config = context.config,
                 guild = context.guild,
                 user = context.user,
                 producer = DiscordMessageProducer,
                 messageRef = messageRef,
-                publishers = when (command.getOrException().responseFlag) {
+                publishers = when (command.responseFlag) {
                     is ResponseFlag.Defer -> AdaptivePublisherSet(
                         plain = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
                         windowed = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg).setEphemeral(true)) },

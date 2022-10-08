@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package utils.assets
 
 import java.nio.ByteBuffer
@@ -12,15 +14,6 @@ fun Int.toBytes(): ByteArray =
             putInt(this@toBytes)
         }
         .array()
-
-fun List<Byte>.getFirstInt(): Int {
-    var result = this[0].toInt() shl 12
-    result = result or (this[1].toInt() shl 8)
-    result = result or (this[2].toInt() shl 4)
-    result = result or this[3].toInt()
-
-    return result
-}
 
 fun Boolean.toInt(): Int = if (this) 1 else 0
 
@@ -51,3 +44,7 @@ fun <T: Comparable<T>> Iterable<T>.maxIndexes(): Array<Int>? {
 
     return maxPoints.toTypedArray()
 }
+
+inline fun <T> orNull(cond: Boolean, produce: () -> T?): T? =
+    if (cond) produce()
+    else null

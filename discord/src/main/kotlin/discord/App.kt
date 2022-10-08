@@ -108,8 +108,10 @@ object GomokuBot {
 
         val discordConfig = DiscordConfigBuilder.fromEnv()
 
+        val caches = LocalCaches()
+
         val dbConnection = runBlocking {
-            DatabaseManager.newConnectionFrom(postgresqlConfig.serverURL, LocalCaches())
+            DatabaseManager.newConnectionFrom(postgresqlConfig.serverURL, caches)
                 .also { connection ->
                     DatabaseManager.initDatabase(connection)
                     DatabaseManager.initCaches(connection)

@@ -371,7 +371,7 @@ open class LanguageENG : LanguageContainer {
     override fun endPVETie(player: String) =
         "$player vs AI ended in a draw because there were no more points to make a move."
     override fun endPVETimeOut(player: String) =
-        "$player, You lost to Ai because you didn't make the next move for a long time."
+        "$player, You lost to AI because you didn't make the next move for a long time."
 
     // # 5. BOARD
 
