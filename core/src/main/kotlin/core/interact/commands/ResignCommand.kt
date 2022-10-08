@@ -11,6 +11,7 @@ import core.interact.reports.asCommandReport
 import core.session.GameManager
 import core.session.GameResult
 import core.session.SessionManager
+import core.session.SweepPolicy
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
@@ -37,6 +38,15 @@ class ResignCommand(private val session: GameSession) : Command {
 
         GameManager.finishSession(bot, guild, finishedSession, result)
 
+        val publisher = run {
+            val boardMessage = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
+
+            if (config.sweepPolicy == SweepPolicy.EDIT && boardMessage != null)
+                publishers.edit(boardMessage)
+            else
+                publishers.plain
+        }
+
         val io = when (finishedSession) {
             is AiGameSession ->
                 producer.produceSurrenderedPVE(publishers.plain, config.language.container, finishedSession.owner)
@@ -44,16 +54,8 @@ class ResignCommand(private val session: GameSession) : Command {
                 producer.produceSurrenderedPVP(publishers.plain, config.language.container, result.winner, result.looser)
         }
             .launch()
-            .flatMap {
-                producer.produceBoard(publishers.plain, config.language.container, config.boardStyle.renderer, finishedSession)
-                    .launch()
-            }
-            .map {
-                listOf(
-                    Order.BulkDelete(SessionManager.checkoutMessages(bot.sessions, this.session.messageBufferKey).orEmpty()),
-                    Order.ArchiveSession(finishedSession, config.archivePolicy)
-                )
-            }
+            .flatMap { buildFinishProcedure(bot, producer, publisher, config, this.session, finishedSession) }
+            .map { it + Order.ArchiveSession(finishedSession, config.archivePolicy) }
 
         io to this.asCommandReport("surrendered, terminate session by $result", guild, user)
     }

@@ -10,6 +10,7 @@ import core.interact.i18n.LanguageContainer
 import core.interact.parse.NamedParser
 import core.interact.parse.asParseFailure
 import core.session.SessionManager
+import core.session.SweepPolicy
 import dev.minn.jda.ktx.coroutines.await
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
@@ -64,7 +65,10 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
                 producer.produceSessionAlready(publisher, container)
                     .retrieve()
                     .flatMapOption { IO { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef) } }
-                    .flatMap { buildBoardProcedure(context.bot, context.guild, context.config, producer, publisher, session) }
+                    .flatMap { when (context.config.sweepPolicy) {
+                        SweepPolicy.EDIT -> IO.empty
+                        else -> buildBoardProcedure(context.bot, context.guild, context.config, producer, publisher, session)
+                    } }
                     .map { emptyList() }
             }
         }

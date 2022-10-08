@@ -68,15 +68,15 @@ private fun buildSweepProcedure(
     bot: BotContext,
     config: GuildConfig,
     session: GameSession
-): IO<List<Order>> = when (config.sweepPolicy) {
-    SweepPolicy.RELAY -> IO { listOf(Order.BulkDelete(SessionManager.checkoutMessages(bot.sessions, session.messageBufferKey).orEmpty())) }
+): IO<List<Order>> = IO { when (config.sweepPolicy) {
+    SweepPolicy.RELAY -> listOf(Order.BulkDelete(SessionManager.checkoutMessages(bot.sessions, session.messageBufferKey).orEmpty()))
     SweepPolicy.LEAVE -> {
         SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
-            ?.let { IO { listOf(Order.RemoveNavigators(it, true)) } }
-            ?: IO { emptyList() }
+            ?.let { listOf(Order.RemoveNavigators(it, true)) }
+            ?: emptyList()
     }
-    SweepPolicy.EDIT -> IO { emptyList() }
-}
+    SweepPolicy.EDIT -> emptyList()
+} }
 
 fun <A, B> buildFinishProcedure(
     bot: BotContext,

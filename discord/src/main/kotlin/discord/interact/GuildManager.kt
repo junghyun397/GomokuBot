@@ -43,8 +43,7 @@ object GuildManager {
             ?.get()
             ?.roles
             ?.any { it.idLong == config.testerRoleId }
-//            ?: false
-            ?: true
+            ?: false
 
     inline fun <T> permissionGrantedRun(channel: TextChannel, permission: Permission, block: () -> T): Option<T> =
         if (this.lookupPermission(channel, permission)) Option(block())

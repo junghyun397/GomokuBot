@@ -12,6 +12,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.interactions.InteractionHook
 import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.requests.RestAction
+import net.dv8tion.jda.api.requests.restaction.MessageAction
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageAction
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageUpdateAction
 import net.dv8tion.jda.api.requests.restaction.interactions.MessageEditCallbackAction
@@ -96,7 +97,7 @@ abstract class RestActionMessageHookDispatcherMixin(private val original: RestAc
                 .mapToResult()
                 .queue { maybeMessage ->
                     maybeMessage
-                        .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
+                        .onSuccess { control.resume(Option.cond(!it.isEphemeral) { DiscordMessageAdaptor(it) }) }
                         .onFailure { control.resume(Option.Empty) }
                 }
             }
@@ -134,7 +135,7 @@ class WebHookEditActionAdaptor(
             .mapToResult()
             .queue { maybeMessage ->
                 maybeMessage
-                    .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
+                    .onSuccess { control.resume(Option.cond(!it.isEphemeral) { DiscordMessageAdaptor(it) }) }
                     .onFailure { Option.Empty }
             }
     } }
@@ -154,7 +155,7 @@ class WebHookComponentEditActionAdaptor(
             .mapToResult()
             .queue { maybeMessage ->
                 maybeMessage
-                    .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
+                    .onSuccess { control.resume(Option.cond(!it.isEphemeral) { DiscordMessageAdaptor(it) }) }
                     .onFailure { Option.Empty }
             }
     } }
@@ -162,7 +163,7 @@ class WebHookComponentEditActionAdaptor(
 }
 
 class MessageActionAdaptor(
-    private val original: net.dv8tion.jda.api.requests.restaction.MessageAction,
+    private val original: MessageAction,
     private val components: List<ActionRow> = emptyList()
 ) : RestActionMessageLauncherMixin(original) {
 
@@ -183,7 +184,7 @@ class MessageActionAdaptor(
             .mapToResult()
             .queue { maybeMessage ->
                 maybeMessage
-                    .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
+                    .onSuccess { control.resume(Option.cond(!it.isEphemeral) { DiscordMessageAdaptor(it) }) }
                     .onFailure { Option.Empty }
             }
     } }
@@ -191,7 +192,7 @@ class MessageActionAdaptor(
 }
 
 class MessageComponentActionAdaptor(
-    private val original: net.dv8tion.jda.api.requests.restaction.MessageAction,
+    private val original: MessageAction,
 ) : RestActionMessageDispatcherMixin(original) {
 
     override fun addFile(file: InputStream, name: String) = MessageComponentActionAdaptor(original.addFile(file, name))

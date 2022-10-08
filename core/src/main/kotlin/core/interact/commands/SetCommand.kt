@@ -44,7 +44,7 @@ class SetCommand(
 
         val thenSession = GameManager.makeMove(this.session, this.pos)
 
-        val publisher = when (config.sweepPolicy) {
+        val boardPublisher = when (config.sweepPolicy) {
             SweepPolicy.EDIT -> publishers.edit(this.deployAt ?: messageRef)
             else -> publishers.plain
         }
@@ -69,7 +69,7 @@ class SetCommand(
                     }
 
                     val io = guideIO
-                        .flatMap { buildNextMoveProcedure(bot, guild, config, producer, publisher, this.session, thenSession) }
+                        .flatMap { buildNextMoveProcedure(bot, guild, config, producer, boardPublisher, this.session, thenSession) }
 
                     io to this.asCommandReport("make move $pos", guild, user)
                 }
@@ -95,7 +95,7 @@ class SetCommand(
                             }
 
                             val io = guideIO
-                                .flatMap { buildNextMoveProcedure(bot, guild, config, producer, publisher, this.session, nextSession) }
+                                .flatMap { buildNextMoveProcedure(bot, guild, config, producer, boardPublisher, this.session, nextSession) }
 
                             io to this.asCommandReport("make move $pos", guild, user)
                         },
@@ -109,7 +109,7 @@ class SetCommand(
                                     producer.produceTiePVE(publishers.plain, config.language.container, nextSession.owner)
                             }
                                 .launch()
-                                .flatMap { buildFinishProcedure(bot, producer, publisher, config, this.session, nextSession) }
+                                .flatMap { buildFinishProcedure(bot, producer, boardPublisher, config, this.session, nextSession) }
                                 .map { it + Order.ArchiveSession(nextSession, config.archivePolicy) }
 
                             io to this.asCommandReport("make move $pos, terminate session by $result", guild, user)
@@ -129,7 +129,7 @@ class SetCommand(
                                 producer.produceTiePVP(publishers.plain, config.language.container, thenSession.owner, thenSession.opponent)
                         }
                             .launch()
-                            .flatMap { buildFinishProcedure(bot, producer, publisher, config, this.session, thenSession) }
+                            .flatMap { buildFinishProcedure(bot, producer, boardPublisher, config, this.session, thenSession) }
                             .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
                         io to this.asCommandReport("make move $pos, terminate session by $result", guild, user)
@@ -142,7 +142,7 @@ class SetCommand(
                                 producer.produceTiePVE(publishers.plain, config.language.container, thenSession.owner)
                         }
                             .launch()
-                            .flatMap { buildFinishProcedure(bot, producer, publisher, config, this.session, thenSession) }
+                            .flatMap { buildFinishProcedure(bot, producer, boardPublisher, config, this.session, thenSession) }
                             .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
                         io to this.asCommandReport("make move $pos, terminate session by $result", guild, user)
