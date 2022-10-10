@@ -269,12 +269,12 @@ open class LanguageKOR : LanguageENG() {
     // ### 3-2-3. SET:ERROR:EXIST (MESSAGE)
 
     override fun setErrorExist(move: String) =
-        "``$move``에는 이미 돌이 놓여 있습니다. 다른 곳에 돌을 놓아주세요."
+        "${move}에는 이미 돌이 놓여 있습니다. 다른 곳에 돌을 놓아주세요."
 
     // ### 3-2-4. SET:ERROR:FORBIDDEN (MESSAGE)
 
     override fun setErrorForbidden(move: String, forbiddenKind: String) =
-        "``$move``은(는) ``${forbiddenKind}금수`` 입니다. 다른 곳에 돌을 놓아주세요."
+        "${move}은(는) ${forbiddenKind}금수 입니다. 다른 곳에 돌을 놓아주세요."
 
     // ## 3-3. RESIGN
 

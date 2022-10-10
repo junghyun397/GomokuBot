@@ -1,10 +1,7 @@
 package core.session
 
 import core.BotContext
-import core.assets.Guild
-import core.assets.Notation
-import core.assets.User
-import core.assets.aiUser
+import core.assets.*
 import core.database.entities.extractGameRecord
 import core.database.repositories.GameRecordRepository
 import core.inference.AiLevel
@@ -16,10 +13,7 @@ import core.session.entities.GameSession
 import core.session.entities.PvpGameSession
 import renju.`EmptyScalaBoard$`
 import renju.ScalaBoard
-import renju.notation.Color
-import renju.notation.Pos
-import renju.notation.Renju
-import renju.notation.Result
+import renju.notation.*
 import renju.protocol.SolutionNode
 import utils.assets.LinuxTime
 import utils.lang.and
@@ -47,10 +41,6 @@ enum class SweepPolicy(override val id: Short) : Identifiable {
 
 enum class ArchivePolicy(override val id: Short) : Identifiable {
     WITH_PROFILE(0), BY_ANONYMOUS(1), PRIVACY(2)
-}
-
-enum class InvalidKind(override val id: Short) : Identifiable {
-    EXIST(0), FORBIDDEN(1)
 }
 
 @JvmInline value class Token(val token: String)
@@ -148,26 +138,10 @@ object GameManager {
     }
 
     fun validateMove(session: GameSession, pos: Pos): Option<InvalidKind> =
-        session.board.validateMove(pos.idx()).fold(
-            { Option.Empty },
-            {
-                when (it) {
-                    Notation.InvalidKind.Exist -> Option(InvalidKind.EXIST)
-                    Notation.InvalidKind.Forbidden -> Option(InvalidKind.FORBIDDEN)
-                    else -> throw IllegalStateException()
-                }
-            }
-        )
+        session.board.validateMove(pos.idx()).toOption()
 
     fun makeMove(session: GameSession, pos: Pos): GameSession {
         val thenBoard = session.board.makeMove(pos)
-
-        if (session.board.moves() + 1 >= Renju.BOARD_SIZE())
-            return session.next(
-                thenBoard, pos,
-                Option(GameResult.Full),
-                session.messageBufferKey
-            )
 
         return thenBoard.winner().fold(
             { session.next(thenBoard, pos, Option.Empty, SessionManager.generateMessageBufferKey(session.owner)) },

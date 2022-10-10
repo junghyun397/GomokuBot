@@ -31,7 +31,7 @@ data class GameRecord(
 private val INVALID_POS: Pos = Pos.fromIdx(-1)
 
 fun GameSession.extractGameRecord(guildUid: GuildUid): Option<GameRecord> =
-    Option.cond(this.gameResult.isEmpty || this.recording || this.history.contains(null)) {
+    Option.cond(this.gameResult.isDefined && this.recording && !this.history.contains(null)) {
         GameRecord(
             boardStatus = board.field(),
             history = history.map { it ?: INVALID_POS },

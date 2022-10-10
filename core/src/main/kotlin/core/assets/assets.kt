@@ -2,6 +2,7 @@ package core.assets
 
 import io.r2dbc.spi.Statement
 import renju.notation.Flag
+import utils.structs.Option
 import java.awt.Color
 import java.util.*
 
@@ -86,4 +87,10 @@ inline fun <reified T : Any> Statement.bindNullable(name: String, value: T?): St
     when (value) {
         null -> bindNull(name, T::class.java)
         else -> bind(name, value)
+    }
+
+fun <T> scala.Option<T>.toOption(): Option<T> =
+    when (this.isDefined) {
+        true -> Option.Some(this.get())
+        else -> Option.Empty
     }

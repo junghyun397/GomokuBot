@@ -178,6 +178,7 @@ object GomokuBot {
             eventManager.on<MessageReactionAddEvent>()
                 .filter {
                     it.isFromGuild
+                            && it.userIdLong != jda.selfUser.idLong
                             && it.channel.type == ChannelType.TEXT
                             && NAVIGATION_EMOJIS.contains(it.emoji)
                             && !(it.user?.isBot ?: false)
@@ -188,10 +189,11 @@ object GomokuBot {
             eventManager.on<MessageReactionRemoveEvent>()
                 .filter {
                     it.isFromGuild
+                            && it.userIdLong != jda.selfUser.idLong
+                            && !(it.user?.isBot ?: false)
                             && it.channel.type == ChannelType.TEXT
                             && NAVIGATION_EMOJIS.contains(it.emoji)
                             && !GuildManager.lookupPermission(it.channel.asTextChannel(), Permission.MESSAGE_MANAGE)
-                            && !(it.user?.isBot ?: false)
                 }
                 .flatMap { mono {
                     it and it.guild

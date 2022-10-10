@@ -5,10 +5,12 @@ import core.assets.Notation
 import core.assets.UserUid
 import core.assets.aiUser
 import core.database.DatabaseConnection
-import core.database.DatabaseManager.shortAnyCastToByte
+import core.database.DatabaseManager.smallIntToByte
+import core.database.DatabaseManager.smallIntToMaybeByte
 import core.database.entities.UserStats
 import kotlinx.coroutines.reactive.awaitSingle
 import renju.notation.Color
+import renju.notation.Flag
 import renju.notation.Result
 import utils.assets.LinuxTime
 import utils.lang.toLinuxTime
@@ -77,10 +79,10 @@ object UserStatsRepository {
             }
             .flatMap { result -> result
                 .map { row, _ ->
-                    val maybeBlackId = row["black_id"] as UUID?
-                    val maybeWhiteId = row["white_id"] as UUID?
+                    val maybeBlackId = row["black_id"] as? UUID
+                    val maybeWhiteId = row["white_id"] as? UUID
 
-                    val recordResult = Notation.ResultInstance.fromFlag(row["win_color"].shortAnyCastToByte())
+                    val recordResult = Notation.ResultInstance.fromFlag(smallIntToMaybeByte(row["win_color"]) ?: Flag.EMPTY())
 
                     when {
                         maybeBlackId != null -> Triple(UserUid(maybeBlackId), Notation.Color.Black, recordResult)
@@ -104,14 +106,14 @@ object UserStatsRepository {
             }
             .flatMap { result -> result
                 .map { row, _ ->
-                    val maybeBlackId = row["black_id"] as UUID
-                    val maybeWhiteId = row["white_id"] as UUID
+                    val blackId = UserUid(row["black_id"] as UUID)
+                    val whiteId = UserUid(row["white_id"] as UUID)
 
-                    val recordResult = Notation.ResultInstance.fromFlag(row["win_color"].shortAnyCastToByte())
+                    val recordResult = Notation.ResultInstance.fromFlag(smallIntToByte(row["win_color"]))
 
                     when {
-                        maybeBlackId != userUid.uuid -> Triple(UserUid(maybeBlackId), Notation.Color.Black, recordResult)
-                        maybeWhiteId != userUid.uuid -> Triple(UserUid(maybeWhiteId), Notation.Color.White, recordResult)
+                        blackId != userUid -> Triple(blackId, Notation.Color.Black, recordResult)
+                        whiteId != userUid -> Triple(whiteId, Notation.Color.White, recordResult)
                         else -> throw IllegalStateException()
                     }
                 }

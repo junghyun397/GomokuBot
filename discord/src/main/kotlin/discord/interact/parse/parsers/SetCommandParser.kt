@@ -11,7 +11,6 @@ import core.interact.message.MessageAdaptor
 import core.interact.parse.SessionSideParser
 import core.interact.parse.asParseFailure
 import core.session.GameManager
-import core.session.InvalidKind
 import core.session.SessionManager
 import core.session.SweepPolicy
 import core.session.entities.GameSession
@@ -105,11 +104,12 @@ object SetCommandParser : SessionSideParser<Message, DiscordComponents>(), Parsa
             GameManager.validateMove(session, pos)
                 .flatMap { invalidKind ->
                     when (invalidKind) {
-                        InvalidKind.EXIST -> Option(this.buildExistFailure(context, session, pos))
-                        InvalidKind.FORBIDDEN -> when(session.board.nextColor()) {
+                        Notation.InvalidKind.Exist -> Option(this.buildExistFailure(context, session, pos))
+                        Notation.InvalidKind.Forbidden -> when(session.board.nextColor()) {
                             Notation.Color.Black -> Option(this.buildForbiddenMoveFailure(context, session, pos, session.board.field()[pos.idx()]))
                             else -> Option.Empty
                         }
+                        else -> throw IllegalStateException()
                     }
                 }
                 .fold(

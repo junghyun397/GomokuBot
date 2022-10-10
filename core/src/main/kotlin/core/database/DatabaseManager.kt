@@ -141,6 +141,8 @@ object DatabaseManager {
         AnnounceRepository.updateAnnounceCache(connection)
     }
 
-    internal fun Any?.shortAnyCastToByte(): Byte = (this as Short).toByte()
+    internal fun smallIntToByte(smallInt: Any?): Byte = (smallInt as Short).toByte()
+
+    internal fun smallIntToMaybeByte(smallInt: Any?): Byte? = (smallInt as? Short)?.toByte()
 
 }

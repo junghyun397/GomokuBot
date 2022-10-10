@@ -283,7 +283,7 @@ open class LanguageENG : LanguageContainer {
     // ### 3-2-4. SET:ERROR:FORBIDDEN (MESSAGE)
 
     override fun setErrorForbidden(move: String, forbiddenKind: String) =
-        "``$move`` is ``$forbiddenKind`` forbidden move. Please move to another place."
+        "$move is $forbiddenKind forbidden move. Please move to another place."
 
     // ## 3-3. RESIGN
 

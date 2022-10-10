@@ -58,13 +58,15 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
                         Flag.WHITE() -> ButtonFlag.WHITE_RECENT
                         else -> throw IllegalStateException()
                     }
-                    else -> when (board.field()[idx]) {
+                    else -> when (val flag = board.field()[idx]) {
                         Flag.BLACK() -> ButtonFlag.BLACK
                         Flag.WHITE() -> ButtonFlag.WHITE
-                        Flag.FORBIDDEN_33(), Flag.FORBIDDEN_44(), Flag.FORBIDDEN_6() -> ButtonFlag.FORBIDDEN
-                        else -> when(absolutePos) {
-                            in focusInfo.highlights -> ButtonFlag.HIGHLIGHTED
-                            else -> ButtonFlag.FREE
+                        else -> when {
+                            Notation.FlagInstance.isForbid(flag, board.nextColorFlag()) -> ButtonFlag.FORBIDDEN
+                            else -> when (absolutePos) {
+                                in focusInfo.highlights -> ButtonFlag.HIGHLIGHTED
+                                else -> ButtonFlag.FREE
+                            }
                         }
                     }
                 }

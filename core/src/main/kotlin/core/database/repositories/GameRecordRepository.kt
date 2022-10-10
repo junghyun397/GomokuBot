@@ -5,7 +5,7 @@ import core.assets.Notation
 import core.assets.UserUid
 import core.assets.bindNullable
 import core.database.DatabaseConnection
-import core.database.DatabaseManager.shortAnyCastToByte
+import core.database.DatabaseManager.smallIntToMaybeByte
 import core.database.entities.GameRecord
 import core.inference.AiLevel
 import core.session.GameResult
@@ -14,6 +14,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.mono
 import reactor.core.publisher.Mono
+import renju.notation.Flag
 import renju.notation.Pos
 import utils.assets.LinuxTime
 import utils.structs.find
@@ -78,7 +79,7 @@ object GameRecordRepository {
                 boardStatus = row["board_status"] as ByteArray,
                 history = (row["history"] as IntArray).map { Pos.fromIdx(it) },
                 gameResult = GameResult.build(
-                    gameResult = Notation.ResultInstance.fromFlag(row["win_color"].shortAnyCastToByte()),
+                    gameResult = Notation.ResultInstance.fromFlag(smallIntToMaybeByte(row["win_color"]) ?: Flag.EMPTY()),
                     cause = GameResult.Cause.values().find(row["cause"] as Short),
                     blackUser = blackUser,
                     whiteUser = whiteUser
