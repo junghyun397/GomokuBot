@@ -20,13 +20,13 @@ object GuildConfigRepository {
                 .bind("$1", guildUid.uuid)
                 .execute()
             }
-            .flatMap<Option<GuildConfig>> { result -> result
+            .flatMap { result -> result
                 .map { row, _ ->
                     Option(GuildConfig(
                         language = Language.values().find(row["language"] as Short),
                         boardStyle = BoardStyle.values().find(row["board_style"] as Short),
                         focusPolicy = FocusPolicy.values().find(row["focus_policy"] as Short),
-                        hintPolicy = HintPolicy.values().find(row["focus_policy"] as Short),
+                        hintPolicy = HintPolicy.values().find(row["hint_policy"] as Short),
                         sweepPolicy = SweepPolicy.values().find(row["sweep_policy"] as Short),
                         archivePolicy = ArchivePolicy.values().find(row["archive_policy"] as Short)
                     ))

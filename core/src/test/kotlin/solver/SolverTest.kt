@@ -8,7 +8,7 @@ import renju.Board
 import renju.`BoardIO$`
 import renju.ScalaBoard
 import renju.protocol.Solution
-import utils.lang.and
+import utils.lang.pair
 import java.util.*
 
 internal class SolverTest {
@@ -35,9 +35,9 @@ internal class SolverTest {
 
         val (blackSolver, whiteSolver) = run {
             if (Random().nextBoolean())
-                solver1 and solver2
+                solver1 pair solver2
             else
-                solver2 and solver1
+                solver2 pair solver1
         }
 
         val result: Boolean? = run {

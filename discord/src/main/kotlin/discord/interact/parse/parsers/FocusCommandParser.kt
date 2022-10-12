@@ -11,7 +11,7 @@ import discord.interact.InteractionContext
 import discord.interact.parse.NavigableCommand
 import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
-import utils.lang.and
+import utils.lang.pair
 import utils.structs.asOption
 import utils.structs.filter
 import utils.structs.flatMap
@@ -38,7 +38,7 @@ object FocusCommandParser : NamedParser, NavigableCommand {
             .flatMap { session ->
                 this.matchDirection(context.event.reaction.emoji.asUnicode())
                     .asOption()
-                    .map { session and it }
+                    .map { session pair it }
             }
             .map { (session, direction) -> FocusCommand(state as BoardNavigationState, session, direction) }
 

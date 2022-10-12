@@ -9,7 +9,7 @@ import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
-import utils.lang.and
+import utils.lang.pair
 import utils.structs.map
 
 class HelpCommand(private val sendSettings: Boolean) : Command {
@@ -33,7 +33,7 @@ class HelpCommand(private val sendSettings: Boolean) : Command {
         }
             .map { emptyList<Order>() }
 
-        io and this.asCommandReport("succeed", guild, user)
+        io pair this.asCommandReport("succeed", guild, user)
     }
 
 }

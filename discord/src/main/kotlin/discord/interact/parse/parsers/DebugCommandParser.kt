@@ -35,9 +35,15 @@ object DebugCommandParser : NamedParser, ParsableCommand {
                 IO { emptyList() }
             })
 
+        val customPayload = when (type) {
+            DebugType.STATUS ->
+                "node = #${context.event.jda.shardInfo.shardId}, ${context.event.jda.guildCache.size()} guilds, ${context.event.jda.userCache.size()} users"
+            else -> null
+        }
+
         return Either.Left(DebugCommand(
             type,
-            context.event.message.contentRaw
+            customPayload ?: context.event.message.contentRaw
                 .drop(
                     context.event.message.contentRaw
                         .split(" ")

@@ -11,7 +11,7 @@ import core.interact.reports.asCommandReport
 import core.session.BoardStyle
 import core.session.SessionManager
 import core.session.entities.GuildConfig
-import utils.lang.and
+import utils.lang.pair
 import utils.structs.map
 
 class StyleCommand(private val style: BoardStyle) : Command {
@@ -35,7 +35,7 @@ class StyleCommand(private val style: BoardStyle) : Command {
             .launch()
             .map { emptyList<Order>() }
 
-        io and this.asCommandReport("set style ${config.boardStyle.name} to ${style.name}", guild, user)
+        io pair this.asCommandReport("set style ${config.boardStyle.name} to ${style.name}", guild, user)
     }
 
 }

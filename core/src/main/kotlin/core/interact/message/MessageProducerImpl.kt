@@ -12,8 +12,8 @@ import renju.notation.Flag
 import renju.notation.Pos
 import utils.assets.MarkdownLikeDocument
 import utils.assets.parseMarkdownLikeDocument
-import utils.lang.and
 import utils.lang.memoize
+import utils.lang.pair
 import utils.structs.IO
 
 abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
@@ -71,7 +71,7 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
                     }
                 }
 
-                absolutePos.toString() and buttonFlag
+                absolutePos.toString() pair buttonFlag
             }
         }
     }

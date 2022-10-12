@@ -12,7 +12,7 @@ import renju.protocol.SolutionLeaf
 import utils.assets.bound
 import utils.assets.maxIndexes
 import utils.assets.toInt
-import utils.lang.and
+import utils.lang.pair
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
@@ -106,7 +106,7 @@ object FocusSolver {
                 components.clear()
 
             if (components.size == 5) {
-                return components and when (strip.direction()) {
+                return components pair when (strip.direction()) {
                     Notation.Direction.X -> mutableListOf<Int>().apply {
                         val centerRow = Pos.idxToRow(components[2])
                         val centerCol = Pos.idxToCol(components[2])
@@ -132,14 +132,14 @@ object FocusSolver {
             }
         }
 
-        return emptyList<Int>() and emptyList()
+        return emptyList<Int>() pair emptyList()
     }
 
     private fun collectFiveComponents(board: Board): Pair<List<Int>, List<Int>> {
         val components = BoardOps(board).composeStrips(board.lastMove())
             .map { strip -> this.collectFiveComponentsInStrip(board, strip, board.colorFlag()) }
 
-        return components.flatMap { (components, _) -> components } and components.flatMap { (_, guides) -> guides }
+        return components.flatMap { (components, _) -> components } pair components.flatMap { (_, guides) -> guides }
     }
 
     private fun evaluateParticle(weightSet: WeightSet, selfStruct: Struct, opponentStruct: Struct, bySelf: Boolean): Int {

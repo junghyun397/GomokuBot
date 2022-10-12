@@ -7,7 +7,7 @@ import discord.interact.InteractionContext
 import discord.interact.parse.EmbeddableCommand
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent
-import utils.lang.and
+import utils.lang.pair
 import utils.structs.Option
 import utils.structs.asOption
 import utils.structs.map
@@ -24,25 +24,25 @@ object ApplySettingCommandParser : EmbeddableCommand {
             BoardStyle::class.simpleName -> {
                 val style = BoardStyle.valueOf(choice)
 
-                style and context.config.copy(boardStyle = style)
+                style pair context.config.copy(boardStyle = style)
             }
             FocusPolicy::class.simpleName -> {
                 val focus = FocusPolicy.valueOf(choice)
 
-                focus and context.config.copy(focusPolicy = focus)
+                focus pair context.config.copy(focusPolicy = focus)
             }
             HintPolicy::class.simpleName -> {
                 val hint = HintPolicy.valueOf(choice)
 
-                hint and context.config.copy(hintPolicy = hint)
+                hint pair context.config.copy(hintPolicy = hint)
             }
             SweepPolicy::class.simpleName -> {
                 val sweep = SweepPolicy.valueOf(choice)
-                sweep and context.config.copy(sweepPolicy = sweep)
+                sweep pair context.config.copy(sweepPolicy = sweep)
             }
             ArchivePolicy::class.simpleName -> {
                 val archive = ArchivePolicy.valueOf(choice)
-                archive and context.config.copy(archivePolicy = archive)
+                archive pair context.config.copy(archivePolicy = archive)
             }
             else -> throw IllegalStateException()
         } }

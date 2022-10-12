@@ -21,7 +21,7 @@ import renju.BoardIO
 import renju.notation.Pos
 import renju.notation.Renju
 import utils.assets.LinuxTime
-import utils.lang.and
+import utils.lang.pair
 import utils.lang.toInputStream
 import utils.structs.IO
 import utils.structs.Option
@@ -59,16 +59,15 @@ class DebugCommand(
                         "analysis-report-${System.currentTimeMillis()}.txt"
                     )
                     .launch()
-                    .map { emptyList<Order>() } and this.asCommandReport("succeed", guild, user)
-            } ?: (IO { emptyList<Order>() } and this.asCommandReport("failed", guild, user))
+                    .map { emptyList<Order>() } pair this.asCommandReport("succeed", guild, user)
+            } ?: (IO { emptyList<Order>() } pair this.asCommandReport("failed", guild, user))
         }
         DebugType.SELF_REQUEST -> {
-            when {
-                SessionManager.retrieveGameSession(bot.sessions, guild, user.id) != null ||
-                        SessionManager.retrieveRequestSession(bot.sessions, guild, user.id) != null ->
-                    IO { emptyList<Order>() } and this.asCommandReport("failed", guild, user)
-                else -> {
-                    val requestSession = RequestSession(
+            if (SessionManager.retrieveGameSession(bot.sessions, guild, user.id) != null ||
+                        SessionManager.retrieveRequestSession(bot.sessions, guild, user.id) != null)
+                IO { emptyList<Order>() } pair this.asCommandReport("failed", guild, user)
+            else {
+                val requestSession = RequestSession(
                         user, user,
                         SessionManager.generateMessageBufferKey(user),
                         LinuxTime.nowWithOffset(bot.config.gameExpireOffset)
@@ -80,8 +79,7 @@ class DebugCommand(
                         .launch()
                         .map { emptyList<Order>()  }
 
-                    io and this.asCommandReport("succeed", guild, user)
-                }
+                    io pair this.asCommandReport("succeed", guild, user)
             }
         }
         DebugType.INJECT -> {
@@ -108,10 +106,11 @@ class DebugCommand(
                 .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, session) }
                 .map { emptyList<Order>() }
 
-            io and this.asCommandReport("succeed", guild, user)
+            io pair this.asCommandReport("succeed", guild, user)
         }
         DebugType.STATUS -> {
             val message = """
+                ${this.payload}
                 games = ${bot.sessions.sessions.map { (_, session) -> session.gameSessions.size }.sum()}
                 requests = ${bot.sessions.sessions.map { (_, session) -> session.requestSessions.size }.sum()}
                 navigates = ${bot.sessions.navigates.size}
@@ -121,7 +120,7 @@ class DebugCommand(
                 .launch()
                 .map { emptyList<Order>() }
 
-            io and this.asCommandReport("succeed", guild, user)
+            io pair this.asCommandReport("succeed", guild, user)
         }
         DebugType.SESSIONS -> {
             val sessionMessage = bot.sessions.sessions
@@ -129,7 +128,7 @@ class DebugCommand(
                 .sortedBy { it.createDate.timestamp }
                 .map { it.toString() }
                 .let { sessions -> when {
-                    sessions.isEmpty() -> ""
+                    sessions.isEmpty() -> "empty"
                     else -> sessions.reduce { acc, s -> "$acc\n$s" }
                 } }
 
@@ -138,7 +137,7 @@ class DebugCommand(
                 .launch()
                 .map { emptyList<Order>() }
 
-            io and this.asCommandReport("succeed", guild, user)
+            io pair this.asCommandReport("succeed", guild, user)
         }
         DebugType.VCF -> {
             val vcfCase = """
@@ -183,7 +182,7 @@ class DebugCommand(
                 .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, session) }
                 .map { emptyList<Order>() }
 
-            io and this.asCommandReport("succeed", guild, user)
+            io pair this.asCommandReport("succeed", guild, user)
         }
     } }
 

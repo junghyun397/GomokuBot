@@ -12,7 +12,7 @@ import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
-import utils.lang.and
+import utils.lang.pair
 import utils.structs.map
 
 sealed interface RankScope {
@@ -42,14 +42,14 @@ class RankCommand(private val scope: RankScope) : Command {
     ) = runCatching {
         val rankings = when (this.scope) {
             is RankScope.Global -> UserStatsRepository.fetchRankings(bot.dbConnection)
-                .map { UserProfileRepository.retrieveUser(bot.dbConnection, it.userId) and it }
+                .map { UserProfileRepository.retrieveUser(bot.dbConnection, it.userId) pair it }
             is RankScope.Guild -> UserStatsRepository.fetchRankings(bot.dbConnection, scope.target.id)
-                .map { UserProfileRepository.retrieveUser(bot.dbConnection, it.userId) and it }
+                .map { UserProfileRepository.retrieveUser(bot.dbConnection, it.userId) pair it }
             is RankScope.User -> UserStatsRepository.fetchRankings(bot.dbConnection, scope.target.id)
                 .map { stats ->
                     when (stats.userId) {
-                        aiUser.id -> aiUser and stats
-                        else -> UserProfileRepository.retrieveUser(bot.dbConnection, stats.userId) and stats
+                        aiUser.id -> aiUser pair stats
+                        else -> UserProfileRepository.retrieveUser(bot.dbConnection, stats.userId) pair stats
                     }
                 }
         }
@@ -58,7 +58,7 @@ class RankCommand(private val scope: RankScope) : Command {
             .launch()
             .map { emptyList<Order>() }
 
-        io and this.asCommandReport("$scope scope", guild, user)
+        io pair this.asCommandReport("$scope scope", guild, user)
     }
 
 }

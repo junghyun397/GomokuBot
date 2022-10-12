@@ -11,7 +11,7 @@ import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import core.session.entities.RequestSession
-import utils.lang.and
+import utils.lang.pair
 import utils.structs.flatMap
 import utils.structs.map
 
@@ -42,7 +42,7 @@ class RejectCommand(private val requestSession: RequestSession) : Command {
             .flatMap { noticeIO }
             .map { emptyList<Order>() }
 
-        io and this.asCommandReport("reject ${requestSession.owner}'s request", guild, user)
+        io pair this.asCommandReport("reject ${requestSession.owner}'s request", guild, user)
     }
 
 }

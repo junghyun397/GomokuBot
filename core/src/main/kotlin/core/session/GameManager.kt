@@ -11,12 +11,11 @@ import core.interact.message.graphics.*
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.PvpGameSession
-import renju.`EmptyScalaBoard$`
 import renju.ScalaBoard
 import renju.notation.*
 import renju.protocol.SolutionNode
 import utils.assets.LinuxTime
-import utils.lang.and
+import utils.lang.pair
 import utils.structs.*
 import kotlin.random.Random
 
@@ -99,8 +98,8 @@ object GameManager {
         PvpGameSession(
             owner = owner,
             opponent = opponent,
-            ownerHasBlack = Random(System.currentTimeMillis()).nextBoolean(),
-            board = `EmptyScalaBoard$`.`MODULE$`,
+            ownerHasBlack = Random(System.nanoTime()).nextBoolean(),
+            board = Notation.EmptyBoard,
             history = emptyList(),
             messageBufferKey = SessionManager.generateMessageBufferKey(owner),
             recording = true,
@@ -109,9 +108,9 @@ object GameManager {
         )
 
     suspend fun generateAiSession(bot: BotContext, owner: User, aiLevel: AiLevel): GameSession {
-        val ownerHasBlack = java.util.Random().nextBoolean()
+        val ownerHasBlack = Random(System.nanoTime()).nextBoolean()
 
-        val board = if (ownerHasBlack) `EmptyScalaBoard$`.`MODULE$` else ScalaBoard.newBoard()
+        val board = if (ownerHasBlack) Notation.EmptyBoard else ScalaBoard.newBoard()
 
         val history = if (ownerHasBlack) emptyList() else listOf(Renju.BOARD_CENTER_POS())
 
@@ -168,8 +167,8 @@ object GameManager {
             .fold(
                 onDefined = {
                     when (it) {
-                        is SolutionNode -> it.idx() and Option(it)
-                        else -> it.idx() and Option.Empty
+                        is SolutionNode -> it.idx() pair Option(it)
+                        else -> it.idx() pair Option.Empty
                     }
                 },
                 onEmpty = {
@@ -179,8 +178,8 @@ object GameManager {
                     }
 
                     when (solution) {
-                        is SolutionNode -> solution.idx() and Option(solution)
-                        else -> solution.idx() and Option.Empty
+                        is SolutionNode -> solution.idx() pair Option(solution)
+                        else -> solution.idx() pair Option.Empty
                     }
                 },
             )
@@ -213,7 +212,7 @@ object GameManager {
 
     fun resignSession(session: GameSession, cause: GameResult.Cause, user: User?): Pair<GameSession, GameResult.Win> {
         val winColor = when (session.board) {
-            is `EmptyScalaBoard$` -> when (session.ownerHasBlack) {
+            is EmptyBoard -> when (session.ownerHasBlack) {
                 true -> Notation.Color.White
                 else -> Notation.Color.Black
             }
@@ -224,17 +223,17 @@ object GameManager {
             is AiGameSession -> {
                 val result = GameResult.Win(cause, winColor, aiUser, session.owner)
 
-                session.copy(gameResult = Option(result)) and result
+                session.copy(gameResult = Option(result)) pair result
             }
             is PvpGameSession -> {
                 val (winner, looser) = if (user?.id == session.owner.id)
-                    session.opponent and session.owner
+                    session.opponent pair session.owner
                 else
-                    session.owner and session.opponent
+                    session.owner pair session.opponent
 
                 val result = GameResult.Win(cause, winColor, winner, looser)
 
-                session.copy(gameResult = Option(result)) and result
+                session.copy(gameResult = Option(result)) pair result
             }
         }
     }

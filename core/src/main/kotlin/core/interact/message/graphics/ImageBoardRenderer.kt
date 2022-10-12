@@ -5,8 +5,8 @@ import renju.Board
 import renju.notation.Flag
 import renju.notation.Pos
 import renju.notation.Renju
-import utils.lang.and
 import utils.lang.clone
+import utils.lang.pair
 import utils.lang.toInputStream
 import utils.structs.Either
 import utils.structs.Option
@@ -129,7 +129,7 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
             board.field()
                 .withIndex()
                 .filter { it.value != Flag.EMPTY() }
-                .map { Pos.fromIdx(it.index).asBoardPos() and it.value}
+                .map { Pos.fromIdx(it.index).asBoardPos() pair it.value}
                 .forEach { (pos, flag) -> when (flag) {
                     Flag.BLACK() -> {
                         color = COLOR_GREY
@@ -192,7 +192,7 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
                     histories
                         .withIndex()
                         .filter { it.value != null }
-                        .map { it.index + 1 and it.value!!.asBoardPos() }
+                        .map { it.index + 1 pair it.value!!.asBoardPos() }
                         .forEach { (sequence, pos) ->
                             val textWidth = fontMetrics.stringWidth(sequence.toString())
 

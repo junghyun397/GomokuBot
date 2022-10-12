@@ -29,7 +29,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import renju.notation.Pos
 import renju.notation.Renju
-import utils.lang.and
+import utils.lang.pair
 import utils.structs.*
 
 object SetCommandParser : SessionSideParser<Message, DiscordComponents>(), ParsableCommand, EmbeddableCommand, BuildableCommand {
@@ -137,8 +137,8 @@ object SetCommandParser : SessionSideParser<Message, DiscordComponents>(), Parsa
             .drop(1)
             .take(2)
             .takeIf { it.size == 2 }
-            ?.let { it.component1() and it.component2() }
-            ?: (null and null)
+            ?.let { it.component1() pair it.component2() }
+            ?: (null pair null)
 
         return this.parseRawCommand(context, context.user, rawRow, rawColumn)
     }
@@ -146,7 +146,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordComponents>(), Parsa
     override suspend fun parseButton(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
         val (column, row) = context.event.componentId
             .drop(2)
-            .let { this.matchColumn(it.take(1)) and this.matchRow(it.drop(1)) }
+            .let { this.matchColumn(it.take(1)) pair this.matchRow(it.drop(1)) }
 
         if (row == null || column == null) return Option.Empty
 

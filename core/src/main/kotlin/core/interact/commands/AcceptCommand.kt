@@ -12,7 +12,7 @@ import core.session.GameManager
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import core.session.entities.RequestSession
-import utils.lang.and
+import utils.lang.pair
 import utils.structs.flatMap
 import utils.structs.map
 
@@ -49,7 +49,7 @@ class AcceptCommand(private val requestSession: RequestSession) : Command {
             .flatMap { boardIO }
             .map { listOf(Order.DeleteSource) }
 
-        io and this.asCommandReport("accept ${requestSession.owner}'s request", guild, user)
+        io pair this.asCommandReport("accept ${requestSession.owner}'s request", guild, user)
     }
 
 }

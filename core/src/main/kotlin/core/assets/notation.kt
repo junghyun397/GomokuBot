@@ -1,13 +1,18 @@
 package core.assets
 
 import renju.`BoardIO$`
+import renju.`EmptyScalaBoard$`
 import renju.Struct
 import renju.notation.`Flag$`
 import renju.notation.`Result$`
 
 fun intToStruct(raw: Int): Struct = Struct(raw)
 
+typealias EmptyBoard = `EmptyScalaBoard$`
+
 object Notation {
+
+    val EmptyBoard: EmptyBoard = `EmptyScalaBoard$`.`MODULE$`
 
     val BoardIOInstance: `BoardIO$` = `BoardIO$`.`MODULE$`
 

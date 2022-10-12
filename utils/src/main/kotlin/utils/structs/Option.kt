@@ -2,7 +2,7 @@
 
 package utils.structs
 
-import utils.lang.and
+import utils.lang.pair
 
 sealed interface Option<out T> {
 
@@ -28,7 +28,7 @@ sealed interface Option<out T> {
 
         fun <A, B> zip(a: Option<A>, b: Option<B>): Option<Pair<A, B>> =
             when {
-                a is Some && b is Some -> Some(a.value and b.value)
+                a is Some && b is Some -> Some(a.value pair b.value)
                 else -> Empty
             }
 

@@ -13,7 +13,7 @@ import core.session.entities.GuildConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
 import utils.assets.LinuxTime
-import utils.lang.and
+import utils.lang.pair
 import utils.structs.IO
 import utils.structs.map
 
@@ -46,7 +46,7 @@ class NavigationCommand(
         )
 
         if (this.navigationState.page == newState.page)
-            return@runCatching IO { emptyList<Order>() } and this.asCommandReport("navigate ${navigationState.kind} bounded", guild, user)
+            return@runCatching IO { emptyList<Order>() } pair this.asCommandReport("navigate ${navigationState.kind} bounded", guild, user)
 
         SessionManager.addNavigation(bot.sessions, messageRef, newState)
 
@@ -60,7 +60,7 @@ class NavigationCommand(
             .launch()
             .map { emptyList<Order>()  }
 
-        io and this.asCommandReport("navigate ${newState.kind} as ${newState.page}", guild, user)
+        io pair this.asCommandReport("navigate ${newState.kind} as ${newState.page}", guild, user)
     }
 
 }

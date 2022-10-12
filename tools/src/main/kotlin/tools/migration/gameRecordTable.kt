@@ -12,12 +12,11 @@ import core.session.GameResult
 import kotlinx.coroutines.reactive.awaitLast
 import reactor.kotlin.core.publisher.toFlux
 import renju.Board
-import renju.`EmptyScalaBoard$`
 import renju.notation.Flag
 import renju.notation.Pos
 import renju.notation.Result
 import utils.assets.LinuxTime
-import utils.lang.and
+import utils.lang.pair
 import utils.structs.getOrException
 import java.sql.Connection
 
@@ -46,7 +45,7 @@ suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysq
             .map { (row, col) -> Pos.rowColToIdx(row.toInt(), col.toInt()) }
             .map { Pos.fromIdx(it) }
 
-        val board = history.fold<Pos, Board>(`EmptyScalaBoard$`.`MODULE$`) { board, pos -> board.makeMove(pos) }
+        val board = history.fold<Pos, Board>(Notation.EmptyBoard) { board, pos -> board.makeMove(pos) }
 
         val winColor = when {
             board.moves() == 0 -> Notation.Color.Black.flag()
@@ -71,16 +70,16 @@ suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysq
 
         val (blackUser, whiteUser) = when (results.getString("reason")) {
             "WIN" -> when (winColor) {
-                Flag.BLACK() -> user and null
-                else -> null and user
+                Flag.BLACK() -> user pair null
+                else -> null pair user
             }
             "LOSE", "RESIGN", "TIMEOUT" -> when (winColor) {
-                Flag.WHITE() -> null and user
-                else -> user and null
+                Flag.WHITE() -> null pair user
+                else -> user pair null
             }
             "FULL" -> when (board.color()) {
-                Notation.Color.Black -> null and user
-                else -> user and null
+                Notation.Color.Black -> null pair user
+                else -> user pair null
             }
             else -> throw IllegalStateException()
         }

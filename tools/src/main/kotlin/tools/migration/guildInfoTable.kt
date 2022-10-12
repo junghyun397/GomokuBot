@@ -8,7 +8,7 @@ import core.database.repositories.GuildConfigRepository
 import core.database.repositories.GuildProfileRepository
 import core.interact.i18n.Language
 import core.session.entities.GuildConfig
-import utils.lang.and
+import utils.lang.pair
 import java.sql.Connection
 import java.util.*
 
@@ -40,7 +40,7 @@ suspend fun migrateGuildInfoTable(gomokuBotConnection: DatabaseConnection, mysql
             language = language ?: Language.ENG
         )
 
-        guildAndConfigs.add(guild and config)
+        guildAndConfigs.add(guild pair config)
     }
 
     guildAndConfigs.forEach { (guild, config) ->

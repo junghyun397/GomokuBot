@@ -10,7 +10,7 @@ import core.interact.i18n.Language
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.session.entities.GuildConfig
-import utils.lang.and
+import utils.lang.pair
 import utils.structs.flatMap
 
 class AnnounceCommand(private val command: Command) : Command {
@@ -45,7 +45,7 @@ class AnnounceCommand(private val command: Command) : Command {
         this.command
             .execute(bot, config, guild, user, producer, messageRef, publishers)
             .map { (originalIO, originalReport) ->
-                io.flatMap { originalIO } and originalReport.copy(commandName = "$name${originalReport.commandName}")
+                io.flatMap { originalIO } pair originalReport.copy(commandName = "$name${originalReport.commandName}")
             }
             .getOrThrow()
     }

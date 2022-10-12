@@ -12,7 +12,7 @@ import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.*
 import core.session.entities.GuildConfig
-import utils.lang.and
+import utils.lang.pair
 import utils.structs.Identifiable
 import utils.structs.map
 
@@ -26,30 +26,30 @@ class ApplySettingCommand(
     override val responseFlag = ResponseFlag.Immediately
 
     private fun getKindNamePair(container: LanguageContainer) = when (diff) {
-        is BoardStyle -> container.style() and when (diff) {
+        is BoardStyle -> container.style() pair when (diff) {
             BoardStyle.IMAGE -> container.styleSelectImage()
             BoardStyle.TEXT -> container.styleSelectText()
             BoardStyle.SOLID_TEXT -> container.styleSelectSolidText()
             BoardStyle.UNICODE -> container.styleSelectUnicodeText()
         }
 
-        is FocusPolicy -> container.focus() and when (diff) {
+        is FocusPolicy -> container.focus() pair when (diff) {
             FocusPolicy.INTELLIGENCE -> container.focusSelectIntelligence()
             FocusPolicy.FALLOWING -> container.focusSelectFallowing()
         }
 
-        is HintPolicy -> container.hint() and when (diff) {
+        is HintPolicy -> container.hint() pair when (diff) {
             HintPolicy.FIVE -> container.hintSelectFive()
             HintPolicy.OFF -> container.hintSelectOff()
         }
 
-        is SweepPolicy -> container.sweep() and when (diff) {
+        is SweepPolicy -> container.sweep() pair when (diff) {
             SweepPolicy.RELAY -> container.sweepSelectRelay()
             SweepPolicy.LEAVE -> container.sweepSelectLeave()
             SweepPolicy.EDIT -> container.sweepSelectEdit()
         }
 
-        is ArchivePolicy -> container.archive() and when (diff) {
+        is ArchivePolicy -> container.archive() pair when (diff) {
             ArchivePolicy.BY_ANONYMOUS -> container.archiveSelectByAnonymous()
             ArchivePolicy.WITH_PROFILE -> container.archiveSelectWithProfile()
             ArchivePolicy.PRIVACY -> container.archiveSelectPrivacy()
@@ -77,7 +77,7 @@ class ApplySettingCommand(
 
         val (kind, choice) = this.getKindNamePair(Language.ENG.container)
 
-        io and this.asCommandReport("update $kind as [$choice](${diff.id})", guild, user)
+        io pair this.asCommandReport("update $kind as [$choice](${diff.id})", guild, user)
     }
 
 }

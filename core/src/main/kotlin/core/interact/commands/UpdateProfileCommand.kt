@@ -9,7 +9,7 @@ import core.database.repositories.UserProfileRepository
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.session.entities.GuildConfig
-import utils.lang.and
+import utils.lang.pair
 import utils.structs.Option
 import utils.structs.forEach
 import utils.structs.orElseGet
@@ -48,7 +48,7 @@ class UpdateProfileCommand(
         this.command
             .execute(bot, config, thenGuild, thenUser, producer, messageRef, publishers)
             .map { (originalIO, originalReport) ->
-                originalIO and originalReport.copy(guild = thenGuild, user = thenUser, commandName = "$name${originalReport.commandName}")
+                originalIO pair originalReport.copy(guild = thenGuild, user = thenUser, commandName = "$name${originalReport.commandName}")
             }
             .getOrThrow()
     }

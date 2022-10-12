@@ -42,7 +42,7 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
 import reactor.core.publisher.Flux
 import utils.assets.LinuxTime
-import utils.lang.and
+import utils.lang.pair
 import utils.log.getLogger
 
 private data class PostgreSQLConfig(val serverURL: String) {
@@ -196,7 +196,7 @@ object GomokuBot {
                             && !GuildManager.lookupPermission(it.channel.asTextChannel(), Permission.MESSAGE_MANAGE)
                 }
                 .flatMap { mono {
-                    it and it.guild
+                    it pair it.guild
                         .retrieveMemberById(it.userId)
                         .mapToResult()
                         .map { maybeMember -> maybeMember.map { it.user } }

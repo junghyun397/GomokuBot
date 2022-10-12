@@ -7,7 +7,7 @@ import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import utils.lang.and
+import utils.lang.pair
 import java.time.LocalDateTime
 import java.util.*
 
@@ -39,7 +39,7 @@ object AnnounceRepository {
                 .map { row, _ ->
                     val date = row["create_date"] as LocalDateTime
 
-                    row["announce_id"] as Int and Json.parseToJsonElement(row["contents"] as String)
+                    row["announce_id"] as Int pair Json.parseToJsonElement(row["contents"] as String)
                         .jsonObject
                         .mapKeys { (language, _) ->
                             Language.values()

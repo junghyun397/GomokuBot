@@ -13,7 +13,7 @@ import core.session.entities.GuildConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
 import utils.assets.LinuxTime
-import utils.lang.and
+import utils.lang.pair
 import utils.structs.flatMapOption
 import utils.structs.map
 
@@ -50,7 +50,7 @@ class SettingsCommand : Command {
             }
             .map { emptyList<Order>() }
 
-        io and this.asCommandReport("succeed", guild, user)
+        io pair this.asCommandReport("succeed", guild, user)
     }
 
 }

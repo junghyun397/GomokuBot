@@ -1,6 +1,6 @@
 package tools.documentation
 
-import utils.lang.and
+import utils.lang.pair
 
 fun main() {
     print("source: ")
@@ -11,7 +11,7 @@ fun main() {
     val result = Regex("```(\n|.)*?```")
         .findAll(source)
         .map { matchResult ->
-            matchResult.value and matchResult.value
+            matchResult.value pair matchResult.value
                 .drop(3)
                 .takeWhile { it != '\n' }
                 .split(",")

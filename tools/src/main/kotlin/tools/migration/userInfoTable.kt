@@ -9,7 +9,7 @@ import core.database.repositories.AnnounceRepository
 import core.database.repositories.UserProfileRepository
 import kotlinx.coroutines.reactive.awaitLast
 import reactor.kotlin.core.publisher.toFlux
-import utils.lang.and
+import utils.lang.pair
 import java.sql.Connection
 import java.util.*
 
@@ -53,7 +53,7 @@ suspend fun migrateUserInfoTable(gomokuBotConnection: DatabaseConnection, mysqlC
             whiteLosses = whiteLosses
         )
 
-        userAndUserStats.add(user and userStats)
+        userAndUserStats.add(user pair userStats)
     }
 
     userAndUserStats.forEach { (user, _) ->

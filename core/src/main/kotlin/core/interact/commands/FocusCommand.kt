@@ -13,7 +13,7 @@ import core.session.entities.BoardNavigationState
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
 import renju.notation.Pos
-import utils.lang.and
+import utils.lang.pair
 import utils.structs.IO
 import utils.structs.map
 
@@ -58,7 +58,7 @@ class FocusCommand(
         val newFocusInfo = this.navigationState.focusInfo.copy(focus = newFocus)
 
         when(newFocus.idx()) {
-            this.navigationState.page -> IO { emptyList<Order>() } and this.asCommandReport("focus bounded", guild, user)
+            this.navigationState.page -> IO { emptyList<Order>() } pair this.asCommandReport("focus bounded", guild, user)
             else -> {
                 SessionManager.addNavigation(bot.sessions, messageRef, this.navigationState.copy(page = newFocus.idx()))
 
@@ -66,7 +66,7 @@ class FocusCommand(
                     .launch()
                     .map { emptyList<Order>() }
 
-                action and this.asCommandReport("move focus $direction", guild, user)
+                action pair this.asCommandReport("move focus $direction", guild, user)
             }
         }
     }

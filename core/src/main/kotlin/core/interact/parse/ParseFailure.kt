@@ -8,7 +8,7 @@ import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
 import core.interact.reports.CommandReport
 import core.session.entities.GuildConfig
-import utils.lang.and
+import utils.lang.pair
 import utils.structs.IO
 
 class ParseFailure<A, B>(
@@ -20,7 +20,7 @@ class ParseFailure<A, B>(
 ) {
 
     fun notice(config: GuildConfig, producer: MessageProducer<A, B>, publisher: MessagePublisher<A, B>): Result<Pair<IO<List<Order>>, CommandReport>> =
-        Result.success(onFailure(producer, publisher, config.language.container) and this.asCommandReport())
+        Result.success(onFailure(producer, publisher, config.language.container) pair this.asCommandReport())
 
 }
 
