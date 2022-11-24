@@ -42,10 +42,10 @@ class LanguageSKO : LanguageKOR() {
 
     override fun processErrorOrder(player: String) =
         "只今은 $player 님의次例입니다. $player 님의다음手를待機해주세요. :thinking:"
-    override fun endPVPWin(winner: String, looser: String, lastMove: String) =
-        winner + " 님이" + lastMove + "에置함으로서 " + looser + " 님에게勝利하였습니다!"
-    override fun endPVPResign(winner: String, looser: String) =
-        "$looser 님이降伏을宣言함으로서 $winner 님이勝利하였습니다!"
+    override fun endPVPWin(winner: String, loser: String, lastMove: String) =
+        winner + " 님이" + lastMove + "에置함으로서 " + loser + " 님에게勝利하였습니다!"
+    override fun endPVPResign(winner: String, loser: String) =
+        "$loser 님이降伏을宣言함으로서 $winner 님이勝利하였습니다!"
 
     override fun endPVEWin(player: String, lastPos: String) = lastPos +  "에置함으로서人工知能에게勝利하셨습니다. 祝賀합니다!"
     override fun endPVELose(player: String, lastPos: String) = "人工知能이" + lastPos + "에置함으로서敗北하셨습니다."

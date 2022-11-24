@@ -27,7 +27,7 @@ sealed interface GameSession : Expirable {
 
     val history: List<Pos?>
 
-    val messageBufferKey: String
+    val messageBufferKey: MessageBufferKey
 
     val recording: Boolean
 
@@ -43,7 +43,7 @@ sealed interface GameSession : Expirable {
         else -> this.owner
     }
 
-    fun next(board: Board, move: Pos, gameResult: Option<GameResult>, messageBufferKey: String): GameSession
+    fun next(board: Board, move: Pos, gameResult: Option<GameResult>, messageBufferKey: MessageBufferKey): GameSession
 
 }
 
@@ -56,7 +56,7 @@ data class AiGameSession(
     override val board: Board,
     override val gameResult: Option<GameResult> = Option.Empty,
     override val history: List<Pos?>,
-    override val messageBufferKey: String,
+    override val messageBufferKey: MessageBufferKey,
     override val expireOffset: Long,
     override val recording: Boolean,
     override val expireDate: LinuxTime,
@@ -65,7 +65,7 @@ data class AiGameSession(
 
     override val opponent = aiUser
 
-    override fun next(board: Board, move: Pos, gameResult: Option<GameResult>, messageBufferKey: String) =
+    override fun next(board: Board, move: Pos, gameResult: Option<GameResult>, messageBufferKey: MessageBufferKey) =
         this.copy(
             board = board,
             history = this.history + move,
@@ -83,14 +83,14 @@ data class PvpGameSession(
     override val board: Board,
     override val gameResult: Option<GameResult> = Option.Empty,
     override val history: List<Pos?>,
-    override val messageBufferKey: String,
+    override val messageBufferKey: MessageBufferKey,
     override val expireOffset: Long,
     override val recording: Boolean,
     override val expireDate: LinuxTime,
     override val createDate: LinuxTime = LinuxTime.now()
 ) : GameSession {
 
-    override fun next(board: Board, move: Pos, gameResult: Option<GameResult>, messageBufferKey: String) =
+    override fun next(board: Board, move: Pos, gameResult: Option<GameResult>, messageBufferKey: MessageBufferKey) =
         this.copy(
             board = board,
             history = this.history + move,

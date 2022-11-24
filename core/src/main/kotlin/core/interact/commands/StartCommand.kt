@@ -12,6 +12,7 @@ import core.interact.reports.asCommandReport
 import core.session.GameManager
 import core.session.SessionManager
 import core.session.entities.GuildConfig
+import core.session.entities.MessageBufferKey
 import core.session.entities.RequestSession
 import utils.assets.LinuxTime
 import utils.lang.pair
@@ -51,7 +52,7 @@ class StartCommand(val opponent: User?) : Command {
             else -> {
                 val requestSession = RequestSession(
                     user, opponent,
-                    SessionManager.generateMessageBufferKey(user),
+                    MessageBufferKey.fromString(user.nameTag),
                     LinuxTime.nowWithOffset(bot.config.requestExpireOffset),
                 )
 

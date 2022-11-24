@@ -131,17 +131,17 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
             lastMove.toString().asHighlightFormat()
         )
 
-    override fun produceWinPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, looser: User, lastMove: Pos) =
-        publisher sends container.endPVPWin(winner.asMentionFormat(), looser.asMentionFormat(), lastMove.toString().asHighlightFormat())
+    override fun produceWinPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, loser: User, lastMove: Pos) =
+        publisher sends container.endPVPWin(winner.asMentionFormat(), loser.asMentionFormat(), lastMove.toString().asHighlightFormat())
 
     override fun produceTiePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User) =
         publisher sends container.endPVPTie(owner.asMentionFormat(), opponent.asMentionFormat())
 
-    override fun produceSurrenderedPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, looser: User) =
-        publisher sends container.endPVPResign(winner.asMentionFormat(), looser.asMentionFormat())
+    override fun produceSurrenderedPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, loser: User) =
+        publisher sends container.endPVPResign(winner.asMentionFormat(), loser.asMentionFormat())
 
-    override fun produceTimeoutPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, looser: User) =
-        publisher sends container.endPVPTimeOut(winner.asMentionFormat(), looser.asMentionFormat())
+    override fun produceTimeoutPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, loser: User) =
+        publisher sends container.endPVPTimeOut(winner.asMentionFormat(), loser.asMentionFormat())
 
     override fun produceNextMovePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, lastMove: Pos) =
         publisher sends container.processNextPVE(lastMove.toString().asHighlightFormat())

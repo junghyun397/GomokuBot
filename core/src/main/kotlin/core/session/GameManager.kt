@@ -10,6 +10,7 @@ import core.inference.KvineClient
 import core.interact.message.graphics.*
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
+import core.session.entities.MessageBufferKey
 import core.session.entities.PvpGameSession
 import renju.ScalaBoard
 import renju.notation.*
@@ -56,9 +57,9 @@ sealed interface GameResult {
         FIVE_IN_A_ROW(0), RESIGN(1), TIMEOUT(2), DRAW(3)
     }
 
-    data class Win(override val cause: Cause, val winColor: Color, val winner: User, val looser: User) : GameResult {
+    data class Win(override val cause: Cause, val winColor: Color, val winner: User, val loser: User) : GameResult {
 
-        override val message get() = "$winner wins over $looser by $cause"
+        override val message get() = "$winner wins over $loser by $cause"
 
         override val winColorId = this.winColor.flag().toShort()
 
@@ -101,7 +102,7 @@ object GameManager {
             ownerHasBlack = Random(System.nanoTime()).nextBoolean(),
             board = Notation.EmptyBoard,
             history = emptyList(),
-            messageBufferKey = SessionManager.generateMessageBufferKey(owner),
+            messageBufferKey = MessageBufferKey.fromString(owner.nameTag),
             recording = true,
             expireOffset = bot.config.gameExpireOffset,
             expireDate = LinuxTime.nowWithOffset(bot.config.gameExpireOffset),
@@ -129,7 +130,7 @@ object GameManager {
             ownerHasBlack = ownerHasBlack,
             board = board,
             history = history,
-            messageBufferKey = SessionManager.generateMessageBufferKey(owner),
+            messageBufferKey = MessageBufferKey.fromString(owner.nameTag),
             recording = true,
             expireOffset = bot.config.gameExpireOffset,
             expireDate = LinuxTime.nowWithOffset(bot.config.gameExpireOffset),
@@ -143,7 +144,7 @@ object GameManager {
         val thenBoard = session.board.makeMove(pos)
 
         return thenBoard.winner().fold(
-            { session.next(thenBoard, pos, Option.Empty, SessionManager.generateMessageBufferKey(session.owner)) },
+            { session.next(thenBoard, pos, Option.Empty, MessageBufferKey.fromString(session.owner.nameTag)) },
             { result ->
                 val gameResult = when (result) {
                     is Result.FiveInRow ->
@@ -226,12 +227,12 @@ object GameManager {
                 session.copy(gameResult = Option(result)) pair result
             }
             is PvpGameSession -> {
-                val (winner, looser) = if (user?.id == session.owner.id)
+                val (winner, loser) = if (user?.id == session.owner.id)
                     session.opponent pair session.owner
                 else
                     session.owner pair session.opponent
 
-                val result = GameResult.Win(cause, winColor, winner, looser)
+                val result = GameResult.Win(cause, winColor, winner, loser)
 
                 session.copy(gameResult = Option(result)) pair result
             }

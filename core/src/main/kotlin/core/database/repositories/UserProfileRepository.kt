@@ -75,7 +75,7 @@ object UserProfileRepository {
                 .bind("$2", givenId.idLong)
                 .execute()
             }
-            .flatMap<Option<User>> { result -> result
+            .flatMap { result -> result
                 .map { row, _ ->
                     Option(User(
                         id = UserUid(row["user_id"] as UUID),

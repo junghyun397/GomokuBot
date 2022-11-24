@@ -10,11 +10,11 @@ import core.session.GameResult
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.PvpGameSession
-import dev.minn.jda.ktx.coroutines.await
 import dev.minn.jda.ktx.interactions.commands.slash
 import dev.minn.jda.ktx.interactions.commands.updateCommands
 import dev.minn.jda.ktx.messages.Message
 import discord.assets.JDAGuild
+import discord.assets.awaitOption
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.DiscordMessagePublisher
 import discord.interact.message.MessageActionAdaptor
@@ -26,7 +26,9 @@ import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.requests.RestAction
 import utils.structs.Option
+import utils.structs.getOrNull
 import utils.structs.map
+import utils.structs.orElseGet
 
 object GuildManager {
 
@@ -37,13 +39,9 @@ object GuildManager {
         user.jda
             .getGuildById(config.officialServerId.idLong)!!
             .retrieveMemberById(user.idLong)
-            .mapToResult()
-            .await()
-            .takeIf { it.isSuccess }
-            ?.get()
-            ?.roles
-            ?.any { it.idLong == config.testerRoleId }
-            ?: false
+            .awaitOption()
+            .map { member -> member.roles.any { it.idLong == config.testerRoleId } }
+            .orElseGet { false }
 
     inline fun <T> permissionGrantedRun(channel: TextChannel, permission: Permission, block: () -> T): Option<T> =
         if (this.lookupPermission(channel, permission)) Option(block())
@@ -87,7 +85,7 @@ object GuildManager {
                 when (result) {
                     is GameResult.Win -> result.copy(
                         winner = result.winner.switchToAnonymousUser(),
-                        looser = result.looser.switchToAnonymousUser()
+                        loser = result.loser.switchToAnonymousUser()
                     )
                     else -> result
                 }
@@ -106,14 +104,8 @@ object GuildManager {
         jda.getGuildById(messageRef.guildId.idLong)
             ?.getTextChannelById(messageRef.channelId.idLong)
             ?.retrieveMessageById(messageRef.id.idLong)
-            ?.mapToResult()
-            ?.await()
-            ?.let { result ->
-                when {
-                    result.isSuccess -> result.get()
-                    else -> null
-                }
-            }
+            ?.awaitOption()
+            ?.getOrNull()
 
     fun bulkDelete(jdaGuild: JDAGuild, messageRefs: List<MessageRef>) {
         if (messageRefs.isEmpty()) return

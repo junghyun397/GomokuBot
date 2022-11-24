@@ -1,8 +1,7 @@
 package core.database
 
 import io.r2dbc.spi.Connection
-import io.r2dbc.spi.ConnectionFactories
-import kotlinx.coroutines.reactive.awaitFirst
+import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 
 data class DatabaseConnection(
@@ -10,6 +9,6 @@ data class DatabaseConnection(
     val localCaches: LocalCaches,
 ) {
 
-    fun liftConnection() = this.connection.toMono()
+    fun liftConnection(): Mono<Connection> = this.connection.toMono()
 
 }

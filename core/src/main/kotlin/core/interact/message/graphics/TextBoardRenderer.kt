@@ -8,8 +8,8 @@ import utils.structs.Option
 
 open class TextBoardRenderer : BoardRenderer {
 
-    protected fun renderBoardText(board: Board) =
-        Notation.BoardIOInstance.BoardToString(board).boardString()!!
+    protected fun renderBoardText(board: Board): String =
+        Notation.BoardIOInstance.buildBoardString(board, true)
 
     override fun renderBoard(board: Board, history: Option<List<Pos?>>) =
         Either.Left("```\n${this.renderBoardText(board).replace(".", " ")}```")

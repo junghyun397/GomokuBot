@@ -341,14 +341,14 @@ open class LanguageKOR : LanguageENG() {
 
     // ### 4-3-1. END:PVP (MESSAGE)
 
-    override fun endPVPWin(winner: String, looser: String, lastMove: String) =
-        "$winner 님이 ${lastMove}에 돌을 놓음으로써 $looser 님을 이겼습니다."
-    override fun endPVPResign(winner: String, looser: String) =
-        "$looser 님이 항복을 선언 함으로써 $winner 님이 이겼습니다."
+    override fun endPVPWin(winner: String, loser: String, lastMove: String) =
+        "$winner 님이 ${lastMove}에 돌을 놓음으로써 $loser 님을 이겼습니다."
+    override fun endPVPResign(winner: String, loser: String) =
+        "$loser 님이 항복을 선언 함으로써 $winner 님이 이겼습니다."
     override fun endPVPTie(owner: String, opponent: String) =
         "이제 더 이상 돌을 놓을 공간이 없으므로, $opponent 님과 $opponent 님의 게임은 무승부로 끝났습니다."
-    override fun endPVPTimeOut(winner: String, looser: String) =
-        "$looser 님이 오랜 시간 동안 다음 수를 두지 않았기 때문에 $winner 님이 $looser 님을 이겼습니다."
+    override fun endPVPTimeOut(winner: String, loser: String) =
+        "$loser 님이 오랜 시간 동안 다음 수를 두지 않았기 때문에 $winner 님이 $loser 님을 이겼습니다."
 
     // ### 4-3-2. END:AI (MESSAGE)
 

@@ -44,10 +44,10 @@ class LanguageJPN : LanguageENG() {
 
     override fun processErrorOrder(player: String) =
         "今は`$player`'さんの番です。`$player`さんの次の番を待ってください。 :thinking:"
-    override fun endPVPWin(winner: String, looser: String, lastMove: String) =
-        "`$winner`さんが $lastMove に置いて`$looser`さんに勝ちました。"
-    override fun endPVPResign(winner: String, looser: String) =
-        "`$looser`さんが降伏を宣言して`$winner`さんが勝ちました。"
+    override fun endPVPWin(winner: String, loser: String, lastMove: String) =
+        "`$winner`さんが $lastMove に置いて`$loser`さんに勝ちました。"
+    override fun endPVPResign(winner: String, loser: String) =
+        "`$loser`さんが降伏を宣言して`$winner`さんが勝ちました。"
 
     override fun endPVEWin(player: String, lastPos: String) = lastPos + "に置いてAIに勝ちました。おめでとうございます。"
     override fun endPVELose(player: String, lastPos: String) = "AIが" + lastPos + "に置いて負けました。"

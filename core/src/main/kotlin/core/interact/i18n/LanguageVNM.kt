@@ -55,10 +55,10 @@ class LanguageVNM : LanguageENG() {
 
     override fun processErrorOrder(player: String) =
         "`$player` đang suy nghĩ. Chờ `$player` đánh rồi mới đến lượt của bạn. :thinking:"
-    override fun endPVPWin(winner: String, looser: String, lastMove: String) =
-        "`$winner` đã thắng `$looser`. Vị trí mà người thắng đánh cuối cùng là ô $lastMove!"
-    override fun endPVPResign(winner: String, looser: String) =
-        "`$winner` đã thắng `$looser` vì `$looser` đã xin dừng cuộc chơi!"
+    override fun endPVPWin(winner: String, loser: String, lastMove: String) =
+        "`$winner` đã thắng `$loser`. Vị trí mà người thắng đánh cuối cùng là ô $lastMove!"
+    override fun endPVPResign(winner: String, loser: String) =
+        "`$winner` đã thắng `$loser` vì `$loser` đã xin dừng cuộc chơi!"
 
     override fun endPVEWin(player: String, lastPos: String) = "Bạn thắng máy bằng cách đánh ở ô $lastPos. Chúc mừng! :tada:"
     override fun endPVELose(player: String, lastPos: String) = "Bạn đã thua máy. Máy đã đánh ở ô gần nhất là $lastPos."

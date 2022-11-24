@@ -1,12 +1,19 @@
 package core.assets
 
+import renju.Board
 import renju.`BoardIO$`
 import renju.`EmptyScalaBoard$`
-import renju.Struct
+import renju.FieldStatus
+import renju.notation.Flag
 import renju.notation.`Flag$`
 import renju.notation.`Result$`
+import renju.notation.Struct
 
 fun intToStruct(raw: Int): Struct = Struct(raw)
+
+fun byteToFlag(raw: Byte): Flag = Flag(raw)
+
+operator fun Board.get(index: Int): FieldStatus = this.getFieldStatus(index)
 
 typealias EmptyBoard = `EmptyScalaBoard$`
 

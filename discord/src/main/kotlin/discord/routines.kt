@@ -12,7 +12,7 @@ import core.session.SessionManager
 import core.session.SweepPolicy
 import core.session.entities.AiGameSession
 import core.session.entities.PvpGameSession
-import dev.minn.jda.ktx.coroutines.await
+import discord.assets.awaitOption
 import discord.interact.DiscordConfig
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.DiscordMessagePublisher
@@ -24,7 +24,10 @@ import net.dv8tion.jda.api.JDA
 import reactor.core.publisher.Flux
 import utils.assets.LinuxTime
 import utils.lang.schedule
-import utils.structs.*
+import utils.structs.IO
+import utils.structs.flatMap
+import utils.structs.fold
+import utils.structs.map
 
 fun scheduleRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flux<InteractionReport> {
     val expireGameSessionFlow = schedule<InteractionReport>(bot.config.gameExpireCycle) {
@@ -38,16 +41,14 @@ fun scheduleRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): F
             val message = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
             val guild = jda.getGuildById(guildSession.guild.givenId.idLong)
-            val channel = message?.let { jda.getTextChannelById(it.channelId.idLong) }
+            val channel = message?.let { guild?.getTextChannelById(it.channelId.idLong) }
 
             if (message != null && guild != null && channel != null) {
                 val infoPublisher: DiscordMessagePublisher = { msg -> MessageActionAdaptor(channel.sendMessage(msg)) }
 
-                val boardPublisher: DiscordMessagePublisher = run {
-                    when (guildSession.config.sweepPolicy) {
-                        SweepPolicy.EDIT -> { msg -> MessageActionAdaptor(channel.editMessageById(message.id.idLong, msg)) }
-                        else -> infoPublisher
-                    }
+                val boardPublisher: DiscordMessagePublisher = when (guildSession.config.sweepPolicy) {
+                    SweepPolicy.EDIT -> { msg -> MessageActionAdaptor(channel.editMessageById(message.id.idLong, msg)) }
+                    else -> infoPublisher
                 }
 
                 val io = when (session) {
@@ -82,9 +83,7 @@ fun scheduleRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): F
 
             if (message != null && guild != null && channel != null) {
                 val maybeRequestMessage = channel.retrieveMessageById(message.id.idLong)
-                    .mapToResult()
-                    .map { Option.cond(it.isSuccess) { it.get() } }
-                    .await()
+                    .awaitOption()
 
                 val editIO = maybeRequestMessage.fold(
                     onDefined = {

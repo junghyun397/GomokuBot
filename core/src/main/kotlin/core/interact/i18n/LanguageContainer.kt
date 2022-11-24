@@ -317,10 +317,10 @@ sealed interface LanguageContainer {
 
     // ### 4-3-1. END:PVP (MESSAGE)
 
-    fun endPVPWin(winner: String, looser: String, lastMove: String): String
-    fun endPVPResign(winner: String, looser: String): String
+    fun endPVPWin(winner: String, loser: String, lastMove: String): String
+    fun endPVPResign(winner: String, loser: String): String
     fun endPVPTie(owner: String, opponent: String): String
-    fun endPVPTimeOut(winner: String, looser: String): String
+    fun endPVPTimeOut(winner: String, loser: String): String
 
     // ### 4-3-2. END:AI (MESSAGE)
 

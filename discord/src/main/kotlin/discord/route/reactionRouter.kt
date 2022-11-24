@@ -40,7 +40,7 @@ fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mo
     val messageRef = context.event.extractMessageRef()
 
     return mono {
-        val maybeParsable = SessionManager.getnavigationState(context.bot.sessions, messageRef)
+        val maybeParsable = SessionManager.getNavigationState(context.bot.sessions, messageRef)
         .asOption()
         .orElse { recoverNavigationState(context.bot, context.event.retrieveMessage().await(), messageRef) }
         .map { state ->

@@ -7,7 +7,6 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.time.LocalDateTime
 import java.time.ZoneOffset
-import java.util.*
 import javax.imageio.ImageIO
 
 fun BufferedImage.clone(): BufferedImage =
@@ -24,7 +23,3 @@ fun String.toInputStream(): InputStream = this.byteInputStream(Charsets.UTF_8)
 fun Iterable<Char>.asString(): String = String(this.toList().toCharArray())
 
 fun LocalDateTime.toLinuxTime(): LinuxTime = LinuxTime(this.toInstant(ZoneOffset.UTC).toEpochMilli())
-
-fun encodeBase64(source: ByteArray): String = String(Base64.getEncoder().encode(source))
-
-fun decodeBase64(source: String): ByteArray = Base64.getDecoder().decode(source)

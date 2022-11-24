@@ -69,7 +69,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
     fun encodePageNavigationState(base: Int, navigationState: PageNavigationState): Int =
         this.encodePageNavigationState(base, navigationState.kind, navigationState.page)
 
-    fun encodePageNavigationState(base: Int, kind: NavigationKind, page: Int): Int {
+    private fun encodePageNavigationState(base: Int, kind: NavigationKind, page: Int): Int {
         val baseBytes = base.toBytes()
             .drop(1)
             .map { it.toUByte().toInt() }
@@ -264,7 +264,7 @@ object DiscordMessageProducer : MessageProducerImpl<Message, DiscordComponents>(
                                 checkTerminated() -> cancel()
                                 else -> {
                                     action.queue()
-                                    delay(500) // sync on rate limit?
+                                    delay(500) // TODO: sync on rate limit
                                 }
                             }
                         }

@@ -1,6 +1,7 @@
 package discord.assets
 
 import core.assets.*
+import dev.minn.jda.ktx.coroutines.await
 import discord.interact.message.MessageActionAdaptor
 import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
@@ -12,6 +13,8 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent
+import net.dv8tion.jda.api.requests.RestAction
+import utils.structs.Option
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -43,6 +46,11 @@ fun net.dv8tion.jda.api.entities.User.extractProfile(uid: UserUid = UserUid(UUID
 
 fun net.dv8tion.jda.api.entities.Guild.editMessageByMessageRef(ref: MessageRef, newContent: net.dv8tion.jda.api.entities.Message): MessageActionAdaptor =
     MessageActionAdaptor(this.getTextChannelById(ref.channelId.idLong)!!.editMessageById(ref.id.idLong, newContent))
+
+suspend fun <T> RestAction<T>.awaitOption(): Option<T> = this
+    .mapToResult()
+    .map { Option.cond(it.isSuccess) { it.get() } }
+    .await()
 
 fun <T : Event> getEventAbbreviation(source: KClass<T>): String =
     when (source) {

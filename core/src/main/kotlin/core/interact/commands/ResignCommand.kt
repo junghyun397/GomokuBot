@@ -51,7 +51,7 @@ class ResignCommand(private val session: GameSession) : Command {
             is AiGameSession ->
                 producer.produceSurrenderedPVE(publishers.plain, config.language.container, finishedSession.owner)
             is PvpGameSession ->
-                producer.produceSurrenderedPVP(publishers.plain, config.language.container, result.winner, result.looser)
+                producer.produceSurrenderedPVP(publishers.plain, config.language.container, result.winner, result.loser)
         }
             .launch()
             .flatMap { buildFinishProcedure(bot, producer, publisher, config, this.session, finishedSession) }

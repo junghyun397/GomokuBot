@@ -9,8 +9,8 @@ import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteract
 import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent
 import utils.lang.pair
 import utils.structs.Option
-import utils.structs.asOption
 import utils.structs.map
+import utils.structs.toOption
 
 object ApplySettingCommandParser : EmbeddableCommand {
 
@@ -46,7 +46,7 @@ object ApplySettingCommandParser : EmbeddableCommand {
             }
             else -> throw IllegalStateException()
         } }
-            .asOption()
+            .toOption()
             .map { (diff, newConfig) -> ApplySettingCommand(newConfig, diff) }
     }
 

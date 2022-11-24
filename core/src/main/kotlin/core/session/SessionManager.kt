@@ -1,12 +1,33 @@
 package core.session
 
-import core.assets.*
+import core.assets.Guild
+import core.assets.GuildUid
+import core.assets.MessageRef
+import core.assets.UserUid
 import core.database.repositories.GuildConfigRepository
 import core.session.entities.*
 import utils.assets.LinuxTime
 import utils.lang.pair
 import utils.structs.Quadruple
 import utils.structs.fold
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.Set
+import kotlin.collections.asSequence
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.filter
+import kotlin.collections.filterValues
+import kotlin.collections.first
+import kotlin.collections.firstOrNull
+import kotlin.collections.getOrElse
+import kotlin.collections.getOrPut
+import kotlin.collections.map
+import kotlin.collections.minus
+import kotlin.collections.mutableListOf
+import kotlin.collections.plus
+import kotlin.collections.set
+import kotlin.collections.toSet
 
 object SessionManager {
 
@@ -88,30 +109,27 @@ object SessionManager {
         }
     }
 
-    fun generateMessageBufferKey(owner: User): String =
-        String(owner.name.toCharArray() + System.currentTimeMillis().toString().toCharArray())
-
-    fun appendMessageHead(repo: SessionRepository, key: String, messageRef: MessageRef) {
+    fun appendMessageHead(repo: SessionRepository, key: MessageBufferKey, messageRef: MessageRef) {
         repo.messageBuffer.getOrPut(key) { mutableListOf() }
             .add(0, messageRef)
     }
 
-    fun appendMessage(repo: SessionRepository, key: String, messageRef: MessageRef) {
+    fun appendMessage(repo: SessionRepository, key: MessageBufferKey, messageRef: MessageRef) {
         repo.messageBuffer.getOrPut(key) { mutableListOf() }
             .add(messageRef)
     }
 
-    fun viewHeadMessage(repo: SessionRepository, key: String): MessageRef? =
+    fun viewHeadMessage(repo: SessionRepository, key: MessageBufferKey): MessageRef? =
         repo.messageBuffer[key]?.first()
 
-    fun checkoutMessages(repo: SessionRepository, key: String): List<MessageRef>? =
+    fun checkoutMessages(repo: SessionRepository, key: MessageBufferKey): List<MessageRef>? =
         repo.messageBuffer.remove(key)
 
     fun addNavigation(repo: SessionRepository, messageRef: MessageRef, state: NavigationState) {
         repo.navigates[messageRef] = state
     }
 
-    fun getnavigationState(repo: SessionRepository, messageRef: MessageRef): NavigationState? =
+    fun getNavigationState(repo: SessionRepository, messageRef: MessageRef): NavigationState? =
         repo.navigates[messageRef]
 
     private inline fun <T : Expirable> cleanExpired(

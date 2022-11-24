@@ -70,16 +70,14 @@ object GuildProfileRepository {
                 .bind("$2", givenId.idLong)
                 .execute()
             }
-            .flatMap<Option<Guild>> { result -> result
+            .flatMap { result -> result
                 .map { row, _ ->
-                    Option(
-                        Guild(
+                    Option(Guild(
                         id = GuildUid(row["guild_id"] as UUID),
                         platform = platform,
                         givenId = givenId,
                         name = row["name"] as String
-                    )
-                    )
+                    ))
                 }
             }
             .defaultIfEmpty(Option.Empty)

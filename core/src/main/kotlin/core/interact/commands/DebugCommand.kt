@@ -16,6 +16,7 @@ import core.session.SessionManager
 import core.session.Token
 import core.session.entities.AiGameSession
 import core.session.entities.GuildConfig
+import core.session.entities.MessageBufferKey
 import core.session.entities.RequestSession
 import renju.BoardIO
 import renju.notation.Pos
@@ -55,7 +56,7 @@ class DebugCommand(
             SessionManager.retrieveGameSession(bot.sessions, guild, user.id)?.let { session ->
                 producer.produceSessionArchive(publishers.plain, session, session.gameResult)
                     .addFile(
-                        Notation.BoardIOInstance.BoardToString(session.board).debugString().toInputStream(),
+                        Notation.BoardIOInstance.buildBoardDebugString(session.board).toInputStream(),
                         "analysis-report-${System.currentTimeMillis()}.txt"
                     )
                     .launch()
@@ -69,7 +70,7 @@ class DebugCommand(
             else {
                 val requestSession = RequestSession(
                         user, user,
-                        SessionManager.generateMessageBufferKey(user),
+                        MessageBufferKey.fromString(user.nameTag),
                         LinuxTime.nowWithOffset(bot.config.gameExpireOffset)
                     )
 
@@ -93,7 +94,7 @@ class DebugCommand(
                 ownerHasBlack = board.isNextColorBlack,
                 board = board,
                 history = List(board.moves()) { null },
-                messageBufferKey = SessionManager.generateMessageBufferKey(user),
+                messageBufferKey = MessageBufferKey.fromString(user.nameTag),
                 expireOffset = bot.config.gameExpireOffset,
                 recording = false,
                 expireDate = LinuxTime.nowWithOffset(bot.config.gameExpireOffset)
@@ -169,7 +170,7 @@ class DebugCommand(
                 ownerHasBlack = false,
                 board = vcfCase,
                 history = List(vcfCase.moves()) { null },
-                messageBufferKey = SessionManager.generateMessageBufferKey(user),
+                messageBufferKey = MessageBufferKey.fromString(user.nameTag),
                 expireOffset = bot.config.gameExpireOffset,
                 recording = false,
                 expireDate = LinuxTime.nowWithOffset(bot.config.gameExpireOffset)

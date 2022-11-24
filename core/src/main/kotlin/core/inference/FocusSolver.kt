@@ -3,10 +3,15 @@ package core.inference
 import core.assets.Notation
 import core.assets.intToStruct
 import engine.move.LargeMoveGenerator
+import engine.move.ThreatMoveGenerator
 import engine.search.vcf.VCFSolver
-import renju.*
+import renju.Board
+import renju.BoardOps
+import renju.L1Strip
+import renju.StructOps
 import renju.notation.Pos
 import renju.notation.Renju
+import renju.notation.Struct
 import renju.protocol.Solution
 import renju.protocol.SolutionLeaf
 import utils.assets.bound
@@ -171,7 +176,8 @@ object FocusSolver {
     fun findSolution(board: Board, weightSet: WeightSet = SolverWeights): Solution {
         val traps = StructOps(board).collectTrapPoints()
 
-        val moves = LargeMoveGenerator.collectValidMoves(board)
+        val moves = ThreatMoveGenerator.collectValidMoves(board).toTypedArray()
+            .ifEmpty { LargeMoveGenerator.collectValidMoves(board).toTypedArray() }
 
         if (moves.size == 1)
             return SolutionLeaf(moves.first())

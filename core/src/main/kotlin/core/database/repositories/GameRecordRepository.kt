@@ -42,7 +42,7 @@ object GameRecordRepository {
             .awaitFirstOrNull()
     }
 
-    suspend fun retrieveGameRecordsByGuildUid(connection: DatabaseConnection, guildUid: GuildUid) =
+    suspend fun retrieveGameRecordsByGuildUid(connection: DatabaseConnection, guildUid: GuildUid): MutableList<GameRecord> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
                 .createStatement("SELECT * FROM game_record WHERE guild_id = $1")
@@ -56,7 +56,7 @@ object GameRecordRepository {
             .collectList()
             .awaitSingle()
 
-    suspend fun retrieveGameRecordsByUserUid(connection: DatabaseConnection, userUid: UserUid) =
+    suspend fun retrieveGameRecordsByUserUid(connection: DatabaseConnection, userUid: UserUid): MutableList<GameRecord> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
                 .createStatement("SELECT * FROM game_record WHERE white_id = $1 OR black_id = $1")

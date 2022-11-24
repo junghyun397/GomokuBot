@@ -351,14 +351,14 @@ open class LanguageENG : LanguageContainer {
 
     // ### 4-3-1. END:PVP (MESSAGE)
 
-    override fun endPVPWin(winner: String, looser: String, lastMove: String) =
-        "$winner wins by $looser placed in $lastMove!"
-    override fun endPVPResign(winner: String, looser: String) =
-        "$winner wins by $looser resignation!"
+    override fun endPVPWin(winner: String, loser: String, lastMove: String) =
+        "$winner wins by $loser placed in $lastMove!"
+    override fun endPVPResign(winner: String, loser: String) =
+        "$winner wins by $loser resignation!"
     override fun endPVPTie(owner: String, opponent: String) =
         "$owner vs $opponent ended in a draw because there were no more points to make a move."
-    override fun endPVPTimeOut(winner: String, looser: String) =
-        "$winner wins by $looser because $looser didn't make the next move for a long time."
+    override fun endPVPTimeOut(winner: String, loser: String) =
+        "$winner wins by $loser because $loser didn't make the next move for a long time."
 
     // ### 4-3-2. END:AI (MESSAGE)
 
