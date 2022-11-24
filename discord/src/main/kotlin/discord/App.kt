@@ -28,6 +28,7 @@ import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.entities.ChannelType
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.ReadyEvent
 import net.dv8tion.jda.api.events.ShutdownEvent
@@ -160,7 +161,8 @@ object GomokuBot {
                     it.isFromGuild
                             && it.channel.type == ChannelType.TEXT
                             && !it.author.isBot
-                            && (it.message.contentRaw.startsWith(COMMAND_PREFIX) || it.message.mentions.isMentioned(it.jda.selfUser))
+                            && (it.message.contentRaw.startsWith(COMMAND_PREFIX) ||
+                                it.message.mentions.isMentioned(it.jda.selfUser, Message.MentionType.USER))
                 }
                 .flatMap { mono { buildInteractionContext(botContext, discordConfig, it, it.author, it.guild) } }
                 .flatMap(::textCommandRouter),
