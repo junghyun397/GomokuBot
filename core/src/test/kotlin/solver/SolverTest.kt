@@ -5,7 +5,6 @@ package solver
 import core.inference.FocusSolver
 import org.junit.Test
 import renju.Board
-import renju.`BoardIO$`
 import renju.ScalaBoard
 import renju.protocol.Solution
 import utils.lang.pair
@@ -61,8 +60,6 @@ internal class SolverTest {
 
             return null
         }
-
-        println(`BoardIO$`.`MODULE$`.BoardToString(board).boardString())
 
         return result
     }
