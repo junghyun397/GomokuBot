@@ -6,11 +6,11 @@ import utils.structs.IO
 import utils.structs.Option
 import java.io.InputStream
 
-typealias MessagePublisher<A, B> = (A) -> MessageIO<A, B>
+typealias MessagePublisher<A, B> = (A) -> MessageBuilder<A, B>
 
-typealias MessageEditPublisher<A, B> = (MessageRef) -> (A) -> MessageIO<A, B>
+typealias MessageEditPublisher<A, B> = (MessageRef) -> (A) -> MessageBuilder<A, B>
 
-typealias ComponentPublisher<A, B> = (B) -> MessageIO<A, B>
+typealias ComponentPublisher<A, B> = (B) -> MessageBuilder<A, B>
 
 interface PublisherSet<A, B> {
 
@@ -57,11 +57,11 @@ data class MonoPublisherSet<A, B>(
 
 }
 
-interface MessageIO<A, B> {
+interface MessageBuilder<A, B> {
 
-    fun addFile(file: InputStream, name: String): MessageIO<A, B>
+    fun addFile(file: InputStream, name: String): MessageBuilder<A, B>
 
-    fun addButtons(buttons: B): MessageIO<A, B>
+    fun addComponents(components: B): MessageBuilder<A, B>
 
     fun launch(): IO<Unit>
 
@@ -73,11 +73,9 @@ interface MessageAdaptor<A, B> {
 
     val messageRef: MessageRef
 
-    val original: A
+    val messageData: A
 
-    val buttons: B
-
-    fun updateButtons(buttons: B): MessageIO<A, B>
+    fun updateComponents(buttons: B): MessageBuilder<A, B>
 
 }
 

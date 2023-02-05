@@ -20,7 +20,7 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
 
     // INTERFACE
 
-    abstract fun sendString(text: String, publisher: MessagePublisher<A, B>): MessageIO<A, B>
+    abstract fun sendString(text: String, publisher: MessagePublisher<A, B>): MessageBuilder<A, B>
 
     abstract fun User.asMentionFormat(): String
 
@@ -80,12 +80,12 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
 
     private val focusNavigatorFlow = flowOf(UNICODE_LEFT, UNICODE_DOWN, UNICODE_UP, UNICODE_RIGHT, UNICODE_FOCUS)
 
-    override fun attachFocusNavigators(message: MessageAdaptor<A, B>, checkTerminated: suspend () -> Boolean): IO<Unit> =
+    override fun attachFocusNavigators(message: A, checkTerminated: suspend () -> Boolean): IO<Unit> =
         this.attachNavigators(this.focusNavigatorFlow, message, checkTerminated)
 
     private val binaryNavigatorFlow = flowOf(UNICODE_LEFT, UNICODE_RIGHT)
 
-    override fun attachBinaryNavigators(message: MessageAdaptor<A, B>): IO<Unit> =
+    override fun attachBinaryNavigators(message: A): IO<Unit> =
         this.attachNavigators(this.binaryNavigatorFlow, message) { false }
 
     // HELP

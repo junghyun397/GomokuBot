@@ -46,7 +46,7 @@ class SettingsCommand : Command {
                     )
                 )
 
-                producer.attachBinaryNavigators(settingsMessage)
+                producer.attachBinaryNavigators(settingsMessage.messageData)
             }
             .map { emptyList<Order>() }
 

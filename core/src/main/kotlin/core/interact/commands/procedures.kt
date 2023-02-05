@@ -57,7 +57,7 @@ fun <A, B> buildBoardProcedure(
         .flatMapOption { message ->
             SessionManager.addNavigation(bot.sessions, message.messageRef, BoardNavigationState(focusInfo.focus.idx(), focusInfo, session.expireDate))
             SessionManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.messageRef)
-            producer.attachFocusNavigators(message) {
+            producer.attachFocusNavigators(message.messageData) {
                 SessionManager.retrieveGameSession(bot.sessions, guild, session.owner.id)?.board?.moves() != session.board.moves()
             }
         }
@@ -115,7 +115,7 @@ fun <A, B> buildHelpProcedure(
             )
         )
 
-        producer.attachBinaryNavigators(helpMessage)
+        producer.attachBinaryNavigators(helpMessage.messageData)
     }
 
 fun <A, B> buildCombinedHelpProcedure(
@@ -152,6 +152,6 @@ fun <A, B> buildCombinedHelpProcedure(
             )
         )
 
-        producer.attachBinaryNavigators(helpMessage)
-            .flatMap { producer.attachBinaryNavigators(settingsMessage) }
+        producer.attachBinaryNavigators(helpMessage.messageData)
+            .flatMap { producer.attachBinaryNavigators(settingsMessage.messageData) }
     }

@@ -16,7 +16,7 @@ class HelpCommand(private val sendSettings: Boolean) : Command {
 
     override val name = "help"
 
-    override val responseFlag = ResponseFlag.Defer
+    override val responseFlag = ResponseFlag.Immediately
 
     override suspend fun <A, B> execute(
         bot: BotContext,
