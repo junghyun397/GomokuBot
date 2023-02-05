@@ -2,18 +2,20 @@ package discord.assets
 
 import core.assets.*
 import dev.minn.jda.ktx.coroutines.await
-import discord.interact.message.MessageActionAdaptor
+import discord.interact.message.DiscordMessageBuilder
+import discord.interact.message.MessageEditAdaptor
 import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
-import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent
+import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent
 import net.dv8tion.jda.api.requests.RestAction
+import net.dv8tion.jda.api.utils.messages.MessageEditData
 import utils.structs.Option
 import java.util.*
 import kotlin.reflect.KClass
@@ -36,7 +38,7 @@ fun net.dv8tion.jda.api.entities.User.extractId(): UserId = UserId(this.idLong)
 
 fun net.dv8tion.jda.api.entities.Message.extractId(): MessageId = MessageId(this.idLong)
 
-fun net.dv8tion.jda.api.entities.Channel.extractId(): ChannelId = ChannelId(this.idLong)
+fun net.dv8tion.jda.api.entities.channel.Channel.extractId(): ChannelId = ChannelId(this.idLong)
 
 fun net.dv8tion.jda.api.entities.Guild.extractProfile(uid: GuildUid = GuildUid(UUID.randomUUID())): Guild =
     Guild(uid, DISCORD_PLATFORM_ID, this.extractId(), this.name)
@@ -44,8 +46,8 @@ fun net.dv8tion.jda.api.entities.Guild.extractProfile(uid: GuildUid = GuildUid(U
 fun net.dv8tion.jda.api.entities.User.extractProfile(uid: UserUid = UserUid(UUID.randomUUID()), announceId: Int? = null): User =
     User(uid, DISCORD_PLATFORM_ID, this.extractId(), this.name, this.asTag, announceId, this.avatarUrl)
 
-fun net.dv8tion.jda.api.entities.Guild.editMessageByMessageRef(ref: MessageRef, newContent: net.dv8tion.jda.api.entities.Message): MessageActionAdaptor =
-    MessageActionAdaptor(this.getTextChannelById(ref.channelId.idLong)!!.editMessageById(ref.id.idLong, newContent))
+fun net.dv8tion.jda.api.entities.Guild.editMessageByMessageRef(ref: MessageRef, newContent: MessageEditData): DiscordMessageBuilder =
+    MessageEditAdaptor(this.getTextChannelById(ref.channelId.idLong)!!.editMessageById(ref.id.idLong, newContent))
 
 suspend fun <T> RestAction<T>.awaitOption(): Option<T> = this
     .mapToResult()
@@ -57,7 +59,7 @@ fun <T : Event> getEventAbbreviation(source: KClass<T>): String =
         SlashCommandInteractionEvent::class -> "SCIE"
         MessageReceivedEvent::class -> "MRE"
         ButtonInteractionEvent::class -> "BIE"
-        SelectMenuInteractionEvent::class -> "SMIE"
+        EntitySelectInteractionEvent::class -> "ESIE"
         MessageReactionAddEvent::class -> "MRAE"
         MessageReactionRemoveEvent::class -> "MRRE"
         GuildJoinEvent::class -> "GJE"

@@ -12,18 +12,18 @@ import core.session.entities.GameSession
 import core.session.entities.PvpGameSession
 import dev.minn.jda.ktx.interactions.commands.slash
 import dev.minn.jda.ktx.interactions.commands.updateCommands
-import dev.minn.jda.ktx.messages.Message
+import discord.assets.DiscordMessageData
 import discord.assets.JDAGuild
 import discord.assets.awaitOption
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.DiscordMessagePublisher
-import discord.interact.message.MessageActionAdaptor
+import discord.interact.message.MessageCreateAdaptor
 import discord.interact.parse.buildableCommands
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
-import net.dv8tion.jda.api.entities.GuildChannel
-import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
 import net.dv8tion.jda.api.requests.RestAction
 import utils.structs.Option
 import utils.structs.getOrNull
@@ -93,7 +93,7 @@ object GuildManager {
             else -> modSession.gameResult
         }
 
-        val publisher: DiscordMessagePublisher = { msg -> MessageActionAdaptor(archiveChannel.sendMessage(msg)) }
+        val publisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(archiveChannel.sendMessage(msg.buildCreate())) }
 
         DiscordMessageProducer.produceSessionArchive(publisher, modSession, modResult)
             .launch()
@@ -147,8 +147,7 @@ object GuildManager {
     }
 
     fun retainFirstEmbed(message: net.dv8tion.jda.api.entities.Message) =
-        message.editMessage(Message(embed = message.embeds.first()))
-            .retainFiles(message.attachments)
+        message.editMessage(DiscordMessageData(embed = message.embeds.first()).buildEdit())
             .queue()
 
     fun removeComponents(message: net.dv8tion.jda.api.entities.Message) =

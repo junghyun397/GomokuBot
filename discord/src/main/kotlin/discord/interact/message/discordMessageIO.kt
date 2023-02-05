@@ -3,31 +3,29 @@
 package discord.interact.message
 
 import core.assets.MessageRef
-import core.interact.message.MessageAdaptor
-import core.interact.message.MessageIO
-import core.interact.message.MessagePublisher
-import core.interact.message.PublisherSet
+import core.interact.message.*
+import discord.assets.DiscordMessageData
 import discord.assets.extractMessageRef
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.interactions.InteractionHook
-import net.dv8tion.jda.api.interactions.components.ActionRow
-import net.dv8tion.jda.api.requests.RestAction
-import net.dv8tion.jda.api.requests.restaction.MessageAction
-import net.dv8tion.jda.api.requests.restaction.WebhookMessageAction
-import net.dv8tion.jda.api.requests.restaction.WebhookMessageUpdateAction
-import net.dv8tion.jda.api.requests.restaction.interactions.MessageEditCallbackAction
-import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction
+import net.dv8tion.jda.api.interactions.components.LayoutComponent
+import net.dv8tion.jda.api.requests.FluentRestAction
+import net.dv8tion.jda.api.utils.FileUpload
+import net.dv8tion.jda.api.utils.messages.MessageCreateRequest
+import net.dv8tion.jda.api.utils.messages.MessageEditRequest
 import utils.structs.IO
 import utils.structs.Option
 import java.io.InputStream
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-typealias DiscordComponents = List<ActionRow>
+typealias DiscordComponents = List<LayoutComponent>
 
-typealias DiscordMessagePublisher = MessagePublisher<Message, DiscordComponents>
+typealias DiscordMessagePublisher = MessagePublisher<DiscordMessageData, DiscordComponents>
 
-typealias DiscordMessageIO = MessageIO<Message, DiscordComponents>
+typealias DiscordComponentPublisher = ComponentPublisher<DiscordMessageData, DiscordComponents>
+
+typealias DiscordMessageBuilder = MessageBuilder<DiscordMessageData, DiscordComponents>
 
 fun TransMessagePublisher(head: DiscordMessagePublisher, tail: DiscordMessagePublisher): DiscordMessagePublisher {
     var consumeTail = false
@@ -44,9 +42,9 @@ fun TransMessagePublisher(head: DiscordMessagePublisher, tail: DiscordMessagePub
 }
 
 class TransMessagePublisherSet(
-    private val head: PublisherSet<Message, DiscordComponents>,
-    private val tail: PublisherSet<Message, DiscordComponents>,
-) : PublisherSet<Message, DiscordComponents> {
+    private val head: PublisherSet<DiscordMessageData, DiscordComponents>,
+    private val tail: PublisherSet<DiscordMessageData, DiscordComponents>,
+) : PublisherSet<DiscordMessageData, DiscordComponents> {
 
     private var consumeTail = false
 
@@ -68,13 +66,18 @@ class TransMessagePublisherSet(
 
 }
 
-abstract class RestActionMessageLauncherMixin(private val original: RestAction<*>) : DiscordMessageIO {
+class MessageCreateAdaptor<T>(private val original: T) : DiscordMessageBuilder
+        where T : MessageCreateRequest<T>, T : FluentRestAction<Message, T> {
 
-    override fun launch() = IO.effect { this.original.queue() }
+    override fun addFile(file: InputStream, name: String): DiscordMessageBuilder =
+        MessageCreateAdaptor(this.original.addFiles(FileUpload.fromData(file, name)))
 
-}
+    override fun addComponents(components: DiscordComponents): DiscordMessageBuilder =
+        MessageCreateAdaptor(components.fold(this.original) { acc, component -> acc.addActionRow(component.actionComponents) })
 
-abstract class RestActionMessageDispatcherMixin(private val original: RestAction<Message>) : RestActionMessageLauncherMixin(original) {
+    override fun launch(): IO<Unit> = IO.effect {
+        this.original.queue()
+    }
 
     override fun retrieve(): IO<Option<DiscordMessageAdaptor>> = IO { suspendCoroutine { control ->
         this.original
@@ -82,13 +85,24 @@ abstract class RestActionMessageDispatcherMixin(private val original: RestAction
             .queue { maybeMessage ->
                 maybeMessage
                     .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
-                    .onFailure { Option.Empty }
+                    .onFailure { control.resume(Option.Empty) }
             }
     } }
 
 }
 
-abstract class RestActionMessageHookDispatcherMixin(private val original: RestAction<InteractionHook>) : RestActionMessageLauncherMixin(original) {
+class WebHookMessageCreateAdaptor<T>(private val original: T) : DiscordMessageBuilder
+        where T : MessageCreateRequest<T>, T : FluentRestAction<InteractionHook, T> {
+
+    override fun addFile(file: InputStream, name: String): DiscordMessageBuilder =
+        WebHookMessageCreateAdaptor(this.original.addFiles(FileUpload.fromData(file, name)))
+
+    override fun addComponents(components: DiscordComponents): DiscordMessageBuilder =
+        WebHookMessageCreateAdaptor(components.fold(this.original) { acc, component -> acc.addActionRow(component.actionComponents) })
+
+    override fun launch(): IO<Unit> = IO.effect {
+        this.original.queue()
+    }
 
     override fun retrieve(): IO<Option<DiscordMessageAdaptor>> = IO { suspendCoroutine { control ->
         this.original
@@ -97,7 +111,7 @@ abstract class RestActionMessageHookDispatcherMixin(private val original: RestAc
                 .mapToResult()
                 .queue { maybeMessage ->
                     maybeMessage
-                        .onSuccess { control.resume(Option.cond(!it.isEphemeral) { DiscordMessageAdaptor(it) }) }
+                        .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
                         .onFailure { control.resume(Option.Empty) }
                 }
             }
@@ -105,128 +119,106 @@ abstract class RestActionMessageHookDispatcherMixin(private val original: RestAc
 
 }
 
-class WebHookActionAdaptor(private val original: WebhookMessageAction<Message>) : RestActionMessageDispatcherMixin(original) {
+abstract class MessageEditRequestMixin<T : MessageEditRequest<T>>(
+    protected open val original: T,
+    protected open val files: List<FileUpload> = emptyList(),
+    protected open val components: DiscordComponents = emptyList()
+) {
 
-    override fun addFile(file: InputStream, name: String) = WebHookActionAdaptor(original.addFile(file, name))
-
-    override fun addButtons(buttons: DiscordComponents) = WebHookActionAdaptor(original.addActionRows(buttons))
-
-}
-
-class WebHookEditActionAdaptor(
-    private val original: WebhookMessageUpdateAction<Message>,
-    private val components: List<ActionRow> = emptyList()
-) : RestActionMessageLauncherMixin(original) {
-
-    override fun addFile(file: InputStream, name: String) = WebHookEditActionAdaptor(original.addFile(file, name), this.components)
-
-    override fun addButtons(buttons: DiscordComponents) = WebHookEditActionAdaptor(original, this.components + buttons)
-
-    override fun launch() =
-        IO.effect {
+    protected fun applyAttachments(): T {
+        val fileAttached = if (this.files.isNotEmpty()) {
+            this.original.setFiles(this.files)
+        } else {
             this.original
-                .setActionRows(this.components)
-                .queue()
         }
 
-    override fun retrieve(): IO<Option<DiscordMessageAdaptor>> = IO { suspendCoroutine { control ->
-        this.original
-            .setActionRows(this.components)
-            .mapToResult()
-            .queue { maybeMessage ->
-                maybeMessage
-                    .onSuccess { control.resume(Option.cond(!it.isEphemeral) { DiscordMessageAdaptor(it) }) }
-                    .onFailure { Option.Empty }
-            }
-    } }
-
-}
-
-class WebHookComponentEditActionAdaptor(
-    private val original: WebhookMessageUpdateAction<Message>,
-) : RestActionMessageDispatcherMixin(original) {
-
-    override fun addFile(file: InputStream, name: String) = WebHookComponentEditActionAdaptor(original.addFile(file, name))
-
-    override fun addButtons(buttons: DiscordComponents) = this
-
-    override fun retrieve(): IO<Option<DiscordMessageAdaptor>> = IO { suspendCoroutine { control ->
-        this.original
-            .mapToResult()
-            .queue { maybeMessage ->
-                maybeMessage
-                    .onSuccess { control.resume(Option.cond(!it.isEphemeral) { DiscordMessageAdaptor(it) }) }
-                    .onFailure { Option.Empty }
-            }
-    } }
-
-}
-
-class MessageActionAdaptor(
-    private val original: MessageAction,
-    private val components: List<ActionRow> = emptyList()
-) : RestActionMessageLauncherMixin(original) {
-
-    override fun addFile(file: InputStream, name: String) = MessageActionAdaptor(original.addFile(file, name), components)
-
-    override fun addButtons(buttons: DiscordComponents) = MessageActionAdaptor(original, components + buttons)
-
-    override fun launch() =
-        IO.effect {
-            this.original
-                .setActionRows(this.components)
-                .queue()
+        val componentsAttached = if (this.components.isNotEmpty()) {
+            fileAttached.setComponents(this.components)
+        } else {
+            fileAttached
         }
 
+        return componentsAttached
+    }
+
+}
+
+data class MessageEditAdaptor<T>(
+    override val original: T,
+    override val files: List<FileUpload> = emptyList(),
+    override val components: DiscordComponents = emptyList(),
+) : MessageEditRequestMixin<T>(original, files, components), DiscordMessageBuilder
+        where T : MessageEditRequest<T>, T : FluentRestAction<Message, T> {
+
+    override fun addFile(file: InputStream, name: String): DiscordMessageBuilder =
+        this.copy(files = this.files + FileUpload.fromData(file, name))
+
+    override fun addComponents(components: DiscordComponents): DiscordMessageBuilder =
+        this.copy(components = this.components + components)
+
+    override fun launch(): IO<Unit> = IO.effect {
+        this.applyAttachments().queue()
+    }
+
     override fun retrieve(): IO<Option<DiscordMessageAdaptor>> = IO { suspendCoroutine { control ->
-        this.original
-            .setActionRows(this.components)
+        this.applyAttachments()
             .mapToResult()
             .queue { maybeMessage ->
                 maybeMessage
-                    .onSuccess { control.resume(Option.cond(!it.isEphemeral) { DiscordMessageAdaptor(it) }) }
-                    .onFailure { Option.Empty }
+                    .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
+                    .onFailure { control.resume(Option.Empty) }
             }
     } }
 
 }
 
-class MessageComponentActionAdaptor(
-    private val original: MessageAction,
-) : RestActionMessageDispatcherMixin(original) {
+data class WebHookMessageEditAdaptor<T>(
+    override val original: T,
+    override val files: List<FileUpload> = emptyList(),
+    override val components: DiscordComponents = emptyList(),
+) : MessageEditRequestMixin<T>(original, files, components), DiscordMessageBuilder
+        where T : MessageEditRequest<T>, T : FluentRestAction<InteractionHook, T> {
 
-    override fun addFile(file: InputStream, name: String) = MessageComponentActionAdaptor(original.addFile(file, name))
+    override fun addFile(file: InputStream, name: String): DiscordMessageBuilder =
+        this.copy(files = this.files + FileUpload.fromData(file, name))
 
-    override fun addButtons(buttons: DiscordComponents) = this
+    override fun addComponents(components: DiscordComponents): DiscordMessageBuilder =
+        this.copy(components = this.components + components)
+
+    override fun launch(): IO<Unit> = IO.effect {
+        this.applyAttachments().queue()
+    }
+
+    override fun retrieve(): IO<Option<DiscordMessageAdaptor>> = IO { suspendCoroutine { control ->
+        this.applyAttachments()
+            .queue { hook -> hook
+                .retrieveOriginal()
+                .mapToResult()
+                .queue { maybeMessage ->
+                    maybeMessage
+                        .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
+                        .onFailure { control.resume(Option.Empty) }
+                }
+            }
+    } }
 
 }
 
-class ReplyActionAdaptor(private val original: ReplyCallbackAction) : RestActionMessageHookDispatcherMixin(original) {
-
-    override fun addFile(file: InputStream, name: String) = ReplyActionAdaptor(original.addFile(file, name))
-
-    override fun addButtons(buttons: DiscordComponents) = ReplyActionAdaptor(original.addActionRows(buttons))
-
-
-
-}
-
-class MessageEditCallbackAdaptor(private val original: MessageEditCallbackAction) : RestActionMessageHookDispatcherMixin(original) {
-
-    override fun addFile(file: InputStream, name: String) = MessageEditCallbackAdaptor(original.addFile(file, name))
-
-    override fun addButtons(buttons: DiscordComponents) = MessageEditCallbackAdaptor(original.setActionRows(buttons))
-
-}
-
-class DiscordMessageAdaptor(override val original: Message) : MessageAdaptor<Message, DiscordComponents> {
+class DiscordMessageAdaptor(private val original: Message) : MessageAdaptor<DiscordMessageData, DiscordComponents> {
 
     override val messageRef: MessageRef by lazy { this.original.extractMessageRef() }
 
-    override val buttons: DiscordComponents
-        get() = this.original.actionRows
+    override val messageData: DiscordMessageData
+        get() = DiscordMessageData(
+            this.original.contentRaw,
+            this.original.embeds,
+            this.original.attachments,
+            this.original.components,
+            this.original.isTTS,
+            Option.Some(this.original)
+        )
 
-    override fun updateButtons(buttons: DiscordComponents) =
-        MessageActionAdaptor(this.original.editMessageComponents(), buttons)
+    override fun updateComponents(components: DiscordComponents): MessageEditAdaptor<*> =
+        MessageEditAdaptor(this.original.editMessageComponents(), components = components)
 
 }

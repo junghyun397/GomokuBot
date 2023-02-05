@@ -16,7 +16,8 @@ import discord.assets.awaitOption
 import discord.interact.DiscordConfig
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.DiscordMessagePublisher
-import discord.interact.message.MessageActionAdaptor
+import discord.interact.message.MessageCreateAdaptor
+import discord.interact.message.MessageEditAdaptor
 import discord.route.export
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.reactor.asFlux
@@ -44,10 +45,10 @@ fun scheduleRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): F
             val channel = message?.let { guild?.getTextChannelById(it.channelId.idLong) }
 
             if (message != null && guild != null && channel != null) {
-                val infoPublisher: DiscordMessagePublisher = { msg -> MessageActionAdaptor(channel.sendMessage(msg)) }
+                val infoPublisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(channel.sendMessage(msg.buildCreate())) }
 
                 val boardPublisher: DiscordMessagePublisher = when (guildSession.config.sweepPolicy) {
-                    SweepPolicy.EDIT -> { msg -> MessageActionAdaptor(channel.editMessageById(message.id.idLong, msg)) }
+                    SweepPolicy.EDIT -> { msg -> MessageEditAdaptor(channel.editMessageById(message.id.idLong, msg.buildEdit())) }
                     else -> infoPublisher
                 }
 
@@ -87,7 +88,8 @@ fun scheduleRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): F
 
                 val editIO = maybeRequestMessage.fold(
                     onDefined = {
-                        val editPublisher: DiscordMessagePublisher = { msg -> MessageActionAdaptor(channel.editMessageById(message.id.idLong, msg)) }
+                        val editPublisher: DiscordMessagePublisher =
+                            { msg -> MessageEditAdaptor(channel.editMessageById(message.id.idLong, msg.buildEdit())) }
 
                         DiscordMessageProducer
                             .produceRequestInvalidated(editPublisher, guildSession.config.language.container, session.owner, session.opponent)
@@ -97,8 +99,8 @@ fun scheduleRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): F
                 )
 
                 val publisher: DiscordMessagePublisher = maybeRequestMessage.fold(
-                    onDefined = { { msg -> MessageActionAdaptor(it.reply(msg)) } },
-                    onEmpty = { { msg -> MessageActionAdaptor(channel.sendMessage(msg)) } }
+                    onDefined = { { msg -> MessageCreateAdaptor(it.reply(msg.buildCreate())) } },
+                    onEmpty = { { msg -> MessageCreateAdaptor(channel.sendMessage(msg.buildCreate())) } }
                 )
 
                 val noticeIO = DiscordMessageProducer

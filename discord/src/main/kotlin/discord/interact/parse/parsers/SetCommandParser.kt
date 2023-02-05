@@ -16,13 +16,13 @@ import core.session.SweepPolicy
 import core.session.entities.GameSession
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
+import discord.assets.DiscordMessageData
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordComponents
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.EmbeddableCommand
 import discord.interact.parse.ParsableCommand
-import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -32,7 +32,7 @@ import renju.notation.Renju
 import utils.lang.pair
 import utils.structs.*
 
-object SetCommandParser : SessionSideParser<Message, DiscordComponents>(), ParsableCommand, EmbeddableCommand, BuildableCommand {
+object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponents>(), ParsableCommand, EmbeddableCommand, BuildableCommand {
 
     override val name = "s"
 
@@ -46,7 +46,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordComponents>(), Parsa
             ?.takeIf { it in 1 .. Renju.BOARD_WIDTH() }
             ?.let { it - 1 }
 
-    private fun buildAppendMessageProcedure(maybeMessage: Option<MessageAdaptor<Message, DiscordComponents>>, context: InteractionContext<*>, session: GameSession): IO<List<Order>> =
+    private fun buildAppendMessageProcedure(maybeMessage: Option<MessageAdaptor<DiscordMessageData, DiscordComponents>>, context: InteractionContext<*>, session: GameSession): IO<List<Order>> =
         maybeMessage.fold(
             onDefined = { IO { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef); emptyList() } },
             onEmpty = { IO { emptyList() } }
@@ -56,7 +56,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordComponents>(), Parsa
         this.asParseFailure("try move but now $player's turn", context.guild, context.user) { producer, publisher, container ->
             producer.produceOrderFailure(publisher, container, player)
                 .retrieve()
-                .flatMap { this.buildAppendMessageProcedure(it, context, session) }
+                .flatMap { this.buildAppendMessageProcedure(it.map { it }, context, session) }
         }
 
     private fun buildMissMatchFailure(context: InteractionContext<*>, session: GameSession): DiscordParseFailure =
@@ -143,7 +143,7 @@ object SetCommandParser : SessionSideParser<Message, DiscordComponents>(), Parsa
         return this.parseRawCommand(context, context.user, rawRow, rawColumn)
     }
 
-    override suspend fun parseButton(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
+    override suspend fun parseComponent(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
         val (column, row) = context.event.componentId
             .drop(2)
             .let { this.matchColumn(it.take(1)) pair this.matchRow(it.drop(1)) }

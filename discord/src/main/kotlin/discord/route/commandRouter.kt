@@ -23,8 +23,8 @@ import discord.interact.parse.parsers.*
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -42,7 +42,7 @@ private fun buildPermissionNode(context: InteractionContext<*>, parsableCommand:
                     jdaUser.openPrivateChannel()
                         .flatMap { privateChannel ->
                             DiscordMessageProducer.sendPermissionNotGrantedEmbed(
-                                publisher = { msg -> privateChannel.sendMessage(msg) },
+                                publisher = { msg -> privateChannel.sendMessage(msg.buildCreate()) },
                                 container = container,
                                 channelName = channel.name
                             )
@@ -132,17 +132,17 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
                         messageRef = VOID_MESSAGE_REF,
                         publishers = when (command.responseFlag) {
                             is ResponseFlag.Defer -> AdaptivePublisherSet(
-                                plain = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
-                                windowed = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
-                                editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg) } },
+                                plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
+                                windowed = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
+                                editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg.buildEdit()) } },
                             )
                             else -> AdaptivePublisherSet(
                                 plain = TransMessagePublisher(
-                                    head = { msg -> ReplyActionAdaptor(context.event.reply(msg)) },
-                                    tail = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) }
+                                    head = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate())) },
+                                    tail = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) }
                                 ),
-                                windowed = { msg -> ReplyActionAdaptor(context.event.reply(msg).setEphemeral(true)) },
-                                editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg) } }
+                                windowed = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate()).setEphemeral(true)) },
+                                editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg.buildEdit()) } }
                             )
                         }
                     )
@@ -152,8 +152,8 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
                         config = context.config,
                         producer = DiscordMessageProducer,
                         publisher = TransMessagePublisher(
-                            head = { msg -> ReplyActionAdaptor(context.event.reply(msg).setEphemeral(true)) },
-                            tail = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg).setEphemeral(true)) }
+                            head = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate()).setEphemeral(true)) },
+                            tail = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate()).setEphemeral(true)) }
                         )
                     )
                 }
@@ -223,8 +223,8 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<I
                         producer = DiscordMessageProducer,
                         messageRef = context.event.message.extractMessageRef(),
                         publishers = MonoPublisherSet(
-                            publisher = { msg -> MessageActionAdaptor(context.event.message.reply(msg)) },
-                            editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg) } },
+                            publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.buildCreate())) },
+                            editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg.buildEdit()) } },
                         ),
                     )
                 },
@@ -232,7 +232,7 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<I
                     parseFailure.notice(
                         config = context.config,
                         producer = DiscordMessageProducer,
-                        publisher = { msg -> MessageActionAdaptor(context.event.message.reply(msg)) },
+                        publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.buildCreate())) },
                     )
                 }
             ).fold(

@@ -19,7 +19,7 @@ import discord.assets.extractProfile
 import discord.assets.getEventAbbreviation
 import discord.interact.GuildManager
 import discord.interact.message.DiscordMessageProducer
-import discord.interact.message.MessageActionAdaptor
+import discord.interact.message.MessageCreateAdaptor
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
@@ -66,7 +66,7 @@ fun guildJoinRouter(bot: BotContext, event: GuildJoinEvent): Mono<ServerJoinRepo
                 buildCombinedHelpProcedure(
                     bot = bot,
                     config = config,
-                    publisher = { msg -> MessageActionAdaptor(this.sendMessage(msg)) },
+                    publisher = { msg -> MessageCreateAdaptor(this.sendMessage(msg.buildCreate())) },
                     producer = DiscordMessageProducer,
                     settingsPage = 0
                 ).run()

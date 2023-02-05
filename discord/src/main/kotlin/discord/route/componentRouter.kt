@@ -42,7 +42,7 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
                 matchAction(rawId.split("-").first())
             }
             .flatMap { parsable ->
-                parsable.parseButton(context)
+                parsable.parseComponent(context)
             }
     }
         .filter { it.isDefined }
@@ -69,27 +69,27 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
                 messageRef = messageRef,
                 publishers = when (command.responseFlag) {
                     is ResponseFlag.Defer -> AdaptivePublisherSet(
-                        plain = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
-                        windowed = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg).setEphemeral(true)) },
-                        editSelf = { msg -> WebHookEditActionAdaptor(context.event.hook.editOriginal(msg)) },
-                        editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg) } },
-                        component = { components -> WebHookComponentEditActionAdaptor(context.event.hook.editOriginalComponents(components)) }
+                        plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
+                        windowed = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate()).setEphemeral(true)) },
+                        editSelf = { msg -> MessageEditAdaptor(context.event.hook.editOriginal(msg.buildEdit())) },
+                        editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg.buildEdit()) } },
+                        component = { components -> MessageEditAdaptor(context.event.hook.editOriginalComponents(components)) }
                     )
                     else -> TransMessagePublisherSet(
                         head = AdaptivePublisherSet(
-                            plain = { msg -> ReplyActionAdaptor(context.event.reply(msg)) },
-                            windowed = { msg -> ReplyActionAdaptor(context.event.reply(msg).setEphemeral(true)) },
-                            editSelf = { msg -> MessageEditCallbackAdaptor(context.event.editMessage(msg)) },
-                            editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg) } },
-                            component = { components -> MessageEditCallbackAdaptor(context.event.editComponents(components)) },
+                            plain = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate())) },
+                            windowed = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate()).setEphemeral(true)) },
+                            editSelf = { msg -> WebHookMessageEditAdaptor(context.event.editMessage(msg.buildEdit())) },
+                            editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg.buildEdit()) } },
+                            component = { components -> WebHookMessageEditAdaptor(context.event.editComponents(components)) },
                             selfRef = messageRef
                         ),
                         tail = AdaptivePublisherSet(
-                            plain = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg)) },
-                            windowed = { msg -> WebHookActionAdaptor(context.event.hook.sendMessage(msg).setEphemeral(true)) },
-                            editSelf = { msg -> WebHookEditActionAdaptor(context.event.hook.editOriginal(msg)) },
-                            editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg) } },
-                            component = { components -> WebHookComponentEditActionAdaptor(context.event.hook.editOriginalComponents(components)) },
+                            plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
+                            windowed = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate()).setEphemeral(true)) },
+                            editSelf = { msg -> MessageEditAdaptor(context.event.hook.editOriginal(msg.buildEdit())) },
+                            editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg.buildEdit()) } },
+                            component = { components -> MessageEditAdaptor(context.event.hook.editOriginalComponents(components)) },
                             selfRef = messageRef
                         )
                     )

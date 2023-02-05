@@ -16,8 +16,8 @@ import discord.assets.getEventAbbreviation
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageProducer
-import discord.interact.message.MessageActionAdaptor
-import discord.interact.message.MessageComponentActionAdaptor
+import discord.interact.message.MessageCreateAdaptor
+import discord.interact.message.MessageEditAdaptor
 import discord.interact.parse.parsers.FocusCommandParser
 import discord.interact.parse.parsers.NavigationCommandParser
 import kotlinx.coroutines.reactor.mono
@@ -73,10 +73,10 @@ fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mo
                     producer = DiscordMessageProducer,
                     messageRef = messageRef,
                     publishers = AdaptivePublisherSet(
-                        plain = { msg -> MessageActionAdaptor(context.event.channel.sendMessage(msg)) },
-                        windowed = { msg -> MessageActionAdaptor(context.event.channel.sendMessage(msg)) },
-                        editSelf = { msg -> MessageActionAdaptor(context.event.channel.editMessageById(messageRef.id.idLong, msg)) },
-                        component = { components -> MessageComponentActionAdaptor(context.event.channel.editMessageComponentsById(messageRef.id.idLong, components)) },
+                        plain = { msg -> MessageCreateAdaptor(context.event.channel.sendMessage(msg.buildCreate())) },
+                        windowed = { msg -> MessageCreateAdaptor(context.event.channel.sendMessage(msg.buildCreate())) },
+                        editSelf = { msg -> MessageEditAdaptor(context.event.channel.editMessageById(messageRef.id.idLong, msg.buildEdit())) },
+                        component = { components -> MessageEditAdaptor(context.event.channel.editMessageComponentsById(messageRef.id.idLong, components)) },
                         selfRef = messageRef,
                     ),
                 ).fold(

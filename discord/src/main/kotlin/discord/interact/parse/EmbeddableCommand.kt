@@ -7,6 +7,6 @@ import utils.structs.Option
 
 interface EmbeddableCommand {
 
-    suspend fun parseButton(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command>
+    suspend fun parseComponent(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command>
 
 }

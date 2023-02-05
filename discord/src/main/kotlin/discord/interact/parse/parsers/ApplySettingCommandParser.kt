@@ -6,7 +6,7 @@ import core.session.*
 import discord.interact.InteractionContext
 import discord.interact.parse.EmbeddableCommand
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
-import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent
 import utils.lang.pair
 import utils.structs.Option
 import utils.structs.map
@@ -14,9 +14,9 @@ import utils.structs.toOption
 
 object ApplySettingCommandParser : EmbeddableCommand {
 
-    override suspend fun parseButton(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
+    override suspend fun parseComponent(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
         val (kind, choice) = when(context.event) {
-            is SelectMenuInteractionEvent -> context.event.interaction.selectedOptions.first().value.split("-")
+            is StringSelectInteractionEvent -> context.event.interaction.selectedOptions.first().value.split("-")
             else -> context.event.componentId.split("-").drop(1)
         }
 

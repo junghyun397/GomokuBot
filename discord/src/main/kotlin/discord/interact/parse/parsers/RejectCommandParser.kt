@@ -10,7 +10,7 @@ import utils.structs.Option
 @Suppress("DuplicatedCode")
 object RejectCommandParser : EmbeddableCommand {
 
-    override suspend fun parseButton(context: InteractionContext<GenericComponentInteractionCreateEvent>) =
+    override suspend fun parseComponent(context: InteractionContext<GenericComponentInteractionCreateEvent>) =
         SessionManager.retrieveRequestSessionByOpponent(context.bot.sessions, context.guild, context.user.id)
             ?.let { Option(RejectCommand(it)) }
             ?: Option.Empty

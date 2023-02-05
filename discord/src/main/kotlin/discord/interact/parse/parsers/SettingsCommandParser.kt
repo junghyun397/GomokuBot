@@ -14,7 +14,7 @@ import utils.structs.Either
 
 object SettingsCommandParser : NamedParser, ParsableCommand, BuildableCommand {
 
-    override val name = "config"
+    override val name = "settings"
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>) =
         Either.Left(SettingsCommand())

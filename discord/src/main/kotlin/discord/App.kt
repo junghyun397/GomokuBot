@@ -27,19 +27,19 @@ import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Activity
-import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.channel.ChannelType
 import net.dv8tion.jda.api.events.Event
-import net.dv8tion.jda.api.events.ReadyEvent
-import net.dv8tion.jda.api.events.ShutdownEvent
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
-import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent
+import net.dv8tion.jda.api.events.session.ReadyEvent
+import net.dv8tion.jda.api.events.session.ShutdownEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
 import reactor.core.publisher.Flux
 import utils.assets.LinuxTime
@@ -172,7 +172,7 @@ object GomokuBot {
                 .flatMap { mono { buildInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
                 .flatMap(::buttonInteractionRouter),
 
-            eventManager.on<SelectMenuInteractionEvent>()
+            eventManager.on<StringSelectInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
                 .flatMap { mono { buildInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
                 .flatMap(::buttonInteractionRouter),

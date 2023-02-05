@@ -125,7 +125,7 @@ object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, Bui
         return this.parseActually(context, owner, opponent)
     }
 
-    override suspend fun parseButton(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
+    override suspend fun parseComponent(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
         val owner = context.user
         val opponent = context.event.componentId
             .drop(2)
