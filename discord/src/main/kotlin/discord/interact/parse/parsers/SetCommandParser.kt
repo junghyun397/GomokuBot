@@ -16,9 +16,9 @@ import core.session.SweepPolicy
 import core.session.entities.GameSession
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
-import discord.assets.DiscordMessageData
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordComponents
+import discord.interact.message.DiscordMessageData
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.EmbeddableCommand

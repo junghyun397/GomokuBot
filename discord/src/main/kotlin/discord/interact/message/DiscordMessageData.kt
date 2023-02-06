@@ -1,4 +1,4 @@
-package discord.assets
+package discord.interact.message
 
 import dev.minn.jda.ktx.messages.MessageCreate
 import dev.minn.jda.ktx.messages.MessageEdit

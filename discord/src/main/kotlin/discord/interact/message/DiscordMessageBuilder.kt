@@ -1,14 +1,8 @@
-@file:Suppress("FunctionName")
-
 package discord.interact.message
 
-import core.assets.MessageRef
-import core.interact.message.*
-import discord.assets.DiscordMessageData
-import discord.assets.extractMessageRef
+import core.interact.message.MessageBuilder
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.interactions.InteractionHook
-import net.dv8tion.jda.api.interactions.components.LayoutComponent
 import net.dv8tion.jda.api.requests.FluentRestAction
 import net.dv8tion.jda.api.utils.FileUpload
 import net.dv8tion.jda.api.utils.messages.MessageCreateRequest
@@ -19,52 +13,7 @@ import java.io.InputStream
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-typealias DiscordComponents = List<LayoutComponent>
-
-typealias DiscordMessagePublisher = MessagePublisher<DiscordMessageData, DiscordComponents>
-
-typealias DiscordComponentPublisher = ComponentPublisher<DiscordMessageData, DiscordComponents>
-
 typealias DiscordMessageBuilder = MessageBuilder<DiscordMessageData, DiscordComponents>
-
-fun TransMessagePublisher(head: DiscordMessagePublisher, tail: DiscordMessagePublisher): DiscordMessagePublisher {
-    var consumeTail = false
-
-    return { msg ->
-        when (consumeTail) {
-            true -> tail(msg)
-            else -> {
-                consumeTail = true
-                head(msg)
-            }
-        }
-    }
-}
-
-class TransMessagePublisherSet(
-    private val head: PublisherSet<DiscordMessageData, DiscordComponents>,
-    private val tail: PublisherSet<DiscordMessageData, DiscordComponents>,
-) : PublisherSet<DiscordMessageData, DiscordComponents> {
-
-    private var consumeTail = false
-
-    private fun selectSet() = when(this.consumeTail) {
-        true -> this.tail
-        else -> {
-            this.consumeTail = true
-            this.head
-        }
-    }
-
-    override val plain get() = this.selectSet().plain
-
-    override val windowed get() = this.selectSet().windowed
-
-    override val edit get() = this.selectSet().edit
-
-    override val component get() = this.selectSet().component
-
-}
 
 class MessageCreateAdaptor<T>(private val original: T) : DiscordMessageBuilder
         where T : MessageCreateRequest<T>, T : FluentRestAction<Message, T> {
@@ -201,24 +150,5 @@ data class WebHookMessageEditAdaptor<T>(
                 }
             }
     } }
-
-}
-
-class DiscordMessageAdaptor(private val original: Message) : MessageAdaptor<DiscordMessageData, DiscordComponents> {
-
-    override val messageRef: MessageRef by lazy { this.original.extractMessageRef() }
-
-    override val messageData: DiscordMessageData
-        get() = DiscordMessageData(
-            this.original.contentRaw,
-            this.original.embeds,
-            this.original.attachments,
-            this.original.components,
-            this.original.isTTS,
-            Option.Some(this.original)
-        )
-
-    override fun updateComponents(components: DiscordComponents): MessageEditAdaptor<*> =
-        MessageEditAdaptor(this.original.editMessageComponents(), components = components)
 
 }

@@ -400,11 +400,13 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
 
     private fun buildHelpMessage(publisher: DiscordMessagePublisher, container: LanguageContainer, page: Int) =
         when (page) {
-            0 -> publisher(DiscordMessageData(embeds = listOf(
+            0 -> publisher(
+                DiscordMessageData(embeds = listOf(
                 this.buildAboutEmbed(container),
                 this.buildCommandGuideEmbed(container),
                 this.buildExploreAboutRenjuEmbed(container)
-            )))
+            ))
+            )
             else -> publisher(DiscordMessageData(embeds = this.buildAboutRenjuEmbed(page - 1 pair container)))
         }
 

@@ -3,6 +3,7 @@ package discord.assets
 import core.assets.*
 import dev.minn.jda.ktx.coroutines.await
 import discord.interact.message.DiscordMessageBuilder
+import discord.interact.message.DiscordMessageData
 import discord.interact.message.MessageEditAdaptor
 import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
@@ -48,6 +49,16 @@ fun net.dv8tion.jda.api.entities.User.extractProfile(uid: UserUid = UserUid(UUID
 
 fun net.dv8tion.jda.api.entities.Guild.editMessageByMessageRef(ref: MessageRef, newContent: MessageEditData): DiscordMessageBuilder =
     MessageEditAdaptor(this.getTextChannelById(ref.channelId.idLong)!!.editMessageById(ref.id.idLong, newContent))
+
+fun net.dv8tion.jda.api.entities.Message.extractMessageData(): DiscordMessageData =
+    DiscordMessageData(
+        this.contentRaw,
+        this.embeds,
+        this.attachments,
+        this.components,
+        this.isTTS,
+        Option.Some(this)
+    )
 
 suspend fun <T> RestAction<T>.awaitOption(): Option<T> = this
     .mapToResult()

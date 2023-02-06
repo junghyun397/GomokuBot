@@ -13,6 +13,7 @@ import core.session.SessionManager
 import core.session.SweepPolicy
 import core.session.entities.*
 import utils.assets.LinuxTime
+import utils.lang.pair
 import utils.structs.*
 
 fun <A, B> buildAppendGameMessageProcedure(
@@ -52,7 +53,12 @@ fun <A, B> buildBoardProcedure(
 
     val boardMessageIO = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, session)
 
-    return producer.attachFocusButtons(boardMessageIO, session, focusInfo)
+    val buttonBoardIO = if (session.board.winner().isEmpty)
+        producer.attachFocusButtons(boardMessageIO, session, focusInfo)
+    else
+        boardMessageIO
+
+    return buttonBoardIO
         .retrieve()
         .flatMapOption { message ->
             SessionManager.addNavigation(bot.sessions, message.messageRef, BoardNavigationState(focusInfo.focus.idx(), focusInfo, session.expireDate))
@@ -72,7 +78,7 @@ private fun buildSweepProcedure(
     SweepPolicy.RELAY -> listOf(Order.BulkDelete(SessionManager.checkoutMessages(bot.sessions, session.messageBufferKey).orEmpty()))
     SweepPolicy.LEAVE -> {
         SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
-            ?.let { listOf(Order.RemoveNavigators(it, true)) }
+            ?.let { listOf(Order.RemoveNavigators(it, reduceComponents = true)) }
             ?: emptyList()
     }
     SweepPolicy.EDIT -> emptyList()
@@ -86,14 +92,15 @@ fun <A, B> buildFinishProcedure(
     session: GameSession,
     thenSession: GameSession
 ): IO<List<Order>> = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, thenSession)
-    .launch()
-    .flatMap { buildSweepProcedure(bot, config, session) }
-    .map { originalOrder ->
-        originalOrder
-            .takeIf { thenSession.gameResult.isDefined && config.sweepPolicy == SweepPolicy.EDIT }
-            ?.let { SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey) }
-            ?.let { originalOrder + Order.RemoveNavigators(it) }
-            ?: originalOrder
+    .retrieve()
+    .flatMap { maybeMessage -> buildSweepProcedure(bot, config, session).map { maybeMessage pair it } }
+    .map { (maybeMessage, originalOrder) ->
+        maybeMessage
+            .filter { thenSession.gameResult.isDefined && config.sweepPolicy == SweepPolicy.EDIT }
+            .fold(
+                onDefined = { message -> originalOrder + Order.RemoveNavigators(message.messageRef, reduceComponents = true) },
+                onEmpty = { originalOrder }
+            )
     }
 
 fun <A, B> buildHelpProcedure(

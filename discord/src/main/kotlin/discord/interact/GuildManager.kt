@@ -12,9 +12,9 @@ import core.session.entities.GameSession
 import core.session.entities.PvpGameSession
 import dev.minn.jda.ktx.interactions.commands.slash
 import dev.minn.jda.ktx.interactions.commands.updateCommands
-import discord.assets.DiscordMessageData
 import discord.assets.JDAGuild
 import discord.assets.awaitOption
+import discord.interact.message.DiscordMessageData
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.DiscordMessagePublisher
 import discord.interact.message.MessageCreateAdaptor
@@ -146,13 +146,11 @@ object GuildManager {
         maybeChannel?.deleteMessageById(messageRef.id.idLong)?.queue()
     }
 
-    fun retainFirstEmbed(message: net.dv8tion.jda.api.entities.Message) =
-        message.editMessage(DiscordMessageData(embed = message.embeds.first()).buildEdit())
-            .queue()
+    fun retainFirstEmbed(message: DiscordMessageData): DiscordMessageData =
+        message.copy(embeds = message.embeds.subList(0, 1))
 
-    fun removeComponents(message: net.dv8tion.jda.api.entities.Message) =
-        message.editMessageComponents()
-            .queue()
+    fun clearComponents(message: DiscordMessageData): DiscordMessageData =
+        message.copy(components = emptyList())
 
     fun clearReaction(message: net.dv8tion.jda.api.entities.Message) {
         this.permissionDependedRun(

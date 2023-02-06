@@ -1,7 +1,7 @@
 package discord.interact.parse
 
 import core.interact.parse.ParseFailure
-import discord.assets.DiscordMessageData
 import discord.interact.message.DiscordComponents
+import discord.interact.message.DiscordMessageData
 
 typealias DiscordParseFailure = ParseFailure<DiscordMessageData, DiscordComponents>

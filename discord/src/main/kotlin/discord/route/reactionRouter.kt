@@ -40,19 +40,17 @@ fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mo
     val messageRef = context.event.extractMessageRef()
 
     return mono {
-        val maybeParsable = SessionManager.getNavigationState(context.bot.sessions, messageRef)
-        .asOption()
-        .orElse { recoverNavigationState(context.bot, context.event.retrieveMessage().await(), messageRef) }
-        .map { state ->
-            state pair when (state) {
-                is BoardNavigationState -> FocusCommandParser
-                is PageNavigationState -> NavigationCommandParser
+        SessionManager.getNavigationState(context.bot.sessions, messageRef).asOption()
+            .orElse { recoverNavigationState(context.bot, context.event.retrieveMessage().await(), messageRef) }
+            .map { state ->
+                state pair when (state) {
+                    is BoardNavigationState -> FocusCommandParser
+                    is PageNavigationState -> NavigationCommandParser
+                }
             }
-        }
-
-        maybeParsable.flatMap { (state, parsable) ->
-            parsable.parseReaction(context, state)
-        }
+            .flatMap { (state, parsable) ->
+                parsable.parseReaction(context, state)
+            }
     }
         .filter { it.isDefined }
         .map { it.getOrException() }

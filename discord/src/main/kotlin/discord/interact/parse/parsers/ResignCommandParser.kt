@@ -4,9 +4,9 @@ import core.interact.commands.ResignCommand
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.SessionSideParser
 import dev.minn.jda.ktx.interactions.commands.slash
-import discord.assets.DiscordMessageData
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordComponents
+import discord.interact.message.DiscordMessageData
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent

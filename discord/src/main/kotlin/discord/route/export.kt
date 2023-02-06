@@ -18,17 +18,20 @@ suspend fun export(discordConfig: DiscordConfig, jdaGuild: JDAGuild, io: IO<List
             is Order.UpsertCommands -> GuildManager.upsertCommands(jdaGuild, order.container)
             is Order.DeleteSource -> source?.let { GuildManager.deleteSingle(jdaGuild, it) }
             is Order.BulkDelete -> GuildManager.bulkDelete(jdaGuild, order.messageRefs)
-            is Order.RemoveNavigators ->
-                jdaGuild.getTextChannelById(order.messageRef.channelId.idLong)?.run {
-                    GuildManager.retrieveJDAMessage(jdaGuild.jda, order.messageRef)?.let { originalMessage ->
-                        GuildManager.clearReaction(originalMessage)
+            is Order.RemoveNavigators -> GuildManager.retrieveJDAMessage(jdaGuild.jda, order.messageRef)
+                ?.let { originalMessage ->
+                    GuildManager.clearReaction(originalMessage)
 
-                        if (order.reduceComponents) {
-                            GuildManager.retainFirstEmbed(originalMessage)
-                            GuildManager.removeComponents(originalMessage)
-                        }
-                    }
+//                    if (order.reduceComponents) {
+//                        originalMessage.extractMessageData()
+//                            .let { GuildManager.retainFirstEmbed(it) }
+//                            .let { GuildManager.clearComponents(it) }
+//                            .let { messageData ->
+//                                originalMessage.editMessage(messageData.buildEdit()).queue()
+//                            }
+//                    }
                 }
+
             is Order.ArchiveSession -> GuildManager.archiveSession(
                 jdaGuild.jda.getTextChannelById(discordConfig.archiveChannelId.idLong)!!,
                 order.session, order.policy
