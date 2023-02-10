@@ -3,8 +3,11 @@ package core.interact.message.graphics
 import renju.Board
 import renju.notation.Pos
 import utils.structs.Either
-import utils.structs.Option
 import java.io.InputStream
+
+enum class HistoryRenderType {
+    NONE, NUMBER, CROSS
+}
 
 sealed interface BoardRendererSample {
 
@@ -16,6 +19,6 @@ sealed interface BoardRendererSample {
 
 sealed interface BoardRenderer {
 
-    fun renderBoard(board: Board, history: Option<List<Pos?>>): Either<String, InputStream>
+    fun renderBoard(board: Board, history: List<Pos?>, historyRenderType: HistoryRenderType): Either<String, InputStream>
 
 }

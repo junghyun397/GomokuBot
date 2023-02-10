@@ -6,7 +6,6 @@ import renju.notation.Pos
 import renju.notation.Renju
 import utils.lang.asString
 import utils.structs.Either
-import utils.structs.Option
 
 object UnicodeBoardRenderer : BoardRenderer, BoardRendererSample {
 
@@ -53,7 +52,7 @@ object UnicodeBoardRenderer : BoardRenderer, BoardRendererSample {
             .map { it.toChar() }
             .asString()
 
-    override fun renderBoard(board: Board, history: Option<List<Pos?>>) =
+    override fun renderBoard(board: Board, history: List<Pos?>, historyRenderType: HistoryRenderType) =
         Either.Left(this.renderUnicodeBoard(board))
 
     private fun renderUnicodeBoard(board: Board) =

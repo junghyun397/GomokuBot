@@ -1,9 +1,9 @@
 package tools.documentation
 
+import core.interact.message.graphics.HistoryRenderType
 import core.interact.message.graphics.ImageBoardRenderer
 import renju.BoardIO
 import renju.notation.Pos
-import utils.structs.Option
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -16,7 +16,8 @@ fun generateImage(boardSource: String, lastMove: String, fName: String, fPath: S
 
     val inputStream = ImageBoardRenderer.renderInputStream(
         board,
-        if (lastMove == "null") Option(emptyList()) else Option.Empty,
+        emptyList(),
+        if (lastMove == "null") HistoryRenderType.NONE else HistoryRenderType.NUMBER,
         enableForbiddenPoints
     )
 

@@ -11,6 +11,7 @@ import core.interact.message.ButtonFlag
 import core.interact.message.FocusedFields
 import core.interact.message.MessageProducerImpl
 import core.interact.message.graphics.BoardRenderer
+import core.interact.message.graphics.HistoryRenderType
 import core.interact.message.graphics.ImageBoardRenderer
 import core.session.*
 import core.session.entities.GameSession
@@ -160,7 +161,9 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
     override fun produceBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, session: GameSession): DiscordMessageBuilder {
         val barColor = session.gameResult.fold(onDefined = { COLOR_RED_HEX }, onEmpty = { COLOR_GREEN_HEX })
 
-        return renderer.renderBoard(session.board, session.gameResult.map { session.history }).fold(
+        val renderType = session.gameResult.fold(onDefined = { HistoryRenderType.NUMBER }, onEmpty = { HistoryRenderType.CROSS })
+
+        return renderer.renderBoard(session.board, session.history, renderType).fold(
             onLeft = { textBoard ->
                 publisher(DiscordMessageData(
                     embeds = mutableListOf<MessageEmbed>().apply {
@@ -211,7 +214,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
         val imageStream = if (animate)
             ImageBoardRenderer.renderHistoryAnimation(session.history.filterNotNull())
         else
-            ImageBoardRenderer.renderInputStream(session.board, Option(session.history), true)
+            ImageBoardRenderer.renderInputStream(session.board, session.history, HistoryRenderType.NUMBER, true)
 
         val fName = if (animate)
             ImageBoardRenderer.newGifFileName()

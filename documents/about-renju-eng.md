@@ -4,7 +4,7 @@
 
 Q. What do you mean, GomokuBot and Renju?
 
-A. Gomoku is very simple. But Gomoku is not a fair game. Therefore, GomokuBot uses Renju, which has some very simple rules added, not plain Gomoku.
+A. Gomoku is elementary. But Gomoku is not a fair game. Therefore, GomokuBot uses Renju, which has some elementary rules added, not plain Gomoku.
 
 But don't worry. Renju is really similar to Gomoku. In the game between beginners, it's the same so that, even if they don't know what Renju is, it doesn't affect them at all.
 
@@ -36,7 +36,7 @@ Renju is a variant game that adds **Forbidden moves** that only apply to black i
 
 If you've played Gomoku for a while, you've probably realized that the black you start first with is very advantageous in Gomoku, where there are no other restrictions. So, how good is black? What would be the result if both black and white had their best moves?
 
-A plain Gomoku with no additional rules was proved in 1980 by Stefan Reisch. Even if both black and white have their best moves, black can always find a winning strategy.
+A plain Gomoku with no additional rules was proved in 1980 by Stefan Reisch.[*](https://doi.org/10.1007/bf00288536) Even if both black and white have their best moves, black can always find a winning strategy.
 
 In other words, in a plain Gomoku, black **always** wins, even if both black and white have their best moves. The higher the level of both players, the closer they get to tossing a coin. In order to get out of the coin toss, a special rule is indispensable to solve the overwhelming advantage of black first.
 
@@ -44,7 +44,7 @@ In other words, in a plain Gomoku, black **always** wins, even if both black and
 
 Renju chose the "Forbidden moves" rule to address the overwhelming advantage of black First. There are three types of forbids: 3-3 forbid, 4-4 forbid, and overline forbid.
 
-If it looks complicated, don't worry. Forbidden moves are fairly rare in beginner's games, and even if they don't know what a Forbidden moves is, it's unlikely to change their win or loss.
+If it looks complicated, don't worry. Forbidden moves are fairly rare in beginners' games, and even if they don't know what a Forbidden move is, it's unlikely to change their win or loss.
 
 To understand forbidden moves correctly, we must first understand how Gomoku defines three and four, and in which situations the forbidden moves appears. Here we start with the definition of four.
 
@@ -277,7 +277,7 @@ Now that we know what three is defined by Gomoku, we can clearly define 3-3 forb
    A B C D E F G H I J K L M N O
 ```
 
-So far, we have looked at very simple shapes, but in real games, sometimes complex shapes appear. Here are some simple examples. The shapes below do not contain any 3-3 forbids.
+So far, we have looked at elementary shapes, but in real games, sometimes complex shapes appear. Here are some simple examples. The shapes below do not contain any 3-3 forbids.
 
 ```fname = dobule-three-forbid-pseudo, forbid = false, lmove = null
    A B C D E F G H I J K L M N O
@@ -305,7 +305,7 @@ This is because all these shapes are not three overlapping shapes, but actually 
 
 We're almost there. An **overline forbid** means **a place where you can make 6 or more stones arranged in a row in a single move**.
 
-Even if you can make a 7-in-a-row in a single move, it's an overline forbid. Neither 8-in-a-row nor 9-in-a-row. However, 10-in-a-row is an exception. If someone makes a 10-in-a-row, you must immediately turn off all electronics and leave the area.
+Even if you can make a 7-in-a-row in a single move, it's overline forbid. Neither 8-in-a-row nor 9-in-a-row. However, 10-in-a-row is an exception. If someone makes a 10-in-a-row, you must immediately turn off all electronics and leave the area.
 
 *Please remember. Overline forbid is also a rule that only applies to black, and white is free to create more than five-in-a-row to win.*
 
@@ -331,7 +331,7 @@ Even if you can make a 7-in-a-row in a single move, it's an overline forbid. Nei
 
 ## Five-in-a-Row Can Ignore All Forbidden Moves.
 
-Here's the good news (only black unfortunately). Even if forbidden move is created on a point that can be won with a five-in-a-row, if you win with a five-in-a-row, you can move ignoring any forbidden moves.
+Here's the good news (only black unfortunately). Even if the forbidden move is created on a point that can be won with a five-in-a-row, if you win with a five-in-a-row, you can move ignoring any forbidden moves.
 
 ```fname = five-in-a-row-and-forbid, forbid = false, lmove = null
    A B C D E F G H I J K L M N O
@@ -411,7 +411,7 @@ In complex situations, a good way to figure out forbidden moves is to move one s
    A B C D E F G H I J K L M N O
 ```
 
-In this situation, column h is blocked by 4-4 forbid and cannot create straight four. Two stones in column h were not three that could make a straight four in a single move. Let's remember the definition of forbidden moves again. If three or four is not valid, then forbidden move is also invalid. So ``h9`` that can only make one three is not 3-3 forbidden.
+In this situation, column h is blocked by 4-4 forbid and cannot create straight four. Two stones in column h were not three that could make a straight four in a single move. Let's remember the definition of forbidden moves again. If three or four is not valid, then the forbidden move is also invalid. So ``h9`` that can only make one three is not 3-3 forbidden.
 
 ## It Doesn't Seem Like a Forbidden Move, But It Could Be a Forbidden Move.
 
@@ -653,13 +653,13 @@ Black was able to defend four, but two stones arranged horizontally in row 8 and
    A B C D E F G H I J K L M N O
 ```
 
-*Since ``g8`` is a 3-3 forbid, black has no way to stop the subsequent diagonal four attacks of white. White wins!!*
+*Since ``g8`` is a 3-3 forbid, black has no way to stop the subsequent diagonal four attacks of white. White wins!*
 
-This is the beauty of Renju! White can use 4-4 forbid and overline forbid in the same way to create and win traps. Black should read the situation well and be extra careful not to fall into the trap and ruin the game.
+The situation has completely changed! White can use 4-4 forbid and overline forbid in the same way to create and win traps. Black should read the situation well and be extra careful not to fall into the trap and ruin the game.
 
 ## Black Can Escape the Trap by Marking It Non-Forbidden Move
 
-Here's a twist. Black was able to win without being trapped. ``f6`` is an excellent point for black. But as we've seen before, if black puts it in ``f6``, Black will be caught in white's trap and defeated. How can black move safely to ``f6``?
+Here's a twist. Black was able to win without being trapped. ``f6`` is an excellent point for black. But as we've seen before, if black move to ``f6``, Black will be caught in white's trap and defeated. How can black move safely to ``f6``?
 
 ```fname = counter-forbid-trap, forbid = true, lmove = null
    A B C D E F G H I J K L M N O
@@ -753,6 +753,6 @@ Although not always possible (this is a very rare situation in real games), Blac
 
 Now you know everything you need to know about Renju. You know what's wrong with Gomoku, and you know how Renju solved Gomoku's problem. You know how to apply the Renju rule correctly in very complex situations, and you know how to use Renju to attack and defend.
 
-Renju is a very simple but very engaging game with an interesting and endless strategy. With GomokuBot, challenge more complex problems with your friends. It will definitely be fun.
+Renju is a straightforward but very engaging game with an interesting and endless strategy. With GomokuBot, challenge more complex problems with your friends. It will definitely be fun.
 
 If you have any questions, please feel free to visit the GomokuBot [support channel](https://discord.gg/vq8pkfF). I hope you have a good time with GomokuBot. — *GomokuBot developer junghyun397.*
