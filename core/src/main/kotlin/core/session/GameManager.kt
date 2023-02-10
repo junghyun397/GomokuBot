@@ -102,7 +102,7 @@ object GameManager {
             ownerHasBlack = Random(System.nanoTime()).nextBoolean(),
             board = Notation.EmptyBoard,
             history = emptyList(),
-            messageBufferKey = MessageBufferKey.fromString(owner.nameTag),
+            messageBufferKey = MessageBufferKey.issue(),
             recording = true,
             expireOffset = bot.config.gameExpireOffset,
             expireDate = LinuxTime.nowWithOffset(bot.config.gameExpireOffset),
@@ -130,7 +130,7 @@ object GameManager {
             ownerHasBlack = ownerHasBlack,
             board = board,
             history = history,
-            messageBufferKey = MessageBufferKey.fromString(owner.nameTag),
+            messageBufferKey = MessageBufferKey.issue(),
             recording = true,
             expireOffset = bot.config.gameExpireOffset,
             expireDate = LinuxTime.nowWithOffset(bot.config.gameExpireOffset),
@@ -144,7 +144,7 @@ object GameManager {
         val thenBoard = session.board.makeMove(pos)
 
         return thenBoard.winner().fold(
-            { session.next(thenBoard, pos, Option.Empty, MessageBufferKey.fromString(session.owner.nameTag)) },
+            { session.next(thenBoard, pos, Option.Empty, MessageBufferKey.issue()) },
             { result ->
                 val gameResult = when (result) {
                     is Result.FiveInRow ->

@@ -1,12 +1,15 @@
 package core.database.entities
 
-import core.assets.GuildUid
-import core.assets.UserUid
-import core.assets.aiUser
+import core.assets.*
+import core.database.repositories.UserProfileRepository
 import core.inference.AiLevel
 import core.session.GameResult
+import core.session.SessionRepository
+import core.session.Token
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
+import core.session.entities.MessageBufferKey
+import core.session.entities.PvpGameSession
 import renju.notation.Pos
 import utils.assets.LinuxTime
 import utils.structs.Option
@@ -55,4 +58,50 @@ fun GameSession.extractGameRecord(guildUid: GuildUid): Option<GameRecord> =
 
             date = LinuxTime.now()
         )
+    }
+
+suspend fun GameRecord.asGameSession(repo: SessionRepository, owner: User): GameSession =
+    when {
+        whiteId != null && blackId != null -> {
+            val ownerHasBlack = blackId == owner.id
+
+            val board = Notation.BoardIOInstance.fromFieldArray(boardStatus, history.last().idx()).get()
+
+            PvpGameSession(
+                owner = owner,
+                opponent = if (ownerHasBlack)
+                    UserProfileRepository.retrieveUser(repo.dbConnection, whiteId)
+                else UserProfileRepository.retrieveUser(repo.dbConnection, blackId),
+                ownerHasBlack = ownerHasBlack,
+                board = board,
+                gameResult = Option.Some(gameResult),
+                history = history,
+                messageBufferKey = MessageBufferKey.issue(),
+                expireOffset = 0,
+                recording = false,
+                expireDate = date,
+                createDate = date,
+            )
+        }
+        else -> {
+            val ownerHasBlack = whiteId == null
+
+            val board = Notation.BoardIOInstance.fromPosSequence(history.joinToString(separator = "")).get()
+
+            AiGameSession(
+                aiLevel = aiLevel!!,
+                solution = Option.Empty,
+                kvineToken = Token(""),
+                owner = owner,
+                ownerHasBlack = ownerHasBlack,
+                board = board,
+                gameResult = Option.Some(gameResult),
+                history = history,
+                messageBufferKey = MessageBufferKey.issue(),
+                expireOffset = 0,
+                recording = false,
+                expireDate = date,
+                createDate = date
+            )
+        }
     }

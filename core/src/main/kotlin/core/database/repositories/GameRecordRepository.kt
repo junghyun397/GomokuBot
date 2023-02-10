@@ -12,12 +12,14 @@ import core.session.GameResult
 import io.r2dbc.spi.Row
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.awaitSingle
-import kotlinx.coroutines.reactor.mono
-import reactor.core.publisher.Mono
 import renju.notation.Flag
 import renju.notation.Pos
 import utils.assets.LinuxTime
+import utils.structs.Option
+import utils.structs.asOption
 import utils.structs.find
+import utils.structs.map
+import java.nio.ByteBuffer
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.*
@@ -50,11 +52,12 @@ object GameRecordRepository {
                 .execute()
             }
             .flatMap { result -> result
-                .map { row, _ -> row }
+                .map { row, _ -> this.extractGameRecordData(row) }
             }
-            .flatMap { row -> this.buildGameRecord(connection, row) }
             .collectList()
             .awaitSingle()
+            .map { this.buildGameRecord(connection, it) }
+            .toMutableList()
 
     suspend fun retrieveGameRecordsByUserUid(connection: DatabaseConnection, userUid: UserUid): MutableList<GameRecord> =
         connection.liftConnection()
@@ -64,32 +67,71 @@ object GameRecordRepository {
                 .execute()
             }
             .flatMap { result -> result
-                .map { row, _ -> row }
+                .map { row, _ -> this.extractGameRecordData(row) }
             }
-            .flatMap { row -> this.buildGameRecord(connection, row) }
             .collectList()
             .awaitSingle()
+            .map { this.buildGameRecord(connection, it) }
+            .toMutableList()
 
-    private fun buildGameRecord(connection: DatabaseConnection, row: Row): Mono<GameRecord> =
-        mono {
-            val blackUser = (row["black_id"] as UUID?)?.let { UserProfileRepository.retrieveUser(connection, UserUid(it)) }
-            val whiteUser = (row["white_id"] as UUID?)?.let { UserProfileRepository.retrieveUser(connection, UserUid(it)) }
+    suspend fun retrieveLastGameRecordByUserUid(connection: DatabaseConnection, userUid: UserUid): Option<GameRecord> =
+        connection.liftConnection()
+            .flatMapMany { dbc -> dbc
+                .createStatement("SELECT * FROM game_record WHERE white_id = $1 OR black_id = $1 ORDER BY create_date DESC LIMIT 1")
+                .bind("$1", userUid.uuid)
+                .execute()
+            }
+            .flatMap { result -> result
+                .map { row, _ -> this.extractGameRecordData(row) }
+            }
+            .awaitFirstOrNull()
+            .asOption()
+            .map { this.buildGameRecord(connection, it) }
 
-            GameRecord(
-                boardStatus = row["board_status"] as ByteArray,
-                history = (row["history"] as IntArray).map { Pos.fromIdx(it) },
-                gameResult = GameResult.build(
-                    gameResult = Notation.ResultInstance.fromFlag(smallIntToMaybeByte(row["win_color"]) ?: Flag.EMPTY()),
-                    cause = GameResult.Cause.values().find(row["cause"] as Short),
-                    blackUser = blackUser,
-                    whiteUser = whiteUser
-                )!!,
-                guildId = GuildUid(row["guild_id"] as UUID),
-                blackId = blackUser?.id,
-                whiteId = whiteUser?.id,
-                aiLevel = (row["ai_level"] as Short?)?.let { AiLevel.values().find(it) },
-                date = LinuxTime((row["create_date"] as LocalDateTime).toInstant(ZoneOffset.UTC).toEpochMilli()),
-            )
-        }
+    private fun extractGameRecordData(row: Row): GameRecordRow =
+        GameRecordRow(
+            row["black_id"] as UUID?,
+            row["white_id"] as UUID?,
+            (row["board_status"] as ByteBuffer).array(),
+            (row["history"] as Array<*>).map { it as Int }.toIntArray(),
+            smallIntToMaybeByte(row["win_color"]),
+            row["cause"] as Short,
+            row["guild_id"] as UUID,
+            row["ai_level"] as Short?,
+            row["create_date"] as LocalDateTime
+        )
+
+    private suspend fun buildGameRecord(connection: DatabaseConnection, gameRecordRow: GameRecordRow): GameRecord {
+        val blackUser = gameRecordRow.blackId?.let { UserProfileRepository.retrieveUser(connection, UserUid(it)) }
+        val whiteUser = gameRecordRow.whiteId?.let { UserProfileRepository.retrieveUser(connection, UserUid(it)) }
+
+        return GameRecord(
+            boardStatus = gameRecordRow.boardStatus,
+            history = gameRecordRow.history.map { Pos.fromIdx(it) },
+            gameResult = GameResult.build(
+                gameResult = Notation.ResultInstance.fromFlag(gameRecordRow.winColor ?: Flag.EMPTY()),
+                cause = GameResult.Cause.values().find(gameRecordRow.cause),
+                blackUser = blackUser,
+                whiteUser = whiteUser
+            )!!,
+            guildId = GuildUid(gameRecordRow.guildId),
+            blackId = blackUser?.id,
+            whiteId = whiteUser?.id,
+            aiLevel = gameRecordRow.aiLevel?.let { AiLevel.values().find(it) },
+            date = LinuxTime(gameRecordRow.data.toInstant(ZoneOffset.UTC).toEpochMilli()),
+        )
+    }
+
+    internal class GameRecordRow(
+        val blackId: UUID?,
+        val whiteId: UUID?,
+        val boardStatus: ByteArray,
+        val history: IntArray,
+        val winColor: Byte?,
+        val cause: Short,
+        val guildId: UUID,
+        val aiLevel: Short?,
+        val data: LocalDateTime
+    )
 
 }

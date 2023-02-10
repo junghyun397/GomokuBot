@@ -1,5 +1,7 @@
 package core.interact.message.graphics
 
+import com.sksamuel.scrimage.AwtImage
+import com.sksamuel.scrimage.nio.StreamingGifWriter
 import core.assets.*
 import renju.Board
 import renju.notation.Flag
@@ -15,7 +17,10 @@ import java.awt.Dimension
 import java.awt.Font
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.time.Duration
 
 object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
 
@@ -32,7 +37,7 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
     private const val COORDINATE_START_OFFSET = COORDINATE_SIZE + POINT_SIZE / 2
     private const val COORDINATE_PADDING = COORDINATE_SIZE / 5
 
-    private val DIMENSION = (COORDINATE_SIZE * 2 + BOARD_WIDTH).let { Dimension(it, it) }
+    val DIMENSION = (COORDINATE_SIZE * 2 + BOARD_WIDTH).let { Dimension(it, it) }
 
     private const val LINE_WEIGHT = POINT_SIZE / 30
     private const val LINE_START_POS = COORDINATE_SIZE + POINT_SIZE / 2 - LINE_WEIGHT / 2
@@ -117,99 +122,125 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
     fun newFileName(): String =
         "board-${System.currentTimeMillis()}.png"
 
+    fun newGifFileName(): String =
+        "board-animated-${System.currentTimeMillis()}.gif"
+
     override fun renderBoard(board: Board, history: Option<List<Pos?>>) =
-        Either.Right(this.renderImageBoard(board, history))
+        Either.Right(this.renderInputStream(board, history))
 
-    fun renderImageBoard(board: Board, history: Option<List<Pos?>> = Option.Empty, enableForbiddenPoints: Boolean = true): InputStream {
-        val image = this.prototypeImage.clone()
+    fun renderBufferedImage(board: Board, history: Option<List<Pos?>> = Option.Empty, enableForbiddenPoints: Boolean = true): BufferedImage =
+        this.prototypeImage.clone().also { image ->
+            image.createGraphics().apply {
+                setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
-        image.createGraphics().apply {
-            setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+                board.field()
+                    .withIndex()
+                    .filter { it.value != Flag.EMPTY() }
+                    .map { Pos.fromIdx(it.index).asBoardPos() pair it.value }
+                    .forEach { (pos, flag) ->
+                        when (flag) {
+                            Flag.BLACK() -> {
+                                color = COLOR_GREY
+                                fillOval(pos.x + STONE_OFFSET, pos.y + STONE_OFFSET, STONE_SIZE, STONE_SIZE)
 
-            board.field()
-                .withIndex()
-                .filter { it.value != Flag.EMPTY() }
-                .map { Pos.fromIdx(it.index).asBoardPos() pair it.value}
-                .forEach { (pos, flag) -> when (flag) {
-                    Flag.BLACK() -> {
-                        color = COLOR_GREY
-                        fillOval(pos.x + STONE_OFFSET, pos.y + STONE_OFFSET, STONE_SIZE, STONE_SIZE)
+                                color = COLOR_BLACK
+                                fillOval(
+                                    pos.x + STONE_OFFSET + BOARDER_SIZE,
+                                    pos.y + STONE_OFFSET + BOARDER_SIZE,
+                                    STONE_SIZE - 2 * BOARDER_SIZE,
+                                    STONE_SIZE - 2 * BOARDER_SIZE,
+                                )
+                            }
 
-                        color = COLOR_BLACK
-                        fillOval(
-                            pos.x + STONE_OFFSET + BOARDER_SIZE,
-                            pos.y + STONE_OFFSET + BOARDER_SIZE,
-                            STONE_SIZE - 2 * BOARDER_SIZE,
-                            STONE_SIZE - 2 * BOARDER_SIZE,
-                        )
-                    }
-                    Flag.WHITE() -> {
-                        color = COLOR_GREY
-                        fillOval(pos.x + STONE_OFFSET, pos.y + STONE_OFFSET, STONE_SIZE, STONE_SIZE)
+                            Flag.WHITE() -> {
+                                color = COLOR_GREY
+                                fillOval(pos.x + STONE_OFFSET, pos.y + STONE_OFFSET, STONE_SIZE, STONE_SIZE)
 
-                        color = COLOR_WHITE
-                        fillOval(
-                            pos.x + STONE_OFFSET + BOARDER_SIZE,
-                            pos.y + STONE_OFFSET + BOARDER_SIZE,
-                            STONE_SIZE - 2 * BOARDER_SIZE,
-                            STONE_SIZE - 2 * BOARDER_SIZE,
-                        )
-                    }
-                    Flag.FORBIDDEN_33(), Flag.FORBIDDEN_44(), Flag.FORBIDDEN_6() -> {
-                        if (enableForbiddenPoints) {
-                            color = COLOR_RED
-                            fillOval(
-                                pos.x + FORBID_DOT_OFFSET,
-                                pos.y + FORBID_DOT_OFFSET,
-                                LATEST_MOVE_DOT_SIZE,
-                                LATEST_MOVE_DOT_SIZE,
-                            )
+                                color = COLOR_WHITE
+                                fillOval(
+                                    pos.x + STONE_OFFSET + BOARDER_SIZE,
+                                    pos.y + STONE_OFFSET + BOARDER_SIZE,
+                                    STONE_SIZE - 2 * BOARDER_SIZE,
+                                    STONE_SIZE - 2 * BOARDER_SIZE,
+                                )
+                            }
+
+                            Flag.FORBIDDEN_33(), Flag.FORBIDDEN_44(), Flag.FORBIDDEN_6() -> {
+                                if (enableForbiddenPoints) {
+                                    color = COLOR_RED
+                                    fillOval(
+                                        pos.x + FORBID_DOT_OFFSET,
+                                        pos.y + FORBID_DOT_OFFSET,
+                                        LATEST_MOVE_DOT_SIZE,
+                                        LATEST_MOVE_DOT_SIZE,
+                                    )
+                                }
+                            }
                         }
                     }
-                } }
 
-            history.fold(
-                onEmpty = {
-                    board.lastPos()
-                        .map { it.asBoardPos() }
-                        .foreach { pos ->
-                            color = if (board.color() == Notation.Color.Black) COLOR_WHITE else COLOR_BLACK
-                            fillOval(
-                                pos.x + LATEST_MOVE_DOT_OFFSET,
-                                pos.y + LATEST_MOVE_DOT_OFFSET,
-                                LATEST_MOVE_DOT_SIZE,
-                                LATEST_MOVE_DOT_SIZE
-                            )
-                        }
-                },
-                onDefined = { histories ->
-                    setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
+                history.fold(
+                    onEmpty = {
+                        board.lastPos()
+                            .map { it.asBoardPos() }
+                            .foreach { pos ->
+                                color = if (board.color() == Notation.Color.Black) COLOR_WHITE else COLOR_BLACK
+                                fillOval(
+                                    pos.x + LATEST_MOVE_DOT_OFFSET,
+                                    pos.y + LATEST_MOVE_DOT_OFFSET,
+                                    LATEST_MOVE_DOT_SIZE,
+                                    LATEST_MOVE_DOT_SIZE
+                                )
+                            }
+                    },
+                    onDefined = { histories ->
+                        setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
 
-                    val historyFont = Font(HISTORY_FONT, Font.TRUETYPE_FONT, HISTORY_FONT_SIZE)
-                    val fontMetrics = getFontMetrics(historyFont)
-                    font = historyFont
+                        val historyFont = Font(HISTORY_FONT, Font.TRUETYPE_FONT, HISTORY_FONT_SIZE)
+                        val fontMetrics = getFontMetrics(historyFont)
+                        font = historyFont
 
-                    histories
-                        .withIndex()
-                        .filter { it.value != null }
-                        .map { it.index + 1 pair it.value!!.asBoardPos() }
-                        .forEach { (sequence, pos) ->
-                            val textWidth = fontMetrics.stringWidth(sequence.toString())
+                        histories
+                            .withIndex()
+                            .filter { it.value != null }
+                            .map { it.index + 1 pair it.value!!.asBoardPos() }
+                            .forEach { (sequence, pos) ->
+                                val textWidth = fontMetrics.stringWidth(sequence.toString())
 
-                            color = if (sequence % 2 == 0) COLOR_BLACK else COLOR_WHITE
-                            drawString(
-                                sequence.toString(),
-                                pos.x + POINT_SIZE / 2 - textWidth / 2,
-                                pos.y + POINT_SIZE / 2 + HISTORY_FONT_SIZE / 2 - HISTORY_FONT_SIZE / 5
-                            )
-                        }
-                }
-            )
+                                color = if (sequence % 2 == 0) COLOR_BLACK else COLOR_WHITE
+                                drawString(
+                                    sequence.toString(),
+                                    pos.x + POINT_SIZE / 2 - textWidth / 2,
+                                    pos.y + POINT_SIZE / 2 + HISTORY_FONT_SIZE / 2 - HISTORY_FONT_SIZE / 5
+                                )
+                            }
+                    }
+                )
 
-            dispose()
+                dispose()
+            }
         }
 
-        return image.toInputStream()
+    fun renderInputStream(board: Board, history: Option<List<Pos?>> = Option.Empty, enableForbiddenPoints: Boolean = true): InputStream =
+        this.renderBufferedImage(board, history, enableForbiddenPoints).toInputStream()
+
+    fun renderHistoryAnimation(history: List<Pos>): InputStream {
+        val outputStream = ByteArrayOutputStream()
+
+        val gifBuilder = StreamingGifWriter(Duration.ofSeconds(1), false, false)
+
+        gifBuilder.prepareStream(outputStream, BufferedImage.TYPE_INT_ARGB).apply {
+            var board: Board = Notation.EmptyBoard
+
+            history.forEachIndexed { index, pos ->
+                board = board.makeMove(pos)
+                writeFrame(AwtImage(renderBufferedImage(board, Option.Some(history.subList(0, index + 1)))).toImmutableImage())
+            }
+
+            close()
+        }
+
+        return ByteArrayInputStream(outputStream.toByteArray())
     }
 
 }

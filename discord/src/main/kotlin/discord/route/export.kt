@@ -3,6 +3,7 @@ package discord.route
 import core.assets.MessageRef
 import core.interact.Order
 import discord.assets.JDAGuild
+import discord.assets.extractMessageData
 import discord.interact.DiscordConfig
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
@@ -22,14 +23,14 @@ suspend fun export(discordConfig: DiscordConfig, jdaGuild: JDAGuild, io: IO<List
                 ?.let { originalMessage ->
                     GuildManager.clearReaction(originalMessage)
 
-//                    if (order.reduceComponents) {
-//                        originalMessage.extractMessageData()
-//                            .let { GuildManager.retainFirstEmbed(it) }
-//                            .let { GuildManager.clearComponents(it) }
-//                            .let { messageData ->
-//                                originalMessage.editMessage(messageData.buildEdit()).queue()
-//                            }
-//                    }
+                    if (order.reduceComponents) {
+                        originalMessage.extractMessageData()
+                            .let { GuildManager.retainFirstEmbed(it) }
+                            .let { GuildManager.clearComponents(it) }
+                            .let { messageData ->
+                                originalMessage.editMessage(messageData.buildEdit()).queue()
+                            }
+                    }
                 }
 
             is Order.ArchiveSession -> GuildManager.archiveSession(

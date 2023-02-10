@@ -95,7 +95,7 @@ object GuildManager {
 
         val publisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(archiveChannel.sendMessage(msg.buildCreate())) }
 
-        DiscordMessageProducer.produceSessionArchive(publisher, modSession, modResult)
+        DiscordMessageProducer.produceSessionArchive(publisher, modSession, modResult, false)
             .launch()
             .run()
     }

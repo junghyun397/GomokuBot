@@ -28,7 +28,7 @@ interface MessageProducer<A, B> {
 
     fun produceBoard(publisher: MessagePublisher<A, B>, container: LanguageContainer, renderer: BoardRenderer, session: GameSession): MessageBuilder<A, B>
 
-    fun produceSessionArchive(publisher: MessagePublisher<A, B>, session: GameSession, result: Option<GameResult>): MessageBuilder<A, B>
+    fun produceSessionArchive(publisher: MessagePublisher<A, B>, session: GameSession, result: Option<GameResult>, animate: Boolean): MessageBuilder<A, B>
 
     fun attachFocusButtons(boardAction: MessageBuilder<A, B>, session: GameSession, focusInfo: FocusSolver.FocusInfo): MessageBuilder<A, B>
 

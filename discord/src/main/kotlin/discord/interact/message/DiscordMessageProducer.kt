@@ -207,9 +207,16 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
         )
     }
 
-    override fun produceSessionArchive(publisher: DiscordMessagePublisher, session: GameSession, result: Option<GameResult>): DiscordMessageBuilder {
-        val imageStream = ImageBoardRenderer.renderImageBoard(session.board, Option(session.history), true)
-        val fName = ImageBoardRenderer.newFileName()
+    override fun produceSessionArchive(publisher: DiscordMessagePublisher, session: GameSession, result: Option<GameResult>, animate: Boolean): DiscordMessageBuilder {
+        val imageStream = if (animate)
+            ImageBoardRenderer.renderHistoryAnimation(session.history.filterNotNull())
+        else
+            ImageBoardRenderer.renderInputStream(session.board, Option(session.history), true)
+
+        val fName = if (animate)
+            ImageBoardRenderer.newGifFileName()
+        else
+            ImageBoardRenderer.newFileName()
 
         return publisher(DiscordMessageData(
             embed = Embed {
@@ -249,7 +256,11 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
 
     override fun attachNavigators(flow: Flow<String>, message: DiscordMessageData, checkTerminated: suspend () -> Boolean) =
         IO { message.original
-            .filter { !it.isEphemeral && GuildManager.lookupPermission(it.guildChannel, Permission.MESSAGE_ADD_REACTION) }
+            .filter {
+                !it.isEphemeral
+                        && GuildManager.lookupPermission(it.guildChannel, Permission.MESSAGE_ADD_REACTION)
+                        && GuildManager.lookupPermission(it.guildChannel, Permission.MESSAGE_HISTORY)
+            }
             .forEach { original ->
                 try {
                     coroutineScope {

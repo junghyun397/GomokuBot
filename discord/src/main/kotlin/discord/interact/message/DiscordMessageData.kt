@@ -21,8 +21,8 @@ data class DiscordMessageData(
 
     constructor(content: String = "", embed: MessageEmbed): this(content, embeds = listOf(embed))
 
-    fun buildCreate(): MessageCreateData = MessageCreate(this.content, this.embeds, tts = this.tts)
+    fun buildCreate(): MessageCreateData = MessageCreate(this.content, this.embeds, components = this.components, tts = this.tts)
 
-    fun buildEdit(): MessageEditData = MessageEdit(this.content, this.embeds)
+    fun buildEdit(): MessageEditData = MessageEdit(this.content, this.embeds, components = this.components)
 
 }

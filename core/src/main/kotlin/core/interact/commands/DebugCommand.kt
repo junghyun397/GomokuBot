@@ -7,6 +7,8 @@ import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.Notation
 import core.assets.User
+import core.database.entities.asGameSession
+import core.database.repositories.GameRecordRepository
 import core.inference.AiLevel
 import core.interact.Order
 import core.interact.message.MessageProducer
@@ -24,13 +26,10 @@ import renju.notation.Renju
 import utils.assets.LinuxTime
 import utils.lang.pair
 import utils.lang.toInputStream
-import utils.structs.IO
-import utils.structs.Option
-import utils.structs.flatMap
-import utils.structs.map
+import utils.structs.*
 
 enum class DebugType {
-    ANALYSIS, SELF_REQUEST, VCF, INJECT, STATUS, SESSIONS
+    ANALYSIS, SELF_REQUEST, VCF, INJECT, STATUS, SESSIONS, GIF
 }
 
 class DebugCommand(
@@ -54,7 +53,7 @@ class DebugCommand(
     ) = runCatching { when (debugType) {
         DebugType.ANALYSIS -> {
             SessionManager.retrieveGameSession(bot.sessions, guild, user.id)?.let { session ->
-                producer.produceSessionArchive(publishers.plain, session, session.gameResult)
+                producer.produceSessionArchive(publishers.plain, session, session.gameResult, false)
                     .addFile(
                         Notation.BoardIOInstance.buildBoardDebugString(session.board).toInputStream(),
                         "analysis-report-${System.currentTimeMillis()}.txt"
@@ -70,7 +69,7 @@ class DebugCommand(
             else {
                 val requestSession = RequestSession(
                         user, user,
-                        MessageBufferKey.fromString(user.nameTag),
+                        MessageBufferKey.issue(),
                         LinuxTime.nowWithOffset(bot.config.gameExpireOffset)
                     )
 
@@ -94,7 +93,7 @@ class DebugCommand(
                 ownerHasBlack = board.isNextColorBlack,
                 board = board,
                 history = List(board.moves()) { null },
-                messageBufferKey = MessageBufferKey.fromString(user.nameTag),
+                messageBufferKey = MessageBufferKey.issue(),
                 expireOffset = bot.config.gameExpireOffset,
                 recording = false,
                 expireDate = LinuxTime.nowWithOffset(bot.config.gameExpireOffset)
@@ -170,7 +169,7 @@ class DebugCommand(
                 ownerHasBlack = false,
                 board = vcfCase,
                 history = List(vcfCase.moves()) { null },
-                messageBufferKey = MessageBufferKey.fromString(user.nameTag),
+                messageBufferKey = MessageBufferKey.issue(),
                 expireOffset = bot.config.gameExpireOffset,
                 recording = false,
                 expireDate = LinuxTime.nowWithOffset(bot.config.gameExpireOffset)
@@ -181,6 +180,17 @@ class DebugCommand(
             val io = producer.produceNextMovePVE(publishers.plain, config.language.container, user, session.board.lastPos().get())
                 .launch()
                 .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, session) }
+                .map { emptyList<Order>() }
+
+            io pair this.asCommandReport("succeed", guild, user)
+        }
+        DebugType.GIF -> {
+            val gameRecord = GameRecordRepository.retrieveLastGameRecordByUserUid(bot.sessions.dbConnection, user.id).getOrException()
+
+            val session = gameRecord.asGameSession(bot.sessions, user)
+
+            val io = producer.produceSessionArchive(publishers.plain, session, session.gameResult, true)
+                .launch()
                 .map { emptyList<Order>() }
 
             io pair this.asCommandReport("succeed", guild, user)

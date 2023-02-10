@@ -1,12 +1,10 @@
 package core.session.entities
 
-@JvmInline
-value class MessageBufferKey(val key: String) {
+class MessageBufferKey {
 
     companion object {
 
-        fun fromString(source: String): MessageBufferKey =
-            MessageBufferKey(String(source.toCharArray() + System.currentTimeMillis().toString().toCharArray()))
+        fun issue(): MessageBufferKey = MessageBufferKey()
 
     }
 

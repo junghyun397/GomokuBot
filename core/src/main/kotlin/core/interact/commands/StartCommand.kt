@@ -52,7 +52,7 @@ class StartCommand(val opponent: User?) : Command {
             else -> {
                 val requestSession = RequestSession(
                     user, opponent,
-                    MessageBufferKey.fromString(user.nameTag),
+                    MessageBufferKey.issue(),
                     LinuxTime.nowWithOffset(bot.config.requestExpireOffset),
                 )
 
