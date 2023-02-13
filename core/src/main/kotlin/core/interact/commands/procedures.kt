@@ -10,7 +10,7 @@ import core.interact.message.MessagePublisher
 import core.session.FocusPolicy
 import core.session.HintPolicy
 import core.session.SessionManager
-import core.session.SweepPolicy
+import core.session.SwapPolicy
 import core.session.entities.*
 import utils.assets.LinuxTime
 import utils.lang.pair
@@ -37,7 +37,7 @@ fun <A, B> buildNextMoveProcedure(
     session: GameSession,
     thenSession: GameSession,
 ): IO<List<Order>> = buildBoardProcedure(bot, guild, config, producer, publisher, thenSession)
-    .flatMap { buildSweepProcedure(bot, config, session) }
+    .flatMap { buildSwapProcedure(bot, config, session) }
 
 fun <A, B> buildBoardProcedure(
     bot: BotContext,
@@ -67,18 +67,18 @@ fun <A, B> buildBoardProcedure(
 }
 
 
-private fun buildSweepProcedure(
+private fun buildSwapProcedure(
     bot: BotContext,
     config: GuildConfig,
     session: GameSession
-): IO<List<Order>> = IO { when (config.sweepPolicy) {
-    SweepPolicy.RELAY -> listOf(Order.BulkDelete(SessionManager.checkoutMessages(bot.sessions, session.messageBufferKey).orEmpty()))
-    SweepPolicy.LEAVE -> {
+): IO<List<Order>> = IO { when (config.swapPolicy) {
+    SwapPolicy.RELAY -> listOf(Order.BulkDelete(SessionManager.checkoutMessages(bot.sessions, session.messageBufferKey).orEmpty()))
+    SwapPolicy.ARCHIVE -> {
         SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
             ?.let { listOf(Order.RemoveNavigators(it, reduceComponents = true)) }
             ?: emptyList()
     }
-    SweepPolicy.EDIT -> emptyList()
+    SwapPolicy.EDIT -> emptyList()
 } }
 
 fun <A, B> buildFinishProcedure(
@@ -90,10 +90,10 @@ fun <A, B> buildFinishProcedure(
     thenSession: GameSession
 ): IO<List<Order>> = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, config.markPolicy, thenSession)
     .retrieve()
-    .flatMap { maybeMessage -> buildSweepProcedure(bot, config, session).map { maybeMessage pair it } }
+    .flatMap { maybeMessage -> buildSwapProcedure(bot, config, session).map { maybeMessage pair it } }
     .map { (maybeMessage, originalOrder) ->
         maybeMessage
-            .filter { thenSession.gameResult.isDefined && config.sweepPolicy == SweepPolicy.EDIT }
+            .filter { thenSession.gameResult.isDefined && config.swapPolicy == SwapPolicy.EDIT }
             .fold(
                 onDefined = { message -> originalOrder + Order.RemoveNavigators(message.messageRef, reduceComponents = true) },
                 onEmpty = { originalOrder }

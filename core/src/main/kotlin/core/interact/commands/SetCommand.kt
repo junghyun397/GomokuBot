@@ -11,7 +11,7 @@ import core.interact.reports.asCommandReport
 import core.session.GameManager
 import core.session.GameResult
 import core.session.SessionManager
-import core.session.SweepPolicy
+import core.session.SwapPolicy
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
@@ -44,8 +44,8 @@ class SetCommand(
 
         val thenSession = GameManager.makeMove(this.session, this.pos)
 
-        val boardPublisher = when (config.sweepPolicy) {
-            SweepPolicy.EDIT -> publishers.edit(this.deployAt ?: messageRef)
+        val boardPublisher = when (config.swapPolicy) {
+            SwapPolicy.EDIT -> publishers.edit(this.deployAt ?: messageRef)
             else -> publishers.plain
         }
 
@@ -55,10 +55,10 @@ class SetCommand(
                     SessionManager.putGameSession(bot.sessions, guild, thenSession)
 
                     val guideIO = when {
-                        config.sweepPolicy == SweepPolicy.EDIT && this.deployAt == null -> IO.empty
+                        config.swapPolicy == SwapPolicy.EDIT && this.deployAt == null -> IO.empty
                         else -> {
-                            val guidePublisher = when (config.sweepPolicy) {
-                                SweepPolicy.EDIT -> publishers.windowed
+                            val guidePublisher = when (config.swapPolicy) {
+                                SwapPolicy.EDIT -> publishers.windowed
                                 else -> publishers.plain
                             }
 
@@ -81,10 +81,10 @@ class SetCommand(
                             SessionManager.putGameSession(bot.sessions, guild, nextSession)
 
                             val guideIO = when {
-                                config.sweepPolicy == SweepPolicy.EDIT && this.deployAt == null -> IO.empty
+                                config.swapPolicy == SwapPolicy.EDIT && this.deployAt == null -> IO.empty
                                 else -> {
-                                    val guidePublisher = when (config.sweepPolicy) {
-                                        SweepPolicy.EDIT -> publishers.windowed
+                                    val guidePublisher = when (config.swapPolicy) {
+                                        SwapPolicy.EDIT -> publishers.windowed
                                         else -> publishers.plain
                                     }
 

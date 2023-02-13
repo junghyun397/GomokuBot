@@ -205,24 +205,24 @@ open class LanguageKOR : LanguageENG() {
     override fun markSelectSequenceDescription() =
         "돌을 놓은 순서를 모두 표시합니다."
 
-    // ### 2-3-3. SWEEP
+    // ### 2-3-3. SWAP
 
-    override fun sweep() = "청소"
+    override fun swap() = "청소"
 
-    override fun sweepEmbedTitle() = "GomokuBot / 청소"
-    override fun sweepEmbedDescription() =
+    override fun swapEmbedTitle() = "GomokuBot / 청소"
+    override fun swapEmbedDescription() =
         "GomokuBot은 정말 많은 양의 메시지를 보냅니다. GomokuBot이 보낸 메시지를 어떻게 처리할지 정해주세요."
 
-    override fun sweepSelectRelay() = "이어가기"
-    override fun sweepSelectRelayDescription() =
+    override fun swapSelectRelay() = "이어가기"
+    override fun swapSelectRelayDescription() =
         "다음 수를 놓을 때 이전에 보낸 메시지를 모두 삭제합니다."
 
-    override fun sweepSelectLeave() = "놓아두기"
-    override fun sweepSelectLeaveDescription() =
+    override fun swapSelectArchive() = "놓아두기"
+    override fun swapSelectArchiveDescription() =
         "그 어떤 메시지도 삭제하지 않습니다."
 
-    override fun sweepSelectEdit() = "편집하기"
-    override fun sweepSelectEditDescription() =
+    override fun swapSelectEdit() = "편집하기"
+    override fun swapSelectEditDescription() =
         "처음 보낸 메시지를 편집합니다."
 
     // ### 2-3-4. ARCHIVE

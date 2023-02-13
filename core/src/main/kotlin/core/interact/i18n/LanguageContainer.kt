@@ -206,21 +206,21 @@ sealed interface LanguageContainer {
     fun markSelectSequence(): String
     fun markSelectSequenceDescription(): String
 
-    // ### 2-3-3. SWEEP
+    // ### 2-3-3. SWAP
 
-    fun sweep(): String
+    fun swap(): String
 
-    fun sweepEmbedTitle(): String
-    fun sweepEmbedDescription(): String
+    fun swapEmbedTitle(): String
+    fun swapEmbedDescription(): String
 
-    fun sweepSelectRelay(): String
-    fun sweepSelectRelayDescription(): String
+    fun swapSelectRelay(): String
+    fun swapSelectRelayDescription(): String
 
-    fun sweepSelectLeave(): String
-    fun sweepSelectLeaveDescription(): String
+    fun swapSelectArchive(): String
+    fun swapSelectArchiveDescription(): String
 
-    fun sweepSelectEdit(): String
-    fun sweepSelectEditDescription(): String
+    fun swapSelectEdit(): String
+    fun swapSelectEditDescription(): String
 
     // ### 2-3-4. ARCHIVE
 

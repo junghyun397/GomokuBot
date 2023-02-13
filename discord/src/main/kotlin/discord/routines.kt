@@ -9,7 +9,7 @@ import core.interact.reports.InteractionReport
 import core.session.GameManager
 import core.session.GameResult
 import core.session.SessionManager
-import core.session.SweepPolicy
+import core.session.SwapPolicy
 import core.session.entities.AiGameSession
 import core.session.entities.PvpGameSession
 import discord.assets.awaitOption
@@ -47,8 +47,8 @@ fun scheduleRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): F
             if (message != null && guild != null && channel != null) {
                 val infoPublisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(channel.sendMessage(msg.buildCreate())) }
 
-                val boardPublisher: DiscordMessagePublisher = when (guildSession.config.sweepPolicy) {
-                    SweepPolicy.EDIT -> { msg -> MessageEditAdaptor(channel.editMessageById(message.id.idLong, msg.buildEdit())) }
+                val boardPublisher: DiscordMessagePublisher = when (guildSession.config.swapPolicy) {
+                    SwapPolicy.EDIT -> { msg -> MessageEditAdaptor(channel.editMessageById(message.id.idLong, msg.buildEdit())) }
                     else -> infoPublisher
                 }
 

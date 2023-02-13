@@ -24,10 +24,7 @@ class UnionReport(
             }
         }
 
-        return """
-UnionReport(${reports.size}):
-${reports.joinToString(prefix = "\t", separator = "\n")}
-        """.trimIndent()
+        return "UnionReport(${reports.size}):\n${reports.joinToString(prefix = "\t", separator = "\n")}"
     }
 
 }

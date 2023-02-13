@@ -12,7 +12,7 @@ import core.interact.parse.SessionSideParser
 import core.interact.parse.asParseFailure
 import core.session.GameManager
 import core.session.SessionManager
-import core.session.SweepPolicy
+import core.session.SwapPolicy
 import core.session.entities.GameSession
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
@@ -100,8 +100,8 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
 
             val pos = Pos(row, column)
 
-            val ref = when (context.config.sweepPolicy) {
-                SweepPolicy.EDIT -> SessionManager.viewHeadMessage(context.bot.sessions, session.messageBufferKey)
+            val ref = when (context.config.swapPolicy) {
+                SwapPolicy.EDIT -> SessionManager.viewHeadMessage(context.bot.sessions, session.messageBufferKey)
                 else -> null
             }
 
@@ -119,8 +119,8 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
                 .fold(
                     onDefined = { Either.Right(it) },
                     onEmpty = {
-                        val responseFlag = when (context.config.sweepPolicy) {
-                            SweepPolicy.EDIT -> ResponseFlag.DeferWindowed
+                        val responseFlag = when (context.config.swapPolicy) {
+                            SwapPolicy.EDIT -> ResponseFlag.DeferWindowed
                             else -> ResponseFlag.Defer
                         }
 
@@ -164,7 +164,7 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
         if (session.player.id != userId)
             return Option.Empty
 
-        return Option(SetCommand(session, pos, null, ResponseFlag.Defer(context.config.sweepPolicy == SweepPolicy.EDIT)))
+        return Option(SetCommand(session, pos, null, ResponseFlag.Defer(context.config.swapPolicy == SwapPolicy.EDIT)))
     }
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

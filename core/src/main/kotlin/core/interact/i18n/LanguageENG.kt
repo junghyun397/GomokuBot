@@ -214,24 +214,24 @@ open class LanguageENG : LanguageContainer {
     override fun markSelectSequenceDescription() =
         "Mark all the stones in the order in which they where moved."
 
-    // ### 2-3-3. SWEEP
+    // ### 2-3-3. SWAP
 
-    override fun sweep() = "Sweep"
+    override fun swap() = "Swap"
 
-    override fun sweepEmbedTitle() = "GomokuBot / Sweep"
-    override fun sweepEmbedDescription() =
+    override fun swapEmbedTitle() = "GomokuBot / Swap"
+    override fun swapEmbedDescription() =
         "GomokuBot sends very, very many messages. Please set what to do with the message sent by GomokuBot."
 
-    override fun sweepSelectRelay() = "Relay"
-    override fun sweepSelectRelayDescription() =
+    override fun swapSelectRelay() = "Relay"
+    override fun swapSelectRelayDescription() =
         "When a player makes a new move, clear all previously sent messages."
 
-    override fun sweepSelectLeave() = "Leave"
-    override fun sweepSelectLeaveDescription() =
+    override fun swapSelectArchive() = "Archive"
+    override fun swapSelectArchiveDescription() =
         "Do not delete any messages. Except for the Navigators."
 
-    override fun sweepSelectEdit() = "Edit"
-    override fun sweepSelectEditDescription() =
+    override fun swapSelectEdit() = "Edit"
+    override fun swapSelectEditDescription() =
         "Send no more messages, edit the first message sent."
 
     // ### 2-3-4. ARCHIVE

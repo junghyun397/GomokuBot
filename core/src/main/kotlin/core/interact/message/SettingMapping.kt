@@ -146,30 +146,30 @@ object SettingMapping {
                 )
             )
         ),
-        SweepPolicy::class to Pair(
+        SwapPolicy::class to Pair(
             first = SettingElement(
                 menuIndex = 5,
-                label = LanguageContainer::sweep,
-                description = LanguageContainer::sweepEmbedDescription,
-                extractor = { it.sweepPolicy },
+                label = LanguageContainer::swap,
+                description = LanguageContainer::swapEmbedDescription,
+                extractor = { it.swapPolicy },
             ),
             second = mapOf(
-                SweepPolicy.RELAY to OptionElement.fromIdentifiableEnum(
-                    enum = SweepPolicy.RELAY,
-                    label = LanguageContainer::sweepSelectRelay,
-                    description = LanguageContainer::sweepSelectRelayDescription,
+                SwapPolicy.RELAY to OptionElement.fromIdentifiableEnum(
+                    enum = SwapPolicy.RELAY,
+                    label = LanguageContainer::swapSelectRelay,
+                    description = LanguageContainer::swapSelectRelayDescription,
                     emoji = UNICODE_BROOM
                 ),
-                SweepPolicy.LEAVE to OptionElement.fromIdentifiableEnum(
-                    enum = SweepPolicy.LEAVE,
-                    label = LanguageContainer::sweepSelectLeave,
-                    description = LanguageContainer::sweepSelectLeaveDescription,
+                SwapPolicy.ARCHIVE to OptionElement.fromIdentifiableEnum(
+                    enum = SwapPolicy.ARCHIVE,
+                    label = LanguageContainer::swapSelectArchive,
+                    description = LanguageContainer::swapSelectArchiveDescription,
                     emoji = UNICODE_CABINET
                 ),
-                SweepPolicy.EDIT to OptionElement.fromIdentifiableEnum(
-                    enum = SweepPolicy.EDIT,
-                    label = LanguageContainer::sweepSelectEdit,
-                    description = LanguageContainer::sweepSelectEditDescription,
+                SwapPolicy.EDIT to OptionElement.fromIdentifiableEnum(
+                    enum = SwapPolicy.EDIT,
+                    label = LanguageContainer::swapSelectEdit,
+                    description = LanguageContainer::swapSelectEditDescription,
                     emoji = UNICODE_RECYCLE
                 )
             )
@@ -222,9 +222,9 @@ object SettingMapping {
                 val mark = HistoryRenderType.valueOf(choice)
                 mark pair config.copy(markPolicy = mark)
             }
-            SweepPolicy::class.simpleName -> {
-                val sweep = SweepPolicy.valueOf(choice)
-                sweep pair config.copy(sweepPolicy = sweep)
+            SwapPolicy::class.simpleName -> {
+                val swap = SwapPolicy.valueOf(choice)
+                swap pair config.copy(swapPolicy = swap)
             }
             ArchivePolicy::class.simpleName -> {
                 val archive = ArchivePolicy.valueOf(choice)
@@ -258,10 +258,10 @@ object SettingMapping {
             HistoryRenderType.SEQUENCE -> container.markSelectSequence()
         }
 
-        is SweepPolicy -> container.sweep() pair when (diff) {
-            SweepPolicy.RELAY -> container.sweepSelectRelay()
-            SweepPolicy.LEAVE -> container.sweepSelectLeave()
-            SweepPolicy.EDIT -> container.sweepSelectEdit()
+        is SwapPolicy -> container.swap() pair when (diff) {
+            SwapPolicy.RELAY -> container.swapSelectRelay()
+            SwapPolicy.ARCHIVE -> container.swapSelectArchive()
+            SwapPolicy.EDIT -> container.swapSelectEdit()
         }
 
         is ArchivePolicy -> container.archive() pair when (diff) {

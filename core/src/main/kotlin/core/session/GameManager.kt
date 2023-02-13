@@ -35,8 +35,8 @@ enum class HintPolicy(override val id: Short) : Identifiable {
     OFF(0), FIVE(1)
 }
 
-enum class SweepPolicy(override val id: Short) : Identifiable {
-    RELAY(0), LEAVE(1), EDIT(2)
+enum class SwapPolicy(override val id: Short) : Identifiable {
+    RELAY(0), ARCHIVE(1), EDIT(2)
 }
 
 enum class ArchivePolicy(override val id: Short) : Identifiable {

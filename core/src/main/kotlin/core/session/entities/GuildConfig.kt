@@ -10,6 +10,6 @@ data class GuildConfig(
     val focusPolicy: FocusPolicy = FocusPolicy.INTELLIGENCE,
     val hintPolicy: HintPolicy = HintPolicy.FIVE,
     val markPolicy: HistoryRenderType = HistoryRenderType.LAST,
-    val sweepPolicy: SweepPolicy = SweepPolicy.RELAY,
+    val swapPolicy: SwapPolicy = SwapPolicy.RELAY,
     val archivePolicy: ArchivePolicy = ArchivePolicy.BY_ANONYMOUS
 )

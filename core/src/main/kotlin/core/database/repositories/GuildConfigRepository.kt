@@ -29,7 +29,7 @@ object GuildConfigRepository {
                         focusPolicy = FocusPolicy.values().find(row["focus_policy"] as Short),
                         hintPolicy = HintPolicy.values().find(row["hint_policy"] as Short),
                         markPolicy = HistoryRenderType.values().find(row["mark_policy"] as Short),
-                        sweepPolicy = SweepPolicy.values().find(row["sweep_policy"] as Short),
+                        swapPolicy = SwapPolicy.values().find(row["swap_policy"] as Short),
                         archivePolicy = ArchivePolicy.values().find(row["archive_policy"] as Short),
                     ))
                 }
@@ -42,8 +42,8 @@ object GuildConfigRepository {
             .flatMapMany { dbc -> dbc
                 .createStatement(
                     """
-                        INSERT INTO guild_config (guild_id, language, board_style, focus_policy, hint_policy, mark_policy, sweep_policy, archive_policy) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                            ON CONFLICT (guild_id) DO UPDATE SET language = $2, board_style = $3, focus_policy = $4, hint_policy = $5, mark_policy = $6, sweep_policy = $7, archive_policy = $8
+                        INSERT INTO guild_config (guild_id, language, board_style, focus_policy, hint_policy, mark_policy, swap_policy, archive_policy) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                            ON CONFLICT (guild_id) DO UPDATE SET language = $2, board_style = $3, focus_policy = $4, hint_policy = $5, mark_policy = $6, swap_policy = $7, archive_policy = $8
                     """.trimIndent()
                 )
                 .bind("$1", guildUid.uuid)
@@ -52,7 +52,7 @@ object GuildConfigRepository {
                 .bind("$4", guildConfig.focusPolicy.id)
                 .bind("$5", guildConfig.hintPolicy.id)
                 .bind("$6", guildConfig.markPolicy.id)
-                .bind("$7", guildConfig.sweepPolicy.id)
+                .bind("$7", guildConfig.swapPolicy.id)
                 .bind("$8", guildConfig.archivePolicy.id)
                 .execute()
             }

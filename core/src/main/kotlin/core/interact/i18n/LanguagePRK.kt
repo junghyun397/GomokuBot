@@ -150,18 +150,18 @@ class LanguagePRK : LanguageKOR() {
     override fun focusSelectFallowingDescription() =
         "항상 마지막 수를 가운데 둡니다."
 
-    // ### 2-3-3. SWEEP
+    // ### 2-3-3. SWAP
 
-    override fun sweepEmbedTitle() = "GomokuBot / 청소"
-    override fun sweepEmbedDescription() =
+    override fun swapEmbedTitle() = "GomokuBot / 청소"
+    override fun swapEmbedDescription() =
         "GomokuBot은 백두대간의 먼지만큼 통보를 보내오. GomokuBot이 보낸 통보를 어떻게 처리할지 정하시오."
 
-    override fun sweepSelectRelay() = "숙청"
-    override fun sweepSelectRelayDescription() =
+    override fun swapSelectRelay() = "숙청"
+    override fun swapSelectRelayDescription() =
         "다음 수를 놓을 때 이전에 보낸 통보를 모두 삭제합니다."
 
-    override fun sweepSelectLeave() = "놓아두기"
-    override fun sweepSelectLeaveDescription() =
+    override fun swapSelectArchive() = "놓아두기"
+    override fun swapSelectArchiveDescription() =
         "그 어떤 통보도 삭제하지 않습니다."
 
     // ### 2-3-4. ARCHIVE

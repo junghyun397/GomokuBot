@@ -41,7 +41,7 @@ object DatabaseManager {
                             language smallint NOT NULL,
                             board_style smallint NOT NULL,
                             focus_policy smallint NOT NULL,
-                            sweep_policy smallint NOT NULL,
+                            swap_policy smallint NOT NULL,
                             archive_policy smallint NOT NULL,
                             hint_policy smallint NOT NULL,
                             mark_policy smallint NOT NULL,
