@@ -40,20 +40,20 @@ class LanguagePRK : LanguageKOR() {
 
     // ### 1-1-3. HELP:COMMAND (EMBED)
 
-    override fun helpCommandEmbedTitle() = "GomokuBot / 시킴말"
-    override fun helpCommandEmbedHelp() = "도움말을 알아보오."
-    override fun helpCommandEmbedRank() = "1위부터 10위까지의 순위를 알아보오."
-    override fun helpCommandEmbedRating() = "``GomokuBot ELO`` 레이팅을 알아보오."
+    override fun commandUsageEmbedTitle() = "GomokuBot / 시킴말"
+    override fun commandUsageHelp() = "도움말을 알아보오."
+    override fun commandUsageRankGlobal() = "1위부터 10위까지의 순위를 알아보오."
+    override fun commandUsageRating() = "``GomokuBot ELO`` 레이팅을 알아보오."
 
-    override fun helpCommandEmbedLang(langList: String) =
+    override fun commandUsageLang(langList: String) =
         "이 봉사기에서 쓰이는 말씨 설정을 바꾸오. Ex) ``/lang`` ``ENG``"
-    override fun helpCommandEmbedStyle() =
+    override fun commandUsageStyle() =
         "이 봉사기에서 쓰이는 오목판 꼴을 바꾸오. Ex) ``/스타일`` ``A``"
 
-    override fun helpCommandEmbedStartPVE() = "콤퓨타와 함께 새 놀음을 시작하오."
-    override fun helpCommandEmbedStartPVP() =
+    override fun commandUsageStartPVE() = "콤퓨타와 함께 새 놀음을 시작하오."
+    override fun commandUsageStartPVP() =
         "멘션 된 인민에게 새 놀음을 제안하오. Ex) ``/시작`` ``@유저``"
-    override fun helpCommandEmbedResign() = "진행 중인 놀음을 포기하오."
+    override fun commandUsageResign() = "진행 중인 놀음을 포기하오."
 
     // ## 1-2. RANK
 
@@ -129,8 +129,8 @@ class LanguagePRK : LanguageKOR() {
     override fun styleSelectText() = "글뭉치"
     override fun styleSelectTextDescription() = "오목 판을 글뭉치로 표시합니다. 가장 단순하지만 가장 빠릅니다."
 
-    override fun styleSelectSolidText() = "점박이 글뭉치"
-    override fun styleSelectSolidTextDescription() = "글뭉치와 거의 같습니다. 다만 빈 자리에 공백이 아닌 점을 표시합니다."
+    override fun styleSelectDottedText() = "점박이 글뭉치"
+    override fun styleSelectDottedTextDescription() = "글뭉치와 거의 같습니다. 다만 빈 자리에 공백이 아닌 점을 표시합니다."
 
     override fun styleSelectUnicodeText() = "만능부호"
     override fun styleSelectUnicodeTextDescription() =

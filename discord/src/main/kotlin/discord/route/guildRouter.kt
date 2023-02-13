@@ -14,9 +14,9 @@ import core.interact.reports.ServerLeaveReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import discord.assets.DISCORD_PLATFORM_ID
+import discord.assets.abbreviation
 import discord.assets.extractId
 import discord.assets.extractProfile
-import discord.assets.getEventAbbreviation
 import discord.interact.GuildManager
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.MessageCreateAdaptor
@@ -73,7 +73,7 @@ fun guildJoinRouter(bot: BotContext, event: GuildJoinEvent): Mono<ServerJoinRepo
             }
         }?.isDefined
 
-        ServerJoinReport(commandInserted, helpSent, event.guild.locale.languageName, config.language, guild, getEventAbbreviation(GuildJoinEvent::class), emittedTime)
+        ServerJoinReport(commandInserted, helpSent, event.guild.locale.languageName, config.language, guild, event.abbreviation(), emittedTime)
     }
 
 fun guildLeaveRouter(bot: BotContext, event: GuildLeaveEvent): Mono<InteractionReport> =
@@ -83,7 +83,7 @@ fun guildLeaveRouter(bot: BotContext, event: GuildLeaveEvent): Mono<InteractionR
         val maybeGuild = GuildProfileRepository.retrieveGuild(bot.dbConnection, DISCORD_PLATFORM_ID, event.guild.extractId())
 
         maybeGuild.fold(
-            onDefined = { guild -> ServerLeaveReport(guild, getEventAbbreviation(GuildLeaveEvent::class), emittedTime) },
-            onEmpty = { ErrorReport(IllegalStateException(), event.guild.extractProfile(), getEventAbbreviation(GuildLeaveEvent::class), emittedTime) }
+            onDefined = { guild -> ServerLeaveReport(guild, event.abbreviation(), emittedTime) },
+            onEmpty = { ErrorReport(IllegalStateException(), event.guild.extractProfile(), event.abbreviation(), emittedTime) }
         )
     }

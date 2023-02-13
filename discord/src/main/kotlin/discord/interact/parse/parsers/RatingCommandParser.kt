@@ -6,6 +6,7 @@ import core.interact.parse.NamedParser
 import core.interact.parse.asParseFailure
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
+import discord.assets.COMMAND_PREFIX
 import discord.interact.InteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.DiscordParseFailure
@@ -19,6 +20,15 @@ import utils.structs.map
 object RatingCommandParser : NamedParser, ParsableCommand, BuildableCommand {
 
     override val name = "rating"
+
+    override fun getLocalizedName(container: LanguageContainer) = container.ratingCommand()
+
+    override fun getLocalizedUsages(container: LanguageContainer) = listOf(
+        BuildableCommand.Usage(
+            usage = "``/${container.ratingCommand()}`` or ``$COMMAND_PREFIX${container.ratingCommand()}``",
+            description = container.commandUsageRating()
+        ),
+    )
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("not yet implemented", context.guild, context.user) { producer, publisher, container ->

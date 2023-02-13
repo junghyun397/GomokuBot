@@ -14,6 +14,7 @@ import core.session.SweepPolicy
 import core.session.entities.*
 import utils.assets.LinuxTime
 import utils.lang.pair
+import utils.lang.shift
 import utils.structs.*
 
 fun <A, B> buildAppendGameMessageProcedure(
@@ -51,14 +52,10 @@ fun <A, B> buildBoardProcedure(
         FocusPolicy.FALLOWING -> FocusSolver.resolveCenter(session.board, producer.focusRange)
     }
 
-    val boardMessageIO = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, session)
-
-    val buttonBoardIO = if (session.board.winner().isEmpty)
-        producer.attachFocusButtons(boardMessageIO, session, focusInfo)
-    else
-        boardMessageIO
-
-    return buttonBoardIO
+    return  producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, config.markPolicy, session)
+        .shift(session.board.winner().isEmpty) { io ->
+            producer.attachFocusButtons(io, session, focusInfo)
+        }
         .retrieve()
         .flatMapOption { message ->
             SessionManager.addNavigation(bot.sessions, message.messageRef, BoardNavigationState(focusInfo.focus.idx(), focusInfo, session.expireDate))
@@ -91,7 +88,7 @@ fun <A, B> buildFinishProcedure(
     config: GuildConfig,
     session: GameSession,
     thenSession: GameSession
-): IO<List<Order>> = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, thenSession)
+): IO<List<Order>> = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, config.markPolicy, thenSession)
     .retrieve()
     .flatMap { maybeMessage -> buildSweepProcedure(bot, config, session).map { maybeMessage pair it } }
     .map { (maybeMessage, originalOrder) ->

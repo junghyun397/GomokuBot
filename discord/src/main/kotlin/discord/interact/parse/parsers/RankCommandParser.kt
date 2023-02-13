@@ -10,6 +10,7 @@ import core.interact.parse.asParseFailure
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
 import dev.minn.jda.ktx.interactions.commands.subcommand
+import discord.assets.COMMAND_PREFIX
 import discord.assets.DISCORD_PLATFORM_ID
 import discord.assets.extractId
 import discord.interact.InteractionContext
@@ -24,6 +25,23 @@ import utils.structs.*
 object RankCommandParser : NamedParser, ParsableCommand, BuildableCommand {
 
     override val name = "rank"
+
+    override fun getLocalizedName(container: LanguageContainer) = container.rankCommand()
+
+    override fun getLocalizedUsages(container: LanguageContainer) = listOf(
+        BuildableCommand.Usage(
+            usage = "``/${container.rankCommand()} ${container.rankCommandSubGlobal()}`` or ``$COMMAND_PREFIX${container.rankCommand()}``",
+            description = container.commandUsageRankGlobal()
+        ),
+        BuildableCommand.Usage(
+            usage = "``/${container.rankCommand()} ${container.rankCommandSubServer()}`` or ``$COMMAND_PREFIX${container.rankCommand()} ${container.rankCommandSubServer()}``",
+            description = container.commandUsageRankServer()
+        ),
+        BuildableCommand.Usage(
+            usage = "``/${container.rankCommand()} ${container.rankCommandSubUser()} @mention`` or ``$COMMAND_PREFIX${container.rankCommand()} ${container.rankCommandSubUser()} @mention``",
+            description = container.commandUsageRankUser()
+        ),
+    )
 
     private suspend fun parseUserRank(context: InteractionContext<*>, maybeTarget: Option<net.dv8tion.jda.api.entities.User>): Either<Command, DiscordParseFailure> =
         maybeTarget

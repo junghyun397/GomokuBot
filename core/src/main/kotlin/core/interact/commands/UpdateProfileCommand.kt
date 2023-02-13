@@ -8,6 +8,7 @@ import core.database.repositories.GuildProfileRepository
 import core.database.repositories.UserProfileRepository
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
+import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
 import utils.lang.pair
 import utils.structs.Option
@@ -20,7 +21,7 @@ class UpdateProfileCommand(
     private val newGuild: Option<Guild>,
 ) : Command {
 
-    override val name = "update-profile+"
+    override val name = "update-profile"
 
     override val responseFlag = this.command.responseFlag
 
@@ -48,7 +49,7 @@ class UpdateProfileCommand(
         this.command
             .execute(bot, config, thenGuild, thenUser, producer, messageRef, publishers)
             .map { (originalIO, originalReport) ->
-                originalIO pair originalReport.copy(guild = thenGuild, user = thenUser, commandName = "$name${originalReport.commandName}")
+                originalIO pair originalReport + this.asCommandReport("succeed", guild, user)
             }
             .getOrThrow()
     }

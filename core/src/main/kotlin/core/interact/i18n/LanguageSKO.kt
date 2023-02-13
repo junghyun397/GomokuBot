@@ -15,13 +15,13 @@ class LanguageSKO : LanguageKOR() {
     override fun helpAboutEmbedVersion() = "版"
     override fun helpAboutEmbedSupport() = "支援手段"
 
-    override fun helpCommandEmbedTitle() = "GomokuBot / 命令語"
-    override fun helpCommandEmbedHelp() = "`~help` 助言을告知해드립니다."
-    override fun helpCommandEmbedLang(langList: String) =
+    override fun commandUsageEmbedTitle() = "GomokuBot / 命令語"
+    override fun commandUsageHelp() = "`~help` 助言을告知해드립니다."
+    override fun commandUsageLang(langList: String) =
         "`~lang` $langList 此奉仕機에서使用되는言語設定을改變합니다. Ex) `~lang` `ENG`"
-    override fun helpCommandEmbedStartPVE() = "`~start` 人工知能와의遊戱을開始합니다."
-    override fun helpCommandEmbedStartPVP() = "`~start` `@言及` 言及된遊戱者와의遊戱을開始합니다. Ex) `~start` `@player`"
-    override fun helpCommandEmbedResign() = "`~resign` 現在進行하고있는遊戱을抛棄합니다."
+    override fun commandUsageStartPVE() = "`~start` 人工知能와의遊戱을開始합니다."
+    override fun commandUsageStartPVP() = "`~start` `@言及` 言及된遊戱者와의遊戱을開始합니다. Ex) `~start` `@player`"
+    override fun commandUsageResign() = "`~resign` 現在進行하고있는遊戱을抛棄합니다."
 
     override fun rankEmbedTitle() = "GomokuBot / 順位"
     override fun rankEmbedDescription() = "一位부터十位까지의順位입니다. :D"

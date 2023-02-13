@@ -91,7 +91,7 @@ suspend fun GameRecord.asGameSession(repo: SessionRepository, owner: User): Game
             AiGameSession(
                 aiLevel = aiLevel!!,
                 solution = Option.Empty,
-                kvineToken = Token(""),
+                resRenjuToken = Token(""),
                 owner = owner,
                 ownerHasBlack = ownerHasBlack,
                 board = board,

@@ -44,6 +44,7 @@ object DatabaseManager {
                             sweep_policy smallint NOT NULL,
                             archive_policy smallint NOT NULL,
                             hint_policy smallint NOT NULL,
+                            mark_policy smallint NOT NULL,
                             FOREIGN KEY (guild_id) REFERENCES guild_profile (guild_id)
                         );
                         

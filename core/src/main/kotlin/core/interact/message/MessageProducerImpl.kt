@@ -2,7 +2,6 @@ package core.interact.message
 
 import core.assets.*
 import core.inference.FocusSolver
-import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.session.entities.GameSession
 import kotlinx.coroutines.flow.flowOf
@@ -100,13 +99,6 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
         publisher sends container.rankErrorNotFound()
 
     // LANG
-
-    protected val languageList =
-        buildString {
-            Language.values().forEach { language ->
-                append(" ``${language.container.languageCode()}``")
-            }
-        }
 
     override fun produceLanguageNotFound(publisher: MessagePublisher<A, B>) =
         publisher sends "There is an error in the Language Code. Please select from the list below."

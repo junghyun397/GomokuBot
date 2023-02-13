@@ -5,6 +5,7 @@ import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.NamedParser
 import dev.minn.jda.ktx.interactions.commands.slash
+import discord.assets.COMMAND_PREFIX
 import discord.interact.InteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.ParsableCommand
@@ -16,6 +17,15 @@ import utils.structs.Either
 object HelpCommandParser : NamedParser, ParsableCommand, BuildableCommand {
 
     override val name = "help"
+
+    override fun getLocalizedName(container: LanguageContainer) = container.helpCommand()
+
+    override fun getLocalizedUsages(container: LanguageContainer) = listOf(
+        BuildableCommand.Usage(
+            usage = "``/${container.helpCommand()}`` or ``$COMMAND_PREFIX${container.helpCommand()}``",
+            description = container.commandUsageHelp()
+        )
+    )
 
     private fun checkCrossLanguageCommand(container: LanguageContainer, command: String) =
         container.helpCommand() != command

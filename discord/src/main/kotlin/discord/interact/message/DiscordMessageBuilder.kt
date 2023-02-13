@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.requests.FluentRestAction
 import net.dv8tion.jda.api.utils.FileUpload
 import net.dv8tion.jda.api.utils.messages.MessageCreateRequest
 import net.dv8tion.jda.api.utils.messages.MessageEditRequest
+import utils.lang.shift
 import utils.structs.IO
 import utils.structs.Option
 import java.io.InputStream
@@ -74,21 +75,10 @@ abstract class MessageEditRequestMixin<T : MessageEditRequest<T>>(
     protected open val components: DiscordComponents = emptyList()
 ) {
 
-    protected fun applyAttachments(): T {
-        val fileAttached = if (this.files.isNotEmpty()) {
-            this.original.setFiles(this.files)
-        } else {
-            this.original
-        }
-
-        val componentsAttached = if (this.components.isNotEmpty()) {
-            fileAttached.setComponents(this.components)
-        } else {
-            fileAttached
-        }
-
-        return componentsAttached
-    }
+    protected fun applyAttachments(): T =
+        this.original
+            .shift(this.files.isNotEmpty()) { it.setFiles(this.files) }
+            .shift(this.components.isNotEmpty()) { it.setComponents(this.components) }
 
 }
 

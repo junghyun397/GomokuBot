@@ -51,19 +51,21 @@ sealed interface LanguageContainer {
 
     // ### 1-1-3. HELP:COMMAND (EMBED)
 
-    fun helpCommandEmbedTitle(): String
+    fun commandUsageEmbedTitle(): String
 
-    fun helpCommandEmbedHelp(): String
-    fun helpCommandEmbedSettings(): String
-    fun helpCommandEmbedRank(): String
-    fun helpCommandEmbedRating(): String
+    fun commandUsageHelp(): String
+    fun commandUsageSettings(): String
+    fun commandUsageRankGlobal(): String
+    fun commandUsageRankServer(): String
+    fun commandUsageRankUser(): String
+    fun commandUsageRating(): String
 
-    fun helpCommandEmbedLang(langList: String): String
-    fun helpCommandEmbedStyle(): String
+    fun commandUsageLang(langList: String): String
+    fun commandUsageStyle(): String
 
-    fun helpCommandEmbedStartPVE(): String
-    fun helpCommandEmbedStartPVP(): String
-    fun helpCommandEmbedResign(): String
+    fun commandUsageStartPVE(): String
+    fun commandUsageStartPVP(): String
+    fun commandUsageResign(): String
 
     // ## 1-2. RANK
 
@@ -156,8 +158,8 @@ sealed interface LanguageContainer {
     fun styleSelectText(): String
     fun styleSelectTextDescription(): String
 
-    fun styleSelectSolidText(): String
-    fun styleSelectSolidTextDescription(): String
+    fun styleSelectDottedText(): String
+    fun styleSelectDottedTextDescription(): String
 
     fun styleSelectUnicodeText(): String
     fun styleSelectUnicodeTextDescription(): String
@@ -187,6 +189,22 @@ sealed interface LanguageContainer {
 
     fun hintSelectOff(): String
     fun hintSelectOffDescription(): String
+
+    // ### MARK
+
+    fun mark(): String
+
+    fun markEmbedTitle(): String
+    fun markEmbedDescription(): String
+
+    fun markSelectLast(): String
+    fun markSelectLastDescription(): String
+
+    fun markSelectRecent(): String
+    fun markSelectRecentDescription(): String
+
+    fun markSelectSequence(): String
+    fun markSelectSequenceDescription(): String
 
     // ### 2-3-3. SWEEP
 

@@ -6,9 +6,9 @@ import core.interact.commands.ResponseFlag
 import core.interact.message.AdaptivePublisherSet
 import core.interact.reports.ErrorReport
 import core.interact.reports.InteractionReport
+import discord.assets.abbreviation
 import discord.assets.editMessageByMessageRef
 import discord.assets.extractMessageRef
-import discord.assets.getEventAbbreviation
 import discord.interact.InteractionContext
 import discord.interact.message.*
 import discord.interact.parse.EmbeddableCommand
@@ -103,7 +103,7 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
                     ErrorReport(throwable, context.guild)
                 }
             ).apply {
-                interactionSource = getEventAbbreviation(context.event::class)
+                interactionSource = context.event.abbreviation()
                 emittedTime = context.emittedTime
                 apiTime = LinuxTime.now()
             }

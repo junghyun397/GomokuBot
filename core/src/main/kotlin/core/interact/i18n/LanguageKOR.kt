@@ -45,21 +45,23 @@ open class LanguageKOR : LanguageENG() {
 
     // ### 1-1-3. HELP:COMMAND (EMBED)
 
-    override fun helpCommandEmbedTitle() = "GomokuBot / 명령어"
-    override fun helpCommandEmbedHelp() = "도움말을 알아봅니다."
-    override fun helpCommandEmbedSettings() = "설정 화면을 표시합니다."
-    override fun helpCommandEmbedRank() = "1위부터 10위까지의 순위를 알아봅니다."
-    override fun helpCommandEmbedRating() = "``GomokuBot ELO`` 레이팅을 알아봅니다."
+    override fun commandUsageEmbedTitle() = "GomokuBot / 명령어"
+    override fun commandUsageHelp() = "도움말을 알아봅니다."
+    override fun commandUsageSettings() = "설정 화면을 표시합니다."
+    override fun commandUsageRankGlobal() = "1위부터 10위까지의 GomokuBot 전체 순위를 알아봅니다."
+    override fun commandUsageRankServer() = "이 서버 안에서의 순위를 알아봅니다."
+    override fun commandUsageRankUser() = "멘션 된 유저 상대의 순위를 알아봅니다."
+    override fun commandUsageRating() = "``GomokuBot ELO`` 레이팅을 알아봅니다."
 
-    override fun helpCommandEmbedLang(langList: String) =
+    override fun commandUsageLang(langList: String) =
         "이 서버에서 쓰이는 언어 설정을 바꿉니다. Ex) ``/lang`` ``ENG``"
-    override fun helpCommandEmbedStyle() =
+    override fun commandUsageStyle() =
         "이 서버에서 쓰이는 오목판 모양을 바꿉니다. Ex) ``/스타일`` ``A``"
 
-    override fun helpCommandEmbedStartPVE() = "인공지능과 함께 새 게임을 시작합니다."
-    override fun helpCommandEmbedStartPVP() =
+    override fun commandUsageStartPVE() = "인공지능과 함께 새 게임을 시작합니다."
+    override fun commandUsageStartPVP() =
         "멘션 된 유저에게 새 게임을 제안합니다. Ex) ``/시작`` ``@유저``"
-    override fun helpCommandEmbedResign() = "진행 중인 게임을 포기합니다."
+    override fun commandUsageResign() = "진행 중인 게임을 포기합니다."
 
     // ## 1-2. RANK
 
@@ -148,8 +150,8 @@ open class LanguageKOR : LanguageENG() {
     override fun styleSelectText() = "텍스트"
     override fun styleSelectTextDescription() = "오목 판을 텍스트로 표시합니다. 가장 단순하지만 가장 빠릅니다."
 
-    override fun styleSelectSolidText() = "점박이 텍스트"
-    override fun styleSelectSolidTextDescription() = "텍스트와 거의 같습니다. 다만 빈 자리에 공백이 아닌 점을 표시합니다."
+    override fun styleSelectDottedText() = "점박이 텍스트"
+    override fun styleSelectDottedTextDescription() = "텍스트와 거의 같습니다. 다만 빈 자리에 공백이 아닌 점을 표시합니다."
 
     override fun styleSelectUnicodeText() = "유니코드"
     override fun styleSelectUnicodeTextDescription() =
@@ -167,7 +169,7 @@ open class LanguageKOR : LanguageENG() {
     override fun focusSelectIntelligenceDescription() =
         "GomokuBot 추론 엔진으로 가장 적절한 위치를 분석해 확대합니다."
 
-    override fun focusSelectFallowing() = "추종적"
+    override fun focusSelectFallowing() = "수동적"
     override fun focusSelectFallowingDescription() =
         "항상 마지막 수를 가운데 둡니다."
 
@@ -183,13 +185,33 @@ open class LanguageKOR : LanguageENG() {
     override fun hintSelectOff() = "꺼짐"
     override fun hintSelectOffDescription() = "그 어떤 자리도 강조하지 않습니다."
 
+    // ### MARK
+
+    override fun mark() = "표시"
+
+    override fun markEmbedTitle() = "Gomokubot / 표시"
+    override fun markEmbedDescription() =
+        "수많은 돌 사이에서 마지막으로 둔 위치를 기억하기는 쉬운 일이 아닙니다. GomokuBot이 마지막에 둔 돌을 어떻게 표시할지 정해주세요."
+
+    override fun markSelectLast() = "마지막 위치"
+    override fun markSelectLastDescription() =
+        "마지막에 둔 위치에 작은 점 하나를 찍습니다."
+
+    override fun markSelectRecent() = "마지막 차례"
+    override fun markSelectRecentDescription() =
+        "상대가 마지막에 둔 위치에 작은 점을, 자신이 마지막에 둔 위치에 얇은 십자를 표시합니다."
+
+    override fun markSelectSequence() = "순서"
+    override fun markSelectSequenceDescription() =
+        "돌을 놓은 순서를 모두 표시합니다."
+
     // ### 2-3-3. SWEEP
 
     override fun sweep() = "청소"
 
     override fun sweepEmbedTitle() = "GomokuBot / 청소"
     override fun sweepEmbedDescription() =
-        "GomokuBot은 아주, 아주 많은 양의 메시지를 보냅니다. GomokuBot이 보낸 메시지를 어떻게 처리할지 정해주세요."
+        "GomokuBot은 정말 많은 양의 메시지를 보냅니다. GomokuBot이 보낸 메시지를 어떻게 처리할지 정해주세요."
 
     override fun sweepSelectRelay() = "이어가기"
     override fun sweepSelectRelayDescription() =

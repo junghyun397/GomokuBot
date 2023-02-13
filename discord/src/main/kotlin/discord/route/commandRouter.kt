@@ -2,12 +2,10 @@
 
 package discord.route
 
+import core.assets.GuildUid
 import core.assets.VOID_MESSAGE_REF
 import core.database.repositories.AnnounceRepository
-import core.interact.commands.AnnounceCommand
-import core.interact.commands.Command
-import core.interact.commands.ResponseFlag
-import core.interact.commands.UpdateProfileCommand
+import core.interact.commands.*
 import core.interact.i18n.LanguageContainer
 import core.interact.message.AdaptivePublisherSet
 import core.interact.message.MonoPublisherSet
@@ -30,6 +28,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import reactor.core.publisher.Mono
 import utils.assets.LinuxTime
+import utils.lang.shift
 import utils.structs.*
 import java.util.concurrent.TimeUnit
 
@@ -59,10 +58,8 @@ private fun buildPermissionNode(context: InteractionContext<*>, parsableCommand:
     )
 
 private fun <T : Event> buildAnnounceNode(context: InteractionContext<T>, command: Command): Command =
-    when {
-        (context.user.announceId ?: -1) < (AnnounceRepository.getLatestAnnounceId(context.bot.dbConnection) ?: -1) ->
-            AnnounceCommand(command)
-        else -> command
+    command.shift((context.user.announceId ?: -1) < (AnnounceRepository.getLatestAnnounceId(context.bot.dbConnection) ?: -1)) {
+        AnnounceCommand(command)
     }
 
 private fun <T : Event> buildUpdateProfileNode(context: InteractionContext<T>, command: Command, jdaUser: User): Command {
@@ -72,10 +69,25 @@ private fun <T : Event> buildUpdateProfileNode(context: InteractionContext<T>, c
     val thenUser = Option.cond(user != context.user) { user }
     val thenGuild = Option.cond(guild != context.guild) { guild }
 
-    return when {
-        thenUser.isDefined || thenGuild.isDefined -> UpdateProfileCommand(command, thenUser, thenGuild)
-        else -> command
+    return command.shift(thenUser.isDefined || thenGuild.isDefined) {
+        UpdateProfileCommand(command, thenUser, thenGuild)
     }
+}
+
+private val commandCheckedSet = mutableSetOf<GuildUid>()
+
+private suspend fun <T : Event> buildUpdateCommandsNote(context: InteractionContext<T>, command: Command): Command {
+    if (commandCheckedSet.contains(context.guild.id))
+        return command
+
+    commandCheckedSet.add(context.guild.id)
+    
+    val (deprecated, added) = GuildManager.fetchDeprecatedCommandCount(context.jdaGuild, context.config.language.container)
+    
+    if (deprecated + added < 1)
+        return command
+
+    return UpdateCommandsCommand(command, deprecated, added)
 }
 
 private fun matchCommand(command: String, container: LanguageContainer): Option<ParsableCommand> =
@@ -107,6 +119,9 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
                     }
                     .mapLeft { command ->
                         buildUpdateProfileNode(context, command, context.event.user)
+                    }
+                    .mapLeft { command ->
+                        buildUpdateCommandsNote(context, command)
                     }
             }
     }
@@ -166,7 +181,7 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
                     ErrorReport(throwable, context.guild)
                 }
             ).apply {
-                interactionSource = getEventAbbreviation(context.event::class)
+                interactionSource = context.event.abbreviation()
                 emittedTime = context.emittedTime
             }
         } }
@@ -199,6 +214,9 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<I
                     }
                     .mapLeft { command ->
                         buildUpdateProfileNode(context, command, context.event.author)
+                    }
+                    .mapLeft { command ->
+                        buildUpdateCommandsNote(context, command)
                     }
             }
     }
@@ -244,7 +262,7 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<I
                     ErrorReport(throwable, context.guild)
                 }
             ).apply {
-                interactionSource = getEventAbbreviation(context.event::class)
+                interactionSource = context.event.abbreviation()
                 emittedTime = context.emittedTime
                 apiTime = LinuxTime.now()
             }

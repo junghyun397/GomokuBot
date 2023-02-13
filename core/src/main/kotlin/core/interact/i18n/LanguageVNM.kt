@@ -16,15 +16,15 @@ class LanguageVNM : LanguageENG() {
     override fun helpAboutEmbedSupport() = "Kênh hỗ trợ"
     override fun helpAboutEmbedInvite() = "Link mời"
 
-    override fun helpCommandEmbedTitle() = "GomokuBot / Dòng lệnh"
-    override fun helpCommandEmbedHelp() = "`~help` Xin trợ giúp"
-    override fun helpCommandEmbedRank() = "`~rank` Hiện bảng xếp hạng TOP 10 người chơi xuất sắc"
-    override fun helpCommandEmbedLang(langList: String) =
+    override fun commandUsageEmbedTitle() = "GomokuBot / Dòng lệnh"
+    override fun commandUsageHelp() = "`~help` Xin trợ giúp"
+    override fun commandUsageRankGlobal() = "`~rank` Hiện bảng xếp hạng TOP 10 người chơi xuất sắc"
+    override fun commandUsageLang(langList: String) =
         "`~lang` $langList Thay đổi ngôn ngữ khi giao tiếp với bot. VD) `~lang` `ENG`"
-    override fun helpCommandEmbedStyle() = "`~skin` `A` `B` `C` Thay đổi skin của bot khi đánh. VD) `~skin` `A`"
-    override fun helpCommandEmbedStartPVE() = "`~start` Đánh với máy."
-    override fun helpCommandEmbedStartPVP() = "`~start` `@mention` Hai người chơi. VD) `~start` `@player`"
-    override fun helpCommandEmbedResign() = "`~resign` Dừng ván đang chơi."
+    override fun commandUsageStyle() = "`~skin` `A` `B` `C` Thay đổi skin của bot khi đánh. VD) `~skin` `A`"
+    override fun commandUsageStartPVE() = "`~start` Đánh với máy."
+    override fun commandUsageStartPVP() = "`~start` `@mention` Hai người chơi. VD) `~start` `@player`"
+    override fun commandUsageResign() = "`~resign` Dừng ván đang chơi."
 
     override fun styleEmbedTitle() = "GomokuBot / Skin"
     override fun styleEmbedDescription() =

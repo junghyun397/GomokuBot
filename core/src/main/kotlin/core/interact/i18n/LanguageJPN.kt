@@ -15,13 +15,13 @@ class LanguageJPN : LanguageENG() {
     override fun helpAboutEmbedVersion() = "バージョン"
     override fun helpAboutEmbedSupport() = "サポートチャンネル"
 
-    override fun helpCommandEmbedTitle() = "GomokuBot / コマンド"
-    override fun helpCommandEmbedHelp() = "`~help` ヘルプを案内します。"
-    override fun helpCommandEmbedLang(langList: String) =
+    override fun commandUsageEmbedTitle() = "GomokuBot / コマンド"
+    override fun commandUsageHelp() = "`~help` ヘルプを案内します。"
+    override fun commandUsageLang(langList: String) =
         "`~lang` $langList このサーバーで使われる言語設定を変更します。Ex) `~lang` `ENG`"
-    override fun helpCommandEmbedStartPVE() = "`~start` A.Iとゲームを開始します。"
-    override fun helpCommandEmbedStartPVP() = "`~start` `@言及` 言及されたプレーヤーとゲームを開始します。 Ex) `~start` `@player`"
-    override fun helpCommandEmbedResign() = "`~resign` 現在進行中のゲームを諦めます。"
+    override fun commandUsageStartPVE() = "`~start` A.Iとゲームを開始します。"
+    override fun commandUsageStartPVP() = "`~start` `@言及` 言及されたプレーヤーとゲームを開始します。 Ex) `~start` `@player`"
+    override fun commandUsageResign() = "`~resign` 現在進行中のゲームを諦めます。"
 
     override fun rankEmbedTitle() = "GomokuBot / ランキング"
     override fun rankEmbedDescription() = "1位から10位までのランキングです。"

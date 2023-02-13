@@ -9,13 +9,14 @@ import core.database.repositories.UserProfileRepository
 import core.interact.i18n.Language
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
+import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
 import utils.lang.pair
 import utils.structs.flatMap
 
 class AnnounceCommand(private val command: Command) : Command {
 
-    override val name = "announce+"
+    override val name = "announce"
 
     override val responseFlag = this.command.responseFlag
 
@@ -45,7 +46,7 @@ class AnnounceCommand(private val command: Command) : Command {
         this.command
             .execute(bot, config, guild, user, producer, messageRef, publishers)
             .map { (originalIO, originalReport) ->
-                io.flatMap { originalIO } pair originalReport.copy(commandName = "$name${originalReport.commandName}")
+                io.flatMap { originalIO } pair originalReport + this.asCommandReport("succeed", guild, user)
             }
             .getOrThrow()
     }

@@ -170,7 +170,7 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
                     }
 
                 when (historyRenderType) {
-                    HistoryRenderType.NUMBER -> {
+                    HistoryRenderType.SEQUENCE -> {
                         setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
 
                         val historyFont = Font(HISTORY_FONT, Font.TRUETYPE_FONT, HISTORY_FONT_SIZE)
@@ -206,7 +206,7 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
                                 )
                             }
 
-                        if (historyRenderType == HistoryRenderType.CROSS) {
+                        if (historyRenderType == HistoryRenderType.RECENT) {
                             history.getOrNull(history.lastIndex - 1)?.also { pos ->
                                 val boardPos = pos.asBoardPos()
 
@@ -246,7 +246,7 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
 
             history.forEachIndexed { index, pos ->
                 board = board.makeMove(pos)
-                writeFrame(AwtImage(renderBufferedImage(board, history.subList(0, index + 1), HistoryRenderType.NUMBER)).toImmutableImage())
+                writeFrame(AwtImage(renderBufferedImage(board, history.subList(0, index + 1), HistoryRenderType.SEQUENCE)).toImmutableImage())
             }
 
             close()

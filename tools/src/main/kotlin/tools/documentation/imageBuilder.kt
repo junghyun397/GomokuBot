@@ -17,7 +17,7 @@ fun generateImage(boardSource: String, lastMove: String, fName: String, fPath: S
     val inputStream = ImageBoardRenderer.renderInputStream(
         board,
         emptyList(),
-        if (lastMove == "null") HistoryRenderType.NONE else HistoryRenderType.NUMBER,
+        if (lastMove == "null") HistoryRenderType.LAST else HistoryRenderType.SEQUENCE,
         enableForbiddenPoints
     )
 

@@ -6,6 +6,7 @@ import core.database.entities.UserStats
 import core.inference.FocusSolver
 import core.interact.i18n.LanguageContainer
 import core.interact.message.graphics.BoardRenderer
+import core.interact.message.graphics.HistoryRenderType
 import core.session.GameResult
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
@@ -26,7 +27,7 @@ interface MessageProducer<A, B> {
 
     fun generateFocusedButtons(focusedFields: FocusedFields): B
 
-    fun produceBoard(publisher: MessagePublisher<A, B>, container: LanguageContainer, renderer: BoardRenderer, session: GameSession): MessageBuilder<A, B>
+    fun produceBoard(publisher: MessagePublisher<A, B>, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession): MessageBuilder<A, B>
 
     fun produceSessionArchive(publisher: MessagePublisher<A, B>, session: GameSession, result: Option<GameResult>, animate: Boolean): MessageBuilder<A, B>
 

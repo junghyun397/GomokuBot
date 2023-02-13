@@ -10,7 +10,7 @@ import core.database.DatabaseManager
 import core.database.LocalCaches
 import core.database.repositories.GuildProfileRepository
 import core.database.repositories.UserProfileRepository
-import core.inference.KvineClient
+import core.inference.ResRenjuClient
 import core.interact.reports.ErrorReport
 import core.interact.reports.InteractionReport
 import core.session.SessionManager
@@ -54,11 +54,11 @@ private data class PostgreSQLConfig(val serverURL: String) {
     }
 }
 
-private data class KvineConfig(val serverAddress: String, val serverPort: Int) {
+private data class ResRenjuConfig(val serverAddress: String, val serverPort: Int) {
     companion object {
-        fun fromEnv(): KvineConfig = KvineConfig(
-            serverAddress = System.getenv("GOMOKUBOT_KVINE_ADDRESS"),
-            serverPort = System.getenv("GOMOKUBOT_KVINE_PORT").toInt()
+        fun fromEnv(): ResRenjuConfig = ResRenjuConfig(
+            serverAddress = System.getenv("GOMOKUBOT_RESRENJU_ADDRESS"),
+            serverPort = System.getenv("GOMOKUBOT_RESRENJU_PORT").toInt()
         )
     }
 }
@@ -105,7 +105,7 @@ object GomokuBot {
         val botConfig = BotConfig()
 
         val postgresqlConfig = PostgreSQLConfig.fromEnv()
-        val kvineConfig = KvineConfig.fromEnv()
+        val resRenjuConfig = ResRenjuConfig.fromEnv()
 
         val discordConfig = DiscordConfigBuilder.fromEnv()
 
@@ -121,14 +121,14 @@ object GomokuBot {
 
         logger.info("postgresql database connected.")
 
-        val kvineClient = KvineClient
-            .connectionFrom(kvineConfig.serverAddress, kvineConfig.serverPort)
+        val resRenjuClient = ResRenjuClient
+            .connectionFrom(resRenjuConfig.serverAddress, resRenjuConfig.serverPort)
 
-        logger.info("kvine renju inference service connected.")
+        logger.info("resrenju renju inference service connected.")
 
         val sessionRepository = SessionRepository(dbConnection = dbConnection)
 
-        val botContext = BotContext(botConfig, dbConnection, kvineClient, sessionRepository)
+        val botContext = BotContext(botConfig, dbConnection, resRenjuClient, sessionRepository)
 
         val eventManager = ReactiveEventManager()
 

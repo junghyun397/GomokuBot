@@ -11,8 +11,8 @@ import core.session.entities.BoardNavigationState
 import core.session.entities.NavigationState
 import core.session.entities.PageNavigationState
 import dev.minn.jda.ktx.coroutines.await
+import discord.assets.abbreviation
 import discord.assets.extractMessageRef
-import discord.assets.getEventAbbreviation
 import discord.interact.GuildManager
 import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageProducer
@@ -86,7 +86,7 @@ fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mo
                         ErrorReport(throwable, context.guild)
                     }
                 ).apply {
-                    interactionSource = getEventAbbreviation(context.event::class)
+                    interactionSource = context.event.abbreviation()
                     emittedTime = context.emittedTime
                     apiTime = LinuxTime.now()
                 }

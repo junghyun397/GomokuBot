@@ -10,6 +10,7 @@ import core.session.GameResult
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.PvpGameSession
+import dev.minn.jda.ktx.coroutines.await
 import dev.minn.jda.ktx.interactions.commands.slash
 import dev.minn.jda.ktx.interactions.commands.updateCommands
 import discord.assets.JDAGuild
@@ -19,12 +20,15 @@ import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.DiscordMessagePublisher
 import discord.interact.message.MessageCreateAdaptor
 import discord.interact.parse.buildableCommands
+import discord.interact.parse.engBuildableCommands
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
 import net.dv8tion.jda.api.requests.RestAction
+import utils.lang.pair
+import utils.lang.shift
 import utils.structs.Option
 import utils.structs.getOrNull
 import utils.structs.map
@@ -56,6 +60,25 @@ object GuildManager {
             slash(Language.ENG.container.helpCommand(), Language.ENG.container.helpCommandDescription())
         }.queue()
     }
+
+    suspend fun fetchDeprecatedCommandCount(guild: JDAGuild, container: LanguageContainer): Pair<Int, Int> =
+        guild.retrieveCommands()
+            .map { commands ->
+                val localCommands = commands.toSet()
+
+                val serverCommands = buildableCommands
+                    .shift(container == Language.ENG.container) { engBuildableCommands }
+                    .map { it.getLocalizedName(container) pair it }
+
+                val deprecates = localCommands
+                    .count { command -> !serverCommands.any { (name, _) -> command.name == name } }
+
+                val adds = serverCommands
+                    .count { (name, _) -> !localCommands.any { command -> command.name == name } }
+
+                deprecates pair adds
+            }
+            .await()
 
     fun upsertCommands(guild: JDAGuild, container: LanguageContainer) {
         buildableCommands.fold(guild.updateCommands()) { action, command ->

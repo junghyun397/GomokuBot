@@ -74,7 +74,7 @@ class SetCommand(
                     io to this.asCommandReport("make move $pos", guild, user)
                 }
                 is AiGameSession -> {
-                    val nextSession = GameManager.makeAiMove(bot.kvineClient, thenSession)
+                    val nextSession = GameManager.makeAiMove(bot.resRenjuClient, thenSession)
 
                     nextSession.gameResult.fold(
                         onEmpty = {

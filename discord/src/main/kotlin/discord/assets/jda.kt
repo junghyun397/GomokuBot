@@ -19,7 +19,6 @@ import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.utils.messages.MessageEditData
 import utils.structs.Option
 import java.util.*
-import kotlin.reflect.KClass
 
 const val DISCORD_PLATFORM_ID: Short = 1
 
@@ -65,8 +64,8 @@ suspend fun <T> RestAction<T>.awaitOption(): Option<T> = this
     .map { Option.cond(it.isSuccess) { it.get() } }
     .await()
 
-fun <T : Event> getEventAbbreviation(source: KClass<T>): String =
-    when (source) {
+fun <T : Event> T.abbreviation(): String =
+    when (this::class) {
         SlashCommandInteractionEvent::class -> "SCIE"
         MessageReceivedEvent::class -> "MRE"
         ButtonInteractionEvent::class -> "BIE"

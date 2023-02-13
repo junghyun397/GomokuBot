@@ -16,9 +16,9 @@ import renju.protocol.Solution
 import java.io.Closeable
 import java.util.concurrent.TimeUnit
 
-class KvineClient(private val channel: ManagedChannel) : Closeable {
+class ResRenjuClient(private val channel: ManagedChannel) : Closeable {
 
-    private val kvineStub = InferenceGrpcKt
+    private val resRenjuStub = InferenceGrpcKt
         .InferenceCoroutineStub(this.channel)
         .withWaitForReady()
 
@@ -76,7 +76,7 @@ class KvineClient(private val channel: ManagedChannel) : Closeable {
             .setInitStatus(board.toProtoStatus())
             .build()
 
-        return this.kvineStub.begins(request).parseToken()
+        return this.resRenjuStub.begins(request).parseToken()
     }
 
     suspend fun update(token: Token, board: Board): Solution {
@@ -85,7 +85,7 @@ class KvineClient(private val channel: ManagedChannel) : Closeable {
             .setStatus(board.toProtoStatus())
             .build()
 
-        return this.kvineStub.update(request).parseSolution()
+        return this.resRenjuStub.update(request).parseSolution()
     }
 
     suspend fun report(token: Token, board: Board, gameResult: GameResult) {
@@ -95,7 +95,7 @@ class KvineClient(private val channel: ManagedChannel) : Closeable {
             .setResult(gameResult.toProtoResult())
             .build()
 
-        this.kvineStub.report(request)
+        this.resRenjuStub.report(request)
     }
 
     override fun close() {
@@ -104,8 +104,8 @@ class KvineClient(private val channel: ManagedChannel) : Closeable {
 
     companion object {
 
-        fun connectionFrom(serverAddress: String, serverPort: Int): KvineClient =
-            KvineClient(
+        fun connectionFrom(serverAddress: String, serverPort: Int): ResRenjuClient =
+            ResRenjuClient(
                 ManagedChannelBuilder
                     .forAddress(serverAddress, serverPort)
                     .build()

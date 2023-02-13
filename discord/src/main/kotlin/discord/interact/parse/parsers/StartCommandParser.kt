@@ -14,6 +14,7 @@ import core.session.SweepPolicy
 import dev.minn.jda.ktx.coroutines.await
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
+import discord.assets.COMMAND_PREFIX
 import discord.assets.DISCORD_PLATFORM_ID
 import discord.assets.extractId
 import discord.assets.extractProfile
@@ -31,6 +32,19 @@ import utils.structs.*
 object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, BuildableCommand {
 
     override val name = "start"
+
+    override fun getLocalizedName(container: LanguageContainer) = container.startCommand()
+
+    override fun getLocalizedUsages(container: LanguageContainer) = listOf(
+        BuildableCommand.Usage(
+            usage = "``/${container.startCommand()}`` or ``$COMMAND_PREFIX${container.startCommand()}``",
+            description = container.commandUsageStartPVE()
+        ),
+        BuildableCommand.Usage(
+            usage = "``/${container.startCommand()} @mention`` or ``$COMMAND_PREFIX${container.startCommand()} @mention``",
+            description = container.commandUsageStartPVP()
+        ),
+    )
 
     private suspend fun lookupRequestSent(context: InteractionContext<*>, owner: User): Option<DiscordParseFailure> =
         SessionManager.retrieveRequestSessionByOwner(context.bot.sessions, context.guild, owner.id).asOption().map { session ->

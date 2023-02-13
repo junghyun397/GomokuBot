@@ -11,6 +11,7 @@ import core.interact.parse.asParseFailure
 import dev.minn.jda.ktx.interactions.commands.choice
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
+import discord.assets.COMMAND_PREFIX
 import discord.interact.InteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.DiscordParseFailure
@@ -25,6 +26,22 @@ import utils.structs.map
 object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
 
     override val name = "lang"
+
+    private val languageList =
+        buildString {
+            Language.values().forEach { language ->
+                append(" ``${language.container.languageCode()}``")
+            }
+        }
+
+    override fun getLocalizedName(container: LanguageContainer) = container.languageCommand()
+
+    override fun getLocalizedUsages(container: LanguageContainer) = listOf(
+        BuildableCommand.Usage(
+            usage = "``/${container.languageCommand()}`` or ``$COMMAND_PREFIX${container.languageCommand()}``",
+            description = container.commandUsageLang(this.languageList)
+        ),
+    )
 
     private fun matchLang(option: String): Language? =
         Language.values().firstOrNull { it.container.languageCode() == option }

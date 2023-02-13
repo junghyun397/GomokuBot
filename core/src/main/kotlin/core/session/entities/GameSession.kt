@@ -50,7 +50,7 @@ sealed interface GameSession : Expirable {
 data class AiGameSession(
     val aiLevel: AiLevel,
     val solution: Option<SolutionNode>,
-    val kvineToken: Token,
+    val resRenjuToken: Token,
     override val owner: User,
     override val ownerHasBlack: Boolean,
     override val board: Board,

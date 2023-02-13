@@ -2,6 +2,9 @@ package core.interact.reports
 
 abstract class AbstractInteractionReport : InteractionReport {
 
+    open operator fun plus(other: AbstractInteractionReport): AbstractInteractionReport =
+        UnionReport(listOf(this, other), guild, commandTime, interactionSource, emittedTime, apiTime)
+
     override fun toString(): String {
         val executionTime = this.emittedTime
             ?.let { emitted -> this.commandTime.timestamp - emitted.timestamp }

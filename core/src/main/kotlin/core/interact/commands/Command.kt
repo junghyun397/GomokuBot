@@ -7,7 +7,7 @@ import core.assets.User
 import core.interact.Order
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
-import core.interact.reports.CommandReport
+import core.interact.reports.AbstractInteractionReport
 import core.session.entities.GuildConfig
 import utils.structs.IO
 
@@ -25,6 +25,6 @@ sealed interface Command {
         producer: MessageProducer<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
-    ): Result<Pair<IO<List<Order>>, CommandReport>>
+    ): Result<Pair<IO<List<Order>>, AbstractInteractionReport>>
 
 }

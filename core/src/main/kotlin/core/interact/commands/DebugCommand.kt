@@ -88,7 +88,7 @@ class DebugCommand(
             val session = AiGameSession(
                 owner = user,
                 aiLevel = AiLevel.AMOEBA,
-                kvineToken = Token(""),
+                resRenjuToken = Token(""),
                 solution = Option.Empty,
                 ownerHasBlack = board.isNextColorBlack,
                 board = board,
@@ -164,7 +164,7 @@ class DebugCommand(
             val session = AiGameSession(
                 owner = user,
                 aiLevel = AiLevel.AMOEBA,
-                kvineToken = Token(""),
+                resRenjuToken = Token(""),
                 solution = Option.Empty,
                 ownerHasBlack = false,
                 board = vcfCase,

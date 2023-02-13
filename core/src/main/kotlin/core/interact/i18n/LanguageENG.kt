@@ -27,7 +27,7 @@ open class LanguageENG : LanguageContainer {
     override fun helpCommand() = "help"
     override fun helpCommandDescription() = "Get help."
 
-    override fun settingsCommand() = "setting"
+    override fun settingsCommand() = "settings"
     override fun settingsCommandDescription() = "Get settings panel."
 
     // ### 1-1-2. HELP:ABOUT (EMBED)
@@ -45,21 +45,23 @@ open class LanguageENG : LanguageContainer {
 
     // ### 1-1-3. HELP:COMMAND (EMBED)
 
-    override fun helpCommandEmbedTitle() = "GomokuBot / Command"
-    override fun helpCommandEmbedHelp() = "Get help."
-    override fun helpCommandEmbedSettings() = "Get settings panel."
-    override fun helpCommandEmbedRank() = "Get a ranking from 1st to 10th."
-    override fun helpCommandEmbedRating() = "Get ``GomokuBot ELO`` rating."
+    override fun commandUsageEmbedTitle() = "GomokuBot / Command"
+    override fun commandUsageHelp() = "Get help."
+    override fun commandUsageSettings() = "Get settings panel."
+    override fun commandUsageRankGlobal() = "Get the overall ranking of GomokuBot from 1st to 10th."
+    override fun commandUsageRankServer() = "Get the internal ranking of this server."
+    override fun commandUsageRankUser() = "Get a ranking of mentioned user's opponents."
+    override fun commandUsageRating() = "Get ``GomokuBot ELO`` rating."
 
-    override fun helpCommandEmbedLang(langList: String) =
+    override fun commandUsageLang(langList: String) =
         "Change the language setting used by this server. Ex) ``/lang`` ``ENG``"
-    override fun helpCommandEmbedStyle() =
+    override fun commandUsageStyle() =
         "Change the Gomoku Board style used by this server. Ex) ``/style`` ``A``"
 
-    override fun helpCommandEmbedStartPVE() = "Start a new game with AI."
-    override fun helpCommandEmbedStartPVP() =
+    override fun commandUsageStartPVE() = "Start a new game with AI."
+    override fun commandUsageStartPVP() =
         "Send a game request to the mentioned user. Ex) ``/start`` ``@user``"
-    override fun helpCommandEmbedResign() = "Resign from a game in progress."
+    override fun commandUsageResign() = "Resign from a game in progress."
 
     // ## 1-2. RANK
 
@@ -157,8 +159,8 @@ open class LanguageENG : LanguageContainer {
     override fun styleSelectText() = "Text"
     override fun styleSelectTextDescription() = "Render as a Monospaced Text. The fastest."
 
-    override fun styleSelectSolidText() = "Solid Text"
-    override fun styleSelectSolidTextDescription() = "Same as Text - but with dots instead of blanks."
+    override fun styleSelectDottedText() = "Solid Text"
+    override fun styleSelectDottedTextDescription() = "Same as Text - but with dots instead of blanks."
 
     override fun styleSelectUnicodeText() = "Unicode"
     override fun styleSelectUnicodeTextDescription() =
@@ -191,6 +193,26 @@ open class LanguageENG : LanguageContainer {
 
     override fun hintSelectOff() = "Off"
     override fun hintSelectOffDescription() = "Do not highlight any moves."
+
+    // ### MARK
+
+    override fun mark() = "Mark"
+
+    override fun markEmbedTitle() = "Gomokubot / Mark"
+    override fun markEmbedDescription() =
+        "It's not an easy task to memorize the last move among the many stones. Please set how Gomokubot display your last move. "
+
+    override fun markSelectLast() = "Last Move"
+    override fun markSelectLastDescription() =
+        "Draw a small dot where the opponent last moved."
+
+    override fun markSelectRecent() = "Recent Moves"
+    override fun markSelectRecentDescription() =
+        "Draw a small dot where the opponent last moved and thin cross at your last moved."
+
+    override fun markSelectSequence() = "Sequences"
+    override fun markSelectSequenceDescription() =
+        "Mark all the stones in the order in which they where moved."
 
     // ### 2-3-3. SWEEP
 

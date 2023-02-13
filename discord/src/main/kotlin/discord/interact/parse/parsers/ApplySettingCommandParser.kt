@@ -2,15 +2,13 @@ package discord.interact.parse.parsers
 
 import core.interact.commands.ApplySettingCommand
 import core.interact.commands.Command
-import core.session.*
+import core.interact.message.SettingMapping
 import discord.interact.InteractionContext
 import discord.interact.parse.EmbeddableCommand
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent
-import utils.lang.pair
 import utils.structs.Option
 import utils.structs.map
-import utils.structs.toOption
 
 object ApplySettingCommandParser : EmbeddableCommand {
 
@@ -20,33 +18,7 @@ object ApplySettingCommandParser : EmbeddableCommand {
             else -> context.event.componentId.split("-").drop(1)
         }
 
-        return runCatching { when (kind) {
-            BoardStyle::class.simpleName -> {
-                val style = BoardStyle.valueOf(choice)
-
-                style pair context.config.copy(boardStyle = style)
-            }
-            FocusPolicy::class.simpleName -> {
-                val focus = FocusPolicy.valueOf(choice)
-
-                focus pair context.config.copy(focusPolicy = focus)
-            }
-            HintPolicy::class.simpleName -> {
-                val hint = HintPolicy.valueOf(choice)
-
-                hint pair context.config.copy(hintPolicy = hint)
-            }
-            SweepPolicy::class.simpleName -> {
-                val sweep = SweepPolicy.valueOf(choice)
-                sweep pair context.config.copy(sweepPolicy = sweep)
-            }
-            ArchivePolicy::class.simpleName -> {
-                val archive = ArchivePolicy.valueOf(choice)
-                archive pair context.config.copy(archivePolicy = archive)
-            }
-            else -> throw IllegalStateException()
-        } }
-            .toOption()
+        return SettingMapping.buildDifference(context.config, kind, choice)
             .map { (diff, newConfig) -> ApplySettingCommand(newConfig, diff) }
     }
 

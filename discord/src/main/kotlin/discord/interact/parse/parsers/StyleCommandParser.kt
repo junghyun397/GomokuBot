@@ -9,6 +9,7 @@ import core.session.BoardStyle
 import dev.minn.jda.ktx.interactions.commands.choice
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
+import discord.assets.COMMAND_PREFIX
 import discord.interact.InteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.DiscordParseFailure
@@ -23,6 +24,15 @@ import utils.structs.map
 object StyleCommandParser : NamedParser, ParsableCommand, BuildableCommand {
 
     override val name = "style"
+
+    override fun getLocalizedName(container: LanguageContainer) = container.styleCommand()
+
+    override fun getLocalizedUsages(container: LanguageContainer) = listOf(
+        BuildableCommand.Usage(
+            usage = "``/${container.styleCommand()}`` or ``$COMMAND_PREFIX${container.styleCommand()}``",
+            description = container.commandUsageStyle()
+        ),
+    )
 
     private fun matchStyle(option: String): BoardStyle? =
         BoardStyle.values().firstOrNull { it.sample.styleShortcut == option || it.sample.styleName == option }

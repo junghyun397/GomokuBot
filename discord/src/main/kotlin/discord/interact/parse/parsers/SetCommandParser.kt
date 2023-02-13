@@ -36,6 +36,10 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
 
     override val name = "s"
 
+    override fun getLocalizedName(container: LanguageContainer) = "s"
+
+    override fun getLocalizedUsages(container: LanguageContainer): List<BuildableCommand.Usage> = emptyList()
+
     private fun matchColumn(option: String): Int? =
         option.firstOrNull()
             ?.takeIf { it.code in 97 .. 97 + Renju.BOARD_WIDTH() }

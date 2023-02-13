@@ -12,7 +12,16 @@ val buildableCommands: Set<BuildableCommand> =
         RankCommandParser, RatingCommandParser
     )
 
+val engBuildableCommands: Set<BuildableCommand> =
+    buildableCommands - HelpCommandParser
+
 interface BuildableCommand {
+
+    data class Usage(val usage: String, val description: String)
+
+    fun getLocalizedName(container: LanguageContainer): String
+
+    fun getLocalizedUsages(container: LanguageContainer): List<Usage>
 
     fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer): CommandListUpdateAction
 

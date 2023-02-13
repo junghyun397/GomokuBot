@@ -6,7 +6,7 @@ import core.database.entities.extractGameRecord
 import core.database.repositories.GameRecordRepository
 import core.inference.AiLevel
 import core.inference.FocusSolver
-import core.inference.KvineClient
+import core.inference.ResRenjuClient
 import core.interact.message.graphics.*
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
@@ -23,7 +23,7 @@ import kotlin.random.Random
 enum class BoardStyle(override val id: Short, val renderer: BoardRenderer, val sample: BoardRendererSample) : Identifiable {
     IMAGE(0, ImageBoardRenderer, ImageBoardRenderer),
     TEXT(1, TextBoardRenderer(), TextBoardRenderer),
-    SOLID_TEXT(2, SolidTextBoardRenderer(), SolidTextBoardRenderer),
+    DOTTED_TEXT(2, DottedTextBoardRenderer(), DottedTextBoardRenderer),
     UNICODE(3, UnicodeBoardRenderer, UnicodeBoardRenderer)
 }
 
@@ -119,13 +119,13 @@ object GameManager {
 
         val token = when (aiLevel) {
             AiLevel.AMOEBA -> Token("AMOEBA")
-            else -> bot.kvineClient.begins(aiLevel.aiPreset, aiColor, board)
+            else -> bot.resRenjuClient.begins(aiLevel.aiPreset, aiColor, board)
         }
 
         return AiGameSession(
             owner = owner,
             aiLevel = aiLevel,
-            kvineToken = token,
+            resRenjuToken = token,
             solution = Option.Empty,
             ownerHasBlack = ownerHasBlack,
             board = board,
@@ -157,7 +157,7 @@ object GameManager {
         )
     }
 
-    suspend fun makeAiMove(kvineClient: KvineClient, session: AiGameSession): AiGameSession {
+    suspend fun makeAiMove(resRenjuClient: ResRenjuClient, session: AiGameSession): AiGameSession {
         val (aiMove, solutionNode) = session.solution
             .flatMap { solutionNode ->
                 solutionNode.child().get(session.board.lastMove()).fold(
@@ -175,7 +175,7 @@ object GameManager {
                 onEmpty = {
                     val solution = when (session.aiLevel) {
                         AiLevel.AMOEBA -> FocusSolver.findSolution(session.board)
-                        else -> kvineClient.update(session.kvineToken, session.board)
+                        else -> resRenjuClient.update(session.resRenjuToken, session.board)
                     }
 
                     when (solution) {
@@ -247,7 +247,7 @@ object GameManager {
         }
 
         if (session is AiGameSession && session.aiLevel != AiLevel.AMOEBA) {
-            bot.kvineClient.report(session.kvineToken, session.board, result)
+            bot.resRenjuClient.report(session.resRenjuToken, session.board, result)
         }
     }
 
