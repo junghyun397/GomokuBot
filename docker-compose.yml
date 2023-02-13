@@ -28,8 +28,8 @@ services:
     volumes:
       - logs:/app/logs
     environment:
-      - "GOMOKUBOT_KVINE_ADDRESS=localhost"
-      - "GOMOKUBOT_KVINE_PORT=2001"
+      - "GOMOKUBOT_RESRENJU_ADDRESS=localhost"
+      - "GOMOKUBOT_RESRENJU_PORT=2001"
 
       - "GOMOKUBOT_DB_URL=r2dbc:postgresql://gomokubot:acomplexpassword@gomokubot-postgres/gomokubot"
 
