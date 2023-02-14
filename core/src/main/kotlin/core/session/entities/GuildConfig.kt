@@ -7,9 +7,9 @@ import core.session.*
 data class GuildConfig(
     val language: Language = Language.ENG,
     val boardStyle: BoardStyle = BoardStyle.IMAGE,
-    val focusPolicy: FocusPolicy = FocusPolicy.INTELLIGENCE,
-    val hintPolicy: HintPolicy = HintPolicy.FIVE,
-    val markPolicy: HistoryRenderType = HistoryRenderType.LAST,
-    val swapPolicy: SwapPolicy = SwapPolicy.RELAY,
+    val focusType: FocusType = FocusType.INTELLIGENCE,
+    val hintType: HintType = HintType.FIVE,
+    val markType: HistoryRenderType = HistoryRenderType.LAST,
+    val swapType: SwapType = SwapType.RELAY,
     val archivePolicy: ArchivePolicy = ArchivePolicy.BY_ANONYMOUS
 )

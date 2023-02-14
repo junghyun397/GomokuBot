@@ -26,10 +26,10 @@ object GuildConfigRepository {
                     Option(GuildConfig(
                         language = Language.values().find(row["language"] as Short),
                         boardStyle = BoardStyle.values().find(row["board_style"] as Short),
-                        focusPolicy = FocusPolicy.values().find(row["focus_policy"] as Short),
-                        hintPolicy = HintPolicy.values().find(row["hint_policy"] as Short),
-                        markPolicy = HistoryRenderType.values().find(row["mark_policy"] as Short),
-                        swapPolicy = SwapPolicy.values().find(row["swap_policy"] as Short),
+                        focusType = FocusType.values().find(row["focus_type"] as Short),
+                        hintType = HintType.values().find(row["hint_type"] as Short),
+                        markType = HistoryRenderType.values().find(row["mark_type"] as Short),
+                        swapType = SwapType.values().find(row["swap_type"] as Short),
                         archivePolicy = ArchivePolicy.values().find(row["archive_policy"] as Short),
                     ))
                 }
@@ -42,17 +42,17 @@ object GuildConfigRepository {
             .flatMapMany { dbc -> dbc
                 .createStatement(
                     """
-                        INSERT INTO guild_config (guild_id, language, board_style, focus_policy, hint_policy, mark_policy, swap_policy, archive_policy) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                            ON CONFLICT (guild_id) DO UPDATE SET language = $2, board_style = $3, focus_policy = $4, hint_policy = $5, mark_policy = $6, swap_policy = $7, archive_policy = $8
+                        INSERT INTO guild_config (guild_id, language, board_style, focus_type, hint_type, mark_type, swap_type, archive_policy) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                            ON CONFLICT (guild_id) DO UPDATE SET language = $2, board_style = $3, focus_type = $4, hint_type = $5, mark_type = $6, swap_type = $7, archive_policy = $8
                     """.trimIndent()
                 )
                 .bind("$1", guildUid.uuid)
                 .bind("$2", guildConfig.language.id)
                 .bind("$3", guildConfig.boardStyle.id)
-                .bind("$4", guildConfig.focusPolicy.id)
-                .bind("$5", guildConfig.hintPolicy.id)
-                .bind("$6", guildConfig.markPolicy.id)
-                .bind("$7", guildConfig.swapPolicy.id)
+                .bind("$4", guildConfig.focusType.id)
+                .bind("$5", guildConfig.hintType.id)
+                .bind("$6", guildConfig.markType.id)
+                .bind("$7", guildConfig.swapType.id)
                 .bind("$8", guildConfig.archivePolicy.id)
                 .execute()
             }

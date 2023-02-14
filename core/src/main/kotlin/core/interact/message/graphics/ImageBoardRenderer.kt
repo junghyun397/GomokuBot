@@ -31,7 +31,7 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
 
     private const val COORDINATE_SIZE = POINT_SIZE / 2
     private const val COORDINATE_FONT_SIZE = POINT_SIZE / 3
-    private const val COORDINATE_FONT = "Bitstream Charter"
+    private val COORDINATE_FONT = Font("Bitstream Charter", Font.TRUETYPE_FONT, COORDINATE_FONT_SIZE)
     private const val COORDINATE_START_OFFSET = COORDINATE_SIZE + POINT_SIZE / 2
     private const val COORDINATE_PADDING = COORDINATE_SIZE / 5
 
@@ -58,7 +58,7 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
     private const val FORBID_DOT_OFFSET = (POINT_SIZE - FORBID_DOT_SIZE) / 2
 
     private const val HISTORY_FONT_SIZE = POINT_SIZE / 2
-    private const val HISTORY_FONT = "Bitstream Charter"
+    private val HISTORY_FONT = Font("Bitstream Charter" , Font.TRUETYPE_FONT, HISTORY_FONT_SIZE)
 
     private val prototypeImage: BufferedImage by lazy {
         BufferedImage(DIMENSION.width, DIMENSION.height, BufferedImage.TYPE_INT_RGB).also { image ->
@@ -75,9 +75,8 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
                     fillRect(LINE_START_POS, idx, LINE_END_POS, LINE_WEIGHT)
                 }
 
-                val coordinateFont = Font(COORDINATE_FONT, Font.TRUETYPE_FONT, COORDINATE_FONT_SIZE)
-                val fontMetrics = getFontMetrics(coordinateFont)
-                font = coordinateFont
+                val fontMetrics = getFontMetrics(COORDINATE_FONT)
+                font = COORDINATE_FONT
 
                 val rowWidth = fontMetrics.stringWidth(Renju.BOARD_WIDTH().toString())
 
@@ -173,11 +172,11 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
                     HistoryRenderType.SEQUENCE -> {
                         setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
 
-                        val historyFont = Font(HISTORY_FONT, Font.TRUETYPE_FONT, HISTORY_FONT_SIZE)
-                        val fontMetrics = getFontMetrics(historyFont)
-                        font = historyFont
+                        val fontMetrics = getFontMetrics(HISTORY_FONT)
+                        font = HISTORY_FONT
 
                         history
+                            .asSequence()
                             .withIndex()
                             .filter { it.value != null }
                             .map { it.index + 1 pair it.value!!.asBoardPos() }

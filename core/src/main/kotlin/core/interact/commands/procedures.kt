@@ -7,10 +7,10 @@ import core.interact.Order
 import core.interact.message.MessageAdaptor
 import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
-import core.session.FocusPolicy
-import core.session.HintPolicy
+import core.session.FocusType
+import core.session.HintType
 import core.session.SessionManager
-import core.session.SwapPolicy
+import core.session.SwapType
 import core.session.entities.*
 import utils.assets.LinuxTime
 import utils.lang.pair
@@ -47,12 +47,12 @@ fun <A, B> buildBoardProcedure(
     publisher: MessagePublisher<A, B>,
     session: GameSession,
 ): IO<Option<Unit>> {
-    val focusInfo = when (config.focusPolicy) {
-        FocusPolicy.INTELLIGENCE -> FocusSolver.resolveFocus(session.board, producer.focusWidth, config.hintPolicy == HintPolicy.FIVE)
-        FocusPolicy.FALLOWING -> FocusSolver.resolveCenter(session.board, producer.focusRange)
+    val focusInfo = when (config.focusType) {
+        FocusType.INTELLIGENCE -> FocusSolver.resolveFocus(session.board, producer.focusWidth, config.hintType == HintType.FIVE)
+        FocusType.FALLOWING -> FocusSolver.resolveCenter(session.board, producer.focusRange)
     }
 
-    return  producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, config.markPolicy, session)
+    return  producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, session)
         .shift(session.board.winner().isEmpty) { io ->
             producer.attachFocusButtons(io, session, focusInfo)
         }
@@ -71,14 +71,14 @@ private fun buildSwapProcedure(
     bot: BotContext,
     config: GuildConfig,
     session: GameSession
-): IO<List<Order>> = IO { when (config.swapPolicy) {
-    SwapPolicy.RELAY -> listOf(Order.BulkDelete(SessionManager.checkoutMessages(bot.sessions, session.messageBufferKey).orEmpty()))
-    SwapPolicy.ARCHIVE -> {
+): IO<List<Order>> = IO { when (config.swapType) {
+    SwapType.RELAY -> listOf(Order.BulkDelete(SessionManager.checkoutMessages(bot.sessions, session.messageBufferKey).orEmpty()))
+    SwapType.ARCHIVE -> {
         SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
             ?.let { listOf(Order.RemoveNavigators(it, reduceComponents = true)) }
             ?: emptyList()
     }
-    SwapPolicy.EDIT -> emptyList()
+    SwapType.EDIT -> emptyList()
 } }
 
 fun <A, B> buildFinishProcedure(
@@ -88,12 +88,12 @@ fun <A, B> buildFinishProcedure(
     config: GuildConfig,
     session: GameSession,
     thenSession: GameSession
-): IO<List<Order>> = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, config.markPolicy, thenSession)
+): IO<List<Order>> = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, thenSession)
     .retrieve()
     .flatMap { maybeMessage -> buildSwapProcedure(bot, config, session).map { maybeMessage pair it } }
     .map { (maybeMessage, originalOrder) ->
         maybeMessage
-            .filter { thenSession.gameResult.isDefined && config.swapPolicy == SwapPolicy.EDIT }
+            .filter { thenSession.gameResult.isDefined && config.swapType == SwapType.EDIT }
             .fold(
                 onDefined = { message -> originalOrder + Order.RemoveNavigators(message.messageRef, reduceComponents = true) },
                 onEmpty = { originalOrder }

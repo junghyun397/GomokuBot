@@ -3,9 +3,9 @@ package core.database.entities
 import core.assets.*
 import core.database.repositories.UserProfileRepository
 import core.inference.AiLevel
+import core.inference.Token
 import core.session.GameResult
 import core.session.SessionRepository
-import core.session.Token
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.MessageBufferKey
@@ -31,13 +31,13 @@ data class GameRecord(
     val date: LinuxTime
 )
 
-private val INVALID_POS: Pos = Pos.fromIdx(-1)
+private val invalidPos: Pos = Pos.fromIdx(-1)
 
 fun GameSession.extractGameRecord(guildUid: GuildUid): Option<GameRecord> =
     Option.cond(this.gameResult.isDefined && this.recording && !this.history.contains(null)) {
         GameRecord(
             boardStatus = board.field(),
-            history = history.map { it ?: INVALID_POS },
+            history = history.map { it ?: invalidPos },
 
             gameResult = gameResult.getOrException(),
 

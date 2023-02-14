@@ -7,23 +7,24 @@ import core.session.*
 import core.session.entities.GuildConfig
 import utils.assets.toEnumString
 import utils.lang.pair
-import utils.structs.Identifiable
-import utils.structs.Option
-import utils.structs.toOption
+import utils.structs.*
 import kotlin.reflect.KClass
 
 data class SettingElement(
     val menuIndex: Int,
+    val stringId: String,
     val label: (LanguageContainer) -> String,
     val description: (LanguageContainer) -> String,
-    val extractor: (GuildConfig) -> Any
+    val extract: (GuildConfig) -> Identifiable,
+    val find: (String) -> Option<Identifiable>,
+    val mutate: (GuildConfig, Identifiable) -> GuildConfig
 )
 
 data class OptionElement(
+    val shortId: Short,
+    val stringId: String,
     val label: (LanguageContainer) -> String,
     val description: (LanguageContainer) -> String,
-    val stringId: String,
-    val shortId: Short,
     val emoji: String,
 ) {
 
@@ -31,7 +32,7 @@ data class OptionElement(
 
         fun <T> fromIdentifiableEnum(enum: T, label: (LanguageContainer) -> String, description: (LanguageContainer) -> String, emoji: String)
         where T : Enum<*>, T : Identifiable =
-            OptionElement(label, description, enum.toEnumString(), enum.id, emoji)
+            OptionElement(enum.id, enum.toEnumString(), label, description, emoji)
 
     }
 
@@ -43,10 +44,12 @@ object SettingMapping {
         BoardStyle::class to Pair(
             first = SettingElement(
                 menuIndex = 1,
+                stringId = BoardStyle::class.simpleName!!,
                 label = LanguageContainer::style,
                 description = LanguageContainer::styleEmbedDescription,
-                extractor = { it.boardStyle },
-            ),
+                extract = { it.boardStyle },
+                find = { name -> option { BoardStyle.valueOf(name) } }
+            ) { config, value -> config.copy(boardStyle = value as BoardStyle) },
             second = mapOf(
                 BoardStyle.IMAGE to OptionElement.fromIdentifiableEnum(
                     enum = BoardStyle.IMAGE,
@@ -74,44 +77,48 @@ object SettingMapping {
                 )
             )
         ),
-        FocusPolicy::class to Pair(
+        FocusType::class to Pair(
             first = SettingElement(
                 menuIndex = 2,
+                stringId = FocusType::class.simpleName!!,
                 label = LanguageContainer::focus,
                 description = LanguageContainer::focusEmbedDescription,
-                extractor = { it.focusPolicy },
-            ),
+                extract = { it.focusType },
+                find = { name -> option { FocusType.valueOf(name) } }
+            ) { config, value -> config.copy(focusType = value as FocusType) },
             second = mapOf(
-                FocusPolicy.INTELLIGENCE to OptionElement.fromIdentifiableEnum(
-                    enum = FocusPolicy.INTELLIGENCE,
+                FocusType.INTELLIGENCE to OptionElement.fromIdentifiableEnum(
+                    enum = FocusType.INTELLIGENCE,
                     label = LanguageContainer::focusSelectIntelligence,
                     description = LanguageContainer::focusSelectIntelligenceDescription,
                     emoji = UNICODE_ZAP
                 ),
-                FocusPolicy.FALLOWING to OptionElement.fromIdentifiableEnum(
-                    enum = FocusPolicy.FALLOWING,
+                FocusType.FALLOWING to OptionElement.fromIdentifiableEnum(
+                    enum = FocusType.FALLOWING,
                     label = LanguageContainer::focusSelectFallowing,
                     description = LanguageContainer::focusSelectFallowingDescription,
                     emoji = UNICODE_MAG
                 )
             )
         ),
-        HintPolicy::class to Pair(
+        HintType::class to Pair(
             first = SettingElement(
                 menuIndex = 3,
+                stringId = HintType::class.simpleName!!,
                 label = LanguageContainer::hint,
                 description = LanguageContainer::hintEmbedDescription,
-                extractor = { it.hintPolicy },
-            ),
+                extract = { it.hintType },
+                find = { name -> option { HintType.valueOf(name) } }
+            ) { config, value -> config.copy(hintType = value as HintType) },
             second = mapOf(
-                HintPolicy.FIVE to OptionElement.fromIdentifiableEnum(
-                    enum = HintPolicy.FIVE,
+                HintType.FIVE to OptionElement.fromIdentifiableEnum(
+                    enum = HintType.FIVE,
                     label = LanguageContainer::hintSelectFive,
                     description = LanguageContainer::hintSelectFiveDescription,
                     emoji = UNICODE_LIGHT
                 ),
-                HintPolicy.OFF to OptionElement.fromIdentifiableEnum(
-                    enum = HintPolicy.OFF,
+                HintType.OFF to OptionElement.fromIdentifiableEnum(
+                    enum = HintType.OFF,
                     label = LanguageContainer::hintSelectOff,
                     description = LanguageContainer::hintSelectFiveDescription,
                     emoji = UNICODE_NOTEBOOK
@@ -121,10 +128,12 @@ object SettingMapping {
         HistoryRenderType::class to Pair(
             first = SettingElement(
                 menuIndex = 4,
+                stringId = HistoryRenderType::class.simpleName!!,
                 label = LanguageContainer::mark,
                 description = LanguageContainer::markEmbedDescription,
-                extractor = { it.markPolicy },
-            ),
+                extract = { it.markType },
+                find = { name -> option { HistoryRenderType.valueOf(name) } }
+            ) { config, value -> config.copy(markType = value as HistoryRenderType) },
             second = mapOf(
                 HistoryRenderType.LAST to OptionElement.fromIdentifiableEnum(
                     enum = HistoryRenderType.LAST,
@@ -146,28 +155,30 @@ object SettingMapping {
                 )
             )
         ),
-        SwapPolicy::class to Pair(
+        SwapType::class to Pair(
             first = SettingElement(
                 menuIndex = 5,
+                stringId = SwapType::class.simpleName!!,
                 label = LanguageContainer::swap,
                 description = LanguageContainer::swapEmbedDescription,
-                extractor = { it.swapPolicy },
-            ),
+                extract = { it.swapType },
+                find = { name -> option { SwapType.valueOf(name) } }
+            ) { config, value -> config.copy(swapType = value as SwapType) },
             second = mapOf(
-                SwapPolicy.RELAY to OptionElement.fromIdentifiableEnum(
-                    enum = SwapPolicy.RELAY,
+                SwapType.RELAY to OptionElement.fromIdentifiableEnum(
+                    enum = SwapType.RELAY,
                     label = LanguageContainer::swapSelectRelay,
                     description = LanguageContainer::swapSelectRelayDescription,
                     emoji = UNICODE_BROOM
                 ),
-                SwapPolicy.ARCHIVE to OptionElement.fromIdentifiableEnum(
-                    enum = SwapPolicy.ARCHIVE,
+                SwapType.ARCHIVE to OptionElement.fromIdentifiableEnum(
+                    enum = SwapType.ARCHIVE,
                     label = LanguageContainer::swapSelectArchive,
                     description = LanguageContainer::swapSelectArchiveDescription,
                     emoji = UNICODE_CABINET
                 ),
-                SwapPolicy.EDIT to OptionElement.fromIdentifiableEnum(
-                    enum = SwapPolicy.EDIT,
+                SwapType.EDIT to OptionElement.fromIdentifiableEnum(
+                    enum = SwapType.EDIT,
                     label = LanguageContainer::swapSelectEdit,
                     description = LanguageContainer::swapSelectEditDescription,
                     emoji = UNICODE_RECYCLE
@@ -177,10 +188,12 @@ object SettingMapping {
         ArchivePolicy::class to Pair(
             first = SettingElement(
                 menuIndex = 6,
+                stringId = ArchivePolicy::class.simpleName!!,
                 label = LanguageContainer::archive,
                 description = LanguageContainer::archiveEmbedDescription,
-                extractor = { it.archivePolicy },
-            ),
+                extract = { it.archivePolicy },
+                find = { name -> option { ArchivePolicy.valueOf(name) } }
+            ) { config, value -> config.copy(archivePolicy = value as ArchivePolicy) },
             second = mapOf(
                 ArchivePolicy.BY_ANONYMOUS to OptionElement.fromIdentifiableEnum(
                     enum = ArchivePolicy.BY_ANONYMOUS,
@@ -204,73 +217,18 @@ object SettingMapping {
         )
     )
 
-    fun buildDifference(config: GuildConfig, kind: String, choice: String): Option<Pair<Identifiable, GuildConfig>> =
-        runCatching { when (kind) {
-            BoardStyle::class.simpleName -> {
-                val style = BoardStyle.valueOf(choice)
-                style pair config.copy(boardStyle = style)
-            }
-            FocusPolicy::class.simpleName -> {
-                val focus = FocusPolicy.valueOf(choice)
-                focus pair config.copy(focusPolicy = focus)
-            }
-            HintPolicy::class.simpleName -> {
-                val hint = HintPolicy.valueOf(choice)
-                hint pair config.copy(hintPolicy = hint)
-            }
-            HistoryRenderType::class.simpleName -> {
-                val mark = HistoryRenderType.valueOf(choice)
-                mark pair config.copy(markPolicy = mark)
-            }
-            SwapPolicy::class.simpleName -> {
-                val swap = SwapPolicy.valueOf(choice)
-                swap pair config.copy(swapPolicy = swap)
-            }
-            ArchivePolicy::class.simpleName -> {
-                val archive = ArchivePolicy.valueOf(choice)
-                archive pair config.copy(archivePolicy = archive)
-            }
-            else -> throw IllegalStateException()
-        } }
-            .toOption()
+    fun buildKindNamePair(container: LanguageContainer, diff: Identifiable): Pair<String, String> {
+        val (settingElement, map) = this.map[diff::class]!!
 
-    fun buildKindNamePair(container: LanguageContainer, diff: Identifiable) = when (diff) {
-        is BoardStyle -> container.style() pair when (diff) {
-            BoardStyle.IMAGE -> container.styleSelectImage()
-            BoardStyle.TEXT -> container.styleSelectText()
-            BoardStyle.DOTTED_TEXT -> container.styleSelectDottedText()
-            BoardStyle.UNICODE -> container.styleSelectUnicodeText()
-        }
-
-        is FocusPolicy -> container.focus() pair when (diff) {
-            FocusPolicy.INTELLIGENCE -> container.focusSelectIntelligence()
-            FocusPolicy.FALLOWING -> container.focusSelectFallowing()
-        }
-
-        is HintPolicy -> container.hint() pair when (diff) {
-            HintPolicy.FIVE -> container.hintSelectFive()
-            HintPolicy.OFF -> container.hintSelectOff()
-        }
-
-        is HistoryRenderType -> container.mark() pair when (diff) {
-            HistoryRenderType.LAST -> container.markSelectLast()
-            HistoryRenderType.RECENT -> container.markSelectRecent()
-            HistoryRenderType.SEQUENCE -> container.markSelectSequence()
-        }
-
-        is SwapPolicy -> container.swap() pair when (diff) {
-            SwapPolicy.RELAY -> container.swapSelectRelay()
-            SwapPolicy.ARCHIVE -> container.swapSelectArchive()
-            SwapPolicy.EDIT -> container.swapSelectEdit()
-        }
-
-        is ArchivePolicy -> container.archive() pair when (diff) {
-            ArchivePolicy.BY_ANONYMOUS -> container.archiveSelectByAnonymous()
-            ArchivePolicy.WITH_PROFILE -> container.archiveSelectWithProfile()
-            ArchivePolicy.PRIVACY -> container.archiveSelectPrivacy()
-        }
-
-        else -> throw IllegalStateException()
+        return settingElement.label(container) pair map[diff]!!.label(container)
     }
+
+    fun buildDifference(config: GuildConfig, kind: String, choice: String): Option<Pair<Identifiable, GuildConfig>> =
+        this.map.values.firstOrNull { (settlingElement, _) -> settlingElement.stringId == kind }
+            .asOption()
+            .flatMap { (settingElement, _) ->
+                settingElement.find(choice)
+                    .map { choiceValue -> choiceValue pair settingElement.mutate(config, choiceValue) }
+            }
 
 }

@@ -14,9 +14,10 @@ open class LanguageKOR : LanguageENG() {
     override fun aiLevelAmoeba() = "아메바"
     override fun aiLevelApe() = "유인원"
     override fun aiLevelBeginner() = "초심자"
-    override fun aiLevelModerate() = "보통"
-    override fun aiLevelExpert() = "숙련자"
-    override fun aiLevelGuru() = "전문가"
+    override fun aiLevelIntermediate() = "중급자"
+    override fun aiLevelAdvanced() = "숙련자"
+    override fun aiLevelExpert() = "전문가"
+    override fun aiLevelGuru() = "현자"
 
     // # 1. INFORM
 

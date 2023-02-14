@@ -3,7 +3,6 @@ package core.inference
 import com.google.protobuf.kotlin.toByteString
 import core.assets.Notation
 import core.session.GameResult
-import core.session.Token
 import engine.util.SolutionExtension
 import inference.InferenceGrpcKt
 import inference.InferenceProto
@@ -15,6 +14,8 @@ import renju.protocol.AiPreset
 import renju.protocol.Solution
 import java.io.Closeable
 import java.util.concurrent.TimeUnit
+
+@JvmInline value class Token(val token: String)
 
 class ResRenjuClient(private val channel: ManagedChannel) : Closeable {
 

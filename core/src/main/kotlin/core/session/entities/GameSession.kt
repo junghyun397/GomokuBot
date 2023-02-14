@@ -3,8 +3,8 @@ package core.session.entities
 import core.assets.User
 import core.assets.aiUser
 import core.inference.AiLevel
+import core.inference.Token
 import core.session.GameResult
-import core.session.Token
 import renju.Board
 import renju.notation.Pos
 import renju.protocol.SolutionNode

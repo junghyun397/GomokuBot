@@ -11,7 +11,7 @@ import core.interact.reports.asCommandReport
 import core.session.GameManager
 import core.session.GameResult
 import core.session.SessionManager
-import core.session.SwapPolicy
+import core.session.SwapType
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
@@ -41,7 +41,7 @@ class ResignCommand(private val session: GameSession) : Command {
         val publisher = run {
             val boardMessage = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
-            if (config.swapPolicy == SwapPolicy.EDIT && boardMessage != null)
+            if (config.swapType == SwapType.EDIT && boardMessage != null)
                 publishers.edit(boardMessage)
             else
                 publishers.plain

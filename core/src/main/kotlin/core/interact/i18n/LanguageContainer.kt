@@ -23,7 +23,8 @@ sealed interface LanguageContainer {
     fun aiLevelAmoeba(): String
     fun aiLevelApe(): String
     fun aiLevelBeginner(): String
-    fun aiLevelModerate(): String
+    fun aiLevelIntermediate(): String
+    fun aiLevelAdvanced(): String
     fun aiLevelExpert(): String
     fun aiLevelGuru(): String
 

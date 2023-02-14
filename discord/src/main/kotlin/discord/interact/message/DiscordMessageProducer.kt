@@ -400,14 +400,14 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
             0 -> publisher(DiscordMessageData(embed = this.languageEmbed))
             1 -> publisher(DiscordMessageData(embed = this.settingEmbed(BoardStyle::class)(config.language.container)))
                 .addComponents(this.settingMenu(BoardStyle::class)(config.language.container)(config).liftToButtons())
-            2 -> publisher(DiscordMessageData(embed = this.settingEmbed(FocusPolicy::class)(config.language.container)))
-                .addComponents(this.settingMenu(FocusPolicy::class)(config.language.container)(config).liftToButtons())
-            3 -> publisher(DiscordMessageData(embed = this.settingEmbed(HintPolicy::class)(config.language.container)))
-                .addComponents(this.settingMenu(HintPolicy::class)(config.language.container)(config).liftToButtons())
+            2 -> publisher(DiscordMessageData(embed = this.settingEmbed(FocusType::class)(config.language.container)))
+                .addComponents(this.settingMenu(FocusType::class)(config.language.container)(config).liftToButtons())
+            3 -> publisher(DiscordMessageData(embed = this.settingEmbed(HintType::class)(config.language.container)))
+                .addComponents(this.settingMenu(HintType::class)(config.language.container)(config).liftToButtons())
             4 -> publisher(DiscordMessageData(embed = this.settingEmbed(HistoryRenderType::class)(config.language.container)))
                 .addComponents(this.settingMenu(HistoryRenderType::class)(config.language.container)(config).liftToButtons())
-            5 -> publisher(DiscordMessageData(embed = this.settingEmbed(SwapPolicy::class)(config.language.container)))
-                .addComponents(this.settingMenu(SwapPolicy::class)(config.language.container)(config).liftToButtons())
+            5 -> publisher(DiscordMessageData(embed = this.settingEmbed(SwapType::class)(config.language.container)))
+                .addComponents(this.settingMenu(SwapType::class)(config.language.container)(config).liftToButtons())
             6 -> publisher(DiscordMessageData(embed = this.settingEmbed(ArchivePolicy::class)(config.language.container)))
                 .addComponents(this.settingMenu(ArchivePolicy::class)(config.language.container)(config).liftToButtons())
             else -> throw IllegalStateException()
@@ -501,7 +501,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
                         label = optionElement.label(container),
                         value = optionElement.stringId,
                         emoji = Emoji.fromUnicode(optionElement.emoji),
-                        default = settingElement.extractor(config) == classTag
+                        default = settingElement.extract(config) == classTag
                     )
                 }
             }

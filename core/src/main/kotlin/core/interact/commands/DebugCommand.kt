@@ -10,12 +10,12 @@ import core.assets.User
 import core.database.entities.asGameSession
 import core.database.repositories.GameRecordRepository
 import core.inference.AiLevel
+import core.inference.Token
 import core.interact.Order
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.SessionManager
-import core.session.Token
 import core.session.entities.AiGameSession
 import core.session.entities.GuildConfig
 import core.session.entities.MessageBufferKey

@@ -40,11 +40,11 @@ object DatabaseManager {
                             guild_id uuid PRIMARY KEY,
                             language smallint NOT NULL,
                             board_style smallint NOT NULL,
-                            focus_policy smallint NOT NULL,
-                            swap_policy smallint NOT NULL,
+                            focus_type smallint NOT NULL,
+                            swap_type smallint NOT NULL,
                             archive_policy smallint NOT NULL,
-                            hint_policy smallint NOT NULL,
-                            mark_policy smallint NOT NULL,
+                            hint_type smallint NOT NULL,
+                            mark_type smallint NOT NULL,
                             FOREIGN KEY (guild_id) REFERENCES guild_profile (guild_id)
                         );
                         

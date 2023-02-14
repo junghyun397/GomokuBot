@@ -14,7 +14,8 @@ open class LanguageENG : LanguageContainer {
     override fun aiLevelAmoeba() = "Amoeba"
     override fun aiLevelApe() = "Ape"
     override fun aiLevelBeginner() = "Beginner"
-    override fun aiLevelModerate() = "Moderate"
+    override fun aiLevelIntermediate() = "Intermediate"
+    override fun aiLevelAdvanced() = "Advanced"
     override fun aiLevelExpert() = "Expert"
     override fun aiLevelGuru() = "Guru"
 
@@ -45,7 +46,7 @@ open class LanguageENG : LanguageContainer {
 
     // ### 1-1-3. HELP:COMMAND (EMBED)
 
-    override fun commandUsageEmbedTitle() = "GomokuBot / Command"
+    override fun commandUsageEmbedTitle() = "GomokuBot / Commands"
     override fun commandUsageHelp() = "Get help."
     override fun commandUsageSettings() = "Get settings panel."
     override fun commandUsageRankGlobal() = "Get the overall ranking of GomokuBot from 1st to 10th."
@@ -543,7 +544,7 @@ This is because all these shapes are not three overlapping shapes, but actually 
 
 We're almost there. An **overline forbid** means **a place where you can make 6 or more stones arranged in a row in a single move**.
 
-Even if you can make a 7-in-a-row in a single move, it's overline forbid. Neither 8-in-a-row nor 9-in-a-row. However, 10-in-a-row is an exception. If someone makes a 10-in-a-row, you must immediately turn off all electronics and leave the area.
+Even if you can make a 7-in-a-row in a single move, it's overline forbid. Same goes for 8-in-a-row nor 9-in-a-row. However, 10-in-a-row is an exception. If someone makes a 10-in-a-row, you must immediately turn off all electronics and leave the area.
 
 *Please remember. Overline forbid is also a rule that only applies to black, and white is free to create more than five-in-a-row to win.*
 
@@ -559,7 +560,7 @@ Here's the good news (only black unfortunately). Even if the forbidden move is c
 
 Welcome to the much fairer Gomoku! If you've followed this guide far, you know all the basic Renju rules. Now, even if forbidden moves appear, you will be able to unlock that or use other strategies to continue the game without panicking.
 
-Now start a game with your friends with the ``/start @mention`` command. Even if you don't have friends, the GomokuBot AI will always be with you. Don't forget to customize GomokuBot with the ``/setting`` command as well.
+Now start a game with your friends with the ``/start @mention`` command. Even if you don't have friends, the GomokuBot AI will always be with you. Don't forget to customize GomokuBot with the ``/settings`` command as well.
 
 In the next chapter, we'll learn how to figure out forbidden moves in very complex situations and how to attack and defend using forbidden moves. These are strategies for Renju, all possible only in Renju. It can be a little difficult for beginners.
 

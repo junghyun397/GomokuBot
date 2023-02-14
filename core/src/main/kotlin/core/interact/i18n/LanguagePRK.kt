@@ -12,7 +12,7 @@ class LanguagePRK : LanguageKOR() {
     override fun aiLevelAmoeba() = "아메바"
     override fun aiLevelApe() = "유인원"
     override fun aiLevelBeginner() = "초심자"
-    override fun aiLevelModerate() = "보통"
+    override fun aiLevelIntermediate() = "보통"
     override fun aiLevelExpert() = "숙련자"
     override fun aiLevelGuru() = "전문가"
 

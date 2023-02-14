@@ -7,6 +7,7 @@ import core.database.repositories.GameRecordRepository
 import core.inference.AiLevel
 import core.inference.FocusSolver
 import core.inference.ResRenjuClient
+import core.inference.Token
 import core.interact.message.graphics.*
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
@@ -27,23 +28,21 @@ enum class BoardStyle(override val id: Short, val renderer: BoardRenderer, val s
     UNICODE(3, UnicodeBoardRenderer, UnicodeBoardRenderer)
 }
 
-enum class FocusPolicy(override val id: Short) : Identifiable {
+enum class FocusType(override val id: Short) : Identifiable {
     INTELLIGENCE(0), FALLOWING(1)
 }
 
-enum class HintPolicy(override val id: Short) : Identifiable {
+enum class HintType(override val id: Short) : Identifiable {
     OFF(0), FIVE(1)
 }
 
-enum class SwapPolicy(override val id: Short) : Identifiable {
+enum class SwapType(override val id: Short) : Identifiable {
     RELAY(0), ARCHIVE(1), EDIT(2)
 }
 
 enum class ArchivePolicy(override val id: Short) : Identifiable {
     WITH_PROFILE(0), BY_ANONYMOUS(1), PRIVACY(2)
 }
-
-@JvmInline value class Token(val token: String)
 
 sealed interface GameResult {
 
@@ -157,7 +156,7 @@ object GameManager {
         )
     }
 
-    suspend fun makeAiMove(resRenjuClient: ResRenjuClient, session: AiGameSession): AiGameSession {
+    suspend fun makeAiMove(session: AiGameSession, resRenjuClient: ResRenjuClient): AiGameSession {
         val (aiMove, solutionNode) = session.solution
             .flatMap { solutionNode ->
                 solutionNode.child().get(session.board.lastMove()).fold(
