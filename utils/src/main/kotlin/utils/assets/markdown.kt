@@ -1,6 +1,6 @@
 package utils.assets
 
-import utils.lang.pair
+import utils.lang.tuple
 import utils.structs.Either
 
 typealias MarkdownLikeDocument = List<Pair<String, List<Pair<String?, List<Either<String, URL>>>>>>
@@ -48,8 +48,8 @@ fun parseMarkdownLikeDocument(source: String): MarkdownLikeDocument =
                             else -> listOf(Either.Left(block))
                         } }
 
-                    h3Head pair blocks
+                    tuple(h3Head, blocks)
                 }
 
-            h2Head pair h2Body
+            tuple(h2Head, h2Body)
         }

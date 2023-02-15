@@ -1,6 +1,6 @@
 package tools.documentation
 
-import utils.lang.pair
+import utils.lang.tuple
 
 fun main() {
     print("source: ")
@@ -11,7 +11,9 @@ fun main() {
     val result = Regex("```(\n|.)*?```")
         .findAll(source)
         .map { matchResult ->
-            matchResult.value pair matchResult.value
+            val value = matchResult.value
+
+            val imageStrings = matchResult.value
                 .drop(3)
                 .takeWhile { it != '\n' }
                 .split(",")
@@ -27,6 +29,8 @@ fun main() {
                 }
                 .first()
                 .let { "![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/$it.png)" }
+
+            tuple(value, imageStrings)
         }
         .fold(source) { acc, (target, toBe) -> acc.replace(target, toBe) }
         .dropLast(5)

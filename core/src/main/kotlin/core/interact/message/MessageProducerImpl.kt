@@ -12,7 +12,7 @@ import renju.notation.Pos
 import utils.assets.MarkdownLikeDocument
 import utils.assets.parseMarkdownLikeDocument
 import utils.lang.memoize
-import utils.lang.pair
+import utils.lang.tuple
 import utils.structs.IO
 
 abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
@@ -70,7 +70,7 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
                     }
                 }
 
-                absolutePos.toString() pair buttonFlag
+                tuple(absolutePos.toString(), buttonFlag)
             }
         }
     }

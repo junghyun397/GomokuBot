@@ -13,8 +13,8 @@ import core.session.SessionManager
 import core.session.SwapType
 import core.session.entities.*
 import utils.assets.LinuxTime
-import utils.lang.pair
 import utils.lang.shift
+import utils.lang.tuple
 import utils.structs.*
 
 fun <A, B> buildAppendGameMessageProcedure(
@@ -90,7 +90,7 @@ fun <A, B> buildFinishProcedure(
     thenSession: GameSession
 ): IO<List<Order>> = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, thenSession)
     .retrieve()
-    .flatMap { maybeMessage -> buildSwapProcedure(bot, config, session).map { maybeMessage pair it } }
+    .flatMap { maybeMessage -> buildSwapProcedure(bot, config, session).map { tuple(maybeMessage, it) } }
     .map { (maybeMessage, originalOrder) ->
         maybeMessage
             .filter { thenSession.gameResult.isDefined && config.swapType == SwapType.EDIT }

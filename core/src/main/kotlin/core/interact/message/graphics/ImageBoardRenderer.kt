@@ -8,7 +8,6 @@ import renju.notation.Flag
 import renju.notation.Pos
 import renju.notation.Renju
 import utils.lang.clone
-import utils.lang.pair
 import utils.lang.toInputStream
 import utils.structs.Either
 import java.awt.Dimension
@@ -179,8 +178,10 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
                             .asSequence()
                             .withIndex()
                             .filter { it.value != null }
-                            .map { it.index + 1 pair it.value!!.asBoardPos() }
-                            .forEach { (sequence, pos) ->
+                            .forEach { (index, value) ->
+                                val sequence = index + 1
+                                val pos = value!!.asBoardPos()
+
                                 val textWidth = fontMetrics.stringWidth(sequence.toString())
 
                                 color = if (sequence % 2 == 0) COLOR_BLACK else COLOR_WHITE

@@ -14,6 +14,7 @@ import renju.notation.Flag
 import renju.notation.Result
 import utils.assets.LinuxTime
 import utils.lang.toLinuxTime
+import utils.lang.tuple
 import java.time.LocalDateTime
 import java.util.*
 
@@ -85,8 +86,8 @@ object UserStatsRepository {
                     val recordResult = Notation.ResultInstance.fromFlag(smallIntToMaybeByte(row["win_color"]) ?: Flag.EMPTY())
 
                     when {
-                        maybeBlackId != null -> Triple(UserUid(maybeBlackId), Notation.Color.Black, recordResult)
-                        maybeWhiteId != null -> Triple(UserUid(maybeWhiteId), Notation.Color.White, recordResult)
+                        maybeBlackId != null -> tuple(UserUid(maybeBlackId), Notation.Color.Black, recordResult)
+                        maybeWhiteId != null -> tuple(UserUid(maybeWhiteId), Notation.Color.White, recordResult)
                         else -> throw IllegalStateException()
                     }
                 }
@@ -112,8 +113,8 @@ object UserStatsRepository {
                     val recordResult = Notation.ResultInstance.fromFlag(smallIntToByte(row["win_color"]))
 
                     when {
-                        blackId != userUid -> Triple(blackId, Notation.Color.Black, recordResult)
-                        whiteId != userUid -> Triple(whiteId, Notation.Color.White, recordResult)
+                        blackId != userUid -> tuple(blackId, Notation.Color.Black, recordResult)
+                        whiteId != userUid -> tuple(whiteId, Notation.Color.White, recordResult)
                         else -> throw IllegalStateException()
                     }
                 }

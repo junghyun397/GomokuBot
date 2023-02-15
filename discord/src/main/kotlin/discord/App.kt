@@ -43,7 +43,7 @@ import net.dv8tion.jda.api.events.session.ShutdownEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
 import reactor.core.publisher.Flux
 import utils.assets.LinuxTime
-import utils.lang.pair
+import utils.lang.tuple
 import utils.log.getLogger
 
 private data class PostgreSQLConfig(val serverURL: String) {
@@ -198,11 +198,13 @@ object GomokuBot {
                             && !GuildManager.lookupPermission(it.channel.asTextChannel(), Permission.MESSAGE_MANAGE)
                 }
                 .flatMap { mono {
-                    it pair it.guild
+                    val user = it.guild
                         .retrieveMemberById(it.userId)
                         .mapToResult()
                         .map { maybeMember -> maybeMember.map { it.user } }
                         .await()
+
+                    tuple(it, user)
                 } }
                 .filter { (_, maybeUser) -> maybeUser.isSuccess && !maybeUser.get().isBot }
                 .flatMap { (event, user) -> mono { buildInteractionContext(botContext, discordConfig, event, user.get(), event.guild) } }

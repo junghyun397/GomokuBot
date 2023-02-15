@@ -9,7 +9,7 @@ import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.AbstractInteractionReport
 import core.session.entities.GuildConfig
-import utils.lang.pair
+import utils.lang.tuple
 import utils.structs.IO
 import utils.structs.Quadruple
 import utils.structs.flatMap
@@ -31,7 +31,7 @@ abstract class UnionCommand(protected val command: Command) : Command {
         val (originalIO, report) = this.command.execute(bot, config, thenGuild, thenUser, producer, messageRef, publishers)
             .getOrThrow()
 
-        unionIO.flatMap { originalIO } pair unionReport + report
+        tuple(unionIO.flatMap { originalIO }, unionReport + report)
     }
 
     protected abstract suspend fun <A, B> executeSelf(

@@ -15,7 +15,7 @@ import core.session.entities.GuildConfig
 import core.session.entities.MessageBufferKey
 import core.session.entities.RequestSession
 import utils.assets.LinuxTime
-import utils.lang.pair
+import utils.lang.tuple
 import utils.structs.IO
 import utils.structs.flatMap
 import utils.structs.flatMapOption
@@ -47,7 +47,7 @@ class StartCommand(val opponent: User?) : Command {
                     .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, gameSession) }
                     .map { emptyList<Order>() }
 
-                io pair this.asCommandReport("start game session with AI", guild, user)
+                tuple(io, this.asCommandReport("start game session with AI", guild, user))
             }
             else -> {
                 val requestSession = RequestSession(
@@ -63,7 +63,7 @@ class StartCommand(val opponent: User?) : Command {
                     .flatMapOption { IO { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.messageRef) } }
                     .map { emptyList<Order>() }
 
-                io pair this.asCommandReport("make request to ${this.opponent}", guild, user)
+                tuple(io, this.asCommandReport("make request to ${this.opponent}", guild, user))
             }
         }
     }

@@ -6,7 +6,7 @@ import core.interact.message.graphics.HistoryRenderType
 import core.session.*
 import core.session.entities.GuildConfig
 import utils.assets.toEnumString
-import utils.lang.pair
+import utils.lang.tuple
 import utils.structs.*
 import kotlin.reflect.KClass
 
@@ -220,7 +220,7 @@ object SettingMapping {
     fun buildKindNamePair(container: LanguageContainer, diff: Identifiable): Pair<String, String> {
         val (settingElement, map) = this.map[diff::class]!!
 
-        return settingElement.label(container) pair map[diff]!!.label(container)
+        return tuple(settingElement.label(container), map[diff]!!.label(container))
     }
 
     fun buildDifference(config: GuildConfig, kind: String, choice: String): Option<Pair<Identifiable, GuildConfig>> =
@@ -228,7 +228,7 @@ object SettingMapping {
             .asOption()
             .flatMap { (settingElement, _) ->
                 settingElement.find(choice)
-                    .map { choiceValue -> choiceValue pair settingElement.mutate(config, choiceValue) }
+                    .map { choiceValue -> tuple(choiceValue, settingElement.mutate(config, choiceValue)) }
             }
 
 }

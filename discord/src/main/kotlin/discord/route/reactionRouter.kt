@@ -27,7 +27,7 @@ import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import reactor.core.publisher.Mono
 import utils.assets.LinuxTime
-import utils.lang.pair
+import utils.lang.tuple
 import utils.structs.*
 
 private fun recoverNavigationState(bot: BotContext, message: Message, messageRef: MessageRef): Option<NavigationState> =
@@ -43,10 +43,10 @@ fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mo
         SessionManager.getNavigationState(context.bot.sessions, messageRef).asOption()
             .orElse { recoverNavigationState(context.bot, context.event.retrieveMessage().await(), messageRef) }
             .map { state ->
-                state pair when (state) {
+                tuple(state, when (state) {
                     is BoardNavigationState -> FocusCommandParser
                     is PageNavigationState -> NavigationCommandParser
-                }
+                })
             }
             .flatMap { (state, parsable) ->
                 parsable.parseReaction(context, state)

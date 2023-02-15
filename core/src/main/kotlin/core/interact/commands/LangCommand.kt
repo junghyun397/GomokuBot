@@ -11,7 +11,7 @@ import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
-import utils.lang.pair
+import utils.lang.tuple
 import utils.structs.flatMap
 import utils.structs.map
 
@@ -39,7 +39,7 @@ class LangCommand(private val language: Language) : Command {
             .flatMap { buildHelpProcedure(bot, thenConfig, publishers.plain, producer) }
             .map { listOf(Order.UpsertCommands(thenConfig.language.container)) }
 
-        io pair this.asCommandReport("set language ${config.language.name} to ${thenConfig.language.name}", guild, user)
+        tuple(io, this.asCommandReport("set language ${config.language.name} to ${thenConfig.language.name}", guild, user))
     }
 
 }

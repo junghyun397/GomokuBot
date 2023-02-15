@@ -17,7 +17,7 @@ import renju.ScalaBoard
 import renju.notation.*
 import renju.protocol.SolutionNode
 import utils.assets.LinuxTime
-import utils.lang.pair
+import utils.lang.tuple
 import utils.structs.*
 import kotlin.random.Random
 
@@ -167,8 +167,8 @@ object GameManager {
             .fold(
                 onDefined = {
                     when (it) {
-                        is SolutionNode -> it.idx() pair Option(it)
-                        else -> it.idx() pair Option.Empty
+                        is SolutionNode -> tuple(it.idx(), Option(it))
+                        else -> tuple(it.idx(), Option.Empty)
                     }
                 },
                 onEmpty = {
@@ -178,8 +178,8 @@ object GameManager {
                     }
 
                     when (solution) {
-                        is SolutionNode -> solution.idx() pair Option(solution)
-                        else -> solution.idx() pair Option.Empty
+                        is SolutionNode -> tuple(solution.idx(), Option(solution))
+                        else -> tuple(solution.idx(), Option.Empty)
                     }
                 },
             )
@@ -223,17 +223,17 @@ object GameManager {
             is AiGameSession -> {
                 val result = GameResult.Win(cause, winColor, aiUser, session.owner)
 
-                session.copy(gameResult = Option(result)) pair result
+                tuple(session.copy(gameResult = Option(result)), result)
             }
             is PvpGameSession -> {
                 val (winner, loser) = if (user?.id == session.owner.id)
-                    session.opponent pair session.owner
+                    tuple(session.opponent, session.owner)
                 else
-                    session.owner pair session.opponent
+                    tuple(session.owner, session.opponent)
 
                 val result = GameResult.Win(cause, winColor, winner, loser)
 
-                session.copy(gameResult = Option(result)) pair result
+                tuple(session.copy(gameResult = Option(result)), result)
             }
         }
     }

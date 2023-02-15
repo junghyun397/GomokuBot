@@ -30,8 +30,8 @@ import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.requests.RestAction
 import utils.lang.memoize
-import utils.lang.pair
 import utils.lang.shift
+import utils.lang.tuple
 import utils.structs.Option
 import utils.structs.getOrNull
 import utils.structs.map
@@ -87,7 +87,7 @@ object GuildManager {
                     .values
                     .toList()
 
-                deprecates pair adds
+                tuple(deprecates, adds)
             }
             .await()
 

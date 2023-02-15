@@ -7,27 +7,12 @@ import core.assets.UserUid
 import core.database.repositories.GuildConfigRepository
 import core.session.entities.*
 import utils.assets.LinuxTime
-import utils.lang.pair
+import utils.lang.tuple
 import utils.structs.Quadruple
 import utils.structs.fold
-import kotlin.collections.List
-import kotlin.collections.Map
-import kotlin.collections.Set
-import kotlin.collections.asSequence
 import kotlin.collections.component1
 import kotlin.collections.component2
-import kotlin.collections.filter
-import kotlin.collections.filterValues
-import kotlin.collections.first
-import kotlin.collections.firstOrNull
-import kotlin.collections.getOrElse
-import kotlin.collections.getOrPut
-import kotlin.collections.map
-import kotlin.collections.minus
-import kotlin.collections.mutableListOf
-import kotlin.collections.plus
 import kotlin.collections.set
-import kotlin.collections.toSet
 
 object SessionManager {
 
@@ -77,7 +62,7 @@ object SessionManager {
 
     suspend fun putRequestSession(repo: SessionRepository, guild: Guild, requestSession: RequestSession) {
         this.mapGuildSession(repo, guild) {
-            it.copy(requestSessions = it.requestSessions + (requestSession.owner.id pair requestSession))
+            it.copy(requestSessions = it.requestSessions + (requestSession.owner.id to requestSession))
         }
     }
 
@@ -99,7 +84,7 @@ object SessionManager {
 
     suspend fun putGameSession(repo: SessionRepository, guild: Guild, gameSession: GameSession) {
         this.mapGuildSession(repo, guild) {
-            it.copy(gameSessions = it.gameSessions + (gameSession.owner.id pair gameSession))
+            it.copy(gameSessions = it.gameSessions + (gameSession.owner.id to gameSession))
         }
     }
 
@@ -144,7 +129,7 @@ object SessionManager {
             .flatMap { (guildId, session) ->
                 extract(session)
                     .filter { referenceTime.timestamp > it.value.expireDate.timestamp }
-                    .map { (userId, expired) -> Quadruple(guildId, session, userId, expired) }
+                    .map { (userId, expired) -> tuple(guildId, session, userId, expired) }
                     .also { expires ->
                         repo.sessions[guildId] = mutate(repo.sessions[guildId]!!, expires.map { it.third }.toSet())
                     }

@@ -12,7 +12,7 @@ import core.interact.message.SettingMapping
 import core.interact.reports.asCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
-import utils.lang.pair
+import utils.lang.tuple
 import utils.structs.Identifiable
 import utils.structs.map
 
@@ -44,7 +44,7 @@ class ApplySettingCommand(
 
         val (kind, choice) = SettingMapping.buildKindNamePair(Language.ENG.container, this.diff)
 
-        io pair this.asCommandReport("update $kind as [$choice](${diff.id})", guild, user)
+        tuple(io, this.asCommandReport("update $kind as [$choice](${diff.id})", guild, user))
     }
 
 }

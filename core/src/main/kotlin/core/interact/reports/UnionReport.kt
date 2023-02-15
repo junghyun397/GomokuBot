@@ -24,7 +24,7 @@ class UnionReport(
             }
         }
 
-        return "UnionReport(${reports.size}):\n${reports.joinToString(prefix = "\t", separator = "\n")}"
+        return "UnionReport(${reports.size}):\n${reports.joinToString(prefix = "\t", separator = "\n\t")}"
     }
 
 }

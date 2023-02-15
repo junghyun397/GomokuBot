@@ -24,8 +24,8 @@ import renju.BoardIO
 import renju.notation.Pos
 import renju.notation.Renju
 import utils.assets.LinuxTime
-import utils.lang.pair
 import utils.lang.toInputStream
+import utils.lang.tuple
 import utils.structs.*
 
 enum class DebugType {
@@ -59,13 +59,14 @@ class DebugCommand(
                         "analysis-report-${System.currentTimeMillis()}.txt"
                     )
                     .launch()
-                    .map { emptyList<Order>() } pair this.asCommandReport("succeed", guild, user)
-            } ?: (IO { emptyList<Order>() } pair this.asCommandReport("failed", guild, user))
+                    .map { emptyList<Order>() }
+                    .let { tuple(it, this.asCommandReport("succeed", guild, user)) }
+            } ?: (tuple(IO { emptyList() }, this.asCommandReport("failed", guild, user)))
         }
         DebugType.SELF_REQUEST -> {
             if (SessionManager.retrieveGameSession(bot.sessions, guild, user.id) != null ||
                         SessionManager.retrieveRequestSession(bot.sessions, guild, user.id) != null)
-                IO { emptyList<Order>() } pair this.asCommandReport("failed", guild, user)
+                tuple(IO { emptyList<Order>() }, this.asCommandReport("failed", guild, user))
             else {
                 val requestSession = RequestSession(
                         user, user,
@@ -79,7 +80,7 @@ class DebugCommand(
                         .launch()
                         .map { emptyList<Order>()  }
 
-                    io pair this.asCommandReport("succeed", guild, user)
+                    tuple(io, this.asCommandReport("succeed", guild, user))
             }
         }
         DebugType.INJECT -> {
@@ -106,7 +107,7 @@ class DebugCommand(
                 .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, session) }
                 .map { emptyList<Order>() }
 
-            io pair this.asCommandReport("succeed", guild, user)
+            tuple(io, this.asCommandReport("succeed", guild, user))
         }
         DebugType.STATUS -> {
             val message = """
@@ -120,7 +121,7 @@ class DebugCommand(
                 .launch()
                 .map { emptyList<Order>() }
 
-            io pair this.asCommandReport("succeed", guild, user)
+            tuple(io, this.asCommandReport("succeed", guild, user))
         }
         DebugType.SESSIONS -> {
             val sessionMessage = bot.sessions.sessions
@@ -137,7 +138,7 @@ class DebugCommand(
                 .launch()
                 .map { emptyList<Order>() }
 
-            io pair this.asCommandReport("succeed", guild, user)
+            tuple(io, this.asCommandReport("succeed", guild, user))
         }
         DebugType.VCF -> {
             val vcfCase = """
@@ -182,7 +183,7 @@ class DebugCommand(
                 .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, session) }
                 .map { emptyList<Order>() }
 
-            io pair this.asCommandReport("succeed", guild, user)
+            tuple(io, this.asCommandReport("succeed", guild, user))
         }
         DebugType.GIF -> {
             val gameRecord = GameRecordRepository.retrieveLastGameRecordByUserUid(bot.sessions.dbConnection, user.id).getOrException()
@@ -193,7 +194,7 @@ class DebugCommand(
                 .launch()
                 .map { emptyList<Order>() }
 
-            io pair this.asCommandReport("succeed", guild, user)
+            tuple(io, this.asCommandReport("succeed", guild, user))
         }
     } }
 

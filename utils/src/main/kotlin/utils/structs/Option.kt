@@ -2,8 +2,6 @@
 
 package utils.structs
 
-import utils.lang.pair
-
 sealed interface Option<out T> {
 
     val isDefined: Boolean get() = this is Some
@@ -28,7 +26,7 @@ sealed interface Option<out T> {
 
         fun <A, B> zip(a: Option<A>, b: Option<B>): Option<Pair<A, B>> =
             when {
-                a is Some && b is Some -> Some(a.value pair b.value)
+                a is Some && b is Some -> Some(Pair(a.value, b.value))
                 else -> Empty
             }
 

@@ -7,7 +7,7 @@ import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import utils.lang.pair
+import utils.lang.tuple
 import java.time.LocalDateTime
 import java.util.*
 
@@ -39,20 +39,24 @@ object AnnounceRepository {
                 .map { row, _ ->
                     val date = row["create_date"] as LocalDateTime
 
-                    row["announce_id"] as Int pair Json.parseToJsonElement(row["contents"] as String)
+                    val announces = Json.parseToJsonElement(row["contents"] as String)
                         .jsonObject
-                        .mapKeys { (language, _) ->
-                            Language.values()
-                                .find { it.container.languageCode() == language.uppercase() }
+                        .entries
+                        .associate { (languageCode, rawContent) ->
+                            val language = Language.values()
+                                .find { it.container.languageCode() == languageCode.uppercase() }
                                 ?: Language.ENG
-                        }
-                        .mapValues { (_, content) ->
-                            Announce(
-                                content.jsonObject["title"]!!.jsonPrimitive.content,
-                                content.jsonObject["content"]!!.jsonPrimitive.content,
+
+                            val content = Announce(
+                                rawContent.jsonObject["title"]!!.jsonPrimitive.content,
+                                rawContent.jsonObject["content"]!!.jsonPrimitive.content,
                                 date
                             )
+
+                            language to content
                         }
+
+                    tuple(row["announce_id"] as Int, announces)
                 }
             }
             .filter { (_, announces) -> announces.containsKey(Language.ENG) }

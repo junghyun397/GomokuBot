@@ -47,7 +47,7 @@ import renju.notation.Renju
 import utils.assets.LinuxTime
 import utils.assets.toBytes
 import utils.lang.memoize
-import utils.lang.pair
+import utils.lang.tuple
 import utils.structs.*
 import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
@@ -386,7 +386,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
                     )
                 )
             )
-            else -> publisher(DiscordMessageData(embeds = this.buildAboutRenjuEmbed(page - 1 pair container)))
+            else -> publisher(DiscordMessageData(embeds = this.buildAboutRenjuEmbed(tuple(page - 1, container))))
         }
 
     override fun produceHelp(publisher: DiscordMessagePublisher, container: LanguageContainer, page: Int) =

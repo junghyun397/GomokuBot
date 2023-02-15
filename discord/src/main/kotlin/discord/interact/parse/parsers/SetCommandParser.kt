@@ -29,7 +29,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import renju.notation.Pos
 import renju.notation.Renju
-import utils.lang.pair
+import utils.lang.tuple
 import utils.structs.*
 
 object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponents>(), ParsableCommand, EmbeddableCommand, BuildableCommand {
@@ -60,7 +60,7 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
         this.asParseFailure("try move but now $player's turn", context.guild, context.user) { producer, publisher, container ->
             producer.produceOrderFailure(publisher, container, player)
                 .retrieve()
-                .flatMap { this.buildAppendMessageProcedure(it.map { it }, context, session) }
+                .flatMap { this.buildAppendMessageProcedure(it, context, session) }
         }
 
     private fun buildMissMatchFailure(context: InteractionContext<*>, session: GameSession): DiscordParseFailure =
@@ -141,8 +141,8 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
             .drop(1)
             .take(2)
             .takeIf { it.size == 2 }
-            ?.let { it.component1() pair it.component2() }
-            ?: (null pair null)
+            ?.let { tuple(it.component1(), it.component2()) }
+            ?: tuple(null, null)
 
         return this.parseRawCommand(context, context.user, rawRow, rawColumn)
     }
@@ -150,7 +150,7 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
     override suspend fun parseComponent(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
         val (column, row) = context.event.componentId
             .drop(2)
-            .let { this.matchColumn(it.take(1)) pair this.matchRow(it.drop(1)) }
+            .let { tuple(this.matchColumn(it.take(1)), this.matchRow(it.drop(1))) }
 
         if (row == null || column == null) return Option.Empty
 

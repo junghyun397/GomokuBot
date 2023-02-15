@@ -77,7 +77,7 @@ private fun <T : Event> buildUpdateProfileNode(context: InteractionContext<T>, c
 
 private val commandCheckedSet = mutableSetOf<GuildUid>()
 
-private suspend fun <T : Event> buildUpdateCommandsNote(context: InteractionContext<T>, command: Command): Command {
+private suspend fun <T : Event> buildUpdateCommandsNode(context: InteractionContext<T>, command: Command): Command {
     if (commandCheckedSet.contains(context.guild.id))
         return command
 
@@ -122,7 +122,7 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
                         buildUpdateProfileNode(context, command, context.event.user)
                     }
                     .mapLeft { command ->
-                        buildUpdateCommandsNote(context, command)
+                        buildUpdateCommandsNode(context, command)
                     }
             }
     }
@@ -217,7 +217,7 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<I
                         buildUpdateProfileNode(context, command, context.event.author)
                     }
                     .mapLeft { command ->
-                        buildUpdateCommandsNote(context, command)
+                        buildUpdateCommandsNode(context, command)
                     }
             }
     }

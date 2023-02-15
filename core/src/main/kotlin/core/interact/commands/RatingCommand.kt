@@ -9,7 +9,7 @@ import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
-import utils.lang.pair
+import utils.lang.tuple
 import utils.structs.IO
 
 class RatingCommand() : Command {
@@ -27,7 +27,7 @@ class RatingCommand() : Command {
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        IO { emptyList<Order>() } pair this.asCommandReport("succeed", guild, user)
+        tuple(IO { emptyList<Order>() }, this.asCommandReport("succeed", guild, user))
     }
 
 }
