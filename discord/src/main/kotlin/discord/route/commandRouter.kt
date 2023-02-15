@@ -6,6 +6,7 @@ import core.assets.GuildUid
 import core.assets.VOID_MESSAGE_REF
 import core.database.repositories.AnnounceRepository
 import core.interact.commands.*
+import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.interact.message.AdaptivePublisherSet
 import core.interact.message.MonoPublisherSet
@@ -82,12 +83,12 @@ private suspend fun <T : Event> buildUpdateCommandsNote(context: InteractionCont
 
     commandCheckedSet.add(context.guild.id)
     
-    val (deprecated, added) = GuildManager.fetchDeprecatedCommandCount(context.jdaGuild, context.config.language.container)
+    val (deprecates, adds) = GuildManager.buildCommandUpdates(context.jdaGuild, context.config.language.container)
     
-    if (deprecated + added < 1)
+    if (deprecates.size + adds.size < 1)
         return command
 
-    return UpdateCommandsCommand(command, deprecated, added)
+    return UpdateCommandsCommand(command, deprecates.map { it.name }, adds.map { it.getLocalizedName(Language.ENG.container) })
 }
 
 private fun matchCommand(command: String, container: LanguageContainer): Option<ParsableCommand> =

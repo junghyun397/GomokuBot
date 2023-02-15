@@ -14,8 +14,8 @@ import utils.structs.map
 
 class UpdateCommandsCommand(
     private val command: Command,
-    private val deprecated: Int,
-    private val added: Int
+    private val deprecates: List<String>,
+    private val adds: List<String>
 ) : Command {
 
     override val name = "update-commands"
@@ -37,7 +37,7 @@ class UpdateCommandsCommand(
                 val io = originalIO
                     .map { originalOrder -> originalOrder + Order.UpsertCommands(config.language.container) }
 
-                io pair originalReport + this.asCommandReport("deprecated = $deprecated, added = $added", guild, user)
+                io pair originalReport + this.asCommandReport("deprecates = $deprecates, adds = $adds", guild, user)
             }
             .getOrThrow()
     }

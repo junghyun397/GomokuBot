@@ -19,6 +19,7 @@ import discord.interact.message.DiscordMessageData
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.DiscordMessagePublisher
 import discord.interact.message.MessageCreateAdaptor
+import discord.interact.parse.BuildableCommand
 import discord.interact.parse.buildableCommands
 import discord.interact.parse.engBuildableCommands
 import net.dv8tion.jda.api.JDA
@@ -26,7 +27,9 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
+import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.requests.RestAction
+import utils.lang.memoize
 import utils.lang.pair
 import utils.lang.shift
 import utils.structs.Option
@@ -61,20 +64,28 @@ object GuildManager {
         }.queue()
     }
 
-    suspend fun fetchDeprecatedCommandCount(guild: JDAGuild, container: LanguageContainer): Pair<Int, Int> =
+    private val buildableCommandIndexes: (LanguageContainer) -> Map<String, BuildableCommand> = memoize { container ->
+        buildableCommands.associateBy { it.getLocalizedName(container) }
+    }
+
+    private val engBuildableCommandIndexes: Map<String, BuildableCommand> =
+        engBuildableCommands.associateBy { it.getLocalizedName(Language.ENG.container) }
+
+    suspend fun buildCommandUpdates(guild: JDAGuild, container: LanguageContainer): Pair<List<Command>, List<BuildableCommand>> =
         guild.retrieveCommands()
             .map { commands ->
                 val localCommands = commands.toSet()
 
-                val serverCommands = buildableCommands
-                    .shift(container == Language.ENG.container) { engBuildableCommands }
-                    .map { it.getLocalizedName(container) pair it }
+                val serverCommands = buildableCommandIndexes(container)
+                    .shift(container == Language.ENG.container) { engBuildableCommandIndexes }
 
                 val deprecates = localCommands
-                    .count { command -> !serverCommands.any { (name, _) -> command.name == name } }
+                    .filterNot { command -> serverCommands.containsKey(command.name) }
 
                 val adds = serverCommands
-                    .count { (name, _) -> !localCommands.any { command -> command.name == name } }
+                    .filterKeys { name -> !localCommands.any { command -> command.name == name } }
+                    .values
+                    .toList()
 
                 deprecates pair adds
             }
@@ -95,16 +106,15 @@ object GuildManager {
     suspend fun archiveSession(archiveChannel: TextChannel, session: GameSession, archivePolicy: ArchivePolicy) {
         if (session.board.moves() < 20 || archivePolicy == ArchivePolicy.PRIVACY) return
 
-        val modSession = when (archivePolicy) {
-            ArchivePolicy.BY_ANONYMOUS -> when (session) {
+        val modSession = session.shift(archivePolicy == ArchivePolicy.BY_ANONYMOUS) {
+            when (session) {
                 is AiGameSession -> session.copy(owner = anonymousUser)
                 is PvpGameSession -> session.copy(owner = anonymousUser, opponent = anonymousUser)
             }
-            else -> session
         }
 
-        val modResult = when (archivePolicy) {
-            ArchivePolicy.BY_ANONYMOUS -> modSession.gameResult.map { result ->
+        val modResult = modSession.gameResult.map { result ->
+            result.shift(archivePolicy == ArchivePolicy.BY_ANONYMOUS) {
                 when (result) {
                     is GameResult.Win -> result.copy(
                         winner = result.winner.switchToAnonymousUser(),
@@ -113,7 +123,6 @@ object GuildManager {
                     else -> result
                 }
             }
-            else -> modSession.gameResult
         }
 
         val publisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(archiveChannel.sendMessage(msg.buildCreate())) }
