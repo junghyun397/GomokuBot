@@ -6,21 +6,23 @@ import core.assets.MessageRef
 import core.assets.User
 import core.database.repositories.AnnounceRepository
 import core.database.repositories.UserProfileRepository
+import core.interact.Order
 import core.interact.i18n.Language
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
-import utils.lang.pair
+import utils.lang.tuple
 import utils.structs.flatMap
+import utils.structs.map
 
-class AnnounceCommand(private val command: Command) : Command {
+class AnnounceCommand(command: Command) : UnionCommand(command) {
 
     override val name = "announce"
 
     override val responseFlag = this.command.responseFlag
 
-    override suspend fun <A, B> execute(
+    override suspend fun <A, B> executeSelf(
         bot: BotContext,
         config: GuildConfig,
         guild: Guild,
@@ -42,13 +44,11 @@ class AnnounceCommand(private val command: Command) : Command {
                 ).launch()
             }
             .reduce { acc, io -> acc.flatMap { io } }
+            .map { emptyList<Order>() }
 
-        this.command
-            .execute(bot, config, guild, user, producer, messageRef, publishers)
-            .map { (originalIO, originalReport) ->
-                io.flatMap { originalIO } pair originalReport + this.asCommandReport("succeed", guild, user)
-            }
-            .getOrThrow()
+        val report = this.asCommandReport("succeed", guild, thenUser)
+
+        tuple(io, report, guild, user)
     }
 
 }

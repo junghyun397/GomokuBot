@@ -9,20 +9,20 @@ import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
-import utils.lang.pair
-import utils.structs.map
+import utils.lang.tuple
+import utils.structs.IO
 
 class UpdateCommandsCommand(
-    private val command: Command,
+    command: Command,
     private val deprecates: List<String>,
     private val adds: List<String>
-) : Command {
+) : UnionCommand(command) {
 
     override val name = "update-commands"
 
     override val responseFlag = ResponseFlag.Immediately
 
-    override suspend fun <A, B> execute(
+    override suspend fun <A, B> executeSelf(
         bot: BotContext,
         config: GuildConfig,
         guild: Guild,
@@ -31,15 +31,11 @@ class UpdateCommandsCommand(
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {
-        this.command
-            .execute(bot, config, guild, user, producer, messageRef, publishers)
-            .map { (originalIO, originalReport) ->
-                val io = originalIO
-                    .map { originalOrder -> originalOrder + Order.UpsertCommands(config.language.container) }
+        val io = IO.unit { listOf(Order.UpsertCommands(config.language.container)) }
 
-                io pair originalReport + this.asCommandReport("deprecates = $deprecates, adds = $adds", guild, user)
-            }
-            .getOrThrow()
+        val report = this.asCommandReport("deprecates = $deprecates, adds = $adds", guild, user)
+
+        tuple(io, report, guild, user)
     }
 
 }

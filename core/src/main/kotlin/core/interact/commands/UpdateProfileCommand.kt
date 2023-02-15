@@ -6,26 +6,28 @@ import core.assets.MessageRef
 import core.assets.User
 import core.database.repositories.GuildProfileRepository
 import core.database.repositories.UserProfileRepository
+import core.interact.Order
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
 import core.session.entities.GuildConfig
-import utils.lang.pair
+import utils.lang.tuple
+import utils.structs.IO
 import utils.structs.Option
 import utils.structs.forEach
 import utils.structs.orElseGet
 
 class UpdateProfileCommand(
-    private val command: Command,
+    command: Command,
     private val newUser: Option<User>,
     private val newGuild: Option<Guild>,
-) : Command {
+) : UnionCommand(command) {
 
     override val name = "update-profile"
 
     override val responseFlag = this.command.responseFlag
 
-    override suspend fun <A, B> execute(
+    override suspend fun <A, B> executeSelf(
         bot: BotContext,
         config: GuildConfig,
         guild: Guild,
@@ -46,12 +48,11 @@ class UpdateProfileCommand(
 
         val thenGuild = this.newGuild.orElseGet { guild }
 
-        this.command
-            .execute(bot, config, thenGuild, thenUser, producer, messageRef, publishers)
-            .map { (originalIO, originalReport) ->
-                originalIO pair originalReport + this.asCommandReport("succeed", guild, user)
-            }
-            .getOrThrow()
+        val io = IO.unit { emptyList<Order>() }
+
+        val report = this.asCommandReport("succeed", guild, user)
+
+        tuple(io, report, thenGuild, thenUser)
     }
 
 }
