@@ -75,7 +75,7 @@ object DatabaseManager {
                             
                         CREATE TABLE IF NOT EXISTS game_record (
                             record_id SERIAL PRIMARY KEY,
-                            board_status bytea NOT NULL,
+                            board_state bytea NOT NULL,
                             history int[] NOT NULL,
                             cause smallint NOT NULL,
                             win_color smallint,
@@ -90,7 +90,7 @@ object DatabaseManager {
                         );
                         
                         CREATE OR REPLACE PROCEDURE upload_game_record(
-                            p_board_status bytea,
+                            p_board_state bytea,
                             p_history int[],
                             p_cause smallint,
                             p_win_color smallint,
@@ -101,8 +101,8 @@ object DatabaseManager {
                         ) LANGUAGE plpgsql AS $$
                         BEGIN
                         
-                        INSERT INTO game_record (board_status, history, cause, win_color, guild_id, black_id, white_id, ai_level)
-                            VALUES (p_board_status, p_history, p_cause, p_win_color, p_guild_id, p_black_id, p_white_id, p_ai_level);
+                        INSERT INTO game_record (board_state, history, cause, win_color, guild_id, black_id, white_id, ai_level)
+                            VALUES (p_board_state, p_history, p_cause, p_win_color, p_guild_id, p_black_id, p_white_id, p_ai_level);
                             
                         IF p_ai_level IS NOT NULL THEN
                         

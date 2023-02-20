@@ -30,7 +30,7 @@ object GameRecordRepository {
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
                 .createStatement("CALL upload_game_record($1, $2, $3, $4, $5, $6, $7, $8)")
-                .bind("$1", record.boardStatus)
+                .bind("$1", record.boardState)
                 .bind("$2", record.history.map { it.idx() }.toTypedArray())
                 .bind("$3", record.gameResult.cause.id)
                 .bindNullable("$4", record.gameResult.winColorId)
@@ -92,7 +92,7 @@ object GameRecordRepository {
         GameRecordRow(
             row["black_id"] as UUID?,
             row["white_id"] as UUID?,
-            (row["board_status"] as ByteBuffer).array(),
+            (row["board_state"] as ByteBuffer).array(),
             (row["history"] as Array<*>).map { it as Int }.toIntArray(),
             smallIntToMaybeByte(row["win_color"]),
             row["cause"] as Short,
@@ -106,7 +106,7 @@ object GameRecordRepository {
         val whiteUser = gameRecordRow.whiteId?.let { UserProfileRepository.retrieveUser(connection, UserUid(it)) }
 
         return GameRecord(
-            boardStatus = gameRecordRow.boardStatus,
+            boardState = gameRecordRow.boardState,
             history = gameRecordRow.history.map { Pos.fromIdx(it) },
             gameResult = GameResult.build(
                 gameResult = Notation.ResultInstance.fromFlag(gameRecordRow.winColor ?: Flag.EMPTY()),
@@ -125,7 +125,7 @@ object GameRecordRepository {
     internal class GameRecordRow(
         val blackId: UUID?,
         val whiteId: UUID?,
-        val boardStatus: ByteArray,
+        val boardState: ByteArray,
         val history: IntArray,
         val winColor: Byte?,
         val cause: Short,

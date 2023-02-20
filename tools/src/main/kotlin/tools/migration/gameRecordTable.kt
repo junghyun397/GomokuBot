@@ -92,7 +92,7 @@ suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysq
         )!!
 
         val record = GameRecord(
-            boardStatus = board.field(),
+            boardState = board.field(),
             history = history,
             gameResult = gameResult,
             guildId = genericGuild.id,
@@ -112,11 +112,11 @@ suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysq
                 .flatMapMany { dbc -> dbc
                     .createStatement(
                         """
-                            INSERT INTO game_record (board_status, history, cause, win_color, guild_id, black_id, white_id, ai_level)
+                            INSERT INTO game_record (board_state, history, cause, win_color, guild_id, black_id, white_id, ai_level)
                                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                         """.trimMargin()
                     )
-                    .bind("$1", record.boardStatus)
+                    .bind("$1", record.boardState)
                     .bind("$2", record.history.map { it.idx() }.toTypedArray())
                     .bind("$3", record.gameResult.cause.id)
                     .bindNullable("$4", record.gameResult.winColorId)

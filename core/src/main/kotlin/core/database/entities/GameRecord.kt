@@ -17,7 +17,7 @@ import utils.structs.getOrException
 
 @Suppress("ArrayInDataClass")
 data class GameRecord(
-    val boardStatus: ByteArray,
+    val boardState: ByteArray,
     val history: List<Pos>,
 
     val gameResult: GameResult,
@@ -36,7 +36,7 @@ private val invalidPos: Pos = Pos.fromIdx(-1)
 fun GameSession.extractGameRecord(guildUid: GuildUid): Option<GameRecord> =
     Option.cond(this.gameResult.isDefined && this.recording && !this.history.contains(null)) {
         GameRecord(
-            boardStatus = board.field(),
+            boardState = board.field(),
             history = history.map { it ?: invalidPos },
 
             gameResult = gameResult.getOrException(),
@@ -65,7 +65,7 @@ suspend fun GameRecord.asGameSession(repo: SessionRepository, owner: User): Game
         whiteId != null && blackId != null -> {
             val ownerHasBlack = blackId == owner.id
 
-            val board = Notation.BoardIOInstance.fromFieldArray(boardStatus, history.last().idx()).get()
+            val board = Notation.BoardIOInstance.fromFieldArray(boardState, history.last().idx()).get()
 
             PvpGameSession(
                 owner = owner,
