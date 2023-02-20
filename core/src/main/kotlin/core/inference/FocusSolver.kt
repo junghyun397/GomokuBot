@@ -112,7 +112,7 @@ object FocusSolver {
 
             if (components.size == 5) {
                 val orthogonalComponents = when (strip.direction()) {
-                    Notation.Direction.X -> mutableListOf<Int>().apply {
+                    Notation.Direction.X -> buildList {
                         val centerRow = Pos.idxToRow(components[2])
                         val centerCol = Pos.idxToCol(components[2])
 
@@ -122,7 +122,7 @@ object FocusSolver {
                         if (centerRow > 1) add(Pos.rowColToIdx(centerRow - 2, centerCol))
                     }
 
-                    Notation.Direction.Y -> mutableListOf<Int>().apply {
+                    Notation.Direction.Y -> buildList {
                         val centerRow = Pos.idxToRow(components[2])
                         val centerCol = Pos.idxToCol(components[2])
 

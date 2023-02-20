@@ -4,7 +4,7 @@
 
 Q. What do you mean, GomokuBot and Renju?
 
-A. Gomoku is elementary. But Gomoku is not a fair game. Therefore, GomokuBot uses Renju, which has some elementary rules added, not plain Gomoku.
+A. Gomoku is elementary. But Gomoku is not a fair game. Therefore, GomokuBot uses Renju, which has some additional rules, not plain Gomoku.
 
 But don't worry. Renju is really similar to Gomoku. In the game between beginners, it's the same so that, even if they don't know what Renju is, it doesn't affect them at all.
 
@@ -30,11 +30,11 @@ But don't worry. Renju is really similar to Gomoku. In the game between beginner
 
 *Black wins!*
 
-Renju is a variant game that adds **Forbidden moves** that only apply to black in Gomoku. Before diving into Renju and Forbidden moves, you need to understand why Renju only applies Forbidden moves to black, and how unfair a plain Gomoku game is.
+Renju is a variant game that adds **Forbidden moves** that only apply to black in Gomoku. Before diving into Renju and Forbidden moves, we need to understand why Renju only applies Forbidden moves to black, and how unfair a plain Gomoku game is.
 
 ### Gomoku is a Solved Game.
 
-If you've played Gomoku for a while, you've probably realized that the black you start first with is very advantageous in Gomoku, where there are no other restrictions. So, how good is black? What would be the result if both black and white had their best moves?
+If you've played Gomoku for a while, you've probably figured out that black is very advantageous to start playing first on Gomoku, where there are no other constraints. So, how good is black? What would be the result if both black and white had their best moves?
 
 A plain Gomoku with no additional rules was proved in 1980 by Stefan Reisch.[*](https://doi.org/10.1007/bf00288536) Even if both black and white have their best moves, black can always find a winning strategy.
 
@@ -42,11 +42,11 @@ In other words, in a plain Gomoku, black **always** wins, even if both black and
 
 ### Renju has "Forbidden Moves"
 
-Renju chose the "Forbidden moves" rule to address the overwhelming advantage of black First. There are three types of forbids: 3-3 forbid, 4-4 forbid, and overline forbid.
+Renju chose the **Forbidden moves** rule to address the overwhelming advantage of black First. There are three types of forbids: 3-3 forbid, 4-4 forbid, and overline forbid.
 
 If it looks complicated, don't worry. Forbidden moves are fairly rare in beginners' games, and even if they don't know what a Forbidden move is, it's unlikely to change their win or loss.
 
-To understand forbidden moves correctly, we must first understand how Gomoku defines three and four, and in which situations the forbidden moves appears. Here we start with the definition of four.
+To understand forbidden moves correctly, you must first understand how Gomoku defines three and four, and in which situations the forbidden moves appears. Here we start with the definition of four.
 
 ## What is "Four"?
 
@@ -97,11 +97,11 @@ The four stones arranged in a straight line are four. Four stone blocks on one s
  1 . . . . . . . . . . . . . . . 1
    A B C D E F G H I J K L M N O
 ```
-*...You can win!*
+*...Black can win!*
 
 ## What is "4-4 Forbid"?
 
-**4-4 forbid** means **a place where you can make two or more fours with a single move**. Even if you can create three fours in a single move, it is 4-4 forbid.
+**4-4 forbid** means **a point where you can make two or more fours with a single move**. Even if you can create three fours in a single move, it is 4-4 forbid.
 
 Remember: forbidden moves are rules designed to solve Black's overwhelming advantage. Therefore, all forbidden moves apply only to black. White is free to make 4-4 fork to win!
 
@@ -303,7 +303,7 @@ This is because all these shapes are not three overlapping shapes, but actually 
 
 ## What is "Overline Forbid"?
 
-We're almost there. An **overline forbid** means **a place where you can make 6 or more stones arranged in a row in a single move**.
+We're almost there. An **overline forbid** means **a point where you can make 6 or more stones arranged in a row in a single move**.
 
 Even if you can make a 7-in-a-row in a single move, it's overline forbid. Neither 8-in-a-row nor 9-in-a-row. However, 10-in-a-row is an exception. If someone makes a 10-in-a-row, you must immediately turn off all electronics and leave the area.
 

@@ -67,21 +67,21 @@ private fun <T : Event> buildUpdateProfileNode(context: InteractionContext<T>, c
     val user = jdaUser.extractProfile(uid = context.user.id, announceId = context.user.announceId)
     val guild = context.jdaGuild.extractProfile(uid = context.guild.id)
 
-    val thenUser = Option.cond(user != context.user) { user }
-    val thenGuild = Option.cond(guild != context.guild) { guild }
+    val maybeThenUser = Option.cond(user != context.user) { user }
+    val maybeThenGuild = Option.cond(guild != context.guild) { guild }
 
-    return command.shift(thenUser.isDefined || thenGuild.isDefined) {
-        UpdateProfileCommand(command, thenUser, thenGuild)
+    return command.shift(maybeThenUser.isDefined || maybeThenGuild.isDefined) {
+        UpdateProfileCommand(command, maybeThenUser, maybeThenGuild)
     }
 }
 
-private val commandCheckedSet = mutableSetOf<GuildUid>()
+private val updateCommandBypassGuilds = mutableSetOf<GuildUid>()
 
 private suspend fun <T : Event> buildUpdateCommandsNode(context: InteractionContext<T>, command: Command): Command {
-    if (commandCheckedSet.contains(context.guild.id))
+    if (updateCommandBypassGuilds.contains(context.guild.id))
         return command
 
-    commandCheckedSet.add(context.guild.id)
+    updateCommandBypassGuilds.add(context.guild.id)
     
     val (deprecates, adds) = GuildManager.buildCommandUpdates(context.jdaGuild, context.config.language.container)
     

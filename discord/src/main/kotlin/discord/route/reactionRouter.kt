@@ -33,7 +33,7 @@ import utils.structs.*
 private fun recoverNavigationState(bot: BotContext, message: Message, messageRef: MessageRef): Option<NavigationState> =
     message.embeds.firstOrNull()
         .asOption()
-        .flatMap { DiscordMessageProducer.decodePageNavigationState(COLOR_NORMAL_HEX, it.colorRaw, bot.config, messageRef) }
+        .flatMap { PageNavigationState.decodeFromColor(COLOR_NORMAL_HEX, it.colorRaw, bot.config, messageRef) }
         .onEach { SessionManager.addNavigation(bot.sessions, messageRef, it) }
 
 fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mono<InteractionReport> {

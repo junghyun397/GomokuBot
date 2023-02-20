@@ -1,6 +1,5 @@
 package discord.interact.message
 
-import core.BotConfig
 import core.assets.*
 import core.database.entities.Announce
 import core.database.entities.UserStats
@@ -44,8 +43,6 @@ import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction
 import renju.notation.Renju
-import utils.assets.LinuxTime
-import utils.assets.toBytes
 import utils.lang.memoize
 import utils.lang.tuple
 import utils.structs.*
@@ -62,6 +59,12 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
     override fun sendString(text: String, publisher: DiscordMessagePublisher) =
         publisher(DiscordMessageData(text))
 
+    private infix fun DiscordMessagePublisher.sends(embed: MessageEmbed) =
+        this(DiscordMessageData(embed = embed))
+
+    private infix fun DiscordMessagePublisher.sends(embeds: List<MessageEmbed>) =
+        this(DiscordMessageData(embeds = embeds))
+
     override fun User.asMentionFormat() = "<@${this.givenId.idLong}>"
 
     override fun String.asHighlightFormat() = "``$this``"
@@ -72,32 +75,6 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
 
     private fun ItemComponent.liftToButtons() = listOf(ActionRow.of(this))
 
-    fun encodePageNavigationState(base: Int, navigationState: PageNavigationState): Int =
-        this.encodePageNavigationState(base, navigationState.kind, navigationState.page)
-
-    private fun encodePageNavigationState(base: Int, kind: NavigationKind, page: Int): Int {
-        val baseBytes = base.toBytes()
-            .drop(1)
-            .map { it.toUByte().toInt() }
-
-        val headByte: Int = page shr 1
-        val tailByte: Int = headByte + (headByte and 0x1)
-
-        return ((baseBytes[0] + kind.id) shl 16) or ((baseBytes[1] + headByte) shl 8) or (baseBytes[2] + tailByte)
-    }
-
-    fun decodePageNavigationState(base: Int, code: Int, config: BotConfig, messageRef: MessageRef): Option<PageNavigationState> {
-        val bytes = base.toBytes()
-            .zip(code.toBytes()) { a, b -> b - a }
-            .drop(1)
-
-        val kind = NavigationKind.values().find(bytes.first().toShort())
-        val page = bytes[1] + bytes[2]
-
-        return Option.cond(kind != NavigationKind.BOARD && page in kind.range) {
-            PageNavigationState(messageRef, kind, page, LinuxTime.nowWithOffset(config.navigatorExpireOffset))
-        }
-    }
 
     // BOARD
 
@@ -172,47 +149,45 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
 
         return renderer.renderBoard(session.board, session.history, modRenderType).fold(
             onLeft = { textBoard ->
-                publisher(DiscordMessageData(
-                    embeds = mutableListOf<MessageEmbed>().apply {
-                        add(Embed {
-                            color = barColor
+                publisher sends buildList {
+                    add(Embed {
+                        color = barColor
 
-                            buildBoardAuthor(container, session)
-                            description = textBoard
+                        buildBoardAuthor(container, session)
+                        description = textBoard
 
-                            session.gameResult.fold(
-                                onDefined = { buildResultFields(container, session, it) },
-                                onEmpty = { buildStatusFields(container, session) },
-                            )
-                        })
+                        session.gameResult.fold(
+                            onDefined = { buildResultFields(container, session, it) },
+                            onEmpty = { buildStatusFields(container, session) },
+                        )
+                    })
 
-                        if (session.gameResult.isEmpty)
-                            add(this@DiscordMessageProducer.buildNextMoveEmbed(container))
-                    }
-                ))
+                    if (session.gameResult.isEmpty)
+                        add(this@DiscordMessageProducer.buildNextMoveEmbed(container))
+                }
             },
             onRight = { imageStream ->
                 val fName = ImageBoardRenderer.newFileName()
 
-                publisher(DiscordMessageData(
-                    embeds = mutableListOf<MessageEmbed>().apply {
-                        add(Embed {
-                            color = barColor
+                val messageBuilder = publisher sends buildList {
+                    add(Embed {
+                        color = barColor
 
-                            buildBoardAuthor(container, session)
+                        buildBoardAuthor(container, session)
 
-                            session.gameResult.fold(
-                                onDefined = { buildResultFields(container, session, it) },
-                                onEmpty = { buildStatusFields(container, session) },
-                            )
+                        session.gameResult.fold(
+                            onDefined = { buildResultFields(container, session, it) },
+                            onEmpty = { buildStatusFields(container, session) },
+                        )
 
-                            image = "attachment://$fName"
-                        })
+                        image = "attachment://$fName"
+                    })
 
-                        if (session.gameResult.isEmpty)
-                            add(this@DiscordMessageProducer.buildNextMoveEmbed(container))
-                    }
-                )).addFile(imageStream, fName)
+                    if (session.gameResult.isEmpty)
+                        add(this@DiscordMessageProducer.buildNextMoveEmbed(container))
+                }
+
+                messageBuilder.addFile(imageStream, fName)
             }
         )
     }
@@ -228,21 +203,20 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
         else
             ImageBoardRenderer.newFileName()
 
-        return publisher(DiscordMessageData(
-            embed = Embed {
-                color = COLOR_NORMAL_HEX
+        val messageBuilder = publisher sends Embed {
+            color = COLOR_NORMAL_HEX
 
-                buildBoardAuthor(Language.ENG.container, session)
+            buildBoardAuthor(Language.ENG.container, session)
 
-                result.fold(
-                    onDefined = { buildResultFields(Language.ENG.container, session, it) },
-                    onEmpty = { buildStatusFields(Language.ENG.container, session) },
-                )
+            result.fold(
+                onDefined = { buildResultFields(Language.ENG.container, session, it) },
+                onEmpty = { buildStatusFields(Language.ENG.container, session) },
+            )
 
-                image = "attachment://${fName}"
+            image = "attachment://${fName}"
+        }
 
-            }
-        )).addFile(imageStream, fName)
+        return messageBuilder.addFile(imageStream, fName)
     }
 
     override fun generateFocusedButtons(focusedFields: FocusedFields) =
@@ -295,7 +269,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
 
     private val buildAboutEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
-            color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.ABOUT, 0)
+            color = PageNavigationState.encodeToColor(COLOR_NORMAL_HEX, NavigationKind.ABOUT, 0)
             title = container.helpAboutEmbedTitle()
             description = container.helpAboutEmbedDescription("Discord")
             thumbnail =
@@ -330,7 +304,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
 
     private val buildCommandGuideEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
-            color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.ABOUT, 0)
+            color = PageNavigationState.encodeToColor(COLOR_NORMAL_HEX, NavigationKind.ABOUT, 0)
             title = container.commandUsageEmbedTitle()
 
             buildableCommands
@@ -347,7 +321,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
 
     private val buildExploreAboutRenjuEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
-            color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.ABOUT, 0)
+            color = PageNavigationState.encodeToColor(COLOR_NORMAL_HEX, NavigationKind.ABOUT, 0)
             description = container.exploreAboutRenju()
         }
     }
@@ -359,7 +333,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
             .flatMapIndexed { h2Index, (h3Title, blocks) -> blocks
                 .mapIndexed { blockIndex, block ->
                     Embed {
-                        color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.ABOUT, page)
+                        color = PageNavigationState.encodeToColor(COLOR_NORMAL_HEX, NavigationKind.ABOUT, page)
                         title = when {
                             h2Index == 0 && blockIndex == 0 -> h2Title.asBoldFormat()
                             blockIndex == 0 -> h3Title
@@ -377,16 +351,12 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
 
     private fun buildHelpMessage(publisher: DiscordMessagePublisher, container: LanguageContainer, page: Int) =
         when (page) {
-            0 -> publisher(
-                DiscordMessageData(
-                    embeds = listOf(
-                        this.buildAboutEmbed(container),
-                        this.buildCommandGuideEmbed(container),
-                        this.buildExploreAboutRenjuEmbed(container)
-                    )
-                )
+            0 -> publisher sends listOf(
+                this.buildAboutEmbed(container),
+                this.buildCommandGuideEmbed(container),
+                this.buildExploreAboutRenjuEmbed(container)
             )
-            else -> publisher(DiscordMessageData(embeds = this.buildAboutRenjuEmbed(tuple(page - 1, container))))
+            else -> publisher sends this.buildAboutRenjuEmbed(tuple(page - 1, container))
         }
 
     override fun produceHelp(publisher: DiscordMessagePublisher, container: LanguageContainer, page: Int) =
@@ -422,30 +392,28 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
     // RANK
 
     override fun produceRankings(publisher: DiscordMessagePublisher, container: LanguageContainer, rankings: List<Pair<User, UserStats>>) =
-        publisher(DiscordMessageData(
-            embed = Embed {
-                color = COLOR_NORMAL_HEX
-                title = container.rankEmbedTitle()
-                description = container.rankEmbedDescription()
+        publisher sends Embed {
+            color = COLOR_NORMAL_HEX
+            title = container.rankEmbedTitle()
+            description = container.rankEmbedDescription()
 
-                val win = container.rankEmbedWin()
-                val lose = container.rankEmbedLose()
-                val draw = container.rankEmbedDraw()
+            val win = container.rankEmbedWin()
+            val lose = container.rankEmbedLose()
+            val draw = container.rankEmbedDraw()
 
-                rankings.forEachIndexed { index, details ->
-                    val (profile, stats) = details
-                    field {
-                        name = "#${index + 1} ${profile.name}"
-                        value = """
-                                **$UNICODE_TROPHY$win: ``${stats.totalWins}``, $UNICODE_WHITE_FLAG️$lose: ``${stats.totalLosses}``, $UNICODE_PENCIL️$draw: ``${stats.totalDraws}``**
-                                ``$UNICODE_BLACK_CIRCLE``$win: ``${stats.blackWins}``, ``$UNICODE_BLACK_CIRCLE``$lose: ``${stats.blackLosses}``,``$UNICODE_BLACK_CIRCLE``$draw: ``${stats.blackDraws}``
-                                ``$UNICODE_WHITE_CIRCLE``$win: ``${stats.whiteWins}``, ``$UNICODE_WHITE_CIRCLE``$lose: ``${stats.whiteLosses}``,``$UNICODE_WHITE_CIRCLE``$draw: ``${stats.whiteDraws}``
-                                """.trimIndent()
-                        inline = false
-                    }
+            rankings.forEachIndexed { index, details ->
+                val (profile, stats) = details
+                field {
+                    name = "#${index + 1} ${profile.name}"
+                    value = """
+                            **$UNICODE_TROPHY$win: ``${stats.totalWins}``, $UNICODE_WHITE_FLAG️$lose: ``${stats.totalLosses}``, $UNICODE_PENCIL️$draw: ``${stats.totalDraws}``**
+                            ``$UNICODE_BLACK_CIRCLE``$win: ``${stats.blackWins}``, ``$UNICODE_BLACK_CIRCLE``$lose: ``${stats.blackLosses}``,``$UNICODE_BLACK_CIRCLE``$draw: ``${stats.blackDraws}``
+                            ``$UNICODE_WHITE_CIRCLE``$win: ``${stats.whiteWins}``, ``$UNICODE_WHITE_CIRCLE``$lose: ``${stats.whiteLosses}``,``$UNICODE_WHITE_CIRCLE``$draw: ``${stats.whiteDraws}``
+                            """.trimIndent()
+                    inline = false
                 }
             }
-        ))
+        }
 
     // RATING
 
@@ -454,7 +422,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
     // LANG
 
     private val languageEmbed = Embed {
-        color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.SETTINGS, 0)
+        color = PageNavigationState.encodeToColor(COLOR_NORMAL_HEX, NavigationKind.SETTINGS, 0)
         title = "GomokuBot / Language"
         description = "The default language is set based on the server region. Please apply the proper language for this server."
 
@@ -468,7 +436,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
     }
 
     override fun produceLanguageGuide(publisher: DiscordMessagePublisher) =
-        publisher(DiscordMessageData(embed = languageEmbed))
+        publisher sends languageEmbed
 
     // SETTINGS
 
@@ -477,7 +445,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
             val (settingElement, optionElements) = SettingMapping.map[classTag]!!
 
             Embed {
-                color = encodePageNavigationState(COLOR_NORMAL_HEX, NavigationKind.SETTINGS, settingElement.menuIndex)
+                color = PageNavigationState.encodeToColor(COLOR_NORMAL_HEX, NavigationKind.SETTINGS, settingElement.menuIndex)
                 title = "GomokuBot / ${settingElement.label(container)}"
                 description = settingElement.description(container)
 
@@ -510,13 +478,12 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
     // STYLE
 
     override fun produceStyleGuide(publisher: DiscordMessagePublisher, container: LanguageContainer) =
-        publisher(DiscordMessageData(embed = this.settingEmbed(BoardStyle::class)(container)))
+        publisher sends this.settingEmbed(BoardStyle::class)(container)
 
     // REQUEST
 
     override fun produceRequest(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
-        publisher(DiscordMessageData(
-            embed = Embed {
+        publisher(DiscordMessageData(embed = Embed {
                 color = COLOR_GREEN_HEX
                 title = container.requestEmbedTitle()
                 description = container.requestEmbedDescription(owner.asMentionFormat(), opponent.asMentionFormat())
@@ -529,40 +496,34 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
         )
 
     override fun produceRequestInvalidated(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
-        publisher(DiscordMessageData(
-            embed = Embed {
-                color = COLOR_RED_HEX
-                title = "~~${container.requestEmbedTitle()}~~"
-                description = "~~${container.requestEmbedDescription(owner.asMentionFormat(), opponent.asMentionFormat())}~~"
-            }
-        ))
+        publisher sends Embed {
+            color = COLOR_RED_HEX
+            title = "~~${container.requestEmbedTitle()}~~"
+            description = "~~${container.requestEmbedDescription(owner.asMentionFormat(), opponent.asMentionFormat())}~~"
+        }
 
     // UTILS
 
     override fun produceAnnounce(publisher: DiscordMessagePublisher, container: LanguageContainer, announce: Announce) =
-        publisher(DiscordMessageData(
-            embed = Embed {
-                color = COLOR_NORMAL_HEX
-                title = "$UNICODE_SPEAKER ${announce.title}"
-                description = announce.content
+        publisher sends Embed {
+            color = COLOR_NORMAL_HEX
+            title = "$UNICODE_SPEAKER ${announce.title}"
+            description = announce.content
 
-                footer {
-                    name = container.announceWrittenOn("$UNICODE_ALARM_CLOCK ${announce.date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd kk:mm"))} UTC")
-                }
+            footer {
+                name = container.announceWrittenOn("$UNICODE_ALARM_CLOCK ${announce.date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd kk:mm"))} UTC")
             }
-        ))
+        }
 
     override fun produceNotYetImplemented(publisher: DiscordMessagePublisher, container: LanguageContainer, officialChannel: String) =
-        publisher(DiscordMessageData(
-            embed = Embed {
-                color = COLOR_RED_HEX
-                title = "$UNICODE_CONSTRUCTION ${container.somethingWrongEmbedTitle()}"
-                description = container.notYetImplementedEmbedDescription()
-                footer {
-                    name = "$UNICODE_MAILBOX ${container.notYetImplementedEmbedFooter(officialChannel)}"
+        publisher sends Embed {
+            color = COLOR_RED_HEX
+            title = "$UNICODE_CONSTRUCTION ${container.somethingWrongEmbedTitle()}"
+            description = container.notYetImplementedEmbedDescription()
+            footer {
+                name = "$UNICODE_MAILBOX ${container.notYetImplementedEmbedFooter(officialChannel)}"
                 }
-            }
-        ))
+        }
 
     fun sendPermissionNotGrantedEmbed(publisher: (DiscordMessageData) -> MessageCreateAction, container: LanguageContainer, channelName: String) =
         publisher(DiscordMessageData(
