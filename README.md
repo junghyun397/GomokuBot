@@ -1,8 +1,4 @@
 # GomokuBot
-
-
-<img align="right" width="33%" src="https://github.com/junghyun397/GomokuBot/blob/master/images/discord-in-game.png?raw=true">
-
 Now play Gomoku in your chat room. GomokuBot can do it. ― GomokuBot is an AI Chatbot designed to collect data for reinforcement learning. GomokuBot can be services with any platform and can handle many requests reliably based on reactive streams. 
 
 *For the Renju engine and inference server used by GomokuBot, please refer to the [ResRenju](https://github.com/junghyun397/ResRenju) repository.*
@@ -17,18 +13,15 @@ Now play Gomoku in your chat room. GomokuBot can do it. ― GomokuBot is an AI C
 * **Non-Blocking IO.** All IO tasks with Project Reactor and Coroutines. The database is also connected using the R2DBC SPI to ensure complete non-blocking IO.
 * **Immutable, Functional.** Almost all parts of GomokuBot are composed of immutable objects, and business logic is programmed using monadic operations.
 
-## Quick Start
-
-```shell
-gradlew build
-```
+## Platforms
 
 ### gomokubot-discord
 
-```shell
-cd discord
-docker build -t gomokubot-discord .
-```
+| help | in game | game result |
+| ---  | ---     | ---         |
+|![discord-help](https://github.com/junghyun397/GomokuBot/blob/master/images/discord-help.png?raw=true) | ![discord-in-game](https://github.com/junghyun397/GomokuBot/blob/master/images/discord-in-game.png?raw=true) | ![discord-finished-game](https://github.com/junghyun397/GomokuBot/blob/master/images/discord-finished-game.png?raw=true) |
+
+Based on [JDA](https://github.com/DV8FromTheWorld/JDA), [jda-reactor](https://github.com/MinnDevelopment/jda-reactor), [jda-ktx](https://github.com/MinnDevelopment/jda-ktx). See [discord module](https://github.com/junghyun397/GomokuBot/tree/master/discord). You can invite gomokubot-discord bot via [this link](https://discord.com/api/oauth2/authorize?client_id=452520939792498689&permissions=137439266880&scope=bot%20applications.commands).
 
 ### gomokubot-telegram
 
@@ -36,7 +29,24 @@ WIP
 
 ### gomokubot-irc
 
-### docker
+WIP
+
+## Quick Start
+
+### build jar
+
+```shell
+gradlew build
+```
+
+### build DockerFile
+
+```shell
+cd discord
+docker build -t gomokubot-discord .
+```
+
+### docker-compose
 
 ```shell
 echo "GOMOKUBOT_DISCORD_TOKEN=discordapplicationtoken
