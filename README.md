@@ -6,11 +6,11 @@ Now play Gomoku in your chat room. GomokuBot can do it. ― GomokuBot is an AI C
 ## Features
 
 * **Renju Rule Support.** With the ResRenju renju engine, GomokuBot always correctly applies [Renju rules](https://www.renju.net/rules/).
-* **Multilingual Support.** Currently, six languages are supported: English, Korean, Korean, 日本語, 國漢文混用體, and Tiếng Việt. Thanks to the community translators. 
+* **Multilingual Support.** Currently, six languages are supported: English, 한국어, 조선말, 日本語, 國漢文混用體, and Tiếng Việt. Thanks to the [community translators](https://github.com/junghyun397/GomokuBot/blob/master/documents/community-translations.md). 
 * **Fully Customizable.** Various elements such as board style, focus type, and hint type can be set.
-* **Intuitive Input.** Within chatbot's environment, the ResRenju renju engine helps intuitive input.
+* **Intuitive Input.** Within chatbot's environment, the [ResRenju](https://github.com/junghyun397/ResRenju) renju engine helps intuitive input.
 * **Multiplatform Support.** Business logic and parser logic are completely separate. Just write a command parser to make GomokuBot service on various platforms.
-* **Non-Blocking IO.** All IO tasks with Project Reactor and Coroutines. The database is also connected using the R2DBC SPI to ensure complete non-blocking IO.
+* **Non-Blocking IO.** All IO tasks with [Project Reactor](https://github.com/reactor/reactor-core) and [Coroutines](https://github.com/Kotlin/kotlinx.coroutines). The database is also connected using the [R2DBC SPI](https://github.com/r2dbc/r2dbc-spi) to ensure complete non-blocking IO.
 * **Immutable, Functional.** Almost all parts of GomokuBot are composed of immutable objects, and business logic is programmed using monadic operations.
 
 ## Platforms
