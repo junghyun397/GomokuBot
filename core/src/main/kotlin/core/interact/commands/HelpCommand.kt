@@ -4,7 +4,7 @@ import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
-import core.interact.Order
+import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
@@ -31,7 +31,7 @@ class HelpCommand(private val sendSettings: Boolean) : Command {
             true -> buildCombinedHelpProcedure(bot, config, publishers.plain, producer, 0)
             else -> buildHelpProcedure(bot, config, publishers.plain, producer)
         }
-            .map { emptyList<Order>() }
+            .map { emptyOrders }
 
         tuple(io, this.asCommandReport("succeed", guild, user))
     }

@@ -6,7 +6,7 @@ import core.assets.MessageRef
 import core.assets.User
 import core.database.repositories.GuildProfileRepository
 import core.database.repositories.UserProfileRepository
-import core.interact.Order
+import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
@@ -48,7 +48,7 @@ class UpdateProfileCommand(
 
         val thenGuild = this.newGuild.orElseGet { guild }
 
-        val io = IO.unit { emptyList<Order>() }
+        val io = IO.unit { emptyOrders }
 
         val report = this.asCommandReport("succeed", guild, user)
 

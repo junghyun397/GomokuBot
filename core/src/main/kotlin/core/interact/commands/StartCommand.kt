@@ -5,7 +5,7 @@ import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
 import core.inference.AiLevel
-import core.interact.Order
+import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
@@ -45,7 +45,7 @@ class StartCommand(val opponent: User?) : Command {
                 val io = producer.produceBeginsPVE(publishers.plain, config.language.container, user, gameSession.ownerHasBlack)
                     .launch()
                     .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, gameSession) }
-                    .map { emptyList<Order>() }
+                    .map { emptyOrders }
 
                 tuple(io, this.asCommandReport("start game session with AI", guild, user))
             }
@@ -61,7 +61,7 @@ class StartCommand(val opponent: User?) : Command {
                 val io = producer.produceRequest(publishers.plain, config.language.container, user, opponent)
                     .retrieve()
                     .flatMapOption { IO { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.messageRef) } }
-                    .map { emptyList<Order>() }
+                    .map { emptyOrders }
 
                 tuple(io, this.asCommandReport("make request to ${this.opponent}", guild, user))
             }

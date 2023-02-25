@@ -4,7 +4,7 @@ import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
-import core.interact.Order
+import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
@@ -46,7 +46,7 @@ class NavigationCommand(
         )
 
         if (this.navigationState.page == newState.page)
-            return@runCatching tuple(IO { emptyList<Order>() }, this.asCommandReport("navigate ${navigationState.kind} bounded", guild, user))
+            return@runCatching tuple(IO.value(emptyOrders), this.asCommandReport("navigate ${navigationState.kind} bounded", guild, user))
 
         SessionManager.addNavigation(bot.sessions, messageRef, newState)
 
@@ -58,7 +58,7 @@ class NavigationCommand(
             else -> throw Exception()
         }
             .launch()
-            .map { emptyList<Order>()  }
+            .map { emptyOrders  }
 
         tuple(io, this.asCommandReport("navigate ${newState.kind} as ${newState.page}", guild, user))
     }

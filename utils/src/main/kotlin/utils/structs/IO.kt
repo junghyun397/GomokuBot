@@ -25,6 +25,11 @@ interface IO<out A> {
                 override suspend fun run() = block()
             }
 
+        fun <A> value(value: A) =
+            object : IO<A> {
+                override suspend fun run() = value
+            }
+
         inline operator fun <A> invoke(crossinline block: suspend () -> A) = unit(block)
 
         fun <A, B> zip(a: IO<A>, b: IO<B>): IO<Pair<A, B>> =

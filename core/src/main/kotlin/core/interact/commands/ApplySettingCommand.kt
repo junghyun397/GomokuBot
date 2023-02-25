@@ -4,7 +4,7 @@ import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
-import core.interact.Order
+import core.interact.emptyOrders
 import core.interact.i18n.Language
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
@@ -40,7 +40,7 @@ class ApplySettingCommand(
 
         val io = producer.produceSettingApplied(publishers.windowed, config.language.container, localKind, localChoice)
             .launch()
-            .map { emptyList<Order>() }
+            .map { emptyOrders }
 
         val (kind, choice) = SettingMapping.buildKindNamePair(Language.ENG.container, this.diff)
 

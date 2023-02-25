@@ -4,7 +4,7 @@ import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
-import core.interact.Order
+import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
@@ -33,7 +33,7 @@ class StyleCommand(private val style: BoardStyle) : Command {
 
         val io = producer.produceStyleUpdated(publishers.windowed, config.language.container, style.sample.styleName)
             .launch()
-            .map { emptyList<Order>() }
+            .map { emptyOrders }
 
         tuple(io, this.asCommandReport("set style ${config.boardStyle.name} to ${style.name}", guild, user))
     }

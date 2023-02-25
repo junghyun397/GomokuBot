@@ -4,7 +4,7 @@ import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
-import core.interact.Order
+import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
@@ -58,13 +58,13 @@ class FocusCommand(
         val newFocusInfo = this.navigationState.focusInfo.copy(focus = newFocus)
 
         when(newFocus.idx()) {
-            this.navigationState.page -> tuple(IO { emptyList() }, this.asCommandReport("focus bounded", guild, user))
+            this.navigationState.page -> tuple(IO.value(emptyOrders), this.asCommandReport("focus bounded", guild, user))
             else -> {
                 SessionManager.addNavigation(bot.sessions, messageRef, this.navigationState.copy(page = newFocus.idx()))
 
                 val action = producer.attachFocusButtons(publishers.component, session, newFocusInfo)
                     .launch()
-                    .map { emptyList<Order>() }
+                    .map { emptyOrders }
 
                 tuple(action, this.asCommandReport("move focus $direction", guild, user))
             }

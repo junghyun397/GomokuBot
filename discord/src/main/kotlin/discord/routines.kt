@@ -4,6 +4,7 @@ import core.BotContext
 import core.database.repositories.AnnounceRepository
 import core.interact.Order
 import core.interact.commands.buildFinishProcedure
+import core.interact.emptyOrders
 import core.interact.reports.CommandReport
 import core.interact.reports.InteractionReport
 import core.session.GameManager
@@ -109,7 +110,7 @@ fun scheduleRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): F
 
                 val io = editIO
                     .flatMap { noticeIO }
-                    .map { emptyList<Order>() }
+                    .map { emptyOrders }
 
                 export(discordConfig, guild, io, null)
             }

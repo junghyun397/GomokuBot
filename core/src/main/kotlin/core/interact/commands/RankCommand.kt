@@ -7,7 +7,7 @@ import core.assets.User
 import core.assets.aiUser
 import core.database.repositories.UserProfileRepository
 import core.database.repositories.UserStatsRepository
-import core.interact.Order
+import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
@@ -56,7 +56,7 @@ class RankCommand(private val scope: RankScope) : Command {
 
         val io = producer.produceRankings(publishers.plain, config.language.container, rankings)
             .launch()
-            .map { emptyList<Order>() }
+            .map { emptyOrders }
 
         tuple(io, this.asCommandReport("$scope scope", guild, user))
     }

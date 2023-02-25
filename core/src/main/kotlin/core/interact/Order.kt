@@ -12,3 +12,5 @@ sealed interface Order {
     class RemoveNavigators(val messageRef: MessageRef, val reduceComponents: Boolean = false) : Order
     class ArchiveSession(val session: GameSession, val policy: ArchivePolicy) : Order
 }
+
+val emptyOrders = emptyList<Order>()

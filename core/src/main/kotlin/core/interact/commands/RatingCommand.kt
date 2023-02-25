@@ -4,7 +4,7 @@ import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
-import core.interact.Order
+import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
@@ -27,7 +27,7 @@ class RatingCommand() : Command {
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        tuple(IO { emptyList<Order>() }, this.asCommandReport("succeed", guild, user))
+        tuple(IO.value(emptyOrders), this.asCommandReport("succeed", guild, user))
     }
 
 }

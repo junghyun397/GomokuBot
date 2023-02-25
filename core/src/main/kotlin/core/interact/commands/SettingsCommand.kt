@@ -4,7 +4,7 @@ import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
-import core.interact.Order
+import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
@@ -19,7 +19,7 @@ import utils.structs.map
 
 class SettingsCommand : Command {
 
-    override val name = "setting"
+    override val name = "settings"
 
     override val responseFlag = ResponseFlag.Immediately
 
@@ -48,7 +48,7 @@ class SettingsCommand : Command {
 
                 producer.attachBinaryNavigators(settingsMessage.messageData)
             }
-            .map { emptyList<Order>() }
+            .map { emptyOrders }
 
         tuple(io, this.asCommandReport("succeed", guild, user))
     }

@@ -3,6 +3,7 @@ package discord.interact.parse.parsers
 import core.interact.commands.Command
 import core.interact.commands.DebugCommand
 import core.interact.commands.DebugType
+import core.interact.emptyOrders
 import core.interact.parse.NamedParser
 import core.interact.parse.asParseFailure
 import discord.interact.GuildManager
@@ -24,7 +25,7 @@ object DebugCommandParser : NamedParser, ParsableCommand {
     override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
         if (!GuildManager.hasDebugPermission(context.discordConfig, context.event.author))
             return Either.Right(this.asParseFailure("tester permission not granted", context.guild, context.user) { _, _, _ ->
-                IO { emptyList() }
+                IO.value(emptyOrders)
             })
 
         val type = run { when {
@@ -32,7 +33,7 @@ object DebugCommandParser : NamedParser, ParsableCommand {
             else -> matchType(payload.component2().uppercase())
         } }
             ?: return Either.Right(this.asParseFailure("unknown debug type", context.guild, context.user) { _,  _, _ ->
-                IO { emptyList() }
+                IO.value(emptyOrders)
             })
 
         val customPayload = when (type) {
@@ -41,22 +42,12 @@ object DebugCommandParser : NamedParser, ParsableCommand {
             else -> null
         }
 
-        return Either.Left(DebugCommand(
-            type,
-            customPayload ?: context.event.message.contentRaw
-                .drop(
-                    context.event.message.contentRaw
-                        .split(" ")
-                        .take(2)
-                        .sumOf { it.length }
-                )
-                .ifEmpty { null }
-        ))
+        return Either.Left(DebugCommand(type, customPayload ?: payload.joinToString(separator = " ")))
     }
 
     override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("slash commands not supported", context.guild, context.user) { _, _, _ ->
-            IO { emptyList() }
+            IO.value(emptyOrders)
         })
 
 }

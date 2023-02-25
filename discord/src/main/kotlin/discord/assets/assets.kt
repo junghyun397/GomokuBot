@@ -2,7 +2,7 @@ package discord.assets
 
 const val COMMAND_PREFIX = '~'
 
-val ASCII_LOGO = """
+val ASCII_SPLASH = """
 
                                                         ____________
                                                        /            \

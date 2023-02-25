@@ -6,6 +6,7 @@ import core.interact.Order
 import core.interact.commands.Command
 import core.interact.commands.ResponseFlag
 import core.interact.commands.SetCommand
+import core.interact.emptyOrders
 import core.interact.i18n.LanguageContainer
 import core.interact.message.MessageAdaptor
 import core.interact.parse.SessionSideParser
@@ -53,7 +54,7 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
     private fun buildAppendMessageProcedure(maybeMessage: Option<MessageAdaptor<DiscordMessageData, DiscordComponents>>, context: InteractionContext<*>, session: GameSession): IO<List<Order>> =
         maybeMessage.fold(
             onDefined = { IO { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef); emptyList() } },
-            onEmpty = { IO { emptyList() } }
+            onEmpty = { IO.value(emptyOrders) }
         )
 
     private fun buildOrderFailure(context: InteractionContext<*>, session: GameSession, player: User): DiscordParseFailure =

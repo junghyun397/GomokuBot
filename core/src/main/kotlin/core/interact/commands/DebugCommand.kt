@@ -7,11 +7,12 @@ import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.Notation
 import core.assets.User
+import core.database.entities.GameRecordId
 import core.database.entities.asGameSession
 import core.database.repositories.GameRecordRepository
 import core.inference.AiLevel
 import core.inference.Token
-import core.interact.Order
+import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
@@ -59,14 +60,14 @@ class DebugCommand(
                         "analysis-report-${System.currentTimeMillis()}.txt"
                     )
                     .launch()
-                    .map { emptyList<Order>() }
+                    .map { emptyOrders }
                     .let { tuple(it, this.asCommandReport("succeed", guild, user)) }
-            } ?: (tuple(IO { emptyList() }, this.asCommandReport("failed", guild, user)))
+            } ?: (tuple(IO.value(emptyOrders), this.asCommandReport("failed", guild, user)))
         }
         DebugType.SELF_REQUEST -> {
             if (SessionManager.retrieveGameSession(bot.sessions, guild, user.id) != null ||
                         SessionManager.retrieveRequestSession(bot.sessions, guild, user.id) != null)
-                tuple(IO { emptyList<Order>() }, this.asCommandReport("failed", guild, user))
+                tuple(IO.value(emptyOrders), this.asCommandReport("failed", guild, user))
             else {
                 val requestSession = RequestSession(
                         user, user,
@@ -78,7 +79,7 @@ class DebugCommand(
 
                     val io = producer.produceRequest(publishers.plain, config.language.container, user, user)
                         .launch()
-                        .map { emptyList<Order>()  }
+                        .map { emptyOrders  }
 
                     tuple(io, this.asCommandReport("succeed", guild, user))
             }
@@ -105,7 +106,7 @@ class DebugCommand(
             val io = producer.produceNextMovePVE(publishers.plain, config.language.container, user, session.board.lastPos().get())
                 .launch()
                 .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, session) }
-                .map { emptyList<Order>() }
+                .map { emptyOrders }
 
             tuple(io, this.asCommandReport("succeed", guild, user))
         }
@@ -119,7 +120,7 @@ class DebugCommand(
 
             val io = producer.produceDebugMessage(publishers.plain, message)
                 .launch()
-                .map { emptyList<Order>() }
+                .map { emptyOrders }
 
             tuple(io, this.asCommandReport("succeed", guild, user))
         }
@@ -136,7 +137,7 @@ class DebugCommand(
             val io = producer.produceDebugMessage(publishers.plain, "report here")
                 .addFile(sessionMessage.byteInputStream(), "sessions.txt")
                 .launch()
-                .map { emptyList<Order>() }
+                .map { emptyOrders }
 
             tuple(io, this.asCommandReport("succeed", guild, user))
         }
@@ -181,18 +182,28 @@ class DebugCommand(
             val io = producer.produceNextMovePVE(publishers.plain, config.language.container, user, session.board.lastPos().get())
                 .launch()
                 .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, session) }
-                .map { emptyList<Order>() }
+                .map { emptyOrders }
 
             tuple(io, this.asCommandReport("succeed", guild, user))
         }
         DebugType.GIF -> {
-            val gameRecord = GameRecordRepository.retrieveLastGameRecordByUserUid(bot.sessions.dbConnection, user.id).getOrException()
+            val gameRecord = payload
+                ?.split(" ")
+                ?.getOrNull(2)
+                ?.toLongOrNull()
+                ?.let { GameRecordId(it) }
+                .asOption()
+                .fold(
+                    onDefined = { GameRecordRepository.retrieveGameRecordByRecordId(bot.sessions.dbConnection, it) },
+                    onEmpty = { GameRecordRepository.retrieveLastGameRecordByUserUid(bot.sessions.dbConnection, user.id) }
+                )
+                .getOrException()
 
             val session = gameRecord.asGameSession(bot.sessions, user)
 
             val io = producer.produceSessionArchive(publishers.plain, session, session.gameResult, true)
                 .launch()
-                .map { emptyList<Order>() }
+                .map { emptyOrders }
 
             tuple(io, this.asCommandReport("succeed", guild, user))
         }

@@ -4,7 +4,7 @@ import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
-import core.interact.Order
+import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
 import core.interact.reports.asCommandReport
@@ -40,7 +40,7 @@ class RejectCommand(private val requestSession: RequestSession) : Command {
 
         val io = editIO
             .flatMap { noticeIO }
-            .map { emptyList<Order>() }
+            .map { emptyOrders }
 
         tuple(io, this.asCommandReport("reject ${requestSession.owner}'s request", guild, user))
     }

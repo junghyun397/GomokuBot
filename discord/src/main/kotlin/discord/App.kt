@@ -233,7 +233,7 @@ object GomokuBot {
 val logger = getLogger<GomokuBot>()
 
 fun main() {
-    logger.info(ASCII_LOGO)
+    logger.info(ASCII_SPLASH)
 
     runCatching { GomokuBot.launch() }
         .onSuccess { logger.info("gomokubot ready.") }

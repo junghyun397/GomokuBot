@@ -7,6 +7,7 @@ import core.assets.bindNullable
 import core.database.DatabaseConnection
 import core.database.DatabaseManager.smallIntToMaybeByte
 import core.database.entities.GameRecord
+import core.database.entities.GameRecordId
 import core.inference.AiLevel
 import core.session.GameResult
 import io.r2dbc.spi.Row
@@ -88,8 +89,23 @@ object GameRecordRepository {
             .asOption()
             .map { this.buildGameRecord(connection, it) }
 
+    suspend fun retrieveGameRecordByRecordId(connection: DatabaseConnection, recordId: GameRecordId): Option<GameRecord> =
+        connection.liftConnection()
+            .flatMapMany { dbc -> dbc
+                .createStatement("SELECT * FROM game_record WHERE record_id = $1")
+                .bind("$1", recordId.id)
+                .execute()
+            }
+            .flatMap { result -> result
+                .map { row, _ -> this.extractGameRecordData(row) }
+            }
+            .awaitFirstOrNull()
+            .asOption()
+            .map { this.buildGameRecord(connection, it) }
+
     private fun extractGameRecordData(row: Row): GameRecordRow =
         GameRecordRow(
+            (row["record_id"] as Int).toLong(),
             row["black_id"] as UUID?,
             row["white_id"] as UUID?,
             (row["board_state"] as ByteBuffer).array(),
@@ -106,6 +122,7 @@ object GameRecordRepository {
         val whiteUser = gameRecordRow.whiteId?.let { UserProfileRepository.retrieveUser(connection, UserUid(it)) }
 
         return GameRecord(
+            gameRecordId = Option.Some(GameRecordId(gameRecordRow.recordId)),
             boardState = gameRecordRow.boardState,
             history = gameRecordRow.history.map { Pos.fromIdx(it) },
             gameResult = GameResult.build(
@@ -123,6 +140,7 @@ object GameRecordRepository {
     }
 
     internal class GameRecordRow(
+        val recordId: Long,
         val blackId: UUID?,
         val whiteId: UUID?,
         val boardState: ByteArray,

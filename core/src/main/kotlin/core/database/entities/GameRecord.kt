@@ -17,6 +17,8 @@ import utils.structs.getOrException
 
 @Suppress("ArrayInDataClass")
 data class GameRecord(
+    val gameRecordId: Option<GameRecordId>,
+
     val boardState: ByteArray,
     val history: List<Pos>,
 
@@ -31,11 +33,15 @@ data class GameRecord(
     val date: LinuxTime
 )
 
+@JvmInline value class GameRecordId(val id: Long)
+
 private val invalidPos: Pos = Pos.fromIdx(-1)
 
 fun GameSession.extractGameRecord(guildUid: GuildUid): Option<GameRecord> =
     Option.cond(this.gameResult.isDefined && this.recording && !this.history.contains(null)) {
         GameRecord(
+            gameRecordId = Option.Empty,
+
             boardState = board.field(),
             history = history.map { it ?: invalidPos },
 
