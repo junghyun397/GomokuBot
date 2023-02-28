@@ -7,7 +7,7 @@ import core.assets.User
 import core.interact.Order
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
-import core.interact.reports.asCommandReport
+import core.interact.reports.writeCommandReport
 import core.session.GameManager
 import core.session.GameResult
 import core.session.SessionManager
@@ -57,7 +57,7 @@ class ResignCommand(private val session: GameSession) : Command {
             .flatMap { buildFinishProcedure(bot, producer, publisher, config, this.session, finishedSession) }
             .map { it + Order.ArchiveSession(finishedSession, config.archivePolicy) }
 
-        io to this.asCommandReport("surrendered, terminate session by $result", guild, user)
+        io to this.writeCommandReport("surrendered, terminate session by $result", guild, user)
     }
 
 }

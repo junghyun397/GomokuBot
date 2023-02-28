@@ -2,14 +2,12 @@
 
 package discord.route
 
+import core.interact.commands.CommandResult
 import core.interact.commands.ResponseFlag
 import core.interact.message.AdaptivePublisherSet
-import core.interact.reports.ErrorReport
-import core.interact.reports.InteractionReport
-import discord.assets.abbreviation
 import discord.assets.editMessageByMessageRef
 import discord.assets.extractMessageRef
-import discord.interact.InteractionContext
+import discord.interact.UserInteractionContext
 import discord.interact.message.*
 import discord.interact.parse.EmbeddableCommand
 import discord.interact.parse.parsers.AcceptCommandParser
@@ -19,7 +17,6 @@ import discord.interact.parse.parsers.SetCommandParser
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import reactor.core.publisher.Mono
-import utils.assets.LinuxTime
 import utils.structs.Option
 import utils.structs.asOption
 import utils.structs.flatMap
@@ -34,7 +31,7 @@ private fun matchAction(prefix: String): Option<EmbeddableCommand> =
         else -> Option.Empty
     }
 
-fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteractionCreateEvent>): Mono<InteractionReport> =
+fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Mono<CommandResult> =
     mono {
         context.event.component.id
             .asOption()
@@ -94,17 +91,5 @@ fun buttonInteractionRouter(context: InteractionContext<GenericComponentInteract
                         )
                     )
                 }
-            ).fold(
-                onSuccess = { (io, report) ->
-                    export(context, io, messageRef)
-                    report
-                },
-                onFailure = { throwable ->
-                    ErrorReport(throwable, context.guild)
-                }
-            ).apply {
-                interactionSource = context.event.abbreviation()
-                emittedTime = context.emittedTime
-                apiTime = LinuxTime.now()
-            }
+            )
         } }

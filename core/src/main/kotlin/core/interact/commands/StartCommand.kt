@@ -8,7 +8,7 @@ import core.inference.AiLevel
 import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
-import core.interact.reports.asCommandReport
+import core.interact.reports.writeCommandReport
 import core.session.GameManager
 import core.session.SessionManager
 import core.session.entities.GuildConfig
@@ -47,7 +47,7 @@ class StartCommand(val opponent: User?) : Command {
                     .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, gameSession) }
                     .map { emptyOrders }
 
-                tuple(io, this.asCommandReport("start game session with AI", guild, user))
+                tuple(io, this.writeCommandReport("start game session with AI", guild, user))
             }
             else -> {
                 val requestSession = RequestSession(
@@ -63,7 +63,7 @@ class StartCommand(val opponent: User?) : Command {
                     .flatMapOption { IO { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.messageRef) } }
                     .map { emptyOrders }
 
-                tuple(io, this.asCommandReport("make request to ${this.opponent}", guild, user))
+                tuple(io, this.writeCommandReport("make request to ${this.opponent}", guild, user))
             }
         }
     }

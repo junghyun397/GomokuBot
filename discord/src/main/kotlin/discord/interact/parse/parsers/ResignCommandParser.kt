@@ -5,7 +5,7 @@ import core.interact.i18n.LanguageContainer
 import core.interact.parse.SessionSideParser
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.assets.COMMAND_PREFIX
-import discord.interact.InteractionContext
+import discord.interact.UserInteractionContext
 import discord.interact.message.DiscordComponents
 import discord.interact.message.DiscordMessageData
 import discord.interact.parse.BuildableCommand
@@ -28,12 +28,12 @@ object ResignCommandParser : SessionSideParser<DiscordMessageData, DiscordCompon
         ),
     )
 
-    override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>) =
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>) =
         this.retrieveSession(context.bot, context.guild, context.user).mapLeft { session ->
             ResignCommand(session)
         }
 
-    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>) =
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>) =
         this.retrieveSession(context.bot, context.guild, context.user).mapLeft { session ->
             ResignCommand(session)
         }

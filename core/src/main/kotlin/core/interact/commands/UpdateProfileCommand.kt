@@ -9,7 +9,7 @@ import core.database.repositories.UserProfileRepository
 import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
-import core.interact.reports.asCommandReport
+import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
 import utils.lang.tuple
 import utils.structs.IO
@@ -50,7 +50,7 @@ class UpdateProfileCommand(
 
         val io = IO.unit { emptyOrders }
 
-        val report = this.asCommandReport("succeed", guild, user)
+        val report = this.writeCommandReport("succeed", guild, user)
 
         tuple(io, report, thenGuild, thenUser)
     }

@@ -7,7 +7,7 @@ import core.assets.User
 import core.interact.Order
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
-import core.interact.reports.asCommandReport
+import core.interact.reports.writeCommandReport
 import core.session.GameManager
 import core.session.GameResult
 import core.session.SessionManager
@@ -71,7 +71,7 @@ class SetCommand(
                     val io = guideIO
                         .flatMap { buildNextMoveProcedure(bot, guild, config, producer, boardPublisher, this.session, thenSession) }
 
-                    io to this.asCommandReport("make move $pos", guild, user)
+                    io to this.writeCommandReport("make move $pos", guild, user)
                 }
                 is AiGameSession -> {
                     val nextSession = GameManager.makeAiMove(thenSession, bot.resRenjuClient)
@@ -97,7 +97,7 @@ class SetCommand(
                             val io = guideIO
                                 .flatMap { buildNextMoveProcedure(bot, guild, config, producer, boardPublisher, this.session, nextSession) }
 
-                            io to this.asCommandReport("make move $pos", guild, user)
+                            io to this.writeCommandReport("make move $pos", guild, user)
                         },
                         onDefined = { result ->
                             GameManager.finishSession(bot, guild, nextSession, result)
@@ -112,7 +112,7 @@ class SetCommand(
                                 .flatMap { buildFinishProcedure(bot, producer, boardPublisher, config, this.session, nextSession) }
                                 .map { it + Order.ArchiveSession(nextSession, config.archivePolicy) }
 
-                            io to this.asCommandReport("make move $pos, terminate session by $result", guild, user)
+                            io to this.writeCommandReport("make move $pos, terminate session by $result", guild, user)
                         }
                     )
                 }
@@ -132,7 +132,7 @@ class SetCommand(
                             .flatMap { buildFinishProcedure(bot, producer, boardPublisher, config, this.session, thenSession) }
                             .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
-                        io to this.asCommandReport("make move $pos, terminate session by $result", guild, user)
+                        io to this.writeCommandReport("make move $pos, terminate session by $result", guild, user)
                     }
                     is AiGameSession -> {
                         val io = when (result) {
@@ -145,7 +145,7 @@ class SetCommand(
                             .flatMap { buildFinishProcedure(bot, producer, boardPublisher, config, this.session, thenSession) }
                             .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
-                        io to this.asCommandReport("make move $pos, terminate session by $result", guild, user)
+                        io to this.writeCommandReport("make move $pos, terminate session by $result", guild, user)
                     }
                 }
             }

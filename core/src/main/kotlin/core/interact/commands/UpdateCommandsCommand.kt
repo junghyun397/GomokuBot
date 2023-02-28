@@ -7,7 +7,7 @@ import core.assets.User
 import core.interact.Order
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
-import core.interact.reports.asCommandReport
+import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
 import utils.lang.tuple
 import utils.structs.IO
@@ -33,7 +33,7 @@ class UpdateCommandsCommand(
     ) = runCatching {
         val io = IO.unit { listOf(Order.UpsertCommands(config.language.container)) }
 
-        val report = this.asCommandReport("deprecates = $deprecates, adds = $adds", guild, user)
+        val report = this.writeCommandReport("deprecates = $deprecates, adds = $adds", guild, user)
 
         tuple(io, report, guild, user)
     }

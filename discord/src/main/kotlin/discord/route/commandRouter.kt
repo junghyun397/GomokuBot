@@ -10,11 +10,9 @@ import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.interact.message.AdaptivePublisherSet
 import core.interact.message.MonoPublisherSet
-import core.interact.reports.ErrorReport
-import core.interact.reports.InteractionReport
 import discord.assets.*
 import discord.interact.GuildManager
-import discord.interact.InteractionContext
+import discord.interact.UserInteractionContext
 import discord.interact.message.*
 import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
@@ -28,12 +26,11 @@ import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import reactor.core.publisher.Mono
-import utils.assets.LinuxTime
 import utils.lang.shift
 import utils.structs.*
 import java.util.concurrent.TimeUnit
 
-private fun buildPermissionNode(context: InteractionContext<*>, parsableCommand: ParsableCommand, channel: TextChannel, jdaUser: User): Either<ParsableCommand, DiscordParseFailure> =
+private fun buildPermissionNode(context: UserInteractionContext<*>, parsableCommand: ParsableCommand, channel: TextChannel, jdaUser: User): Either<ParsableCommand, DiscordParseFailure> =
     GuildManager.permissionDependedRun(
         channel, Permission.MESSAGE_SEND,
         onMissed = { Either.Right(
@@ -58,12 +55,12 @@ private fun buildPermissionNode(context: InteractionContext<*>, parsableCommand:
         onGranted = { Either.Left(parsableCommand) }
     )
 
-private fun <T : Event> buildAnnounceNode(context: InteractionContext<T>, command: Command): Command =
+private fun <T : Event> buildAnnounceNode(context: UserInteractionContext<T>, command: Command): Command =
     command.shift((context.user.announceId ?: -1) < (AnnounceRepository.getLatestAnnounceId(context.bot.dbConnection) ?: -1)) {
         AnnounceCommand(command)
     }
 
-private fun <T : Event> buildUpdateProfileNode(context: InteractionContext<T>, command: Command, jdaUser: User): Command {
+private fun <T : Event> buildUpdateProfileNode(context: UserInteractionContext<T>, command: Command, jdaUser: User): Command {
     val user = jdaUser.extractProfile(uid = context.user.id, announceId = context.user.announceId)
     val guild = context.jdaGuild.extractProfile(uid = context.guild.id)
 
@@ -77,7 +74,7 @@ private fun <T : Event> buildUpdateProfileNode(context: InteractionContext<T>, c
 
 private val updateCommandBypassGuilds = mutableSetOf<GuildUid>()
 
-private suspend fun <T : Event> buildUpdateCommandsNode(context: InteractionContext<T>, command: Command): Command {
+private suspend fun <T : Event> buildUpdateCommandsNode(context: UserInteractionContext<T>, command: Command): Command {
     if (updateCommandBypassGuilds.contains(context.guild.id))
         return command
 
@@ -107,7 +104,7 @@ private fun matchCommand(command: String, container: LanguageContainer): Option<
         else -> Option.Empty
     }
 
-fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>): Mono<InteractionReport> =
+fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEvent>): Mono<CommandResult> =
     mono {
         matchCommand(context.event.name, context.config.language.container)
             .map { parsable ->
@@ -173,21 +170,10 @@ fun slashCommandRouter(context: InteractionContext<SlashCommandInteractionEvent>
                         )
                     )
                 }
-            ).fold(
-                onSuccess = { (io, report) ->
-                    export(context, io, null)
-                    report
-                },
-                onFailure = { throwable ->
-                    ErrorReport(throwable, context.guild)
-                }
-            ).apply {
-                interactionSource = context.event.abbreviation()
-                emittedTime = context.emittedTime
-            }
+            )
         } }
 
-fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<InteractionReport> {
+fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mono<CommandResult> {
     val messageRaw = context.event.message.contentRaw
 
     val payload = when {
@@ -254,18 +240,6 @@ fun textCommandRouter(context: InteractionContext<MessageReceivedEvent>): Mono<I
                         publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.buildCreate())) },
                     )
                 }
-            ).fold(
-                onSuccess = { (io, report) ->
-                    export(context, io, null)
-                    report
-                },
-                onFailure = { throwable ->
-                    ErrorReport(throwable, context.guild)
-                }
-            ).apply {
-                interactionSource = context.event.abbreviation()
-                emittedTime = context.emittedTime
-                apiTime = LinuxTime.now()
-            }
+            )
         } }
 }

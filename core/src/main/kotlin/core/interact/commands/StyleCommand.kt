@@ -7,7 +7,7 @@ import core.assets.User
 import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
-import core.interact.reports.asCommandReport
+import core.interact.reports.writeCommandReport
 import core.session.BoardStyle
 import core.session.SessionManager
 import core.session.entities.GuildConfig
@@ -35,7 +35,7 @@ class StyleCommand(private val style: BoardStyle) : Command {
             .launch()
             .map { emptyOrders }
 
-        tuple(io, this.asCommandReport("set style ${config.boardStyle.name} to ${style.name}", guild, user))
+        tuple(io, this.writeCommandReport("set style ${config.boardStyle.name} to ${style.name}", guild, user))
     }
 
 }

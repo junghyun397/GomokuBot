@@ -13,7 +13,7 @@ import dev.minn.jda.ktx.interactions.commands.subcommand
 import discord.assets.COMMAND_PREFIX
 import discord.assets.DISCORD_PLATFORM_ID
 import discord.assets.extractId
-import discord.interact.InteractionContext
+import discord.interact.UserInteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
@@ -43,7 +43,7 @@ object RankCommandParser : NamedParser, ParsableCommand, BuildableCommand {
         ),
     )
 
-    private suspend fun parseUserRank(context: InteractionContext<*>, maybeTarget: Option<net.dv8tion.jda.api.entities.User>): Either<Command, DiscordParseFailure> =
+    private suspend fun parseUserRank(context: UserInteractionContext<*>, maybeTarget: Option<net.dv8tion.jda.api.entities.User>): Either<Command, DiscordParseFailure> =
         maybeTarget
             .flatMap { UserProfileRepository.retrieveUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, it.extractId()) }
             .fold(
@@ -55,7 +55,7 @@ object RankCommandParser : NamedParser, ParsableCommand, BuildableCommand {
                 }) }
             )
 
-    override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
         when (context.event.subcommandName) {
             context.config.language.container.rankCommandSubServer() ->
                 Either.Left(RankCommand(RankScope.Guild(context.guild)))
@@ -67,7 +67,7 @@ object RankCommandParser : NamedParser, ParsableCommand, BuildableCommand {
             else -> Either.Left(RankCommand(RankScope.Global))
         }
 
-    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> =
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> =
         when (payload.getOrNull(1)) {
             context.config.language.container.rankCommandSubServer() ->
                 Either.Left(RankCommand(RankScope.Guild(context.guild)))

@@ -17,7 +17,7 @@ import core.session.SwapType
 import core.session.entities.GameSession
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
-import discord.interact.InteractionContext
+import discord.interact.UserInteractionContext
 import discord.interact.message.DiscordComponents
 import discord.interact.message.DiscordMessageData
 import discord.interact.parse.BuildableCommand
@@ -51,41 +51,41 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
             ?.takeIf { it in 1 .. Renju.BOARD_WIDTH() }
             ?.let { it - 1 }
 
-    private fun buildAppendMessageProcedure(maybeMessage: Option<MessageAdaptor<DiscordMessageData, DiscordComponents>>, context: InteractionContext<*>, session: GameSession): IO<List<Order>> =
+    private fun buildAppendMessageProcedure(maybeMessage: Option<MessageAdaptor<DiscordMessageData, DiscordComponents>>, context: UserInteractionContext<*>, session: GameSession): IO<List<Order>> =
         maybeMessage.fold(
             onDefined = { IO { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef); emptyList() } },
             onEmpty = { IO.value(emptyOrders) }
         )
 
-    private fun buildOrderFailure(context: InteractionContext<*>, session: GameSession, player: User): DiscordParseFailure =
+    private fun buildOrderFailure(context: UserInteractionContext<*>, session: GameSession, player: User): DiscordParseFailure =
         this.asParseFailure("try move but now $player's turn", context.guild, context.user) { producer, publisher, container ->
             producer.produceOrderFailure(publisher, container, player)
                 .retrieve()
                 .flatMap { this.buildAppendMessageProcedure(it, context, session) }
         }
 
-    private fun buildMissMatchFailure(context: InteractionContext<*>, session: GameSession): DiscordParseFailure =
+    private fun buildMissMatchFailure(context: UserInteractionContext<*>, session: GameSession): DiscordParseFailure =
         this.asParseFailure("try move but argument mismatch", context.guild, context.user) { producer, publisher, container ->
             producer.produceSetIllegalArgument(publisher, container)
                 .retrieve()
                 .flatMap { this.buildAppendMessageProcedure(it, context, session) }
         }
 
-    private fun buildExistFailure(context: InteractionContext<*>, session: GameSession, pos: Pos): DiscordParseFailure =
+    private fun buildExistFailure(context: UserInteractionContext<*>, session: GameSession, pos: Pos): DiscordParseFailure =
         this.asParseFailure("make move but already exist", context.guild, context.user) { producer, publisher, container ->
             producer.produceSetAlreadyExist(publisher, container, pos)
                 .retrieve()
                 .flatMap { this.buildAppendMessageProcedure(it, context, session) }
         }
 
-    private fun buildForbiddenMoveFailure(context: InteractionContext<*>, session: GameSession, pos: Pos, flag: Byte): DiscordParseFailure =
+    private fun buildForbiddenMoveFailure(context: UserInteractionContext<*>, session: GameSession, pos: Pos, flag: Byte): DiscordParseFailure =
         this.asParseFailure("make move but forbidden", context.guild, context.user) { producer, publisher, container ->
             producer.produceSetForbiddenMove(publisher, container, pos, flag)
                 .retrieve()
                 .flatMap { this.buildAppendMessageProcedure(it, context, session) }
         }
 
-    private suspend fun parseRawCommand(context: InteractionContext<*>, user: User, rawRow: String?, rawColumn: String?): Either<Command, DiscordParseFailure> =
+    private suspend fun parseRawCommand(context: UserInteractionContext<*>, user: User, rawRow: String?, rawColumn: String?): Either<Command, DiscordParseFailure> =
         this.retrieveSession(context.bot, context.guild, user).flatMapLeft { session ->
             if (session.player.id != user.id)
                 return@flatMapLeft Either.Right(this.buildOrderFailure(context, session, session.player))
@@ -130,14 +130,14 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
                 )
         }
 
-    override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {
         val rawColumn = context.event.getOption(context.config.language.container.setCommandOptionColumn())?.asString
         val rawRow = context.event.getOption(context.config.language.container.setCommandOptionRow())?.asString
 
         return this.parseRawCommand(context, context.user, rawRow, rawColumn)
     }
 
-    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
         val (rawColumn, rawRow) = payload
             .drop(1)
             .take(2)
@@ -148,7 +148,7 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
         return this.parseRawCommand(context, context.user, rawRow, rawColumn)
     }
 
-    override suspend fun parseComponent(context: InteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
+    override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
         val (column, row) = context.event.componentId
             .drop(2)
             .let { tuple(this.matchColumn(it.take(1)), this.matchRow(it.drop(1))) }

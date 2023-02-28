@@ -7,7 +7,7 @@ import core.assets.User
 import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
-import core.interact.reports.asCommandReport
+import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
 import utils.lang.tuple
 import utils.structs.map
@@ -33,7 +33,7 @@ class HelpCommand(private val sendSettings: Boolean) : Command {
         }
             .map { emptyOrders }
 
-        tuple(io, this.asCommandReport("succeed", guild, user))
+        tuple(io, this.writeCommandReport("succeed", guild, user))
     }
 
 }

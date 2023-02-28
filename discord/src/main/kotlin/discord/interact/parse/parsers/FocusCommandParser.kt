@@ -7,7 +7,7 @@ import core.session.SessionManager
 import core.session.entities.BoardNavigationState
 import core.session.entities.NavigationState
 import discord.assets.*
-import discord.interact.InteractionContext
+import discord.interact.UserInteractionContext
 import discord.interact.parse.NavigableCommand
 import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
@@ -31,7 +31,7 @@ object FocusCommandParser : NamedParser, NavigableCommand {
             else -> null
         }
 
-    override suspend fun parseReaction(context: InteractionContext<GenericMessageReactionEvent>, state: NavigationState) =
+    override suspend fun parseReaction(context: UserInteractionContext<GenericMessageReactionEvent>, state: NavigationState) =
         SessionManager.retrieveGameSession(context.bot.sessions, context.guild, context.user.id)
             .asOption()
             .filter { state is BoardNavigationState }

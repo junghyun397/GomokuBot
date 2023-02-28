@@ -10,7 +10,7 @@ import dev.minn.jda.ktx.interactions.commands.choice
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.assets.COMMAND_PREFIX
-import discord.interact.InteractionContext
+import discord.interact.UserInteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
@@ -37,14 +37,14 @@ object StyleCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     private fun matchStyle(option: String): BoardStyle? =
         BoardStyle.values().firstOrNull { it.sample.styleShortcut == option || it.sample.styleName == option }
 
-    private fun composeMissMatchFailure(context: InteractionContext<*>): Either<Command, DiscordParseFailure> =
+    private fun composeMissMatchFailure(context: UserInteractionContext<*>): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("option mismatch", context.guild, context.user) { producer, publisher, container ->
             producer.produceStyleNotFound(publisher, container).launch()
                 .flatMap { producer.produceStyleGuide(publisher, container).launch() }
                 .map { emptyList() }
         })
 
-    override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {
         val style = context.event.getOption(context.config.language.container.styleCommandOptionCode())?.asString?.uppercase()?.let {
             matchStyle(it)
         } ?: return this.composeMissMatchFailure(context)
@@ -52,7 +52,7 @@ object StyleCommandParser : NamedParser, ParsableCommand, BuildableCommand {
         return Either.Left(StyleCommand(style))
     }
 
-    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
         val style = payload
             .getOrNull(1)
             ?.uppercase()

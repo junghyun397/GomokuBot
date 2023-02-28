@@ -12,7 +12,7 @@ import dev.minn.jda.ktx.interactions.commands.choice
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.assets.COMMAND_PREFIX
-import discord.interact.InteractionContext
+import discord.interact.UserInteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
@@ -53,7 +53,7 @@ object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
                 .map { emptyList() }
         })
 
-    override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {
         val lang = context.event.getOption(context.config.language.container.languageCommandOptionCode())?.asString?.uppercase()?.let {
             matchLang(it)
         } ?: return this.composeMissMatchFailure(context.guild, context.user)
@@ -61,7 +61,7 @@ object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
         return Either.Left(LangCommand(lang))
     }
 
-    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
         val lang = payload
             .getOrNull(1)
             ?.uppercase()

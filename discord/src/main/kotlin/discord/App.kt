@@ -8,18 +8,17 @@ import core.assets.ChannelId
 import core.assets.GuildId
 import core.database.DatabaseManager
 import core.database.LocalCaches
-import core.database.repositories.GuildProfileRepository
-import core.database.repositories.UserProfileRepository
 import core.inference.ResRenjuClient
+import core.interact.commands.CommandResult
 import core.interact.reports.ErrorReport
 import core.interact.reports.InteractionReport
-import core.session.SessionManager
 import core.session.SessionRepository
 import dev.minn.jda.ktx.coroutines.await
-import discord.assets.*
-import discord.interact.DiscordConfig
-import discord.interact.GuildManager
-import discord.interact.InteractionContext
+import discord.assets.ASCII_SPLASH
+import discord.assets.COMMAND_PREFIX
+import discord.assets.NAVIGATION_EMOJIS
+import discord.assets.abbreviation
+import discord.interact.*
 import discord.route.*
 import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.runBlocking
@@ -42,7 +41,11 @@ import net.dv8tion.jda.api.events.session.ReadyEvent
 import net.dv8tion.jda.api.events.session.ShutdownEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import reactor.util.function.Tuple2
 import utils.assets.LinuxTime
+import utils.lang.component1
+import utils.lang.component2
 import utils.lang.tuple
 import utils.log.getLogger
 
@@ -79,25 +82,8 @@ fun leaveLog(report: InteractionReport) {
     }
 }
 
-private suspend fun <E : Event> buildInteractionContext(bot: BotContext, discordConfig: DiscordConfig, event: E, jdaUser: JDAUser, jdaGuild: JDAGuild): InteractionContext<E> {
-    val user = UserProfileRepository.retrieveOrInsertUser(bot.dbConnection, DISCORD_PLATFORM_ID, jdaUser.extractId()) {
-        jdaUser.extractProfile()
-    }
-
-    val guild = GuildProfileRepository.retrieveOrInsertGuild(bot.dbConnection, DISCORD_PLATFORM_ID, jdaGuild.extractId()) {
-        jdaGuild.extractProfile()
-    }
-
-    return InteractionContext(
-        bot = bot,
-        discordConfig = discordConfig,
-        event = event,
-        user = user,
-        guild = guild,
-        config = SessionManager.retrieveGuildConfig(bot.sessions, guild),
-        emittedTime = LinuxTime.now()
-    )
-}
+fun <T : Event, C : InteractionContext<T>> zip(context: C, router: (C) -> Mono<CommandResult>): Mono<Tuple2<InteractionContext<T>, CommandResult>> =
+    Mono.zip(Mono.just(context), router(context))
 
 object GomokuBot {
 
@@ -153,8 +139,8 @@ object GomokuBot {
         Flux.merge(
             eventManager.on<SlashCommandInteractionEvent>()
                 .filter { it.isFromGuild && it.channel.type == ChannelType.TEXT && !it.user.isBot }
-                .flatMap { mono { buildInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
-                .flatMap(::slashCommandRouter),
+                .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!) }
+                .flatMap { zip(it, ::slashCommandRouter) },
 
             eventManager.on<MessageReceivedEvent>()
                 .filter {
@@ -164,18 +150,18 @@ object GomokuBot {
                             && (it.message.contentRaw.startsWith(COMMAND_PREFIX) ||
                                 it.message.mentions.isMentioned(it.jda.selfUser, Message.MentionType.USER))
                 }
-                .flatMap { mono { buildInteractionContext(botContext, discordConfig, it, it.author, it.guild) } }
-                .flatMap(::textCommandRouter),
+                .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.author, it.guild) }
+                .flatMap { zip(it, ::textCommandRouter) },
 
             eventManager.on<ButtonInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
-                .flatMap { mono { buildInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
-                .flatMap(::buttonInteractionRouter),
+                .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!) }
+                .flatMap { zip(it, ::buttonInteractionRouter) },
 
             eventManager.on<StringSelectInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
-                .flatMap { mono { buildInteractionContext(botContext, discordConfig, it, it.user, it.guild!!) } }
-                .flatMap(::buttonInteractionRouter),
+                .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!) }
+                .flatMap { zip(it, ::buttonInteractionRouter) },
 
             eventManager.on<MessageReactionAddEvent>()
                 .filter {
@@ -185,8 +171,8 @@ object GomokuBot {
                             && NAVIGATION_EMOJIS.contains(it.emoji)
                             && !(it.user?.isBot ?: false)
                 }
-                .flatMap { mono { buildInteractionContext(botContext, discordConfig, it, it.user!!, it.guild) } }
-                .flatMap(::reactionRouter),
+                .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user!!, it.guild) }
+                .flatMap { zip(it, ::reactionRouter) },
 
             eventManager.on<MessageReactionRemoveEvent>()
                 .filter {
@@ -207,17 +193,34 @@ object GomokuBot {
                     tuple(it, user)
                 } }
                 .filter { (_, maybeUser) -> maybeUser.isSuccess && !maybeUser.get().isBot }
-                .flatMap { (event, user) -> mono { buildInteractionContext(botContext, discordConfig, event, user.get(), event.guild) } }
-                .flatMap(::reactionRouter),
+                .flatMap { (event, user) -> UserInteractionContext.fromJDAEvent(botContext, discordConfig, event, user.get(), event.guild) }
+                .flatMap { zip(it, ::reactionRouter) },
 
             eventManager.on<GuildJoinEvent>()
-                .flatMap { guildJoinRouter(botContext, it) },
+                .flatMap { event -> InternalInteractionContext.fromJDAEvent(botContext, discordConfig, event, event.guild) }
+                .flatMap { zip(it, ::guildJoinRouter) },
 
             eventManager.on<GuildLeaveEvent>()
-                .flatMap { guildLeaveRouter(botContext, it) },
+                .flatMap { event -> InternalInteractionContext.fromJDAEvent(botContext, discordConfig, event, event.guild) }
+                .flatMap { zip(it, ::guildLeaveRouter) },
 
-            scheduleRoutines(botContext, discordConfig, jda)
+//            scheduleExpireRoutines(botContext, discordConfig, jda)
         )
+            .flatMap { (context, result) -> mono {
+                result.fold(
+                    onSuccess = { (io, report) ->
+                        export(context, io, null)
+                        report
+                    },
+                    onFailure = { throwable ->
+                        ErrorReport(throwable, context.guild)
+                    }
+                ).apply {
+                    interactionSource = context.event.abbreviation()
+                    emittedTime = context.emittedTime
+                    apiTime = LinuxTime.now()
+                }
+            } }
             .onErrorContinue { error, _ -> logger.error(error.stackTraceToString()) }
             .subscribe(::leaveLog)
 

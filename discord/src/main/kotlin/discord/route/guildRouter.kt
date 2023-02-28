@@ -1,32 +1,26 @@
 package discord.route
 
-import core.BotContext
 import core.assets.Guild
 import core.assets.GuildUid
 import core.database.repositories.GuildConfigRepository
 import core.database.repositories.GuildProfileRepository
-import core.interact.commands.buildCombinedHelpProcedure
+import core.interact.commands.CommandResult
+import core.interact.commands.GuildJoinCommand
+import core.interact.commands.GuildLeaveCommand
 import core.interact.i18n.Language
-import core.interact.reports.ErrorReport
-import core.interact.reports.InteractionReport
-import core.interact.reports.ServerJoinReport
-import core.interact.reports.ServerLeaveReport
+import core.interact.message.MonoPublisherSet
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import discord.assets.DISCORD_PLATFORM_ID
-import discord.assets.abbreviation
 import discord.assets.extractId
-import discord.assets.extractProfile
-import discord.interact.GuildManager
+import discord.interact.InternalInteractionContext
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.MessageCreateAdaptor
 import kotlinx.coroutines.reactor.mono
-import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import reactor.core.publisher.Mono
-import utils.assets.LinuxTime
 import utils.structs.fold
 import utils.structs.orElseGet
 import java.util.*
@@ -39,51 +33,51 @@ private fun matchLocale(locale: DiscordLocale): Language =
         else -> Language.ENG
     }
 
-fun guildJoinRouter(bot: BotContext, event: GuildJoinEvent): Mono<ServerJoinReport> =
+fun guildJoinRouter(context: InternalInteractionContext<GuildJoinEvent>): Mono<CommandResult> =
     mono {
-        val emittedTime = LinuxTime.now()
-
-        val guild = GuildProfileRepository.retrieveOrInsertGuild(bot.dbConnection, DISCORD_PLATFORM_ID, event.guild.extractId()) {
+        val guild = GuildProfileRepository.retrieveOrInsertGuild(context.bot.dbConnection, DISCORD_PLATFORM_ID, context.event.guild.extractId()) {
             Guild(
                 id = GuildUid(UUID.randomUUID()),
                 platform = DISCORD_PLATFORM_ID,
-                givenId = event.guild.extractId(),
-                name = event.guild.name,
+                givenId = context.event.guild.extractId(),
+                name = context.event.guild.name,
             )
         }
 
-        val config = GuildConfigRepository.fetchGuildConfig(bot.dbConnection, guild.id)
-            .orElseGet { GuildConfig(language = matchLocale(event.guild.locale)) }
+        val config = GuildConfigRepository.fetchGuildConfig(context.bot.dbConnection, guild.id)
+            .orElseGet { GuildConfig(language = matchLocale(context.event.guild.locale)) }
 
-        SessionManager.updateGuildConfig(bot.sessions, guild, config)
+        val command = GuildJoinCommand(context.event.guild.locale.languageName)
 
-        val commandInserted = runCatching {
-            GuildManager.upsertCommands(event.guild, config.language.container)
-        }.isSuccess
-
-        val helpSent = event.guild.systemChannel?.run {
-            GuildManager.permissionGrantedRun(this, Permission.MESSAGE_SEND) {
-                buildCombinedHelpProcedure(
-                    bot = bot,
-                    config = config,
-                    publisher = { msg -> MessageCreateAdaptor(this.sendMessage(msg.buildCreate())) },
-                    producer = DiscordMessageProducer,
-                    settingsPage = 0
-                ).run()
-            }
-        }?.isDefined
-
-        ServerJoinReport(commandInserted, helpSent, event.guild.locale.languageName, config.language, guild, event.abbreviation(), emittedTime)
+        command.execute(
+            bot = context.bot,
+            config = config,
+            guild = guild,
+            producer = DiscordMessageProducer,
+            publisher = MonoPublisherSet(
+                publisher = { msg -> MessageCreateAdaptor(context.event.guild.systemChannel!!.sendMessage(msg.buildCreate()))},
+                editGlobal = { throw IllegalStateException() }
+            )
+        )
     }
 
-fun guildLeaveRouter(bot: BotContext, event: GuildLeaveEvent): Mono<InteractionReport> =
+fun guildLeaveRouter(context: InternalInteractionContext<GuildLeaveEvent>): Mono<CommandResult> =
     mono {
-        val emittedTime = LinuxTime.now()
-
-        val maybeGuild = GuildProfileRepository.retrieveGuild(bot.dbConnection, DISCORD_PLATFORM_ID, event.guild.extractId())
+        val maybeGuild = GuildProfileRepository.retrieveGuild(context.bot.dbConnection, DISCORD_PLATFORM_ID, context.event.guild.extractId())
 
         maybeGuild.fold(
-            onDefined = { guild -> ServerLeaveReport(guild, event.abbreviation(), emittedTime) },
-            onEmpty = { ErrorReport(IllegalStateException(), event.guild.extractProfile(), event.abbreviation(), emittedTime) }
+            onDefined = { guild ->
+                GuildLeaveCommand().execute(
+                    bot = context.bot,
+                    config = SessionManager.retrieveGuildConfig(context.bot.sessions, guild),
+                    guild = guild,
+                    producer = DiscordMessageProducer,
+                    publisher = MonoPublisherSet(
+                        publisher = { throw IllegalStateException() },
+                        editGlobal = { throw IllegalStateException() }
+                    )
+                )
+            },
+            onEmpty = { Result.failure(IllegalStateException()) }
         )
     }

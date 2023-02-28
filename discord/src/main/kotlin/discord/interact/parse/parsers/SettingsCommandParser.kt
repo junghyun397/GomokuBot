@@ -5,7 +5,7 @@ import core.interact.i18n.LanguageContainer
 import core.interact.parse.NamedParser
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.assets.COMMAND_PREFIX
-import discord.interact.InteractionContext
+import discord.interact.UserInteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -26,10 +26,10 @@ object SettingsCommandParser : NamedParser, ParsableCommand, BuildableCommand {
         ),
     )
 
-    override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>) =
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>) =
         Either.Left(SettingsCommand())
 
-    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>) =
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>) =
         Either.Left(SettingsCommand())
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

@@ -3,18 +3,16 @@ package discord.route
 import core.BotContext
 import core.assets.COLOR_NORMAL_HEX
 import core.assets.MessageRef
+import core.interact.commands.CommandResult
 import core.interact.message.AdaptivePublisherSet
-import core.interact.reports.ErrorReport
-import core.interact.reports.InteractionReport
 import core.session.SessionManager
 import core.session.entities.BoardNavigationState
 import core.session.entities.NavigationState
 import core.session.entities.PageNavigationState
 import dev.minn.jda.ktx.coroutines.await
-import discord.assets.abbreviation
 import discord.assets.extractMessageRef
 import discord.interact.GuildManager
-import discord.interact.InteractionContext
+import discord.interact.UserInteractionContext
 import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.MessageCreateAdaptor
 import discord.interact.message.MessageEditAdaptor
@@ -26,7 +24,6 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import reactor.core.publisher.Mono
-import utils.assets.LinuxTime
 import utils.lang.tuple
 import utils.structs.*
 
@@ -36,7 +33,7 @@ private fun recoverNavigationState(bot: BotContext, message: Message, messageRef
         .flatMap { PageNavigationState.decodeFromColor(COLOR_NORMAL_HEX, it.colorRaw, bot.config, messageRef) }
         .onEach { SessionManager.addNavigation(bot.sessions, messageRef, it) }
 
-fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mono<InteractionReport> {
+fun reactionRouter(context: UserInteractionContext<GenericMessageReactionEvent>): Mono<CommandResult> {
     val messageRef = context.event.extractMessageRef()
 
     return mono {
@@ -77,19 +74,7 @@ fun reactionRouter(context: InteractionContext<GenericMessageReactionEvent>): Mo
                         component = { components -> MessageEditAdaptor(context.event.channel.editMessageComponentsById(messageRef.id.idLong, components)) },
                         selfRef = messageRef,
                     ),
-                ).fold(
-                    onSuccess = { (io, report) ->
-                        export(context, io, messageRef)
-                        report
-                    },
-                    onFailure = { throwable ->
-                        ErrorReport(throwable, context.guild)
-                    }
-                ).apply {
-                    interactionSource = context.event.abbreviation()
-                    emittedTime = context.emittedTime
-                    apiTime = LinuxTime.now()
-                }
+                )
             }
         }
 }

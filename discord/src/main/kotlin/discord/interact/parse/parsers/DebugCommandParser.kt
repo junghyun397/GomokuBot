@@ -7,7 +7,7 @@ import core.interact.emptyOrders
 import core.interact.parse.NamedParser
 import core.interact.parse.asParseFailure
 import discord.interact.GuildManager
-import discord.interact.InteractionContext
+import discord.interact.UserInteractionContext
 import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -22,7 +22,7 @@ object DebugCommandParser : NamedParser, ParsableCommand {
     private fun matchType(option: String): DebugType? =
         DebugType.values().firstOrNull { it.name == option }
 
-    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
         if (!GuildManager.hasDebugPermission(context.discordConfig, context.event.author))
             return Either.Right(this.asParseFailure("tester permission not granted", context.guild, context.user) { _, _, _ ->
                 IO.value(emptyOrders)
@@ -45,7 +45,7 @@ object DebugCommandParser : NamedParser, ParsableCommand {
         return Either.Left(DebugCommand(type, customPayload ?: payload.joinToString(separator = " ")))
     }
 
-    override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("slash commands not supported", context.guild, context.user) { _, _, _ ->
             IO.value(emptyOrders)
         })

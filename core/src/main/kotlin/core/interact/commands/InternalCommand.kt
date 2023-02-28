@@ -2,31 +2,20 @@ package core.interact.commands
 
 import core.BotContext
 import core.assets.Guild
-import core.assets.MessageRef
-import core.assets.User
-import core.interact.Order
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
-import core.interact.reports.AbstractInteractionReport
 import core.session.entities.GuildConfig
-import utils.structs.IO
 
-sealed interface Command {
+interface InternalCommand {
 
     val name: String
-
-    val responseFlag: ResponseFlag
 
     suspend fun <A, B> execute(
         bot: BotContext,
         config: GuildConfig,
         guild: Guild,
-        user: User,
         producer: MessageProducer<A, B>,
-        messageRef: MessageRef,
-        publishers: PublisherSet<A, B>,
+        publisher: PublisherSet<A, B>
     ): CommandResult
 
 }
-
-typealias CommandResult = Result<Pair<IO<List<Order>>, AbstractInteractionReport>>

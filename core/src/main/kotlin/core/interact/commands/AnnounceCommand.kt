@@ -10,7 +10,7 @@ import core.interact.emptyOrders
 import core.interact.i18n.Language
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
-import core.interact.reports.asCommandReport
+import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
 import utils.lang.tuple
 import utils.structs.flatMap
@@ -46,7 +46,7 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
             .reduce { acc, io -> acc.flatMap { io } }
             .map { emptyOrders }
 
-        val report = this.asCommandReport("succeed", guild, thenUser)
+        val report = this.writeCommandReport("succeed", guild, thenUser)
 
         tuple(io, report, guild, user)
     }

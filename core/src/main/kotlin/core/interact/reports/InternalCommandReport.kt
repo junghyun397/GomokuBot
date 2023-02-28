@@ -1,24 +1,22 @@
 package core.interact.reports
 
 import core.assets.Guild
-import core.assets.User
-import core.interact.commands.Command
+import core.interact.commands.InternalCommand
 import utils.assets.LinuxTime
 
-data class CommandReport(
+data class InternalCommandReport(
     val commandName: String,
     val comment: String,
     override val guild: Guild,
-    val user: User,
     override var interactionSource: String? = null,
     override var emittedTime: LinuxTime? = null,
     override val commandTime: LinuxTime = LinuxTime.now(),
-    override var apiTime: LinuxTime? = null
+    override var apiTime: LinuxTime? = LinuxTime.now(),
 ) : AbstractInteractionReport() {
 
-    override fun toString() = "${super.toString()}/$user\t $commandName\t $comment"
+    override fun toString() = "${super.toString()}\t $commandName\t $comment"
 
 }
 
-fun Command.writeCommandReport(comment: String, guild: Guild, user: User) =
-    CommandReport(this.name, comment, guild, user)
+fun InternalCommand.writeCommandReport(comment: String, guild: Guild) =
+    InternalCommandReport(this.name, comment, guild)

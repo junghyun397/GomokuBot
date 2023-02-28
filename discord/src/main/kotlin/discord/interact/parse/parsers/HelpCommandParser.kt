@@ -6,7 +6,7 @@ import core.interact.i18n.LanguageContainer
 import core.interact.parse.NamedParser
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.assets.COMMAND_PREFIX
-import discord.interact.InteractionContext
+import discord.interact.UserInteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -30,12 +30,12 @@ object HelpCommandParser : NamedParser, ParsableCommand, BuildableCommand {
     private fun checkCrossLanguageCommand(container: LanguageContainer, command: String) =
         container.helpCommand() != command
 
-    override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>) =
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>) =
         Either.Left(
             HelpCommand(this.checkCrossLanguageCommand(context.config.language.container, context.event.name.lowercase()))
         )
 
-    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>) =
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>) =
         Either.Left(
             HelpCommand(this.checkCrossLanguageCommand(context.config.language.container, payload[0].lowercase()))
         )

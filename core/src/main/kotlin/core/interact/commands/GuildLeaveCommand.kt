@@ -2,8 +2,6 @@ package core.interact.commands
 
 import core.BotContext
 import core.assets.Guild
-import core.assets.MessageRef
-import core.assets.User
 import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
@@ -12,22 +10,18 @@ import core.session.entities.GuildConfig
 import utils.lang.tuple
 import utils.structs.IO
 
-class RatingCommand() : Command {
+class GuildLeaveCommand : InternalCommand {
 
-    override val name = "rating"
-
-    override val responseFlag = ResponseFlag.Immediately
+    override val name = "guild-leave"
 
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: GuildConfig,
         guild: Guild,
-        user: User,
         producer: MessageProducer<A, B>,
-        messageRef: MessageRef,
-        publishers: PublisherSet<A, B>,
+        publisher: PublisherSet<A, B>,
     ) = runCatching {
-        tuple(IO.value(emptyOrders), this.writeCommandReport("succeed", guild, user))
+        tuple(IO.value(emptyOrders), this.writeCommandReport("goodbye", guild))
     }
 
 }

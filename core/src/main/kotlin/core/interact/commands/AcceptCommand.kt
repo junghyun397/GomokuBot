@@ -7,7 +7,7 @@ import core.assets.User
 import core.interact.Order
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
-import core.interact.reports.asCommandReport
+import core.interact.reports.writeCommandReport
 import core.session.GameManager
 import core.session.SessionManager
 import core.session.entities.GuildConfig
@@ -49,7 +49,7 @@ class AcceptCommand(private val requestSession: RequestSession) : Command {
             .flatMap { boardIO }
             .map { listOf(Order.DeleteSource) }
 
-        tuple(io, this.asCommandReport("accept ${requestSession.owner}'s request", guild, user))
+        tuple(io, this.writeCommandReport("accept ${requestSession.owner}'s request", guild, user))
     }
 
 }

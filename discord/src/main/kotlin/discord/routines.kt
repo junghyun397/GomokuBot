@@ -2,132 +2,90 @@ package discord
 
 import core.BotContext
 import core.database.repositories.AnnounceRepository
-import core.interact.Order
-import core.interact.commands.buildFinishProcedure
-import core.interact.emptyOrders
-import core.interact.reports.CommandReport
-import core.interact.reports.InteractionReport
-import core.session.GameManager
-import core.session.GameResult
+import core.interact.commands.CommandResult
+import core.interact.commands.ExpireGameCommand
+import core.interact.commands.ExpireRequestCommand
+import core.interact.commands.InternalCommand
+import core.interact.message.MonoPublisherSet
 import core.session.SessionManager
-import core.session.SwapType
-import core.session.entities.AiGameSession
-import core.session.entities.PvpGameSession
-import discord.assets.awaitOption
+import core.session.entities.GuildSession
 import discord.interact.DiscordConfig
 import discord.interact.message.DiscordMessageProducer
-import discord.interact.message.DiscordMessagePublisher
 import discord.interact.message.MessageCreateAdaptor
 import discord.interact.message.MessageEditAdaptor
-import discord.route.export
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.reactor.asFlux
 import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import reactor.core.publisher.Flux
-import utils.assets.LinuxTime
 import utils.lang.schedule
-import utils.structs.IO
-import utils.structs.flatMap
-import utils.structs.fold
-import utils.structs.map
 
-fun scheduleRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flux<InteractionReport> {
-    val expireGameSessionFlow = schedule<InteractionReport>(bot.config.gameExpireCycle) {
+private suspend fun executeCommand(command: InternalCommand, bot: BotContext, guildSession: GuildSession, channel: MessageChannel): CommandResult =
+    command.execute(
+        bot = bot,
+        config = guildSession.config,
+        guild = guildSession.guild,
+        producer = DiscordMessageProducer,
+        publisher = MonoPublisherSet(
+            publisher = { msg -> MessageCreateAdaptor(channel.sendMessage(msg.buildCreate())) },
+            editGlobal = { ref -> { msg -> MessageEditAdaptor(channel.editMessageById(ref.id.idLong, msg.buildEdit())) } }
+        )
+    )
+
+fun scheduleExpireRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flux<CommandResult> {
+    val expireGameSessionFlow = schedule(bot.config.gameExpireCycle) {
         SessionManager.cleanExpiredGameSession(bot.sessions).forEach { (_, guildSession, _, session) ->
-            val emittedTime = LinuxTime.now()
+            val maybeMessage = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
-            val (finishedSession, result) = GameManager.resignSession(session, GameResult.Cause.TIMEOUT, session.player)
+            val maybeGuild = jda.getGuildById(guildSession.guild.givenId.idLong)
+            val maybeChannel = maybeMessage?.let { maybeGuild?.getTextChannelById(it.channelId.idLong) }
 
-            GameManager.finishSession(bot, guildSession.guild, finishedSession, result)
+            val command = ExpireGameCommand(
+                guildSession = guildSession,
+                session = session,
+                channelAvailable = maybeGuild != null && maybeChannel != null
+            )
 
-            val message = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
+            val result = executeCommand(command, bot, guildSession, maybeChannel!!)
 
-            val guild = jda.getGuildById(guildSession.guild.givenId.idLong)
-            val channel = message?.let { guild?.getTextChannelById(it.channelId.idLong) }
-
-            if (message != null && guild != null && channel != null) {
-                val infoPublisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(channel.sendMessage(msg.buildCreate())) }
-
-                val boardPublisher: DiscordMessagePublisher = when (guildSession.config.swapType) {
-                    SwapType.EDIT -> { msg -> MessageEditAdaptor(channel.editMessageById(message.id.idLong, msg.buildEdit())) }
-                    else -> infoPublisher
-                }
-
-                val io = when (session) {
-                    is PvpGameSession -> DiscordMessageProducer
-                        .produceTimeoutPVP(infoPublisher, guildSession.config.language.container, session.player, session.nextPlayer)
-                    is AiGameSession -> DiscordMessageProducer
-                        .produceTimeoutPVE(infoPublisher, guildSession.config.language.container, session.owner)
-                }
-                    .launch()
-                    .flatMap { buildFinishProcedure(bot, DiscordMessageProducer, boardPublisher, guildSession.config, session, finishedSession) }
-                    .map { it + Order.ArchiveSession(finishedSession, guildSession.config.archivePolicy) }
-
-                export(discordConfig, guild, io, message)
-            }
-
-            val report = CommandReport("expire-game", "expired, terminate session by $result", guildSession.guild, session.owner, "SCH", emittedTime)
-
-            emit(report)
+            emit(result)
         }
 
         SessionManager.cleanEmptySessions(bot.sessions)
     }
 
-    val expireRequestSessionFlow = schedule<InteractionReport>(bot.config.requestExpireCycle) {
+    val expireRequestSessionFlow = schedule(bot.config.requestExpireCycle) {
         SessionManager.cleanExpiredRequestSessions(bot.sessions).forEach { (_, guildSession, _, session) ->
-            val emittedTime = LinuxTime.now()
+            val maybeMessage = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
-            val message = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
+            val maybeGuild = jda.getGuildById(guildSession.guild.givenId.idLong)
+            val maybeChannel = maybeMessage?.let { jda.getTextChannelById(it.channelId.idLong) }
 
-            val guild = jda.getGuildById(guildSession.guild.givenId.idLong)
-            val channel = message?.let { jda.getTextChannelById(it.channelId.idLong) }
+            val command = ExpireRequestCommand(
+                guildSession = guildSession,
+                session = session,
+                channelAvailable = maybeGuild != null && maybeChannel != null,
+                messageAvailable = maybeMessage != null
+            )
 
-            if (message != null && guild != null && channel != null) {
-                val maybeRequestMessage = channel.retrieveMessageById(message.id.idLong)
-                    .awaitOption()
+            val result = executeCommand(command, bot, guildSession, maybeChannel!!)
 
-                val editIO = maybeRequestMessage.fold(
-                    onDefined = {
-                        val editPublisher: DiscordMessagePublisher =
-                            { msg -> MessageEditAdaptor(channel.editMessageById(message.id.idLong, msg.buildEdit())) }
-
-                        DiscordMessageProducer
-                            .produceRequestInvalidated(editPublisher, guildSession.config.language.container, session.owner, session.opponent)
-                            .launch()
-                    },
-                    onEmpty = { IO.empty }
-                )
-
-                val publisher: DiscordMessagePublisher = maybeRequestMessage.fold(
-                    onDefined = { { msg -> MessageCreateAdaptor(it.reply(msg.buildCreate())) } },
-                    onEmpty = { { msg -> MessageCreateAdaptor(channel.sendMessage(msg.buildCreate())) } }
-                )
-
-                val noticeIO = DiscordMessageProducer
-                    .produceRequestExpired(publisher, guildSession.config.language.container, session.owner, session.opponent)
-                    .launch()
-
-                val io = editIO
-                    .flatMap { noticeIO }
-                    .map { emptyOrders }
-
-                export(discordConfig, guild, io, null)
-            }
-
-            val report = CommandReport("expire-request", "expired, $session rejected", guildSession.guild, session.owner, "SCH", emittedTime)
-
-            emit(report)
+            emit(result)
         }
     }
 
-    val expireNavigateFlow = schedule<InteractionReport>(bot.config.navigatorExpireCycle) {
+    return merge(expireGameSessionFlow, expireRequestSessionFlow).asFlux()
+}
+
+fun scheduleUpdateRoutines(bot: BotContext): Flux<Unit> {
+
+    val expireNavigateFlow = schedule<Unit>(bot.config.navigatorExpireCycle) {
         SessionManager.cleanExpiredNavigators(bot.sessions)
     }
 
-    val announceFlow = schedule<InteractionReport>(bot.config.announceUpdateCycle) {
+    val announceFlow = schedule<Unit>(bot.config.announceUpdateCycle) {
         AnnounceRepository.updateAnnounceCache(bot.dbConnection)
     }
 
-    return merge(expireGameSessionFlow, expireRequestSessionFlow, expireNavigateFlow, announceFlow).asFlux()
+    return merge(expireNavigateFlow, announceFlow).asFlux()
 }

@@ -15,7 +15,7 @@ import core.inference.Token
 import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
-import core.interact.reports.asCommandReport
+import core.interact.reports.writeCommandReport
 import core.session.SessionManager
 import core.session.entities.AiGameSession
 import core.session.entities.GuildConfig
@@ -61,13 +61,13 @@ class DebugCommand(
                     )
                     .launch()
                     .map { emptyOrders }
-                    .let { tuple(it, this.asCommandReport("succeed", guild, user)) }
-            } ?: (tuple(IO.value(emptyOrders), this.asCommandReport("failed", guild, user)))
+                    .let { tuple(it, this.writeCommandReport("succeed", guild, user)) }
+            } ?: (tuple(IO.value(emptyOrders), this.writeCommandReport("failed", guild, user)))
         }
         DebugType.SELF_REQUEST -> {
             if (SessionManager.retrieveGameSession(bot.sessions, guild, user.id) != null ||
                         SessionManager.retrieveRequestSession(bot.sessions, guild, user.id) != null)
-                tuple(IO.value(emptyOrders), this.asCommandReport("failed", guild, user))
+                tuple(IO.value(emptyOrders), this.writeCommandReport("failed", guild, user))
             else {
                 val requestSession = RequestSession(
                         user, user,
@@ -81,7 +81,7 @@ class DebugCommand(
                         .launch()
                         .map { emptyOrders  }
 
-                    tuple(io, this.asCommandReport("succeed", guild, user))
+                    tuple(io, this.writeCommandReport("succeed", guild, user))
             }
         }
         DebugType.INJECT -> {
@@ -108,7 +108,7 @@ class DebugCommand(
                 .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, session) }
                 .map { emptyOrders }
 
-            tuple(io, this.asCommandReport("succeed", guild, user))
+            tuple(io, this.writeCommandReport("succeed", guild, user))
         }
         DebugType.STATUS -> {
             val message = """
@@ -122,7 +122,7 @@ class DebugCommand(
                 .launch()
                 .map { emptyOrders }
 
-            tuple(io, this.asCommandReport("succeed", guild, user))
+            tuple(io, this.writeCommandReport("succeed", guild, user))
         }
         DebugType.SESSIONS -> {
             val sessionMessage = bot.sessions.sessions
@@ -139,7 +139,7 @@ class DebugCommand(
                 .launch()
                 .map { emptyOrders }
 
-            tuple(io, this.asCommandReport("succeed", guild, user))
+            tuple(io, this.writeCommandReport("succeed", guild, user))
         }
         DebugType.VCF -> {
             val vcfCase = """
@@ -184,7 +184,7 @@ class DebugCommand(
                 .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, session) }
                 .map { emptyOrders }
 
-            tuple(io, this.asCommandReport("succeed", guild, user))
+            tuple(io, this.writeCommandReport("succeed", guild, user))
         }
         DebugType.GIF -> {
             val gameRecord = payload
@@ -205,7 +205,7 @@ class DebugCommand(
                 .launch()
                 .map { emptyOrders }
 
-            tuple(io, this.asCommandReport("succeed", guild, user))
+            tuple(io, this.writeCommandReport("succeed", guild, user))
         }
     } }
 

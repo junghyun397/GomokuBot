@@ -10,7 +10,7 @@ import core.database.repositories.UserStatsRepository
 import core.interact.emptyOrders
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
-import core.interact.reports.asCommandReport
+import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
 import utils.lang.tuple
 import utils.structs.map
@@ -58,7 +58,7 @@ class RankCommand(private val scope: RankScope) : Command {
             .launch()
             .map { emptyOrders }
 
-        tuple(io, this.asCommandReport("$scope scope", guild, user))
+        tuple(io, this.writeCommandReport("$scope scope", guild, user))
     }
 
 }

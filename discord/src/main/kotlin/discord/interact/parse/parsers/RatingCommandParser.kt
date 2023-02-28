@@ -7,7 +7,7 @@ import core.interact.parse.asParseFailure
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.assets.COMMAND_PREFIX
-import discord.interact.InteractionContext
+import discord.interact.UserInteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
@@ -30,14 +30,14 @@ object RatingCommandParser : NamedParser, ParsableCommand, BuildableCommand {
         ),
     )
 
-    override suspend fun parseSlash(context: InteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("not yet implemented", context.guild, context.user) { producer, publisher, container ->
             producer.produceNotYetImplemented(publisher, container, "https://discord.gg/vq8pkfF")
                 .launch()
                 .map { emptyList() }
         })
 
-    override suspend fun parseText(context: InteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> =
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("not yet implemented", context.guild, context.user) { producer, publisher, container ->
             producer.produceNotYetImplemented(publisher, container, "https://discord.gg/vq8pkfF")
                 .launch()

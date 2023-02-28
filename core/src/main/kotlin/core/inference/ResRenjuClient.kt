@@ -23,20 +23,20 @@ class ResRenjuClient(private val channel: ManagedChannel) : Closeable {
         .InferenceCoroutineStub(this.channel)
         .withWaitForReady()
 
-    private fun Board.toProtoStatus(): InferenceProto.Status =
-        InferenceProto.Status.newBuilder()
-            .setBoard((this.field()).toByteString())
-            .setMoves(this.moves())
-            .setLastMove(this.lastMove())
-            .build()
+    private fun Board.toProtoState(): InferenceProto.Status =
+        InferenceProto.Status.newBuilder().apply {
+            board = field().toByteString()
+            moves = moves()
+            lastMove = lastMove()
+        }.build()
 
     private fun AiPreset.toProtoAiPreset(): InferenceProto.Begins.AiPreset =
-        InferenceProto.Begins.AiPreset.newBuilder()
-            .setMaxNodes(this.maxNodes())
-            .setMaxDepth(this.maxDepth())
-            .setAiVCFDepth(this.aiVcfDepth())
-            .setPlayerVCFDepth(this.playerVcfDepth())
-            .build()
+        InferenceProto.Begins.AiPreset.newBuilder().apply {
+            maxNodes = maxNodes()
+            maxDepth = maxDepth()
+            aiVCFDepth = aiVcfDepth()
+            playerVCFDepth = playerVcfDepth()
+        }.build()
 
     private fun Color.toProtoColor(): InferenceProto.Color =
         when (this) {
@@ -74,7 +74,7 @@ class ResRenjuClient(private val channel: ManagedChannel) : Closeable {
         val request = InferenceProto.Begins.newBuilder()
             .setAiPreset(aiPreset.toProtoAiPreset())
             .setAiColor(aiColor.toProtoColor())
-            .setInitStatus(board.toProtoStatus())
+            .setInitStatus(board.toProtoState())
             .build()
 
         return this.resRenjuStub.begins(request).parseToken()
@@ -83,7 +83,7 @@ class ResRenjuClient(private val channel: ManagedChannel) : Closeable {
     suspend fun update(token: Token, board: Board): Solution {
         val request = InferenceProto.Update.newBuilder()
             .setToken(token.toProtoToken())
-            .setStatus(board.toProtoStatus())
+            .setStatus(board.toProtoState())
             .build()
 
         return this.resRenjuStub.update(request).parseSolution()
@@ -92,7 +92,7 @@ class ResRenjuClient(private val channel: ManagedChannel) : Closeable {
     suspend fun report(token: Token, board: Board, gameResult: GameResult) {
         val request = InferenceProto.Report.newBuilder()
             .setToken(token.toProtoToken())
-            .setStatus(board.toProtoStatus())
+            .setStatus(board.toProtoState())
             .setResult(gameResult.toProtoResult())
             .build()
 

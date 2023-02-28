@@ -8,7 +8,7 @@ import core.interact.Order
 import core.interact.i18n.Language
 import core.interact.message.MessageProducer
 import core.interact.message.PublisherSet
-import core.interact.reports.asCommandReport
+import core.interact.reports.writeCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import utils.lang.tuple
@@ -39,7 +39,7 @@ class LangCommand(private val language: Language) : Command {
             .flatMap { buildHelpProcedure(bot, thenConfig, publishers.plain, producer) }
             .map { listOf(Order.UpsertCommands(thenConfig.language.container)) }
 
-        tuple(io, this.asCommandReport("set language ${config.language.name} to ${thenConfig.language.name}", guild, user))
+        tuple(io, this.writeCommandReport("set language ${config.language.name} to ${thenConfig.language.name}", guild, user))
     }
 
 }
