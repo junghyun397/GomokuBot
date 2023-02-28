@@ -4,7 +4,7 @@ import core.BotContext
 import core.assets.Guild
 import core.interact.Order
 import core.interact.emptyOrders
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.GameManager
@@ -33,7 +33,7 @@ class ExpireGameCommand(
         bot: BotContext,
         config: GuildConfig,
         guild: Guild,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         publisher: PublisherSet<A, B>,
     ) = runCatching {
         val (finishedSession, result) = GameManager.resignSession(session, GameResult.Cause.TIMEOUT, session.player)
@@ -48,14 +48,15 @@ class ExpireGameCommand(
             val boardPublisher = noticePublisher
                 .shift(guildSession.config.swapType == SwapType.EDIT && message != null) { publisher.edit(message!!) }
 
-            val finishIO = buildFinishProcedure(bot, producer, boardPublisher, guildSession.config, session, finishedSession)
+            val finishIO = buildFinishProcedure(bot,
+                service, boardPublisher, guildSession.config, session, finishedSession)
                 .map { it + Order.ArchiveSession(finishedSession, guildSession.config.archivePolicy) }
 
             val noticeIO = when (session) {
-                is PvpGameSession -> producer
-                    .produceTimeoutPVP(noticePublisher, guildSession.config.language.container, session.player, session.nextPlayer)
-                is AiGameSession -> producer
-                    .produceTimeoutPVE(noticePublisher, guildSession.config.language.container, session.owner)
+                is PvpGameSession -> service
+                    .buildTimeoutPVP(noticePublisher, guildSession.config.language.container, session.player, session.nextPlayer)
+                is AiGameSession -> service
+                    .buildTimeoutPVE(noticePublisher, guildSession.config.language.container, session.owner)
             }
                 .launch()
 

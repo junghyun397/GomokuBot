@@ -58,29 +58,29 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
         )
 
     private fun buildOrderFailure(context: UserInteractionContext<*>, session: GameSession, player: User): DiscordParseFailure =
-        this.asParseFailure("try move but now $player's turn", context.guild, context.user) { producer, publisher, container ->
-            producer.produceOrderFailure(publisher, container, player)
+        this.asParseFailure("try move but now $player's turn", context.guild, context.user) { messagingService, publisher, container ->
+            messagingService.buildSetOrderFailure(publisher, container, player)
                 .retrieve()
                 .flatMap { this.buildAppendMessageProcedure(it, context, session) }
         }
 
     private fun buildMissMatchFailure(context: UserInteractionContext<*>, session: GameSession): DiscordParseFailure =
-        this.asParseFailure("try move but argument mismatch", context.guild, context.user) { producer, publisher, container ->
-            producer.produceSetIllegalArgument(publisher, container)
+        this.asParseFailure("try move but argument mismatch", context.guild, context.user) { messagingService, publisher, container ->
+            messagingService.buildSetIllegalArgumentFailure(publisher, container)
                 .retrieve()
                 .flatMap { this.buildAppendMessageProcedure(it, context, session) }
         }
 
     private fun buildExistFailure(context: UserInteractionContext<*>, session: GameSession, pos: Pos): DiscordParseFailure =
-        this.asParseFailure("make move but already exist", context.guild, context.user) { producer, publisher, container ->
-            producer.produceSetAlreadyExist(publisher, container, pos)
+        this.asParseFailure("make move but already exist", context.guild, context.user) { messagingService, publisher, container ->
+            messagingService.buildSetAlreadyExistFailure(publisher, container, pos)
                 .retrieve()
                 .flatMap { this.buildAppendMessageProcedure(it, context, session) }
         }
 
     private fun buildForbiddenMoveFailure(context: UserInteractionContext<*>, session: GameSession, pos: Pos, flag: Byte): DiscordParseFailure =
-        this.asParseFailure("make move but forbidden", context.guild, context.user) { producer, publisher, container ->
-            producer.produceSetForbiddenMove(publisher, container, pos, flag)
+        this.asParseFailure("make move but forbidden", context.guild, context.user) { messagingService, publisher, container ->
+            messagingService.buildSetForbiddenMoveFailure(publisher, container, pos, flag)
                 .retrieve()
                 .flatMap { this.buildAppendMessageProcedure(it, context, session) }
         }

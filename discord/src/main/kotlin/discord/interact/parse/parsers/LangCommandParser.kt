@@ -47,9 +47,9 @@ object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
         Language.values().firstOrNull { it.container.languageCode() == option }
 
     private fun composeMissMatchFailure(guild: Guild, user: User): Either<Command, DiscordParseFailure> =
-        Either.Right(this.asParseFailure("option mismatch", guild, user) { producer, publisher, _ ->
-            producer.produceLanguageNotFound(publisher).launch()
-                .flatMap { producer.produceLanguageGuide(publisher).launch() }
+        Either.Right(this.asParseFailure("option mismatch", guild, user) { messagingService, publisher, _ ->
+            messagingService.buildLanguageNotFound(publisher).launch()
+                .flatMap { messagingService.buildLanguageGuide(publisher).launch() }
                 .map { emptyList() }
         })
 

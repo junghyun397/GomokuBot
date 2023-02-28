@@ -8,7 +8,7 @@ import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.interact.message.ButtonFlag
 import core.interact.message.FocusedFields
-import core.interact.message.MessageProducerImpl
+import core.interact.message.MessagingServiceImpl
 import core.interact.message.SettingMapping
 import core.interact.message.graphics.BoardRenderer
 import core.interact.message.graphics.HistoryRenderType
@@ -49,7 +49,7 @@ import utils.structs.*
 import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
 
-object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordComponents>() {
+object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, DiscordComponents>() {
 
     override val focusWidth = 5
     override val focusRange = 2 .. Renju.BOARD_WIDTH_MAX_IDX() - 2
@@ -124,7 +124,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
                 value = when (gameResult) {
                     is GameResult.Win -> {
                         container.boardWinDescription(
-                            "${gameResult.winner.name}${this@DiscordMessageProducer.unicodeStone(gameResult.winColor)}".asHighlightFormat()
+                            "${gameResult.winner.name}${this@DiscordMessagingService.unicodeStone(gameResult.winColor)}".asHighlightFormat()
                         )
                     }
                     is GameResult.Full -> { container.boardTieDescription().asHighlightFormat() }
@@ -140,7 +140,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
         }
     }
 
-    override fun produceBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession): DiscordMessageBuilder {
+    override fun buildBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession): DiscordMessageBuilder {
         val barColor = session.gameResult
             .fold(onDefined = { COLOR_RED_HEX }, onEmpty = { COLOR_GREEN_HEX })
 
@@ -163,7 +163,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
                     })
 
                     if (session.gameResult.isEmpty)
-                        add(this@DiscordMessageProducer.buildNextMoveEmbed(container))
+                        add(this@DiscordMessagingService.buildNextMoveEmbed(container))
                 }
             },
             onRight = { imageStream ->
@@ -184,7 +184,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
                     })
 
                     if (session.gameResult.isEmpty)
-                        add(this@DiscordMessageProducer.buildNextMoveEmbed(container))
+                        add(this@DiscordMessagingService.buildNextMoveEmbed(container))
                 }
 
                 messageBuilder.addFile(imageStream, fName)
@@ -192,7 +192,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
         )
     }
 
-    override fun produceSessionArchive(publisher: DiscordMessagePublisher, session: GameSession, result: Option<GameResult>, animate: Boolean): DiscordMessageBuilder {
+    override fun buildSessionArchive(publisher: DiscordMessagePublisher, session: GameSession, result: Option<GameResult>, animate: Boolean): DiscordMessageBuilder {
         val imageStream = if (animate)
             ImageBoardRenderer.renderHistoryAnimation(session.history.filterNotNull())
         else
@@ -359,10 +359,10 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
             else -> publisher sends this.buildAboutRenjuEmbed(tuple(page - 1, container))
         }
 
-    override fun produceHelp(publisher: DiscordMessagePublisher, container: LanguageContainer, page: Int) =
+    override fun buildHelp(publisher: DiscordMessagePublisher, container: LanguageContainer, page: Int) =
         this.buildHelpMessage(publisher, container, page)
 
-    override fun paginateHelp(publisher: DiscordMessagePublisher, container: LanguageContainer, page: Int) =
+    override fun buildPaginatedHelp(publisher: DiscordMessagePublisher, container: LanguageContainer, page: Int) =
         this.buildHelpMessage(publisher, container, page)
 
     private fun buildSettingsMessage(publisher: DiscordMessagePublisher, config: GuildConfig, page: Int) =
@@ -383,15 +383,15 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
             else -> throw IllegalStateException()
         }
 
-    override fun produceSettings(publisher: DiscordMessagePublisher, config: GuildConfig, page: Int) =
+    override fun buildSettings(publisher: DiscordMessagePublisher, config: GuildConfig, page: Int) =
         this.buildSettingsMessage(publisher, config, page)
 
-    override fun paginateSettings(publisher: DiscordMessagePublisher, config: GuildConfig, page: Int) =
+    override fun buildPaginatedSettings(publisher: DiscordMessagePublisher, config: GuildConfig, page: Int) =
         this.buildSettingsMessage(publisher, config, page)
 
     // RANK
 
-    override fun produceRankings(publisher: DiscordMessagePublisher, container: LanguageContainer, rankings: List<Pair<User, UserStats>>) =
+    override fun buildRankings(publisher: DiscordMessagePublisher, container: LanguageContainer, rankings: List<Pair<User, UserStats>>) =
         publisher sends Embed {
             color = COLOR_NORMAL_HEX
             title = container.rankEmbedTitle()
@@ -417,7 +417,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
 
     // RATING
 
-    override fun produceRating(publisher: DiscordMessagePublisher, container: LanguageContainer) = TODO()
+    override fun buildRating(publisher: DiscordMessagePublisher, container: LanguageContainer) = TODO()
 
     // LANG
 
@@ -435,7 +435,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
         }
     }
 
-    override fun produceLanguageGuide(publisher: DiscordMessagePublisher) =
+    override fun buildLanguageGuide(publisher: DiscordMessagePublisher) =
         publisher sends languageEmbed
 
     // SETTINGS
@@ -477,12 +477,12 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
 
     // STYLE
 
-    override fun produceStyleGuide(publisher: DiscordMessagePublisher, container: LanguageContainer) =
+    override fun buildStyleGuide(publisher: DiscordMessagePublisher, container: LanguageContainer) =
         publisher sends this.settingEmbed(BoardStyle::class)(container)
 
     // REQUEST
 
-    override fun produceRequest(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
+    override fun buildRequest(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
         publisher(DiscordMessageData(embed = Embed {
                 color = COLOR_GREEN_HEX
                 title = container.requestEmbedTitle()
@@ -495,7 +495,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
             ))
         )
 
-    override fun produceRequestInvalidated(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
+    override fun buildRequestInvalidated(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
         publisher sends Embed {
             color = COLOR_RED_HEX
             title = "~~${container.requestEmbedTitle()}~~"
@@ -504,7 +504,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
 
     // UTILS
 
-    override fun produceAnnounce(publisher: DiscordMessagePublisher, container: LanguageContainer, announce: Announce) =
+    override fun buildAnnounce(publisher: DiscordMessagePublisher, container: LanguageContainer, announce: Announce) =
         publisher sends Embed {
             color = COLOR_NORMAL_HEX
             title = "$UNICODE_SPEAKER ${announce.title}"
@@ -515,7 +515,7 @@ object DiscordMessageProducer : MessageProducerImpl<DiscordMessageData, DiscordC
             }
         }
 
-    override fun produceNotYetImplemented(publisher: DiscordMessagePublisher, container: LanguageContainer, officialChannel: String) =
+    override fun buildNotYetImplemented(publisher: DiscordMessagePublisher, container: LanguageContainer, officialChannel: String) =
         publisher sends Embed {
             color = COLOR_RED_HEX
             title = "$UNICODE_CONSTRUCTION ${container.somethingWrongEmbedTitle()}"

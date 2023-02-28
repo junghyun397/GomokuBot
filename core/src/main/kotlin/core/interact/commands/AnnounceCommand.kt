@@ -8,7 +8,7 @@ import core.database.repositories.AnnounceRepository
 import core.database.repositories.UserProfileRepository
 import core.interact.emptyOrders
 import core.interact.i18n.Language
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
@@ -27,7 +27,7 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
         config: GuildConfig,
         guild: Guild,
         user: User,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {
@@ -37,7 +37,7 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
 
         val io = AnnounceRepository.getAnnouncesSince(bot.dbConnection, user.announceId ?: -1)
             .map { announces ->
-                producer.produceAnnounce(
+                service.buildAnnounce(
                     publishers.plain,
                     config.language.container,
                     announces[config.language] ?: announces[Language.ENG]!!

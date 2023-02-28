@@ -3,7 +3,7 @@ package core.interact.commands
 import core.BotContext
 import core.assets.Guild
 import core.interact.Order
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.SessionManager
@@ -19,7 +19,7 @@ class GuildJoinCommand(private val localeComment: String) : InternalCommand {
         bot: BotContext,
         config: GuildConfig,
         guild: Guild,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         publisher: PublisherSet<A, B>,
     ) = runCatching {
         SessionManager.updateGuildConfig(bot.sessions, guild, config)
@@ -28,7 +28,7 @@ class GuildJoinCommand(private val localeComment: String) : InternalCommand {
             bot = bot,
             config = config,
             publisher = publisher.plain,
-            producer = producer,
+            service = service,
             settingsPage = 0
         )
 

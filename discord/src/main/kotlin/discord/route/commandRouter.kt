@@ -38,7 +38,7 @@ private fun buildPermissionNode(context: UserInteractionContext<*>, parsableComm
                 IO {
                     jdaUser.openPrivateChannel()
                         .flatMap { privateChannel ->
-                            DiscordMessageProducer.sendPermissionNotGrantedEmbed(
+                            DiscordMessagingService.sendPermissionNotGrantedEmbed(
                                 publisher = { msg -> privateChannel.sendMessage(msg.buildCreate()) },
                                 container = container,
                                 channelName = channel.name
@@ -141,7 +141,7 @@ fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEv
                         config = context.config,
                         guild = context.guild,
                         user = context.user,
-                        producer = DiscordMessageProducer,
+                        service = DiscordMessagingService,
                         messageRef = VOID_MESSAGE_REF,
                         publishers = when (command.responseFlag) {
                             is ResponseFlag.Defer -> AdaptivePublisherSet(
@@ -163,7 +163,7 @@ fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEv
                 onRight = { parseFailure ->
                     parseFailure.notice(
                         config = context.config,
-                        producer = DiscordMessageProducer,
+                        service = DiscordMessagingService,
                         publisher = TransMessagePublisher(
                             head = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate()).setEphemeral(true)) },
                             tail = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate()).setEphemeral(true)) }
@@ -225,7 +225,7 @@ fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mo
                         config = context.config,
                         guild = context.guild,
                         user = context.user,
-                        producer = DiscordMessageProducer,
+                        service = DiscordMessagingService,
                         messageRef = context.event.message.extractMessageRef(),
                         publishers = MonoPublisherSet(
                             publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.buildCreate())) },
@@ -236,7 +236,7 @@ fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mo
                 onRight = { parseFailure ->
                     parseFailure.notice(
                         config = context.config,
-                        producer = DiscordMessageProducer,
+                        service = DiscordMessagingService,
                         publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.buildCreate())) },
                     )
                 }

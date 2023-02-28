@@ -17,6 +17,7 @@ import renju.notation.Pos
 import renju.notation.Result
 import utils.assets.LinuxTime
 import utils.lang.pair
+import utils.structs.Option
 import utils.structs.getOrException
 import java.sql.Connection
 
@@ -92,6 +93,7 @@ suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysq
         )!!
 
         val record = GameRecord(
+            gameRecordId = Option.Empty,
             boardState = board.field(),
             history = history,
             gameResult = gameResult,

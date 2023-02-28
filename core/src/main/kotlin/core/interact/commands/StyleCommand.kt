@@ -5,7 +5,7 @@ import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
 import core.interact.emptyOrders
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.BoardStyle
@@ -25,13 +25,13 @@ class StyleCommand(private val style: BoardStyle) : Command {
         config: GuildConfig,
         guild: Guild,
         user: User,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
         SessionManager.updateGuildConfig(bot.sessions, guild, config.copy(boardStyle = style))
 
-        val io = producer.produceStyleUpdated(publishers.windowed, config.language.container, style.sample.styleName)
+        val io = service.buildStyleUpdated(publishers.windowed, config.language.container, style.sample.styleName)
             .launch()
             .map { emptyOrders }
 

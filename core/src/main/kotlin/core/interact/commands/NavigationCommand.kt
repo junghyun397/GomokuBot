@@ -5,7 +5,7 @@ import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
 import core.interact.emptyOrders
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.SessionManager
@@ -31,7 +31,7 @@ class NavigationCommand(
         config: GuildConfig,
         guild: Guild,
         user: User,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {
@@ -52,9 +52,9 @@ class NavigationCommand(
 
         val io = when (this.navigationState.kind) {
             NavigationKind.ABOUT ->
-                producer.paginateHelp(publishers.edit(messageRef), config.language.container, newState.page)
+                service.buildPaginatedHelp(publishers.edit(messageRef), config.language.container, newState.page)
             NavigationKind.SETTINGS ->
-                producer.paginateSettings(publishers.edit(messageRef), config, newState.page)
+                service.buildPaginatedSettings(publishers.edit(messageRef), config, newState.page)
             else -> throw Exception()
         }
             .launch()

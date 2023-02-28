@@ -38,9 +38,9 @@ object StyleCommandParser : NamedParser, ParsableCommand, BuildableCommand {
         BoardStyle.values().firstOrNull { it.sample.styleShortcut == option || it.sample.styleName == option }
 
     private fun composeMissMatchFailure(context: UserInteractionContext<*>): Either<Command, DiscordParseFailure> =
-        Either.Right(this.asParseFailure("option mismatch", context.guild, context.user) { producer, publisher, container ->
-            producer.produceStyleNotFound(publisher, container).launch()
-                .flatMap { producer.produceStyleGuide(publisher, container).launch() }
+        Either.Right(this.asParseFailure("option mismatch", context.guild, context.user) { messagingService, publisher, container ->
+            messagingService.buildStyleNotFound(publisher, container).launch()
+                .flatMap { messagingService.buildStyleGuide(publisher, container).launch() }
                 .map { emptyList() }
         })
 

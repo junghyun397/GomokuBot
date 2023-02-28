@@ -6,7 +6,7 @@ import core.assets.MessageRef
 import core.assets.User
 import core.interact.Order
 import core.interact.i18n.Language
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.SessionManager
@@ -26,7 +26,7 @@ class LangCommand(private val language: Language) : Command {
         config: GuildConfig,
         guild: Guild,
         user: User,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
@@ -34,9 +34,9 @@ class LangCommand(private val language: Language) : Command {
 
         SessionManager.updateGuildConfig(bot.sessions, guild, thenConfig)
 
-        val io = producer.produceLanguageUpdated(publishers.plain, this.language.container)
+        val io = service.buildLanguageUpdated(publishers.plain, language.container)
             .launch()
-            .flatMap { buildHelpProcedure(bot, thenConfig, publishers.plain, producer) }
+            .flatMap { buildHelpProcedure(bot, thenConfig, publishers.plain, service) }
             .map { listOf(Order.UpsertCommands(thenConfig.language.container)) }
 
         tuple(io, this.writeCommandReport("set language ${config.language.name} to ${thenConfig.language.name}", guild, user))

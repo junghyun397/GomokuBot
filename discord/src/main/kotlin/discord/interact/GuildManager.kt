@@ -16,8 +16,8 @@ import dev.minn.jda.ktx.interactions.commands.updateCommands
 import discord.assets.JDAGuild
 import discord.assets.awaitOption
 import discord.interact.message.DiscordMessageData
-import discord.interact.message.DiscordMessageProducer
 import discord.interact.message.DiscordMessagePublisher
+import discord.interact.message.DiscordMessagingService
 import discord.interact.message.MessageCreateAdaptor
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.buildableCommands
@@ -127,7 +127,7 @@ object GuildManager {
 
         val publisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(archiveChannel.sendMessage(msg.buildCreate())) }
 
-        DiscordMessageProducer.produceSessionArchive(publisher, modSession, modResult, false)
+        DiscordMessagingService.buildSessionArchive(publisher, modSession, modResult, false)
             .launch()
             .run()
     }

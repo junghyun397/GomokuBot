@@ -204,7 +204,8 @@ object GomokuBot {
                 .flatMap { event -> InternalInteractionContext.fromJDAEvent(botContext, discordConfig, event, event.guild) }
                 .flatMap { zip(it, ::guildLeaveRouter) },
 
-//            scheduleExpireRoutines(botContext, discordConfig, jda)
+//            scheduleExpireRoutines(botContext, jda)
+//            scheduleUpdateRoutines(botContext, jda)
         )
             .flatMap { (context, result) -> mono {
                 result.fold(

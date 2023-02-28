@@ -5,7 +5,7 @@ import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
 import core.interact.Order
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.AbstractInteractionReport
 import core.session.entities.GuildConfig
@@ -16,19 +16,23 @@ import utils.structs.flatMap
 
 abstract class UnionCommand(protected val command: Command) : Command {
 
+    override val responseFlag = this.command.responseFlag
+
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: GuildConfig,
         guild: Guild,
         user: User,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {
-        val (unionIO, unionReport, thenGuild, thenUser) = this.executeSelf(bot, config, guild, user, producer, messageRef, publishers)
+        val (unionIO, unionReport, thenGuild, thenUser) = this.executeSelf(bot, config, guild, user,
+            service, messageRef, publishers)
             .getOrThrow()
 
-        val (originalIO, report) = this.command.execute(bot, config, thenGuild, thenUser, producer, messageRef, publishers)
+        val (originalIO, report) = this.command.execute(bot, config, thenGuild, thenUser,
+            service, messageRef, publishers)
             .getOrThrow()
 
         tuple(unionIO.flatMap { originalIO }, unionReport + report)
@@ -39,7 +43,7 @@ abstract class UnionCommand(protected val command: Command) : Command {
         config: GuildConfig,
         guild: Guild,
         user: User,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ): Result<Quadruple<IO<List<Order>>, AbstractInteractionReport, Guild, User>>

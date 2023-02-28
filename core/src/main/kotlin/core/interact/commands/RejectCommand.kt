@@ -5,7 +5,7 @@ import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
 import core.interact.emptyOrders
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.SessionManager
@@ -26,16 +26,16 @@ class RejectCommand(private val requestSession: RequestSession) : Command {
         config: GuildConfig,
         guild: Guild,
         user: User,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
         SessionManager.removeRequestSession(bot.sessions, guild, requestSession.owner.id)
 
-        val editIO = producer.produceRequestInvalidated(publishers.edit(messageRef), config.language.container, this.requestSession.owner, this.requestSession.opponent)
+        val editIO = service.buildRequestInvalidated(publishers.edit(messageRef), config.language.container, requestSession.owner, requestSession.opponent)
             .launch()
 
-        val noticeIO = producer.produceRequestRejected(publishers.plain, config.language.container, requestSession.owner, requestSession.opponent)
+        val noticeIO = service.buildRequestRejected(publishers.plain, config.language.container, requestSession.owner, requestSession.opponent)
             .launch()
 
         val io = editIO

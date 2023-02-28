@@ -3,7 +3,7 @@ package core.interact.commands
 import core.BotContext
 import core.assets.Guild
 import core.interact.emptyOrders
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.SessionManager
@@ -28,7 +28,7 @@ class ExpireRequestCommand(
         bot: BotContext,
         config: GuildConfig,
         guild: Guild,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         publisher: PublisherSet<A, B>,
     ) = runCatching {
         val io = if (this.channelAvailable) {
@@ -36,14 +36,14 @@ class ExpireRequestCommand(
 
             val noticePublisher = publisher.plain
 
-            val noticeIO = producer
-                .produceRequestExpired(noticePublisher, guildSession.config.language.container, session.owner, session.opponent)
+            val noticeIO = service
+                .buildRequestExpired(noticePublisher, guildSession.config.language.container, session.owner, session.opponent)
                 .launch()
 
             val finishIO = if (message != null && this.messageAvailable) {
                 val editPublisher = publisher.edit(message)
 
-                producer.produceRequestInvalidated(editPublisher, config.language.container, session.owner, session.opponent)
+                service.buildRequestInvalidated(editPublisher, config.language.container, session.owner, session.opponent)
                     .launch()
             } else IO.empty
 

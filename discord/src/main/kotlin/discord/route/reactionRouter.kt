@@ -13,7 +13,7 @@ import dev.minn.jda.ktx.coroutines.await
 import discord.assets.extractMessageRef
 import discord.interact.GuildManager
 import discord.interact.UserInteractionContext
-import discord.interact.message.DiscordMessageProducer
+import discord.interact.message.DiscordMessagingService
 import discord.interact.message.MessageCreateAdaptor
 import discord.interact.message.MessageEditAdaptor
 import discord.interact.parse.parsers.FocusCommandParser
@@ -65,7 +65,7 @@ fun reactionRouter(context: UserInteractionContext<GenericMessageReactionEvent>)
                     config = context.config,
                     guild = context.guild,
                     user = context.user,
-                    producer = DiscordMessageProducer,
+                    service = DiscordMessagingService,
                     messageRef = messageRef,
                     publishers = AdaptivePublisherSet(
                         plain = { msg -> MessageCreateAdaptor(context.event.channel.sendMessage(msg.buildCreate())) },

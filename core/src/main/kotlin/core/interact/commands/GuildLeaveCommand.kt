@@ -3,7 +3,7 @@ package core.interact.commands
 import core.BotContext
 import core.assets.Guild
 import core.interact.emptyOrders
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
@@ -18,7 +18,7 @@ class GuildLeaveCommand : InternalCommand {
         bot: BotContext,
         config: GuildConfig,
         guild: Guild,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         publisher: PublisherSet<A, B>,
     ) = runCatching {
         tuple(IO.value(emptyOrders), this.writeCommandReport("goodbye", guild))

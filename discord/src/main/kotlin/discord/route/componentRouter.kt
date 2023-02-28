@@ -62,7 +62,7 @@ fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInte
                 config = context.config,
                 guild = context.guild,
                 user = context.user,
-                producer = DiscordMessageProducer,
+                service = DiscordMessagingService,
                 messageRef = messageRef,
                 publishers = when (command.responseFlag) {
                     is ResponseFlag.Defer -> AdaptivePublisherSet(

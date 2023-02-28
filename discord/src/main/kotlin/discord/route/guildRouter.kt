@@ -14,7 +14,7 @@ import core.session.entities.GuildConfig
 import discord.assets.DISCORD_PLATFORM_ID
 import discord.assets.extractId
 import discord.interact.InternalInteractionContext
-import discord.interact.message.DiscordMessageProducer
+import discord.interact.message.DiscordMessagingService
 import discord.interact.message.MessageCreateAdaptor
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
@@ -53,7 +53,7 @@ fun guildJoinRouter(context: InternalInteractionContext<GuildJoinEvent>): Mono<C
             bot = context.bot,
             config = config,
             guild = guild,
-            producer = DiscordMessageProducer,
+            service = DiscordMessagingService,
             publisher = MonoPublisherSet(
                 publisher = { msg -> MessageCreateAdaptor(context.event.guild.systemChannel!!.sendMessage(msg.buildCreate()))},
                 editGlobal = { throw IllegalStateException() }
@@ -71,7 +71,7 @@ fun guildLeaveRouter(context: InternalInteractionContext<GuildLeaveEvent>): Mono
                     bot = context.bot,
                     config = SessionManager.retrieveGuildConfig(context.bot.sessions, guild),
                     guild = guild,
-                    producer = DiscordMessageProducer,
+                    service = DiscordMessagingService,
                     publisher = MonoPublisherSet(
                         publisher = { throw IllegalStateException() },
                         editGlobal = { throw IllegalStateException() }

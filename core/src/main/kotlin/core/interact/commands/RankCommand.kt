@@ -8,7 +8,7 @@ import core.assets.aiUser
 import core.database.repositories.UserProfileRepository
 import core.database.repositories.UserStatsRepository
 import core.interact.emptyOrders
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
@@ -36,7 +36,7 @@ class RankCommand(private val scope: RankScope) : Command {
         config: GuildConfig,
         guild: Guild,
         user: User,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
@@ -54,7 +54,7 @@ class RankCommand(private val scope: RankScope) : Command {
                 }
         }
 
-        val io = producer.produceRankings(publishers.plain, config.language.container, rankings)
+        val io = service.buildRankings(publishers.plain, config.language.container, rankings)
             .launch()
             .map { emptyOrders }
 

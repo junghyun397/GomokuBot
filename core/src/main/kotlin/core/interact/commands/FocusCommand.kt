@@ -5,7 +5,7 @@ import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
 import core.interact.emptyOrders
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.SessionManager
@@ -36,21 +36,21 @@ class FocusCommand(
         config: GuildConfig,
         guild: Guild,
         user: User,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {
         val newFocus = run {
-            val step = producer.focusWidth / 2 + 1
+            val step = service.focusWidth / 2 + 1
 
             val row = Pos.idxToRow(this.navigationState.page)
             val col = Pos.idxToCol(this.navigationState.page)
 
             when (this.direction) {
-                Direction.LEFT -> Pos(row, (col - step).coerceIn(producer.focusRange))
-                Direction.DOWN -> Pos((row - step).coerceIn(producer.focusRange), col)
-                Direction.UP -> Pos((row + step).coerceIn(producer.focusRange), col)
-                Direction.RIGHT -> Pos(row, (col + step).coerceIn(producer.focusRange))
+                Direction.LEFT -> Pos(row, (col - step).coerceIn(service.focusRange))
+                Direction.DOWN -> Pos((row - step).coerceIn(service.focusRange), col)
+                Direction.UP -> Pos((row + step).coerceIn(service.focusRange), col)
+                Direction.RIGHT -> Pos(row, (col + step).coerceIn(service.focusRange))
                 Direction.CENTER -> this.navigationState.focusInfo.focus
             }
         }
@@ -62,7 +62,7 @@ class FocusCommand(
             else -> {
                 SessionManager.addNavigation(bot.sessions, messageRef, this.navigationState.copy(page = newFocus.idx()))
 
-                val action = producer.attachFocusButtons(publishers.component, session, newFocusInfo)
+                val action = service.attachFocusButtons(publishers.component, session, newFocusInfo)
                     .launch()
                     .map { emptyOrders }
 

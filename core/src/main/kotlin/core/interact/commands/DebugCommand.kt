@@ -13,7 +13,7 @@ import core.database.repositories.GameRecordRepository
 import core.inference.AiLevel
 import core.inference.Token
 import core.interact.emptyOrders
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.SessionManager
@@ -48,13 +48,13 @@ class DebugCommand(
         config: GuildConfig,
         guild: Guild,
         user: User,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching { when (debugType) {
         DebugType.ANALYSIS -> {
             SessionManager.retrieveGameSession(bot.sessions, guild, user.id)?.let { session ->
-                producer.produceSessionArchive(publishers.plain, session, session.gameResult, false)
+                service.buildSessionArchive(publishers.plain, session, session.gameResult, false)
                     .addFile(
                         Notation.BoardIOInstance.buildBoardDebugString(session.board).toInputStream(),
                         "analysis-report-${System.currentTimeMillis()}.txt"
@@ -77,7 +77,7 @@ class DebugCommand(
 
                     SessionManager.putRequestSession(bot.sessions, guild, requestSession)
 
-                    val io = producer.produceRequest(publishers.plain, config.language.container, user, user)
+                    val io = service.buildRequest(publishers.plain, config.language.container, user, user)
                         .launch()
                         .map { emptyOrders  }
 
@@ -103,9 +103,9 @@ class DebugCommand(
 
             SessionManager.putGameSession(bot.sessions, guild, session)
 
-            val io = producer.produceNextMovePVE(publishers.plain, config.language.container, user, session.board.lastPos().get())
+            val io = service.buildNextMovePVE(publishers.plain, config.language.container, user, session.board.lastPos().get())
                 .launch()
-                .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, session) }
+                .flatMap { buildBoardProcedure(bot, guild, config, service, publishers.plain, session) }
                 .map { emptyOrders }
 
             tuple(io, this.writeCommandReport("succeed", guild, user))
@@ -118,7 +118,7 @@ class DebugCommand(
                 navigates = ${bot.sessions.navigates.size}
             """.trimIndent()
 
-            val io = producer.produceDebugMessage(publishers.plain, message)
+            val io = service.buildDebugMessage(publishers.plain, message)
                 .launch()
                 .map { emptyOrders }
 
@@ -134,7 +134,7 @@ class DebugCommand(
                     else -> sessions.reduce { acc, s -> "$acc\n$s" }
                 } }
 
-            val io = producer.produceDebugMessage(publishers.plain, "report here")
+            val io = service.buildDebugMessage(publishers.plain, "report here")
                 .addFile(sessionMessage.byteInputStream(), "sessions.txt")
                 .launch()
                 .map { emptyOrders }
@@ -179,9 +179,9 @@ class DebugCommand(
 
             SessionManager.putGameSession(bot.sessions, guild, session)
 
-            val io = producer.produceNextMovePVE(publishers.plain, config.language.container, user, session.board.lastPos().get())
+            val io = service.buildNextMovePVE(publishers.plain, config.language.container, user, session.board.lastPos().get())
                 .launch()
-                .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, session) }
+                .flatMap { buildBoardProcedure(bot, guild, config, service, publishers.plain, session) }
                 .map { emptyOrders }
 
             tuple(io, this.writeCommandReport("succeed", guild, user))
@@ -201,7 +201,7 @@ class DebugCommand(
 
             val session = gameRecord.asGameSession(bot.sessions, user)
 
-            val io = producer.produceSessionArchive(publishers.plain, session, session.gameResult, true)
+            val io = service.buildSessionArchive(publishers.plain, session, session.gameResult, true)
                 .launch()
                 .map { emptyOrders }
 

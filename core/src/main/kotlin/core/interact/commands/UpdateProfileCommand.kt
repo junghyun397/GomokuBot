@@ -7,7 +7,7 @@ import core.assets.User
 import core.database.repositories.GuildProfileRepository
 import core.database.repositories.UserProfileRepository
 import core.interact.emptyOrders
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
@@ -25,14 +25,12 @@ class UpdateProfileCommand(
 
     override val name = "update-profile"
 
-    override val responseFlag = this.command.responseFlag
-
     override suspend fun <A, B> executeSelf(
         bot: BotContext,
         config: GuildConfig,
         guild: Guild,
         user: User,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {

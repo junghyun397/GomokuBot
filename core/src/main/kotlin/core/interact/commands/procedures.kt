@@ -5,8 +5,8 @@ import core.assets.Guild
 import core.inference.FocusSolver
 import core.interact.Order
 import core.interact.message.MessageAdaptor
-import core.interact.message.MessageProducer
 import core.interact.message.MessagePublisher
+import core.interact.message.MessagingService
 import core.session.FocusType
 import core.session.HintType
 import core.session.SessionManager
@@ -32,35 +32,35 @@ fun <A, B> buildNextMoveProcedure(
     bot: BotContext,
     guild: Guild,
     config: GuildConfig,
-    producer: MessageProducer<A, B>,
+    service: MessagingService<A, B>,
     publisher: MessagePublisher<A, B>,
     session: GameSession,
     thenSession: GameSession,
-): IO<List<Order>> = buildBoardProcedure(bot, guild, config, producer, publisher, thenSession)
+): IO<List<Order>> = buildBoardProcedure(bot, guild, config, service, publisher, thenSession)
     .flatMap { buildSwapProcedure(bot, config, session) }
 
 fun <A, B> buildBoardProcedure(
     bot: BotContext,
     guild: Guild,
     config: GuildConfig,
-    producer: MessageProducer<A, B>,
+    service: MessagingService<A, B>,
     publisher: MessagePublisher<A, B>,
     session: GameSession,
 ): IO<Option<Unit>> {
     val focusInfo = when (config.focusType) {
-        FocusType.INTELLIGENCE -> FocusSolver.resolveFocus(session.board, producer.focusWidth, config.hintType == HintType.FIVE)
-        FocusType.FALLOWING -> FocusSolver.resolveCenter(session.board, producer.focusRange)
+        FocusType.INTELLIGENCE -> FocusSolver.resolveFocus(session.board, service.focusWidth, config.hintType == HintType.FIVE)
+        FocusType.FALLOWING -> FocusSolver.resolveCenter(session.board, service.focusRange)
     }
 
-    return  producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, session)
+    return  service.buildBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, session)
         .shift(session.board.winner().isEmpty) { io ->
-            producer.attachFocusButtons(io, session, focusInfo)
+            service.attachFocusButtons(io, session, focusInfo)
         }
         .retrieve()
         .flatMapOption { message ->
             SessionManager.addNavigation(bot.sessions, message.messageRef, BoardNavigationState(focusInfo.focus.idx(), focusInfo, session.expireDate))
             SessionManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.messageRef)
-            producer.attachFocusNavigators(message.messageData) {
+            service.attachFocusNavigators(message.messageData) {
                 SessionManager.retrieveGameSession(bot.sessions, guild, session.owner.id)?.board?.moves() != session.board.moves()
             }
         }
@@ -83,12 +83,12 @@ private fun buildSwapProcedure(
 
 fun <A, B> buildFinishProcedure(
     bot: BotContext,
-    producer: MessageProducer<A, B>,
+    service: MessagingService<A, B>,
     publisher: MessagePublisher<A, B>,
     config: GuildConfig,
     session: GameSession,
     thenSession: GameSession
-): IO<List<Order>> = producer.produceBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, thenSession)
+): IO<List<Order>> = service.buildBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, thenSession)
     .retrieve()
     .flatMap { maybeMessage -> buildSwapProcedure(bot, config, session).map { tuple(maybeMessage, it) } }
     .map { (maybeMessage, originalOrder) ->
@@ -104,8 +104,8 @@ fun <A, B> buildHelpProcedure(
     bot: BotContext,
     config: GuildConfig,
     publisher: MessagePublisher<A, B>,
-    producer: MessageProducer<A, B>,
-): IO<Option<Unit>> = producer.produceHelp(publisher, config.language.container, 0)
+    service: MessagingService<A, B>,
+): IO<Option<Unit>> = service.buildHelp(publisher, config.language.container, 0)
     .retrieve()
     .flatMapOption { helpMessage ->
         SessionManager.addNavigation(
@@ -119,18 +119,18 @@ fun <A, B> buildHelpProcedure(
             )
         )
 
-        producer.attachBinaryNavigators(helpMessage.messageData)
+        service.attachBinaryNavigators(helpMessage.messageData)
     }
 
 fun <A, B> buildCombinedHelpProcedure(
     bot: BotContext,
     config: GuildConfig,
     publisher: MessagePublisher<A, B>,
-    producer: MessageProducer<A, B>,
+    service: MessagingService<A, B>,
     settingsPage: Int
 ): IO<Option<Unit>> = IO.zip(
-    producer.produceHelp(publisher, config.language.container, 0).retrieve(),
-    producer.produceSettings(publisher, config, settingsPage).retrieve(),
+    service.buildHelp(publisher, config.language.container, 0).retrieve(),
+    service.buildSettings(publisher, config, settingsPage).retrieve(),
 )
     .map { (maybeHelp, maybeSettings) -> Option.zip(maybeHelp, maybeSettings) }
     .flatMapOption { (helpMessage, settingsMessage) ->
@@ -156,6 +156,6 @@ fun <A, B> buildCombinedHelpProcedure(
             )
         )
 
-        producer.attachBinaryNavigators(helpMessage.messageData)
-            .flatMap { producer.attachBinaryNavigators(settingsMessage.messageData) }
+        service.attachBinaryNavigators(helpMessage.messageData)
+            .flatMap { service.attachBinaryNavigators(settingsMessage.messageData) }
     }

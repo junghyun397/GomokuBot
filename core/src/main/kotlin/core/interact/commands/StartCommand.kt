@@ -6,7 +6,7 @@ import core.assets.MessageRef
 import core.assets.User
 import core.inference.AiLevel
 import core.interact.emptyOrders
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.GameManager
@@ -32,7 +32,7 @@ class StartCommand(val opponent: User?) : Command {
         config: GuildConfig,
         guild: Guild,
         user: User,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
@@ -42,9 +42,9 @@ class StartCommand(val opponent: User?) : Command {
 
                 SessionManager.putGameSession(bot.sessions, guild, gameSession)
 
-                val io = producer.produceBeginsPVE(publishers.plain, config.language.container, user, gameSession.ownerHasBlack)
+                val io = service.buildBeginsPVE(publishers.plain, config.language.container, user, gameSession.ownerHasBlack)
                     .launch()
-                    .flatMap { buildBoardProcedure(bot, guild, config, producer, publishers.plain, gameSession) }
+                    .flatMap { buildBoardProcedure(bot, guild, config, service, publishers.plain, gameSession) }
                     .map { emptyOrders }
 
                 tuple(io, this.writeCommandReport("start game session with AI", guild, user))
@@ -58,7 +58,7 @@ class StartCommand(val opponent: User?) : Command {
 
                 SessionManager.putRequestSession(bot.sessions, guild, requestSession)
 
-                val io = producer.produceRequest(publishers.plain, config.language.container, user, opponent)
+                val io = service.buildRequest(publishers.plain, config.language.container, user, opponent)
                     .retrieve()
                     .flatMapOption { IO { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.messageRef) } }
                     .map { emptyOrders }

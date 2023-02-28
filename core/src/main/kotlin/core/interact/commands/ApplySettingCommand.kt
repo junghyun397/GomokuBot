@@ -6,7 +6,7 @@ import core.assets.MessageRef
 import core.assets.User
 import core.interact.emptyOrders
 import core.interact.i18n.Language
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.message.SettingMapping
 import core.interact.reports.writeCommandReport
@@ -30,7 +30,7 @@ class ApplySettingCommand(
         config: GuildConfig,
         guild: Guild,
         user: User,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {
@@ -38,7 +38,7 @@ class ApplySettingCommand(
 
         val (localKind, localChoice) = SettingMapping.buildKindNamePair(config.language.container, this.diff)
 
-        val io = producer.produceSettingApplied(publishers.windowed, config.language.container, localKind, localChoice)
+        val io = service.buildSettingApplied(publishers.windowed, config.language.container, localKind, localChoice)
             .launch()
             .map { emptyOrders }
 

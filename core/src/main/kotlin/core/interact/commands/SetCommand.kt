@@ -5,7 +5,7 @@ import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
 import core.interact.Order
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.GameManager
@@ -36,7 +36,7 @@ class SetCommand(
         config: GuildConfig,
         guild: Guild,
         user: User,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
@@ -62,14 +62,15 @@ class SetCommand(
                                 else -> publishers.plain
                             }
 
-                            producer.produceNextMovePVP(guidePublisher, config.language.container, thenSession.player, thenSession.nextPlayer, this.pos)
+                            service.buildNextMovePVP(guidePublisher, config.language.container, thenSession.player, thenSession.nextPlayer, pos)
                                 .retrieve()
                                 .flatMap { buildAppendGameMessageProcedure(it, bot, thenSession) }
                         }
                     }
 
                     val io = guideIO
-                        .flatMap { buildNextMoveProcedure(bot, guild, config, producer, boardPublisher, this.session, thenSession) }
+                        .flatMap { buildNextMoveProcedure(bot, guild, config,
+                            service, boardPublisher, this.session, thenSession) }
 
                     io to this.writeCommandReport("make move $pos", guild, user)
                 }
@@ -88,14 +89,15 @@ class SetCommand(
                                         else -> publishers.plain
                                     }
 
-                                    producer.produceNextMovePVE(guidePublisher, config.language.container, nextSession.owner, nextSession.board.lastPos().get())
+                                    service.buildNextMovePVE(guidePublisher, config.language.container, nextSession.owner, nextSession.board.lastPos().get())
                                         .retrieve()
                                         .flatMap { buildAppendGameMessageProcedure(it, bot, thenSession) }
                                 }
                             }
 
                             val io = guideIO
-                                .flatMap { buildNextMoveProcedure(bot, guild, config, producer, boardPublisher, this.session, nextSession) }
+                                .flatMap { buildNextMoveProcedure(bot, guild, config,
+                                    service, boardPublisher, this.session, nextSession) }
 
                             io to this.writeCommandReport("make move $pos", guild, user)
                         },
@@ -104,12 +106,13 @@ class SetCommand(
 
                             val io = when (result) {
                                 is GameResult.Win ->
-                                    producer.produceLosePVE(publishers.plain, config.language.container, nextSession.owner, nextSession.board.lastPos().get())
+                                    service.buildLosePVE(publishers.plain, config.language.container, nextSession.owner, nextSession.board.lastPos().get())
                                 is GameResult.Full ->
-                                    producer.produceTiePVE(publishers.plain, config.language.container, nextSession.owner)
+                                    service.buildTiePVE(publishers.plain, config.language.container, nextSession.owner)
                             }
                                 .launch()
-                                .flatMap { buildFinishProcedure(bot, producer, boardPublisher, config, this.session, nextSession) }
+                                .flatMap { buildFinishProcedure(bot,
+                                    service, boardPublisher, config, this.session, nextSession) }
                                 .map { it + Order.ArchiveSession(nextSession, config.archivePolicy) }
 
                             io to this.writeCommandReport("make move $pos, terminate session by $result", guild, user)
@@ -124,12 +127,13 @@ class SetCommand(
                     is PvpGameSession -> {
                         val io = when (result) {
                             is GameResult.Win ->
-                                producer.produceWinPVP(publishers.plain, config.language.container, thenSession.nextPlayer, thenSession.player, this.pos)
+                                service.buildWinPVP(publishers.plain, config.language.container, thenSession.nextPlayer, thenSession.player, pos)
                             is GameResult.Full ->
-                                producer.produceTiePVP(publishers.plain, config.language.container, thenSession.owner, thenSession.opponent)
+                                service.buildTiePVP(publishers.plain, config.language.container, thenSession.owner, thenSession.opponent)
                         }
                             .launch()
-                            .flatMap { buildFinishProcedure(bot, producer, boardPublisher, config, this.session, thenSession) }
+                            .flatMap { buildFinishProcedure(bot,
+                                service, boardPublisher, config, this.session, thenSession) }
                             .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
                         io to this.writeCommandReport("make move $pos, terminate session by $result", guild, user)
@@ -137,12 +141,13 @@ class SetCommand(
                     is AiGameSession -> {
                         val io = when (result) {
                             is GameResult.Win ->
-                                producer.produceWinPVE(publishers.plain, config.language.container, thenSession.owner, this.pos)
+                                service.buildWinPVE(publishers.plain, config.language.container, thenSession.owner, pos)
                             is GameResult.Full ->
-                                producer.produceTiePVE(publishers.plain, config.language.container, thenSession.owner)
+                                service.buildTiePVE(publishers.plain, config.language.container, thenSession.owner)
                         }
                             .launch()
-                            .flatMap { buildFinishProcedure(bot, producer, boardPublisher, config, this.session, thenSession) }
+                            .flatMap { buildFinishProcedure(bot,
+                                service, boardPublisher, config, this.session, thenSession) }
                             .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
                         io to this.writeCommandReport("make move $pos, terminate session by $result", guild, user)

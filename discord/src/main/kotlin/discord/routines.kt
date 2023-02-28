@@ -9,8 +9,7 @@ import core.interact.commands.InternalCommand
 import core.interact.message.MonoPublisherSet
 import core.session.SessionManager
 import core.session.entities.GuildSession
-import discord.interact.DiscordConfig
-import discord.interact.message.DiscordMessageProducer
+import discord.interact.message.DiscordMessagingService
 import discord.interact.message.MessageCreateAdaptor
 import discord.interact.message.MessageEditAdaptor
 import kotlinx.coroutines.flow.merge
@@ -25,14 +24,14 @@ private suspend fun executeCommand(command: InternalCommand, bot: BotContext, gu
         bot = bot,
         config = guildSession.config,
         guild = guildSession.guild,
-        producer = DiscordMessageProducer,
+        service = DiscordMessagingService,
         publisher = MonoPublisherSet(
             publisher = { msg -> MessageCreateAdaptor(channel.sendMessage(msg.buildCreate())) },
             editGlobal = { ref -> { msg -> MessageEditAdaptor(channel.editMessageById(ref.id.idLong, msg.buildEdit())) } }
         )
     )
 
-fun scheduleExpireRoutines(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flux<CommandResult> {
+fun scheduleExpireRoutines(bot: BotContext, jda: JDA): Flux<CommandResult> {
     val expireGameSessionFlow = schedule(bot.config.gameExpireCycle) {
         SessionManager.cleanExpiredGameSession(bot.sessions).forEach { (_, guildSession, _, session) ->
             val maybeMessage = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)

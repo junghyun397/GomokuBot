@@ -15,7 +15,7 @@ import utils.lang.memoize
 import utils.lang.tuple
 import utils.structs.IO
 
-abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
+abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
 
     // INTERFACE
 
@@ -30,13 +30,13 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
     // FORMAT
 
     protected infix fun MessagePublisher<A, B>.sends(message: String) =
-        this@MessageProducerImpl.sendString(message, this)
+        this@MessagingServiceImpl.sendString(message, this)
 
     protected fun unicodeStone(color: Color) =
         if (color == Notation.Color.Black) UNICODE_BLACK_CIRCLE else UNICODE_WHITE_CIRCLE
 
     protected fun User.withColor(color: Color) =
-        "${this.name}${this@MessageProducerImpl.unicodeStone(color)}"
+        "${this.name}${this@MessagingServiceImpl.unicodeStone(color)}"
 
     protected fun GameSession.ownerWithColor() =
         if (this.ownerHasBlack) this.owner.withColor(Notation.Color.Black) else this.owner.withColor(Notation.Color.White)
@@ -95,124 +95,124 @@ abstract class MessageProducerImpl<A, B> : MessageProducer<A, B> {
 
     // RANK
 
-    override fun produceUserNotFound(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
+    override fun buildUserNotFound(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
         publisher sends container.rankErrorNotFound()
 
     // LANG
 
-    override fun produceLanguageNotFound(publisher: MessagePublisher<A, B>) =
+    override fun buildLanguageNotFound(publisher: MessagePublisher<A, B>) =
         publisher sends "There is an error in the Language Code. Please select from the list below."
 
-    override fun produceLanguageUpdated(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
+    override fun buildLanguageUpdated(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
         publisher sends container.languageUpdated()
 
     // GAME
 
-    override fun produceBeginsPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, blackPlayer: User, whitePlayer: User) =
+    override fun buildBeginsPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, blackPlayer: User, whitePlayer: User) =
         publisher sends container.beginPVP(blackPlayer.asMentionFormat(), whitePlayer.asMentionFormat())
 
-    override fun produceBeginsPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, ownerHasBlack: Boolean) =
+    override fun buildBeginsPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, ownerHasBlack: Boolean) =
         publisher sends when {
             ownerHasBlack -> container.beginPVEAiWhite(owner.asMentionFormat())
             else -> container.beginPVEAiBlack(owner.asMentionFormat())
         }
 
-    override fun produceNextMovePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, previousPlayer: User, nextPlayer: User, lastMove: Pos) =
+    override fun buildNextMovePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, previousPlayer: User, nextPlayer: User, lastMove: Pos) =
         publisher sends container.processNextPVP(
             nextPlayer.asMentionFormat(),
             lastMove.toString().asHighlightFormat()
         )
 
-    override fun produceWinPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, loser: User, lastMove: Pos) =
+    override fun buildWinPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, loser: User, lastMove: Pos) =
         publisher sends container.endPVPWin(winner.asMentionFormat(), loser.asMentionFormat(), lastMove.toString().asHighlightFormat())
 
-    override fun produceTiePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User) =
+    override fun buildTiePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User) =
         publisher sends container.endPVPTie(owner.asMentionFormat(), opponent.asMentionFormat())
 
-    override fun produceSurrenderedPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, loser: User) =
+    override fun buildSurrenderedPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, loser: User) =
         publisher sends container.endPVPResign(winner.asMentionFormat(), loser.asMentionFormat())
 
-    override fun produceTimeoutPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, loser: User) =
+    override fun buildTimeoutPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, loser: User) =
         publisher sends container.endPVPTimeOut(winner.asMentionFormat(), loser.asMentionFormat())
 
-    override fun produceNextMovePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, lastMove: Pos) =
+    override fun buildNextMovePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, lastMove: Pos) =
         publisher sends container.processNextPVE(lastMove.toString().asHighlightFormat())
 
-    override fun produceWinPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, lastMove: Pos) =
+    override fun buildWinPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, lastMove: Pos) =
         publisher sends container.endPVEWin(owner.asMentionFormat(), lastMove.toString().asHighlightFormat())
 
-    override fun produceLosePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, lastMove: Pos) =
+    override fun buildLosePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, lastMove: Pos) =
         publisher sends container.endPVELose(owner.asMentionFormat(), lastMove.toString().asHighlightFormat())
 
-    override fun produceTiePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User) =
+    override fun buildTiePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User) =
         publisher sends container.endPVETie(owner.asMentionFormat())
 
-    override fun produceSurrenderedPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User) =
+    override fun buildSurrenderedPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User) =
         publisher sends container.endPVEResign(owner.asMentionFormat())
 
-    override fun produceTimeoutPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, player: User) =
+    override fun buildTimeoutPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, player: User) =
         publisher sends container.endPVETimeOut(player.asMentionFormat())
 
     // CONFIG
 
-    override fun produceSettingApplied(publisher: MessagePublisher<A, B>, container: LanguageContainer, configKind: String, configChoice: String) =
+    override fun buildSettingApplied(publisher: MessagePublisher<A, B>, container: LanguageContainer, configKind: String, configChoice: String) =
         publisher sends container.settingApplied(configKind.asHighlightFormat(), configChoice.asHighlightFormat())
 
     // SESSION
 
-    override fun produceSessionNotFound(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
+    override fun buildSessionNotFound(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
         publisher sends container.sessionNotFound()
 
     // START
 
-    override fun produceSessionAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
+    override fun buildSessionAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
         publisher sends container.startErrorSessionAlready()
 
-    override fun produceOpponentSessionAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer, opponent: User) =
+    override fun buildOpponentSessionAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer, opponent: User) =
         publisher sends container.startErrorOpponentSessionAlready(opponent.asMentionFormat())
 
-    override fun produceRequestAlreadySent(publisher: MessagePublisher<A, B>, container: LanguageContainer, opponent: User) =
+    override fun buildRequestAlreadySent(publisher: MessagePublisher<A, B>, container: LanguageContainer, opponent: User) =
         publisher sends container.startErrorRequestAlreadySent(opponent.asMentionFormat())
 
-    override fun produceRequestAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer, opponent: User) =
+    override fun buildRequestAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer, opponent: User) =
         publisher sends container.startErrorRequestAlready(opponent.asMentionFormat())
 
-    override fun produceOpponentRequestAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer, opponent: User) =
+    override fun buildOpponentRequestAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer, opponent: User) =
         publisher sends container.startErrorOpponentRequestAlready(opponent.asMentionFormat())
 
     // SET
 
-    override fun produceOrderFailure(publisher: MessagePublisher<A, B>, container: LanguageContainer, player: User) =
+    override fun buildSetOrderFailure(publisher: MessagePublisher<A, B>, container: LanguageContainer, player: User) =
         publisher sends container.processErrorOrder(player.asMentionFormat())
 
-    override fun produceSetIllegalArgument(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
+    override fun buildSetIllegalArgumentFailure(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
         publisher sends container.setErrorIllegalArgument()
 
-    override fun produceSetAlreadyExist(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos) =
+    override fun buildSetAlreadyExistFailure(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos) =
         publisher sends container.setErrorExist(pos.toString().asHighlightFormat())
 
-    override fun produceSetForbiddenMove(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos, forbiddenFlag: Byte) =
+    override fun buildSetForbiddenMoveFailure(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos, forbiddenFlag: Byte) =
         publisher sends container.setErrorForbidden(pos.toString().asHighlightFormat(), forbiddenFlagToText(forbiddenFlag).asHighlightFormat())
 
     // STYLE
 
-    override fun produceStyleNotFound(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
+    override fun buildStyleNotFound(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
         publisher sends container.styleErrorNotfound()
 
-    override fun produceStyleUpdated(publisher: MessagePublisher<A, B>, container: LanguageContainer, style: String) =
+    override fun buildStyleUpdated(publisher: MessagePublisher<A, B>, container: LanguageContainer, style: String) =
         publisher sends container.styleUpdated(style)
 
     // REQUEST
 
-    override fun produceRequestRejected(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User) =
+    override fun buildRequestRejected(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User) =
         publisher sends container.requestRejected(owner.asMentionFormat(), opponent.asMentionFormat())
 
-    override fun produceRequestExpired(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User) =
+    override fun buildRequestExpired(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User) =
         publisher sends container.requestExpired(owner.asMentionFormat(), opponent.asMentionFormat())
 
     // UTILS
 
-    override fun produceDebugMessage(publisher: MessagePublisher<A, B>, payload: String) =
+    override fun buildDebugMessage(publisher: MessagePublisher<A, B>, payload: String) =
         publisher sends payload
 
 }

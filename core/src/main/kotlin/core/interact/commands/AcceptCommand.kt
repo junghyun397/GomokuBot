@@ -5,7 +5,7 @@ import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
 import core.interact.Order
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.GameManager
@@ -27,7 +27,7 @@ class AcceptCommand(private val requestSession: RequestSession) : Command {
         config: GuildConfig,
         guild: Guild,
         user: User,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
@@ -40,10 +40,10 @@ class AcceptCommand(private val requestSession: RequestSession) : Command {
         SessionManager.putGameSession(bot.sessions, guild, gameSession)
         SessionManager.removeRequestSession(bot.sessions, guild, this.requestSession.owner.id)
 
-        val beginIO = producer.produceBeginsPVP(publishers.plain, config.language.container, gameSession.player, gameSession.nextPlayer)
+        val beginIO = service.buildBeginsPVP(publishers.plain, config.language.container, gameSession.player, gameSession.nextPlayer)
             .launch()
 
-        val boardIO = buildBoardProcedure(bot, guild, config, producer, publishers.plain, gameSession)
+        val boardIO = buildBoardProcedure(bot, guild, config, service, publishers.plain, gameSession)
 
         val io = beginIO
             .flatMap { boardIO }

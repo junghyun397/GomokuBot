@@ -5,7 +5,7 @@ import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
 import core.interact.emptyOrders
-import core.interact.message.MessageProducer
+import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
@@ -23,13 +23,13 @@ class HelpCommand(private val sendSettings: Boolean) : Command {
         config: GuildConfig,
         guild: Guild,
         user: User,
-        producer: MessageProducer<A, B>,
+        service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
         val io = when (this.sendSettings) {
-            true -> buildCombinedHelpProcedure(bot, config, publishers.plain, producer, 0)
-            else -> buildHelpProcedure(bot, config, publishers.plain, producer)
+            true -> buildCombinedHelpProcedure(bot, config, publishers.plain, service, 0)
+            else -> buildHelpProcedure(bot, config, publishers.plain, service)
         }
             .map { emptyOrders }
 
