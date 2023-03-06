@@ -12,6 +12,9 @@ data class ErrorReport(
     override var apiTime: LinuxTime? = LinuxTime.now(),
 ) : AbstractInteractionReport() {
 
+    override val comment: String
+        get() = "error\t ${throwable.stackTraceToString()}"
+
     override fun toString() = "${super.toString()} error\t ${throwable.stackTraceToString()}"
 
 }

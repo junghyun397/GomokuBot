@@ -25,11 +25,7 @@ object AnnounceRepository {
             .values
             .toList()
 
-    suspend fun updateAnnounceCache(connection: DatabaseConnection) {
-        connection.localCaches.announceCache = this.fetchAnnounces(connection)
-    }
-
-    private suspend fun fetchAnnounces(connection: DatabaseConnection): SortedMap<Int, Map<Language, Announce>> =
+    suspend fun fetchAnnounces(connection: DatabaseConnection): SortedMap<Int, Map<Language, Announce>> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
                 .createStatement("SELECT * FROM announce")

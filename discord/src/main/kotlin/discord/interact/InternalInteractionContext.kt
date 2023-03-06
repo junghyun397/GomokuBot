@@ -5,10 +5,7 @@ import core.assets.Guild
 import core.database.repositories.GuildProfileRepository
 import core.session.SessionManager
 import core.session.entities.GuildConfig
-import discord.assets.DISCORD_PLATFORM_ID
-import discord.assets.JDAGuild
-import discord.assets.extractId
-import discord.assets.extractProfile
+import discord.assets.*
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.events.Event
 import reactor.core.publisher.Mono
@@ -20,7 +17,8 @@ data class InternalInteractionContext<out E : Event> (
     override val event: E,
     override val guild: Guild,
     override val config: GuildConfig,
-    override val emittedTime: LinuxTime
+    override val emittedTime: LinuxTime,
+    override val source: String
 ) : InteractionContext<E> {
 
     companion object {
@@ -36,7 +34,8 @@ data class InternalInteractionContext<out E : Event> (
                 event = event,
                 guild = guild,
                 config = SessionManager.retrieveGuildConfig(bot.sessions, guild),
-                emittedTime = LinuxTime.now()
+                emittedTime = LinuxTime.now(),
+                source = event.abbreviation()
             )
         }
     }

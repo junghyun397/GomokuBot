@@ -6,7 +6,7 @@ import utils.assets.LinuxTime
 
 data class InternalCommandReport(
     val commandName: String,
-    val comment: String,
+    override val comment: String,
     override val guild: Guild,
     override var interactionSource: String? = null,
     override var emittedTime: LinuxTime? = null,

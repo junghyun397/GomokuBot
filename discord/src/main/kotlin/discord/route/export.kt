@@ -6,14 +6,9 @@ import discord.assets.JDAGuild
 import discord.assets.extractMessageData
 import discord.interact.DiscordConfig
 import discord.interact.GuildManager
-import discord.interact.InteractionContext
 import utils.structs.IO
 
-suspend fun export(context: InteractionContext<*>, io: IO<List<Order>>, source: MessageRef?) {
-    export(context.discordConfig, context.jdaGuild, io, source)
-}
-
-suspend fun export(discordConfig: DiscordConfig, jdaGuild: JDAGuild, io: IO<List<Order>>, source: MessageRef?) {
+suspend fun export(discordConfig: DiscordConfig, io: IO<List<Order>>, jdaGuild: JDAGuild, source: MessageRef?) {
     io.run().forEach { order ->
         when (order) {
             is Order.UpsertCommands -> GuildManager.upsertCommands(jdaGuild, order.container)

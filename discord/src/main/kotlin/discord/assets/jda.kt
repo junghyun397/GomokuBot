@@ -1,10 +1,13 @@
 package discord.assets
 
 import core.assets.*
+import core.interact.ExecutionContext
 import dev.minn.jda.ktx.coroutines.await
+import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageBuilder
 import discord.interact.message.DiscordMessageData
 import discord.interact.message.MessageEditAdaptor
+import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
@@ -75,4 +78,10 @@ fun <T : Event> T.abbreviation(): String =
         GuildJoinEvent::class -> "GJE"
         GuildLeaveEvent::class -> "GLE"
         else -> "UNK"
+    }
+
+fun ExecutionContext.retrieveJDAGuild(jda: JDA): JDAGuild =
+    when (this) {
+        is InteractionContext<*> -> this.jdaGuild
+        else -> jda.getGuildById(this.guild.givenId.idLong)!!
     }

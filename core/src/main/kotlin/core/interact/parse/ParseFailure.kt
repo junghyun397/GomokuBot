@@ -24,7 +24,7 @@ class ParseFailure<A, B>(
 
 }
 
-fun <A, B> NamedParser.asParseFailure(comment: String, guild: Guild, user: User, onFailure: (MessagingService<A, B>, MessagePublisher<A, B>, LanguageContainer) -> IO<List<Order>>) =
+fun <A, B> CommandParser.asParseFailure(comment: String, guild: Guild, user: User, onFailure: (MessagingService<A, B>, MessagePublisher<A, B>, LanguageContainer) -> IO<List<Order>>) =
     ParseFailure(this.name, comment, guild, user, onFailure)
 
 fun ParseFailure<*, *>.asCommandReport() =

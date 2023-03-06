@@ -7,7 +7,7 @@ import core.interact.commands.Command
 import core.interact.commands.StartCommand
 import core.interact.commands.buildBoardProcedure
 import core.interact.i18n.LanguageContainer
-import core.interact.parse.NamedParser
+import core.interact.parse.CommandParser
 import core.interact.parse.asParseFailure
 import core.session.SessionManager
 import core.session.SwapType
@@ -29,7 +29,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import utils.structs.*
 
-object StartCommandParser : NamedParser, ParsableCommand, EmbeddableCommand, BuildableCommand {
+object StartCommandParser : CommandParser, ParsableCommand, EmbeddableCommand, BuildableCommand {
 
     override val name = "start"
 

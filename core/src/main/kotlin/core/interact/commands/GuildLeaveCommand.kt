@@ -10,7 +10,7 @@ import core.session.entities.GuildConfig
 import utils.lang.tuple
 import utils.structs.IO
 
-class GuildLeaveCommand : InternalCommand {
+object GuildLeaveCommand : InternalCommand {
 
     override val name = "guild-leave"
 

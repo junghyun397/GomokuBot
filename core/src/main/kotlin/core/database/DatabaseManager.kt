@@ -139,7 +139,7 @@ object DatabaseManager {
     }
 
     suspend fun initCaches(connection: DatabaseConnection) {
-        AnnounceRepository.updateAnnounceCache(connection)
+        connection.localCaches.announceCache = AnnounceRepository.fetchAnnounces(connection)
     }
 
     internal fun smallIntToByte(smallInt: Any?): Byte = (smallInt as Short).toByte()

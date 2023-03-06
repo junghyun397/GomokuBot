@@ -20,7 +20,8 @@ data class UserInteractionContext<out E : Event>(
     val user: User,
     override val guild: Guild,
     override val config: GuildConfig,
-    override val emittedTime: LinuxTime
+    override val emittedTime: LinuxTime,
+    override val source: String
 ) : InteractionContext<E> {
 
     companion object {
@@ -41,7 +42,8 @@ data class UserInteractionContext<out E : Event>(
                 user = user,
                 guild = guild,
                 config = SessionManager.retrieveGuildConfig(bot.sessions, guild),
-                emittedTime = LinuxTime.now()
+                emittedTime = LinuxTime.now(),
+                source = event.abbreviation()
             )
         }
 

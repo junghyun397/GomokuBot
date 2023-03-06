@@ -7,7 +7,7 @@ import utils.assets.LinuxTime
 
 data class CommandReport(
     val commandName: String,
-    val comment: String,
+    override val comment: String,
     override val guild: Guild,
     val user: User,
     override var interactionSource: String? = null,

@@ -15,6 +15,11 @@ class UnionReport(
     override operator fun plus(other: AbstractInteractionReport): AbstractInteractionReport =
         UnionReport(this.reports + other, guild, commandTime, interactionSource, emittedTime, apiTime)
 
+    override operator fun plus(other: UnionReport): AbstractInteractionReport =
+        UnionReport(this.reports + other.reports, guild, commandTime, interactionSource, emittedTime, apiTime)
+
+    override val comment get() = reports.joinToString(prefix = "\t", separator = "\n\t")
+
     override fun toString(): String {
         this.reports.forEach { report ->
             report.apply {
@@ -24,7 +29,7 @@ class UnionReport(
             }
         }
 
-        return "UnionReport(${reports.size}):\n${reports.joinToString(prefix = "\t", separator = "\n\t")}"
+        return "UnionReport(${reports.size}):\n${this.comment}"
     }
 
 }

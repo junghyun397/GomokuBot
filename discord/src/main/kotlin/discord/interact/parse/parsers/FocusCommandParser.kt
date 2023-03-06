@@ -2,7 +2,7 @@ package discord.interact.parse.parsers
 
 import core.interact.commands.Direction
 import core.interact.commands.FocusCommand
-import core.interact.parse.NamedParser
+import core.interact.parse.CommandParser
 import core.session.SessionManager
 import core.session.entities.BoardNavigationState
 import core.session.entities.NavigationState
@@ -17,7 +17,7 @@ import utils.structs.filter
 import utils.structs.flatMap
 import utils.structs.map
 
-object FocusCommandParser : NamedParser, NavigableCommand {
+object FocusCommandParser : CommandParser, NavigableCommand {
 
     override val name = "focus"
 

@@ -6,7 +6,7 @@ import core.interact.commands.Command
 import core.interact.commands.LangCommand
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
-import core.interact.parse.NamedParser
+import core.interact.parse.CommandParser
 import core.interact.parse.asParseFailure
 import dev.minn.jda.ktx.interactions.commands.choice
 import dev.minn.jda.ktx.interactions.commands.option
@@ -23,7 +23,7 @@ import utils.structs.Either
 import utils.structs.flatMap
 import utils.structs.map
 
-object LangCommandParser : NamedParser, ParsableCommand, BuildableCommand {
+object LangCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
     override val name = "lang"
 

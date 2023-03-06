@@ -5,7 +5,7 @@ import core.database.repositories.UserProfileRepository
 import core.inference.AiLevel
 import core.inference.Token
 import core.session.GameResult
-import core.session.SessionRepository
+import core.session.SessionPool
 import core.session.entities.AiGameSession
 import core.session.entities.GameSession
 import core.session.entities.MessageBufferKey
@@ -66,7 +66,7 @@ fun GameSession.extractGameRecord(guildUid: GuildUid): Option<GameRecord> =
         )
     }
 
-suspend fun GameRecord.asGameSession(repo: SessionRepository, owner: User): GameSession =
+suspend fun GameRecord.asGameSession(pool: SessionPool, owner: User): GameSession =
     when {
         whiteId != null && blackId != null -> {
             val ownerHasBlack = blackId == owner.id
@@ -76,8 +76,9 @@ suspend fun GameRecord.asGameSession(repo: SessionRepository, owner: User): Game
             PvpGameSession(
                 owner = owner,
                 opponent = if (ownerHasBlack)
-                    UserProfileRepository.retrieveUser(repo.dbConnection, whiteId)
-                else UserProfileRepository.retrieveUser(repo.dbConnection, blackId),
+                    UserProfileRepository.retrieveUser(pool.dbConnection, whiteId)
+                else
+                    UserProfileRepository.retrieveUser(pool.dbConnection, blackId),
                 ownerHasBlack = ownerHasBlack,
                 board = board,
                 gameResult = Option.Some(gameResult),

@@ -3,7 +3,7 @@ package discord.interact.parse.parsers
 import core.interact.commands.Command
 import core.interact.commands.StyleCommand
 import core.interact.i18n.LanguageContainer
-import core.interact.parse.NamedParser
+import core.interact.parse.CommandParser
 import core.interact.parse.asParseFailure
 import core.session.BoardStyle
 import dev.minn.jda.ktx.interactions.commands.choice
@@ -21,7 +21,7 @@ import utils.structs.Either
 import utils.structs.flatMap
 import utils.structs.map
 
-object StyleCommandParser : NamedParser, ParsableCommand, BuildableCommand {
+object StyleCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
     override val name = "style"
 

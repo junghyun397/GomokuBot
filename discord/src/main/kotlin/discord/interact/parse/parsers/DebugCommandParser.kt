@@ -4,7 +4,7 @@ import core.interact.commands.Command
 import core.interact.commands.DebugCommand
 import core.interact.commands.DebugType
 import core.interact.emptyOrders
-import core.interact.parse.NamedParser
+import core.interact.parse.CommandParser
 import core.interact.parse.asParseFailure
 import discord.interact.GuildManager
 import discord.interact.UserInteractionContext
@@ -15,7 +15,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import utils.structs.Either
 import utils.structs.IO
 
-object DebugCommandParser : NamedParser, ParsableCommand {
+object DebugCommandParser : CommandParser, ParsableCommand {
 
     override val name = "debug"
 

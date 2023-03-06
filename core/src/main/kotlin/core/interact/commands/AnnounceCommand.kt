@@ -20,8 +20,6 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
 
     override val name = "announce"
 
-    override val responseFlag = this.command.responseFlag
-
     override suspend fun <A, B> executeSelf(
         bot: BotContext,
         config: GuildConfig,

@@ -1,6 +1,6 @@
 package core.interact.parse
 
-interface NamedParser {
+interface CommandParser {
 
     val name: String
 

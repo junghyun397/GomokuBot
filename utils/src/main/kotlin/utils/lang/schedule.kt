@@ -6,7 +6,11 @@ import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
 import java.time.Duration
 
-fun <T> schedule(interval: Duration, errorHandler: (Exception) -> Unit = { }, job: suspend FlowCollector<T>.() -> Unit): Flow<T> {
+inline fun <T> schedule(
+    interval: Duration,
+    crossinline job: suspend FlowCollector<T>.() -> Unit,
+    crossinline errorHandler: (Exception) -> Unit = { }
+): Flow<T> {
     val intervalMillis = interval.toMillis()
 
     return flow {

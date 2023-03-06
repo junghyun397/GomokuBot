@@ -14,7 +14,7 @@ import utils.structs.IO
 import utils.structs.Quadruple
 import utils.structs.flatMap
 
-abstract class UnionCommand(protected val command: Command) : Command {
+abstract class UnionCommand(private val command: Command) : Command {
 
     override val responseFlag = this.command.responseFlag
 
@@ -27,12 +27,10 @@ abstract class UnionCommand(protected val command: Command) : Command {
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {
-        val (unionIO, unionReport, thenGuild, thenUser) = this.executeSelf(bot, config, guild, user,
-            service, messageRef, publishers)
+        val (unionIO, unionReport, thenGuild, thenUser) = this.executeSelf(bot, config, guild, user, service, messageRef, publishers)
             .getOrThrow()
 
-        val (originalIO, report) = this.command.execute(bot, config, thenGuild, thenUser,
-            service, messageRef, publishers)
+        val (originalIO, report) = this.command.execute(bot, config, thenGuild, thenUser, service, messageRef, publishers)
             .getOrThrow()
 
         tuple(unionIO.flatMap { originalIO }, unionReport + report)

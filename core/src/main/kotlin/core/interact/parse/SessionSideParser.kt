@@ -8,7 +8,7 @@ import core.session.entities.GameSession
 import utils.structs.Either
 import utils.structs.map
 
-abstract class SessionSideParser<A, B> : NamedParser {
+abstract class SessionSideParser<A, B> : CommandParser {
 
     protected suspend fun retrieveSession(context: BotContext, guild: Guild, user: User): Either<GameSession, ParseFailure<A, B>> =
         SessionManager.retrieveGameSession(context.sessions, guild, user.id)?.let { Either.Left(it) }

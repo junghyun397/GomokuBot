@@ -2,7 +2,7 @@ package discord.interact.parse.parsers
 
 import core.interact.commands.Command
 import core.interact.i18n.LanguageContainer
-import core.interact.parse.NamedParser
+import core.interact.parse.CommandParser
 import core.interact.parse.asParseFailure
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
@@ -17,7 +17,7 @@ import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import utils.structs.Either
 import utils.structs.map
 
-object RatingCommandParser : NamedParser, ParsableCommand, BuildableCommand {
+object RatingCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
     override val name = "rating"
 

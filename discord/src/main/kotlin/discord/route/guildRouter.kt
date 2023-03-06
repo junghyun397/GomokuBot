@@ -67,7 +67,7 @@ fun guildLeaveRouter(context: InternalInteractionContext<GuildLeaveEvent>): Mono
 
         maybeGuild.fold(
             onDefined = { guild ->
-                GuildLeaveCommand().execute(
+                GuildLeaveCommand.execute(
                     bot = context.bot,
                     config = SessionManager.retrieveGuildConfig(context.bot.sessions, guild),
                     guild = guild,

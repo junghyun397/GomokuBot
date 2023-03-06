@@ -5,7 +5,7 @@ import core.interact.commands.Command
 import core.interact.commands.RankCommand
 import core.interact.commands.RankScope
 import core.interact.i18n.LanguageContainer
-import core.interact.parse.NamedParser
+import core.interact.parse.CommandParser
 import core.interact.parse.asParseFailure
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
@@ -22,7 +22,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import utils.structs.*
 
-object RankCommandParser : NamedParser, ParsableCommand, BuildableCommand {
+object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
     override val name = "rank"
 
