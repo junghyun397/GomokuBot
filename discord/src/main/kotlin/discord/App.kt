@@ -79,8 +79,8 @@ object DiscordConfigBuilder {
 
 fun leaveLog(report: Report) {
     when (report) {
-        is ErrorReport -> logger.error(report.toString())
-        else -> logger.info(report.toString())
+        is ErrorReport -> logger.error(report.buildLog())
+        else -> logger.info(report.buildLog())
     }
 }
 
@@ -206,7 +206,8 @@ object GomokuBot {
                 .flatMap { event -> InternalInteractionContext.fromJDAEvent(botContext, discordConfig, event, event.guild) }
                 .flatMap { withContext(it, ::guildLeaveRouter) },
 
-            scheduleExpireRoutines(botContext, jda)
+            scheduleGameExpiration(botContext, jda),
+            scheduleRequestExpiration(botContext, jda),
         )
 
         val discordIOFlux = commandFlux

@@ -7,7 +7,7 @@ import core.assets.User
 import core.interact.Order
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
-import core.interact.reports.AbstractInteractionReport
+import core.interact.reports.InteractionReport
 import core.session.entities.GuildConfig
 import utils.lang.tuple
 import utils.structs.IO
@@ -44,6 +44,6 @@ abstract class UnionCommand(private val command: Command) : Command {
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
-    ): Result<Quadruple<IO<List<Order>>, AbstractInteractionReport, Guild, User>>
+    ): Result<Quadruple<IO<List<Order>>, InteractionReport, Guild, User>>
 
 }

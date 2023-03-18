@@ -14,7 +14,6 @@ import discord.interact.TaskContext
 import discord.interact.message.DiscordMessagingService
 import discord.interact.message.MessageCreateAdaptor
 import discord.interact.message.MessageEditAdaptor
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.reactor.asFlux
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
@@ -42,8 +41,8 @@ private suspend fun executeCommand(
         )
     )
 
-fun scheduleExpireRoutines(bot: BotContext, jda: JDA): Flux<Tuple2<ExecutionContext, CommandResult>> {
-    val expireGameSessionFlow = schedule<Tuple2<ExecutionContext, CommandResult>>(bot.config.gameExpireCycle, {
+fun scheduleGameExpiration(bot: BotContext, jda: JDA): Flux<Tuple2<ExecutionContext, CommandResult>> =
+    schedule<Tuple2<ExecutionContext, CommandResult>>(bot.config.gameExpireCycle, {
         SessionManager.cleanExpiredGameSession(bot.sessions).forEach { (_, guildSession, _, session) ->
             val context = TaskContext(bot, guildSession.guild, guildSession.config, LinuxTime.now(), "SCH")
 
@@ -64,9 +63,10 @@ fun scheduleExpireRoutines(bot: BotContext, jda: JDA): Flux<Tuple2<ExecutionCont
         }
 
         SessionManager.cleanEmptySessions(bot.sessions)
-    })
+    }).asFlux()
 
-    val expireRequestSessionFlow = schedule<Tuple2<ExecutionContext, CommandResult>>(bot.config.requestExpireCycle, {
+fun scheduleRequestExpiration(bot: BotContext, jda: JDA): Flux<Tuple2<ExecutionContext, CommandResult>> =
+    schedule<Tuple2<ExecutionContext, CommandResult>>(bot.config.requestExpireCycle, {
         SessionManager.cleanExpiredRequestSessions(bot.sessions).forEach { (_, guildSession, _, session) ->
             val context = TaskContext(bot, guildSession.guild, guildSession.config, LinuxTime.now(), "SCH")
 
@@ -86,10 +86,7 @@ fun scheduleExpireRoutines(bot: BotContext, jda: JDA): Flux<Tuple2<ExecutionCont
 
             emit(Tuples.of(context, result))
         }
-    })
-
-    return merge(expireGameSessionFlow, expireRequestSessionFlow).asFlux()
-}
+    }).asFlux()
 
 inline fun routine(interval: Duration, crossinline job: suspend () -> String): Flux<RoutineReport> =
     schedule<RoutineReport>(interval, {
@@ -97,5 +94,5 @@ inline fun routine(interval: Duration, crossinline job: suspend () -> String): F
 
         val comment = job()
 
-        RoutineReport(comment, time, "SCH")
+        RoutineReport(comment, time, LinuxTime.now(), "SCH")
     }).asFlux()

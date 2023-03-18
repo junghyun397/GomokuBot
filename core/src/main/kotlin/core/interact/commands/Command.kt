@@ -7,7 +7,7 @@ import core.assets.User
 import core.interact.Order
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
-import core.interact.reports.AbstractInteractionReport
+import core.interact.reports.InteractionReport
 import core.session.entities.GuildConfig
 import utils.structs.IO
 
@@ -29,4 +29,4 @@ sealed interface Command {
 
 }
 
-typealias CommandResult = Result<Pair<IO<List<Order>>, AbstractInteractionReport>>
+typealias CommandResult = Result<Pair<IO<List<Order>>, InteractionReport>>

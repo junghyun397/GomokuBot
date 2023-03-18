@@ -26,9 +26,6 @@ class ExpireGameCommand(
 
     override val name = "expire-game"
 
-    private fun writeReport(result: GameResult, guild: Guild) =
-        this.writeCommandReport("expired, terminate session by $result", guild)
-
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: GuildConfig,
@@ -63,7 +60,9 @@ class ExpireGameCommand(
             noticeIO.flatMap { finishIO }
         } else IO.value(emptyOrders)
 
-        tuple(io, this.writeReport(result, guild))
+        val report = this.writeCommandReport("expired, terminate session by $result", guild)
+
+        tuple(io, report)
     }
 
 }

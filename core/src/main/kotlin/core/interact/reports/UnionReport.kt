@@ -4,23 +4,25 @@ import core.assets.Guild
 import utils.assets.LinuxTime
 
 class UnionReport(
-    val reports: List<AbstractInteractionReport>,
+    val reports: List<InteractionReport>,
     override val guild: Guild,
     override val commandTime: LinuxTime,
     override var interactionSource: String?,
     override var emittedTime: LinuxTime?,
     override var apiTime: LinuxTime?
-) : AbstractInteractionReport() {
+) : InteractionReport {
 
-    override operator fun plus(other: AbstractInteractionReport): AbstractInteractionReport =
+    override val commandName = "UNION"
+
+    override operator fun plus(other: InteractionReport): InteractionReport =
         UnionReport(this.reports + other, guild, commandTime, interactionSource, emittedTime, apiTime)
 
-    override operator fun plus(other: UnionReport): AbstractInteractionReport =
+    override operator fun plus(other: UnionReport): InteractionReport =
         UnionReport(this.reports + other.reports, guild, commandTime, interactionSource, emittedTime, apiTime)
 
-    override val comment get() = reports.joinToString(prefix = "\t", separator = "\n\t")
+    override val comment get() = reports.joinToString(prefix = "\t", separator = "\n\t") { it.buildLog() }
 
-    override fun toString(): String {
+    override fun buildBody(): String {
         this.reports.forEach { report ->
             report.apply {
                 interactionSource = this@UnionReport.interactionSource

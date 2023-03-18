@@ -6,7 +6,7 @@ import core.interact.commands.Command
 import utils.assets.LinuxTime
 
 data class CommandReport(
-    val commandName: String,
+    override val commandName: String,
     override val comment: String,
     override val guild: Guild,
     val user: User,
@@ -14,9 +14,9 @@ data class CommandReport(
     override var emittedTime: LinuxTime? = null,
     override val commandTime: LinuxTime = LinuxTime.now(),
     override var apiTime: LinuxTime? = null
-) : AbstractInteractionReport() {
+) : InteractionReport {
 
-    override fun toString() = "${super.toString()}/$user\t $commandName\t $comment"
+    override fun buildBody() = "${guild}/${user}\t $commandName\t $comment"
 
 }
 

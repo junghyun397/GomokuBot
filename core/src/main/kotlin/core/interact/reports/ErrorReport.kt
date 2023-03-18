@@ -10,11 +10,11 @@ data class ErrorReport(
     override var emittedTime: LinuxTime? = null,
     override val commandTime: LinuxTime = LinuxTime.now(),
     override var apiTime: LinuxTime? = LinuxTime.now(),
-) : AbstractInteractionReport() {
+) : InteractionReport {
+
+    override val commandName = "ERROR"
 
     override val comment: String
         get() = "error\t ${throwable.stackTraceToString()}"
-
-    override fun toString() = "${super.toString()} error\t ${throwable.stackTraceToString()}"
 
 }

@@ -5,5 +5,6 @@ import utils.assets.LinuxTime
 data class RoutineReport(
     override val comment: String,
     override var emittedTime: LinuxTime?,
-    override var interactionSource: String?
+    override val commandTime: LinuxTime,
+    override var interactionSource: String?,
 ) : Report
