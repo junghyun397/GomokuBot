@@ -7,3 +7,4 @@ local.properties
 .env
 logs/
 *.tar
+temp.kt
