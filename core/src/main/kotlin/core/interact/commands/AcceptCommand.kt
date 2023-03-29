@@ -12,6 +12,7 @@ import core.session.GameManager
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import core.session.entities.RequestSession
+import core.session.entities.TaraguchiOpeningSession
 import utils.lang.tuple
 import utils.structs.flatMap
 import utils.structs.map
@@ -31,16 +32,17 @@ class AcceptCommand(private val requestSession: RequestSession) : Command {
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        val gameSession = GameManager.generatePvpSession(
-            bot,
-            this.requestSession.owner,
-            this.requestSession.opponent,
-        )
+        val gameSession = GameManager.generatePvpSession(bot, this.requestSession.owner, this.requestSession.opponent, this.requestSession.rule)
 
         SessionManager.putGameSession(bot.sessions, guild, gameSession)
         SessionManager.removeRequestSession(bot.sessions, guild, this.requestSession.owner.id)
 
-        val beginIO = service.buildBeginsPVP(publishers.plain, config.language.container, gameSession.player, gameSession.nextPlayer)
+        val beginIO = when (gameSession) {
+            is TaraguchiOpeningSession ->
+                service.buildBeginsOpening(publishers.plain, config.language.container, gameSession.owner, gameSession.opponent, gameSession.ownerHasBlack)
+            else ->
+                service.buildBeginsPVP(publishers.plain, config.language.container, gameSession.player, gameSession.nextPlayer)
+        }
             .launch()
 
         val boardIO = buildBoardProcedure(bot, guild, config, service, publishers.plain, gameSession)

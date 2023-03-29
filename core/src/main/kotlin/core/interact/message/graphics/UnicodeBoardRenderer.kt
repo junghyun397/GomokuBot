@@ -52,7 +52,7 @@ object UnicodeBoardRenderer : BoardRenderer, BoardRendererSample {
             .map { it.toChar() }
             .asString()
 
-    override fun renderBoard(board: Board, history: List<Pos?>, historyRenderType: HistoryRenderType) =
+    override fun renderBoard(board: Board, history: List<Pos?>, historyRenderType: HistoryRenderType, offers: Set<Pos>?) =
         Either.Left(this.renderUnicodeBoard(board))
 
     private fun renderUnicodeBoard(board: Board) =

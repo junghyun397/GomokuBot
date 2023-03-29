@@ -9,14 +9,14 @@ import core.inference.FocusSolver
 import core.inference.ResRenjuClient
 import core.inference.Token
 import core.interact.message.graphics.*
-import core.session.entities.AiGameSession
-import core.session.entities.GameSession
-import core.session.entities.MessageBufferKey
-import core.session.entities.PvpGameSession
+import core.session.entities.*
 import renju.ScalaBoard
-import renju.notation.*
+import renju.`ScalaBoard$`
+import renju.notation.InvalidKind
+import renju.notation.Pos
+import renju.notation.Renju
+import renju.notation.Result
 import renju.protocol.SolutionNode
-import utils.assets.LinuxTime
 import utils.lang.tuple
 import utils.structs.*
 import kotlin.random.Random
@@ -44,68 +44,39 @@ enum class ArchivePolicy(override val id: Short) : Identifiable {
     WITH_PROFILE(0), BY_ANONYMOUS(1), PRIVACY(2)
 }
 
-sealed interface GameResult {
-
-    val cause: Cause
-
-    val message: String
-
-    val winColorId: Short?
-
-    enum class Cause(override val id: Short) : Identifiable {
-        FIVE_IN_A_ROW(0), RESIGN(1), TIMEOUT(2), DRAW(3)
-    }
-
-    data class Win(override val cause: Cause, val winColor: Color, val winner: User, val loser: User) : GameResult {
-
-        override val message get() = "$winner wins over $loser by $cause"
-
-        override val winColorId = this.winColor.flag().toShort()
-
-    }
-
-    object Full : GameResult {
-
-        override val cause = Cause.DRAW
-
-        override val message get() = "tie caused by full"
-
-        override val winColorId = null
-
-    }
-
-    companion object {
-
-        fun build(gameResult: Result, cause: Cause, blackUser: User?, whiteUser: User?): GameResult? =
-            when (cause) {
-                Cause.FIVE_IN_A_ROW, Cause.RESIGN, Cause.TIMEOUT -> when (gameResult.flag()) {
-                    Notation.FlagInstance.BLACK() ->
-                        Win(cause, Notation.Color.Black, blackUser ?: aiUser, whiteUser ?: aiUser)
-                    Notation.FlagInstance.WHITE() ->
-                        Win(cause, Notation.Color.White, whiteUser ?: aiUser, blackUser ?: aiUser)
-                    else -> null
-                }
-                Cause.DRAW -> Full
-            }
-
-    }
-
+enum class Rule(override val id: Short, val isOpening: Boolean) : Identifiable {
+    RENJU(0, false), TARAGUCHI_10(1, true)
 }
 
 object GameManager {
 
-    fun generatePvpSession(bot: BotContext, owner: User, opponent: User): GameSession =
-        PvpGameSession(
-            owner = owner,
-            opponent = opponent,
-            ownerHasBlack = Random(System.nanoTime()).nextBoolean(),
-            board = Notation.EmptyBoard,
-            history = emptyList(),
-            messageBufferKey = MessageBufferKey.issue(),
-            recording = true,
-            expireOffset = bot.config.gameExpireOffset,
-            expireDate = LinuxTime.nowWithOffset(bot.config.gameExpireOffset),
-        )
+    fun generatePvpSession(bot: BotContext, owner: User, opponent: User, rule: Rule): GameSession {
+        val ownerHasBlack = Random(System.nanoTime()).nextBoolean()
+
+        return when (rule) {
+            Rule.RENJU -> PvpGameSession(
+                owner = owner,
+                opponent = opponent,
+                ownerHasBlack = ownerHasBlack,
+                board = Notation.EmptyBoard,
+                history = emptyList(),
+                messageBufferKey = MessageBufferKey.issue(),
+                recording = true,
+                ruleKind = rule,
+                expireService = ExpireService(bot.config.gameExpireOffset),
+            )
+            Rule.TARAGUCHI_10 -> TaraguchiSwapStageSession(
+                owner = owner,
+                opponent = opponent,
+                ownerHasBlack = Random(System.nanoTime()).nextBoolean(),
+                board = `ScalaBoard$`.`MODULE$`.newBoard(),
+                history = listOf(Renju.BOARD_CENTER_POS()),
+                messageBufferKey = MessageBufferKey.issue(),
+                expireService = ExpireService(bot.config.gameExpireOffset),
+                isBranched = false
+            )
+        }
+    }
 
     suspend fun generateAiSession(bot: BotContext, owner: User, aiLevel: AiLevel): GameSession {
         val ownerHasBlack = Random(System.nanoTime()).nextBoolean()
@@ -131,15 +102,21 @@ object GameManager {
             history = history,
             messageBufferKey = MessageBufferKey.issue(),
             recording = true,
-            expireOffset = bot.config.gameExpireOffset,
-            expireDate = LinuxTime.nowWithOffset(bot.config.gameExpireOffset),
+            ruleKind = Rule.RENJU,
+            expireService = ExpireService(bot.config.gameExpireOffset),
         )
     }
 
-    fun validateMove(session: GameSession, pos: Pos): Option<InvalidKind> =
-        session.board.validateMove(pos.idx()).toOption()
+    fun validateMove(session: GameSession, move: Pos): Option<InvalidKind> =
+        session.board.validateMove(move.idx())
+            .toOption()
+            .orElse {
+                Option.cond(session is OpeningSession && !session.validateMove(move)) {
+                    Notation.InvalidKind.Forbidden
+                }
+            }
 
-    fun makeMove(session: GameSession, pos: Pos): GameSession {
+    fun makeMove(session: RenjuSession, pos: Pos): RenjuSession {
         val thenBoard = session.board.makeMove(pos)
 
         return thenBoard.winner().fold(
@@ -210,33 +187,34 @@ object GameManager {
         )
     }
 
-    fun resignSession(session: GameSession, cause: GameResult.Cause, user: User?): Pair<GameSession, GameResult.Win> {
-        val winColor = when (session.board) {
-            is EmptyBoard -> when (session.ownerHasBlack) {
-                true -> Notation.Color.White
-                else -> Notation.Color.Black
-            }
-            else -> session.board.color()
-        }
-
-        return when (session) {
+    fun resignSession(session: GameSession, cause: GameResult.Cause, user: User): Pair<RenjuSession, GameResult.Win> =
+        when (session) {
             is AiGameSession -> {
+                val winColor = when (session.board) {
+                    is EmptyBoard ->
+                        if(session.ownerHasBlack) Notation.Color.White
+                        else Notation.Color.Black
+                    else -> session.board.color()
+                }
+
                 val result = GameResult.Win(cause, winColor, aiUser, session.owner)
 
                 tuple(session.copy(gameResult = Option(result)), result)
             }
-            is PvpGameSession -> {
-                val (winner, loser) = if (user?.id == session.owner.id)
-                    tuple(session.opponent, session.owner)
-                else
-                    tuple(session.owner, session.opponent)
+            is OpeningSession, is PvpGameSession -> {
+                val winColor =
+                    if ((session.player.id == user.id) == session.ownerHasBlack) Notation.Color.White
+                    else Notation.Color.Black
 
-                val result = GameResult.Win(cause, winColor, winner, loser)
+                val result =
+                    if (user.id == session.owner.id)
+                        GameResult.Win(cause, winColor, session.opponent, session.owner)
+                    else
+                        GameResult.Win(cause, winColor, session.owner, session.opponent)
 
-                tuple(session.copy(gameResult = Option(result)), result)
+                tuple(session.updateResult(result), result)
             }
         }
-    }
 
     suspend fun finishSession(bot: BotContext, guild: Guild, session: GameSession, result: GameResult) {
         SessionManager.removeGameSession(bot.sessions, guild, session.owner.id)

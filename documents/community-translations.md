@@ -13,7 +13,7 @@ Translated by ``kawaii-cirno``.
 - [X] LanguageContainer
 - [ ] about-renju
 
-Translated by ``S1RO``.
+Translated by ChatGPT.
 
 ## Vietnamese
 - [X] LanguageContainer

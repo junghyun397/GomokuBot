@@ -18,7 +18,8 @@ fun generateImage(boardSource: String, lastMove: String, fName: String, fPath: S
         board,
         emptyList(),
         if (lastMove == "null") HistoryRenderType.LAST else HistoryRenderType.SEQUENCE,
-        enableForbiddenPoints
+        null,
+        enableForbiddenPoints,
     )
 
     val tempFile = File(fPath, "$fName.png")

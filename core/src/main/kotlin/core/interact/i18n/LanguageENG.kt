@@ -17,6 +17,15 @@ open class LanguageENG : LanguageContainer {
     override fun aiLevelExpert() = "Expert"
     override fun aiLevelGuru() = "Guru"
 
+    override fun swapSelectYes() = "Yes"
+    override fun swapSelectNo() = "No"
+
+    override fun branchSelectSwap() = "Swap"
+    override fun branchSelectOffer() = "Offer"
+
+    override fun ruleSelectRenju() = "Renju (Default)"
+    override fun ruleSelectTaraguchi10() = "Taraguchi-10"
+
     override fun helpCommand() = "help"
     override fun helpCommandDescription() = "Get help."
 
@@ -223,6 +232,8 @@ open class LanguageENG : LanguageContainer {
     override fun startCommandDescription() = "Start a new game."
     override fun startCommandOptionOpponent() = "opponent"
     override fun startCommandOptionOpponentDescription() = "Specific the user to start game with."
+    override fun startCommandOptionRule() = "rule"
+    override fun startCommandOptionRuleDescription() = "Specific the rules for the new game."
 
     override fun startErrorSessionAlready() =
         "There is already a game in progress. Please finish the game in progress first."
@@ -275,34 +286,40 @@ open class LanguageENG : LanguageContainer {
     override fun beginPVP(blackPlayer: String, whitePlayer: String) =
         "The game of $blackPlayer vs $whitePlayer has started! $blackPlayer is Black. Please make the first move."
 
+    override fun beginOpening(blackPlayer: String, whitePlayer: String) =
+        "The opening renju game of $blackPlayer vs $whitePlayer has started! $blackPlayer is black. $whitePlayer needs to decide whether to swap to black or play as is."
+
     override fun beginPVEAiBlack(player: String) =
-        "The game of $player vs AI has started! $player is White. AI placed ``h8``. Please make the next move."
+        "The game of $player vs AI has started! $player is White. AI made a move at ``h8``. Please make the next move."
 
     override fun beginPVEAiWhite(player: String) =
         "The game of $player vs AI has started! $player is Black. Please make the first move."
 
     override fun processNextPVE(lastMove: String) =
-        "Please make the next move. AI placed $lastMove."
+        "Please make the next move. AI made a move at $lastMove."
 
     override fun processNextPVP(priorPlayer: String, lastMove: String) =
-        "Please make the next move. $priorPlayer placed $lastMove."
+        "Please make the next move. $priorPlayer have placed at $lastMove."
+
+    override fun processNextOpening(lastMove: String) =
+        "Placed the stone at $lastMove. Please follow the next opening procedure."
 
     override fun processErrorOrder(player: String) =
         "Now it's $player's turn. Please wait until $player makes the next move."
 
     override fun endPVPWin(winner: String, loser: String, lastMove: String) =
-        "$winner wins by $loser placed in $lastMove!"
+        "$winner wins by $loser placed at $lastMove."
     override fun endPVPResign(winner: String, loser: String) =
-        "$winner wins by $loser resignation!"
+        "$winner wins by $loser resignation."
     override fun endPVPTie(owner: String, opponent: String) =
         "$owner vs $opponent ended in a draw because there were no more points to make a move."
     override fun endPVPTimeOut(winner: String, loser: String) =
         "$winner wins by $loser because $loser didn't make the next move for a long time."
 
     override fun endPVEWin(player: String, lastPos: String) =
-        "$player, You won to AI by placed in $lastPos."
+        "$player, You won to AI by placed at $lastPos."
     override fun endPVELose(player: String, lastPos: String) =
-        "$player, You lose to AI by AI placed in $lastPos."
+        "$player, You lose to AI by AI placed at $lastPos."
     override fun endPVEResign(player: String) =
         "$player, You lose to AI by resignation."
     override fun endPVETie(player: String) =
@@ -313,6 +330,7 @@ open class LanguageENG : LanguageContainer {
     // chunk
 
     override fun boardInProgress() = "In Progress"
+    override fun boardInOpening() = "In Opening"
     override fun boardFinished() = "Finished"
 
     override fun boardMoves() = "Moves"
@@ -325,6 +343,14 @@ open class LanguageENG : LanguageContainer {
 
     override fun boardCommandGuide() =
         ":mag: Press the button or use ``/s`` ``column`` ``row`` command to make the next move."
+    override fun boardSwapGuide() =
+        ":arrows_counterclockwise: Press the button to select whether to switch between black and white."
+    override fun boardBranchGuide() =
+        ":paperclips: Press the button to choose whether you want to take the opportunity to swap black and white, or offer 10 possible 5th move candidates to opponent."
+    override fun boardSelectGuide() =
+        ":dart: Press the button or use ``/s`` ``column`` ``row`` command to select 5th move."
+    override fun boardOfferGuide(remainingMoves: Int) =
+        ":question: Press the button or use ``/s`` ``column`` ``row`` command to pick ``$remainingMoves`` candidates for the 5th move."
 
     override fun announceWrittenOn(date: String) = "Written on $date."
 

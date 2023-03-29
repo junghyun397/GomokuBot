@@ -20,6 +20,6 @@ sealed interface BoardRendererSample {
 
 sealed interface BoardRenderer {
 
-    fun renderBoard(board: Board, history: List<Pos?>, historyRenderType: HistoryRenderType): Either<String, InputStream>
+    fun renderBoard(board: Board, history: List<Pos?>, historyRenderType: HistoryRenderType, offers: Set<Pos>?): Either<String, InputStream>
 
 }

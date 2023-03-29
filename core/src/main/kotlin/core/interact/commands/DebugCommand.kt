@@ -16,11 +16,9 @@ import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
+import core.session.Rule
 import core.session.SessionManager
-import core.session.entities.AiGameSession
-import core.session.entities.GuildConfig
-import core.session.entities.MessageBufferKey
-import core.session.entities.RequestSession
+import core.session.entities.*
 import renju.BoardIO
 import renju.notation.Pos
 import renju.notation.Renju
@@ -69,15 +67,17 @@ class DebugCommand(
                         SessionManager.retrieveRequestSession(bot.sessions, guild, user.id) != null)
                 tuple(IO.value(emptyOrders), this.writeCommandReport("failed", guild, user))
             else {
-                val requestSession = RequestSession(
+                val requestSession =
+                    RequestSession(
                         user, user,
                         MessageBufferKey.issue(),
-                        LinuxTime.nowWithOffset(bot.config.gameExpireOffset)
+                        Rule.RENJU,
+                        LinuxTime.nowWithOffset(bot.config.gameExpireOffset),
                     )
 
                     SessionManager.putRequestSession(bot.sessions, guild, requestSession)
 
-                    val io = service.buildRequest(publishers.plain, config.language.container, user, user)
+                    val io = service.buildRequest(publishers.plain, config.language.container, user, user, Rule.RENJU)
                         .launch()
                         .map { emptyOrders  }
 
@@ -96,9 +96,9 @@ class DebugCommand(
                 board = board,
                 history = List(board.moves()) { null },
                 messageBufferKey = MessageBufferKey.issue(),
-                expireOffset = bot.config.gameExpireOffset,
+                expireService = ExpireService(bot.config.gameExpireOffset),
+                ruleKind = Rule.RENJU,
                 recording = false,
-                expireDate = LinuxTime.nowWithOffset(bot.config.gameExpireOffset)
             )
 
             SessionManager.putGameSession(bot.sessions, guild, session)
@@ -127,7 +127,7 @@ class DebugCommand(
         DebugType.SESSIONS -> {
             val sessionMessage = bot.sessions.sessions
                 .flatMap { (_, session) -> session.gameSessions.values }
-                .sortedBy { it.createDate.timestamp }
+                .sortedBy { it.expireService.createDate.timestamp }
                 .map { it.toString() }
                 .let { sessions -> when {
                     sessions.isEmpty() -> "empty"
@@ -172,9 +172,9 @@ class DebugCommand(
                 board = vcfCase,
                 history = List(vcfCase.moves()) { null },
                 messageBufferKey = MessageBufferKey.issue(),
-                expireOffset = bot.config.gameExpireOffset,
+                expireService = ExpireService(bot.config.gameExpireOffset),
+                ruleKind = Rule.TARAGUCHI_10,
                 recording = false,
-                expireDate = LinuxTime.nowWithOffset(bot.config.gameExpireOffset)
             )
 
             SessionManager.putGameSession(bot.sessions, guild, session)

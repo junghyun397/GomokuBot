@@ -10,6 +10,7 @@ import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.GameManager
+import core.session.Rule
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import core.session.entities.MessageBufferKey
@@ -21,7 +22,7 @@ import utils.structs.flatMap
 import utils.structs.flatMapOption
 import utils.structs.map
 
-class StartCommand(val opponent: User?) : Command {
+class StartCommand(val opponent: User?, val rule: Rule) : Command {
 
     override val name: String = "start"
 
@@ -53,12 +54,13 @@ class StartCommand(val opponent: User?) : Command {
                 val requestSession = RequestSession(
                     user, opponent,
                     MessageBufferKey.issue(),
+                    this.rule,
                     LinuxTime.nowWithOffset(bot.config.requestExpireOffset),
                 )
 
                 SessionManager.putRequestSession(bot.sessions, guild, requestSession)
 
-                val io = service.buildRequest(publishers.plain, config.language.container, user, opponent)
+                val io = service.buildRequest(publishers.plain, config.language.container, user, opponent, this.rule)
                     .retrieve()
                     .flatMapOption { IO { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.messageRef) } }
                     .map { emptyOrders }

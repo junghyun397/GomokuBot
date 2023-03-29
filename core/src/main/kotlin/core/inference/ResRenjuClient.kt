@@ -2,7 +2,7 @@ package core.inference
 
 import com.google.protobuf.kotlin.toByteString
 import core.assets.Notation
-import core.session.GameResult
+import core.session.entities.GameResult
 import engine.util.SolutionExtension
 import inference.InferenceGrpcKt
 import inference.InferenceProto

@@ -308,4 +308,6 @@ object FocusSolver {
             { FocusInfo(Pos(it.row().coerceIn(range), it.col().coerceIn(range)), listOf(Renju.BOARD_CENTER_POS())) }
         )
 
+    val centerFocus: FocusInfo = FocusInfo(Renju.BOARD_CENTER_POS(), emptyList())
+
 }

@@ -19,7 +19,6 @@ import dev.minn.jda.ktx.coroutines.await
 import discord.assets.ASCII_SPLASH
 import discord.assets.COMMAND_PREFIX
 import discord.assets.NAVIGATION_EMOJIS
-import discord.assets.retrieveJDAGuild
 import discord.interact.*
 import discord.route.*
 import kotlinx.coroutines.reactor.mono
@@ -45,9 +44,6 @@ import net.dv8tion.jda.api.requests.GatewayIntent
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.util.function.Tuple2
-import utils.assets.LinuxTime
-import utils.lang.component1
-import utils.lang.component2
 import utils.lang.tuple
 import utils.log.getLogger
 
@@ -142,7 +138,7 @@ object GomokuBot {
             eventManager.on<SlashCommandInteractionEvent>()
                 .filter { it.isFromGuild && it.channel.type == ChannelType.TEXT && !it.user.isBot }
                 .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!) }
-                .flatMap { withContext(it, ::slashCommandRouter) },
+                .flatMap(::slashCommandRouter),
 
             eventManager.on<MessageReceivedEvent>()
                 .filter {
@@ -153,17 +149,17 @@ object GomokuBot {
                                 it.message.mentions.isMentioned(it.jda.selfUser, Message.MentionType.USER))
                 }
                 .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.author, it.guild) }
-                .flatMap { withContext(it, ::textCommandRouter) },
+                .flatMap(::textCommandRouter),
 
             eventManager.on<ButtonInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
                 .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!) }
-                .flatMap { withContext(it, ::buttonInteractionRouter) },
+                .flatMap(::buttonInteractionRouter),
 
             eventManager.on<StringSelectInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
                 .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!) }
-                .flatMap { withContext(it, ::buttonInteractionRouter) },
+                .flatMap(::buttonInteractionRouter),
 
             eventManager.on<MessageReactionAddEvent>()
                 .filter {
@@ -174,7 +170,7 @@ object GomokuBot {
                             && !(it.user?.isBot ?: false)
                 }
                 .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user!!, it.guild) }
-                .flatMap { withContext(it, ::reactionRouter) },
+                .flatMap(::reactionRouter),
 
             eventManager.on<MessageReactionRemoveEvent>()
                 .filter {
@@ -196,38 +192,19 @@ object GomokuBot {
                 } }
                 .filter { (_, maybeUser) -> maybeUser.isSuccess && !maybeUser.get().isBot }
                 .flatMap { (event, user) -> UserInteractionContext.fromJDAEvent(botContext, discordConfig, event, user.get(), event.guild) }
-                .flatMap { withContext(it, ::reactionRouter) },
+                .flatMap(::reactionRouter),
 
             eventManager.on<GuildJoinEvent>()
                 .flatMap { event -> InternalInteractionContext.fromJDAEvent(botContext, discordConfig, event, event.guild) }
-                .flatMap { withContext(it, ::guildJoinRouter) },
+                .flatMap(::guildJoinRouter),
 
             eventManager.on<GuildLeaveEvent>()
                 .flatMap { event -> InternalInteractionContext.fromJDAEvent(botContext, discordConfig, event, event.guild) }
-                .flatMap { withContext(it, ::guildLeaveRouter) },
+                .flatMap(::guildLeaveRouter),
 
-            scheduleGameExpiration(botContext, jda),
-            scheduleRequestExpiration(botContext, jda),
-        )
+            scheduleGameExpiration(botContext, discordConfig, jda),
+            scheduleRequestExpiration(botContext, discordConfig, jda),
 
-        val discordIOFlux = commandFlux
-            .flatMap { (context, result) -> mono {
-                result.fold(
-                    onSuccess = { (io, report) ->
-                        export(discordConfig, io, context.retrieveJDAGuild(jda), null)
-                        report
-                    },
-                    onFailure = { throwable ->
-                        ErrorReport(throwable, context.guild)
-                    }
-                ).apply {
-                    interactionSource = context.source
-                    emittedTime = context.emittedTime
-                    apiTime = LinuxTime.now()
-                }
-            } }
-
-        val routineFlux = Flux.merge(
             routine(botConfig.navigatorExpireCycle) {
                 val expires = SessionManager.cleanExpiredNavigators(sessionPool)
 
@@ -242,7 +219,7 @@ object GomokuBot {
             }
         )
 
-        Flux.merge(discordIOFlux, routineFlux)
+        commandFlux
             .onErrorContinue { error, _ -> logger.error(error.stackTraceToString()) }
             .subscribe(::leaveLog)
 

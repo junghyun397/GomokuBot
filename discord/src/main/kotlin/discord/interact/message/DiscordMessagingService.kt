@@ -3,21 +3,14 @@ package discord.interact.message
 import core.assets.*
 import core.database.entities.Announce
 import core.database.entities.UserStats
-import core.inference.FocusSolver
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
-import core.interact.message.ButtonFlag
-import core.interact.message.FocusedFields
-import core.interact.message.MessagingServiceImpl
-import core.interact.message.SettingMapping
+import core.interact.message.*
 import core.interact.message.graphics.BoardRenderer
 import core.interact.message.graphics.HistoryRenderType
 import core.interact.message.graphics.ImageBoardRenderer
 import core.session.*
-import core.session.entities.GameSession
-import core.session.entities.GuildConfig
-import core.session.entities.NavigationKind
-import core.session.entities.PageNavigationState
+import core.session.entities.*
 import dev.minn.jda.ktx.interactions.components.StringSelectMenu
 import dev.minn.jda.ktx.interactions.components.option
 import dev.minn.jda.ktx.messages.Embed
@@ -52,7 +45,7 @@ import kotlin.reflect.KClass
 object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, DiscordComponents>() {
 
     override val focusWidth = 5
-    override val focusRange = 2 .. Renju.BOARD_WIDTH_MAX_IDX() - 2
+    override val focusRange = 2..Renju.BOARD_WIDTH_MAX_IDX() - 2
 
     // INTERFACE
 
@@ -75,7 +68,6 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
     private fun ItemComponent.liftToButtons() = listOf(ActionRow.of(this))
 
-
     // BOARD
 
     private fun InlineEmbed.buildBoardAuthor(container: LanguageContainer, session: GameSession) =
@@ -87,32 +79,16 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                 append(session.opponentWithColor())
                 append(", ")
 
-                if (session.gameResult.isDefined)
-                    append(container.boardFinished())
-                else
-                    append(container.boardInProgress())
-            }
-        }
-
-    private fun InlineEmbed.buildStatusFields(container: LanguageContainer, session: GameSession) =
-        this.apply {
-            session.board.lastPos().foreach {
-                field {
-                    name = container.boardMoves()
-                    value = session.board.moves().toString().asHighlightFormat()
-                    inline = true
-                }
-
-                field {
-                    name = container.boardLastMove()
-                    value = session.board.lastPos().get().toString().asHighlightFormat()
-                    inline = true
+                when {
+                    session.gameResult.isDefined -> append(container.boardFinished())
+                    session is OpeningSession -> append(container.boardInOpening())
+                    else -> append(container.boardInProgress())
                 }
             }
         }
 
-    private fun InlineEmbed.buildResultFields(container: LanguageContainer, session: GameSession, gameResult: GameResult) =
-        this.apply {
+    private fun InlineEmbed.buildStatusFields(container: LanguageContainer, session: GameSession) {
+        session.board.lastPos().foreach {
             field {
                 name = container.boardMoves()
                 value = session.board.moves().toString().asHighlightFormat()
@@ -120,24 +96,60 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             }
 
             field {
-                name = container.boardResult()
-                value = when (gameResult) {
-                    is GameResult.Win -> {
-                        container.boardWinDescription(
-                            "${gameResult.winner.name}${this@DiscordMessagingService.unicodeStone(gameResult.winColor)}".asHighlightFormat()
-                        )
-                    }
-                    is GameResult.Full -> { container.boardTieDescription().asHighlightFormat() }
-                }
+                val colorInfo = if (session.board.isNextColorBlack) UNICODE_WHITE_CIRCLE else UNICODE_BLACK_CIRCLE
+
+                name = container.boardLastMove()
+                value = "${colorInfo}${session.board.lastPos().get()}".asHighlightFormat()
                 inline = true
             }
         }
+    }
 
-    private val buildNextMoveEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
-        Embed {
-            color = COLOR_GREEN_HEX
-            description = container.boardCommandGuide()
+    private fun InlineEmbed.buildResultFields(container: LanguageContainer, session: GameSession, gameResult: GameResult) {
+        field {
+            name = container.boardMoves()
+            value = session.board.moves().toString().asHighlightFormat()
+            inline = true
         }
+
+        field {
+            name = container.boardResult()
+            value = when (gameResult) {
+                is GameResult.Win -> {
+                    container.boardWinDescription(
+                        "${gameResult.winner.name}${unicodeStone(gameResult.winColor)}".asHighlightFormat()
+                    )
+                }
+                is GameResult.Full -> { container.boardTieDescription().asHighlightFormat() }
+            }
+            inline = true
+        }
+    }
+
+    private fun MutableList<MessageEmbed>.buildGuideEmbed(session: GameSession, container: LanguageContainer) {
+        val text = when {
+            (session is RenjuSession || session is MoveStageOpeningSession) && session.gameResult.isEmpty ->
+                container.boardCommandGuide()
+            session is SwapStageOpeningSession -> container.boardSwapGuide()
+            session is BranchingStageOpeningSession -> container.boardBranchGuide()
+            session is SelectStageOpeningSession -> container.boardSelectGuide()
+            session is OfferStageOpeningSession -> container.boardOfferGuide(session.remainingMoves)
+            else -> return
+        }
+
+        val embed = Embed {
+            color = COLOR_GREEN_HEX
+            description = text
+
+            if (session is OpeningSession) {
+                footer {
+                    iconUrl = session.player.profileURL
+                    name = "${session.player.name}'s turn."
+                }
+            }
+        }
+
+        add(embed)
     }
 
     override fun buildBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession): DiscordMessageBuilder {
@@ -147,7 +159,12 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
         val modRenderType = session.gameResult
             .fold(onDefined = { HistoryRenderType.SEQUENCE }, onEmpty = { renderType })
 
-        return renderer.renderBoard(session.board, session.history, modRenderType).fold(
+        val offers = when (session) {
+            is NegotiateStageOpeningSession -> session.moveCandidates
+            else -> null
+        }
+
+        return renderer.renderBoard(session.board, session.history, modRenderType, offers).fold(
             onLeft = { textBoard ->
                 publisher sends buildList {
                     add(Embed {
@@ -162,8 +179,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                         )
                     })
 
-                    if (session.gameResult.isEmpty)
-                        add(this@DiscordMessagingService.buildNextMoveEmbed(container))
+                    buildGuideEmbed(session, container)
                 }
             },
             onRight = { imageStream ->
@@ -183,8 +199,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                         image = "attachment://$fName"
                     })
 
-                    if (session.gameResult.isEmpty)
-                        add(this@DiscordMessagingService.buildNextMoveEmbed(container))
+                    buildGuideEmbed(session, container)
                 }
 
                 messageBuilder.addFile(imageStream, fName)
@@ -196,7 +211,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
         val imageStream = if (animate)
             ImageBoardRenderer.renderHistoryAnimation(session.history.filterNotNull())
         else
-            ImageBoardRenderer.renderInputStream(session.board, session.history, HistoryRenderType.SEQUENCE, true)
+            ImageBoardRenderer.renderInputStream(session.board, session.history, HistoryRenderType.SEQUENCE, null, true)
 
         val fName = if (animate)
             ImageBoardRenderer.newGifFileName()
@@ -229,14 +244,31 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                 ButtonFlag.BLACK_RECENT -> Button.of(ButtonStyle.SUCCESS, "s-${id}", "", EMOJI_BLACK_CIRCLE).asDisabled()
                 ButtonFlag.WHITE_RECENT -> Button.of(ButtonStyle.SUCCESS, "s-${id}", "", EMOJI_WHITE_CIRCLE).asDisabled()
                 ButtonFlag.FORBIDDEN -> Button.of(ButtonStyle.DANGER, "s-${id}", "", EMOJI_DARK_X).asDisabled()
+                ButtonFlag.DISABLED -> Button.of(ButtonStyle.SECONDARY, "s-${id}", id).asDisabled()
             } }
         ) }.reversed() // cartesian coordinate system
 
-    override fun attachFocusButtons(boardAction: DiscordMessageBuilder, session: GameSession, focusInfo: FocusSolver.FocusInfo): DiscordMessageBuilder =
-        boardAction.addComponents(this.generateFocusedButtons(this.generateFocusedField(session.board, focusInfo)))
+    override fun attachFocusButtons(boardAction: DiscordMessageBuilder, focusedFields: FocusedFields): DiscordMessageBuilder =
+        boardAction.addComponents(this.generateFocusedButtons(focusedFields))
 
-    override fun attachFocusButtons(publisher: DiscordComponentPublisher, session: GameSession, focusInfo: FocusSolver.FocusInfo): DiscordMessageBuilder =
-        publisher(this.generateFocusedButtons(this.generateFocusedField(session.board, focusInfo)))
+    override fun attachFocusButtons(publisher: DiscordComponentPublisher, focusedFields: FocusedFields): DiscordMessageBuilder =
+        publisher(this.generateFocusedButtons(focusedFields))
+
+    override fun attachSwapButtons(boardAction: DiscordMessageBuilder, container: LanguageContainer, session: OpeningSession): DiscordMessageBuilder =
+        boardAction.addComponents(listOf(
+            ActionRow.of(
+                Button.of(ButtonStyle.PRIMARY, "o-sy", container.swapSelectYes()),
+                Button.of(ButtonStyle.SECONDARY, "o-sn", container.swapSelectNo())
+            )
+        ))
+
+    override fun attachBranchingButtons(boardAction: DiscordMessageBuilder, container: LanguageContainer): DiscordMessageBuilder =
+        boardAction.addComponents(listOf(
+            ActionRow.of(
+                Button.of(ButtonStyle.PRIMARY, "o-bn", container.branchSelectSwap()),
+                Button.of(ButtonStyle.SECONDARY, "o-by", container.branchSelectOffer())
+            )
+        ))
 
     override fun attachNavigators(flow: Flow<String>, message: DiscordMessageData, checkTerminated: suspend () -> Boolean) =
         IO { message.original
@@ -482,16 +514,15 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
     // REQUEST
 
-    override fun buildRequest(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
+    override fun buildRequest(publisher: MessagePublisher<DiscordMessageData, DiscordComponents>, container: LanguageContainer, owner: User, opponent: User, rule: Rule) =
         publisher(DiscordMessageData(embed = Embed {
-                color = COLOR_GREEN_HEX
-                title = container.requestEmbedTitle()
-                description = container.requestEmbedDescription(owner.asMentionFormat(), opponent.asMentionFormat())
-            }
-        )).addComponents(
+            color = COLOR_GREEN_HEX
+            title = container.requestEmbedTitle()
+            description = container.requestEmbedDescription(owner.asMentionFormat(), opponent.asMentionFormat())
+        })).addComponents(
             listOf(ActionRow.of(
-                Button.of(ButtonStyle.DANGER, "r-${owner.givenId.idLong}", container.requestEmbedButtonReject()),
-                Button.of(ButtonStyle.SUCCESS, "a-${owner.givenId.idLong}", container.requestEmbedButtonAccept())
+                Button.of(ButtonStyle.DANGER, "r-${rule.id}-${owner.givenId.idLong}", container.requestEmbedButtonReject()),
+                Button.of(ButtonStyle.SUCCESS, "a-${rule.id}-${owner.givenId.idLong}", container.requestEmbedButtonAccept())
             ))
         )
 

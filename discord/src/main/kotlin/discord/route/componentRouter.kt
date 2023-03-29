@@ -2,21 +2,20 @@
 
 package discord.route
 
-import core.interact.commands.CommandResult
 import core.interact.commands.ResponseFlag
 import core.interact.message.AdaptivePublisherSet
+import core.interact.reports.ErrorReport
+import core.interact.reports.Report
 import discord.assets.editMessageByMessageRef
 import discord.assets.extractMessageRef
 import discord.interact.UserInteractionContext
 import discord.interact.message.*
 import discord.interact.parse.EmbeddableCommand
-import discord.interact.parse.parsers.AcceptCommandParser
-import discord.interact.parse.parsers.ApplySettingCommandParser
-import discord.interact.parse.parsers.RejectCommandParser
-import discord.interact.parse.parsers.SetCommandParser
+import discord.interact.parse.parsers.*
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import reactor.core.publisher.Mono
+import utils.assets.LinuxTime
 import utils.structs.Option
 import utils.structs.asOption
 import utils.structs.flatMap
@@ -24,14 +23,15 @@ import utils.structs.getOrException
 
 private fun matchAction(prefix: String): Option<EmbeddableCommand> =
     when (prefix) {
-        "s" -> Option(SetCommandParser)
-        "a" -> Option(AcceptCommandParser)
-        "r" -> Option(RejectCommandParser)
-        "p" -> Option(ApplySettingCommandParser)
+        "s" -> Option.Some(SetCommandParser)
+        "a" -> Option.Some(AcceptCommandParser)
+        "r" -> Option.Some(RejectCommandParser)
+        "p" -> Option.Some(ApplySettingCommandParser)
+        "o" -> Option.Some(OpeningCommandParser)
         else -> Option.Empty
     }
 
-fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Mono<CommandResult> =
+fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Mono<Report> =
     mono {
         context.event.component.id
             .asOption()
@@ -91,5 +91,17 @@ fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInte
                         )
                     )
                 }
-            )
+            ).fold(
+                onSuccess = { (io, report) ->
+                    export(context.discordConfig, io, context.jdaGuild, messageRef)
+                    report
+                },
+                onFailure = { throwable ->
+                    ErrorReport(throwable, context.guild)
+                }
+            ).apply {
+                interactionSource = context.source
+                emittedTime = context.emittedTime
+                apiTime = LinuxTime.now()
+            }
         } }

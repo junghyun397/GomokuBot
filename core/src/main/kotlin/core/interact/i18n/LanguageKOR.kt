@@ -202,6 +202,8 @@ open class LanguageKOR : LanguageENG() {
     override fun startCommandDescription() = "새 게임을 시작합니다."
     override fun startCommandOptionOpponent() = "상대"
     override fun startCommandOptionOpponentDescription() = "함께 게임을 시작할 유저를 지정해 주세요."
+    override fun startCommandOptionRule() = "규칙"
+    override fun startCommandOptionRuleDescription() = "새로 시작할 게임의 규칙을 정해주세요."
 
     override fun startErrorSessionAlready() =
         "이미 진행 중인 게임이 있습니다. 진행 중인 게임을 먼저 마무리해 주세요."
@@ -249,6 +251,9 @@ open class LanguageKOR : LanguageENG() {
     override fun beginPVP(blackPlayer: String, whitePlayer: String) =
         "$blackPlayer 님과 $whitePlayer 님의 게임이 시작되었습니다! $blackPlayer 님이 흑입니다. $blackPlayer 님이 첫 번째 수를 놓아주세요."
 
+    override fun beginOpening(blackPlayer: String, whitePlayer: String) =
+        "$blackPlayer 님과 $whitePlayer 님의 오프닝 게임이 시작되었습니다! $blackPlayer 님이 흑입니다. $whitePlayer 님은 흑으로 스왑할지, 그대로 플레이 할지 정해주세요."
+
     override fun beginPVEAiBlack(player: String) =
         "$player 님과 인공지능의 게임이 시작되었습니다! $player 님은 백입니다. 인공지능은 ``h8``에 두었습니다. 두 번째 수를 놓아주세요."
 
@@ -274,7 +279,7 @@ open class LanguageKOR : LanguageENG() {
         "$loser 님이 오랜 시간 동안 다음 수를 두지 않았기 때문에 $winner 님이 $loser 님을 이겼습니다."
 
     override fun endPVEWin(player: String, lastPos: String) =
-        "$lastPos 에 돌을 놓음으로써 인공지능을 이겼습니다. 축하합니다, $player 님!"
+        "$lastPos 에 돌을 놓음으로써 인공지능을 이겼습니다. 축하합니다, $player 님."
     override fun endPVELose(player: String, lastPos: String) =
         "$player 님, 인공지능이 $lastPos 에 돌을 놓음으로써 인공지능에 패배했습니다. 언제든지 다시 도전해 주세요."
     override fun endPVEResign(player: String) =
@@ -285,6 +290,7 @@ open class LanguageKOR : LanguageENG() {
         "$player 님, 오랜 시간 동안 다음 수를 두지 않았기 때문에 인공지능에 패배했습니다."
 
     override fun boardInProgress() = "진행 중"
+    override fun boardInOpening() = "오프닝 중"
     override fun boardFinished() = "종료"
 
     override fun boardMoves() = "진행도"
@@ -296,6 +302,14 @@ open class LanguageKOR : LanguageENG() {
     override fun boardTieDescription() = "무승부"
 
     override fun boardCommandGuide() = ":mag: 버튼을 누르거나 ``/s`` ``알파벳`` ``숫자`` 명령어를 입력해 다음 수를 놓아주세요."
+    override fun boardSwapGuide() =
+        ":arrows_counterclockwise: 버튼을 눌러 흑과 백을 바꿀지 선택해주세요."
+    override fun boardBranchGuide() =
+        ":paperclips: 버튼을 눌러 흑과 백을 바꿀 기회를 얻을지, 5번째 수 후보 10개를 상대에게 제안할지 선택해주세요."
+    override fun boardSelectGuide() =
+        ":dart: 버튼을 누르거나 ``/s`` ``알파벳`` ``숫자`` 명령어를 입력해 5번째 수를 선택해주세요."
+    override fun boardOfferGuide(remainingMoves: Int) =
+        ":question: 버튼을 누르거나 ``/s`` ``알파벳`` ``숫자`` 명령어를 입력해 5번째 수 후보 ${remainingMoves}개를 정해주세요."
 
     override fun announceWrittenOn(date: String) = "$date 에 쓰여짐"
 

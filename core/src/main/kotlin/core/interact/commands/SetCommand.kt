@@ -9,21 +9,18 @@ import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.GameManager
-import core.session.GameResult
 import core.session.SessionManager
 import core.session.SwapType
-import core.session.entities.AiGameSession
-import core.session.entities.GameSession
-import core.session.entities.GuildConfig
-import core.session.entities.PvpGameSession
+import core.session.entities.*
 import renju.notation.Pos
+import utils.lang.tuple
 import utils.structs.IO
 import utils.structs.flatMap
 import utils.structs.fold
 import utils.structs.map
 
 class SetCommand(
-    private val session: GameSession,
+    private val session: RenjuSession,
     private val pos: Pos,
     private val deployAt: MessageRef?,
     override val responseFlag: ResponseFlag,
@@ -72,7 +69,7 @@ class SetCommand(
                         .flatMap { buildNextMoveProcedure(bot, guild, config,
                             service, boardPublisher, this.session, thenSession) }
 
-                    io to this.writeCommandReport("make move $pos", guild, user)
+                    tuple(io, this.writeCommandReport("make move $pos", guild, user))
                 }
                 is AiGameSession -> {
                     val nextSession = GameManager.makeAiMove(thenSession, bot.resRenjuClient)
@@ -99,7 +96,7 @@ class SetCommand(
                                 .flatMap { buildNextMoveProcedure(bot, guild, config,
                                     service, boardPublisher, this.session, nextSession) }
 
-                            io to this.writeCommandReport("make move $pos", guild, user)
+                            tuple(io, this.writeCommandReport("make move $pos", guild, user))
                         },
                         onDefined = { result ->
                             GameManager.finishSession(bot, guild, nextSession, result)
@@ -115,7 +112,7 @@ class SetCommand(
                                     service, boardPublisher, config, this.session, nextSession) }
                                 .map { it + Order.ArchiveSession(nextSession, config.archivePolicy) }
 
-                            io to this.writeCommandReport("make move $pos, terminate session by $result", guild, user)
+                            tuple(io, this.writeCommandReport("make move $pos, terminate session by $result", guild, user))
                         }
                     )
                 }
@@ -136,7 +133,7 @@ class SetCommand(
                                 service, boardPublisher, config, this.session, thenSession) }
                             .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
-                        io to this.writeCommandReport("make move $pos, terminate session by $result", guild, user)
+                        tuple(io, this.writeCommandReport("make move $pos, terminate session by $result", guild, user))
                     }
                     is AiGameSession -> {
                         val io = when (result) {
@@ -150,7 +147,7 @@ class SetCommand(
                                 service, boardPublisher, config, this.session, thenSession) }
                             .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
-                        io to this.writeCommandReport("make move $pos, terminate session by $result", guild, user)
+                        tuple(io, this.writeCommandReport("make move $pos, terminate session by $result", guild, user))
                     }
                 }
             }

@@ -6,10 +6,10 @@ import core.assets.anonymousUser
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.session.ArchivePolicy
-import core.session.GameResult
 import core.session.entities.AiGameSession
-import core.session.entities.GameSession
+import core.session.entities.GameResult
 import core.session.entities.PvpGameSession
+import core.session.entities.RenjuSession
 import dev.minn.jda.ktx.coroutines.await
 import dev.minn.jda.ktx.interactions.commands.slash
 import dev.minn.jda.ktx.interactions.commands.updateCommands
@@ -103,7 +103,7 @@ object GuildManager {
             else -> anonymousUser
         }
 
-    suspend fun archiveSession(archiveChannel: TextChannel, session: GameSession, archivePolicy: ArchivePolicy) {
+    suspend fun archiveSession(archiveChannel: TextChannel, session: RenjuSession, archivePolicy: ArchivePolicy) {
         if (session.board.moves() < 20 || archivePolicy == ArchivePolicy.PRIVACY) return
 
         val modSession = session.shift(archivePolicy == ArchivePolicy.BY_ANONYMOUS) {

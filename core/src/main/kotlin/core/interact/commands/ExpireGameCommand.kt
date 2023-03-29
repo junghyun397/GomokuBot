@@ -8,7 +8,6 @@ import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.GameManager
-import core.session.GameResult
 import core.session.SessionManager
 import core.session.SwapType
 import core.session.entities.*
@@ -50,7 +49,7 @@ class ExpireGameCommand(
                 .map { it + Order.ArchiveSession(finishedSession, guildSession.config.archivePolicy) }
 
             val noticeIO = when (session) {
-                is PvpGameSession -> service
+                is PvpGameSession, is OpeningSession -> service
                     .buildTimeoutPVP(noticePublisher, guildSession.config.language.container, session.player, session.nextPlayer)
                 is AiGameSession -> service
                     .buildTimeoutPVE(noticePublisher, guildSession.config.language.container, session.owner)

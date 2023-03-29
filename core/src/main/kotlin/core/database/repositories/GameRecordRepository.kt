@@ -9,7 +9,8 @@ import core.database.DatabaseManager.smallIntToMaybeByte
 import core.database.entities.GameRecord
 import core.database.entities.GameRecordId
 import core.inference.AiLevel
-import core.session.GameResult
+import core.session.Rule
+import core.session.entities.GameResult
 import io.r2dbc.spi.Row
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.awaitSingle
@@ -114,6 +115,7 @@ object GameRecordRepository {
             row["cause"] as Short,
             row["guild_id"] as UUID,
             row["ai_level"] as Short?,
+            row["rule"] as Short,
             row["create_date"] as LocalDateTime
         )
 
@@ -135,6 +137,7 @@ object GameRecordRepository {
             blackId = blackUser?.id,
             whiteId = whiteUser?.id,
             aiLevel = gameRecordRow.aiLevel?.let { AiLevel.values().find(it) },
+            rule = Rule.values().find(gameRecordRow.rule),
             date = LinuxTime(gameRecordRow.data.toInstant(ZoneOffset.UTC).toEpochMilli()),
         )
     }
@@ -149,6 +152,7 @@ object GameRecordRepository {
         val cause: Short,
         val guildId: UUID,
         val aiLevel: Short?,
+        val rule: Short,
         val data: LocalDateTime
     )
 

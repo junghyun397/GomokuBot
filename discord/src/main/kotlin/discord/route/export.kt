@@ -8,7 +8,7 @@ import discord.interact.DiscordConfig
 import discord.interact.GuildManager
 import utils.structs.IO
 
-suspend fun export(discordConfig: DiscordConfig, io: IO<List<Order>>, jdaGuild: JDAGuild, source: MessageRef?) {
+suspend fun export(discordConfig: DiscordConfig, io: IO<List<Order>>, jdaGuild: JDAGuild, source: MessageRef? = null) {
     io.run().forEach { order ->
         when (order) {
             is Order.UpsertCommands -> GuildManager.upsertCommands(jdaGuild, order.container)

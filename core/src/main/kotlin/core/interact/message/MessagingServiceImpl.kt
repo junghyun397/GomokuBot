@@ -4,8 +4,10 @@ import core.assets.*
 import core.inference.FocusSolver
 import core.interact.i18n.LanguageContainer
 import core.session.entities.GameSession
+import core.session.entities.MoveStageOpeningSession
+import core.session.entities.OfferStageOpeningSession
+import core.session.entities.SelectStageOpeningSession
 import kotlinx.coroutines.flow.flowOf
-import renju.Board
 import renju.notation.Color
 import renju.notation.Flag
 import renju.notation.Pos
@@ -44,7 +46,7 @@ abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
     protected fun GameSession.opponentWithColor() =
         if (this.ownerHasBlack) this.opponent.withColor(Notation.Color.White) else opponent.withColor(Notation.Color.Black)
 
-    override fun generateFocusedField(board: Board, focusInfo: FocusSolver.FocusInfo): FocusedFields {
+    override fun generateFocusedField(session: GameSession, focusInfo: FocusSolver.FocusInfo): FocusedFields {
         val half = this.focusWidth / 2
 
         return (-half .. half).map { rowOffset ->
@@ -52,19 +54,27 @@ abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
                 val absolutePos = Pos(focusInfo.focus.row() + rowOffset, focusInfo.focus.col() + colOffset)
 
                 val buttonFlag = when (val idx = absolutePos.idx()) {
-                    board.lastMove() -> when (board.field()[board.lastMove()]) {
+                    session.board.lastMove() -> when (session.board.field()[session.board.lastMove()]) {
                         Flag.BLACK() -> ButtonFlag.BLACK_RECENT
                         Flag.WHITE() -> ButtonFlag.WHITE_RECENT
                         else -> throw IllegalStateException()
                     }
-                    else -> when (val flag = board.field()[idx]) {
+                    else -> when (val flag = session.board.field()[idx]) {
                         Flag.BLACK() -> ButtonFlag.BLACK
                         Flag.WHITE() -> ButtonFlag.WHITE
                         else -> when {
-                            Notation.FlagInstance.isForbid(flag, board.nextColorFlag()) -> ButtonFlag.FORBIDDEN
+                            Notation.FlagInstance.isForbid(flag, session.board.nextColorFlag()) -> ButtonFlag.FORBIDDEN
                             else -> when (absolutePos) {
                                 in focusInfo.highlights -> ButtonFlag.HIGHLIGHTED
-                                else -> ButtonFlag.FREE
+                                else -> when {
+                                    session is MoveStageOpeningSession && !session.inSquare(absolutePos) -> ButtonFlag.DISABLED
+                                    session is OfferStageOpeningSession && absolutePos in session.moveCandidates -> ButtonFlag.DISABLED
+                                    session is SelectStageOpeningSession -> when (absolutePos) {
+                                        in session.moveCandidates -> ButtonFlag.HIGHLIGHTED
+                                        else -> ButtonFlag.DISABLED
+                                    }
+                                    else -> ButtonFlag.FREE
+                                }
                             }
                         }
                     }
@@ -117,11 +127,14 @@ abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
             else -> container.beginPVEAiBlack(owner.asMentionFormat())
         }
 
+    override fun buildBeginsOpening(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User, ownerHasBlack: Boolean) =
+        publisher sends container.beginOpening(if (ownerHasBlack) owner.asMentionFormat() else opponent.asMentionFormat(), if (ownerHasBlack) opponent.asMentionFormat() else owner.asMentionFormat())
+
     override fun buildNextMovePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, previousPlayer: User, nextPlayer: User, lastMove: Pos) =
-        publisher sends container.processNextPVP(
-            nextPlayer.asMentionFormat(),
-            lastMove.toString().asHighlightFormat()
-        )
+        publisher sends container.processNextPVP(nextPlayer.asMentionFormat(), lastMove.toString().asHighlightFormat())
+
+    override fun buildNextMoveOpening(publisher: MessagePublisher<A, B>, container: LanguageContainer, lastMove: Pos): MessageBuilder<A, B> =
+        publisher sends container.processNextOpening(lastMove.toString().asHighlightFormat())
 
     override fun buildWinPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, loser: User, lastMove: Pos) =
         publisher sends container.endPVPWin(winner.asMentionFormat(), loser.asMentionFormat(), lastMove.toString().asHighlightFormat())

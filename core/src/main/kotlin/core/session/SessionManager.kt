@@ -80,7 +80,7 @@ object SessionManager {
     suspend fun retrieveGameSession(pool: SessionPool, guild: Guild, userUid: UserUid): GameSession? =
         this.retrieveGuildSession(pool, guild).gameSessions
             .values
-            .firstOrNull { it.owner.id == userUid || if (it is PvpGameSession) it.opponent.id == userUid else false }
+            .firstOrNull { it.owner.id == userUid || it.opponent.id == userUid }
 
     suspend fun putGameSession(pool: SessionPool, guild: Guild, gameSession: GameSession) {
         this.mapGuildSession(pool, guild) {

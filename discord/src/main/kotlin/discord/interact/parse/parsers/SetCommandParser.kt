@@ -1,11 +1,10 @@
 package discord.interact.parse.parsers
 
+import core.assets.MessageRef
 import core.assets.Notation
 import core.assets.User
 import core.interact.Order
-import core.interact.commands.Command
-import core.interact.commands.ResponseFlag
-import core.interact.commands.SetCommand
+import core.interact.commands.*
 import core.interact.emptyOrders
 import core.interact.i18n.LanguageContainer
 import core.interact.message.MessageAdaptor
@@ -14,7 +13,7 @@ import core.interact.parse.asParseFailure
 import core.session.GameManager
 import core.session.SessionManager
 import core.session.SwapType
-import core.session.entities.GameSession
+import core.session.entities.*
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.interact.UserInteractionContext
@@ -85,6 +84,20 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
                 .flatMap { this.buildAppendMessageProcedure(it, context, session) }
         }
 
+    private fun buildSilentFailure(context: UserInteractionContext<*>): DiscordParseFailure =
+        this.asParseFailure("unknown error", context.guild, context.user) { _, _, _ ->
+            IO.value(emptyOrders)
+        }
+
+    private fun branchCommandBySession(session: GameSession, pos: Pos, ref: MessageRef?, responseFlag: ResponseFlag): Command? =
+        when (session) {
+            is RenjuSession -> SetCommand(session, pos, ref, responseFlag)
+            is MoveStageOpeningSession -> OpeningSetCommand(session, pos, ref, responseFlag)
+            is OfferStageOpeningSession -> OpeningOfferCommand(session, pos, ref, responseFlag)
+            is SelectStageOpeningSession -> OpeningSelectCommand(session, pos, ref, responseFlag)
+            else -> null
+        }
+
     private suspend fun parseRawCommand(context: UserInteractionContext<*>, user: User, rawRow: String?, rawColumn: String?): Either<Command, DiscordParseFailure> =
         this.retrieveSession(context.bot, context.guild, user).flatMapLeft { session ->
             if (session.player.id != user.id)
@@ -114,7 +127,7 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
                             Notation.Color.Black -> Option(this.buildForbiddenMoveFailure(context, session, pos, session.board.field()[pos.idx()]))
                             else -> Option.Empty
                         }
-                        else -> throw IllegalStateException()
+                        else -> Option.Empty
                     }
                 }
                 .fold(
@@ -125,7 +138,9 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
                             else -> ResponseFlag.Defer
                         }
 
-                        Either.Left(SetCommand(session, pos, ref, responseFlag))
+                        this.branchCommandBySession(session, pos, ref, responseFlag)
+                            ?.let { Either.Left(it) }
+                            ?: Either.Right(this.buildSilentFailure(context))
                     }
                 )
         }
@@ -165,7 +180,14 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
         if (session.player.id != userId)
             return Option.Empty
 
-        return Option(SetCommand(session, pos, null, ResponseFlag.Defer(context.config.swapType == SwapType.EDIT)))
+        return GameManager.validateMove(session, pos)
+            .fold(
+                onDefined = { Option.Empty },
+                onEmpty = {
+                    this.branchCommandBySession(session, pos, null, ResponseFlag.Defer(context.config.swapType == SwapType.EDIT))
+                        .asOption()
+                }
+            )
     }
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

@@ -7,11 +7,12 @@ import core.inference.FocusSolver
 import core.interact.i18n.LanguageContainer
 import core.interact.message.graphics.BoardRenderer
 import core.interact.message.graphics.HistoryRenderType
-import core.session.GameResult
+import core.session.Rule
+import core.session.entities.GameResult
 import core.session.entities.GameSession
 import core.session.entities.GuildConfig
+import core.session.entities.OpeningSession
 import kotlinx.coroutines.flow.Flow
-import renju.Board
 import renju.notation.Pos
 import utils.structs.IO
 import utils.structs.Option
@@ -23,7 +24,7 @@ interface MessagingService<A, B> {
 
     // BOARD
 
-    fun generateFocusedField(board: Board, focusInfo: FocusSolver.FocusInfo): FocusedFields
+    fun generateFocusedField(session: GameSession, focusInfo: FocusSolver.FocusInfo): FocusedFields
 
     fun generateFocusedButtons(focusedFields: FocusedFields): B
 
@@ -31,9 +32,13 @@ interface MessagingService<A, B> {
 
     fun buildSessionArchive(publisher: MessagePublisher<A, B>, session: GameSession, result: Option<GameResult>, animate: Boolean): MessageBuilder<A, B>
 
-    fun attachFocusButtons(boardAction: MessageBuilder<A, B>, session: GameSession, focusInfo: FocusSolver.FocusInfo): MessageBuilder<A, B>
+    fun attachFocusButtons(boardAction: MessageBuilder<A, B>, focusedFields: FocusedFields): MessageBuilder<A, B>
 
-    fun attachFocusButtons(publisher: ComponentPublisher<A, B>, session: GameSession, focusInfo: FocusSolver.FocusInfo): MessageBuilder<A, B>
+    fun attachFocusButtons(publisher: ComponentPublisher<A, B>, focusedFields: FocusedFields): MessageBuilder<A, B>
+
+    fun attachSwapButtons(boardAction: MessageBuilder<A, B>, container: LanguageContainer, session: OpeningSession): MessageBuilder<A, B>
+
+    fun attachBranchingButtons(boardAction: MessageBuilder<A, B>, container: LanguageContainer): MessageBuilder<A, B>
 
     fun attachNavigators(flow: Flow<String>, message: A, checkTerminated: suspend () -> Boolean): IO<Unit>
 
@@ -47,7 +52,11 @@ interface MessagingService<A, B> {
 
     fun buildBeginsPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, ownerHasBlack: Boolean): MessageBuilder<A, B>
 
+    fun buildBeginsOpening(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User, ownerHasBlack: Boolean): MessageBuilder<A, B>
+
     fun buildNextMovePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, previousPlayer: User, nextPlayer: User, lastMove: Pos): MessageBuilder<A, B>
+
+    fun buildNextMoveOpening(publisher: MessagePublisher<A, B>, container: LanguageContainer, lastMove: Pos): MessageBuilder<A, B>
 
     fun buildWinPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, loser: User, lastMove: Pos): MessageBuilder<A, B>
 
@@ -137,7 +146,7 @@ interface MessagingService<A, B> {
 
     // REQUEST
 
-    fun buildRequest(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): MessageBuilder<A, B>
+    fun buildRequest(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User, rule: Rule): MessageBuilder<A, B>
 
     fun buildRequestInvalidated(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): MessageBuilder<A, B>
 

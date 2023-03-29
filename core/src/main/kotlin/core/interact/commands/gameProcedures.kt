@@ -11,9 +11,7 @@ import core.session.FocusType
 import core.session.HintType
 import core.session.SessionManager
 import core.session.SwapType
-import core.session.entities.BoardNavigationState
-import core.session.entities.GameSession
-import core.session.entities.GuildConfig
+import core.session.entities.*
 import utils.lang.shift
 import utils.lang.tuple
 import utils.structs.*
@@ -55,7 +53,11 @@ fun <A, B> buildBoardProcedure(
 
     return service.buildBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, session)
         .shift(session.board.winner().isEmpty) { io ->
-            service.attachFocusButtons(io, session, focusInfo)
+            when (session) {
+                is SwapStageOpeningSession -> service.attachSwapButtons(io, config.language.container, session)
+                is BranchingStageOpeningSession -> service.attachBranchingButtons(io, config.language.container)
+                else -> service.attachFocusButtons(io, service.generateFocusedField(session, focusInfo))
+            }
         }
         .retrieve()
         .flatMap { maybeMessage ->

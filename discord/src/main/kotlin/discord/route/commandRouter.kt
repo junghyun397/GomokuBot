@@ -10,6 +10,8 @@ import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.interact.message.AdaptivePublisherSet
 import core.interact.message.MonoPublisherSet
+import core.interact.reports.ErrorReport
+import core.interact.reports.Report
 import discord.assets.*
 import discord.interact.GuildManager
 import discord.interact.UserInteractionContext
@@ -26,6 +28,7 @@ import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import reactor.core.publisher.Mono
+import utils.assets.LinuxTime
 import utils.lang.shift
 import utils.structs.*
 import java.util.concurrent.TimeUnit
@@ -104,7 +107,7 @@ private fun matchCommand(command: String, container: LanguageContainer): Option<
         else -> Option.Empty
     }
 
-fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEvent>): Mono<CommandResult> =
+fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEvent>): Mono<Report> =
     mono {
         matchCommand(context.event.name, context.config.language.container)
             .map { parsable ->
@@ -170,10 +173,22 @@ fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEv
                         )
                     )
                 }
-            )
+            ).fold(
+                onSuccess = { (io, report) ->
+                    export(context.discordConfig, io, context.jdaGuild)
+                    report
+                },
+                onFailure = { throwable ->
+                    ErrorReport(throwable, context.guild)
+                }
+            ).apply {
+                interactionSource = context.source
+                emittedTime = context.emittedTime
+                apiTime = LinuxTime.now()
+            }
         } }
 
-fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mono<CommandResult> {
+fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mono<Report> {
     val messageRaw = context.event.message.contentRaw
 
     val payload = when {
@@ -240,6 +255,18 @@ fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mo
                         publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.buildCreate())) },
                     )
                 }
-            )
+            ).fold(
+                onSuccess = { (io, report) ->
+                    export(context.discordConfig, io, context.jdaGuild)
+                    report
+                },
+                onFailure = { throwable ->
+                    ErrorReport(throwable, context.guild)
+                }
+            ).apply {
+                interactionSource = context.source
+                emittedTime = context.emittedTime
+                apiTime = LinuxTime.now()
+            }
         } }
 }

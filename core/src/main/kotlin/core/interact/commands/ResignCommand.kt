@@ -9,13 +9,9 @@ import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.GameManager
-import core.session.GameResult
 import core.session.SessionManager
 import core.session.SwapType
-import core.session.entities.AiGameSession
-import core.session.entities.GameSession
-import core.session.entities.GuildConfig
-import core.session.entities.PvpGameSession
+import core.session.entities.*
 import utils.structs.flatMap
 import utils.structs.map
 
@@ -50,7 +46,7 @@ class ResignCommand(private val session: GameSession) : Command {
         val io = when (finishedSession) {
             is AiGameSession ->
                 service.buildSurrenderedPVE(publishers.plain, config.language.container, finishedSession.owner)
-            is PvpGameSession ->
+            is PvpGameSession, is OpeningSession ->
                 service.buildSurrenderedPVP(publishers.plain, config.language.container, result.winner, result.loser)
         }
             .launch()

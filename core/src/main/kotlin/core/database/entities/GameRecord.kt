@@ -4,12 +4,9 @@ import core.assets.*
 import core.database.repositories.UserProfileRepository
 import core.inference.AiLevel
 import core.inference.Token
-import core.session.GameResult
+import core.session.Rule
 import core.session.SessionPool
-import core.session.entities.AiGameSession
-import core.session.entities.GameSession
-import core.session.entities.MessageBufferKey
-import core.session.entities.PvpGameSession
+import core.session.entities.*
 import renju.notation.Pos
 import utils.assets.LinuxTime
 import utils.structs.Option
@@ -29,6 +26,8 @@ data class GameRecord(
     val whiteId: UserUid?,
 
     val aiLevel: AiLevel?,
+
+    val rule: Rule,
 
     val date: LinuxTime
 )
@@ -62,6 +61,8 @@ fun GameSession.extractGameRecord(guildUid: GuildUid): Option<GameRecord> =
                 else -> null
             },
 
+            rule = ruleKind,
+
             date = LinuxTime.now()
         )
     }
@@ -84,10 +85,9 @@ suspend fun GameRecord.asGameSession(pool: SessionPool, owner: User): GameSessio
                 gameResult = Option.Some(gameResult),
                 history = history,
                 messageBufferKey = MessageBufferKey.issue(),
-                expireOffset = 0,
+                expireService = ExpireService(0, date, date),
+                ruleKind = rule,
                 recording = false,
-                expireDate = date,
-                createDate = date,
             )
         }
         else -> {
@@ -105,10 +105,9 @@ suspend fun GameRecord.asGameSession(pool: SessionPool, owner: User): GameSessio
                 gameResult = Option.Some(gameResult),
                 history = history,
                 messageBufferKey = MessageBufferKey.issue(),
-                expireOffset = 0,
+                expireService = ExpireService(0, date, date),
+                ruleKind = rule,
                 recording = false,
-                expireDate = date,
-                createDate = date
             )
         }
     }

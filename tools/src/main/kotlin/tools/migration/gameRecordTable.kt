@@ -8,7 +8,8 @@ import core.database.DatabaseConnection
 import core.database.entities.GameRecord
 import core.database.repositories.UserProfileRepository
 import core.inference.AiLevel
-import core.session.GameResult
+import core.session.Rule
+import core.session.entities.GameResult
 import kotlinx.coroutines.reactive.awaitLast
 import reactor.kotlin.core.publisher.toFlux
 import renju.Board
@@ -101,6 +102,7 @@ suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysq
             blackId = blackUser?.id,
             whiteId = whiteUser?.id,
             aiLevel = AiLevel.APE,
+            rule = Rule.RENJU,
             date = date
         )
 
