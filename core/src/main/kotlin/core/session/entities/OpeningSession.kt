@@ -2,6 +2,7 @@ package core.session.entities
 
 import renju.notation.Pos
 import utils.structs.Option
+import kotlin.math.pow
 
 sealed interface OpeningSession : GameSession {
 
@@ -69,9 +70,52 @@ interface DeclareStageOpeningSession : NegotiateStageOpeningSession {
 
 interface OfferStageOpeningSession : NegotiateStageOpeningSession {
 
-    override fun validateMove(move: Pos) = move !in this.moveCandidates
+    val symmetryMoves: Set<Pos>
+
+    override fun validateMove(move: Pos) = move !in this.moveCandidates && move !in this.symmetryMoves
 
     fun add(move: Pos): NegotiateStageOpeningSession
+
+    private fun calculateSymmetryMoves(ref1: Pos, ref2: Pos, move: Pos): Set<Pos> {
+        return if (ref1.row() == ref2.row() || ref1.col() == ref2.col()) {
+            val reversedRow = ref1.row() + ref2.row() - move.row()
+            val reversedCol = ref1.col() + ref2.col() - move.col()
+
+            setOf(
+                Pos(reversedRow, reversedCol),
+                Pos(move.row(), reversedCol),
+                Pos(reversedRow, move.col())
+            )
+        }
+        else {
+            // y=ax+b
+            // a=(y1-y2)/(x1-x2)
+            val slope = (ref1.row() - ref2.row()).toDouble() / (ref1.col() - ref2.col().toDouble())
+            // b=y-ax
+            val intercept = ref1.row() - slope * ref1.col()
+
+            // 2(ax-y+b)/(a^2+1)
+            val baseEval = 2 * (slope * move.col() - move.row() + intercept) / (slope.pow(2) + 1)
+
+            // x'=x-2a(ax-y+b)/(a^2+1)
+            val reversedCol = (move.col() - slope * baseEval).toInt()
+            // y'=y+2(ax-y+b)/(a^2+1)
+            val reversedRow = (move.row() + baseEval).toInt()
+
+            setOf(
+                Pos(reversedRow, reversedCol),
+                Pos(ref1.row() + ref2.row() - reversedRow, ref1.col() + ref2.col() - reversedCol),
+                Pos(ref1.row() + ref2.row() - move.row(), ref1.col() + ref2.col() - move.col())
+            )
+        }
+    }
+
+    fun calculateSymmetryMoves(move: Pos): Set<Pos> {
+        val blackSymmetryMoves = this.calculateSymmetryMoves(this.history[0]!!, this.history[2]!!, move)
+        val whiteSymmetryMoves = this.calculateSymmetryMoves(this.history[1]!!, this.history[3]!!, move)
+
+        return blackSymmetryMoves.intersect(whiteSymmetryMoves) - move
+    }
 
 }
 

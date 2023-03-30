@@ -35,6 +35,7 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction
+import renju.notation.Flag
 import renju.notation.Renju
 import utils.lang.memoize
 import utils.lang.tuple
@@ -164,7 +165,15 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             else -> null
         }
 
-        return renderer.renderBoard(session.board, session.history, modRenderType, offers).fold(
+        val blinds = when (session) {
+            is MoveStageOpeningSession -> posList
+                .filterNot { session.inSquare(it) }
+            is OfferStageOpeningSession -> posList
+                .filter { session.board.field()[it.idx()] == Flag.EMPTY() && it in session.symmetryMoves }
+            else -> null
+        }
+
+        return renderer.renderBoard(session.board, session.history, modRenderType, offers, blinds?.toSet()).fold(
             onLeft = { textBoard ->
                 publisher sends buildList {
                     add(Embed {
@@ -211,7 +220,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
         val imageStream = if (animate)
             ImageBoardRenderer.renderHistoryAnimation(session.history.filterNotNull())
         else
-            ImageBoardRenderer.renderInputStream(session.board, session.history, HistoryRenderType.SEQUENCE, null, true)
+            ImageBoardRenderer.renderInputStream(session.board, session.history, HistoryRenderType.SEQUENCE, null, null, true)
 
         val fName = if (animate)
             ImageBoardRenderer.newGifFileName()

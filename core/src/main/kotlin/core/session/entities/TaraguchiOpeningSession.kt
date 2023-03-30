@@ -25,8 +25,7 @@ data class TaraguchiSwapStageSession(
     override fun swap(doSwap: Boolean): GameSession =
         if (this.isBranched && this.board.moves() == 5)
             PvpGameSession(
-                owner = this.owner,
-                opponent = this.opponent,
+                owner = this.owner, opponent = this.opponent,
                 ownerHasBlack = this.ownerHasBlack xor doSwap,
                 board = this.board,
                 gameResult = this.gameResult,
@@ -38,11 +37,9 @@ data class TaraguchiSwapStageSession(
             )
         else
             TaraguchiMoveStageSession(
-                owner = this.owner,
-                opponent = this.opponent,
+                owner = this.owner, opponent = this.opponent,
                 ownerHasBlack = this.ownerHasBlack xor doSwap,
-                board = this.board,
-                history = this.history,
+                board = this.board, history = this.history,
                 messageBufferKey = MessageBufferKey.issue(),
                 expireService = this.expireService.next(),
                 isBranched = this.isBranched
@@ -70,9 +67,7 @@ data class TaraguchiMoveStageSession(
     override fun next(move: Pos): TaraguchiOpeningSession =
         if (this.board.moves() == 3)
             TaraguchiBranchingSession(
-                owner = this.owner,
-                opponent = this.opponent,
-                ownerHasBlack = this.ownerHasBlack,
+                owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
                 board = this.board.makeMove(move),
                 history = this.history + move,
                 messageBufferKey = MessageBufferKey.issue(),
@@ -80,9 +75,7 @@ data class TaraguchiMoveStageSession(
             )
         else
             TaraguchiSwapStageSession(
-                owner = this.owner,
-                opponent = this.opponent,
-                ownerHasBlack = this.ownerHasBlack,
+                owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
                 board = this.board.makeMove(move),
                 history = this.history + move,
                 messageBufferKey = MessageBufferKey.issue(),
@@ -105,24 +98,17 @@ data class TaraguchiBranchingSession(
     override fun branch(makeOffer: Boolean): TaraguchiOpeningSession =
         if (makeOffer)
             TaraguchiOfferStageSession(
-                owner = this.owner,
-                opponent = this.opponent,
-                ownerHasBlack = this.ownerHasBlack,
-                board = this.board,
-                history = this.history,
+                owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
+                board = this.board, history = this.history, expireService = this.expireService.next(),
                 messageBufferKey = MessageBufferKey.issue(),
-                expireService = this.expireService,
-                moveCandidates = emptySet()
+                moveCandidates = emptySet(),
+                symmetryMoves = emptySet()
             )
         else
             TaraguchiSwapStageSession(
-                owner = this.owner,
-                opponent = this.opponent,
-                ownerHasBlack = ownerHasBlack,
-                board = this.board,
-                history = this.history,
+                owner = this.owner, opponent = this.opponent, ownerHasBlack = ownerHasBlack,
+                board = this.board, history = this.history, expireService = expireService.next(),
                 messageBufferKey = MessageBufferKey.issue(),
-                expireService = expireService,
                 isBranched = true
             )
 
@@ -142,22 +128,23 @@ data class TaraguchiOfferStageSession(
     override val history: List<Pos?>,
     override val messageBufferKey: MessageBufferKey,
     override val expireService: ExpireService,
-    override val moveCandidates: Set<Pos>
+    override val moveCandidates: Set<Pos>,
+    override val symmetryMoves: Set<Pos>
 ) : TaraguchiNegotiateStageOpeningSession, OfferStageOpeningSession {
 
     override fun add(move: Pos): NegotiateStageOpeningSession =
-        if (moveCandidates.size < 9)
-            this.copy(moveCandidates = moveCandidates + move, messageBufferKey = MessageBufferKey.issue())
+        if (this.moveCandidates.size < 9)
+            this.copy(
+                moveCandidates = this.moveCandidates + move,
+                symmetryMoves = this.symmetryMoves + this.calculateSymmetryMoves(move),
+                messageBufferKey = MessageBufferKey.issue(),
+            )
         else
             TaraguchiSelectStageSession(
-                owner = this.owner,
-                opponent = this.opponent,
-                ownerHasBlack = this.ownerHasBlack,
-                board = this.board,
-                history = this.history,
+                owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
+                board = this.board, history = this.history, expireService = this.expireService.next(),
                 messageBufferKey = MessageBufferKey.issue(),
-                expireService = this.expireService,
-                moveCandidates = this.moveCandidates + move
+                moveCandidates = this.moveCandidates + move,
             )
 
 }
@@ -175,16 +162,14 @@ data class TaraguchiSelectStageSession(
 
     override fun select(move: Pos): PvpGameSession =
         PvpGameSession(
-            owner = this.owner,
-            opponent = this.opponent,
-            ownerHasBlack = this.ownerHasBlack,
+            owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
             board = this.board.makeMove(move),
             gameResult = this.gameResult,
             history = this.history + move,
             messageBufferKey = MessageBufferKey.issue(),
             recording = true,
             ruleKind = Rule.TARAGUCHI_10,
-            expireService = this.expireService
+            expireService = this.expireService.next()
         )
 
 }

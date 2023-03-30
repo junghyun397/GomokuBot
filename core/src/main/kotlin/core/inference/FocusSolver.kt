@@ -2,6 +2,7 @@ package core.inference
 
 import core.assets.Notation
 import core.assets.intToStruct
+import core.assets.validatePos
 import engine.move.LargeMoveGenerator
 import engine.move.ThreatMoveGenerator
 import engine.search.vcf.VCFSolver
@@ -79,8 +80,7 @@ object FocusSolver {
     }
 
     private fun isStoneExist(board: Board, row: Int, col: Int) =
-        row in 0 until Renju.BOARD_WIDTH() && col in 0 until Renju.BOARD_WIDTH()
-                && Notation.FlagInstance.isExist(board.field()[Pos.rowColToIdx(row, col)])
+        validatePos(row, col) && Notation.FlagInstance.isExist(board.field()[Pos.rowColToIdx(row, col)])
 
     private fun hasNeighborhood(board: Board, idx: Int): Boolean {
         val row = Pos.idxToRow(idx)

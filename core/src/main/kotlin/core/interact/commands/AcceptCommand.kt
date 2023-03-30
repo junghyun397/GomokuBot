@@ -4,20 +4,22 @@ import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
-import core.interact.Order
+import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.GameManager
 import core.session.SessionManager
 import core.session.entities.GuildConfig
+import core.session.entities.OpeningSession
 import core.session.entities.RequestSession
-import core.session.entities.TaraguchiOpeningSession
 import utils.lang.tuple
 import utils.structs.flatMap
 import utils.structs.map
 
-class AcceptCommand(private val requestSession: RequestSession) : Command {
+class AcceptCommand(
+    private val requestSession: RequestSession,
+) : Command {
 
     override val name = "accept"
 
@@ -34,14 +36,18 @@ class AcceptCommand(private val requestSession: RequestSession) : Command {
     ) = runCatching {
         val gameSession = GameManager.generatePvpSession(bot, this.requestSession.owner, this.requestSession.opponent, this.requestSession.rule)
 
-        SessionManager.putGameSession(bot.sessions, guild, gameSession)
         SessionManager.removeRequestSession(bot.sessions, guild, this.requestSession.owner.id)
+        SessionManager.putGameSession(bot.sessions, guild, gameSession)
+
+        val guidePublisher = SessionManager.checkoutMessages(bot.sessions, requestSession.messageBufferKey)
+            ?.let { publishers.edit(it.first()) }
+            ?: publishers.plain
 
         val beginIO = when (gameSession) {
-            is TaraguchiOpeningSession ->
-                service.buildBeginsOpening(publishers.plain, config.language.container, gameSession.owner, gameSession.opponent, gameSession.ownerHasBlack)
+            is OpeningSession ->
+                service.buildBeginsOpening(guidePublisher, config.language.container, gameSession.owner, gameSession.opponent, gameSession.ownerHasBlack)
             else ->
-                service.buildBeginsPVP(publishers.plain, config.language.container, gameSession.player, gameSession.nextPlayer)
+                service.buildBeginsPVP(guidePublisher, config.language.container, gameSession.player, gameSession.nextPlayer)
         }
             .launch()
 
@@ -49,7 +55,7 @@ class AcceptCommand(private val requestSession: RequestSession) : Command {
 
         val io = beginIO
             .flatMap { boardIO }
-            .map { listOf(Order.DeleteSource) }
+            .map { emptyOrders }
 
         tuple(io, this.writeCommandReport("accept ${requestSession.owner}'s request", guild, user))
     }

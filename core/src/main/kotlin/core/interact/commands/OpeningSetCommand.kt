@@ -4,7 +4,6 @@ import core.assets.MessageRef
 import core.session.entities.MoveStageOpeningSession
 import renju.notation.Pos
 
-// TODO: WTF?
 class OpeningSetCommand(
     session: MoveStageOpeningSession,
     move: Pos,

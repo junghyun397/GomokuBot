@@ -4,14 +4,16 @@ import renju.Board
 import renju.`BoardIO$`
 import renju.`EmptyScalaBoard$`
 import renju.FieldStatus
-import renju.notation.Flag
-import renju.notation.`Flag$`
-import renju.notation.`Result$`
-import renju.notation.Struct
+import renju.notation.*
 
 fun intToStruct(raw: Int): Struct = Struct(raw)
 
 fun byteToFlag(raw: Byte): Flag = Flag(raw)
+
+fun validatePos(row: Int, col: Int): Boolean =
+    row in 0 until Renju.BOARD_WIDTH() && col in 0 until Renju.BOARD_WIDTH()
+
+val posList = (0 until Renju.BOARD_SIZE()).map { Pos.fromIdx(it) }
 
 operator fun Board.get(index: Int): FieldStatus = this.getFieldStatus(index)
 

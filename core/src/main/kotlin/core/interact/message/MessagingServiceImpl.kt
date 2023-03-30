@@ -4,8 +4,7 @@ import core.assets.*
 import core.inference.FocusSolver
 import core.interact.i18n.LanguageContainer
 import core.session.entities.GameSession
-import core.session.entities.MoveStageOpeningSession
-import core.session.entities.OfferStageOpeningSession
+import core.session.entities.OpeningSession
 import core.session.entities.SelectStageOpeningSession
 import kotlinx.coroutines.flow.flowOf
 import renju.notation.Color
@@ -66,13 +65,12 @@ abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
                             Notation.FlagInstance.isForbid(flag, session.board.nextColorFlag()) -> ButtonFlag.FORBIDDEN
                             else -> when (absolutePos) {
                                 in focusInfo.highlights -> ButtonFlag.HIGHLIGHTED
-                                else -> when {
-                                    session is MoveStageOpeningSession && !session.inSquare(absolutePos) -> ButtonFlag.DISABLED
-                                    session is OfferStageOpeningSession && absolutePos in session.moveCandidates -> ButtonFlag.DISABLED
-                                    session is SelectStageOpeningSession -> when (absolutePos) {
-                                        in session.moveCandidates -> ButtonFlag.HIGHLIGHTED
-                                        else -> ButtonFlag.DISABLED
-                                    }
+                                else -> when (session) {
+                                    is OpeningSession ->
+                                        if (session.validateMove(absolutePos))
+                                            if (session is SelectStageOpeningSession) ButtonFlag.HIGHLIGHTED
+                                            else ButtonFlag.FREE
+                                        else ButtonFlag.DISABLED
                                     else -> ButtonFlag.FREE
                                 }
                             }
