@@ -19,6 +19,7 @@ fun generateImage(boardSource: String, lastMove: String, fName: String, fPath: S
         emptyList(),
         if (lastMove == "null") HistoryRenderType.LAST else HistoryRenderType.SEQUENCE,
         null,
+        null,
         enableForbiddenPoints,
     )
 
