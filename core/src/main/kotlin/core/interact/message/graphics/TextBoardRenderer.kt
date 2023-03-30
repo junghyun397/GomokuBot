@@ -10,7 +10,7 @@ open class TextBoardRenderer : BoardRenderer {
     protected fun renderBoardText(board: Board): String =
         Notation.BoardIOInstance.buildBoardString(board, true)
 
-    override fun renderBoard(board: Board, history: List<Pos?>, historyRenderType: HistoryRenderType, offers: Set<Pos>?) =
+    override fun renderBoard(board: Board, history: List<Pos?>, historyRenderType: HistoryRenderType, offers: Set<Pos>?, blinds: Set<Pos>?) =
         Either.Left("```\n${this.renderBoardText(board).replace(".", " ")}```")
 
     companion object : BoardRendererSample {

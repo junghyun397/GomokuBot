@@ -6,7 +6,7 @@ import utils.structs.Either
 
 class DottedTextBoardRenderer : TextBoardRenderer() {
 
-    override fun renderBoard(board: Board, history: List<Pos?>, historyRenderType: HistoryRenderType, offers: Set<Pos>?) =
+    override fun renderBoard(board: Board, history: List<Pos?>, historyRenderType: HistoryRenderType, offers: Set<Pos>?, blinds: Set<Pos>?) =
         Either.Left("```\n${this.renderBoardText(board).replace(".", "·")}```")
 
     companion object : BoardRendererSample {
