@@ -54,8 +54,9 @@ fun <A, B> buildBoardProcedure(
     return service.buildBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, session)
         .shift(session.board.winner().isEmpty) { io ->
             when (session) {
-                is SwapStageOpeningSession -> service.attachSwapButtons(io, config.language.container, session)
+                is SwapStageOpeningSession -> service.attachSwapButtons(io, config.language.container)
                 is BranchingStageOpeningSession -> service.attachBranchingButtons(io, config.language.container)
+                is DeclareStageOpeningSession -> service.attachDeclareButtons(io, config.language.container, session)
                 else -> service.attachFocusButtons(io, service.generateFocusedField(session, focusInfo))
             }
         }

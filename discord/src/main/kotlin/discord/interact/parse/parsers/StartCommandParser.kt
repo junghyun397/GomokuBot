@@ -47,6 +47,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     private fun ruleFromString(container: LanguageContainer, source: String?): Rule =
         when (source) {
             container.ruleSelectTaraguchi10() -> Rule.TARAGUCHI_10
+            container.ruleSelectSoosyrv8() -> Rule.SOOSYRV_8
             else -> Rule.RENJU
         }
 
@@ -170,6 +171,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             ) {
                 choice(container.ruleSelectRenju(), container.ruleSelectRenju())
                 choice(container.ruleSelectTaraguchi10(), container.ruleSelectTaraguchi10())
+                choice(container.ruleSelectSoosyrv8(), container.ruleSelectSoosyrv8())
             }
         }
 

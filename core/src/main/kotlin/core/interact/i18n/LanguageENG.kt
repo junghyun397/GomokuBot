@@ -25,6 +25,7 @@ open class LanguageENG : LanguageContainer {
 
     override fun ruleSelectRenju() = "Renju (Default)"
     override fun ruleSelectTaraguchi10() = "Taraguchi-10"
+    override fun ruleSelectSoosyrv8() = "Soosyrv-8"
 
     override fun helpCommand() = "help"
     override fun helpCommandDescription() = "Get help."
@@ -345,8 +346,12 @@ open class LanguageENG : LanguageContainer {
         ":mag: Press the button or use ``/s`` ``column`` ``row`` command to make the next move."
     override fun boardSwapGuide() =
         ":arrows_counterclockwise: Press the button to select whether to switch between black and white."
+    override fun boardStatefulSwapGuide(offerCount: Int) =
+        ":arrows_counterclockwise: Press the button to select whether to switch between black and white. The number of 5th move candidates that the black player should offer is ``$offerCount``."
     override fun boardBranchGuide() =
         ":paperclips: Press the button to choose whether you want to take the opportunity to swap black and white, or offer 10 possible 5th move candidates to opponent."
+    override fun boardDeclareGuide() =
+        ":paperclips: Use the Select menu to choose how many 5th move candidates to pick."
     override fun boardSelectGuide() =
         ":dart: Press the button or use ``/s`` ``column`` ``row`` command to select 5th move."
     override fun boardOfferGuide(remainingMoves: Int) =
@@ -369,6 +374,49 @@ open class LanguageENG : LanguageContainer {
     override fun exploreAboutRenju() = "Don't know what Renju is? Press $UNICODE_RIGHT to learn about Renju."
 
     // chunk
+
+    override fun ruleDescriptionTaraguchi10() = """
+1. The black player makes the first move in the center of the board.
+2. The white player may swap**\***.
+3. The white player makes the 2nd move within 3x3 central square.
+4. The black player may swap.
+5. The black player makes the 3rd move within 5x5 central square.
+6. The white player may swap.
+7. The white player makes the 4th move within 7x7 central square.
+8. The black player can choose one or other:
+   i. Swap.
+      a. The black player may swap.
+      b. The black player makes the 5th move within 9x9 central square.
+      c. The white player may swap.
+      d. The white player makes the 6th move anywhere on board.
+  ii. Offer.
+      a. The black player picks ten 5th move candidates from anywhere on board. Symmetrical moves**\*\*** aren't allowed.
+      b. The white player selects one of the offered 5th moves.
+      c. The white player makes the 6th move anywhere on board.
+
+\***Swap**: Both players swap black and white. If you swap, you pass the turn to opponent; if you don't swap, the next turn is yours.
+
+\*\***Symmetrical moves**: A point that has the same shape when rotated or transposed.
+    """.trimIndent()
+    override fun ruleReferenceTaraguchi10() = "https://www.renju.net/rule/25/"
+
+    override fun ruleDescriptionSoosyrv8() = """
+1. The black player makes the first move in the center of the board.
+2. The black player makes the 2nd move within 3x3 central square.
+3. The black player makes the 3rd move within 5x5 central square.
+4. The white player may swap*.
+5. The white player makes the 6th move anywhere on board.
+6. The white player declares the number of 5th move candidates. It must be declared between 1 and 8.
+7. The black player may swap.
+8. The black player picks the 5th move candidates from anywhere on board, as many as the white player declares.
+9. The white player selects one of the offered 5th moves.
+10. The white player makes the 6th move anywhere on board.
+---
+***Swap**: Both players swap black and white. If you swap, you pass the turn to opponent; if you don't swap, the next turn is yours.
+
+****Symmetry**: A point that has the same shape when rotated or transposed. 
+    """.trimIndent()
+    override fun ruleReferenceSoosyrv8() = "https://www.renju.net/rule/24/"
 
     override fun aboutRenjuDocument() = """
 ## What is Renju?

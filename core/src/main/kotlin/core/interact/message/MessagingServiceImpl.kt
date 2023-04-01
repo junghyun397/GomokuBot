@@ -3,6 +3,7 @@ package core.interact.message
 import core.assets.*
 import core.inference.FocusSolver
 import core.interact.i18n.LanguageContainer
+import core.session.Rule
 import core.session.entities.GameSession
 import core.session.entities.OpeningSession
 import core.session.entities.SelectStageOpeningSession
@@ -125,8 +126,8 @@ abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
             else -> container.beginPVEAiBlack(owner.asMentionFormat())
         }
 
-    override fun buildBeginsOpening(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User, ownerHasBlack: Boolean) =
-        publisher sends container.beginOpening(if (ownerHasBlack) owner.asMentionFormat() else opponent.asMentionFormat(), if (ownerHasBlack) opponent.asMentionFormat() else owner.asMentionFormat())
+    override fun buildBeginsOpening(publisher: MessagePublisher<A, B>, container: LanguageContainer, blackPlayer: User, whitePlayer: User, rule: Rule) =
+        publisher sends container.beginOpening(blackPlayer.asMentionFormat(), whitePlayer.asMentionFormat())
 
     override fun buildNextMovePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, previousPlayer: User, nextPlayer: User, lastMove: Pos) =
         publisher sends container.processNextPVP(nextPlayer.asMentionFormat(), lastMove.toString().asHighlightFormat())

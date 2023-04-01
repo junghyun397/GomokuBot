@@ -28,6 +28,13 @@ sealed interface LanguageContainer {
 
     fun ruleSelectRenju(): String
     fun ruleSelectTaraguchi10(): String
+    fun ruleSelectSoosyrv8(): String
+
+    fun ruleDescriptionTaraguchi10(): String
+    fun ruleDescriptionSoosyrv8(): String
+
+    fun ruleReferenceTaraguchi10(): String
+    fun ruleReferenceSoosyrv8(): String
 
     fun swapSelectYes(): String
     fun swapSelectNo(): String
@@ -274,7 +281,9 @@ sealed interface LanguageContainer {
 
     fun boardCommandGuide(): String
     fun boardSwapGuide(): String
+    fun boardStatefulSwapGuide(offerCount: Int): String
     fun boardBranchGuide(): String
+    fun boardDeclareGuide(): String
     fun boardSelectGuide(): String
     fun boardOfferGuide(remainingMoves: Int): String
 

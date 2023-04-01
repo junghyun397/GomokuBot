@@ -45,7 +45,7 @@ enum class ArchivePolicy(override val id: Short) : Identifiable {
 }
 
 enum class Rule(override val id: Short, val isOpening: Boolean) : Identifiable {
-    RENJU(0, false), TARAGUCHI_10(1, true)
+    RENJU(0, false), TARAGUCHI_10(1, true), SOOSYRV_8(2, true)
 }
 
 object GameManager {
@@ -68,7 +68,17 @@ object GameManager {
             Rule.TARAGUCHI_10 -> TaraguchiSwapStageSession(
                 owner = owner,
                 opponent = opponent,
-                ownerHasBlack = Random(System.nanoTime()).nextBoolean(),
+                ownerHasBlack = ownerHasBlack,
+                board = `ScalaBoard$`.`MODULE$`.newBoard(),
+                history = listOf(Renju.BOARD_CENTER_POS()),
+                messageBufferKey = MessageBufferKey.issue(),
+                expireService = ExpireService(bot.config.gameExpireOffset),
+                isBranched = false
+            )
+            Rule.SOOSYRV_8 -> SoosyrvMoveStageSession(
+                owner = owner,
+                opponent = opponent,
+                ownerHasBlack = ownerHasBlack,
                 board = `ScalaBoard$`.`MODULE$`.newBoard(),
                 history = listOf(Renju.BOARD_CENTER_POS()),
                 messageBufferKey = MessageBufferKey.issue(),

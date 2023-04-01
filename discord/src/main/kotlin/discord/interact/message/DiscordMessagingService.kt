@@ -131,8 +131,13 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
         val text = when {
             (session is RenjuSession || session is MoveStageOpeningSession) && session.gameResult.isEmpty ->
                 container.boardCommandGuide()
-            session is SwapStageOpeningSession -> container.boardSwapGuide()
+            session is SwapStageOpeningSession -> session.offerCount
+                .fold(
+                    onDefined = { count -> container.boardStatefulSwapGuide(count) },
+                    onEmpty = { container.boardSwapGuide() }
+                )
             session is BranchingStageOpeningSession -> container.boardBranchGuide()
+            session is DeclareStageOpeningSession -> container.boardDeclareGuide()
             session is SelectStageOpeningSession -> container.boardSelectGuide()
             session is OfferStageOpeningSession -> container.boardOfferGuide(session.remainingMoves)
             else -> return
@@ -263,7 +268,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
     override fun attachFocusButtons(publisher: DiscordComponentPublisher, focusedFields: FocusedFields): DiscordMessageBuilder =
         publisher(this.generateFocusedButtons(focusedFields))
 
-    override fun attachSwapButtons(boardAction: DiscordMessageBuilder, container: LanguageContainer, session: OpeningSession): DiscordMessageBuilder =
+    override fun attachSwapButtons(boardAction: DiscordMessageBuilder, container: LanguageContainer): DiscordMessageBuilder =
         boardAction.addComponents(listOf(
             ActionRow.of(
                 Button.of(ButtonStyle.PRIMARY, "o-sy", container.swapSelectYes()),
@@ -276,6 +281,21 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             ActionRow.of(
                 Button.of(ButtonStyle.PRIMARY, "o-bn", container.branchSelectSwap()),
                 Button.of(ButtonStyle.SECONDARY, "o-by", container.branchSelectOffer())
+            )
+        ))
+
+    override fun attachDeclareButtons(boardAction: MessageBuilder<DiscordMessageData, DiscordComponents>, container: LanguageContainer, session: DeclareStageOpeningSession) =
+        boardAction.addComponents(listOf(
+            ActionRow.of(
+                StringSelectMenu("o") {
+                    for (idx in 1 .. session.maxOfferCount) {
+                        option(
+                            label = idx.toString(),
+                            value = "o-d$idx",
+                            default = false
+                        )
+                    }
+                }
             )
         ))
 
@@ -535,7 +555,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             ))
         )
 
-    override fun buildRequestInvalidated(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
+    override fun buildRejectedRequest(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
         publisher sends Embed {
             color = COLOR_RED_HEX
             title = "~~${container.requestEmbedTitle()}~~"
