@@ -24,6 +24,8 @@ sealed interface PlayStageOpeningSession : OpeningSession {
 
 interface SwapStageOpeningSession : PlayStageOpeningSession {
 
+    val offerCount: Option<Int>
+
     fun swap(doSwap: Boolean): GameSession
 
 }
@@ -36,21 +38,17 @@ interface MoveStageOpeningSession : PlayStageOpeningSession {
 
 }
 
-interface PatternStageOpeningSession : MoveStageOpeningSession {
-
-    override val player get() =
-        if (this.ownerHasBlack) this.owner
-        else this.opponent
-
-    override val nextPlayer get() =
-        if ((this.board.moves() == 2) == this.ownerHasBlack) this.opponent
-        else this.owner
-
-}
-
 interface BranchingStageOpeningSession : OpeningSession {
 
     fun branch(makeOffer: Boolean) : OpeningSession
+
+}
+
+interface DeclareStageOpeningSession : OpeningSession {
+
+    val maxOfferCount: Int
+
+    fun declare(count: Int): OpeningSession
 
 }
 
@@ -58,17 +56,11 @@ sealed interface NegotiateStageOpeningSession : OpeningSession {
 
     val moveCandidates: Set<Pos>
 
-    val remainingMoves: Int
-
-}
-
-interface DeclareStageOpeningSession : NegotiateStageOpeningSession {
-
-    fun declare(count: Int): OfferStageOpeningSession
-
 }
 
 interface OfferStageOpeningSession : NegotiateStageOpeningSession {
+
+    val remainingMoves: Int
 
     val symmetryMoves: Set<Pos>
 

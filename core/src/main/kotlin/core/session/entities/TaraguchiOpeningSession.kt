@@ -4,6 +4,7 @@ import core.assets.User
 import core.session.Rule
 import renju.Board
 import renju.notation.Pos
+import utils.structs.Option
 
 sealed interface TaraguchiOpeningSession : OpeningSession {
 
@@ -21,6 +22,8 @@ data class TaraguchiSwapStageSession(
     override val expireService: ExpireService,
     override val isBranched: Boolean
 ) : TaraguchiOpeningSession, SwapStageOpeningSession {
+
+    override val offerCount = Option.Empty
 
     override fun swap(doSwap: Boolean): GameSession =
         if (this.isBranched && this.board.moves() == 5)
@@ -114,12 +117,6 @@ data class TaraguchiBranchingSession(
 
 }
 
-sealed interface TaraguchiNegotiateStageOpeningSession : TaraguchiOpeningSession, NegotiateStageOpeningSession {
-
-    override val remainingMoves get() = 10 - this.moveCandidates.size
-
-}
-
 data class TaraguchiOfferStageSession(
     override val owner: User,
     override val opponent: User,
@@ -130,7 +127,9 @@ data class TaraguchiOfferStageSession(
     override val expireService: ExpireService,
     override val moveCandidates: Set<Pos>,
     override val symmetryMoves: Set<Pos>
-) : TaraguchiNegotiateStageOpeningSession, OfferStageOpeningSession {
+) : TaraguchiOpeningSession, OfferStageOpeningSession {
+
+    override val remainingMoves get() = 10 - this.moveCandidates.size
 
     override fun add(move: Pos): NegotiateStageOpeningSession =
         if (this.moveCandidates.size < 9)
@@ -158,7 +157,7 @@ data class TaraguchiSelectStageSession(
     override val messageBufferKey: MessageBufferKey,
     override val expireService: ExpireService,
     override val moveCandidates: Set<Pos>,
-) : TaraguchiNegotiateStageOpeningSession, SelectStageOpeningSession {
+) : TaraguchiOpeningSession, SelectStageOpeningSession {
 
     override fun select(move: Pos): PvpGameSession =
         PvpGameSession(
