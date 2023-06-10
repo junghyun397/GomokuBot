@@ -43,7 +43,7 @@ class ExpireRequestCommand(
             val finishIO = if (message != null && this.messageAvailable) {
                 val editPublisher = publisher.edit(message)
 
-                service.buildRequestInvalidated(editPublisher, config.language.container, session.owner, session.opponent)
+                service.buildRejectedRequest(editPublisher, config.language.container, session.owner, session.opponent)
                     .launch()
             } else IO.empty
 

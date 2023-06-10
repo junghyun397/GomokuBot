@@ -3,6 +3,9 @@ package core.session.entities
 import core.BotConfig
 import core.assets.*
 import core.inference.FocusSolver
+import core.interact.i18n.Language
+import core.interact.message.MessagingServiceImpl
+import core.interact.message.SettingMapping
 import renju.notation.Renju
 import utils.assets.LinuxTime
 import utils.assets.toBytes
@@ -10,16 +13,16 @@ import utils.structs.Identifiable
 import utils.structs.Option
 import utils.structs.find
 
-enum class NavigationKind(override val id: Short, val range: IntRange, val emojis: Set<String>) : Identifiable {
+enum class NavigationKind(override val id: Short, val range: IntRange, val navigators: Set<String>) : Identifiable {
 
     BOARD(0, 0 until Renju.BOARD_SIZE(), setOf(UNICODE_LEFT, UNICODE_DOWN, UNICODE_UP, UNICODE_RIGHT, UNICODE_FOCUS)),
-    SETTINGS(1, 0 .. 6, setOf(UNICODE_LEFT, UNICODE_RIGHT)),
-    ABOUT(2, 0 .. 14, setOf(UNICODE_LEFT, UNICODE_RIGHT));
+    SETTINGS(1, 0 .. SettingMapping.map.size, setOf(UNICODE_LEFT, UNICODE_RIGHT)),
+    ABOUT(2, 0 .. MessagingServiceImpl.aboutRenjuDocument[Language.ENG.container]!!.first.size, setOf(UNICODE_LEFT, UNICODE_RIGHT));
 
     companion object {
 
-        val emojis: Set<String> = NavigationKind.values()
-            .map { it.emojis }
+        val navigators: Set<String> = NavigationKind.values()
+            .map { it.navigators }
             .reduce { acc, kind -> acc + kind }
 
     }

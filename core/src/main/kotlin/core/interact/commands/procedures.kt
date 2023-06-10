@@ -15,7 +15,8 @@ fun <A, B> buildHelpProcedure(
     config: GuildConfig,
     publisher: MessagePublisher<A, B>,
     service: MessagingService<A, B>,
-): IO<Unit> = service.buildHelp(publisher, config.language.container, 0)
+    page: Int
+): IO<Unit> = service.buildHelp(publisher, config.language.container, page)
     .retrieve()
     .flatMap { maybeHelpMessage ->
         maybeHelpMessage.fold(
@@ -26,7 +27,7 @@ fun <A, B> buildHelpProcedure(
                     PageNavigationState(
                         helpMessage.messageRef,
                         NavigationKind.ABOUT,
-                        0,
+                        page,
                         LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
                     )
                 )
@@ -57,7 +58,7 @@ fun <A, B> buildCombinedHelpProcedure(
                     PageNavigationState(
                         helpMessage.messageRef,
                         NavigationKind.ABOUT,
-                        0,
+                        page = 0,
                         LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
                     )
                 )

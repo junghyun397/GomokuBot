@@ -1,5 +1,6 @@
 package discord.interact
 
+import core.assets.GuildUid
 import core.assets.MessageRef
 import core.assets.aiUser
 import core.assets.anonymousUser
@@ -11,8 +12,6 @@ import core.session.entities.GameResult
 import core.session.entities.PvpGameSession
 import core.session.entities.RenjuSession
 import dev.minn.jda.ktx.coroutines.await
-import dev.minn.jda.ktx.interactions.commands.slash
-import dev.minn.jda.ktx.interactions.commands.updateCommands
 import discord.assets.JDAGuild
 import discord.assets.awaitOption
 import discord.interact.message.DiscordMessageData
@@ -22,6 +21,7 @@ import discord.interact.message.MessageCreateAdaptor
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.buildableCommands
 import discord.interact.parse.engBuildableCommands
+import discord.interact.parse.parsers.HelpCommandParser
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.User
@@ -38,6 +38,8 @@ import utils.structs.map
 import utils.structs.orElseGet
 
 object GuildManager {
+
+    val updateCommandBypassGuilds = mutableSetOf<GuildUid>()
 
     fun lookupPermission(channel: GuildChannel, permission: Permission) =
         channel.guild.selfMember.hasPermission(channel, permission)
@@ -59,9 +61,7 @@ object GuildManager {
         else onMissed()
 
     fun initGlobalCommand(jda: JDA) {
-        jda.updateCommands {
-            slash(Language.ENG.container.helpCommand(), Language.ENG.container.helpCommandDescription())
-        }.queue()
+        HelpCommandParser.buildHelpCommandData(jda.updateCommands(), Language.ENG.container).queue()
     }
 
     private val buildableCommandIndexes: (LanguageContainer) -> Map<String, BuildableCommand> = memoize { container ->
@@ -91,10 +91,14 @@ object GuildManager {
             }
             .await()
 
-    fun upsertCommands(guild: JDAGuild, container: LanguageContainer) {
-        buildableCommands.fold(guild.updateCommands()) { action, command ->
+    fun upsertCommands(guildId: GuildUid, jdaGuild: JDAGuild, container: LanguageContainer) {
+        if (guildId in this.updateCommandBypassGuilds) return
+
+        buildableCommands.fold(jdaGuild.updateCommands()) { action, command ->
             command.buildCommandData(action, container)
         }.queue()
+
+        this.updateCommandBypassGuilds += guildId
     }
 
     private fun core.assets.User.switchToAnonymousUser() =

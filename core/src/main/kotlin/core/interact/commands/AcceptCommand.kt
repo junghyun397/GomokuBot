@@ -45,7 +45,7 @@ class AcceptCommand(
 
         val beginIO = when (gameSession) {
             is OpeningSession ->
-                service.buildBeginsOpening(guidePublisher, config.language.container, gameSession.owner, gameSession.opponent, gameSession.ownerHasBlack)
+                service.buildBeginsOpening(guidePublisher, config.language.container, gameSession.nextPlayer, gameSession.player, gameSession.ruleKind)
             else ->
                 service.buildBeginsPVP(guidePublisher, config.language.container, gameSession.player, gameSession.nextPlayer)
         }

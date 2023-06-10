@@ -62,7 +62,7 @@ fun guildJoinRouter(context: InternalInteractionContext<GuildJoinEvent>): Mono<R
             )
         ).fold(
             onSuccess = { (io, report) ->
-                export(context.discordConfig, io, context.jdaGuild)
+                export(context.discordConfig, io, context.guild, context.jdaGuild)
                 report
             },
             onFailure = { throwable ->

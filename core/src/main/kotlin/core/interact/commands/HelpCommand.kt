@@ -12,7 +12,10 @@ import core.session.entities.GuildConfig
 import utils.lang.tuple
 import utils.structs.map
 
-class HelpCommand(private val sendSettings: Boolean) : Command {
+class HelpCommand(
+    private val sendSettings: Boolean,
+    private val page: Int,
+) : Command {
 
     override val name = "help"
 
@@ -28,8 +31,8 @@ class HelpCommand(private val sendSettings: Boolean) : Command {
         publishers: PublisherSet<A, B>,
     ) = runCatching {
         val io = when (this.sendSettings) {
-            true -> buildCombinedHelpProcedure(bot, config, publishers.plain, service, 0)
-            else -> buildHelpProcedure(bot, config, publishers.plain, service)
+            true -> buildCombinedHelpProcedure(bot, config, publishers.plain, service, page)
+            else -> buildHelpProcedure(bot, config, publishers.plain, service, page)
         }
             .map { emptyOrders }
 

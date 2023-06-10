@@ -2,7 +2,6 @@
 
 package discord.route
 
-import core.assets.GuildUid
 import core.assets.VOID_MESSAGE_REF
 import core.database.repositories.AnnounceRepository
 import core.interact.commands.*
@@ -15,7 +14,10 @@ import core.interact.reports.Report
 import discord.assets.*
 import discord.interact.GuildManager
 import discord.interact.UserInteractionContext
-import discord.interact.message.*
+import discord.interact.message.DiscordMessagingService
+import discord.interact.message.MessageCreateAdaptor
+import discord.interact.message.TransMessagePublisher
+import discord.interact.message.WebHookMessageCreateAdaptor
 import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
 import discord.interact.parse.parsers.*
@@ -75,13 +77,11 @@ private fun <T : Event> buildUpdateProfileNode(context: UserInteractionContext<T
     }
 }
 
-private val updateCommandBypassGuilds = mutableSetOf<GuildUid>()
-
 private suspend fun <T : Event> buildUpdateCommandsNode(context: UserInteractionContext<T>, command: Command): Command {
-    if (updateCommandBypassGuilds.contains(context.guild.id))
+    if (context.guild.id in GuildManager.updateCommandBypassGuilds)
         return command
 
-    updateCommandBypassGuilds.add(context.guild.id)
+    GuildManager.updateCommandBypassGuilds += context.guild.id
     
     val (deprecates, adds) = GuildManager.buildCommandUpdates(context.jdaGuild, context.config.language.container)
     
@@ -175,7 +175,7 @@ fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEv
                 }
             ).fold(
                 onSuccess = { (io, report) ->
-                    export(context.discordConfig, io, context.jdaGuild)
+                    export(context.discordConfig, io, context.guild, context.jdaGuild)
                     report
                 },
                 onFailure = { throwable ->
@@ -257,7 +257,7 @@ fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mo
                 }
             ).fold(
                 onSuccess = { (io, report) ->
-                    export(context.discordConfig, io, context.jdaGuild)
+                    export(context.discordConfig, io, context.guild, context.jdaGuild)
                     report
                 },
                 onFailure = { throwable ->

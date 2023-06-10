@@ -78,7 +78,7 @@ fun reactionRouter(context: UserInteractionContext<GenericMessageReactionEvent>)
                     ),
                 ).fold(
                     onSuccess = { (io, report) ->
-                        export(context.discordConfig, io, context.jdaGuild, messageRef)
+                        export(context.discordConfig, io, context.guild, context.jdaGuild, messageRef)
                         report
                     },
                     onFailure = { throwable ->

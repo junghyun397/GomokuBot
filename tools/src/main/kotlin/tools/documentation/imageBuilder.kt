@@ -24,8 +24,9 @@ fun generateImage(boardSource: String, lastMove: String, fName: String, fPath: S
     )
 
     val tempFile = File(fPath, "$fName.png")
-        .also { println(it.absolutePath) }
-        .also { it.createNewFile() }
+
+    println(tempFile.absolutePath)
+    tempFile.createNewFile()
 
     Files.copy(
         inputStream,

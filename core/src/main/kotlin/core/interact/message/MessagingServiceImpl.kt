@@ -2,6 +2,7 @@ package core.interact.message
 
 import core.assets.*
 import core.inference.FocusSolver
+import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.session.Rule
 import core.session.entities.GameSession
@@ -11,9 +12,9 @@ import kotlinx.coroutines.flow.flowOf
 import renju.notation.Color
 import renju.notation.Flag
 import renju.notation.Pos
-import utils.assets.MarkdownLikeDocument
-import utils.assets.parseMarkdownLikeDocument
-import utils.lang.memoize
+import utils.assets.MarkdownAnchorMapping
+import utils.assets.SimplifiedMarkdownDocument
+import utils.assets.parseSimplifiedMarkdownDocument
 import utils.lang.tuple
 import utils.structs.IO
 
@@ -95,12 +96,6 @@ abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
 
     override fun attachBinaryNavigators(message: A): IO<Unit> =
         this.attachNavigators(this.binaryNavigatorFlow, message) { false }
-
-    // HELP
-
-    protected val aboutRenjuDocument: (LanguageContainer) -> MarkdownLikeDocument = memoize { container ->
-        parseMarkdownLikeDocument(container.aboutRenjuDocument())
-    }
 
     // RANK
 
@@ -226,5 +221,14 @@ abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
 
     override fun buildDebugMessage(publisher: MessagePublisher<A, B>, payload: String) =
         publisher sends payload
+
+    companion object {
+
+        val aboutRenjuDocument: Map<LanguageContainer, Pair<SimplifiedMarkdownDocument, MarkdownAnchorMapping>> =
+            Language.values().associate { language ->
+                language.container to parseSimplifiedMarkdownDocument(language.container.aboutRenjuDocument())
+            }
+
+    }
 
 }

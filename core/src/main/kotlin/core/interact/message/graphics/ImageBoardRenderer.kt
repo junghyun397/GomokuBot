@@ -134,39 +134,38 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
             image.createGraphics().apply {
                 setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
-                board.field()
-                    .withIndex()
-                    .filter { it.value != Flag.EMPTY() }
-                    .forEach { (pos, flag) ->
-                        val boardPos = Pos.fromIdx(pos).asBoardPos()
+                for (idx in 0 until Renju.BOARD_SIZE()) {
+                    when (val flag = board.field()[idx]) {
+                        Flag.BLACK(), Flag.WHITE() -> {
+                            val boardPos = Pos.fromIdx(idx).asBoardPos()
 
-                        when (flag) {
-                            Flag.BLACK(), Flag.WHITE() -> {
-                                color = COLOR_GREY
-                                fillOval(boardPos.x + STONE_OFFSET, boardPos.y + STONE_OFFSET, STONE_SIZE, STONE_SIZE)
+                            color = COLOR_GREY
+                            fillOval(boardPos.x + STONE_OFFSET, boardPos.y + STONE_OFFSET, STONE_SIZE, STONE_SIZE)
 
-                                color = if (flag == Flag.BLACK()) COLOR_BLACK else COLOR_WHITE
+                            color = if (flag == Flag.BLACK()) COLOR_BLACK else COLOR_WHITE
+                            fillOval(
+                                boardPos.x + STONE_OFFSET + BORDER_SIZE,
+                                boardPos.y + STONE_OFFSET + BORDER_SIZE,
+                                STONE_SIZE - 2 * BORDER_SIZE,
+                                STONE_SIZE - 2 * BORDER_SIZE,
+                            )
+                        }
+                        Flag.FORBIDDEN_33(), Flag.FORBIDDEN_44(), Flag.FORBIDDEN_6() -> {
+                            val boardPos = Pos.fromIdx(idx).asBoardPos()
+
+                            if (enableForbiddenPoints) {
+                                color = COLOR_RED
                                 fillOval(
-                                    boardPos.x + STONE_OFFSET + BORDER_SIZE,
-                                    boardPos.y + STONE_OFFSET + BORDER_SIZE,
-                                    STONE_SIZE - 2 * BORDER_SIZE,
-                                    STONE_SIZE - 2 * BORDER_SIZE,
+                                    boardPos.x + FORBID_DOT_OFFSET,
+                                    boardPos.y + FORBID_DOT_OFFSET,
+                                    LATEST_MOVE_DOT_SIZE,
+                                    LATEST_MOVE_DOT_SIZE,
                                 )
-                            }
-                            Flag.FORBIDDEN_33(), Flag.FORBIDDEN_44(), Flag.FORBIDDEN_6() -> {
-                                if (enableForbiddenPoints) {
-                                    color = COLOR_RED
-                                    fillOval(
-                                        boardPos.x + FORBID_DOT_OFFSET,
-                                        boardPos.y + FORBID_DOT_OFFSET,
-                                        LATEST_MOVE_DOT_SIZE,
-                                        LATEST_MOVE_DOT_SIZE,
-                                    )
-                                }
                             }
                         }
                     }
-                
+                }
+
                 offers?.forEach { pos ->
                     val boardPos = pos.asBoardPos()
 
@@ -199,23 +198,21 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
                         val fontMetrics = getFontMetrics(HISTORY_FONT)
                         font = HISTORY_FONT
 
-                        history
-                            .asSequence()
-                            .withIndex()
-                            .filter { it.value != null }
-                            .forEach { (index, value) ->
-                                val sequence = index + 1
-                                val pos = value!!.asBoardPos()
+                        for (idx in history.indices) {
+                            val element = history[idx] ?: continue
 
-                                val textWidth = fontMetrics.stringWidth(sequence.toString())
+                            val sequence = idx + 1
+                            val pos = element.asBoardPos()
 
-                                color = if (sequence % 2 == 0) COLOR_BLACK else COLOR_WHITE
-                                drawString(
-                                    sequence.toString(),
-                                    pos.x + POINT_SIZE / 2 - textWidth / 2,
-                                    pos.y + POINT_SIZE / 2 + HISTORY_FONT_SIZE / 2 - HISTORY_FONT_SIZE / 5
-                                )
-                            }
+                            val textWidth = fontMetrics.stringWidth(sequence.toString())
+
+                            color = if (sequence % 2 == 0) COLOR_BLACK else COLOR_WHITE
+                            drawString(
+                                sequence.toString(),
+                                pos.x + POINT_SIZE / 2 - textWidth / 2,
+                                pos.y + POINT_SIZE / 2 + HISTORY_FONT_SIZE / 2 - HISTORY_FONT_SIZE / 5
+                            )
+                        }
                     }
                     else -> {
                         board.lastPos()

@@ -36,7 +36,7 @@ class LangCommand(private val language: Language) : Command {
 
         val io = service.buildLanguageUpdated(publishers.plain, language.container)
             .launch()
-            .flatMap { buildHelpProcedure(bot, thenConfig, publishers.plain, service) }
+            .flatMap { buildHelpProcedure(bot, thenConfig, publishers.plain, service, 0) }
             .map { listOf(Order.UpsertCommands(thenConfig.language.container)) }
 
         tuple(io, this.writeCommandReport("set language ${config.language.name} to ${thenConfig.language.name}", guild, user))

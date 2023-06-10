@@ -43,7 +43,7 @@ private suspend fun executeCommand(
         )
     ).fold(
         onSuccess = { (io, report) ->
-            export(discordConfig, io, jdaGuild)
+            export(discordConfig, io, taskContext.guild, jdaGuild)
             report
         },
         onFailure = { throwable ->

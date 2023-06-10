@@ -1,5 +1,6 @@
 package discord.route
 
+import core.assets.Guild
 import core.assets.MessageRef
 import core.interact.Order
 import discord.assets.JDAGuild
@@ -8,10 +9,10 @@ import discord.interact.DiscordConfig
 import discord.interact.GuildManager
 import utils.structs.IO
 
-suspend fun export(discordConfig: DiscordConfig, io: IO<List<Order>>, jdaGuild: JDAGuild, source: MessageRef? = null) {
+suspend fun export(discordConfig: DiscordConfig, io: IO<List<Order>>, guild: Guild, jdaGuild: JDAGuild, source: MessageRef? = null) {
     io.run().forEach { order ->
         when (order) {
-            is Order.UpsertCommands -> GuildManager.upsertCommands(jdaGuild, order.container)
+            is Order.UpsertCommands -> GuildManager.upsertCommands(guild.id, jdaGuild, order.container)
             is Order.DeleteSource -> source?.let { GuildManager.deleteSingle(jdaGuild, it) }
             is Order.BulkDelete -> GuildManager.bulkDelete(jdaGuild, order.messageRefs)
             is Order.RemoveNavigators -> GuildManager.retrieveJDAMessage(jdaGuild.jda, order.messageRef)

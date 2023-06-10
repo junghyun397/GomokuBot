@@ -10,7 +10,6 @@ import core.database.DatabaseManager
 import core.database.LocalCaches
 import core.database.repositories.AnnounceRepository
 import core.inference.ResRenjuClient
-import core.interact.commands.CommandResult
 import core.interact.reports.ErrorReport
 import core.interact.reports.Report
 import core.session.SessionManager
@@ -19,7 +18,10 @@ import dev.minn.jda.ktx.coroutines.await
 import discord.assets.ASCII_SPLASH
 import discord.assets.COMMAND_PREFIX
 import discord.assets.NAVIGATION_EMOJIS
-import discord.interact.*
+import discord.interact.DiscordConfig
+import discord.interact.GuildManager
+import discord.interact.InternalInteractionContext
+import discord.interact.UserInteractionContext
 import discord.route.*
 import kotlinx.coroutines.reactor.mono
 import kotlinx.coroutines.runBlocking
@@ -29,7 +31,6 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.channel.ChannelType
-import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -42,8 +43,6 @@ import net.dv8tion.jda.api.events.session.ReadyEvent
 import net.dv8tion.jda.api.events.session.ShutdownEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
 import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
-import reactor.util.function.Tuple2
 import utils.lang.tuple
 import utils.log.getLogger
 
@@ -79,9 +78,6 @@ fun leaveLog(report: Report) {
         else -> logger.info(report.buildLog())
     }
 }
-
-fun <T : Event, C : InteractionContext<T>> withContext(context: C, router: (C) -> Mono<CommandResult>): Mono<Tuple2<InteractionContext<T>, CommandResult>> =
-    Mono.zip(Mono.just(context), router(context))
 
 object GomokuBot {
 

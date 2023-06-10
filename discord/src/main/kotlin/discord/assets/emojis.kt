@@ -6,7 +6,7 @@ import core.assets.*
 import core.session.entities.NavigationKind
 import net.dv8tion.jda.api.entities.emoji.Emoji
 
-val NAVIGATION_EMOJIS: List<Emoji> = NavigationKind.emojis.map { Emoji.fromUnicode(it) }
+val NAVIGATION_EMOJIS: List<Emoji> = NavigationKind.navigators.map { Emoji.fromUnicode(it) }
 
 val EMOJI_CHECK = Emoji.fromUnicode(UNICODE_CHECK) // ☑
 val EMOJI_CROSS = Emoji.fromUnicode(UNICODE_CROSS) // ❌

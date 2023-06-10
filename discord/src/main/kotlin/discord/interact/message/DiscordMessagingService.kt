@@ -338,7 +338,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
             field {
                 name = container.helpAboutEmbedDeveloper()
-                value = "junghyun397#6725"
+                value = "do1phin#6725"
             }
             field {
                 name = container.helpAboutEmbedRepository()
@@ -388,7 +388,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
     }
 
     private val buildAboutRenjuEmbed: (Pair<Int, LanguageContainer>) -> List<MessageEmbed> = memoize { (page, container) ->
-        val (h2Title, h2Documents) = this.aboutRenjuDocument(container)[page]
+        val (h2Title, h2Documents) = aboutRenjuDocument[container]!!.first[page]
 
         h2Documents
             .flatMapIndexed { h2Index, (h3Title, blocks) -> blocks

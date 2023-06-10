@@ -3,22 +3,31 @@ package utils.assets
 import utils.lang.tuple
 import utils.structs.Either
 
-typealias MarkdownLikeDocument = List<Pair<String, List<Pair<String?, List<Either<String, URL>>>>>>
+typealias SimplifiedMarkdownDocument = List<Pair<String, List<Pair<String?, List<Either<String, URL>>>>>>
+typealias MarkdownAnchorMapping = Map<String, Int>
 
 // ## h2Title
 // ### h3Title
 // ![](https://URL(ref))
 // text
-fun parseMarkdownLikeDocument(source: String): MarkdownLikeDocument =
-    source.split("\n## ")
-        .map { if (it.startsWith("## ")) it.drop(3) else it }
-        .map { it.trim() }
-        .map { h2Elements ->
-            val h2Head = h2Elements
+fun parseSimplifiedMarkdownDocument(source: String): Pair<SimplifiedMarkdownDocument, MarkdownAnchorMapping> {
+    val anchorMapping = hashMapOf<String, Int>()
+
+    val document = source.split("\n## ")
+        .map { if (it.startsWith("## ")) it.drop(3).trim() else it.trim() }
+        .withIndex()
+        .map { (index, h2Elements) ->
+            val h2Line = h2Elements
                 .takeWhile { it != '\n' }
+                .split(" {#")
+
+            val h2Head = h2Line[0]
+
+            if (h2Line.size == 2)
+                anchorMapping[h2Line[1].takeWhile { it != '}' }] = index + 1
 
             val h2Body = h2Elements
-                .drop(h2Head.length)
+                .dropWhile { it != '\n' }
                 .split("\n##")
                 .map { it.trim() }
                 .map { rawBlocks ->
@@ -53,3 +62,6 @@ fun parseMarkdownLikeDocument(source: String): MarkdownLikeDocument =
 
             tuple(h2Head, h2Body)
         }
+
+    return tuple(document, anchorMapping)
+}

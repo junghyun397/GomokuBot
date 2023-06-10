@@ -19,6 +19,8 @@ open class LanguageKOR : LanguageENG() {
 
     override fun helpCommand() = "도움말"
     override fun helpCommandDescription() = "도움말을 알아봅니다."
+    override fun helpCommandOptionShortcut() = "바로가기"
+    override fun helpCommandOptionShortcutDescription() = "원하는 도움말 페이지를 바로 표시합니다."
 
     override fun settingsCommand() = "설정"
     override fun settingsCommandDescription() = "설정 화면을 표시합니다."
@@ -391,7 +393,7 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
 
 ### 열린 4 – 어떤 4는 다른 4보다 더 강력합니다.
 
-여기 2페이지 전에 알아본 5가지의 4가 있습니다. 사실 이 중 하나의 4는 나머지 4와 다른 점 하나를 가지고 있습니다. 8열에 늘어선 4는 열린 4이기 때문입니다.
+여기 2페이지 전에 알아본 5가지의 4가 있습니다. 사실 이 중 하나의 4는 나머지 4와 다른 점 하나를 가지고 있습니다. 8행에 늘어선 4는 열린 4이기 때문입니다.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/straight-four.png)
 
@@ -399,7 +401,7 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/straight-four-had-blocked.png)
 
-다른 4는 모두 막을 수 있었지만, 8열에 늘어선 4는 한 수로는 막을 수 없었습니다. 두 수를 들여 막아야 하지만, 오목에서는 한 턴에 한 수밖에 두지 못 함으로 결코 방어할 수 없습니다.
+다른 4는 모두 막을 수 있었지만, 8행에 늘어선 4는 한 수로는 막을 수 없었습니다. 두 수를 들여 막아야 하지만, 오목에서는 한 턴에 한 수밖에 두지 못 함으로 결코 방어할 수 없습니다.
 
 이와 같이 한 수로 방어할 수 없는 강력한 4, **양 옆이 빈 채 연속적으로 배열된 돌 4개**를 **열린 4**라고 부릅니다.
 
@@ -455,7 +457,7 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
 
 ## 금수 같지만, 금수가 아닐 수 있습니다.
 
-아래와 같은 상황에 대해 생각해 봅시다. 흑은 과연 ``h9``에 둘 수 있을까요? 얼핏 보기에는 ``h9``는 h행에 세로로 배열된 돌 두 개와 9열에 가로로 배열된 돌 두 개에 의해 만들어지는 3-3금수로, 흑은 ``h9``에 둘 수 없어야만 할 것 같습니다.
+아래와 같은 상황에 대해 생각해 봅시다. 흑은 과연 ``h9``에 둘 수 있을까요? 얼핏 보기에는 ``h9``는 h행에 세로로 배열된 돌 두 개와 9행에 가로로 배열된 돌 두 개에 의해 만들어지는 3-3금수로, 흑은 ``h9``에 둘 수 없어야만 할 것 같습니다.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/pseudo-forbid-simple.png)
 
@@ -481,13 +483,13 @@ h행에서는 4-4 금수에 막혀 열린 4를 만들 수 없습니다. h행의 
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/pseudo-forbid-complex-s1.png)
 
-얼핏 보기에는 ``i8``은 i행에 세로로 놓인 돌 두 개와 8열에 가로로 놓인 돌 두 개가 합쳐지는 곳으로 3-3금수인 것 같습니다. 그렇다면 대각선으로 열린 4를 만들 수 없을테니, ``g10``은 금수가 아닐까요?
+얼핏 보기에는 ``i8``은 i열에 세로로 놓인 돌 두 개와 8행에 가로로 놓인 돌 두 개가 합쳐지는 곳으로 3-3금수인 것 같습니다. 그렇다면 대각선으로 열린 4를 만들 수 없을테니, ``g10``은 금수가 아닐까요?
 
-그렇다기에는 f행에 세로로 배열된 돌 3개가 꺼림칙하군요. 판단하기에는 아직 이른 것 같습니다. ``i8``에 돌 하나를 더 놓아봅시다.
+그렇다기에는 f열에 세로로 배열된 돌 3개가 꺼림칙하군요. 판단하기에는 아직 이른 것 같습니다. ``i8``에 돌 하나를 더 놓아봅시다.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/pseudo-forbid-complex-s2.png)
 
-``i8``에 돌을 놓아 보니, 8열에서는 4-4금수에 막혀 열린 4를 만들 수 없었습니다. ``g10``에 돌 하나를 둔 뒤의 ``i8``은 3-3 금수가 아니었습니다!
+``i8``에 돌을 놓아 보니, 8행에서는 4-4금수에 막혀 열린 4를 만들 수 없었습니다. ``g10``에 돌 하나를 둔 뒤의 ``i8``은 3-3 금수가 아니었습니다!
 
 이제 ``g10``에 돌 하나를 둔 뒤의 ``i8``은 금수가 아님을 알았으므로, 한 수를 놓아 열린 4 두 개를 만들 수 있는 ``g10``은 다시 3-3금수가 맞다고 판단할 수 있습니다.
 
@@ -525,7 +527,7 @@ h행에서는 4-4 금수에 막혀 열린 4를 만들 수 없습니다. h행의 
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/forbid-trap-complex-s2.png)
 
-*흑은 4를 방어할 수 있었지만, 8열에 가로로 배열된 돌 두 개와 g행에 세로로 배열된 돌 두 개로 3-3금수가 생기고 말았습니다.*
+*흑은 4를 방어할 수 있었지만, 8행에 가로로 배열된 돌 두 개와 g열에 세로로 배열된 돌 두 개로 3-3금수가 생기고 말았습니다.*
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/forbid-trap-complex-s3.png)
 

@@ -6,7 +6,7 @@ import core.assets.MessageRef
 import core.assets.User
 import core.database.repositories.AnnounceRepository
 import core.database.repositories.UserProfileRepository
-import core.interact.emptyOrders
+import core.interact.Order
 import core.interact.i18n.Language
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
@@ -42,7 +42,7 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
                 ).launch()
             }
             .reduce { acc, io -> acc.flatMap { io } }
-            .map { emptyOrders }
+            .map { listOf(Order.UpsertCommands(config.language.container)) }
 
         val report = this.writeCommandReport("succeed", guild, thenUser)
 
