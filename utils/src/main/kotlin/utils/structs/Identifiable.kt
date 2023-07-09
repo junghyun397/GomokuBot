@@ -1,10 +1,12 @@
 package utils.structs
 
+import kotlin.enums.EnumEntries
+
 interface Identifiable {
 
     val id: Short
 
 }
 
-fun <T : Identifiable> Array<T>.find(id: Short): T =
+fun <T> EnumEntries<T>.find(id: Short): T where T : Enum<T>, T : Identifiable =
     find { it.id == id }!!

@@ -24,13 +24,13 @@ object GuildConfigRepository {
             .flatMap { result -> result
                 .map { row, _ ->
                     Option(GuildConfig(
-                        language = Language.values().find(row["language"] as Short),
-                        boardStyle = BoardStyle.values().find(row["board_style"] as Short),
-                        focusType = FocusType.values().find(row["focus_type"] as Short),
-                        hintType = HintType.values().find(row["hint_type"] as Short),
-                        markType = HistoryRenderType.values().find(row["mark_type"] as Short),
-                        swapType = SwapType.values().find(row["swap_type"] as Short),
-                        archivePolicy = ArchivePolicy.values().find(row["archive_policy"] as Short),
+                        language = Language.entries.find(row["language"] as Short),
+                        boardStyle = BoardStyle.entries.find(row["board_style"] as Short),
+                        focusType = FocusType.entries.find(row["focus_type"] as Short),
+                        hintType = HintType.entries.find(row["hint_type"] as Short),
+                        markType = HistoryRenderType.entries.find(row["mark_type"] as Short),
+                        swapType = SwapType.entries.find(row["swap_type"] as Short),
+                        archivePolicy = ArchivePolicy.entries.find(row["archive_policy"] as Short),
                     ))
                 }
             }

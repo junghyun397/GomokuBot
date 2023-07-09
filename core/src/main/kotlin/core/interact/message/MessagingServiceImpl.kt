@@ -225,7 +225,7 @@ abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
     companion object {
 
         val aboutRenjuDocument: Map<LanguageContainer, Pair<SimplifiedMarkdownDocument, MarkdownAnchorMapping>> =
-            Language.values().associate { language ->
+            Language.entries.associate { language ->
                 language.container to parseSimplifiedMarkdownDocument(language.container.aboutRenjuDocument())
             }
 

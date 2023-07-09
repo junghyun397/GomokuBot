@@ -20,7 +20,7 @@ object DebugCommandParser : CommandParser, ParsableCommand {
     override val name = "debug"
 
     private fun matchType(option: String): DebugType? =
-        DebugType.values().firstOrNull { it.name == option }
+        DebugType.entries.firstOrNull { it.name == option }
 
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
         if (!GuildManager.hasDebugPermission(context.discordConfig, context.event.author))

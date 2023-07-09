@@ -29,7 +29,7 @@ object LangCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
     private val languageList =
         buildString {
-            Language.values().forEach { language ->
+            Language.entries.forEach { language ->
                 append(" ``${language.container.languageCode()}``")
             }
         }
@@ -44,7 +44,7 @@ object LangCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     )
 
     private fun matchLang(option: String): Language? =
-        Language.values().firstOrNull { it.container.languageCode() == option }
+        Language.entries.firstOrNull { it.container.languageCode() == option }
 
     private fun composeMissMatchFailure(guild: Guild, user: User): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("option mismatch", guild, user) { messagingService, publisher, _ ->
@@ -81,7 +81,7 @@ object LangCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                 container.languageCommandOptionCodeDescription(),
                 true
             ) {
-                Language.values().fold(this) { builder, language ->
+                Language.entries.fold(this) { builder, language ->
                     builder.choice(
                         language.container.languageCode(),
                         language.container.languageCode()

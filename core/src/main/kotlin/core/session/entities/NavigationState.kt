@@ -21,7 +21,7 @@ enum class NavigationKind(override val id: Short, val range: IntRange, val navig
 
     companion object {
 
-        val navigators: Set<String> = NavigationKind.values()
+        val navigators: Set<String> = entries
             .map { it.navigators }
             .reduce { acc, kind -> acc + kind }
 
@@ -62,7 +62,7 @@ data class PageNavigationState(
                 .zip(code.toBytes()) { a, b -> b - a }
                 .drop(1)
 
-            val kind = NavigationKind.values().find(kindRaw.toShort())
+            val kind = NavigationKind.entries.find(kindRaw.toShort())
             val page = pageTop + pageBottom
 
             return Option.cond(kind != NavigationKind.BOARD && page in kind.range) {

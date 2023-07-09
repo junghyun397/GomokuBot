@@ -23,7 +23,7 @@ suspend fun migrateGuildInfoTable(gomokuBotConnection: DatabaseConnection, mysql
         val language = results.getString("lang")
             .let { if (results.wasNull()) null else it }
             ?.let { languageRaw ->
-                Language.values()
+                Language.entries
                     .find { language -> language.container.languageCode().uppercase() == languageRaw.uppercase() }
             }
 

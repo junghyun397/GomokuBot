@@ -35,7 +35,7 @@ object StyleCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     )
 
     private fun matchStyle(option: String): BoardStyle? =
-        BoardStyle.values().firstOrNull { it.sample.styleShortcut == option || it.sample.styleName == option }
+        BoardStyle.entries.firstOrNull { it.sample.styleShortcut == option || it.sample.styleName == option }
 
     private fun composeMissMatchFailure(context: UserInteractionContext<*>): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("option mismatch", context.guild, context.user) { messagingService, publisher, container ->
@@ -72,7 +72,7 @@ object StyleCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                 container.styleCommandOptionCodeDescription(),
                 true
             ) {
-                BoardStyle.values().fold(this) { builder, style ->
+                BoardStyle.entries.fold(this) { builder, style ->
                     builder.choice(
                         style.sample.styleShortcut,
                         style.sample.styleShortcut

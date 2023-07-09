@@ -129,15 +129,15 @@ object GameRecordRepository {
             history = gameRecordRow.history.map { Pos.fromIdx(it) },
             gameResult = GameResult.build(
                 gameResult = Notation.ResultInstance.fromFlag(gameRecordRow.winColor ?: Flag.EMPTY()),
-                cause = GameResult.Cause.values().find(gameRecordRow.cause),
+                cause = GameResult.Cause.entries.find(gameRecordRow.cause),
                 blackUser = blackUser,
                 whiteUser = whiteUser
             )!!,
             guildId = GuildUid(gameRecordRow.guildId),
             blackId = blackUser?.id,
             whiteId = whiteUser?.id,
-            aiLevel = gameRecordRow.aiLevel?.let { AiLevel.values().find(it) },
-            rule = Rule.values().find(gameRecordRow.rule),
+            aiLevel = gameRecordRow.aiLevel?.let { AiLevel.entries.find(it) },
+            rule = Rule.entries.find(gameRecordRow.rule),
             date = LinuxTime(gameRecordRow.data.toInstant(ZoneOffset.UTC).toEpochMilli()),
         )
     }
