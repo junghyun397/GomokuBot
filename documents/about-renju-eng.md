@@ -1,6 +1,6 @@
 # ENG
 
-## What is Renju?
+## What is Renju? {#about-renju}
 
 Q. What do you mean, GomokuBot and Renju?
 
@@ -48,7 +48,7 @@ If it looks complicated, don't worry. Forbidden moves are fairly rare in beginne
 
 To understand forbidden moves correctly, you must first understand how Gomoku defines three and four, and in which situations the forbidden moves appears. Here we start with the definition of four.
 
-## What is "Four"?
+## What is "Four"? {#four}
 
 **Four** is **a row of four stones containing one space**, which means a shape that can be won by adding one more stone.
 
@@ -99,7 +99,7 @@ The four stones arranged in a straight line are four. Four stone blocks on one s
 ```
 *...Black can win!*
 
-## What is "4-4 Forbid"?
+## What is "4-4 Forbid"? {#4-4forbid}
 
 **4-4 forbid** means **a point where you can make two or more fours with a single move**. Even if you can create three fours in a single move, it is 4-4 forbid.
 
@@ -149,7 +149,7 @@ Although less common, more than one 4-4 forbid can appear on the same line. If y
    A B C D E F G H I J K L M N O
 ```
 
-## What is "Three"?
+## What is "Three"? {#three}
 
 Three is a little special. That's because it's a bit far from Gomoku's win conditions. Gomoku defines three as a shape that can make a "straight four" in a single move. What exactly is straight four defined by Gomoku?
 
@@ -251,7 +251,7 @@ Gomoku defines **three** as **the shape that can make a straight four in a singl
    A B C D E F G H I J K L M N O
 ```
 
-## What is "3-3 Forbid"?
+## What is "3-3 Forbid"? {#3-3forbid}
 
 Now that we know what three is defined by Gomoku, we can clearly define 3-3 forbid. **3-3 forbid** means **a position where you can make two or more threes that can make straight four by single move**. Even if you can make three threes with a single move, it's even 3-3 forbid.
 
@@ -301,7 +301,7 @@ So far, we have looked at elementary shapes, but in real games, sometimes comple
 
 This is because all these shapes are not three overlapping shapes, but actually only three shapes. Even if it looks like three, it's not three if you can't make straight four out of it. If you can't make more than one three in a single move, it's not 3-3 forbid.
 
-## What is "Overline Forbid"?
+## What is "Overline Forbid"? {#overlineforbid}
 
 We're almost there. An **overline forbid** means **a point where you can make 6 or more stones arranged in a row in a single move**.
 
@@ -331,7 +331,7 @@ Even if you can make a 7-in-a-row in a single move, it's overline forbid. Neithe
 
 ## Five-in-a-Row Can Ignore All Forbidden Moves.
 
-Here's the good news (only black unfortunately). Even if the forbidden move is created on a point that can be won with a five-in-a-row, if you win with a five-in-a-row, you can move ignoring any forbidden moves.
+Here's the good news (only black, unfortunately). Even if the forbidden move is created on a point that can be won with a five-in-a-row, if you win with a five-in-a-row, you can move ignoring any forbidden moves.
 
 ```fname = five-in-a-row-and-forbid, forbid = false, lmove = null
    A B C D E F G H I J K L M N O
@@ -361,7 +361,7 @@ Now start a game with your friends with the ``/start @mention`` command. Even if
 
 In the next chapter, we'll learn how to figure out forbidden moves in very complex situations and how to attack and defend using forbidden moves. These are strategies for Renju, all possible only in Renju. It can be a little difficult for beginners.
 
-## Like a Forbidden Move, But May Not Be a Forbidden Move.
+## Like a Forbidden Move, But May Not Be a Forbidden Move. {#pseudo-forbid}
 
 Consider the following situation. Will black be able to move with ``h9``? At first glance, it seems that ``h9`` is a 3-3 forbid made by two stones arranged vertically in column h and two stones arranged horizontally in row 9, and it seems that black should not be able to move with ``i9``.
 
@@ -413,7 +413,7 @@ In complex situations, a good way to figure out forbidden moves is to move one s
 
 In this situation, column h is blocked by 4-4 forbid and cannot create straight four. Two stones in column h were not three that could make a straight four in a single move. Let's remember the definition of forbidden moves again. If three or four is not valid, then the forbidden move is also invalid. So ``h9`` that can only make one three is not 3-3 forbidden.
 
-## It Doesn't Seem Like a Forbidden Move, But It Could Be a Forbidden Move.
+## It Doesn't Seem Like a Forbidden Move, But It Could Be a Forbidden Move. {#complex-pseudo-forbid}
 
 The ``g10`` looks like 3-3 forbid. But since ``i8`` is also forbid, ``g10`` doesn't seem to be forbid 3-3 forbid. How can we figure out how black can move in ``g10`` in this complex situation?
 
@@ -511,7 +511,7 @@ Now we can figure out that ``i8`` after moving to ``g10`` is not a forbidden poi
 
 In the same way, we can figure out that ``i10`` is also a 3-3 forbid. (The ``i10`` is a little more complicated.) Slowly, if you think about it one by one, it's not difficult.
 
-## White Can Attack By Targeting Forbidden Points.
+## White Can Attack By Targeting Forbidden Points. {#forbid-trap}
 
 Renju's forbidden moves are just a limitation for black, but for white, it's a strategy and an opportunity. Re-focus on the definition of forbidden moves. Black cannot be placed in a forbidden point in any case except five-in-a-row. Even if White can move to the forbidden point and win, it can't be an exception.
 
@@ -657,7 +657,7 @@ Black was able to defend four, but two stones arranged horizontally in row 8 and
 
 The situation has completely changed! White can use 4-4 forbid and overline forbid in the same way to create and win traps. Black should read the situation well and be extra careful not to fall into the trap and ruin the game.
 
-## Black Can Escape the Trap by Marking It Non-Forbidden Move
+## Black Can Escape the Trap by Making its Non-Forbidden Move
 
 Here's a twist. Black was able to win without being trapped. ``f6`` is an excellent point for black. But as we've seen before, if black move to ``f6``, Black will be caught in white's trap and defeated. How can black move safely to ``f6``?
 
@@ -756,3 +756,44 @@ Now you know everything you need to know about Renju. You know what's wrong with
 Renju is a straightforward but very engaging game with an interesting and endless strategy. With GomokuBot, challenge more complex problems with your friends. It will definitely be fun.
 
 If you have any questions, please feel free to visit the GomokuBot [support channel](https://discord.gg/vq8pkfF). I hope you have a good time with GomokuBot. — *GomokuBot developer junghyun397.*
+
+## Taraguchi-10 {#taraguchi-10}
+
+1. The black player makes the first move in the center of the board.
+2. The white player may swap\*.
+3. The white player makes the 2nd move within 3x3 central square.
+4. The black player may swap.
+5. The black player makes the 3rd move within 5x5 central square.
+6. The white player may swap.
+7. The white player makes the 4th move within 7x7 central square.
+8. The black player can choose one or other:
+   1. Swap.
+      1. The black player may swap.
+      2. The black player makes the 5th move within 9x9 central square.
+      3. The white player may swap.
+      4. The white player makes the 6th move anywhere on board.
+   2. Offer.
+      1. The black player picks ten 5th move candidates from anywhere on board. Symmetrical moves\*\* aren't allowed.
+      2. The white player selects one of the offered 5th moves.
+      3. The white player makes the 6th move anywhere on board.
+
+\***Swap**: Both players swap black and white. If you swap, you pass the turn to opponent; if you don't swap, the next turn is yours.
+
+\*\***Symmetrical moves**: A point that has the same shape when rotated or transposed.
+
+## Soosyrv-8 {#soosyrv-8}
+
+1. The black player makes the first move in the center of the board.
+2. The black player makes the 2nd move within 3x3 central square.
+3. The black player makes the 3rd move within 5x5 central square.
+4. The white player may swap\*.
+5. The white player makes the 4th move anywhere on board.
+6. The white player declares the number of 5th move candidates. It must be declared between 1 and 8.
+7. The black player may swap.
+8. The black player picks the 5th move candidates from anywhere on board, as many as the white player declares. Symmetrical moves\*\* aren't allowed.
+9. The white player selects one of the offered 5th moves.
+10. The white player makes the 6th move anywhere on board.
+
+\***Swap**: Both players swap black and white. If you swap, you pass the turn to opponent; if you don't swap, the next turn is yours.
+
+\*\***Symmetrical moves**: A point that has the same shape when rotated or transposed.
