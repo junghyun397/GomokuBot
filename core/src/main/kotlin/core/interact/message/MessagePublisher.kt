@@ -1,7 +1,7 @@
 package core.interact.message
 
+import core.assets.DUMMY_MESSAGE_REF
 import core.assets.MessageRef
-import core.assets.VOID_MESSAGE_REF
 
 typealias MessagePublisher<A, B> = (A) -> MessageBuilder<A, B>
 
@@ -27,7 +27,7 @@ data class AdaptivePublisherSet<A, B>(
     override val component: ComponentPublisher<A, B> = { throw IllegalAccessError() },
     private val editSelf: MessagePublisher<A, B> = { throw IllegalAccessError() },
     private val editGlobal: MessageEditPublisher<A, B> = { throw IllegalAccessError() },
-    private val selfRef: MessageRef = VOID_MESSAGE_REF,
+    private val selfRef: MessageRef = DUMMY_MESSAGE_REF,
 ) : PublisherSet<A, B> {
 
     override val edit: MessageEditPublisher<A, B> get() = { ref ->

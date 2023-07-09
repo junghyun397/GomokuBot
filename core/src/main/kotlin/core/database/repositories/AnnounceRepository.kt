@@ -39,7 +39,7 @@ object AnnounceRepository {
                         .jsonObject
                         .entries
                         .associate { (languageCode, rawContent) ->
-                            val language = Language.values()
+                            val language = Language.entries
                                 .find { it.container.languageCode() == languageCode.uppercase() }
                                 ?: Language.ENG
 

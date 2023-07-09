@@ -18,18 +18,18 @@ data class User(
     val platform: Short,
     val givenId: UserId,
     val name: String,
-    val nameTag: String,
+    val uniqueName: String,
     val announceId: Int?,
     val profileURL: String?
 ) {
 
-    override fun toString() = "[$nameTag](${id.uuid})"
+    override fun toString() = "[$uniqueName](${id.uuid})"
 
 }
 
 data class MessageRef(val id: MessageId, val guildId: GuildId, val channelId: ChannelId)
 
-val VOID_MESSAGE_REF = MessageRef(MessageId(-1), GuildId(-1), ChannelId(-1))
+val DUMMY_MESSAGE_REF = MessageRef(MessageId(-1), GuildId(-1), ChannelId(-1))
 
 @JvmInline value class GuildUid(val uuid: UUID)
 

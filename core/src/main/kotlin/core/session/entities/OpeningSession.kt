@@ -68,18 +68,22 @@ interface OfferStageOpeningSession : NegotiateStageOpeningSession {
 
     fun add(move: Pos): NegotiateStageOpeningSession
 
-    private fun calculateSymmetryMoves(ref1: Pos, ref2: Pos, move: Pos): Set<Pos> {
-        return if (ref1.row() == ref2.row() || ref1.col() == ref2.col()) {
+    private fun calculateSymmetryMoves(ref1: Pos, ref2: Pos, move: Pos): Set<Pos> =
+        if (ref1.row() == ref2.row() || ref1.col() == ref2.col()) {
             val reversedRow = ref1.row() + ref2.row() - move.row()
             val reversedCol = ref1.col() + ref2.col() - move.col()
 
+            // . . | . .
+            // . M | X .
+            // __1_|_2__
+            // . X | X .
+            // . . | . .
             setOf(
                 Pos(reversedRow, reversedCol),
                 Pos(move.row(), reversedCol),
                 Pos(reversedRow, move.col())
             )
-        }
-        else {
+        } else {
             // y=ax+b
             // a=(y1-y2)/(x1-x2)
             val slope = (ref1.row() - ref2.row()).toDouble() / (ref1.col() - ref2.col().toDouble())
@@ -94,13 +98,16 @@ interface OfferStageOpeningSession : NegotiateStageOpeningSession {
             // y'=y+2(ax-y+b)/(a^2+1)
             val reversedRow = (move.row() + baseEval).toInt()
 
+            // . M . . .
+            // X 1 . . .
+            // . . . 2 X
+            // . . . X .
             setOf(
                 Pos(reversedRow, reversedCol),
                 Pos(ref1.row() + ref2.row() - reversedRow, ref1.col() + ref2.col() - reversedCol),
                 Pos(ref1.row() + ref2.row() - move.row(), ref1.col() + ref2.col() - move.col())
             )
         }
-    }
 
     fun calculateSymmetryMoves(move: Pos): Set<Pos> {
         val blackSymmetryMoves = this.calculateSymmetryMoves(this.history[0]!!, this.history[2]!!, move)

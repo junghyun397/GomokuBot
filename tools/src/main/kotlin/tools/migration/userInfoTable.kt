@@ -40,7 +40,7 @@ suspend fun migrateUserInfoTable(gomokuBotConnection: DatabaseConnection, mysqlC
             platform = DISCORD_PLATFORM_ID,
             givenId = userId,
             name = name,
-            nameTag = "unknown",
+            uniqueName = "unknown",
             announceId = latestAnnounce,
             profileURL = null,
         )

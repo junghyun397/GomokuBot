@@ -44,9 +44,6 @@ data class PageNavigationState(
     override val expireDate: LinuxTime,
 ) : NavigationState {
 
-    fun encodeToColor(base: Int): Int =
-        encodeToColor(base, kind, page)
-
     companion object {
 
         fun encodeToColor(base: Int, kind: NavigationKind, page: Int): Int {
@@ -61,12 +58,12 @@ data class PageNavigationState(
         }
 
         fun decodeFromColor(base: Int, code: Int, config: BotConfig, messageRef: MessageRef): Option<PageNavigationState> {
-            val bytes = base.toBytes()
+            val (kindRaw, pageTop, pageBottom) = base.toBytes()
                 .zip(code.toBytes()) { a, b -> b - a }
                 .drop(1)
 
-            val kind = NavigationKind.values().find(bytes.first().toShort())
-            val page = bytes[1] + bytes[2]
+            val kind = NavigationKind.values().find(kindRaw.toShort())
+            val page = pageTop + pageBottom
 
             return Option.cond(kind != NavigationKind.BOARD && page in kind.range) {
                 PageNavigationState(messageRef, kind, page, LinuxTime.nowWithOffset(config.navigatorExpireOffset))

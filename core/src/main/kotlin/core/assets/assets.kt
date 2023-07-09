@@ -12,14 +12,14 @@ val anonymousUser = User(
     platform = GENERIC_PLATFORM_ID,
     givenId = UserId(0L),
     name = "Anon",
-    nameTag = "Anon#0000",
+    uniqueName = "anon",
     announceId = null,
     profileURL = null,
 )
 
 val aiUser = anonymousUser.copy(
     name = "AI",
-    nameTag = "AI#0042"
+    uniqueName = "gomokubot"
 )
 
 fun forbiddenFlagToText(flag: Byte) =

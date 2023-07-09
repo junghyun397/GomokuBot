@@ -2,7 +2,7 @@
 
 package discord.route
 
-import core.assets.VOID_MESSAGE_REF
+import core.assets.DUMMY_MESSAGE_REF
 import core.database.repositories.AnnounceRepository
 import core.interact.commands.*
 import core.interact.i18n.Language
@@ -85,7 +85,7 @@ private suspend fun <T : Event> buildUpdateCommandsNode(context: UserInteraction
     
     val (deprecates, adds) = GuildManager.buildCommandUpdates(context.jdaGuild, context.config.language.container)
     
-    if (deprecates.size + adds.size < 1)
+    if (deprecates.isEmpty() && adds.isEmpty())
         return command
 
     return UpdateCommandsCommand(command, deprecates.map { it.name }, adds.map { it.getLocalizedName(Language.ENG.container) })
@@ -145,7 +145,7 @@ fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEv
                         guild = context.guild,
                         user = context.user,
                         service = DiscordMessagingService,
-                        messageRef = VOID_MESSAGE_REF,
+                        messageRef = DUMMY_MESSAGE_REF,
                         publishers = when (command.responseFlag) {
                             is ResponseFlag.Defer -> AdaptivePublisherSet(
                                 plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },

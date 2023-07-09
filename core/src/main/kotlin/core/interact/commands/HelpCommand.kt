@@ -36,7 +36,7 @@ class HelpCommand(
         }
             .map { emptyOrders }
 
-        tuple(io, this.writeCommandReport("succeed", guild, user))
+        tuple(io, this.writeCommandReport("sent", guild, user))
     }
 
 }

@@ -91,14 +91,10 @@ object GuildManager {
             }
             .await()
 
-    fun upsertCommands(guildId: GuildUid, jdaGuild: JDAGuild, container: LanguageContainer) {
-        if (guildId in this.updateCommandBypassGuilds) return
-
+    fun upsertCommands(jdaGuild: JDAGuild, container: LanguageContainer) {
         buildableCommands.fold(jdaGuild.updateCommands()) { action, command ->
             command.buildCommandData(action, container)
         }.queue()
-
-        this.updateCommandBypassGuilds += guildId
     }
 
     private fun core.assets.User.switchToAnonymousUser() =
@@ -182,12 +178,6 @@ object GuildManager {
         maybeChannel?.deleteMessageById(messageRef.id.idLong)?.queue()
     }
 
-    fun retainFirstEmbed(message: DiscordMessageData): DiscordMessageData =
-        message.copy(embeds = message.embeds.subList(0, 1))
-
-    fun clearComponents(message: DiscordMessageData): DiscordMessageData =
-        message.copy(components = emptyList())
-
     fun clearReaction(message: net.dv8tion.jda.api.entities.Message) {
         this.permissionDependedRun(
             message.channel.asTextChannel(), Permission.MESSAGE_MANAGE,
@@ -200,5 +190,11 @@ object GuildManager {
             onGranted = { message.clearReactions() }
         )?.queue()
     }
+
+    fun DiscordMessageData.retainFirstEmbed(): DiscordMessageData =
+        this.copy(embeds = this.embeds.subList(0, 1))
+
+    fun DiscordMessageData.clearComponents(): DiscordMessageData =
+        this.copy(components = emptyList())
 
 }

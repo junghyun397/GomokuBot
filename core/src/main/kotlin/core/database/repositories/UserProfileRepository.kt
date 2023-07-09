@@ -59,7 +59,7 @@ object UserProfileRepository {
                         platform = row["platform"] as Short,
                         givenId = UserId(row["given_id"] as Long),
                         name = row["name"] as String,
-                        nameTag = row["name_tag"] as String,
+                        uniqueName = row["name_tag"] as String,
                         announceId = row["announce_id"] as Int?,
                         profileURL = row["profile_url"] as String?
                     )
@@ -82,7 +82,7 @@ object UserProfileRepository {
                         platform = platform,
                         givenId = givenId,
                         name = row["name"] as String,
-                        nameTag = row["name_tag"] as String,
+                        uniqueName = row["name_tag"] as String,
                         announceId = row["announce_id"] as Int?,
                         profileURL = row["profile_url"] as String?
                     ))
@@ -107,7 +107,7 @@ object UserProfileRepository {
                 .bind("$2", user.platform)
                 .bind("$3", user.givenId.idLong)
                 .bind("$4", user.name)
-                .bind("$5", user.nameTag)
+                .bind("$5", user.uniqueName)
                 .bindNullable("$6", user.announceId)
                 .bindNullable("$7", user.profileURL)
                 .execute()

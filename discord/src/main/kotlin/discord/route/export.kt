@@ -7,12 +7,14 @@ import discord.assets.JDAGuild
 import discord.assets.extractMessageData
 import discord.interact.DiscordConfig
 import discord.interact.GuildManager
+import discord.interact.GuildManager.clearComponents
+import discord.interact.GuildManager.retainFirstEmbed
 import utils.structs.IO
 
 suspend fun export(discordConfig: DiscordConfig, io: IO<List<Order>>, guild: Guild, jdaGuild: JDAGuild, source: MessageRef? = null) {
     io.run().forEach { order ->
         when (order) {
-            is Order.UpsertCommands -> GuildManager.upsertCommands(guild.id, jdaGuild, order.container)
+            is Order.UpsertCommands -> GuildManager.upsertCommands(jdaGuild, order.container)
             is Order.DeleteSource -> source?.let { GuildManager.deleteSingle(jdaGuild, it) }
             is Order.BulkDelete -> GuildManager.bulkDelete(jdaGuild, order.messageRefs)
             is Order.RemoveNavigators -> GuildManager.retrieveJDAMessage(jdaGuild.jda, order.messageRef)
@@ -20,12 +22,11 @@ suspend fun export(discordConfig: DiscordConfig, io: IO<List<Order>>, guild: Gui
                     GuildManager.clearReaction(originalMessage)
 
                     if (order.reduceComponents) {
-                        originalMessage.extractMessageData()
-                            .let { GuildManager.retainFirstEmbed(it) }
-                            .let { GuildManager.clearComponents(it) }
-                            .let { messageData ->
-                                originalMessage.editMessage(messageData.buildEdit()).queue()
-                            }
+                        val messageData = originalMessage.extractMessageData()
+                            .retainFirstEmbed()
+                            .clearComponents()
+
+                        originalMessage.editMessage(messageData.buildEdit()).queue()
                     }
                 }
 

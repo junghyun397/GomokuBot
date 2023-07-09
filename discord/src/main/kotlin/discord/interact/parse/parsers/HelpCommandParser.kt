@@ -66,7 +66,9 @@ object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
         return Either.Left(
             HelpCommand(
                 sendSettings = isCrossLanguageCommand,
-                page = this.matchPage(container, payload[1])
+                page = payload.getOrNull(1)
+                    ?.let { this.matchPage(container, it) }
+                    ?: 0
             )
         )
     }

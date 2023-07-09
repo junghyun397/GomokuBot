@@ -47,7 +47,7 @@ fun net.dv8tion.jda.api.entities.Guild.extractProfile(uid: GuildUid = GuildUid(U
     Guild(uid, DISCORD_PLATFORM_ID, this.extractId(), this.name)
 
 fun net.dv8tion.jda.api.entities.User.extractProfile(uid: UserUid = UserUid(UUID.randomUUID()), announceId: Int? = null): User =
-    User(uid, DISCORD_PLATFORM_ID, this.extractId(), this.name, this.asTag, announceId, this.avatarUrl)
+    User(uid, DISCORD_PLATFORM_ID, this.extractId(), this.effectiveName, this.name, announceId, this.avatarUrl)
 
 fun net.dv8tion.jda.api.entities.Guild.editMessageByMessageRef(ref: MessageRef, newContent: MessageEditData): DiscordMessageBuilder =
     MessageEditAdaptor(this.getTextChannelById(ref.channelId.idLong)!!.editMessageById(ref.id.idLong, newContent))

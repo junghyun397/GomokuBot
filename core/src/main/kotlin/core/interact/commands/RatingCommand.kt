@@ -27,7 +27,7 @@ class RatingCommand() : Command {
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        tuple(IO.value(emptyOrders), this.writeCommandReport("succeed", guild, user))
+        tuple(IO.value(emptyOrders), this.writeCommandReport("sent", guild, user))
     }
 
 }
