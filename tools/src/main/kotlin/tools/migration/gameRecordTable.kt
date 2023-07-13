@@ -17,7 +17,7 @@ import renju.notation.Flag
 import renju.notation.Pos
 import renju.notation.Result
 import utils.assets.LinuxTime
-import utils.lang.pair
+import utils.lang.tuple
 import utils.structs.Option
 import utils.structs.getOrException
 import java.sql.Connection
@@ -72,16 +72,16 @@ suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysq
 
         val (blackUser, whiteUser) = when (results.getString("reason")) {
             "WIN" -> when (winColor) {
-                Flag.BLACK() -> user pair null
-                else -> null pair user
+                Flag.BLACK() -> tuple(user, null)
+                else -> tuple(null, user)
             }
             "LOSE", "RESIGN", "TIMEOUT" -> when (winColor) {
-                Flag.WHITE() -> null pair user
-                else -> user pair null
+                Flag.WHITE() -> tuple(null, user)
+                else -> tuple(user, null)
             }
             "FULL" -> when (board.color()) {
-                Notation.Color.Black -> null pair user
-                else -> user pair null
+                Notation.Color.Black -> tuple(null, user)
+                else -> tuple(user, null)
             }
             else -> throw IllegalStateException()
         }

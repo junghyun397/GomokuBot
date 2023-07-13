@@ -43,13 +43,13 @@ object AnnounceRepository {
                                 .find { it.container.languageCode() == languageCode.uppercase() }
                                 ?: Language.ENG
 
-                            val content = Announce(
+                            val announce = Announce(
                                 rawContent.jsonObject["title"]!!.jsonPrimitive.content,
                                 rawContent.jsonObject["content"]!!.jsonPrimitive.content,
                                 date
                             )
 
-                            language to content
+                            language to announce
                         }
 
                     tuple(row["announce_id"] as Int, announces)
