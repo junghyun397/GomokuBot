@@ -5,6 +5,7 @@ import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
 import core.interact.emptyOrders
+import core.interact.i18n.Language
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
@@ -35,12 +36,14 @@ class NavigationCommand(
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {
+        val range = this.navigationState.kind.fetchRange(bot.dbConnection)
+
         val newState = this.navigationState.copy(
             page = run {
                 if (this.isForward)
-                    (this.navigationState.page + 1).coerceIn(this.navigationState.kind.range)
+                    (this.navigationState.page + 1).coerceIn(range)
                 else
-                    (this.navigationState.page - 1).coerceIn(this.navigationState.kind.range)
+                    (this.navigationState.page - 1).coerceIn(range)
             },
             expireDate = LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
         )
@@ -55,7 +58,16 @@ class NavigationCommand(
                 service.buildPaginatedHelp(publishers.edit(messageRef), config.language.container, newState.page)
             NavigationKind.SETTINGS ->
                 service.buildPaginatedSettings(publishers.edit(messageRef), config, newState.page)
-            else -> throw Exception()
+            NavigationKind.ANNOUNCE -> {
+                val announceMap = bot.dbConnection.localCaches.announceCache[newState.page]!!
+
+                service.buildAnnounce(
+                    publishers.edit(messageRef),
+                    config.language.container,
+                    announceMap[config.language] ?: announceMap[Language.ENG]!!
+                )
+            }
+            NavigationKind.BOARD -> throw Exception()
         }
             .launch()
             .map { emptyOrders  }
