@@ -9,7 +9,7 @@ import core.database.repositories.AnnounceRepository
 import core.database.repositories.UserProfileRepository
 import kotlinx.coroutines.reactive.awaitLast
 import reactor.kotlin.core.publisher.toFlux
-import utils.lang.pair
+import utils.lang.tuple
 import java.sql.Connection
 import java.util.*
 
@@ -53,7 +53,7 @@ suspend fun migrateUserInfoTable(gomokuBotConnection: DatabaseConnection, mysqlC
             whiteLosses = whiteLosses
         )
 
-        userAndUserStats.add(user pair userStats)
+        userAndUserStats.add(tuple(user, userStats))
     }
 
     userAndUserStats.forEach { (user, _) ->
@@ -62,7 +62,6 @@ suspend fun migrateUserInfoTable(gomokuBotConnection: DatabaseConnection, mysqlC
 
     userAndUserStats
         .toFlux()
-        .doOnNext { println(it.first.name) }
         .flatMap { (_, userStats) ->
             gomokuBotConnection.liftConnection()
                 .flatMapMany { dbc -> dbc
