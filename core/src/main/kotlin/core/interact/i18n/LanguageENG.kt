@@ -375,52 +375,9 @@ open class LanguageENG : LanguageContainer {
 
     override fun exploreAboutRenju() = "Don't know what Renju is? Press $UNICODE_RIGHT to learn about Renju."
 
-    // chunk
-
-    override fun ruleDescriptionTaraguchi10() = """
-1. The black player makes the first move in the center of the board.
-2. The white player may swap**\***.
-3. The white player makes the 2nd move within 3x3 central square.
-4. The black player may swap.
-5. The black player makes the 3rd move within 5x5 central square.
-6. The white player may swap.
-7. The white player makes the 4th move within 7x7 central square.
-8. The black player can choose one or other:
-⠀⠀i. Swap.
-⠀⠀⠀⠀a. The black player may swap.
-⠀⠀⠀⠀b. The black player makes the 5th move within 9x9 central square.
-⠀⠀⠀⠀c. The white player may swap.
-⠀⠀⠀⠀d. The white player makes the 6th move anywhere on board.
-⠀⠀ii. Offer.
-⠀⠀⠀⠀a. The black player picks ten 5th move candidates from anywhere on board. Symmetrical moves**\*\*** aren't allowed.
-⠀⠀⠀⠀b. The white player selects one of the offered 5th moves.
-⠀⠀⠀⠀c. The white player makes the 6th move anywhere on board.
-
-\***Swap**: Both players swap black and white. If you swap, you pass the turn to opponent; if you don't swap, the next turn is yours.
-
-\*\***Symmetrical moves**: A point that has the same shape when rotated or transposed.
-    """.trimIndent()
-    override fun ruleReferenceTaraguchi10() = "https://www.renju.net/rule/25/"
-
-    override fun ruleDescriptionSoosyrv8() = """
-1. The black player makes the first move in the center of the board.
-2. The black player makes the 2nd move within 3x3 central square.
-3. The black player makes the 3rd move within 5x5 central square.
-4. The white player may swap*.
-5. The white player makes the 6th move anywhere on board.
-6. The white player declares the number of 5th move candidates. It must be declared between 1 and 8.
-7. The black player may swap.
-8. The black player picks the 5th move candidates from anywhere on board, as many as the white player declares.
-9. The white player selects one of the offered 5th moves.
-10. The white player makes the 6th move anywhere on board.
----
-***Swap**: Both players swap black and white. If you swap, you pass the turn to opponent; if you don't swap, the next turn is yours.
-
-****Symmetry**: A point that has the same shape when rotated or transposed. 
-    """.trimIndent()
-    override fun ruleReferenceSoosyrv8() = "https://www.renju.net/rule/24/"
-
     override fun aboutRenjuDocument() = """
+# ENG
+
 ## What is Renju? {#about-renju}
 
 Q. What do you mean, GomokuBot and Renju?
@@ -656,7 +613,7 @@ Renju is a straightforward but very engaging game with an interesting and endles
 
 If you have any questions, please feel free to visit the GomokuBot [support channel](https://discord.gg/vq8pkfF). I hope you have a good time with GomokuBot. — *GomokuBot developer junghyun397.*
 
-## Appendix: Taraguchi-10 {#taraguchi-10}
+## Taraguchi-10 {#taraguchi-10}
 
 1. The black player makes the first move in the center of the board.
 2. The white player may swap\*.
@@ -680,13 +637,13 @@ If you have any questions, please feel free to visit the GomokuBot [support chan
 
 \*\***Symmetrical moves**: A point that has the same shape when rotated or transposed.
 
-## Appendix: Soosyrv-8 {#soosyrv-8}
+## Soosyrv-8 {#soosyrv-8}
 
 1. The black player makes the first move in the center of the board.
 2. The black player makes the 2nd move within 3x3 central square.
 3. The black player makes the 3rd move within 5x5 central square.
 4. The white player may swap\*.
-5. The white player makes the 6th move anywhere on board.
+5. The white player makes the 4th move anywhere on board.
 6. The white player declares the number of 5th move candidates. It must be declared between 1 and 8.
 7. The black player may swap.
 8. The black player picks the 5th move candidates from anywhere on board, as many as the white player declares. Symmetrical moves\*\* aren't allowed.
@@ -696,6 +653,5 @@ If you have any questions, please feel free to visit the GomokuBot [support chan
 \***Swap**: Both players swap black and white. If you swap, you pass the turn to opponent; if you don't swap, the next turn is yours.
 
 \*\***Symmetrical moves**: A point that has the same shape when rotated or transposed.
-    """.trimIndent()
-
+""".trimIndent()
 }
