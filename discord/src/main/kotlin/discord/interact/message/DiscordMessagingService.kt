@@ -338,7 +338,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
             field {
                 name = container.helpAboutEmbedDeveloper()
-                value = "do1phin#6725"
+                value = "@do1phin"
             }
             field {
                 name = container.helpAboutEmbedRepository()
@@ -487,7 +487,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
         title = "GomokuBot / Language"
         description = "The default language is set based on the server region. Please apply the proper language for this server."
 
-        Language.values().forEach { language ->
+        Language.entries.forEach { language ->
             field {
                 name = "${language.container.languageName()} (``${language.container.languageCode()}``)"
                 value = language.container.languageSuggestion()
