@@ -6,17 +6,17 @@
 ## GomokuBot이 완전히 새로워 졌습니다!
 2018년 6월 GomokuBot이 처음 만들어진 이래, 4년 남짓의 시간 동안 5,328개의 서버와 21,548명의 유저가 75,506판의 게임을 플레이했습니다. - 정말 감사합니다. 하지만 그와 마찬가지로 GomomkuBot은 꽤 낡았습니다. 이에 따라, 여러 강력한 기능들과 함께 GomokuBot이 완전히 새롭게 다시 만들어졌습니다!
 
- * 처음부터 다시 만들어짐
- * [렌주룰](https://www.renju.net/rules/) 지원
- * 빗금 명령어 지원
- * 멘션 접두사 지원
- * 이미지형 보드 지원
- * 대결 요청 시스템
- * AI 보조 입력 시스템
- * 개선된 AI 추론 엔진
- * 개선된 순위 기능
- * 개선된 설정 기능
- * 기타 등등
+* 처음부터 다시 만들어짐
+* [렌주룰](https://www.renju.net/rules/) 지원
+* 빗금 명령어 지원
+* 멘션 접두사 지원
+* 이미지형 보드 지원
+* 대결 요청 시스템
+* AI 보조 입력 시스템
+* 개선된 AI 추론 엔진
+* 개선된 순위 기능
+* 개선된 설정 기능
+* 기타 등등
 
 /help 또는 ~help 명령어로 새롭게 추가된 명령어들을 확인해주세요. 새로 추가된 빗금 명령어를 사용하기 위해서는 ``~lang`` 명령어를 통해 언어를 다시 설정해야만 합니다.
 
@@ -24,17 +24,17 @@
 
 content":"Since the creation of GomokuBot in June 2018, 5,328 servers and 21,548 users have played 75,506 games in just over four years. — Thank you very much. But as is, GomokuBot is pretty old. Accordingly, the GomokuBot has been completely rewritten with many powerful features!
 
- * All-new codebase
- * Renju rule support
- * Slash commands support
- * Mention prefix support
- * Image board renderer
- * Match request system
- * AI-Aided input system
- * Enhanced AI engine
- * Enhanced ranking feature
- * Enhanced setting feature
- * Et cetera
+* All-new codebase
+* Renju rule support
+* Slash commands support
+* Mention prefix support
+* Image board renderer
+* Match request system
+* AI-Aided input system
+* Enhanced AI engine
+* Enhanced ranking feature
+* Enhanced setting feature
+* Et cetera
 
 Check the newly added commands with /help or ~help commands. To use the newly added Slash Commands, you must reset language by ``~lang`` command.
 
@@ -49,8 +49,8 @@ Check the newly added commands with /help or ~help commands. To use the newly ad
 
 여러분이 오목에 있어 상당한 실력자이고, 더 공평한 오목을 원한다면, 국제 오목대회에서 사용하는 오프닝룰을 GomokuBot에서 사용해 보세요. ``/start @user @rule``과같이 뒤에 사용할 룰 종류를 붙여 주기만 하면 됩니다. GomokuBot은 다음과 같은 오프닝 룰을 지원합니다.
 
- * Soosyrv-8 오프닝 룰
- * Taraguchi-10 오프닝 룰
+* Soosyrv-8 오프닝 룰
+* Taraguchi-10 오프닝 룰
 
 오프닝 룰에 대해 자세히 알아보고 싶다면, [국제 오목협회(RIF)](https://www.renju.net/) 또는 GomokuBot 도움말을 참조해 주세요. 이번 업데이트로 GomokuBot에 도움말 바로가기 기능이 추가되어 쉽게 찾아보실 수 있습니다.
 
@@ -63,7 +63,7 @@ Of course, if you're a Gomoku beginner, you don't have to worry. Even Renju only
 
 If you're a pretty good gomoku player, and you want to play gomoku in a fair way, then try to use the opening rules that are used in international gomoku competitions in GomokuBot. All you need to do is type ``/start @user @rule`` followed by the type of rule you want to use. GomokuBot supports the following opening rules:
 
- * Soosyrv-8 opening rule
- * Taraguchi-10 opening rule
+* Soosyrv-8 opening rule
+* Taraguchi-10 opening rule
 
 If you want to learn more about opening rules, please refer to the [Renju International Federation (RIF)](https://www.renju.net/) or the GomokuBot help. With this update, GomokuBot has added a help shortcut to make it easier to find.

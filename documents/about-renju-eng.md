@@ -1,5 +1,3 @@
-# ENG
-
 ## What is Renju? {#about-renju}
 
 Q. What do you mean, GomokuBot and Renju?
