@@ -31,6 +31,7 @@ open class LanguageENG : LanguageContainer {
     override fun helpCommandDescription() = "Get help."
     override fun helpCommandOptionShortcut() = "shortcut"
     override fun helpCommandOptionShortcutDescription() = "Quickly navigate to the specified help page."
+    override fun helpCommandOptionAnnouncements() = "announcements"
 
     override fun settingsCommand() = "settings"
     override fun settingsCommandDescription() = "Get settings panel."
@@ -376,8 +377,6 @@ open class LanguageENG : LanguageContainer {
     override fun exploreAboutRenju() = "Don't know what Renju is? Press $UNICODE_RIGHT to learn about Renju."
 
     override fun aboutRenjuDocument() = """
-# ENG
-
 ## What is Renju? {#about-renju}
 
 Q. What do you mean, GomokuBot and Renju?

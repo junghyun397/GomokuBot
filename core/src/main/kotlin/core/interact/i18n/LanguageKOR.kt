@@ -21,6 +21,7 @@ open class LanguageKOR : LanguageENG() {
     override fun helpCommandDescription() = "도움말을 알아봅니다."
     override fun helpCommandOptionShortcut() = "바로가기"
     override fun helpCommandOptionShortcutDescription() = "원하는 도움말 페이지를 바로 표시합니다."
+    override fun helpCommandOptionAnnouncements() = "공지"
 
     override fun settingsCommand() = "설정"
     override fun settingsCommandDescription() = "설정 화면을 표시합니다."
@@ -330,8 +331,6 @@ open class LanguageKOR : LanguageENG() {
     override fun exploreAboutRenju() = "렌주가 무엇인지 모르시나요? $UNICODE_RIGHT 를 눌러 렌주에 대해 알아보세요."
 
     override fun aboutRenjuDocument() = """
-# KOR
-
 ## 렌주란 무엇인가요? {#렌주에-관하여}
 
 Q. *오목봇에 렌주라니, 이게 무슨 말인가요?* 
@@ -585,7 +584,7 @@ h행에서는 4-4 금수에 막혀 열린 4를 만들 수 없습니다. h행의 
         2. 백은 흑이 고른 후보 중 하나를 선택해 5번째 수를 둡니다.
         3. 백은 6번째 수를 오목판 아무 데나 둡니다.
 
-\***스왑**: 두 플레이어가 흑과 백을 서로 맞바꿉니다. 스왑을 선택한다면, 상대에게 턴을 넘기게 됩니다. 스왑하지 않는다면, 다음 턴도 자신의 턴입니다.
+\***스왑**: 두 플레이어가 흑과 백을 서로 맞바꿉니다. 스왑을 선택한다면, 상대에게 차례를 넘기게 됩니다. 스왑하지 않는다면, 다음 차례도 자신의 턴입니다.
 
 \*\***대칭되는 수**: 돌리거나 전치했을 때 똑같은 모양이 만들어지는 수.
 
@@ -602,7 +601,7 @@ h행에서는 4-4 금수에 막혀 열린 4를 만들 수 없습니다. h행의 
 9. 백은 흑이 고른 후보 중 하나를 선택해 5번째 수를 둡니다.
 10. 백은 6번째 수를 오목판 아무 데나 둡니다.
 
-\***스왑**: 두 플레이어가 흑과 백을 서로 맞바꿉니다. 스왑을 선택한다면, 상대에게 턴을 넘기게 됩니다. 스왑하지 않는다면, 다음 턴도 자신의 턴입니다.
+\***스왑**: 두 플레이어가 흑과 백을 서로 맞바꿉니다. 스왑을 선택한다면, 상대에게 차례를 넘기게 됩니다. 스왑하지 않는다면, 다음 차례도 자신의 턴입니다.
 
 \*\***대칭되는 수**: 돌리거나 전치했을 때 똑같은 모양이 만들어지는 수.
 """.trimIndent()

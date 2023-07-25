@@ -40,6 +40,7 @@ sealed interface LanguageContainer {
     fun helpCommandDescription(): String
     fun helpCommandOptionShortcut(): String
     fun helpCommandOptionShortcutDescription(): String
+    fun helpCommandOptionAnnouncements(): String
 
     fun settingsCommand(): String
     fun settingsCommandDescription(): String

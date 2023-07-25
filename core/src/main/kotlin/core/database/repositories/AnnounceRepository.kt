@@ -25,6 +25,9 @@ object AnnounceRepository {
             .values
             .toList()
 
+    fun getLatestAnnounce(connection: DatabaseConnection): Map<Language, Announce> =
+        connection.localCaches.announceCache[this.getLatestAnnounceId(connection)]!!
+
     suspend fun fetchAnnounces(connection: DatabaseConnection): SortedMap<Int, Map<Language, Announce>> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
