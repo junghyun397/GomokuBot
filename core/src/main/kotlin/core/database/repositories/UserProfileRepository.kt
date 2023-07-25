@@ -59,7 +59,7 @@ object UserProfileRepository {
                         platform = row["platform"] as Short,
                         givenId = UserId(row["given_id"] as Long),
                         name = row["name"] as String,
-                        uniqueName = row["name_tag"] as String,
+                        uniqueName = row["unique_name"] as String,
                         announceId = row["announce_id"] as Int?,
                         profileURL = row["profile_url"] as String?
                     )
@@ -82,7 +82,7 @@ object UserProfileRepository {
                         platform = platform,
                         givenId = givenId,
                         name = row["name"] as String,
-                        uniqueName = row["name_tag"] as String,
+                        uniqueName = row["unique_name"] as String,
                         announceId = row["announce_id"] as Int?,
                         profileURL = row["profile_url"] as String?
                     ))
@@ -99,8 +99,8 @@ object UserProfileRepository {
             .flatMapMany { dbc -> dbc
                 .createStatement(
                     """
-                        INSERT INTO user_profile (user_id, platform, given_id, name, name_tag, announce_id, profile_url) VALUES ($1, $2, $3, $4, $5, $6, $7)
-                            ON CONFLICT (user_id) DO UPDATE SET platform = $2, name = $4, name_tag = $5, announce_id = $6, profile_url = $7
+                        INSERT INTO user_profile (user_id, platform, given_id, name, unique_name, announce_id, profile_url) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                            ON CONFLICT (user_id) DO UPDATE SET platform = $2, name = $4, unique_name = $5, announce_id = $6, profile_url = $7
                     """.trimIndent()
                 )
                 .bind("$1", user.id.uuid)

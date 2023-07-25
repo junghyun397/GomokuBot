@@ -53,7 +53,7 @@ object DatabaseManager {
                             platform smallint NOT NULL,
                             given_id bigint NOT NULL,
                             name varchar NOT NULL,
-                            name_tag varchar NOT NULL,
+                            unique_name varchar NOT NULL,
                             profile_url varchar,
                             announce_id int,
                             register_date timestamp without time zone DEFAULT now(),
