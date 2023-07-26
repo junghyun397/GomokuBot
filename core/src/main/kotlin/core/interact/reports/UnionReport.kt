@@ -15,10 +15,10 @@ class UnionReport(
     override val commandName = "UNION"
 
     override operator fun plus(other: InteractionReport): InteractionReport =
-        UnionReport(this.reports + other, guild, commandTime, interactionSource, emittedTime, apiTime)
-
-    override operator fun plus(other: UnionReport): InteractionReport =
-        UnionReport(this.reports + other.reports, guild, commandTime, interactionSource, emittedTime, apiTime)
+        when (other) {
+            is UnionReport -> UnionReport(this.reports + other.reports, guild, commandTime, interactionSource, emittedTime, apiTime)
+            else -> UnionReport(this.reports + other, guild, commandTime, interactionSource, emittedTime, apiTime)
+        }
 
     override val comment get() = reports.joinToString(prefix = "\t", separator = "\n\t") { it.buildLog() }
 
