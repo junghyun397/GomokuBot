@@ -350,11 +350,11 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             }
             field {
                 name = container.helpAboutEmbedSupport()
-                value = "[discord.gg/vq8pkfF](https://discord.gg/vq8pkfF)"
+                value = "[discord/vq8pkfF](https://discord.gg/vq8pkfF)"
             }
             field {
                 name = container.helpAboutEmbedInvite()
-                value = "[discord.com/api/oauth2](https://discord.com/api/oauth2/authorize?client_id=452520939792498689&permissions=137439266880&scope=bot%20applications.commands)"
+                value = "[discord/oauth2](https://discord.com/api/oauth2/authorize?client_id=452520939792498689&permissions=137439266880&scope=bot%20applications.commands)"
             }
 
             footer {
