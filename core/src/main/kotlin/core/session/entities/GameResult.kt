@@ -27,7 +27,7 @@ sealed interface GameResult {
 
     }
 
-    object Full : GameResult {
+    data object Full : GameResult {
 
         override val cause = Cause.DRAW
 

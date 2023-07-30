@@ -31,7 +31,7 @@ object GameRecordRepository {
     suspend fun uploadGameRecord(connection: DatabaseConnection, record: GameRecord) {
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
-                .createStatement("CALL upload_game_record($1, $2, $3, $4, $5, $6, $7, $8)")
+                .createStatement("CALL upload_game_record($1, $2, $3, $4, $5, $6, $7, $8, $9)")
                 .bind("$1", record.boardState)
                 .bind("$2", record.history.map { it.idx() }.toTypedArray())
                 .bind("$3", record.gameResult.cause.id)
@@ -40,6 +40,7 @@ object GameRecordRepository {
                 .bindNullable("$6", record.blackId?.uuid)
                 .bindNullable("$7", record.whiteId?.uuid)
                 .bindNullable("$8", record.aiLevel?.id)
+                .bind("$9", record.rule.id)
                 .execute()
             }
             .flatMap { it.rowsUpdated }

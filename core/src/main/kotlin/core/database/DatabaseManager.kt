@@ -83,6 +83,7 @@ object DatabaseManager {
                             black_id uuid,
                             white_id uuid,
                             ai_level smallint,
+                            rule smallint,
                             create_date timestamp without time zone DEFAULT now(),
                             FOREIGN KEY (guild_id) REFERENCES guild_profile (guild_id),
                             FOREIGN KEY (black_id) REFERENCES user_profile (user_id),
@@ -97,12 +98,13 @@ object DatabaseManager {
                             p_guild_id uuid,
                             p_black_id uuid,
                             p_white_id uuid,
-                            p_ai_level smallint
+                            p_ai_level smallint,
+                            p_rule smallint,
                         ) LANGUAGE plpgsql AS $$
                         BEGIN
                         
-                        INSERT INTO game_record (board_state, history, cause, win_color, guild_id, black_id, white_id, ai_level)
-                            VALUES (p_board_state, p_history, p_cause, p_win_color, p_guild_id, p_black_id, p_white_id, p_ai_level);
+                        INSERT INTO game_record (board_state, history, cause, win_color, guild_id, black_id, white_id, ai_level, rule)
+                            VALUES (p_board_state, p_history, p_cause, p_win_color, p_guild_id, p_black_id, p_white_id, p_ai_level, p_rule);
                             
                         IF p_ai_level IS NOT NULL THEN
                         
