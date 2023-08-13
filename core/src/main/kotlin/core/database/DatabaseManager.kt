@@ -99,7 +99,7 @@ object DatabaseManager {
                             p_black_id uuid,
                             p_white_id uuid,
                             p_ai_level smallint,
-                            p_rule smallint,
+                            p_rule smallint
                         ) LANGUAGE plpgsql AS $$
                         BEGIN
                         
