@@ -192,7 +192,10 @@ object GuildManager {
     }
 
     fun DiscordMessageData.retainFirstEmbed(): DiscordMessageData =
-        this.copy(embeds = this.embeds.subList(0, 1))
+        this.copy(embeds = this.embeds.firstOrNull()?.let { listOf(it) } ?: emptyList())
+
+    fun DiscordMessageData.clearFiles(): DiscordMessageData =
+        this.copy(files = emptyList())
 
     fun DiscordMessageData.clearComponents(): DiscordMessageData =
         this.copy(components = emptyList())

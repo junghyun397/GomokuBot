@@ -161,6 +161,7 @@ object GomokuBot {
                 .filter {
                     it.isFromGuild
                             && it.userIdLong != jda.selfUser.idLong
+                            && it.messageAuthorIdLong == jda.selfUser.idLong
                             && it.channel.type == ChannelType.TEXT
                             && NAVIGATION_EMOJIS.contains(it.emoji)
                             && !(it.user?.isBot ?: false)

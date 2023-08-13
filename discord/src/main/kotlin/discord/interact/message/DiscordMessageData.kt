@@ -23,6 +23,6 @@ data class DiscordMessageData(
 
     fun buildCreate(): MessageCreateData = MessageCreate(this.content, this.embeds, components = this.components, tts = this.tts)
 
-    fun buildEdit(): MessageEditData = MessageEdit(this.content, this.embeds, components = this.components)
+    fun buildEdit(): MessageEditData = MessageEdit(this.content, this.embeds, components = this.components, files = this.files)
 
 }

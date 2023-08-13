@@ -8,6 +8,7 @@ import discord.assets.extractMessageData
 import discord.interact.DiscordConfig
 import discord.interact.GuildManager
 import discord.interact.GuildManager.clearComponents
+import discord.interact.GuildManager.clearFiles
 import discord.interact.GuildManager.retainFirstEmbed
 import utils.structs.IO
 
@@ -24,12 +25,12 @@ suspend fun export(discordConfig: DiscordConfig, io: IO<List<Order>>, guild: Gui
                     if (order.reduceComponents) {
                         val messageData = originalMessage.extractMessageData()
                             .retainFirstEmbed()
+                            .clearFiles()
                             .clearComponents()
 
                         originalMessage.editMessage(messageData.buildEdit()).queue()
                     }
                 }
-
             is Order.ArchiveSession -> GuildManager.archiveSession(
                 jdaGuild.jda.getTextChannelById(discordConfig.archiveChannelId.idLong)!!,
                 order.session, order.policy
