@@ -115,7 +115,7 @@ object GomokuBot {
         val jda = JDABuilder.createLight(discordConfig.token)
             .useSharding(0, 1)
             .setEventManager(eventManager)
-            .setActivity(Activity.playing("/help or ${COMMAND_PREFIX}help or @GomokuBot"))
+            .setActivity(Activity.customStatus("/help or ${COMMAND_PREFIX}help or @GomokuBot"))
             .setStatus(OnlineStatus.ONLINE)
             .setEnabledIntents(
                 GatewayIntent.GUILD_MESSAGES,
