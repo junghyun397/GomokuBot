@@ -21,96 +21,95 @@ open class LanguagePRK : LanguageKOR() {
     override fun helpCommandDescription() = "도움말을 알아보오."
 
     override fun settingsCommand() = "설정"
-    override fun settingsCommandDescription() = "설정 화면을 표시합니다."
+    override fun settingsCommandDescription() = "설정 화면을 표시하오."
 
     override fun helpAboutEmbedTitle() = "GomokuBot / 도움말"
     override fun helpAboutEmbedDescription(platform: String) =
-        "이제 **$platform**에서도 **오목**을 즐겨 보세요. **GomokuBot**이 함께 하겠습니다." +
-                " ― GomokuBot은 ${platform}에서 오목([렌주](https://www.renju.net/rules/)) 기능을 제공하는 오픈소스 인공지능 오목 봇입니다. " +
-                "수집된 기보 데이터는 강화학습 인공지능 훈련에 사용됩니다."
+        "**$platform**에서도 **오목**놀음을 즐겨보시오. **GomokuBot** 동지가 함께하오." +
+                " ― GomokuBot은 ${platform}에서 오목([렌주](https://www.renju.net/rules/)) 놀음을 제공하는 오픈소스 봇이오. "
     override fun helpAboutEmbedDeveloper() = "개발자"
     override fun helpAboutEmbedRepository() = "Git 저장소"
-    override fun helpAboutEmbedVersion() = "버전"
-    override fun helpAboutEmbedSupport() = "지원 채널"
-    override fun helpAboutEmbedInvite() = "초대 링크"
+    override fun helpAboutEmbedVersion() = "판올림"
+    override fun helpAboutEmbedSupport() = "지원 당사"
+    override fun helpAboutEmbedInvite() = "입당 신청서"
 
-    override fun commandUsageEmbedTitle() = "GomokuBot / 명령어"
-    override fun commandUsageHelp() = "도움말을 알아봅니다."
-    override fun commandUsageSettings() = "설정 화면을 표시합니다."
-    override fun commandUsageRankGlobal() = "1위부터 10위까지의 GomokuBot 전체 순위를 알아봅니다."
-    override fun commandUsageRankServer() = "이 봉사기 안에서의 순위를 알아봅니다."
-    override fun commandUsageRankUser() = "멘션 된 유저 상대의 순위를 알아봅니다."
-    override fun commandUsageRating() = "``GomokuBot ELO`` 레이팅을 알아봅니다."
+    override fun commandUsageEmbedTitle() = "GomokuBot / 시킴말"
+    override fun commandUsageHelp() = "도움말을 알아보오."
+    override fun commandUsageSettings() = "설정 화면을 표시하오."
+    override fun commandUsageRankGlobal() = "1위부터 10위까지의 GomokuBot 전체 계급을 알아보오."
+    override fun commandUsageRankServer() = "이 봉사기 안에서의 계급를 알아보오."
+    override fun commandUsageRankUser() = "동지의 계급를 알아보오."
+    override fun commandUsageRating() = "``GomokuBot ELO`` 계급수를 알아보오."
 
     override fun commandUsageLang(langList: String) =
-        "이 봉사기에서 쓰이는 언어 설정을 바꿉니다. Ex) ``/lang`` ``ENG``"
+        "이 봉사기에서 쓰이는 언어 설정을 바꾸오. Ex) ``/lang`` ``ENG``"
     override fun commandUsageStyle() =
-        "이 봉사기에서 쓰이는 오목판 모양을 바꿉니다. Ex) ``/스타일`` ``A``"
+        "이 봉사기에서 쓰이는 오목판 모양을 바꾸오. Ex) ``/스타일`` ``A``"
 
-    override fun commandUsageStartPVE() = "인공지능과 함께 새 놀음을 시작합니다."
+    override fun commandUsageStartPVE() = "전자계산기과 함께 새 놀음을 시작하오."
     override fun commandUsageStartPVP() =
-        "멘션 된 유저에게 새 놀음을 제안합니다. Ex) ``/시작`` ``@유저``"
-    override fun commandUsageResign() = "진행 중인 놀음을 포기합니다."
+        "동지에게 새 놀음을 제안하오. Ex) ``/시작`` ``@인민``"
+    override fun commandUsageResign() = "지속 중인 놀음을 포기하오."
 
-    override fun rankCommand() = "순위"
-    override fun rankCommandDescription() = "1위부터 10위까지의 순위를 알아봅니다."
+    override fun rankCommand() = "계급"
+    override fun rankCommandDescription() = "1위부터 10위까지의 계급를 알아보오."
     override fun rankCommandSubGlobal() = "전체"
-    override fun rankCommandSubGlobalDescription() = "GomokuBot 전체 순위을 알아봅니다."
+    override fun rankCommandSubGlobalDescription() = "GomokuBot 전체 계급을 알아보오."
     override fun rankCommandSubServer() = "봉사기"
-    override fun rankCommandSubServerDescription() = "봉사기 내부 순위를 알아봅니다."
-    override fun rankCommandSubUser() = "유저"
-    override fun rankCommandSubUserDescription() = "유저-상대 순위를 알아봅니다."
-    override fun rankCommandOptionPlayer() = "유저"
-    override fun rankCommandOptionPlayerDescription() = "상대 순위를 알아볼 인민을 지정해 주세요."
+    override fun rankCommandSubServerDescription() = "봉사기 내부 계급를 알아보오."
+    override fun rankCommandSubUser() = "인민"
+    override fun rankCommandSubUserDescription() = "동무-상대 계급를 알아보오."
+    override fun rankCommandOptionPlayer() = "인민"
+    override fun rankCommandOptionPlayerDescription() = "상대 계급를 알아볼 인민을 지정해 주시오."
 
-    override fun rankErrorNotFound() = "유저 기록을 찾을 수 없습니다. GomokuBot PvP 플레이 기록이 있는 인민을 지정해 주세요."
+    override fun rankErrorNotFound() = "인민을 찾을 수 없소. GomokuBot 쌈박질 기록이 있는 인민을 지정해 주시오."
 
-    override fun rankEmbedTitle() = "GomokuBot / 순위"
-    override fun rankEmbedDescription() = "1위부터 10위까지의 승리 순위를 확인 해보세요."
+    override fun rankEmbedTitle() = "GomokuBot / 계급"
+    override fun rankEmbedDescription() = "1위부터 10위까지의 승리 계급를 확인 해보시오."
     override fun rankEmbedWin() = "승"
     override fun rankEmbedLose() = "패"
     override fun rankEmbedDraw() = "무"
 
-    override fun ratingCommand() = "레이팅"
-    override fun ratingCommandDescription() = "레이팅을 알아봅니다."
-    override fun ratingCommandOptionUser() = "유저"
-    override fun ratingCommandOptionUserDescription() = "레이팅을 알아볼 인민을 지정해 주세요."
+    override fun ratingCommand() = "계급수"
+    override fun ratingCommandDescription() = "계급수를 알아보오."
+    override fun ratingCommandOptionUser() = "인민"
+    override fun ratingCommandOptionUserDescription() = "계급수를 알아볼 인민을 지정해 주시오."
 
     override fun ratingEmbed() = TODO("Not yet implemented")
     override fun ratingEmbedDescription() = TODO("Not yet implemented")
 
-    override fun languageUpdated() = "언어 설정이 한국어:flag_kr:로 바뀌었습니다!"
+    override fun languageUpdated() = "언어 설정이 조선말:flag_kp:로 바뀌었소. 공화국에 온 걸 환영하오."
 
-    override fun styleCommand() = "스타일"
-    override fun styleCommandDescription() = "이 봉사기에서 쓰이는 오목판 스타일을 바꿉니다."
-    override fun styleCommandOptionCode() = "스타일"
-    override fun styleCommandOptionCodeDescription() = "스타일 코드를 지정해 주세요."
+    override fun styleCommand() = "생김새"
+    override fun styleCommandDescription() = "이 봉사기에서 쓰이는 오목판 생김새를 바꾸오."
+    override fun styleCommandOptionCode() = "생김새"
+    override fun styleCommandOptionCodeDescription() = "생김새 꼴을 정하시오."
 
-    override fun styleEmbedTitle() = "GomokuBot / 스타일"
+    override fun styleEmbedTitle() = "GomokuBot / 생김새"
     override fun styleEmbedDescription() =
         "이 봉사기에 적용된 기본 오목판 스타일(``스타일 A``)이 제대로 보이지 않을 수 있습니다." +
                 " 준비된 네 가지 스타일 중 마음에 드는 스타일 하나를 선택해 주세요."
-    override fun styleEmbedSuggestion(styleName: String) = "이 스타일을 사용하려면 ``/스타일`` $styleName 명령어를 입력해 주세요."
+    override fun styleEmbedSuggestion(styleName: String) = "이 스타일을 사용하려면 ``/스타일`` $styleName 시킴말를 해 주세요."
 
-    override fun styleErrorNotfound() = "스타일 지정이 잘못됐습니다. ``/스타일`` ``스타일 코드`` 형식으로 입력해 주세요."
+    override fun styleErrorNotfound() = "스타일 지정이 잘못됐습니다. ``/스타일`` ``스타일 코드`` 형식으로 해 주세요."
 
     override fun styleUpdated(styleName: String) = "스타일 설정이 스타일 ``${styleName}``로 바뀌었습니다."
 
     override fun settingApplied(kind: String, choice: String) = "$kind 설정이 ${choice}로 바뀌었습니다."
 
-    override fun style() = "스타일"
+    override fun style() = "생김새"
 
-    override fun styleSelectImage() = "이미지"
+    override fun styleSelectImage() = "사진"
     override fun styleSelectImageDescription() =
         "오목 판을 이미지로 표시합니다. 플랫폼 봉사기 상태에 따라 약간의 지연이 생길 수 있습니다."
 
-    override fun styleSelectText() = "텍스트"
+    override fun styleSelectText() = "수자"
     override fun styleSelectTextDescription() = "오목 판을 텍스트로 표시합니다. 가장 단순하지만 가장 빠릅니다."
 
-    override fun styleSelectDottedText() = "점박이 텍스트"
+    override fun styleSelectDottedText() = "점박이 수자"
     override fun styleSelectDottedTextDescription() = "텍스트와 거의 같습니다. 다만 빈 자리에 공백이 아닌 점을 표시합니다."
 
-    override fun styleSelectUnicodeText() = "유니코드"
+    override fun styleSelectUnicodeText() = "통용수자"
     override fun styleSelectUnicodeTextDescription() =
         "오목 판을 유니코드 이모지로 표시합니다. 폰트 설정에 따라 완전히 망가져 보일 수 있습니다."
 
@@ -118,11 +117,11 @@ open class LanguagePRK : LanguageKOR() {
 
     override fun focusEmbedTitle() = "GomokuBot / 확대"
     override fun focusEmbedDescription() =
-        "GomokuBot은 직관적인 입력을 돕기 위해 작은 크기의 \"버튼 판\"을 사용합니다. GomokuBot이 어떤 부분을 어떻게 확대할지 정해주세요."
+        "GomokuBot은 직관적인 립력을 돕기 위해 작은 크기의 \"단추 판\"을 사용합니다. GomokuBot이 어떤 부분을 어떻게 확대할지 정하시오."
 
     override fun focusSelectIntelligence() = "지능적"
     override fun focusSelectIntelligenceDescription() =
-        "GomokuBot 추론 엔진으로 가장 적절한 위치를 분석해 확대합니다."
+        "GomokuBot 추론 엔진으로 가장 적절한 위치를 분석해 확대하오."
 
     override fun focusSelectFallowing() = "수동적"
     override fun focusSelectFallowingDescription() =
@@ -196,93 +195,93 @@ open class LanguagePRK : LanguageKOR() {
         "그 어디에도 놀음 결과를 공유하지 않습니다."
 
     override fun sessionNotFound(): String =
-        "진행 중인 놀음을 찾을 수 없습니다. 먼저 ``/시작`` 명령어로 놀음을 시작해 주세요."
+        "지속 중인 놀음이 없소. 먼저 ``/시작`` 시킴말로 놀음을 시작하시오."
 
     override fun startCommand() = "시작"
-    override fun startCommandDescription() = "새 놀음을 시작합니다."
+    override fun startCommandDescription() = "새 놀음을 시작하오."
     override fun startCommandOptionOpponent() = "상대"
-    override fun startCommandOptionOpponentDescription() = "함께 놀음을 시작할 인민을 지정해 주세요."
+    override fun startCommandOptionOpponentDescription() = "덤빌 인민을 정하시오."
 
     override fun startErrorSessionAlready() =
-        "이미 진행 중인 놀음이 있습니다. 진행 중인 놀음을 먼저 마무리해 주세요."
+        "지속 중인 놀음이 있소. 먼저 끝내시오."
     override fun startErrorOpponentSessionAlready(opponent: String) =
-        "$opponent 님은 이미 다른 놀음을 진행 중 입니다. $opponent 님이 진행 중인 놀음이 끝날 때까지 기다려 주세요."
+        "$opponent 동지는 이미 다른 놀음을 지속하고 있소. $opponent 동지의 놀음이 끝날 때까지 기다리시오."
     override fun startErrorRequestAlreadySent(opponent: String) =
-        "$opponent 님에게 보낸 대결 요청이 아직 남아 있습니다. $opponent 님의 응답을 기다려 주세요."
+        "$opponent 동지에게 보낸 놀음 요청이 아직 남아있소. $opponent 동지의 대답을 기다리시오."
     override fun startErrorRequestAlready(opponent: String) =
-        "$opponent 님이 보낸 대결 요청에 아직 응답하지 않았습니다. $opponent 님의 대결 요청에 먼저 응답해 주세요."
+        "$opponent 동지가 보낸 놀음 요청이 남아있소. $opponent 동지의 놀음 요청에 먼저 대답하시오."
     override fun startErrorOpponentRequestAlready(opponent: String) =
-        "$opponent 님에게는 아직 응답하지 않은 다른 대결 요청 하나가 남아 있습니다. $opponent 님이 다른 대결 요청에 응답할 때까지 기다려 주세요."
+        "$opponent 동지에게는 아직 대답하지 않은 다른 놀음 요청 하나가 남아있소. $opponent 동지를 기다리시오."
 
-    override fun setCommandDescription() = "원하는 좌표에 돌을 놓습니다."
+    override fun setCommandDescription() = "원하는 자리표에 돌을 놓소."
     override fun setCommandOptionColumn() = "x"
-    override fun setCommandOptionColumnDescription() = "알파벳"
+    override fun setCommandOptionColumnDescription() = "미제말"
     override fun setCommandOptionRow() = "y"
     override fun setCommandOptionRowDescription() = "숫자"
 
     override fun setErrorIllegalArgument() =
-        "잘못된 명령어 형식입니다. ``/s`` ``알파벳`` ``숫자`` 꼴로 입력해 주세요."
+        "잘못된 시킴말 입구형식이오. ``/s`` ``미제말`` ``숫자`` 꼴로 입구형식을 지키시오."
 
     override fun setErrorExist(move: String) =
-        "${move}에는 이미 돌이 놓여 있습니다. 다른 곳에 돌을 놓아주세요."
+        "${move}에는 이미 돌이 놓여있소. 다른 곳에 놓으시오."
 
     override fun setErrorForbidden(move: String, forbiddenKind: String) =
-        "${move}은(는) ${forbiddenKind}금수 입니다. 다른 곳에 돌을 놓아주세요."
+        "${move}은(는) ${forbiddenKind}금수요. 다른 곳에 놓으시오."
 
-    override fun resignCommand() = "항복"
-    override fun resignCommandDescription() = "진행중인 놀음을 포기합니다."
+    override fun resignCommand() = "백기"
+    override fun resignCommandDescription() = "지속중인 놀음을 포기하오."
 
     override fun requestEmbedTitle() = "오목 한 판 괜찮겠습니까?"
     override fun requestEmbedDescription(owner: String, opponent: String) =
-        "$owner 님이 $opponent 님에게 대결 요청을 보냈습니다. 아래 버튼을 눌러 대답해 주세요."
-    override fun requestEmbedButtonAccept() = "수락"
-    override fun requestEmbedButtonReject() = "거절"
+        "$owner 동지가 $opponent 동지에게 놀음 요청을 보냈소. 아래 단추을 눌러 대답하시오."
+    override fun requestEmbedButtonAccept() = "평양"
+    override fun requestEmbedButtonReject() = "아오지"
 
     override fun requestRejected(owner: String, opponent: String) =
-        "$opponent 님이 $owner 님의 대결 요청을 거절했습니다."
+        "$opponent 동지가 $owner 동지의 대결 요청을 숙청했소."
 
     override fun requestExpired(owner: String, opponent: String) =
-        "$owner 님이 $opponent 님에게 보낸 대결 요청이 만료되었습니다. 아직도 $opponent 님과 대결하고 싶다면, 새 대결 요청을 보내주세요."
+        "$owner 동지가 $opponent 동지에게 보낸 놀음 요청은 숙청되었소. 아직도 $opponent 동지와 대결하고 싶다면, 새 놀음 요청을 보내시오."
 
     override fun requestExpiredNewRequest() = "다시 제안하기"
 
     override fun beginPVP(blackPlayer: String, whitePlayer: String) =
-        "$blackPlayer 님과 $whitePlayer 님의 놀음이 시작되었습니다! $blackPlayer 님이 흑입니다. $blackPlayer 님이 첫 번째 수를 놓아주세요."
+        "$blackPlayer 동지와 $whitePlayer 동지의 놀음이 시작되었소. $blackPlayer 동지가 흑이요. $blackPlayer 동지가 첫 번째 수를 놓으시오."
 
     override fun beginPVEAiBlack(player: String) =
-        "$player 님과 인공지능의 놀음이 시작되었습니다! $player 님은 백입니다. 인공지능은 ``h8``에 두었습니다. 두 번째 수를 놓아주세요."
+        "$player 동지와 전자계산기의 놀음이 시작되었소. $player 동지는 백이요. 전자계산기는 ``h8``에 두었소. 두 번째 수를 놓으시오."
 
     override fun beginPVEAiWhite(player: String) =
-        "$player 님과 인공지능의 놀음이 시작되었습니다! $player 님이 흑입니다. 첫 번째 수를 놓아주세요."
+        "$player 동지와 전자계산기의 놀음이 시작되었소. $player 동지가 흑이요. 첫 번째 수를 놓으시오."
 
     override fun processNextPVE(lastMove: String) =
-        "다음 수를 놓아주세요. AI는 ${lastMove}에 놓았습니다."
+        "다음 수를 놓으시오. 전자계산기는 ${lastMove}에 놓았소."
 
     override fun processNextPVP(priorPlayer: String, lastMove: String) =
-        "다음 수를 놓아주세요. $priorPlayer 님은 ${lastMove}에 놓았습니다."
+        "다음 수를 놓으시오. $priorPlayer 동지는 ${lastMove}에 놓았소."
 
     override fun processErrorOrder(player: String) =
-        "지금은 $player 님의 차례입니다. $player 님이 다음 수를 놓을 때까지 기다려 주세요."
+        "이번은 $player 동지의 차례요. $player 동지가 다음 수를 놓을 때까지 기다리시오."
 
     override fun endPVPWin(winner: String, loser: String, lastMove: String) =
-        "$winner 님이 ${lastMove}에 돌을 놓음으로써 $loser 님을 이겼습니다."
+        "$winner 동지는 ${lastMove}에 돌을 놓음으로써 $loser 동지를 죽탕쳤소."
     override fun endPVPResign(winner: String, loser: String) =
-        "$loser 님이 항복을 선언 함으로써 $winner 님이 이겼습니다."
+        "$loser 동지가 백기을 선언 함으로써 $winner 동지가 $loser 동지를 죽탕쳤소."
     override fun endPVPTie(owner: String, opponent: String) =
-        "이제 더 이상 돌을 놓을 공간이 없으므로, $opponent 님과 $opponent 님의 놀음은 무승부로 끝났습니다."
+        "이제 더 이상 돌을 놓을 공간이 없으므로, $opponent 동지와 $opponent 동지의 놀음은 무승부로 끝났소."
     override fun endPVPTimeOut(winner: String, loser: String) =
-        "$loser 님이 오랜 시간 동안 다음 수를 두지 않았기 때문에 $winner 님이 $loser 님을 이겼습니다."
+        "$loser 동지는 오랜 시간 동안 다음 수를 두지 않았기 때문에 $winner 동지는 $loser 동지를 견뎠소."
 
     override fun endPVEWin(player: String, lastPos: String) =
-        "$lastPos 에 돌을 놓음으로써 인공지능을 이겼습니다. 축하합니다, $player 님!"
+        "$player 동지는 $lastPos 에 돌을 놓음으로써 전자계산기을 견뎠소."
     override fun endPVELose(player: String, lastPos: String) =
-        "$player 님, 인공지능이 $lastPos 에 돌을 놓음으로써 인공지능에 패배했습니다. 언제든지 다시 도전해 주세요."
+        "전자계산기가 $lastPos 에 돌을 놓음으로써 전자계산기가 $player 동지를 죽탕쳤소."
     override fun endPVEResign(player: String) =
-        "$player 님, 인공지능 상대로 항복을 선언 함으로써 인공지능에 패배하셨습니다. 언제든지 다시 도전해 주세요."
+        "$player 동지는 전자계산기 상대로 백기을 선언 함으로써 전자계산기에 죽탕당했소."
     override fun endPVETie(player: String) =
-        "이제 더 이상 돌을 놓을 공간이 없으므로, $player 님과 인공지능의 놀음은 무승부로 끝났습니다."
+        "이제 더 이상 돌을 놓을 공간이 없으므로, $player 동지와 전자계산기의 놀음은 무승부로 끝났소."
     override fun endPVETimeOut(player: String) =
-        "$player 님, 오랜 시간 동안 다음 수를 두지 않았기 때문에 인공지능에 패배했습니다."
+        "$player 동지는 오랜 시간 동안 다음 수를 두지 않았기 때문에 전자계산기에 죽탕당했소."
 
     override fun boardInProgress() = "진행 중"
     override fun boardFinished() = "종료"
@@ -295,11 +294,11 @@ open class LanguagePRK : LanguageKOR() {
     override fun boardWinDescription(winner: String) = "$winner 승리"
     override fun boardTieDescription() = "무승부"
 
-    override fun boardCommandGuide() = ":mag: 버튼을 누르거나 ``/s`` ``알파벳`` ``숫자`` 명령어를 입력해 다음 수를 놓아주세요."
+    override fun boardCommandGuide() = ":mag: 단추를 누르거나 ``/s`` ``미제말`` ``숫자`` 시킴말을 똑바로 맞춰 원하는 자리표에 놓으시오."
 
     override fun announceWrittenOn(date: String) = "$date 에 쓰여짐"
 
-    override fun somethingWrongEmbedTitle() = "뭔가 잘못됐습니다!"
+    override fun somethingWrongEmbedTitle() = "무언가 잘못되었소."
 
     override fun permissionNotGrantedEmbedDescription(channelName: String) =
         "Gokomubot은 $channelName 채널에 메시지를 보낼 권한이 없습니다! 역할 및 퍼미션 설정을 확인해 주세요."
@@ -311,6 +310,6 @@ open class LanguagePRK : LanguageKOR() {
     override fun notYetImplementedEmbedFooter(officialChannel: String) =
         "지원 채널($officialChannel)에서 Gomokubot 업데이트 소식을 받아볼 수 있습니다."
 
-    override fun exploreAboutRenju() = "렌주가 무엇인지 모르시나요? $UNICODE_RIGHT 를 눌러 렌주에 대해 알아보세요."
+    override fun exploreAboutRenju() = "렌주가 무엇인지 모르시오? $UNICODE_RIGHT 를 눌러 렌주에 대해 알아보시오. 남조선에서 만든 자료가 있소."
 
 }
