@@ -19,7 +19,6 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import utils.lang.shift
 import utils.structs.Either
-import utils.structs.fold
 
 object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
@@ -34,17 +33,16 @@ object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
         )
     )
 
-    private fun matchPage(container: LanguageContainer, shortcut: String?): Either<Unit, Int> =
-        shortcut?.let { validShortcut ->
-            if (validShortcut == container.helpCommandOptionAnnouncements() || validShortcut == Language.ENG.container.helpCommandOptionAnnouncements())
-                Either.Left(Unit)
-            else Either.Right(
-                MessagingServiceImpl.aboutRenjuDocument[container]!!.second[validShortcut]
-                    ?: MessagingServiceImpl.aboutRenjuDocument[Language.ENG.container]!!.second[validShortcut]
+    private fun matchPage(container: LanguageContainer, shortcut: String?): Int? =
+        when (shortcut) {
+            null -> 0
+            else ->
+                if (shortcut == container.helpCommandOptionAnnouncements() || shortcut == Language.ENG.container.helpCommandOptionAnnouncements())
+                    null
+                else MessagingServiceImpl.aboutRenjuDocument[container]!!.second[shortcut]
+                    ?: MessagingServiceImpl.aboutRenjuDocument[Language.ENG.container]!!.second[shortcut]
                     ?: 0
-            )
-        } ?: Either.Right(0)
-
+        }
 
     private fun checkCrossLanguageCommand(container: LanguageContainer, command: String) =
         container.helpCommand() != command
@@ -58,15 +56,13 @@ object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
         return Either.Left(
             this.matchPage(language.container, context.event.getOption(language.container.helpCommandOptionShortcut())?.asString)
-                .fold(
-                    onLeft = { ViewAnnounceCommand(language) },
-                    onRight = { page ->
-                        HelpCommand(
-                            sendSettings = isCrossLanguageCommand,
-                            page = page
-                        )
-                    }
-                )
+                ?.let { page ->
+                    HelpCommand(
+                        sendSettings = isCrossLanguageCommand,
+                        page = page
+                    )
+                }
+                ?: ViewAnnounceCommand(language)
         )
     }
 
@@ -79,15 +75,13 @@ object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
         return Either.Left(
             this.matchPage(language.container, payload.getOrNull(1))
-                .fold(
-                    onLeft = { ViewAnnounceCommand(language) },
-                    onRight = { page ->
-                        HelpCommand(
-                            sendSettings = isCrossLanguageCommand,
-                            page = page
-                        )
-                    }
-                )
+                ?.let { page ->
+                    HelpCommand(
+                        sendSettings = isCrossLanguageCommand,
+                        page = page
+                    )
+                }
+                ?: ViewAnnounceCommand(language)
         )
     }
 
