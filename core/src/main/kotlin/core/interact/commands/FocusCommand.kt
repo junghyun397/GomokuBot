@@ -62,7 +62,7 @@ class FocusCommand(
             else -> {
                 SessionManager.addNavigation(bot.sessions, messageRef, this.navigationState.copy(page = newFocus.idx()))
 
-                val action = service.attachFocusButtons(publishers.component, service.generateFocusedField(session, newFocusInfo))
+                val action = service.dispatchFocusButtons(publishers.component, service.generateFocusedField(session, newFocusInfo))
                     .launch()
                     .map { emptyOrders }
 

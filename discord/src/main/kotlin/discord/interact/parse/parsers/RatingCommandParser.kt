@@ -32,14 +32,14 @@ object RatingCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("not yet implemented", context.guild, context.user) { messagingService, publisher, container ->
-            messagingService.buildNotYetImplemented(publisher, container, "https://discord.gg/vq8pkfF")
+            messagingService.buildNotYetImplemented(publisher, container)
                 .launch()
                 .map { emptyList() }
         })
 
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> =
         Either.Right(this.asParseFailure("not yet implemented", context.guild, context.user) { messagingService, publisher, container ->
-            messagingService.buildNotYetImplemented(publisher, container, "https://discord.gg/vq8pkfF")
+            messagingService.buildNotYetImplemented(publisher, container)
                 .launch()
                 .map { emptyList() }
         })

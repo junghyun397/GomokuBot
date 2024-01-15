@@ -52,14 +52,14 @@ fun <A, B> buildBoardProcedure(
     }
 
     return service.buildBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, session)
-        .shift(session.board.winner().isEmpty) { io ->
+        .shift(session.board.winner().isEmpty) { io -> io.addComponents(
             when (session) {
-                is SwapStageOpeningSession -> service.attachSwapButtons(io, config.language.container)
-                is BranchingStageOpeningSession -> service.attachBranchingButtons(io, config.language.container)
-                is DeclareStageOpeningSession -> service.attachDeclareButtons(io, config.language.container, session)
-                else -> service.attachFocusButtons(io, service.generateFocusedField(session, focusInfo))
+                is SwapStageOpeningSession -> service.buildSwapButtons(config.language.container)
+                is BranchingStageOpeningSession -> service.buildBranchingButtons(config.language.container)
+                is DeclareStageOpeningSession -> service.buildDeclareButtons(config.language.container, session)
+                else -> service.buildFocusedButtons(service.generateFocusedField(session, focusInfo))
             }
-        }
+        ) }
         .retrieve()
         .flatMap { maybeMessage ->
             maybeMessage.fold(

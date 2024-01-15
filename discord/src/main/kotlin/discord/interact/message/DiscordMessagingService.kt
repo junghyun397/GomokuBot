@@ -21,7 +21,10 @@ import dev.minn.jda.ktx.messages.EmbedBuilder
 import dev.minn.jda.ktx.messages.InlineEmbed
 import discord.assets.*
 import discord.interact.GuildManager
+import discord.interact.message.DiscordMessagingService.IdConvention.ACCEPT
 import discord.interact.message.DiscordMessagingService.IdConvention.NO_FEATURE
+import discord.interact.message.DiscordMessagingService.IdConvention.OPENING
+import discord.interact.message.DiscordMessagingService.IdConvention.REJECT
 import discord.interact.message.DiscordMessagingService.IdConvention.REPLAY
 import discord.interact.message.DiscordMessagingService.IdConvention.REPLAY_LIST
 import discord.interact.parse.buildableCommands
@@ -55,8 +58,12 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
         const val NO_FEATURE = 'n'
 
+        const val SET = 's'
+        const val ACCEPT = 'a'
+        const val REJECT = 'r'
+        const val APPLY_SETTING = 'p'
+        const val OPENING = 'o'
         const val REPLAY_LIST = 'l'
-
         const val REPLAY = 'e'
 
     }
@@ -287,10 +294,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
         else
             ImageBoardRenderer.renderInputStream(session.board, session.history, HistoryRenderType.SEQUENCE, null, null, true)
 
-        val fName = if (animate)
-            ImageBoardRenderer.newGifFileName()
-        else
-            ImageBoardRenderer.newFileName()
+        val fName = if (animate) ImageBoardRenderer.newGifFileName() else ImageBoardRenderer.newFileName()
 
         val messageBuilder = publisher sends Embed {
             color = COLOR_NORMAL_HEX
@@ -308,7 +312,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
         return messageBuilder.addFile(imageStream, fName)
     }
 
-    override fun generateFocusedButtons(focusedFields: FocusedFields) =
+    override fun buildFocusedButtons(focusedFields: FocusedFields) =
         focusedFields.map { col -> ActionRow.of(
             col.map { (id, flag) -> when (flag) {
                 ButtonFlag.FREE -> Button.of(ButtonStyle.SECONDARY, "s-${id}", id)
@@ -322,42 +326,35 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             } }
         ) }.reversed() // cartesian coordinate system
 
-    override fun attachFocusButtons(boardAction: DiscordMessageBuilder, focusedFields: FocusedFields): DiscordMessageBuilder =
-        boardAction.addComponents(this.generateFocusedButtons(focusedFields))
+    override fun dispatchFocusButtons(publisher: DiscordComponentPublisher, focusedFields: FocusedFields): DiscordMessageBuilder =
+        publisher(this.buildFocusedButtons(focusedFields))
 
-    override fun attachFocusButtons(publisher: DiscordComponentPublisher, focusedFields: FocusedFields): DiscordMessageBuilder =
-        publisher(this.generateFocusedButtons(focusedFields))
-
-    override fun attachSwapButtons(boardAction: DiscordMessageBuilder, container: LanguageContainer): DiscordMessageBuilder =
-        boardAction.addComponents(listOf(
+    override fun buildSwapButtons(container: LanguageContainer): DiscordComponents =
+        listOf(
             ActionRow.of(
-                Button.of(ButtonStyle.PRIMARY, "o-sy", container.swapSelectYes()),
-                Button.of(ButtonStyle.SECONDARY, "o-sn", container.swapSelectNo())
+                Button.of(ButtonStyle.PRIMARY, "$OPENING-sy", container.swapSelectYes()),
+                Button.of(ButtonStyle.SECONDARY, "$OPENING-sn", container.swapSelectNo())
             )
-        ))
+        )
 
-    override fun attachBranchingButtons(boardAction: DiscordMessageBuilder, container: LanguageContainer): DiscordMessageBuilder =
-        boardAction.addComponents(listOf(
+    override fun buildBranchingButtons(container: LanguageContainer): DiscordComponents =
+        listOf(
             ActionRow.of(
-                Button.of(ButtonStyle.PRIMARY, "o-bn", container.branchSelectSwap()),
-                Button.of(ButtonStyle.SECONDARY, "o-by", container.branchSelectOffer())
+                Button.of(ButtonStyle.PRIMARY, "$OPENING-bn", container.branchSelectSwap()),
+                Button.of(ButtonStyle.SECONDARY, "$OPENING-by", container.branchSelectOffer())
             )
-        ))
+        )
 
-    override fun attachDeclareButtons(boardAction: MessageBuilder<DiscordMessageData, DiscordComponents>, container: LanguageContainer, session: DeclareStageOpeningSession) =
-        boardAction.addComponents(listOf(
-            ActionRow.of(
-                StringSelectMenu("o") {
-                    for (idx in 1 .. session.maxOfferCount) {
-                        option(
-                            label = idx.toString(),
-                            value = "o-d$idx",
-                            default = false
-                        )
-                    }
-                }
-            )
-        ))
+    override fun buildDeclareButtons(container: LanguageContainer, session: DeclareStageOpeningSession) =
+        StringSelectMenu(OPENING.toString()) {
+            for (idx in 1 .. session.maxOfferCount) {
+                option(
+                    label = idx.toString(),
+                    value = "$OPENING-d$idx",
+                    default = false
+                )
+            }
+        }.liftToButtons()
 
     override fun attachNavigators(flow: Flow<String>, message: DiscordMessageData, checkTerminated: suspend () -> Boolean) =
         IO { message.original
@@ -388,8 +385,8 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
     // REPLAY
 
-    override fun attachReplayButtons(builder: MessageBuilder<DiscordMessageData, DiscordComponents>, gameRecordId: GameRecordId, totalMoves: Int, currentMoves: Int) =
-        when (currentMoves) {
+    override fun buildReplayButtons(gameRecordId: GameRecordId, totalMoves: Int, currentMoves: Int): DiscordComponents =
+        listOf(when (currentMoves) {
             1 -> ActionRow.of(
                 Button.of(ButtonStyle.SECONDARY, "$REPLAY_LIST-1", EMOJI_RETURN),
                 Button.of(ButtonStyle.SECONDARY, "$NO_FEATURE-1", EMOJI_PREVIOUS).asDisabled(),
@@ -411,8 +408,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                 Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-${currentMoves+1}-3", EMOJI_RIGHT),
                 Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-${totalMoves}-4", EMOJI_NEXT)
             )
-        }
-            .let { builder.addComponents(listOf(it)) }
+        })
 
     override fun buildBackToListButton() =
         Button.of(ButtonStyle.SECONDARY, "$REPLAY_LIST", EMOJI_RETURN).liftToButtons()
@@ -675,8 +671,8 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             description = container.requestEmbedDescription(owner.asMentionFormat(), opponent.asMentionFormat())
         })).addComponents(
             listOf(ActionRow.of(
-                Button.of(ButtonStyle.DANGER, "r-${rule.id}-${owner.givenId.idLong}", container.requestEmbedButtonReject()),
-                Button.of(ButtonStyle.SUCCESS, "a-${rule.id}-${owner.givenId.idLong}", container.requestEmbedButtonAccept())
+                Button.of(ButtonStyle.DANGER, "$REJECT-${rule.id}-${owner.givenId.idLong}", container.requestEmbedButtonReject()),
+                Button.of(ButtonStyle.SUCCESS, "$ACCEPT-${rule.id}-${owner.givenId.idLong}", container.requestEmbedButtonAccept())
             ))
         )
 

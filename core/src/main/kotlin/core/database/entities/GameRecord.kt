@@ -1,11 +1,11 @@
 package core.database.entities
 
 import core.assets.*
+import core.database.DatabaseConnection
 import core.database.repositories.UserProfileRepository
 import core.inference.AiLevel
 import core.inference.Token
 import core.session.Rule
-import core.session.SessionPool
 import core.session.entities.*
 import renju.notation.Pos
 import utils.assets.LinuxTime
@@ -67,19 +67,19 @@ fun GameSession.extractGameRecord(guildUid: GuildUid): Option<GameRecord> =
         )
     }
 
-suspend fun GameRecord.asGameSession(pool: SessionPool, owner: User): GameSession =
-    when {
+suspend fun GameRecord.asGameSession(dbConnection: DatabaseConnection, owner: User): GameSession {
+    val board = Notation.BoardIOInstance.fromFieldArray(boardState, history.last().idx()).get()
+
+    return when {
         whiteId != null && blackId != null -> {
             val ownerHasBlack = blackId == owner.id
-
-            val board = Notation.BoardIOInstance.fromFieldArray(boardState, history.last().idx()).get()
 
             PvpGameSession(
                 owner = owner,
                 opponent = if (ownerHasBlack)
-                    UserProfileRepository.retrieveUser(pool.dbConnection, whiteId)
+                    UserProfileRepository.retrieveUser(dbConnection, whiteId)
                 else
-                    UserProfileRepository.retrieveUser(pool.dbConnection, blackId),
+                    UserProfileRepository.retrieveUser(dbConnection, blackId),
                 ownerHasBlack = ownerHasBlack,
                 board = board,
                 gameResult = Option.Some(gameResult),
@@ -92,8 +92,6 @@ suspend fun GameRecord.asGameSession(pool: SessionPool, owner: User): GameSessio
         }
         else -> {
             val ownerHasBlack = whiteId == null
-
-            val board = Notation.BoardIOInstance.fromPosSequence(history.joinToString(separator = "")).get()
 
             AiGameSession(
                 aiLevel = aiLevel!!,
@@ -111,3 +109,4 @@ suspend fun GameRecord.asGameSession(pool: SessionPool, owner: User): GameSessio
             )
         }
     }
+}

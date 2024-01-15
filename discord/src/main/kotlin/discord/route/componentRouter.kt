@@ -23,11 +23,11 @@ import utils.structs.getOrException
 
 private fun matchAction(prefix: Char?): Option<EmbeddableCommand> =
     when (prefix) {
-        's' -> Option.Some(SetCommandParser)
-        'a' -> Option.Some(AcceptCommandParser)
-        'r' -> Option.Some(RejectCommandParser)
-        'p' -> Option.Some(ApplySettingCommandParser)
-        'o' -> Option.Some(OpeningCommandParser)
+        DiscordMessagingService.IdConvention.SET -> Option.Some(SetCommandParser)
+        DiscordMessagingService.IdConvention.ACCEPT -> Option.Some(AcceptCommandParser)
+        DiscordMessagingService.IdConvention.REJECT -> Option.Some(RejectCommandParser)
+        DiscordMessagingService.IdConvention.APPLY_SETTING -> Option.Some(ApplySettingCommandParser)
+        DiscordMessagingService.IdConvention.OPENING -> Option.Some(OpeningCommandParser)
         DiscordMessagingService.IdConvention.REPLAY_LIST -> Option.Some(RecentRecordsCommandParser)
         DiscordMessagingService.IdConvention.REPLAY -> Option.Some(ReplayCommandParser)
         else -> Option.Empty

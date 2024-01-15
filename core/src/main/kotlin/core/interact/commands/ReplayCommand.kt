@@ -54,7 +54,7 @@ class ReplayCommand(private val recordId: GameRecordId, private val moves: Int) 
 
         val session = modRecord.asGameSession(bot.dbConnection, user)
 
-        val messageBuilder = service.buildReplayBoard(
+        val io = service.buildReplayBoard(
             publishers.edit(messageRef),
             config.language.container,
             config.boardStyle.renderer,
@@ -62,8 +62,7 @@ class ReplayCommand(private val recordId: GameRecordId, private val moves: Int) 
             session,
             originalRecord.history.size
         )
-
-        val io = service.attachReplayButtons(messageBuilder, this.recordId, originalRecord.history.size, moves)
+            .addComponents(service.buildReplayButtons(this.recordId, originalRecord.history.size, moves))
             .launch()
             .map { emptyOrders }
 

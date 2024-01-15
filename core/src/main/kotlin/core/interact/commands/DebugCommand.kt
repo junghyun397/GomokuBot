@@ -199,7 +199,7 @@ class DebugCommand(
                 )
                 .getOrException()
 
-            val session = gameRecord.asGameSession(bot.sessions, user)
+            val session = gameRecord.asGameSession(bot.dbConnection, user)
 
             val io = service.buildSessionArchive(publishers.plain, session, session.gameResult, true)
                 .launch()

@@ -28,7 +28,7 @@ interface MessagingService<A, B> {
 
     fun generateFocusedField(session: GameSession, focusInfo: FocusSolver.FocusInfo): FocusedFields
 
-    fun generateFocusedButtons(focusedFields: FocusedFields): B
+    fun buildFocusedButtons(focusedFields: FocusedFields): B
 
     fun buildBoard(publisher: MessagePublisher<A, B>, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession): MessageBuilder<A, B>
 
@@ -36,15 +36,13 @@ interface MessagingService<A, B> {
 
     fun buildSessionArchive(publisher: MessagePublisher<A, B>, session: GameSession, result: Option<GameResult>, animate: Boolean): MessageBuilder<A, B>
 
-    fun attachFocusButtons(boardAction: MessageBuilder<A, B>, focusedFields: FocusedFields): MessageBuilder<A, B>
+    fun dispatchFocusButtons(publisher: ComponentPublisher<A, B>, focusedFields: FocusedFields): MessageBuilder<A, B>
 
-    fun attachFocusButtons(publisher: ComponentPublisher<A, B>, focusedFields: FocusedFields): MessageBuilder<A, B>
+    fun buildSwapButtons(container: LanguageContainer): B
 
-    fun attachSwapButtons(boardAction: MessageBuilder<A, B>, container: LanguageContainer): MessageBuilder<A, B>
+    fun buildBranchingButtons(container: LanguageContainer): B
 
-    fun attachBranchingButtons(boardAction: MessageBuilder<A, B>, container: LanguageContainer): MessageBuilder<A, B>
-
-    fun attachDeclareButtons(boardAction: MessageBuilder<A, B>, container: LanguageContainer, session: DeclareStageOpeningSession): MessageBuilder<A, B>
+    fun buildDeclareButtons(container: LanguageContainer, session: DeclareStageOpeningSession): B
 
     fun attachNavigators(flow: Flow<String>, message: A, checkTerminated: suspend () -> Boolean): IO<Unit>
 
@@ -86,7 +84,7 @@ interface MessagingService<A, B> {
 
     // REPLAY
 
-    fun attachReplayButtons(builder: MessageBuilder<A, B>, gameRecordId: GameRecordId, totalMoves: Int, currentMoves: Int): MessageBuilder<A, B>
+    fun buildReplayButtons(gameRecordId: GameRecordId, totalMoves: Int, currentMoves: Int): B
 
     fun buildBackToListButton(): B
 
