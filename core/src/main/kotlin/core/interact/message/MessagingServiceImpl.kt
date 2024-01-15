@@ -222,6 +222,12 @@ abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
     override fun buildDebugMessage(publisher: MessagePublisher<A, B>, payload: String) =
         publisher sends payload
 
+    override fun buildNotYetImplemented(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
+        this.buildSomethingWrongMessage(publisher, container, container.notYetImplementedEmbedDescription())
+
+    override fun buildUnableToReplay(publisher: MessagePublisher<A, B>, container: LanguageContainer) =
+        this.buildSomethingWrongMessage(publisher, container, container.replayEmbedUnableToReplayDescription())
+
     companion object {
 
         val aboutRenjuDocument: Map<LanguageContainer, Pair<SimplifiedMarkdownDocument, MarkdownAnchorMapping>> =

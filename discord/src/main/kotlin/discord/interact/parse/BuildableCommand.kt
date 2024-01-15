@@ -9,7 +9,7 @@ val buildableCommands: Set<BuildableCommand> =
         HelpCommandParser, SettingsCommandParser,
         StyleCommandParser, LangCommandParser,
         StartCommandParser, ResignCommandParser, SetCommandParser,
-        RankCommandParser, RatingCommandParser
+        RankCommandParser, RecentRecordsCommandParser, RatingCommandParser
     )
 
 val engBuildableCommands: Set<BuildableCommand> =

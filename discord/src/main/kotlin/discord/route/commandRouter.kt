@@ -103,6 +103,7 @@ private fun matchCommand(command: String, container: LanguageContainer): Option<
         container.styleCommand() -> Option(StyleCommandParser)
         container.rankCommand() -> Option(RankCommandParser)
         container.ratingCommand() -> Option(RatingCommandParser)
+        container.replayCommand() -> Option(RecentRecordsCommandParser)
         "debug" -> Option(DebugCommandParser)
         else -> Option.Empty
     }

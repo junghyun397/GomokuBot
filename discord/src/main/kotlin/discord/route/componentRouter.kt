@@ -21,13 +21,15 @@ import utils.structs.asOption
 import utils.structs.flatMap
 import utils.structs.getOrException
 
-private fun matchAction(prefix: String): Option<EmbeddableCommand> =
+private fun matchAction(prefix: Char?): Option<EmbeddableCommand> =
     when (prefix) {
-        "s" -> Option.Some(SetCommandParser)
-        "a" -> Option.Some(AcceptCommandParser)
-        "r" -> Option.Some(RejectCommandParser)
-        "p" -> Option.Some(ApplySettingCommandParser)
-        "o" -> Option.Some(OpeningCommandParser)
+        's' -> Option.Some(SetCommandParser)
+        'a' -> Option.Some(AcceptCommandParser)
+        'r' -> Option.Some(RejectCommandParser)
+        'p' -> Option.Some(ApplySettingCommandParser)
+        'o' -> Option.Some(OpeningCommandParser)
+        DiscordMessagingService.IdConvention.REPLAY_LIST -> Option.Some(RecentRecordsCommandParser)
+        DiscordMessagingService.IdConvention.REPLAY -> Option.Some(ReplayCommandParser)
         else -> Option.Empty
     }
 
@@ -36,7 +38,7 @@ fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInte
         context.event.component.id
             .asOption()
             .flatMap { rawId ->
-                matchAction(rawId.split("-").first())
+                matchAction(rawId.split("-").first().getOrNull(0))
             }
             .flatMap { parsable ->
                 parsable.parseComponent(context)

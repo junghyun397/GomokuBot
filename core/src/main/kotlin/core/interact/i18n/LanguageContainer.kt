@@ -60,6 +60,7 @@ sealed interface LanguageContainer {
     fun commandUsageRankGlobal(): String
     fun commandUsageRankServer(): String
     fun commandUsageRankUser(): String
+    fun commandUsageReplay(): String
     fun commandUsageRating(): String
 
     fun commandUsageLang(langList: String): String
@@ -68,6 +69,9 @@ sealed interface LanguageContainer {
     fun commandUsageStartPVE(): String
     fun commandUsageStartPVP(): String
     fun commandUsageResign(): String
+
+    fun replayCommand(): String
+    fun replayCommandDescription(): String
 
     fun rankCommand(): String
     fun rankCommandDescription(): String
@@ -284,6 +288,11 @@ sealed interface LanguageContainer {
     fun boardSelectGuide(): String
     fun boardOfferGuide(remainingMoves: Int): String
 
+    fun replayEmbedWin(): String
+    fun replayEmbedLose(): String
+    fun replayEmbedDraw(): String
+    fun replayEmbedUnableToReplayDescription(): String
+
     fun announceWrittenOn(date: String): String
 
     fun somethingWrongEmbedTitle(): String
@@ -292,7 +301,7 @@ sealed interface LanguageContainer {
     fun permissionNotGrantedEmbedFooter(): String
 
     fun notYetImplementedEmbedDescription(): String
-    fun notYetImplementedEmbedFooter(officialChannel: String): String
+    fun notYetImplementedEmbedFooter(): String
 
     fun exploreAboutRenju(): String
 

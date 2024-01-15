@@ -55,6 +55,7 @@ open class LanguageENG : LanguageContainer {
     override fun commandUsageRankGlobal() = "Get the overall ranking of GomokuBot from 1st to 10th."
     override fun commandUsageRankServer() = "Get the internal ranking of this server."
     override fun commandUsageRankUser() = "Get a ranking of mentioned user's opponents."
+    override fun commandUsageReplay() = "Get a list of recently played game replays."
     override fun commandUsageRating() = "Get ``GomokuBot ELO`` rating."
 
     override fun commandUsageLang(langList: String) =
@@ -66,6 +67,9 @@ open class LanguageENG : LanguageContainer {
     override fun commandUsageStartPVP() =
         "Send a game request to the mentioned user. Ex) ``/start`` ``@user``"
     override fun commandUsageResign() = "Resign from a game in progress."
+
+    override fun replayCommand() = "replay"
+    override fun replayCommandDescription() = "Replay recently played games."
 
     // chunk
 
@@ -360,6 +364,11 @@ open class LanguageENG : LanguageContainer {
     override fun boardOfferGuide(remainingMoves: Int) =
         ":question: Press the button or use ``/s`` ``column`` ``row`` command to pick ``$remainingMoves`` candidates for the 5th move."
 
+    override fun replayEmbedWin() = "Win"
+    override fun replayEmbedLose() = "Lose"
+    override fun replayEmbedDraw() = "Draw"
+    override fun replayEmbedUnableToReplayDescription() = "This is an empty match. The replay is unavailable. Please select another match."
+
     override fun announceWrittenOn(date: String) = "Written on $date."
 
     override fun somethingWrongEmbedTitle() = "Something Wrong"
@@ -371,8 +380,8 @@ open class LanguageENG : LanguageContainer {
 
     override fun notYetImplementedEmbedDescription() = "This feature is not yet implemented."
 
-    override fun notYetImplementedEmbedFooter(officialChannel: String) =
-        "Get updates on GomokuBot in the support channel($officialChannel)."
+    override fun notYetImplementedEmbedFooter() =
+        "Get updates on GomokuBot in the support channel(https://discord.gg/vq8pkfF)."
 
     override fun exploreAboutRenju() = "Don't know what Renju is? Press $UNICODE_RIGHT to learn about Renju."
 

@@ -2,6 +2,8 @@ package core.interact.message
 
 import core.assets.User
 import core.database.entities.Announce
+import core.database.entities.GameRecord
+import core.database.entities.GameRecordId
 import core.database.entities.UserStats
 import core.inference.FocusSolver
 import core.interact.i18n.LanguageContainer
@@ -29,6 +31,8 @@ interface MessagingService<A, B> {
     fun generateFocusedButtons(focusedFields: FocusedFields): B
 
     fun buildBoard(publisher: MessagePublisher<A, B>, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession): MessageBuilder<A, B>
+
+    fun buildReplayBoard(publisher: MessagePublisher<A, B>, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession, totalMoves: Int): MessageBuilder<A, B>
 
     fun buildSessionArchive(publisher: MessagePublisher<A, B>, session: GameSession, result: Option<GameResult>, animate: Boolean): MessageBuilder<A, B>
 
@@ -79,6 +83,14 @@ interface MessagingService<A, B> {
     fun buildSurrenderedPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User): MessageBuilder<A, B>
 
     fun buildTimeoutPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, player: User): MessageBuilder<A, B>
+
+    // REPLAY
+
+    fun attachReplayButtons(builder: MessageBuilder<A, B>, gameRecordId: GameRecordId, totalMoves: Int, currentMoves: Int): MessageBuilder<A, B>
+
+    fun buildBackToListButton(): B
+
+    fun buildRecentRecords(publisher: MessagePublisher<A, B>, container: LanguageContainer, player: User, records: List<Pair<User, GameRecord>>): MessageBuilder<A, B>
 
     // HELP
 
@@ -162,6 +174,10 @@ interface MessagingService<A, B> {
 
     fun buildAnnounce(publisher: MessagePublisher<A, B>, container: LanguageContainer, announce: Announce): MessageBuilder<A, B>
 
-    fun buildNotYetImplemented(publisher: MessagePublisher<A, B>, container: LanguageContainer, officialChannel: String): MessageBuilder<A, B>
+    fun buildSomethingWrongMessage(publisher: MessagePublisher<A, B>, container: LanguageContainer, message: String): MessageBuilder<A, B>
+
+    fun buildNotYetImplemented(publisher: MessagePublisher<A, B>, container: LanguageContainer): MessageBuilder<A, B>
+
+    fun buildUnableToReplay(publisher: MessagePublisher<A, B>, container: LanguageContainer): MessageBuilder<A, B>
 
 }

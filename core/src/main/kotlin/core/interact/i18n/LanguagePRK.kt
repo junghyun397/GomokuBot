@@ -307,8 +307,8 @@ open class LanguagePRK : LanguageKOR() {
 
     override fun notYetImplementedEmbedDescription() = "이 기능은 아직 완성되지 않았습니다."
 
-    override fun notYetImplementedEmbedFooter(officialChannel: String) =
-        "지원 채널($officialChannel)에서 Gomokubot 업데이트 소식을 받아볼 수 있습니다."
+    override fun notYetImplementedEmbedFooter() =
+        "지원 채널(https://discord.gg/vq8pkfF)에서 Gomokubot 업데이트 소식을 받아볼 수 있습니다."
 
     override fun exploreAboutRenju() = "렌주가 무엇인지 모르시오? $UNICODE_RIGHT 를 눌러 렌주에 대해 알아보시오. 남조선에서 만든 자료가 있소."
 

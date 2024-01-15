@@ -19,6 +19,9 @@ const val UNICODE_DOWN = "\ud83d\udd3d" // 🔽
 const val UNICODE_UP = "\ud83d\udd3c" // 🔼
 const val UNICODE_RIGHT = "\u25b6\ufe0f" // ▶
 const val UNICODE_FOCUS = "\u23fa\ufe0f" // ⏺
+const val UNICODE_PREVIOUS = "\u23ee\ufe0f" // ⏮️
+const val UNICODE_NEXT = "\u23ed\ufe0f" // ⏭️
+const val UNICODE_RETURN = "\u21a9\ufe0f" // ↩️
 
 const val UNICODE_IMAGE = "\ud83d\uddbc" // 🖼
 const val UNICODE_T = "\ud83c\uddf9" // 🇹

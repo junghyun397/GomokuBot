@@ -2,6 +2,8 @@ package discord.interact.message
 
 import core.assets.*
 import core.database.entities.Announce
+import core.database.entities.GameRecord
+import core.database.entities.GameRecordId
 import core.database.entities.UserStats
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
@@ -11,14 +13,17 @@ import core.interact.message.graphics.HistoryRenderType
 import core.interact.message.graphics.ImageBoardRenderer
 import core.session.*
 import core.session.entities.*
+import dev.minn.jda.ktx.interactions.components.SelectOption
 import dev.minn.jda.ktx.interactions.components.StringSelectMenu
 import dev.minn.jda.ktx.interactions.components.option
 import dev.minn.jda.ktx.messages.Embed
+import dev.minn.jda.ktx.messages.EmbedBuilder
 import dev.minn.jda.ktx.messages.InlineEmbed
-import discord.assets.EMOJI_BLACK_CIRCLE
-import discord.assets.EMOJI_DARK_X
-import discord.assets.EMOJI_WHITE_CIRCLE
+import discord.assets.*
 import discord.interact.GuildManager
+import discord.interact.message.DiscordMessagingService.IdConvention.NO_FEATURE
+import discord.interact.message.DiscordMessagingService.IdConvention.REPLAY
+import discord.interact.message.DiscordMessagingService.IdConvention.REPLAY_LIST
 import discord.interact.parse.buildableCommands
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
@@ -34,6 +39,7 @@ import net.dv8tion.jda.api.interactions.components.ItemComponent
 import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu
+import net.dv8tion.jda.api.interactions.components.selections.SelectOption
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction
 import renju.notation.Flag
 import renju.notation.Renju
@@ -44,6 +50,16 @@ import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
 
 object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, DiscordComponents>() {
+
+    object IdConvention {
+
+        const val NO_FEATURE = 'n'
+
+        const val REPLAY_LIST = 'l'
+
+        const val REPLAY = 'e'
+
+    }
 
     override val focusWidth = 5
     override val focusRange = 2..Renju.BOARD_WIDTH_MAX_IDX() - 2
@@ -106,10 +122,16 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
         }
     }
 
-    private fun InlineEmbed.buildResultFields(container: LanguageContainer, session: GameSession, gameResult: GameResult) {
+    private fun InlineEmbed.buildResultFields(container: LanguageContainer, session: GameSession, gameResult: GameResult) =
+        this.buildResultFields(container, gameResult, session.board.moves().toString().asHighlightFormat())
+
+    private fun InlineEmbed.buildResultFields(container: LanguageContainer, session: GameSession, gameResult: GameResult, totalMoves: Int) =
+        this.buildResultFields(container, gameResult, "${session.board.moves()}/$totalMoves".asHighlightFormat())
+
+    private fun InlineEmbed.buildResultFields(container: LanguageContainer, gameResult: GameResult, movesFieldString: String) {
         field {
             name = container.boardMoves()
-            value = session.board.moves().toString().asHighlightFormat()
+            value = movesFieldString
             inline = true
         }
 
@@ -209,6 +231,44 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                             onDefined = { buildResultFields(container, session, it) },
                             onEmpty = { buildStatusFields(container, session) },
                         )
+
+                        image = "attachment://$fName"
+                    })
+
+                    buildGuideEmbed(session, container)
+                }
+
+                messageBuilder.addFile(imageStream, fName)
+            }
+        )
+    }
+
+    override fun buildReplayBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession, totalMoves: Int): DiscordMessageBuilder {
+        val gameResult = session.gameResult.getOrException()
+
+        return renderer.renderBoard(session.board, session.history, renderType, null, null).fold(
+            onLeft = { textBoard ->
+                publisher sends buildList {
+                    add(Embed {
+                        color = COLOR_NORMAL_HEX
+
+                        buildBoardAuthor(container, session)
+                        buildResultFields(container, session, gameResult, totalMoves)
+                        description = textBoard
+                    })
+
+                    buildGuideEmbed(session, container)
+                }
+            },
+            onRight = { imageStream ->
+                val fName = ImageBoardRenderer.newFileName()
+
+                val messageBuilder = publisher sends buildList {
+                    add(Embed {
+                        color = COLOR_NORMAL_HEX
+
+                        buildBoardAuthor(container, session)
+                        buildResultFields(container, session, gameResult, totalMoves)
 
                         image = "attachment://$fName"
                     })
@@ -325,6 +385,71 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                 catch (_: CancellationException) {}
             }
         }
+
+    // REPLAY
+
+    override fun attachReplayButtons(builder: MessageBuilder<DiscordMessageData, DiscordComponents>, gameRecordId: GameRecordId, totalMoves: Int, currentMoves: Int) =
+        when (currentMoves) {
+            1 -> ActionRow.of(
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY_LIST-1", EMOJI_RETURN),
+                Button.of(ButtonStyle.SECONDARY, "$NO_FEATURE-1", EMOJI_PREVIOUS).asDisabled(),
+                Button.of(ButtonStyle.SECONDARY, "$NO_FEATURE-2", EMOJI_LEFT).asDisabled(),
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-2-3", EMOJI_RIGHT),
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-${totalMoves}-4", EMOJI_NEXT)
+            )
+            totalMoves -> ActionRow.of(
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY_LIST-1", EMOJI_RETURN),
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-1-1", EMOJI_PREVIOUS),
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-${currentMoves-1}-2", EMOJI_LEFT),
+                Button.of(ButtonStyle.SECONDARY, "$NO_FEATURE-3", EMOJI_RIGHT).asDisabled(),
+                Button.of(ButtonStyle.SECONDARY, "$NO_FEATURE-4", EMOJI_NEXT).asDisabled()
+            )
+            else -> ActionRow.of(
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY_LIST-1", EMOJI_RETURN),
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-1-1", EMOJI_PREVIOUS),
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-${currentMoves-1}-2", EMOJI_LEFT),
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-${currentMoves+1}-3", EMOJI_RIGHT),
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-${totalMoves}-4", EMOJI_NEXT)
+            )
+        }
+            .let { builder.addComponents(listOf(it)) }
+
+    override fun buildBackToListButton() =
+        Button.of(ButtonStyle.SECONDARY, "$REPLAY_LIST", EMOJI_RETURN).liftToButtons()
+
+    override fun buildRecentRecords(publisher: MessagePublisher<DiscordMessageData, DiscordComponents>, container: LanguageContainer, player: User, records: List<Pair<User, GameRecord>>): MessageBuilder<DiscordMessageData, DiscordComponents> {
+        val embedBuilder = EmbedBuilder(
+            color = COLOR_NORMAL_HEX
+        )
+
+        val selectMenuOptions = mutableListOf<SelectOption>()
+
+        records.forEachIndexed { idx, (opponent, record) ->
+            val playerWasBlack = record.blackId == player.id
+            val resultString = when {
+                record.gameResult.cause == GameResult.Cause.DRAW -> "$UNICODE_PENCIL${container.replayEmbedDraw()}"
+                (record.gameResult.winColorId == Notation.FlagInstance.BLACK().toShort()) == playerWasBlack -> "$UNICODE_TROPHY${container.replayEmbedWin()}"
+                else -> "$UNICODE_WHITE_FLAG${container.replayEmbedLose()}"
+            }
+
+            val playerColor = if (playerWasBlack) Notation.Color.Black else Notation.Color.White
+            val opponentColor = if (playerWasBlack) Notation.Color.White else Notation.Color.Black
+
+            embedBuilder.field {
+                name = "#${idx + 1}: ``${player.withColor(playerColor)}`` vs ``${opponent.withColor(opponentColor)}``, $resultString"
+                value = "$UNICODE_ALARM_CLOCK${record.date}, ${record.rule}, total ${record.history.size} moves."
+                inline = false
+            }
+
+            selectMenuOptions.add(SelectOption(
+                label = "#${idx + 1}: ${player.withColor(playerColor)} vs ${opponent.withColor(opponentColor)}, $resultString",
+                value = "$REPLAY-${record.gameRecordId.getOrException().id}-1"
+            ))
+        }
+
+        return (publisher sends embedBuilder.build())
+            .addComponents(StringSelectMenu(REPLAY.toString(), options = selectMenuOptions).liftToButtons())
+    }
 
     // HELP
 
@@ -575,14 +700,14 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             }
         }
 
-    override fun buildNotYetImplemented(publisher: DiscordMessagePublisher, container: LanguageContainer, officialChannel: String) =
+    override fun buildSomethingWrongMessage(publisher: MessagePublisher<DiscordMessageData, DiscordComponents>, container: LanguageContainer, message: String) =
         publisher sends Embed {
             color = COLOR_RED_HEX
             title = "$UNICODE_CONSTRUCTION ${container.somethingWrongEmbedTitle()}"
-            description = container.notYetImplementedEmbedDescription()
+            description = message
             footer {
-                name = "$UNICODE_MAILBOX ${container.notYetImplementedEmbedFooter(officialChannel)}"
-                }
+                name = "$UNICODE_MAILBOX ${container.notYetImplementedEmbedFooter()}"
+            }
         }
 
     fun sendPermissionNotGrantedEmbed(publisher: (DiscordMessageData) -> MessageCreateAction, container: LanguageContainer, channelName: String) =

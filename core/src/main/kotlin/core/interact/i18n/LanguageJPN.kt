@@ -317,8 +317,8 @@ class LanguageJPN : LanguageENG() {
 
     override fun notYetImplementedEmbedDescription() = "この機能はまだ実装されていません。"
 
-    override fun notYetImplementedEmbedFooter(officialChannel: String) =
-        "サポートチャンネル($officialChannel)でGomokuBotの最新情報を入手してください。"
+    override fun notYetImplementedEmbedFooter() =
+        "サポートチャンネル(https://discord.gg/vq8pkfF)でGomokuBotの最新情報を入手してください。"
 
     override fun exploreAboutRenju() = "レンジュについて知らないですか？$UNICODE_RIGHT を押してレンジュについて学びましょう。"
 

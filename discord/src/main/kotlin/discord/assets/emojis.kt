@@ -27,6 +27,9 @@ val EMOJI_DOWN = Emoji.fromUnicode(UNICODE_DOWN) // 🔽
 val EMOJI_UP = Emoji.fromUnicode(UNICODE_UP) // 🔼
 val EMOJI_RIGHT = Emoji.fromUnicode(UNICODE_RIGHT) // ▶
 val EMOJI_FOCUS = Emoji.fromUnicode(UNICODE_FOCUS) // ⏺
+val EMOJI_PREVIOUS = Emoji.fromUnicode(UNICODE_PREVIOUS) //
+val EMOJI_NEXT = Emoji.fromUnicode(UNICODE_NEXT) //
+val EMOJI_RETURN = Emoji.fromUnicode(UNICODE_RETURN) //
 
 val EMOJI_IMAGE = Emoji.fromUnicode(UNICODE_IMAGE) // 🖼
 val EMOJI_T = Emoji.fromUnicode(UNICODE_T) // 🇹

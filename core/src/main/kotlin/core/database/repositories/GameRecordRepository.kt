@@ -47,11 +47,12 @@ object GameRecordRepository {
             .awaitFirstOrNull()
     }
 
-    suspend fun retrieveGameRecordsByGuildUid(connection: DatabaseConnection, guildUid: GuildUid): MutableList<GameRecord> =
+    suspend fun retrieveGameRecordsByGuildUid(connection: DatabaseConnection, guildUid: GuildUid, limit: Int): MutableList<GameRecord> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
-                .createStatement("SELECT * FROM game_record WHERE guild_id = $1")
+                .createStatement("SELECT * FROM game_record WHERE guild_id = $1 ORDER BY create_date DESC LIMIT $2")
                 .bind("$1", guildUid.uuid)
+                .bind("$2", limit)
                 .execute()
             }
             .flatMap { result -> result
@@ -62,11 +63,12 @@ object GameRecordRepository {
             .map { this.buildGameRecord(connection, it) }
             .toMutableList()
 
-    suspend fun retrieveGameRecordsByUserUid(connection: DatabaseConnection, userUid: UserUid): MutableList<GameRecord> =
+    suspend fun retrieveGameRecordsByUserUid(connection: DatabaseConnection, userUid: UserUid, limit: Int): MutableList<GameRecord> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
-                .createStatement("SELECT * FROM game_record WHERE white_id = $1 OR black_id = $1")
+                .createStatement("SELECT * FROM game_record WHERE white_id = $1 OR black_id = $1 ORDER BY create_date DESC LIMIT $2")
                 .bind("$1", userUid.uuid)
+                .bind("$2", limit)
                 .execute()
             }
             .flatMap { result -> result

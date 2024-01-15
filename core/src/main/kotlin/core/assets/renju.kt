@@ -1,6 +1,7 @@
 package core.assets
 
 import renju.Board
+import renju.BoardIO
 import renju.`BoardIO$`
 import renju.`EmptyScalaBoard$`
 import renju.FieldStatus
@@ -18,6 +19,18 @@ val posList = (0 until Renju.BOARD_SIZE()).map { Pos.fromIdx(it) }
 operator fun Board.get(index: Int): FieldStatus = this.getFieldStatus(index)
 
 typealias EmptyBoard = `EmptyScalaBoard$`
+
+fun buildBoard(history: List<Pos>): ByteArray {
+    val field = ByteArray(Renju.BOARD_SIZE()) { Notation.FlagInstance.EMPTY() }
+
+    history.forEachIndexed { index, pos ->
+        field[pos.idx()] =
+            if (index % 2 == 0) Notation.FlagInstance.BLACK()
+            else Notation.FlagInstance.WHITE()
+    }
+
+    return field
+}
 
 object Notation {
 
