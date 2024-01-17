@@ -38,7 +38,7 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
 
         UserProfileRepository.upsertUser(bot.dbConnection, thenUser)
 
-        val io = AnnounceRepository.getAnnouncesSince(bot.dbConnection, user.announceId ?: -1)
+        val io = AnnounceRepository.getAnnouncesSince(bot.dbConnection, user.announceId ?: 0)
             .mapIndexed { index, announces ->
                 service.buildAnnounce(
                     publishers.plain,

@@ -13,6 +13,7 @@ import utils.lang.tuple
 import utils.structs.IO
 import utils.structs.Quadruple
 import utils.structs.flatMap
+import utils.structs.map
 
 abstract class UnionCommand(private val command: Command) : Command {
 
@@ -33,7 +34,7 @@ abstract class UnionCommand(private val command: Command) : Command {
         val (originalIO, report) = this.command.execute(bot, config, thenGuild, thenUser, service, messageRef, publishers)
             .getOrThrow()
 
-        tuple(unionIO.flatMap { originalIO }, unionReport + report)
+        tuple(unionIO.flatMap { unionOrders -> originalIO.map { originalOrders -> unionOrders + originalOrders } }, unionReport + report)
     }
 
     protected abstract suspend fun <A, B> executeSelf(

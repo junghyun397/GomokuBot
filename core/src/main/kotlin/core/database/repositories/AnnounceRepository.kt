@@ -21,7 +21,7 @@ object AnnounceRepository {
 
     fun getAnnouncesSince(connection: DatabaseConnection, announceIndex: Int): List<Map<Language, Announce>> =
         connection.localCaches.announceCache
-            .tailMap(announceIndex)
+            .tailMap(announceIndex + 1)
             .values
             .toList()
 

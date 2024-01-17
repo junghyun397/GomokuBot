@@ -55,6 +55,9 @@ open class LanguageKOR : LanguageENG() {
         "멘션 된 유저에게 새 게임을 제안합니다. Ex) ``/시작`` ``@유저``"
     override fun commandUsageResign() = "진행 중인 게임을 포기합니다."
 
+    override fun replayCommand() = "다시보기"
+    override fun replayCommandDescription() = "최근에 끝낸 게임을 돌아봅니다."
+
     override fun rankCommand() = "순위"
     override fun rankCommandDescription() = "1위부터 10위까지의 순위를 알아봅니다."
     override fun rankCommandSubGlobal() = "전체"
