@@ -433,7 +433,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
             embedBuilder.field {
                 name = "#${idx + 1}: ``${player.withColor(playerColor)}`` vs ``${opponent.withColor(opponentColor)}``, $resultString"
-                value = "$UNICODE_ALARM_CLOCK${record.date}, ${record.rule}, total ${record.history.size} moves."
+                value = "$UNICODE_ALARM_CLOCK${record.date}, ${record.rule}, ${container.replayEmbedMatchInfo(record.history.size)}"
                 inline = false
             }
 

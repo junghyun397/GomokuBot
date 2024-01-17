@@ -291,6 +291,7 @@ sealed interface LanguageContainer {
     fun replayEmbedWin(): String
     fun replayEmbedLose(): String
     fun replayEmbedDraw(): String
+    fun replayEmbedMatchInfo(totalMoves: Int): String
     fun replayEmbedUnableToReplayDescription(): String
 
     fun announceWrittenOn(date: String): String

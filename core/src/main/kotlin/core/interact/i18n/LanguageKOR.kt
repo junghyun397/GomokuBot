@@ -314,6 +314,12 @@ open class LanguageKOR : LanguageENG() {
     override fun boardOfferGuide(remainingMoves: Int) =
         ":question: 버튼을 누르거나 ``/s`` ``알파벳`` ``숫자`` 명령어를 입력해 5번째 수 후보 ${remainingMoves}개를 정해주세요."
 
+    override fun replayEmbedWin() = "승"
+    override fun replayEmbedLose() = "패"
+    override fun replayEmbedDraw() = "무"
+    override fun replayEmbedMatchInfo(totalMoves: Int) = "총 ${totalMoves}수."
+    override fun replayEmbedUnableToReplayDescription() = "이 게임은 빈 게임이기 때문에 아무것도 보여드릴 수 없습니다. 다른 게임을 선택해 주세요."
+
     override fun announceWrittenOn(date: String) = "$date 에 쓰여짐"
 
     override fun somethingWrongEmbedTitle() = "뭔가 잘못됐습니다!"

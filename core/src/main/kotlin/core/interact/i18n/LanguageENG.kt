@@ -367,6 +367,7 @@ open class LanguageENG : LanguageContainer {
     override fun replayEmbedWin() = "Win"
     override fun replayEmbedLose() = "Lose"
     override fun replayEmbedDraw() = "Draw"
+    override fun replayEmbedMatchInfo(totalMoves: Int) = "total $totalMoves moves."
     override fun replayEmbedUnableToReplayDescription() = "This is an empty match. The replay is unavailable. Please select another match."
 
     override fun announceWrittenOn(date: String) = "Written on $date."
