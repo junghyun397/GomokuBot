@@ -22,7 +22,7 @@
 
 ## GomokuBot is completely new!
 
-content":"Since the creation of GomokuBot in June 2018, 5,328 servers and 21,548 users have played 75,506 games in just over four years. — Thank you very much. But as is, GomokuBot is pretty old. Accordingly, the GomokuBot has been completely rewritten with many powerful features!
+Since the creation of GomokuBot in June 2018, 5,328 servers and 21,548 users have played 75,506 games in just over four years. — Thank you very much. But as is, GomokuBot is pretty old. Accordingly, the GomokuBot has been completely rewritten with many powerful features!
 
 * All-new codebase
 * Renju rule support
@@ -55,9 +55,9 @@ Check the newly added commands with /help or ~help commands. To use the newly ad
 오프닝 룰에 대해 자세히 알아보고 싶다면, [국제 오목협회(RIF)](https://www.renju.net/) 또는 GomokuBot 도움말을 참조해 주세요. 이번 업데이트로 GomokuBot에 도움말 바로가기 기능이 추가되어 쉽게 찾아보실 수 있습니다.
 
 ## Opening-rules with GomokuBot.
-It's pretty clear that black can always find a winning strategy in gomoku without any restrictions, so is the alternative, renju, fair? - Unfortunately, no. Even renju leads to a coin toss where black can always find a winning strategy as the skill of both players rises.
+It's pretty clear that black can always find a winning strategy in gomoku without any restrictions, so is the alternative, renju, fair? — Unfortunately, no. Even renju leads to a coin toss where black can always find a winning strategy as the skill of both players rises.
 
-Does this mean that there is no such thing as a ``fair gomoku``? Don't worry. GomokuBot now provides a new alternative. It's called the opening rule, which is used in international gomoku competitions. The opening rules are a set of procedures that prevent Black from creating a very advantageous position at the beginning of the game, forcing the two players to negotiate and start the game with an equivalent position.
+Does this mean that there is no such thing as ``a fair gomoku``? Don't worry. GomokuBot now provides a new alternative. It's called the opening rule, which is used in international gomoku competitions. The opening rules are a set of procedures that prevent Black from creating a very advantageous position at the beginning of the game, forcing the two players to negotiate and start the game with an equivalent position.
 
 Of course, if you're a Gomoku beginner, you don't have to worry. Even Renju only becomes unfair at a fairly advanced level, where you've memorized hundreds of initial cases. You'll always be able to beat GomokuBot's standard AI, and unless you're way above that level, you shouldn't worry about it at all.
 
@@ -67,3 +67,19 @@ If you're a pretty good gomoku player, and you want to play gomoku in a fair way
 * Taraguchi-10 opening rule
 
 If you want to learn more about opening rules, please refer to the [Renju International Federation (RIF)](https://www.renju.net/) or the GomokuBot help. With this update, GomokuBot has added a help shortcut to make it easier to find.
+
+# 2024-1-18
+
+## 다시보기 기능을 사용해 지난 게임을 복기해 보세요.
+알 수 없는 일련의 신묘한 공격에 당황하는 사이 게임이 끝나 버린 적이 있나요? 또는 나의 멋진 플레이를 다시 한번 돌아보고 싶나요? 더 이상 지거나 이기는 것으로 게임 한판을 완전히 잊어버리지 않을 수 있습니다. 이제 GomokuBot은 어떤 일이 있었는지 직관적으로 파악해 볼 수 있는 다시보기 기능을 지원합니다.
+
+``~다시보기`` 또는 ``/다시보기`` 명령어를 사용해 최근 끝마친 게임을 복기해 보세요. 최근 끝마친 게임 순서대로 10개의 게임을 재생해 볼 수 있습니다. 하나하나 천천히 살펴보면 어떤 부분에서 어떤 실수를 했는지, 어떤 부분에서 다른 방법을 사용해 볼 수 있었는지를 쉽게 알아볼 수 있을 것입니다.
+
+Tip: 한 수를 둘 때마다 새로운 메시지로 채팅창이 도배되는 것이 불편하지 않았나요? GomokuBot에서는 2022년부터 메시지 수정 기능을 지원하고 있었습니다. ``/설정`` 명령어를 통해 설정 화면을 불러온 뒤, ``청소`` 설정을 ``편집하기``로 바꿔 보세요. 게임이 끝날 때까지 메시지 하나로 모든 것을 해결할 수 있습니다.
+
+## Rewind to previous matches with the Replay command.
+Have you ever had a game end while you were confused by a series of mysterious attacks? Or maybe you just want to review your great play again? No longer is a game bout completely forgotten by losing or winning. GomokuBot now supports a replay feature that lets you intuitively see what happened.
+
+Use the ``~replay`` or ``/replay`` commands to review your recently finished matches. You'll be able to replay 10 games in the order of your most recent finishes. If you take your time going through each one, you should be able to easily recognize where you made mistakes and what you could have done differently.
+
+Tip: Didn't you find it annoying that every time you made a move, the chat window was flooded with new messages? GomokuBot has been supporting the ability to edit messages since 2022. Bring up the settings screen via the ``/settings`` command, and change the ``Clean`` setting to ``Edit``. You should be able to interact everything with a single message until the end of the match.
