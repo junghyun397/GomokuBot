@@ -10,6 +10,6 @@ data class GuildConfig(
     val focusType: FocusType = FocusType.INTELLIGENCE,
     val hintType: HintType = HintType.FIVE,
     val markType: HistoryRenderType = HistoryRenderType.LAST,
-    val swapType: SwapType = SwapType.RELAY,
+    val swapType: SwapType = SwapType.EDIT,
     val archivePolicy: ArchivePolicy = ArchivePolicy.BY_ANONYMOUS
 )
