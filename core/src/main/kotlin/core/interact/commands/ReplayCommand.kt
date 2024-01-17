@@ -40,7 +40,7 @@ class ReplayCommand(private val recordId: GameRecordId, private val moves: Int) 
                 .launch()
                 .map { emptyOrders }
 
-            return@runCatching tuple(io, this.writeCommandReport("gameId=${this.recordId.id} unable to replay", guild, user))
+            return@runCatching tuple(io, this.writeCommandReport("${this.recordId} is empty", guild, user))
         }
 
         val modRecord = run {
@@ -66,7 +66,7 @@ class ReplayCommand(private val recordId: GameRecordId, private val moves: Int) 
             .launch()
             .map { emptyOrders }
 
-        tuple(io, this.writeCommandReport("gameId=${this.recordId.id}, moves = $moves", guild, user))
+        tuple(io, this.writeCommandReport("gameId = ${this.recordId.id}, moves = $moves", guild, user))
     }
 
 }
