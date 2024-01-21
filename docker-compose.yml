@@ -12,7 +12,7 @@ services:
     environment:
       - "POSTGRES_USER=gomokubot"
       - "POSTGRES_DB=gomokubot"
-      - "POSTGRES_PASSWORD=acomplexpassword"
+      - "POSTGRES_PASSWORD=${POSTGRESQL_PASSWORD}"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready"]
       interval: 10s
@@ -31,7 +31,7 @@ services:
       - "GOMOKUBOT_RESRENJU_ADDRESS=localhost"
       - "GOMOKUBOT_RESRENJU_PORT=2001"
 
-      - "GOMOKUBOT_DB_URL=r2dbc:postgresql://gomokubot:acomplexpassword@gomokubot-postgres/gomokubot"
+      - "GOMOKUBOT_DB_URL=r2dbc:postgresql://gomokubot:${POSTGRESQL_PASSWORD}@gomokubot-postgres/gomokubot"
 
       - "GOMOKUBOT_DISCORD_TOKEN=${GOMOKUBOT_DISCORD_TOKEN}"
       - "GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID=${GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID}"
