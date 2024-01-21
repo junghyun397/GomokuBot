@@ -102,6 +102,12 @@ fun <T> Result<T>.toOption(): Option<T> =
         onFailure = { Option.Empty }
     )
 
+fun <T> Result<Option<T>>.flatten(): Option<T> =
+    this.fold(
+        onSuccess = { it },
+        onFailure = { Option.Empty }
+    )
+
 inline fun <T> option(body: () -> T): Option<T> =
     try {
         Option.Some(body())

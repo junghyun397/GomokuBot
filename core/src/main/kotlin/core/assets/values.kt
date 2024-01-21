@@ -33,7 +33,11 @@ val DUMMY_MESSAGE_REF = MessageRef(MessageId(-1), GuildId(-1), ChannelId(-1))
 
 @JvmInline value class GuildUid(val uuid: UUID)
 
-@JvmInline value class UserUid(val uuid: UUID)
+@JvmInline value class UserUid(val uuid: UUID) {
+
+    val validationKey: String get() = uuid.mostSignificantBits.toString().takeLast(4)
+
+}
 
 @JvmInline value class UserId(val idLong: Long)
 

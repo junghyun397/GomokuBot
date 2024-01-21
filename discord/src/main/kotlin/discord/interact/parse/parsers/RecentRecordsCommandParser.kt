@@ -15,6 +15,8 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import utils.structs.Either
 import utils.structs.Option
+import utils.structs.flatten
+import utils.structs.toOption
 
 object RecentRecordsCommandParser : CommandParser, ParsableCommand, BuildableCommand, EmbeddableCommand {
 
@@ -43,7 +45,11 @@ object RecentRecordsCommandParser : CommandParser, ParsableCommand, BuildableCom
             )
         }
 
-    override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>) =
-        Option(RecentRecordsCommand(true))
+    override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>) = runCatching {
+        Option.cond(context.event.componentId.split("-")[1] == context.user.id.validationKey) {
+            RecentRecordsCommand(true)
+        }
+    }
+        .flatten()
 
 }

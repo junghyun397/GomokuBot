@@ -84,7 +84,7 @@ interface MessagingService<A, B> {
 
     // REPLAY
 
-    fun buildReplayButtons(gameRecordId: GameRecordId, totalMoves: Int, currentMoves: Int): B
+    fun buildReplayButtons(gameRecordId: GameRecordId, validationKey: String, totalMoves: Int, currentMoves: Int): B
 
     fun buildBackToListButton(): B
 

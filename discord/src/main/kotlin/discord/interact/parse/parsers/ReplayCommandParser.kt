@@ -9,12 +9,12 @@ import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteract
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent
 import renju.notation.Renju
 import utils.structs.Option
-import utils.structs.toOption
+import utils.structs.flatten
 
 object ReplayCommandParser : EmbeddableCommand {
 
     override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> = runCatching {
-        val (recordIdRaw, movesRaw) =
+        val (recordIdRaw, movesRaw, validationKey) =
             when (context.event) {
                 is StringSelectInteractionEvent -> context.event.interaction.selectedOptions.first().value
                 else -> context.event.componentId
@@ -22,8 +22,10 @@ object ReplayCommandParser : EmbeddableCommand {
                 .split("-")
                 .drop(1)
 
-        ReplayCommand(GameRecordId(recordIdRaw.toLong()), movesRaw.toInt().coerceIn(0 .. Renju.BOARD_SIZE()))
+        Option.cond(validationKey == context.user.id.validationKey) {
+            ReplayCommand(GameRecordId(recordIdRaw.toLong()), movesRaw.toInt().coerceIn(0 .. Renju.BOARD_SIZE()))
+        }
     }
-        .toOption()
+        .flatten()
 
 }

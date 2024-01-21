@@ -62,7 +62,7 @@ class ReplayCommand(private val recordId: GameRecordId, private val moves: Int) 
             session,
             originalRecord.history.size
         )
-            .addComponents(service.buildReplayButtons(this.recordId, originalRecord.history.size, moves))
+            .addComponents(service.buildReplayButtons(this.recordId, user.id.validationKey, originalRecord.history.size, moves))
             .launch()
             .map { emptyOrders }
 

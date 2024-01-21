@@ -27,6 +27,7 @@ import discord.interact.message.DiscordMessagingService.IdConvention.OPENING
 import discord.interact.message.DiscordMessagingService.IdConvention.REJECT
 import discord.interact.message.DiscordMessagingService.IdConvention.REPLAY
 import discord.interact.message.DiscordMessagingService.IdConvention.REPLAY_LIST
+import discord.interact.message.DiscordMessagingService.IdConvention.SET
 import discord.interact.parse.buildableCommands
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
@@ -315,14 +316,14 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
     override fun buildFocusedButtons(focusedFields: FocusedFields) =
         focusedFields.map { col -> ActionRow.of(
             col.map { (id, flag) -> when (flag) {
-                ButtonFlag.FREE -> Button.of(ButtonStyle.SECONDARY, "s-${id}", id)
-                ButtonFlag.HIGHLIGHTED -> Button.of(ButtonStyle.PRIMARY, "s-${id}", id)
-                ButtonFlag.BLACK -> Button.of(ButtonStyle.SECONDARY, "s-${id}", "", EMOJI_BLACK_CIRCLE).asDisabled()
-                ButtonFlag.WHITE -> Button.of(ButtonStyle.SECONDARY, "s-${id}", "", EMOJI_WHITE_CIRCLE).asDisabled()
-                ButtonFlag.BLACK_RECENT -> Button.of(ButtonStyle.SUCCESS, "s-${id}", "", EMOJI_BLACK_CIRCLE).asDisabled()
-                ButtonFlag.WHITE_RECENT -> Button.of(ButtonStyle.SUCCESS, "s-${id}", "", EMOJI_WHITE_CIRCLE).asDisabled()
-                ButtonFlag.FORBIDDEN -> Button.of(ButtonStyle.DANGER, "s-${id}", "", EMOJI_DARK_X).asDisabled()
-                ButtonFlag.DISABLED -> Button.of(ButtonStyle.SECONDARY, "s-${id}", id).asDisabled()
+                ButtonFlag.FREE -> Button.of(ButtonStyle.SECONDARY, "${SET}-${id}", id)
+                ButtonFlag.HIGHLIGHTED -> Button.of(ButtonStyle.PRIMARY, "${SET}-${id}", id)
+                ButtonFlag.BLACK -> Button.of(ButtonStyle.SECONDARY, "${SET}-${id}", "", EMOJI_BLACK_CIRCLE).asDisabled()
+                ButtonFlag.WHITE -> Button.of(ButtonStyle.SECONDARY, "${SET}-${id}", "", EMOJI_WHITE_CIRCLE).asDisabled()
+                ButtonFlag.BLACK_RECENT -> Button.of(ButtonStyle.SUCCESS, "${SET}-${id}", "", EMOJI_BLACK_CIRCLE).asDisabled()
+                ButtonFlag.WHITE_RECENT -> Button.of(ButtonStyle.SUCCESS, "${SET}-${id}", "", EMOJI_WHITE_CIRCLE).asDisabled()
+                ButtonFlag.FORBIDDEN -> Button.of(ButtonStyle.DANGER, "${SET}-${id}", "", EMOJI_DARK_X).asDisabled()
+                ButtonFlag.DISABLED -> Button.of(ButtonStyle.SECONDARY, "${SET}-${id}", id).asDisabled()
             } }
         ) }.reversed() // cartesian coordinate system
 
@@ -385,28 +386,28 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
     // REPLAY
 
-    override fun buildReplayButtons(gameRecordId: GameRecordId, totalMoves: Int, currentMoves: Int): DiscordComponents =
+    override fun buildReplayButtons(gameRecordId: GameRecordId, validationKey: String, totalMoves: Int, currentMoves: Int): DiscordComponents =
         listOf(when (currentMoves) {
             1 -> ActionRow.of(
-                Button.of(ButtonStyle.SECONDARY, "$REPLAY_LIST-1", EMOJI_RETURN),
-                Button.of(ButtonStyle.SECONDARY, "$NO_FEATURE-1", EMOJI_PREVIOUS).asDisabled(),
-                Button.of(ButtonStyle.SECONDARY, "$NO_FEATURE-2", EMOJI_LEFT).asDisabled(),
-                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-2-3", EMOJI_RIGHT),
-                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-${totalMoves}-4", EMOJI_NEXT)
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY_LIST-$validationKey-1", EMOJI_RETURN),
+                Button.of(ButtonStyle.SECONDARY, "$NO_FEATURE-2", EMOJI_PREVIOUS).asDisabled(),
+                Button.of(ButtonStyle.SECONDARY, "$NO_FEATURE-3", EMOJI_LEFT).asDisabled(),
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-2-$validationKey-4", EMOJI_RIGHT),
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-${totalMoves}-$validationKey-5", EMOJI_NEXT)
             )
             totalMoves -> ActionRow.of(
-                Button.of(ButtonStyle.SECONDARY, "$REPLAY_LIST-1", EMOJI_RETURN),
-                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-1-1", EMOJI_PREVIOUS),
-                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-${currentMoves-1}-2", EMOJI_LEFT),
-                Button.of(ButtonStyle.SECONDARY, "$NO_FEATURE-3", EMOJI_RIGHT).asDisabled(),
-                Button.of(ButtonStyle.SECONDARY, "$NO_FEATURE-4", EMOJI_NEXT).asDisabled()
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY_LIST-$validationKey-1", EMOJI_RETURN),
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-1-$validationKey-2", EMOJI_PREVIOUS),
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-${currentMoves-1}-$validationKey-3", EMOJI_LEFT),
+                Button.of(ButtonStyle.SECONDARY, "$NO_FEATURE-4", EMOJI_RIGHT).asDisabled(),
+                Button.of(ButtonStyle.SECONDARY, "$NO_FEATURE-5", EMOJI_NEXT).asDisabled()
             )
             else -> ActionRow.of(
-                Button.of(ButtonStyle.SECONDARY, "$REPLAY_LIST-1", EMOJI_RETURN),
-                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-1-1", EMOJI_PREVIOUS),
-                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-${currentMoves-1}-2", EMOJI_LEFT),
-                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-${currentMoves+1}-3", EMOJI_RIGHT),
-                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-${totalMoves}-4", EMOJI_NEXT)
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY_LIST-$validationKey-1", EMOJI_RETURN),
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-1-$validationKey-2", EMOJI_PREVIOUS),
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-${currentMoves-1}-$validationKey-3", EMOJI_LEFT),
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-${currentMoves+1}-$validationKey-4", EMOJI_RIGHT),
+                Button.of(ButtonStyle.SECONDARY, "$REPLAY-${gameRecordId.id}-${totalMoves}-$validationKey-5", EMOJI_NEXT)
             )
         })
 
@@ -439,7 +440,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
             selectMenuOptions.add(SelectOption(
                 label = "#${idx + 1}: ${player.withColor(playerColor)} vs ${opponent.withColor(opponentColor)}, $resultString",
-                value = "$REPLAY-${record.gameRecordId.getOrException().id}-1"
+                value = "$REPLAY-${record.gameRecordId.getOrException().id}-1-${player.id.validationKey}"
             ))
         }
 
