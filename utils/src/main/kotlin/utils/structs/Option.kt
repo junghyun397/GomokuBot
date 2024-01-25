@@ -10,15 +10,9 @@ sealed interface Option<out T> {
 
     data class Some<out T>(val value: T) : Option<T>
 
-    object Empty : Option<Nothing> { override fun toString() = "Empty" }
+    data object Empty : Option<Nothing>
 
     companion object {
-
-        fun <T> unit(value: T): Option<T> =
-            Some(value)
-
-        operator fun <T> invoke(value: T): Option<T> =
-            unit(value)
 
         inline fun <A> cond(cond: Boolean, produce: () -> A): Option<A> =
             if (cond) Some(produce())
@@ -94,11 +88,11 @@ inline fun <T> Option<T>.orElse(produce: () -> Option<T>): Option<T> =
 
 fun <T> T?.asOption(): Option<T> =
     if (this == null) Option.Empty
-    else Option(this)
+    else Option.Some(this)
 
 fun <T> Result<T>.toOption(): Option<T> =
     this.fold(
-        onSuccess = { Option(it) },
+        onSuccess = { Option.Some(it) },
         onFailure = { Option.Empty }
     )
 

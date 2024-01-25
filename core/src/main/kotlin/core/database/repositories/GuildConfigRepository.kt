@@ -21,9 +21,9 @@ object GuildConfigRepository {
                 .bind("$1", guildUid.uuid)
                 .execute()
             }
-            .flatMap { result -> result
+            .flatMap<Option<GuildConfig>> { result -> result
                 .map { row, _ ->
-                    Option(GuildConfig(
+                    Option.Some(GuildConfig(
                         language = Language.entries.find(row["language"] as Short),
                         boardStyle = BoardStyle.entries.find(row["board_style"] as Short),
                         focusType = FocusType.entries.find(row["focus_type"] as Short),

@@ -65,7 +65,7 @@ private fun <T : Event> buildAnnounceNode(context: UserInteractionContext<T>, co
         AnnounceCommand(command)
     }
 
-private fun <T : Event> buildUpdateProfileNode(context: UserInteractionContext<T>, command: Command, jdaUser: User): Command {
+private fun <T : Event> buildUpdateProfileNode(context: UserInteractionContext<T>, jdaUser: User, command: Command): Command {
     val user = jdaUser.extractProfile(uid = context.user.id, announceId = context.user.announceId)
     val guild = context.jdaGuild.extractProfile(uid = context.guild.id)
 
@@ -93,18 +93,18 @@ private suspend fun <T : Event> buildUpdateCommandsNode(context: UserInteraction
 
 private fun matchCommand(command: String, container: LanguageContainer): Option<ParsableCommand> =
     when (command.lowercase()) {
-        "help" -> Option(HelpCommandParser)
-        container.helpCommand() -> Option(HelpCommandParser)
-        container.settingsCommand() -> Option(SettingsCommandParser)
-        container.startCommand() -> Option(StartCommandParser)
-        "s" -> Option(SetCommandParser)
-        container.resignCommand() -> Option(ResignCommandParser)
-        container.languageCommand() -> Option(LangCommandParser)
-        container.styleCommand() -> Option(StyleCommandParser)
-        container.rankCommand() -> Option(RankCommandParser)
-        container.ratingCommand() -> Option(RatingCommandParser)
-        container.replayCommand() -> Option(RecentRecordsCommandParser)
-        "debug" -> Option(DebugCommandParser)
+        "help" -> Option.Some(HelpCommandParser)
+        container.helpCommand() -> Option.Some(HelpCommandParser)
+        container.settingsCommand() -> Option.Some(SettingsCommandParser)
+        container.startCommand() -> Option.Some(StartCommandParser)
+        "s" -> Option.Some(SetCommandParser)
+        container.resignCommand() -> Option.Some(ResignCommandParser)
+        container.languageCommand() -> Option.Some(LangCommandParser)
+        container.styleCommand() -> Option.Some(StyleCommandParser)
+        container.rankCommand() -> Option.Some(RankCommandParser)
+        container.ratingCommand() -> Option.Some(RatingCommandParser)
+        container.replayCommand() -> Option.Some(ReplayListCommandParser)
+        "debug" -> Option.Some(DebugCommandParser)
         else -> Option.Empty
     }
 
@@ -117,13 +117,11 @@ fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEv
                         parsable.parseSlash(context)
                     }
                     .mapLeft { command ->
-                        buildAnnounceNode(context, command)
-                    }
-                    .mapLeft { command ->
-                        buildUpdateProfileNode(context, command, context.event.user)
-                    }
-                    .mapLeft { command ->
-                        buildUpdateCommandsNode(context, command)
+                        buildAnnounceNode(context,
+                            buildUpdateProfileNode(context, context.event.user,
+                                buildUpdateCommandsNode(context, command)
+                            )
+                        )
                     }
             }
     }
@@ -213,13 +211,11 @@ fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mo
                         parsable.parseText(context, payload)
                     }
                     .mapLeft { command ->
-                        buildAnnounceNode(context, command)
-                    }
-                    .mapLeft { command ->
-                        buildUpdateProfileNode(context, command, context.event.author)
-                    }
-                    .mapLeft { command ->
-                        buildUpdateCommandsNode(context, command)
+                        buildUpdateCommandsNode(context,
+                            buildUpdateProfileNode(context, context.event.author,
+                                buildAnnounceNode(context, command)
+                            )
+                        )
                     }
             }
     }

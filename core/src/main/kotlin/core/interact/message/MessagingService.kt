@@ -88,7 +88,7 @@ interface MessagingService<A, B> {
 
     fun buildBackToListButton(): B
 
-    fun buildRecentRecords(publisher: MessagePublisher<A, B>, container: LanguageContainer, player: User, records: List<Pair<User, GameRecord>>): MessageBuilder<A, B>
+    fun buildReplayList(publisher: MessagePublisher<A, B>, container: LanguageContainer, player: User, records: List<Pair<User, GameRecord>>): MessageBuilder<A, B>
 
     // HELP
 

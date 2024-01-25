@@ -1,6 +1,6 @@
 package discord.interact.parse.parsers
 
-import core.interact.commands.RecentRecordsCommand
+import core.interact.commands.ReplayListCommand
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.CommandParser
 import dev.minn.jda.ktx.interactions.commands.slash
@@ -16,11 +16,10 @@ import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import utils.structs.Either
 import utils.structs.Option
 import utils.structs.flatten
-import utils.structs.toOption
 
-object RecentRecordsCommandParser : CommandParser, ParsableCommand, BuildableCommand, EmbeddableCommand {
+object ReplayListCommandParser : CommandParser, ParsableCommand, BuildableCommand, EmbeddableCommand {
 
-    override val name = "records"
+    override val name = "replay-list"
 
     override fun getLocalizedName(container: LanguageContainer) = container.replayCommand()
 
@@ -32,10 +31,10 @@ object RecentRecordsCommandParser : CommandParser, ParsableCommand, BuildableCom
     )
 
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>) =
-        Either.Left(RecentRecordsCommand(false))
+        Either.Left(ReplayListCommand(false))
 
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>) =
-        Either.Left(RecentRecordsCommand(false))
+        Either.Left(ReplayListCommand(false))
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.apply {
@@ -47,7 +46,7 @@ object RecentRecordsCommandParser : CommandParser, ParsableCommand, BuildableCom
 
     override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>) = runCatching {
         Option.cond(context.event.componentId.split("-")[1] == context.user.id.validationKey) {
-            RecentRecordsCommand(true)
+            ReplayListCommand(edit = true)
         }
     }
         .flatten()

@@ -53,7 +53,7 @@ object GuildManager {
             .orElseGet { false }
 
     inline fun <T> permissionGrantedRun(channel: TextChannel, permission: Permission, block: () -> T): Option<T> =
-        if (this.lookupPermission(channel, permission)) Option(block())
+        if (this.lookupPermission(channel, permission)) Option.Some(block())
         else Option.Empty
 
     inline fun <T> permissionDependedRun(channel: TextChannel, permission: Permission, onGranted: () -> T, onMissed: () -> T): T =

@@ -28,7 +28,7 @@ private fun matchAction(prefix: Char?): Option<EmbeddableCommand> =
         DiscordMessagingService.IdConvention.REJECT -> Option.Some(RejectCommandParser)
         DiscordMessagingService.IdConvention.APPLY_SETTING -> Option.Some(ApplySettingCommandParser)
         DiscordMessagingService.IdConvention.OPENING -> Option.Some(OpeningCommandParser)
-        DiscordMessagingService.IdConvention.REPLAY_LIST -> Option.Some(RecentRecordsCommandParser)
+        DiscordMessagingService.IdConvention.REPLAY_LIST -> Option.Some(ReplayListCommandParser)
         DiscordMessagingService.IdConvention.REPLAY -> Option.Some(ReplayCommandParser)
         else -> Option.Empty
     }

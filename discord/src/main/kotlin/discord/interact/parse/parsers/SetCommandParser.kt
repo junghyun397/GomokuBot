@@ -122,9 +122,9 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
             GameManager.validateMove(session, pos)
                 .flatMap { invalidKind ->
                     when (invalidKind) {
-                        Notation.InvalidKind.Exist -> Option(this.buildExistFailure(context, session, pos))
+                        Notation.InvalidKind.Exist -> Option.Some(this.buildExistFailure(context, session, pos))
                         Notation.InvalidKind.Forbidden -> when(session.board.nextColor()) {
-                            Notation.Color.Black -> Option(this.buildForbiddenMoveFailure(context, session, pos, session.board.field()[pos.idx()]))
+                            Notation.Color.Black -> Option.Some(this.buildForbiddenMoveFailure(context, session, pos, session.board.field()[pos.idx()]))
                             else -> Option.Empty
                         }
                         else -> Option.Empty

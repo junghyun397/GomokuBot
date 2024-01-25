@@ -15,9 +15,9 @@ import core.session.entities.GuildConfig
 import utils.lang.tuple
 import utils.structs.map
 
-class RecentRecordsCommand(val edit: Boolean) : Command {
+class ReplayListCommand(val edit: Boolean) : Command {
 
-        override val name = "records"
+        override val name = "replay-list"
 
         override val responseFlag =
             if (edit) ResponseFlag.DeferEdit
@@ -46,7 +46,7 @@ class RecentRecordsCommand(val edit: Boolean) : Command {
                 tuple(opponent, record)
             }
 
-            val io = service.buildRecentRecords(publisher, config.language.container, user, gameResults)
+            val io = service.buildReplayList(publisher, config.language.container, user, gameResults)
                 .launch()
                 .map { emptyOrders }
 

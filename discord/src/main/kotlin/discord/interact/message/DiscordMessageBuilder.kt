@@ -34,7 +34,7 @@ class MessageCreateAdaptor<T>(private val original: T) : DiscordMessageBuilder
             .mapToResult()
             .queue { maybeMessage ->
                 maybeMessage
-                    .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
+                    .onSuccess { control.resume(Option.Some(DiscordMessageAdaptor(it))) }
                     .onFailure { control.resume(Option.Empty) }
             }
     } }
@@ -61,7 +61,7 @@ class WebHookMessageCreateAdaptor<T>(private val original: T) : DiscordMessageBu
                 .mapToResult()
                 .queue { maybeMessage ->
                     maybeMessage
-                        .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
+                        .onSuccess { control.resume(Option.Some(DiscordMessageAdaptor(it))) }
                         .onFailure { control.resume(Option.Empty) }
                 }
             }
@@ -104,7 +104,7 @@ data class MessageEditAdaptor<T>(
             .mapToResult()
             .queue { maybeMessage ->
                 maybeMessage
-                    .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
+                    .onSuccess { control.resume(Option.Some(DiscordMessageAdaptor(it))) }
                     .onFailure { control.resume(Option.Empty) }
             }
     } }
@@ -135,7 +135,7 @@ data class WebHookMessageEditAdaptor<T>(
                 .mapToResult()
                 .queue { maybeMessage ->
                     maybeMessage
-                        .onSuccess { control.resume(Option(DiscordMessageAdaptor(it))) }
+                        .onSuccess { control.resume(Option.Some(DiscordMessageAdaptor(it))) }
                         .onFailure { control.resume(Option.Empty) }
                 }
             }

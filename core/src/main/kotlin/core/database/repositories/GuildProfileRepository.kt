@@ -70,9 +70,9 @@ object GuildProfileRepository {
                 .bind("$2", givenId.idLong)
                 .execute()
             }
-            .flatMap { result -> result
+            .flatMap<Option<Guild>> { result -> result
                 .map { row, _ ->
-                    Option(Guild(
+                    Option.Some(Guild(
                         id = GuildUid(row["guild_id"] as UUID),
                         platform = platform,
                         givenId = givenId,

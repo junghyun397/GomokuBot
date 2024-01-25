@@ -138,7 +138,7 @@ object GameManager {
                     else -> GameResult.Full
                 }
 
-                session.next(thenBoard, pos, Option(gameResult), session.messageBufferKey)
+                session.next(thenBoard, pos, Option.Some(gameResult), session.messageBufferKey)
             }
         )
     }
@@ -148,13 +148,13 @@ object GameManager {
             .flatMap { solutionNode ->
                 solutionNode.child().get(session.board.lastMove()).fold(
                     { Option.Empty },
-                    { Option(it) }
+                    { Option.Some(it) }
                 )
             }
             .fold(
                 onDefined = {
                     when (it) {
-                        is SolutionNode -> tuple(it.idx(), Option(it))
+                        is SolutionNode -> tuple(it.idx(), Option.Some(it))
                         else -> tuple(it.idx(), Option.Empty)
                     }
                 },
@@ -165,7 +165,7 @@ object GameManager {
                     }
 
                     when (solution) {
-                        is SolutionNode -> tuple(solution.idx(), Option(solution))
+                        is SolutionNode -> tuple(solution.idx(), Option.Some(solution))
                         else -> tuple(solution.idx(), Option.Empty)
                     }
                 },
@@ -190,7 +190,7 @@ object GameManager {
 
                 session.copy(
                     board = thenBoard,
-                    gameResult = Option(gameResult),
+                    gameResult = Option.Some(gameResult),
                     history = session.history + Pos.fromIdx(aiMove),
                 )
             }
@@ -209,7 +209,7 @@ object GameManager {
 
                 val result = GameResult.Win(cause, winColor, aiUser, session.owner)
 
-                tuple(session.copy(gameResult = Option(result)), result)
+                tuple(session.copy(gameResult = Option.Some(result)), result)
             }
             is OpeningSession, is PvpGameSession -> {
                 val winColor =

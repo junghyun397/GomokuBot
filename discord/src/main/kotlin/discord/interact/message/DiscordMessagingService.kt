@@ -414,7 +414,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
     override fun buildBackToListButton() =
         Button.of(ButtonStyle.SECONDARY, "$REPLAY_LIST", EMOJI_RETURN).liftToButtons()
 
-    override fun buildRecentRecords(publisher: MessagePublisher<DiscordMessageData, DiscordComponents>, container: LanguageContainer, player: User, records: List<Pair<User, GameRecord>>): MessageBuilder<DiscordMessageData, DiscordComponents> {
+    override fun buildReplayList(publisher: MessagePublisher<DiscordMessageData, DiscordComponents>, container: LanguageContainer, player: User, records: List<Pair<User, GameRecord>>): MessageBuilder<DiscordMessageData, DiscordComponents> {
         val embedBuilder = EmbedBuilder(
             color = COLOR_NORMAL_HEX
         )
