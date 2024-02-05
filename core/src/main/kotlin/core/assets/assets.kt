@@ -1,5 +1,7 @@
 package core.assets
 
+import core.database.DatabaseConnection
+import core.database.repositories.UserProfileRepository
 import io.r2dbc.spi.Statement
 import renju.notation.Flag
 import utils.structs.Option
@@ -21,6 +23,11 @@ val aiUser = anonymousUser.copy(
     name = "AI",
     uniqueName = "gomokubot"
 )
+
+suspend fun UserUid?.retrieveUserOrAiUser(connection: DatabaseConnection) =
+    this?.let {
+        UserProfileRepository.retrieveUser(connection, this)
+    } ?: aiUser
 
 fun forbiddenFlagToText(flag: Byte) =
     when (flag) {

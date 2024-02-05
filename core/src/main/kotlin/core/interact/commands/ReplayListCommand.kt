@@ -4,9 +4,8 @@ import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
-import core.assets.aiUser
+import core.assets.retrieveUserOrAiUser
 import core.database.repositories.GameRecordRepository
-import core.database.repositories.UserProfileRepository
 import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
@@ -40,8 +39,8 @@ class ReplayListCommand(val edit: Boolean) : Command {
 
             val gameResults = gameRecords.map { record ->
                 val opponent =
-                    if (record.blackId == user.id) record.whiteId?.let { UserProfileRepository.retrieveUser(bot.dbConnection, it) } ?: aiUser
-                    else record.blackId?.let { UserProfileRepository.retrieveUser(bot.dbConnection, it) } ?: aiUser
+                    if (record.blackId == user.id) record.whiteId.retrieveUserOrAiUser(bot.dbConnection)
+                    else record.blackId.retrieveUserOrAiUser(bot.dbConnection)
 
                 tuple(opponent, record)
             }
