@@ -1,0 +1,54 @@
+name: Deploy docker service
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [Gradle build]
+    branches: [test-actions, release]
+    types: [completed]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download build results
+        uses: actions/download-artifcat@v4
+      - name: Debug
+        run: ls
+      - name: Batch build results
+        run: |
+          mkdir -p build/libs
+          mv discord-*-all.jar build/libs/
+      - name: Build Dockerfiles
+        run: |
+          cd discord
+          docker build -t gomokubot-discord .
+          cd ..
+      - name: Save Docker Images
+        run: |
+          mkdir dockerfiles
+          docker save gomokubot-discord > dockerfiles/gomokubot-discord.tar
+      - name: Upload Docker Image
+        uses: pressidium/lftp-mirror-action@v1
+        with:
+          localDir: ./dockerfiles
+          remoteDir: ./GomokuBot/dockerfiles
+          host: app.do1ph.in
+          user: ${{ secrets.SFTP_USER_NAME }}
+          pass: ${{ secrets.SFTP_PASSWORD }}
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: app.do1ph.in
+          username: ${{ secrets.SSH_USER_NAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            touch updated
+#           git pull origin release
+#           cd GomokuBot/dockerfiles
+#           docker load < gomokubot-discord.tar
+#           cd ..
+#           docker compose down
+#           docker compose up -d
