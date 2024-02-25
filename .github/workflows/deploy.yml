@@ -21,10 +21,7 @@ jobs:
         with:
           name: gomokubot-build-results
           run-id: ${{ github.event.workflow_run.id }}
-      - name: Unzip artifact file
-        run: unzip
-      - name: Debug
-        run: ls
+          github-token: ${{ github.token }}
       - name: Batch build results
         run: |
           mkdir -p build/libs
