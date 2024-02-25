@@ -1,8 +1,12 @@
 name: Gradle build
 
 on:
-  - pull_request
-  - push
+  pull_request:
+  push:
+  create:
+    branches:
+      - test/actions
+      - release
 
 jobs:
   build:
