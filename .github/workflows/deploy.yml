@@ -3,9 +3,13 @@ name: Deploy docker service
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: [Gradle build]
-    branches: [test-actions, release]
-    types: [completed]
+    workflows:
+      - Gradle build
+    branches:
+      - test/actions
+      - release
+    types:
+      - completed
 
 jobs:
   deploy:
