@@ -1,4 +1,4 @@
-name: Deploy docker service
+name: Deploy to production
 
 on:
   workflow_dispatch:
@@ -17,8 +17,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Download build results
-        uses: actions/download-artifcat@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: gomokubot-build-results
+          run_id: ${{ github.event.workflow_run.id }}
+      - name: Unzip artifact file
+        run: unzip
       - name: Debug
         run: ls
       - name: Batch build results

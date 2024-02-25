@@ -1,12 +1,8 @@
 name: Gradle build
 
 on:
-  pull_request:
-  push:
-  create:
-    branches:
-      - test/actions
-      - release
+  - pull_request
+  - push
 
 jobs:
   build:
@@ -23,7 +19,7 @@ jobs:
       - name: Archive build results
         uses: actions/upload-artifact@v4
         with:
-          name: gomokubot
+          name: gomokubot-build-results
           path: |
             discord/build/libs/discord-*-all.jar
-          if-no-files-found: warn
+          if-no-files-found: error
