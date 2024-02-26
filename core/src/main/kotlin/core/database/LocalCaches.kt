@@ -5,32 +5,32 @@ import com.google.common.cache.CacheBuilder
 import core.assets.*
 import core.database.entities.Announce
 import core.interact.i18n.Language
-import java.time.Duration
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 data class LocalCaches(
     val guildProfileUidCache: Cache<GuildUid, Guild> = CacheBuilder
         .newBuilder()
         .maximumSize(1000)
-        .expireAfterAccess(Duration.ofDays(1))
+        .expireAfterAccess(1, TimeUnit.DAYS)
         .build(),
 
     val userProfileUidCache: Cache<UserUid, User> = CacheBuilder
         .newBuilder()
         .maximumSize(1000)
-        .expireAfterAccess(Duration.ofHours(6))
+        .expireAfterAccess(6, TimeUnit.HOURS)
         .build(),
 
     val guildProfileGivenIdCache: Cache<GuildId, Guild> = CacheBuilder
         .newBuilder()
         .maximumSize(1000)
-        .expireAfterAccess(Duration.ofDays(1))
+        .expireAfterAccess(1, TimeUnit.DAYS)
         .build(),
 
     val userProfileGivenIdCache: Cache<UserId, User> = CacheBuilder
         .newBuilder()
         .maximumSize(1000)
-        .expireAfterAccess(Duration.ofHours(6))
+        .expireAfterAccess(6, TimeUnit.HOURS)
         .build(),
 
     var announceCache: SortedMap<Int, Map<Language, Announce>> = sortedMapOf()
