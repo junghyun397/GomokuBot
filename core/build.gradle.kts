@@ -19,16 +19,16 @@ plugins {
 dependencies {
     implementation(project(":utils"))
 
-    implementation("org.postgresql:r2dbc-postgresql:1.0.0.RELEASE")
+    implementation("org.postgresql:r2dbc-postgresql:1.0.4.RELEASE")
 
-    runtimeOnly("io.netty:netty-all:4.1.86.Final")
+    runtimeOnly("io.netty:netty-all:4.1.105.Final")
     runtimeOnly("io.netty:netty-tcnative-boringssl-static:2.0.54.Final")
 
     implementation("io.grpc:grpc-stub:1.48.0")
     implementation("io.grpc:grpc-kotlin-stub:$grpcKotlinVersion")
     implementation("io.grpc:grpc-protobuf:$grpcVersion")
     implementation("com.google.protobuf:protobuf-kotlin:$protobufVersion")
-    implementation("io.grpc:grpc-netty:1.48.0")
+    implementation("io.grpc:grpc-netty:1.61.0")
 
     implementation("com.sksamuel.scrimage:scrimage-core:4.0.33")
 }

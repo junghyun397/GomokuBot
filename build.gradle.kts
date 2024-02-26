@@ -10,7 +10,7 @@ plugins {
 
 allprojects {
     group = "do1phin"
-    version = "2.0-SNAPSHOT"
+    version = "2.3-SNAPSHOT"
 
     repositories {
         mavenCentral()

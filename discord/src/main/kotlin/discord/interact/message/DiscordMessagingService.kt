@@ -468,7 +468,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             }
             field {
                 name = container.helpAboutEmbedVersion()
-                value = "NG 2.0"
+                value = "NG 2.3"
             }
             field {
                 name = container.helpAboutEmbedSupport()
