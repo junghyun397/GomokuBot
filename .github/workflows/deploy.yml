@@ -51,7 +51,6 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           script: |
             cd GomokuBot
-            touch updated
-#           git pull origin release
-#           docker load < dockefiles/gomokubot-discord.tar
-#           docker restart gomokubot-discord
+            git pull origin release
+            docker load < dockefiles/gomokubot-discord.tar
+            docker restart gomokubot-discord
