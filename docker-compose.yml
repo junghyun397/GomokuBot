@@ -4,7 +4,7 @@ services:
 
   database:
     container_name: gomokubot-postgres
-    image: postgres:12.18-bullseye
+    image: postgres:14.11-bullseye
     ports:
       - "54329:5432"
     volumes:
@@ -16,7 +16,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready"]
       interval: 1s
-      timeout: 100s
+      timeout: 3s
       retries: 100
     restart: always
 
