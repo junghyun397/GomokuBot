@@ -52,5 +52,5 @@ jobs:
           script: |
             cd GomokuBot
             git pull origin release
-            docker load < dockefiles/gomokubot-discord.tar
+            docker load < dockerfiles/gomokubot-discord.tar
             docker restart gomokubot-discord
