@@ -24,8 +24,8 @@ jobs:
           github-token: ${{ github.token }}
       - name: Batch build results
         run: |
-          mkdir -p build/libs
-          mv discord-*-all.jar build/libs/
+          mkdir -p gomokubot/build/libs
+          mv discord-*-all.jar gomokubot/build/libs/
       - name: Build Dockerfiles
         run: |
           cd discord
@@ -50,10 +50,8 @@ jobs:
           username: ${{ secrets.SSH_USER_NAME }}
           password: ${{ secrets.SSH_PASSWORD }}
           script: |
+            cd GomokuBot
             touch updated
 #           git pull origin release
-#           cd GomokuBot/dockerfiles
-#           docker load < gomokubot-discord.tar
-#           cd ..
-#           docker compose down
-#           docker compose up -d
+#           docker load < dockefiles/gomokubot-discord.tar
+#           docker restart gomokubot-discord
