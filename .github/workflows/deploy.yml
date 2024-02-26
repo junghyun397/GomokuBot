@@ -24,9 +24,9 @@ jobs:
           github-token: ${{ github.token }}
       - name: Batch build results
         run: |
-          mkdir -p gomokubot/build/libs
-          mv discord-*-all.jar gomokubot/build/libs/
-      - name: Build Dockerfiles
+          mkdir -p discord/build/libs
+          mv discord-*-all.jar discord/build/libs/
+      - name: Build Docker Images
         run: |
           cd discord
           docker build -t gomokubot-discord .
