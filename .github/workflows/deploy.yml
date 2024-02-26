@@ -53,4 +53,5 @@ jobs:
             cd GomokuBot
             git pull origin release
             docker load < dockerfiles/gomokubot-discord.tar
-            docker restart gomokubot-discord
+            docker compose pull
+            docker compose up -d
