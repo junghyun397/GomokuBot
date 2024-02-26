@@ -7,7 +7,6 @@ import engine.util.SolutionExtension
 import inference.InferenceGrpcKt
 import inference.InferenceProto
 import io.grpc.ManagedChannel
-import io.grpc.ManagedChannelBuilder
 import renju.Board
 import renju.notation.Color
 import renju.protocol.AiPreset
@@ -105,12 +104,19 @@ class ResRenjuClient(private val channel: ManagedChannel) : Closeable {
 
     companion object {
 
+        @Suppress("IMPLICIT_NOTHING_TYPE_ARGUMENT_IN_RETURN_POSITION")
+        private val dummyClient: ResRenjuClient by lazy {
+            throw NotImplementedError()
+        }
+
+        @Suppress("UNUSED_PARAMETER")
         fun connectionFrom(serverAddress: String, serverPort: Int): ResRenjuClient =
-            ResRenjuClient(
-                ManagedChannelBuilder
-                    .forAddress(serverAddress, serverPort)
-                    .build()
-            )
+            dummyClient
+//            ResRenjuClient(
+//                ManagedChannelBuilder
+//                    .forAddress(serverAddress, serverPort)
+//                    .build()
+//            )
 
     }
 
