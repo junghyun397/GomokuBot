@@ -7,7 +7,7 @@ import com.google.protobuf.gradle.protobuf
 import com.google.protobuf.gradle.protoc
 import org.gradle.kotlin.dsl.invoke
 
-val grpcVersion = "1.61.1"
+val grpcVersion = "1.57.2"
 val grpcKotlinVersion = "1.4.1"
 val protobufVersion = "3.19.4"
 
