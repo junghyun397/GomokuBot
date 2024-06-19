@@ -17,7 +17,7 @@ import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
-import utils.lang.shift
+import utils.lang.replaceIf
 import utils.structs.Either
 
 object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
@@ -100,7 +100,7 @@ object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
         }
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
-        action.shift(container != Language.ENG.container) {
+        action.replaceIf(container != Language.ENG.container) {
             this.buildHelpCommandData(action, container)
         }
 

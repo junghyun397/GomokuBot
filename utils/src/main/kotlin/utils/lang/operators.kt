@@ -2,7 +2,7 @@ package utils.lang
 
 import utils.structs.Quadruple
 
-inline fun <T> T.shift(condition: Boolean, produce: (T) -> T): T =
+inline fun <T> T.replaceIf(condition: Boolean, produce: (T) -> T): T =
     if (condition)
         produce(this)
     else

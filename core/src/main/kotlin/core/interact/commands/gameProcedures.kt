@@ -12,7 +12,7 @@ import core.session.HintType
 import core.session.SessionManager
 import core.session.SwapType
 import core.session.entities.*
-import utils.lang.shift
+import utils.lang.replaceIf
 import utils.lang.tuple
 import utils.structs.*
 
@@ -52,7 +52,7 @@ fun <A, B> buildBoardProcedure(
     }
 
     return service.buildBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, session)
-        .shift(session.board.winner().isEmpty) { io -> io.addComponents(
+        .replaceIf(session.board.winner().isEmpty) { io -> io.addComponents(
             when (session) {
                 is SwapStageOpeningSession -> service.buildSwapButtons(config.language.container)
                 is BranchingStageOpeningSession -> service.buildBranchingButtons(config.language.container)

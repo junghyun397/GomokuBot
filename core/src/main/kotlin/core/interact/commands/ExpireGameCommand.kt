@@ -11,7 +11,7 @@ import core.session.GameManager
 import core.session.SessionManager
 import core.session.SwapType
 import core.session.entities.*
-import utils.lang.shift
+import utils.lang.replaceIf
 import utils.lang.tuple
 import utils.structs.IO
 import utils.structs.flatMap
@@ -42,7 +42,7 @@ class ExpireGameCommand(
             val noticePublisher = publisher.plain
 
             val boardPublisher = noticePublisher
-                .shift(guildSession.config.swapType == SwapType.EDIT && message != null) { publisher.edit(message!!) }
+                .replaceIf(guildSession.config.swapType == SwapType.EDIT && message != null) { publisher.edit(message!!) }
 
             val finishIO = buildFinishProcedure(bot,
                 service, boardPublisher, guildSession.config, session, finishedSession)

@@ -95,7 +95,7 @@ fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInte
                 }
             ).fold(
                 onSuccess = { (io, report) ->
-                    export(context.discordConfig, io, context.guild, context.jdaGuild, messageRef)
+                    executeIO(context.discordConfig, io, context.jdaGuild, messageRef)
                     report
                 },
                 onFailure = { throwable ->

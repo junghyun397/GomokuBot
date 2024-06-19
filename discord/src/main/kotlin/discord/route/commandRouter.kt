@@ -31,7 +31,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import reactor.core.publisher.Mono
 import utils.assets.LinuxTime
-import utils.lang.shift
+import utils.lang.replaceIf
 import utils.structs.*
 import java.util.concurrent.TimeUnit
 
@@ -61,7 +61,7 @@ private fun buildPermissionNode(context: UserInteractionContext<*>, parsableComm
     )
 
 private fun <T : Event> buildAnnounceNode(context: UserInteractionContext<T>, command: Command): Command =
-    command.shift((context.user.announceId ?: -1) < (AnnounceRepository.getLatestAnnounceId(context.bot.dbConnection) ?: -1)) {
+    command.replaceIf((context.user.announceId ?: -1) < (AnnounceRepository.getLatestAnnounceId(context.bot.dbConnection) ?: -1)) {
         AnnounceCommand(command)
     }
 
@@ -72,7 +72,7 @@ private fun <T : Event> buildUpdateProfileNode(context: UserInteractionContext<T
     val maybeThenUser = Option.cond(user != context.user) { user }
     val maybeThenGuild = Option.cond(guild != context.guild) { guild }
 
-    return command.shift(maybeThenUser.isDefined || maybeThenGuild.isDefined) {
+    return command.replaceIf(maybeThenUser.isDefined || maybeThenGuild.isDefined) {
         UpdateProfileCommand(command, maybeThenUser, maybeThenGuild)
     }
 }
@@ -174,7 +174,7 @@ fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEv
                 }
             ).fold(
                 onSuccess = { (io, report) ->
-                    export(context.discordConfig, io, context.guild, context.jdaGuild)
+                    executeIO(context.discordConfig, io, context.jdaGuild)
                     report
                 },
                 onFailure = { throwable ->
@@ -254,7 +254,7 @@ fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mo
                 }
             ).fold(
                 onSuccess = { (io, report) ->
-                    export(context.discordConfig, io, context.guild, context.jdaGuild)
+                    executeIO(context.discordConfig, io, context.jdaGuild)
                     report
                 },
                 onFailure = { throwable ->

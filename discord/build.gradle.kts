@@ -13,7 +13,7 @@ dependencies {
     implementation(project(":utils"))
     implementation(project(":core"))
 
-    implementation("net.dv8tion:JDA:5.0.0-beta.19")
+    implementation("net.dv8tion:JDA:5.0.0-beta.24")
     implementation("com.github.minndevelopment:jda-ktx:e8b0a7080cc234727abf5a83871ae0c9b6603a58")
     implementation("com.github.minndevelopment:jda-reactor:e01a635")
 

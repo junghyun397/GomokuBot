@@ -7,7 +7,7 @@ import net.dv8tion.jda.api.requests.FluentRestAction
 import net.dv8tion.jda.api.utils.FileUpload
 import net.dv8tion.jda.api.utils.messages.MessageCreateRequest
 import net.dv8tion.jda.api.utils.messages.MessageEditRequest
-import utils.lang.shift
+import utils.lang.replaceIf
 import utils.structs.IO
 import utils.structs.Option
 import java.io.InputStream
@@ -77,8 +77,8 @@ abstract class MessageEditRequestMixin<T : MessageEditRequest<T>>(
 
     protected fun applyAttachments(): T =
         this.original
-            .shift(this.files.isNotEmpty()) { it.setFiles(this.files) }
-            .shift(this.components.isNotEmpty()) { it.setComponents(this.components) }
+            .replaceIf(this.files.isNotEmpty()) { it.setFiles(this.files) }
+            .replaceIf(this.components.isNotEmpty()) { it.setComponents(this.components) }
 
 }
 

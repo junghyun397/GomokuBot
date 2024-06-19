@@ -15,7 +15,7 @@ import discord.interact.TaskContext
 import discord.interact.message.DiscordMessagingService
 import discord.interact.message.MessageCreateAdaptor
 import discord.interact.message.MessageEditAdaptor
-import discord.route.export
+import discord.route.executeIO
 import kotlinx.coroutines.reactor.asFlux
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
@@ -43,7 +43,7 @@ private suspend fun executeCommand(
         )
     ).fold(
         onSuccess = { (io, report) ->
-            export(discordConfig, io, taskContext.guild, jdaGuild)
+            executeIO(discordConfig, io, jdaGuild)
             report
         },
         onFailure = { throwable ->

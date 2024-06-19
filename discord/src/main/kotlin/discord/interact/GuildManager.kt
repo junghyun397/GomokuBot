@@ -30,7 +30,7 @@ import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.requests.RestAction
 import utils.lang.memoize
-import utils.lang.shift
+import utils.lang.replaceIf
 import utils.lang.tuple
 import utils.structs.Option
 import utils.structs.getOrNull
@@ -77,7 +77,7 @@ object GuildManager {
                 val localCommands = commands.toSet()
 
                 val serverCommands = buildableCommandIndexes(container)
-                    .shift(container == Language.ENG.container) { engBuildableCommandIndexes }
+                    .replaceIf(container == Language.ENG.container) { engBuildableCommandIndexes }
 
                 val deprecates = localCommands
                     .filterNot { command -> serverCommands.containsKey(command.name) }
@@ -106,7 +106,7 @@ object GuildManager {
     suspend fun archiveSession(archiveChannel: TextChannel, session: RenjuSession, archivePolicy: ArchivePolicy) {
         if (session.board.moves() < 20 || archivePolicy == ArchivePolicy.PRIVACY) return
 
-        val modSession = session.shift(archivePolicy == ArchivePolicy.BY_ANONYMOUS) {
+        val modSession = session.replaceIf(archivePolicy == ArchivePolicy.BY_ANONYMOUS) {
             when (session) {
                 is AiGameSession -> session.copy(owner = anonymousUser)
                 is PvpGameSession -> session.copy(owner = anonymousUser, opponent = anonymousUser)
@@ -114,7 +114,7 @@ object GuildManager {
         }
 
         val modResult = modSession.gameResult.map { result ->
-            result.shift(archivePolicy == ArchivePolicy.BY_ANONYMOUS) {
+            result.replaceIf(archivePolicy == ArchivePolicy.BY_ANONYMOUS) {
                 when (result) {
                     is GameResult.Win -> result.copy(
                         winner = result.winner.switchToAnonymousUser(),
