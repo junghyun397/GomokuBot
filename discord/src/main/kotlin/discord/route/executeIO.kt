@@ -1,6 +1,5 @@
 package discord.route
 
-import core.assets.Guild
 import core.assets.MessageRef
 import core.interact.Order
 import discord.assets.JDAGuild
@@ -8,11 +7,10 @@ import discord.assets.extractMessageData
 import discord.interact.DiscordConfig
 import discord.interact.GuildManager
 import discord.interact.GuildManager.clearComponents
-import discord.interact.GuildManager.clearFiles
 import discord.interact.GuildManager.retainFirstEmbed
 import utils.structs.IO
 
-suspend fun export(discordConfig: DiscordConfig, io: IO<List<Order>>, guild: Guild, jdaGuild: JDAGuild, source: MessageRef? = null) {
+suspend fun executeIO(discordConfig: DiscordConfig, io: IO<List<Order>>, jdaGuild: JDAGuild, source: MessageRef? = null) {
     io.run().forEach { order ->
         when (order) {
             is Order.UpsertCommands -> GuildManager.upsertCommands(jdaGuild, order.container)
@@ -25,7 +23,6 @@ suspend fun export(discordConfig: DiscordConfig, io: IO<List<Order>>, guild: Gui
                     if (order.reduceComponents) {
                         val messageData = originalMessage.extractMessageData()
                             .retainFirstEmbed()
-                            .clearFiles()
                             .clearComponents()
 
                         originalMessage.editMessage(messageData.buildEdit()).queue()
