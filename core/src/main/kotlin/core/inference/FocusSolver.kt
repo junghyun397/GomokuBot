@@ -210,7 +210,11 @@ object FocusSolver {
                 return Solution.fromIterable(vcfSequence).get()
         }
 
-        return SolutionLeaf(moves[maxIndexes.random()])
+        return SolutionLeaf(moves[
+            maxIndexes
+                .filterNot { idx -> Notation.FlagInstance.isForbid(board.field()[idx], board.nextColorFlag()) }
+                .random()
+        ])
     }
 
     private fun evaluateBoard(board: Board): MutableList<MutableList<Int>> {
