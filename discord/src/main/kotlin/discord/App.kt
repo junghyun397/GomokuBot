@@ -29,7 +29,6 @@ import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Activity
-import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.channel.ChannelType
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
@@ -132,17 +131,16 @@ object GomokuBot {
 
         val commandFlux = Flux.merge(
             eventManager.on<SlashCommandInteractionEvent>()
-                .filter { it.isFromGuild && it.channel.type == ChannelType.TEXT && !it.user.isBot }
+                .filter { it.isFromGuild && !it.user.isBot }
                 .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!) }
                 .flatMap(::slashCommandRouter),
 
             eventManager.on<MessageReceivedEvent>()
                 .filter {
                     it.isFromGuild
-                            && it.channel.type == ChannelType.TEXT
                             && !it.author.isBot
                             && (it.message.contentRaw.startsWith(COMMAND_PREFIX) ||
-                                it.message.mentions.isMentioned(it.jda.selfUser, Message.MentionType.USER))
+                                it.message.mentions.isMentioned(it.jda.selfUser))
                 }
                 .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.author, it.guild) }
                 .flatMap(::textCommandRouter),
@@ -176,7 +174,7 @@ object GomokuBot {
                             && !(it.user?.isBot ?: false)
                             && it.channel.type == ChannelType.TEXT
                             && NAVIGATION_EMOJIS.contains(it.emoji)
-                            && !GuildManager.lookupPermission(it.channel.asTextChannel(), Permission.MESSAGE_MANAGE)
+                            && !GuildManager.lookupPermission(it.channel.asGuildMessageChannel(), Permission.MESSAGE_MANAGE)
                 }
                 .flatMap { mono {
                     val user = it.guild

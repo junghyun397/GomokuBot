@@ -14,6 +14,7 @@ import core.session.entities.RenjuSession
 import dev.minn.jda.ktx.coroutines.await
 import discord.assets.JDAGuild
 import discord.assets.awaitOption
+import discord.assets.getGuildMessageChannelById
 import discord.interact.message.DiscordMessageData
 import discord.interact.message.DiscordMessagePublisher
 import discord.interact.message.DiscordMessagingService
@@ -25,8 +26,8 @@ import discord.interact.parse.parsers.HelpCommandParser
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.User
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
-import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.requests.RestAction
 import utils.lang.memoize
@@ -41,7 +42,7 @@ object GuildManager {
 
     val updateCommandBypassGuilds = mutableSetOf<GuildUid>()
 
-    fun lookupPermission(channel: GuildChannel, permission: Permission) =
+    fun lookupPermission(channel: GuildMessageChannel, permission: Permission) =
         channel.guild.selfMember.hasPermission(channel, permission)
 
     suspend fun hasDebugPermission(config: DiscordConfig, user: User): Boolean =
@@ -52,11 +53,11 @@ object GuildManager {
             .map { member -> member.roles.any { it.idLong == config.testerRoleId } }
             .orElseGet { false }
 
-    inline fun <T> permissionGrantedRun(channel: TextChannel, permission: Permission, block: () -> T): Option<T> =
+    inline fun <T> permissionGrantedRun(channel: GuildMessageChannel, permission: Permission, block: () -> T): Option<T> =
         if (this.lookupPermission(channel, permission)) Option.Some(block())
         else Option.Empty
 
-    inline fun <T> permissionDependedRun(channel: TextChannel, permission: Permission, onGranted: () -> T, onMissed: () -> T): T =
+    inline fun <T> permissionDependedRun(channel: GuildMessageChannel, permission: Permission, onGranted: () -> T, onMissed: () -> T): T =
         if (this.lookupPermission(channel, permission)) onGranted()
         else onMissed()
 
@@ -103,7 +104,7 @@ object GuildManager {
             else -> anonymousUser
         }
 
-    suspend fun archiveSession(archiveChannel: TextChannel, session: RenjuSession, archivePolicy: ArchivePolicy) {
+    suspend fun archiveSession(archiveChannel: MessageChannel, session: RenjuSession, archivePolicy: ArchivePolicy) {
         if (session.board.moves() < 20 || archivePolicy == ArchivePolicy.PRIVACY) return
 
         val modSession = session.replaceIf(archivePolicy == ArchivePolicy.BY_ANONYMOUS) {
@@ -145,7 +146,7 @@ object GuildManager {
         messageRefs
             .groupBy { it.channelId }
             .flatMap { (channelId, messageRefs) ->
-                when (val channel = jdaGuild.getTextChannelById(channelId.idLong)) {
+                when (val channel = jdaGuild.getGuildMessageChannelById(channelId.idLong)) {
                     null -> emptyList<RestAction<*>>()
                     else -> {
                         this.permissionDependedRun(
@@ -180,7 +181,7 @@ object GuildManager {
 
     fun clearReaction(message: net.dv8tion.jda.api.entities.Message) {
         this.permissionDependedRun(
-            message.channel.asTextChannel(), Permission.MESSAGE_MANAGE,
+            message.channel.asGuildMessageChannel(), Permission.MESSAGE_MANAGE,
             onMissed = {
                 message.reactions
                     .map { it.removeReaction(message.jda.selfUser) }

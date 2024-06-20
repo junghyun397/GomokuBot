@@ -8,6 +8,7 @@ import discord.interact.message.DiscordMessageBuilder
 import discord.interact.message.DiscordMessageData
 import discord.interact.message.MessageEditAdaptor
 import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
@@ -50,7 +51,7 @@ fun net.dv8tion.jda.api.entities.User.extractProfile(uid: UserUid = UserUid(UUID
     User(uid, DISCORD_PLATFORM_ID, this.extractId(), this.effectiveName, this.name, announceId, this.avatarUrl)
 
 fun net.dv8tion.jda.api.entities.Guild.editMessageByMessageRef(ref: MessageRef, newContent: MessageEditData): DiscordMessageBuilder =
-    MessageEditAdaptor(this.getTextChannelById(ref.channelId.idLong)!!.editMessageById(ref.id.idLong, newContent))
+    MessageEditAdaptor(this.getGuildMessageChannelById(ref.channelId.idLong)!!.editMessageById(ref.id.idLong, newContent))
 
 fun net.dv8tion.jda.api.entities.Message.extractMessageData(): DiscordMessageData =
     DiscordMessageData(
@@ -61,6 +62,11 @@ fun net.dv8tion.jda.api.entities.Message.extractMessageData(): DiscordMessageDat
         this.isTTS,
         Option.Some(this)
     )
+
+fun net.dv8tion.jda.api.entities.Guild.getGuildMessageChannelById(idLong: Long): GuildMessageChannel? =
+    this.getTextChannelById(idLong)
+        ?: let { this.getThreadChannelById(idLong) }
+        ?: let { this.getVoiceChannelById(idLong) }
 
 suspend fun <T> RestAction<T>.awaitOption(): Option<T> = this
     .mapToResult()

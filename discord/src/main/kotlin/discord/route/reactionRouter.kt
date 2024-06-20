@@ -55,7 +55,7 @@ fun reactionRouter(context: UserInteractionContext<GenericMessageReactionEvent>)
         .map { it.getOrException() }
         .doOnNext {
             if (context.event is MessageReactionAddEvent) {
-                GuildManager.permissionGrantedRun(context.event.channel.asTextChannel(), Permission.MESSAGE_MANAGE) {
+                GuildManager.permissionGrantedRun(context.event.channel.asGuildMessageChannel(), Permission.MESSAGE_MANAGE) {
                     context.event.reaction.removeReaction(context.event.user!!).queue()
                 }
             }

@@ -10,6 +10,7 @@ import core.interact.reports.Report
 import core.interact.reports.RoutineReport
 import core.session.SessionManager
 import discord.assets.JDAGuild
+import discord.assets.getGuildMessageChannelById
 import discord.interact.DiscordConfig
 import discord.interact.TaskContext
 import discord.interact.message.DiscordMessagingService
@@ -63,7 +64,7 @@ fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: J
             val maybeMessage = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
             val maybeGuild = jda.getGuildById(guildSession.guild.givenId.idLong)
-            val maybeChannel = maybeMessage?.let { maybeGuild?.getTextChannelById(it.channelId.idLong) }
+            val maybeChannel = maybeMessage?.let { maybeGuild?.getGuildMessageChannelById(it.channelId.idLong) }
 
             val command = ExpireGameCommand(
                 guildSession = guildSession,
@@ -87,7 +88,7 @@ fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, jda
             val maybeMessage = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
             val maybeGuild = jda.getGuildById(guildSession.guild.givenId.idLong)
-            val maybeChannel = maybeMessage?.let { jda.getTextChannelById(it.channelId.idLong) }
+            val maybeChannel = maybeMessage?.let { maybeGuild?.getGuildMessageChannelById(it.channelId.idLong) }
 
             val command = ExpireRequestCommand(
                 guildSession = guildSession,

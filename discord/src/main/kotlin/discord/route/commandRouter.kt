@@ -25,7 +25,7 @@ import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -35,7 +35,7 @@ import utils.lang.replaceIf
 import utils.structs.*
 import java.util.concurrent.TimeUnit
 
-private fun buildPermissionNode(context: UserInteractionContext<*>, parsableCommand: ParsableCommand, channel: TextChannel, jdaUser: User): Either<ParsableCommand, DiscordParseFailure> =
+private fun buildPermissionNode(context: UserInteractionContext<*>, parsableCommand: ParsableCommand, channel: GuildMessageChannel, jdaUser: User): Either<ParsableCommand, DiscordParseFailure> =
     GuildManager.permissionDependedRun(
         channel, Permission.MESSAGE_SEND,
         onMissed = { Either.Right(
@@ -112,7 +112,7 @@ fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEv
     mono {
         matchCommand(context.event.name, context.config.language.container)
             .map { parsable ->
-                buildPermissionNode(context, parsable, context.event.channel.asTextChannel(), context.event.user)
+                buildPermissionNode(context, parsable, context.event.channel.asGuildMessageChannel(), context.event.user)
                     .flatMapLeft {
                         parsable.parseSlash(context)
                     }
@@ -206,7 +206,7 @@ fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mo
     return mono {
         matchCommand(command = payload.first(), container = context.config.language.container)
             .map { parsable ->
-                buildPermissionNode(context, parsable, context.event.channel.asTextChannel(), context.event.author)
+                buildPermissionNode(context, parsable, context.event.channel.asGuildMessageChannel(), context.event.author)
                     .flatMapLeft {
                         parsable.parseText(context, payload)
                     }
@@ -222,7 +222,7 @@ fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mo
         .filter { it.isDefined }
         .map { it.getOrException() }
         .doOnNext { parsed ->
-            GuildManager.permissionGrantedRun(context.event.channel.asTextChannel(), Permission.MESSAGE_ADD_REACTION) {
+            GuildManager.permissionGrantedRun(context.event.channel.asGuildMessageChannel(), Permission.MESSAGE_ADD_REACTION) {
                 parsed.fold(
                     onLeft = { context.event.message.addReaction(EMOJI_CHECK).queue() },
                     onRight = { context.event.message.addReaction(EMOJI_CROSS).queue() },
