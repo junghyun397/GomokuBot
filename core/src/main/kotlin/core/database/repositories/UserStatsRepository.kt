@@ -39,7 +39,7 @@ object UserStatsRepository {
                         whiteLosses = row["white_losses"] as Int,
                         whiteDraws = row["white_draws"] as Int,
 
-                        last_update = (row["last_update"] as LocalDateTime).toLinuxTime()
+                        lastUpdate = (row["last_update"] as LocalDateTime).toLinuxTime()
                     )
                 }
             }
@@ -64,7 +64,7 @@ object UserStatsRepository {
                         whiteLosses = row["white_losses"] as Int,
                         whiteDraws = row["white_draws"] as Int,
 
-                        last_update = (row["last_update"] as LocalDateTime).toLinuxTime()
+                        lastUpdate = (row["last_update"] as LocalDateTime).toLinuxTime()
                     )
                 }
             }
@@ -155,7 +155,7 @@ object UserStatsRepository {
                     whiteWins = whiteWins,
                     whiteLosses = whiteLosses,
                     whiteDraws = whiteTotal - whiteWins - whiteLosses,
-                    last_update = LinuxTime.now()
+                    lastUpdate = LinuxTime.now()
                 )
             }
 

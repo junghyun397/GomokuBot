@@ -14,7 +14,7 @@ data class UserStats(
     val whiteLosses: Int = 0,
     val whiteDraws: Int = 0,
 
-    val last_update: LinuxTime = LinuxTime.now()
+    val lastUpdate: LinuxTime = LinuxTime.now()
 ) : Comparable<UserStats> {
 
     val isEmpty: Boolean get() =

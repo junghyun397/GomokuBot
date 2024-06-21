@@ -35,7 +35,6 @@ data class GameRecord(
 @JvmInline value class GameRecordId(val id: Long)
 
 private val invalidPos: Pos = Pos.fromIdx(-1)
-
 fun GameSession.extractGameRecord(guildUid: GuildUid): Option<GameRecord> =
     Option.cond(this.gameResult.isDefined && this.recording && !this.history.contains(null)) {
         GameRecord(
