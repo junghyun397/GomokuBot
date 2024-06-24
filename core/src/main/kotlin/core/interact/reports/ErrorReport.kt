@@ -4,7 +4,7 @@ import core.assets.Guild
 import utils.assets.LinuxTime
 
 data class ErrorReport(
-    private val throwable: Throwable,
+    private val error: Throwable,
     override val guild: Guild,
     override var interactionSource: String? = null,
     override var emittedTime: LinuxTime? = null,
@@ -15,6 +15,6 @@ data class ErrorReport(
     override val commandName = "ERROR"
 
     override val comment: String
-        get() = "error\t ${throwable.stackTraceToString()}"
+        get() = "error\t ${error.stackTraceToString()}"
 
 }

@@ -15,6 +15,9 @@ interface Report {
     val executionTime: Long
         get() = this.emittedTime?.let { emitted -> this.commandTime.timestamp - emitted.timestamp } ?: 0
 
+    operator fun plus(other: Report): Report =
+        LinkedReportProxy(other, this)
+
     fun buildTime(): String = "${executionTime}ms"
 
     fun buildBody(): String = comment
