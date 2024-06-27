@@ -109,5 +109,5 @@ inline fun routine(interval: Duration, crossinline job: suspend () -> String): F
 
         val comment = job()
 
-        RoutineReport(comment, time, LinuxTime.now(), "SCH")
+        RoutineReport(comment, time, LinuxTime.now(), LinuxTime.now(),"SCH")
     }).asFlux()

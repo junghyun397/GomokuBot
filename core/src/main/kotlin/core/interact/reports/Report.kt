@@ -8,6 +8,8 @@ interface Report {
 
     var emittedTime: LinuxTime?
 
+    var apiTime: LinuxTime?
+
     val commandTime: LinuxTime
 
     var interactionSource: String?

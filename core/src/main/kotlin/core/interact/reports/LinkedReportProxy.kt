@@ -14,6 +14,13 @@ class LinkedReportProxy(
             this.previousReport.emittedTime = value
         }
 
+    override var apiTime: LinuxTime?
+        get() = this.report.apiTime
+        set(value) {
+            this.report.apiTime = value
+            this.previousReport.apiTime = value
+        }
+
     override val commandTime: LinuxTime
         get() = this.report.commandTime
 
