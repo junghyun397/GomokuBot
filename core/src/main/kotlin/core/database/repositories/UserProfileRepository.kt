@@ -37,7 +37,7 @@ object UserProfileRepository {
             .asOption()
             .orElse {
                 this.fetchUser(connection, platform, givenId)
-                    .also { fetched -> fetched
+                    .also { maybeUser -> maybeUser
                         .forEach { user ->
                             connection.localCaches.userProfileUidCache.put(user.id, user)
                             connection.localCaches.userProfileGivenIdCache.put(user.givenId, user)

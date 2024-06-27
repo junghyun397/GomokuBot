@@ -35,7 +35,7 @@ object GuildProfileRepository {
             .asOption()
             .orElse {
                 this.fetchGuild(connection, platform, givenId)
-                    .also { fetched -> fetched
+                    .also { maybeGuild -> maybeGuild
                         .forEach {guild ->
                             connection.localCaches.guildProfileGivenIdCache.put(guild.givenId, guild)
                             connection.localCaches.guildProfileUidCache.put(guild.id, guild)
