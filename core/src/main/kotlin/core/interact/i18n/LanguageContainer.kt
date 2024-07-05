@@ -70,6 +70,8 @@ sealed interface LanguageContainer {
     fun commandUsageStartPVP(): String
     fun commandUsageResign(): String
 
+    fun commandUsageBoard(): String
+
     fun replayCommand(): String
     fun replayCommandDescription(): String
 
@@ -229,6 +231,9 @@ sealed interface LanguageContainer {
 
     fun resignCommand(): String
     fun resignCommandDescription(): String
+
+    fun boardCommand(): String
+    fun boardCommandDescription(): String
 
     fun requestEmbedTitle(): String
     fun requestEmbedDescription(owner: String, opponent: String): String

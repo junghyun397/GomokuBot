@@ -68,6 +68,8 @@ open class LanguageENG : LanguageContainer {
         "Send a game request to the mentioned user. Ex) ``/start`` ``@user``"
     override fun commandUsageResign() = "Resign from a game in progress."
 
+    override fun commandUsageBoard() = "Opens the game currently in progress as a new message."
+
     override fun replayCommand() = "replay"
     override fun replayCommandDescription() = "Replay recently played games."
 
@@ -273,6 +275,9 @@ open class LanguageENG : LanguageContainer {
 
     override fun resignCommand() = "resign"
     override fun resignCommandDescription() = "Resigns from a game in progress."
+
+    override fun boardCommand() = "board"
+    override fun boardCommandDescription() = "Opens the game currently in progress as a new message."
 
     override fun requestEmbedTitle() = "How about a game of Gomoku?"
     override fun requestEmbedDescription(owner: String, opponent: String) =
