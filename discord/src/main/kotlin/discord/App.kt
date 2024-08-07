@@ -140,7 +140,11 @@ object GomokuBot {
                     it.isFromGuild
                             && !it.author.isBot
                             && (it.message.contentRaw.startsWith(COMMAND_PREFIX) ||
-                                it.message.mentions.isMentioned(it.jda.selfUser))
+                                (!it.message.mentions.mentionsEveryone()
+                                            && it.message.mentions.membersBag.size == 1
+                                            && it.message.mentions.isMentioned(it.jda.selfUser)
+                                )
+                            )
                 }
                 .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.author, it.guild) }
                 .flatMap(::textCommandRouter),

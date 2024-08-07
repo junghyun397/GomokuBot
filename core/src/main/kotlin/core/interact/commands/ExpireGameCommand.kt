@@ -50,7 +50,7 @@ class ExpireGameCommand(
 
             val noticeIO = when (session) {
                 is PvpGameSession, is OpeningSession -> service
-                    .buildTimeoutPVP(noticePublisher, guildSession.config.language.container, session.player, session.nextPlayer)
+                    .buildTimeoutPVP(noticePublisher, guildSession.config.language.container, session.nextPlayer, session.player)
                 is AiGameSession -> service
                     .buildTimeoutPVE(noticePublisher, guildSession.config.language.container, session.owner)
             }
