@@ -4,6 +4,7 @@ import arrow.core.Option
 import core.assets.User
 import core.session.Rule
 import renju.Board
+import renju.notation.GameResult
 import renju.notation.Pos
 import utils.assets.LinuxTime
 

@@ -4,7 +4,6 @@ import arrow.core.*
 import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import core.assets.MessageRef
-import core.assets.Notation
 import core.assets.User
 import core.interact.Order
 import core.interact.commands.*
@@ -30,8 +29,9 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
+import renju.MoveError
+import renju.notation.Color
 import renju.notation.Pos
-import renju.notation.Renju
 import utils.lang.tuple
 
 object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponents>(), ParsableCommand, EmbeddableCommand, BuildableCommand {
@@ -44,12 +44,12 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
 
     private fun matchColumn(option: String): Int? =
         option.firstOrNull()
-            ?.takeIf { it.code in 97 .. 97 + Renju.BOARD_WIDTH() }
+            ?.takeIf { it.code in 97 .. 97 + Pos.BOARD_WIDTH }
             ?.let { it.code - 97 }
 
     private fun matchRow(option: String): Int? =
         option.toIntOrNull()
-            ?.takeIf { it in 1 .. Renju.BOARD_WIDTH() }
+            ?.takeIf { it in 1 .. Pos.BOARD_WIDTH }
             ?.let { it - 1 }
 
     private fun buildAppendMessageProcedure(maybeMessage: Option<MessageAdaptor<DiscordMessageData, DiscordComponents>>, context: UserInteractionContext<*>, session: GameSession): Effect<Nothing, List<Order>> =
@@ -128,12 +128,11 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
             GameManager.validateMove(session, pos)
                 .flatMap { invalidKind ->
                     when (invalidKind) {
-                        Notation.InvalidKind.Exist -> Some(this.buildExistFailure(context, session, pos))
-                        Notation.InvalidKind.Forbidden -> when(session.board.nextColor()) {
-                            Notation.Color.Black -> Some(this.buildForbiddenMoveFailure(context, session, pos, session.board.field()[pos.idx()]))
+                        MoveError.Exist -> Some(this.buildExistFailure(context, session, pos))
+                        MoveError.Forbidden -> when(session.board.playerColor()) {
+                            Color.Black -> Some(this.buildForbiddenMoveFailure(context, session, pos, session.board.field[pos.idx()]))
                             else -> None
                         }
-                        else -> None
                     }
                 }
                 .fold(

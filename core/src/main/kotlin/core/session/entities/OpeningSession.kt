@@ -3,6 +3,7 @@ package core.session.entities
 import arrow.core.None
 import arrow.core.Option
 import arrow.core.Some
+import renju.notation.GameResult
 import renju.notation.Pos
 import kotlin.math.pow
 

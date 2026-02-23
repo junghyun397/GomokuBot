@@ -13,6 +13,7 @@ import core.session.GameManager
 import core.session.SessionManager
 import core.session.SwapType
 import core.session.entities.*
+import renju.notation.GameResult
 
 class ResignCommand(private val session: GameSession) : Command {
 

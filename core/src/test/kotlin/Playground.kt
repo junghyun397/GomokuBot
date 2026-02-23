@@ -7,7 +7,11 @@ class Playground {
 
     @Test
     fun sym() {
-        val rs = calculateSymmetryMoves(Pos.fromCartesian("f7").get(), Pos.fromCartesian("h8").get(), Pos.fromCartesian("g6").get())
+        val rs = calculateSymmetryMoves(
+            Pos.fromCartesian("f7").getOrNull()!!,
+            Pos.fromCartesian("h8").getOrNull()!!,
+            Pos.fromCartesian("g6").getOrNull()!!
+        )
 
         println(rs)
     }

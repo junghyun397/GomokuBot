@@ -4,20 +4,19 @@ import arrow.core.None
 import arrow.core.Option
 import arrow.core.Some
 import core.BotContext
-import core.assets.*
+import core.assets.Channel
+import core.assets.User
+import core.assets.aiUser
 import core.database.entities.extractGameRecord
 import core.database.repositories.GameRecordRepository
 import core.inference.AiLevel
-import core.inference.FocusSolver
 import core.interact.message.graphics.*
 import core.session.entities.*
-import renju.ScalaBoard
-import renju.`ScalaBoard$`
-import renju.notation.InvalidKind
+import renju.Board
+import renju.MoveError
+import renju.notation.Color
+import renju.notation.GameResult
 import renju.notation.Pos
-import renju.notation.Renju
-import renju.notation.Result
-import renju.protocol.SolutionNode
 import utils.lang.tuple
 import utils.structs.Identifiable
 import kotlin.random.Random
@@ -59,7 +58,7 @@ object GameManager {
                 owner = owner,
                 opponent = opponent,
                 ownerHasBlack = ownerHasBlack,
-                board = Notation.EmptyBoard,
+                board = Board.newBoard(),
                 history = emptyList(),
                 messageBufferKey = MessageBufferKey.issue(),
                 recording = true,
@@ -70,8 +69,8 @@ object GameManager {
                 owner = owner,
                 opponent = opponent,
                 ownerHasBlack = ownerHasBlack,
-                board = `ScalaBoard$`.`MODULE$`.newBoard(),
-                history = listOf(Renju.BOARD_CENTER_POS()),
+                board = Board.newBoard().set(Pos.CENTER),
+                history = listOf(Pos.CENTER),
                 messageBufferKey = MessageBufferKey.issue(),
                 expireService = ExpireService(bot.config.gameExpireOffset),
                 isBranched = false
@@ -80,8 +79,8 @@ object GameManager {
                 owner = owner,
                 opponent = opponent,
                 ownerHasBlack = ownerHasBlack,
-                board = `ScalaBoard$`.`MODULE$`.newBoard(),
-                history = listOf(Renju.BOARD_CENTER_POS()),
+                board = Board.newBoard().set(Pos.CENTER),
+                history = listOf(Pos.CENTER),
                 messageBufferKey = MessageBufferKey.issue(),
                 expireService = ExpireService(bot.config.gameExpireOffset),
                 isBranched = false
@@ -92,11 +91,9 @@ object GameManager {
     suspend fun generateAiSession(bot: BotContext, owner: User, aiLevel: AiLevel): GameSession {
         val ownerHasBlack = Random(System.nanoTime()).nextBoolean()
 
-        val board = if (ownerHasBlack) Notation.EmptyBoard else ScalaBoard.newBoard()
+        val board = if (ownerHasBlack) Board.newBoard() else Board.newBoard().set(Pos.CENTER)
 
-        val history = if (ownerHasBlack) emptyList() else listOf(Renju.BOARD_CENTER_POS())
-
-        val aiColor = if (ownerHasBlack) Notation.Color.White else Notation.Color.Black
+        val history = if (ownerHasBlack) emptyList() else listOf(Pos.CENTER)
 
         return AiGameSession(
             owner = owner,
@@ -112,13 +109,12 @@ object GameManager {
         )
     }
 
-    fun validateMove(session: GameSession, move: Pos): Option<InvalidKind> =
+    fun validateMove(session: GameSession, move: Pos): Option<MoveError> =
         session.board.validateMove(move.idx())
-            .toOption()
             .fold(
                 ifEmpty = {
                     if (session is OpeningSession && !session.validateMove(move))
-                        Some(Notation.InvalidKind.Forbidden)
+                        Some(MoveError.Forbidden)
                     else
                         None
                 },
@@ -126,13 +122,13 @@ object GameManager {
             )
 
     fun makeMove(session: RenjuSession, pos: Pos): RenjuSession {
-        val thenBoard = session.board.makeMove(pos)
+        val thenBoard = session.board.set(pos)
 
         return thenBoard.winner().fold(
             { session.next(thenBoard, pos, None, MessageBufferKey.issue()) },
             { result ->
                 val gameResult = when (result) {
-                    is Result.FiveInRow ->
+                    is GameResult.FiveInRow ->
                         GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, result.winner(), session.player, session.nextPlayer)
                     else -> GameResult.Full
                 }
@@ -143,41 +139,25 @@ object GameManager {
     }
 
     suspend fun makeAiMove(session: AiGameSession): AiGameSession {
-        val (aiMove, solutionNode) = session.solution
-            .flatMap { solutionNode ->
-                solutionNode.child().get(session.board.lastMove()).fold(
-                    { None },
-                    { Some(it) }
-                )
-            }
-            .fold(
-                ifSome = {
-                    when (it) {
-                        is SolutionNode -> tuple(it.idx(), Some(it))
-                        else -> tuple(it.idx(), None)
-                    }
-                },
-                ifEmpty = {
-                    when (val solution = FocusSolver.findSolution(session.board)) {
-                        is SolutionNode -> tuple(solution.idx(), Some(solution))
-                        else -> tuple(solution.idx(), None)
-                    }
-                },
-            )
+        // PoC placeholder: choose the first legal move without search/VCF.
+        val aiMove = session.board.legalMoves().firstOrNull() ?: return session.copy(
+            gameResult = Some(GameResult.Full),
+            solution = None,
+        )
 
-        val thenBoard = session.board.makeMove(aiMove)
+        val thenBoard = session.board.set(aiMove)
 
         return thenBoard.winner().fold(
             {
                 session.copy(
                     board = thenBoard,
                     history = session.history + Pos.fromIdx(aiMove),
-                    solution = solutionNode
+                    solution = None,
                 )
             },
             { result ->
                 val gameResult = when (result) {
-                    is Result.FiveInRow ->
+                    is GameResult.FiveInRow ->
                         GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, result.winner(), aiUser, session.owner)
                     else -> GameResult.Full
                 }
@@ -186,6 +166,7 @@ object GameManager {
                     board = thenBoard,
                     gameResult = Some(gameResult),
                     history = session.history + Pos.fromIdx(aiMove),
+                    solution = None,
                 )
             }
         )
@@ -194,12 +175,11 @@ object GameManager {
     fun resignSession(session: GameSession, cause: GameResult.Cause, user: User): Pair<RenjuSession, GameResult.Win> =
         when (session) {
             is AiGameSession -> {
-                val winColor = when (session.board) {
-                    is EmptyBoard ->
-                        if(session.ownerHasBlack) Notation.Color.White
-                        else Notation.Color.Black
-                    else -> session.board.color()
-                }
+                val winColor =
+                    if (session.board.moves() == 0)
+                        if (session.ownerHasBlack) Color.White
+                        else Color.Black
+                    else session.board.color()
 
                 val result = GameResult.Win(cause, winColor, aiUser, session.owner)
 
@@ -207,8 +187,8 @@ object GameManager {
             }
             is OpeningSession, is PvpGameSession -> {
                 val winColor =
-                    if ((session.player.id == user.id) == session.ownerHasBlack) Notation.Color.White
-                    else Notation.Color.Black
+                    if ((session.player.id == user.id) == session.ownerHasBlack) Color.White
+                    else Color.Black
 
                 val result =
                     if (user.id == session.owner.id)

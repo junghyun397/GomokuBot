@@ -54,55 +54,38 @@ CREATE TABLE game_record (
     create_date     timestamptz DEFAULT now()
 );
 
-CREATE OR REPLACE VIEW user_stats AS
-WITH finished_games AS (
+CREATE VIEW user_stats AS
+WITH hvai AS (
     SELECT
         record_id,
-        black_id,
-        white_id,
+        ai_level,
         win_color,
-        create_date
+        create_date,
+        CASE
+            WHEN black_id IS NOT NULL AND white_id IS NULL THEN black_id
+            WHEN white_id IS NOT NULL AND black_id IS NULL THEN white_id
+            END AS user_id,
+        CASE
+            WHEN black_id IS NOT NULL AND white_id IS NULL THEN 0
+            WHEN white_id IS NOT NULL AND black_id IS NULL THEN 1
+            END AS human_color
     FROM game_record
-    WHERE
-        black_id IS NOT NULL AND white_id IS NOT NULL
-    -- 예: 완료된 게임만 집계하고 싶으면 여기서 cause 필터링
-    -- AND cause IN ( ...완료 cause 목록... )
-),
-     per_user AS (
-         -- black 관점 집계
-         SELECT
-             g.black_id AS user_id,
-             SUM(CASE WHEN g.win_color = 0 THEN 1 ELSE 0 END)::int AS black_wins,
-             SUM(CASE WHEN g.win_color = 1 THEN 1 ELSE 0 END)::int AS black_losses,
-             0::int AS white_wins,
-             0::int AS white_losses,
-             SUM(CASE WHEN g.win_color IS NULL THEN 1 ELSE 0 END)::int AS draws,
-             MAX(g.create_date) AS last_update
-         FROM finished_games g
-         GROUP BY g.black_id
-
-         UNION ALL
-
-         -- white 관점 집계
-         SELECT
-             g.white_id AS user_id,
-             0::int AS black_wins,
-             0::int AS black_losses,
-             SUM(CASE WHEN g.win_color = 1 THEN 1 ELSE 0 END)::int AS white_wins,
-             SUM(CASE WHEN g.win_color = 0 THEN 1 ELSE 0 END)::int AS white_losses,
-             SUM(CASE WHEN g.win_color IS NULL THEN 1 ELSE 0 END)::int AS draws,
-             MAX(g.create_date) AS last_update
-         FROM finished_games g
-         GROUP BY g.white_id
-     )
+    WHERE ai_level IS NOT NULL
+      AND (black_id IS NULL) <> (white_id IS NULL)
+)
 SELECT
-    up.user_id,
-    COALESCE(SUM(p.black_wins), 0)::int   AS black_wins,
-    COALESCE(SUM(p.black_losses), 0)::int AS black_losses,
-    COALESCE(SUM(p.white_wins), 0)::int   AS white_wins,
-    COALESCE(SUM(p.white_losses), 0)::int AS white_losses,
-    COALESCE(SUM(p.draws), 0)::int        AS draws,
-    COALESCE(MAX(p.last_update), up.register_date) AS last_update
-FROM user_profile up
-         LEFT JOIN per_user p ON p.user_id = up.user_id
-GROUP BY up.user_id, up.register_date;
+    user_id,
+
+    SUM(CASE WHEN human_color = 0 AND win_color = 0 THEN 1 ELSE 0 END)::INTEGER AS black_wins,
+    SUM(CASE WHEN human_color = 0 AND win_color = 1 THEN 1 ELSE 0 END)::INTEGER AS black_losses,
+
+    SUM(CASE WHEN human_color = 1 AND win_color = 1 THEN 1 ELSE 0 END)::INTEGER AS white_wins,
+    SUM(CASE WHEN human_color = 1 AND win_color = 0 THEN 1 ELSE 0 END)::INTEGER AS white_losses,
+
+    SUM(CASE WHEN win_color IS NULL THEN 1 ELSE 0 END)::int AS draws,
+
+    MAX(create_date) AS last_update
+
+FROM hvai
+WHERE user_id IS NOT NULL
+GROUP BY user_id;

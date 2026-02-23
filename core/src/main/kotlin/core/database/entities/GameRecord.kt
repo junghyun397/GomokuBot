@@ -3,12 +3,17 @@ package core.database.entities
 import arrow.core.None
 import arrow.core.Option
 import arrow.core.Some
-import core.assets.*
+import core.assets.ChannelUid
+import core.assets.User
+import core.assets.UserUid
+import core.assets.aiUser
 import core.database.DatabaseConnection
 import core.database.repositories.UserProfileRepository
 import core.inference.AiLevel
 import core.session.Rule
 import core.session.entities.*
+import renju.Board
+import renju.notation.GameResult
 import renju.notation.Pos
 import utils.assets.LinuxTime
 
@@ -41,7 +46,7 @@ fun GameSession.extractGameRecord(channelUid: ChannelUid): Option<GameRecord> =
             GameRecord(
                 gameRecordId = None,
 
-                boardState = board.field(),
+                boardState = board.field,
                 history = history.map { it ?: invalidPos },
 
                 gameResult = gameResult.getOrNull()!!,
@@ -69,7 +74,8 @@ fun GameSession.extractGameRecord(channelUid: ChannelUid): Option<GameRecord> =
     else None
 
 suspend fun GameRecord.asGameSession(dbConnection: DatabaseConnection, owner: User): GameSession {
-    val board = Notation.BoardIOInstance.fromFieldArray(boardState, history.last().idx()).get()
+    val board = Board.fromFieldArray(boardState, history.last().idx()).getOrNull()
+        ?: error("invalid game record board data")
 
     return when {
         whiteId != null && blackId != null -> {

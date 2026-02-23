@@ -4,7 +4,6 @@ import arrow.core.Option
 import arrow.core.Some
 import arrow.core.toOption
 import core.assets.ChannelUid
-import core.assets.Notation
 import core.assets.UserUid
 import core.assets.bindNullable
 import core.database.DatabaseConnection
@@ -13,11 +12,11 @@ import core.database.entities.GameRecord
 import core.database.entities.GameRecordId
 import core.inference.AiLevel
 import core.session.Rule
-import core.session.entities.GameResult
 import io.r2dbc.spi.Row
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.awaitSingle
-import renju.notation.Flag
+import renju.notation.Color
+import renju.notation.GameResult
 import renju.notation.Pos
 import utils.assets.LinuxTime
 import utils.structs.find
@@ -131,7 +130,7 @@ object GameRecordRepository {
             boardState = gameRecordRow.boardState,
             history = gameRecordRow.history.map { Pos.fromIdx(it) },
             gameResult = GameResult.build(
-                gameResult = Notation.ResultInstance.fromFlag(gameRecordRow.winColor ?: Flag.EMPTY()),
+                gameResult = GameResult.fromFlag(gameRecordRow.winColor ?: Color.emptyFlag()),
                 cause = GameResult.Cause.entries.find(gameRecordRow.cause),
                 blackUser = blackUser,
                 whiteUser = whiteUser

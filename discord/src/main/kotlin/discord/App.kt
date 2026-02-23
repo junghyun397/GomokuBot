@@ -52,15 +52,6 @@ private data class PostgreSQLConfig(val serverURL: String) {
     }
 }
 
-private data class ResRenjuConfig(val serverAddress: String, val serverPort: Int) {
-    companion object {
-        fun fromEnv(): ResRenjuConfig = ResRenjuConfig(
-            serverAddress = System.getenv("GOMOKUBOT_RESRENJU_ADDRESS"),
-            serverPort = System.getenv("GOMOKUBOT_RESRENJU_PORT").toInt()
-        )
-    }
-}
-
 object DiscordConfigBuilder {
     fun fromEnv(): DiscordConfig = DiscordConfig(
         token = System.getenv("GOMOKUBOT_DISCORD_TOKEN"),
@@ -83,7 +74,6 @@ object GomokuBot {
         val botConfig = BotConfig()
 
         val postgresqlConfig = PostgreSQLConfig.fromEnv()
-        val resRenjuConfig = ResRenjuConfig.fromEnv()
 
         val discordConfig = DiscordConfigBuilder.fromEnv()
 

@@ -56,7 +56,7 @@ fun <A, B> buildBoardProcedure(
 
     return effect {
         val maybeMessage = service.buildBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, session)
-            .replaceIf(session.board.winner().isEmpty) { io -> io.addComponents(
+            .replaceIf(session.board.winner().isNone()) { io -> io.addComponents(
                 when (session) {
                     is SwapStageOpeningSession -> service.buildSwapButtons(config.language.container)
                     is BranchingStageOpeningSession -> service.buildBranchingButtons(config.language.container)

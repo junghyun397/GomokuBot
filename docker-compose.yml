@@ -28,9 +28,6 @@ services:
     volumes:
       - logs:/app/logs
     environment:
-      - "GOMOKUBOT_RESRENJU_ADDRESS=localhost"
-      - "GOMOKUBOT_RESRENJU_PORT=2001"
-
       - "GOMOKUBOT_DB_URL=r2dbc:postgresql://gomokubot:${POSTGRESQL_PASSWORD}@gomokubot-postgres/gomokubot"
 
       - "GOMOKUBOT_DISCORD_TOKEN=${GOMOKUBOT_DISCORD_TOKEN}"

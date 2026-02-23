@@ -1,14 +1,13 @@
 package core.interact.message.graphics
 
 import arrow.core.Either
-import core.assets.Notation
 import renju.Board
 import renju.notation.Pos
 
 open class TextBoardRenderer : BoardRenderer {
 
     protected fun renderBoardText(board: Board): String =
-        Notation.BoardIOInstance.buildBoardString(board, true)
+        board.toString()
 
     override fun renderBoard(board: Board, history: List<Pos?>, historyRenderType: HistoryRenderType, offers: Set<Pos>?, blinds: Set<Pos>?) =
         Either.Left("```\n${this.renderBoardText(board).replace(".", " ")}```")
