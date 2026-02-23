@@ -8,6 +8,7 @@ import core.assets.aiUser
 import core.inference.AiLevel
 import core.session.Rule
 import renju.Board
+import renju.notation.GameResult
 import renju.notation.Pos
 import renju.protocol.SolutionNode
 

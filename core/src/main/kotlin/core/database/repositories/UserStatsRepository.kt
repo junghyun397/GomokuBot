@@ -1,7 +1,6 @@
 package core.database.repositories
 
 import core.assets.ChannelUid
-import core.assets.Notation
 import core.assets.UserUid
 import core.assets.aiUser
 import core.database.DatabaseConnection
@@ -10,8 +9,7 @@ import core.database.DatabaseManager.smallIntToMaybeByte
 import core.database.entities.UserStats
 import kotlinx.coroutines.reactive.awaitSingle
 import renju.notation.Color
-import renju.notation.Flag
-import renju.notation.Result
+import renju.notation.GameResult
 import utils.assets.LinuxTime
 import utils.lang.toLinuxTime
 import utils.lang.tuple
@@ -83,11 +81,11 @@ object UserStatsRepository {
                     val maybeBlackId = row["black_id"] as? UUID
                     val maybeWhiteId = row["white_id"] as? UUID
 
-                    val recordResult = Notation.ResultInstance.fromFlag(smallIntToMaybeByte(row["win_color"]) ?: Flag.EMPTY())
+                    val recordResult = GameResult.fromFlag(smallIntToMaybeByte(row["win_color"]) ?: Color.emptyFlag())
 
                     when {
-                        maybeBlackId != null -> tuple(UserUid(maybeBlackId), Notation.Color.Black, recordResult)
-                        maybeWhiteId != null -> tuple(UserUid(maybeWhiteId), Notation.Color.White, recordResult)
+                        maybeBlackId != null -> tuple(UserUid(maybeBlackId), Color.Black, recordResult)
+                        maybeWhiteId != null -> tuple(UserUid(maybeWhiteId), Color.White, recordResult)
                         else -> throw IllegalStateException()
                     }
                 }
@@ -110,11 +108,11 @@ object UserStatsRepository {
                     val blackId = UserUid(row["black_id"] as UUID)
                     val whiteId = UserUid(row["white_id"] as UUID)
 
-                    val recordResult = Notation.ResultInstance.fromFlag(smallIntToByte(row["win_color"]))
+                    val recordResult = GameResult.fromFlag(smallIntToByte(row["win_color"]))
 
                     when {
-                        blackId != userUid -> tuple(blackId, Notation.Color.Black, recordResult)
-                        whiteId != userUid -> tuple(whiteId, Notation.Color.White, recordResult)
+                        blackId != userUid -> tuple(blackId, Color.Black, recordResult)
+                        whiteId != userUid -> tuple(whiteId, Color.White, recordResult)
                         else -> throw IllegalStateException()
                     }
                 }
@@ -134,18 +132,18 @@ object UserStatsRepository {
                 unionRanking.sortedDescending()
             }
 
-    private fun buildUserStats(records: List<Triple<UserUid, Color, Result>>): List<UserStats> =
+    private fun buildUserStats(records: List<Triple<UserUid, Color, GameResult>>): List<UserStats> =
         records
             .groupBy { (id, _, _) -> id }
             .map { (id, tuples) ->
-                val blackTotal = tuples.count { (_, color, _) -> color == Notation.Color.Black }
+                val blackTotal = tuples.count { (_, color, _) -> color == Color.Black }
                 val whiteTotal = tuples.size - blackTotal
 
-                val blackWins = tuples.count { (_, color, result) -> color == Notation.Color.Black && result.flag() == Notation.FlagInstance.BLACK() }
-                val whiteWins = tuples.count { (_, color, result) -> color == Notation.Color.White && result.flag() == Notation.FlagInstance.WHITE() }
+                val blackWins = tuples.count { (_, color, result) -> color == Color.Black && result.flag() == Color.Black.flag() }
+                val whiteWins = tuples.count { (_, color, result) -> color == Color.White && result.flag() == Color.White.flag() }
 
-                val blackLosses = tuples.count { (_, color, result) -> color == Notation.Color.Black && result.flag() == Notation.FlagInstance.WHITE() }
-                val whiteLosses = tuples.count { (_, color, result) -> color == Notation.Color.White && result.flag() == Notation.FlagInstance.BLACK() }
+                val blackLosses = tuples.count { (_, color, result) -> color == Color.Black && result.flag() == Color.White.flag() }
+                val whiteLosses = tuples.count { (_, color, result) -> color == Color.White && result.flag() == Color.Black.flag() }
 
                 UserStats(
                     userId = id,

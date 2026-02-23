@@ -16,7 +16,6 @@ import core.interact.message.graphics.HistoryRenderType
 import core.interact.message.graphics.ImageBoardRenderer
 import core.session.*
 import core.session.entities.*
-import dev.minn.jda.ktx.interactions.components.SelectOption
 import dev.minn.jda.ktx.interactions.components.StringSelectMenu
 import dev.minn.jda.ktx.interactions.components.option
 import dev.minn.jda.ktx.messages.Embed
@@ -48,8 +47,9 @@ import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction
-import renju.notation.Flag
-import renju.notation.Renju
+import renju.notation.Color
+import renju.notation.GameResult
+import renju.notation.Pos
 import utils.lang.memoize
 import utils.lang.tuple
 import java.time.format.DateTimeFormatter
@@ -72,7 +72,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
     }
 
     override val focusWidth = 5
-    override val focusRange = 2..Renju.BOARD_WIDTH_MAX_IDX() - 2
+    override val focusRange = 2..(Pos.BOARD_BOUND - 2)
 
     // INTERFACE
 
@@ -115,21 +115,24 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
         }
 
     private fun InlineEmbed.buildStatusFields(container: LanguageContainer, session: GameSession) {
-        session.board.lastPos().foreach {
-            field {
-                name = container.boardMoves()
-                value = session.board.moves().toString().asHighlightFormat()
-                inline = true
-            }
+        session.board.lastPos().fold(
+            ifSome = { lastPos ->
+                field {
+                    name = container.boardMoves()
+                    value = session.board.moves().toString().asHighlightFormat()
+                    inline = true
+                }
 
-            field {
-                val colorInfo = if (session.board.isNextColorBlack) UNICODE_WHITE_CIRCLE else UNICODE_BLACK_CIRCLE
+                field {
+                    val colorInfo = if (session.board.isNextColorBlack) UNICODE_WHITE_CIRCLE else UNICODE_BLACK_CIRCLE
 
-                name = container.boardLastMove()
-                value = "${colorInfo}${session.board.lastPos().get()}".asHighlightFormat()
-                inline = true
-            }
-        }
+                    name = container.boardLastMove()
+                    value = "${colorInfo}${lastPos}".asHighlightFormat()
+                    inline = true
+                }
+            },
+            ifEmpty = { Unit }
+        )
     }
 
     private fun InlineEmbed.buildResultFields(container: LanguageContainer, session: GameSession, gameResult: GameResult) =
@@ -152,6 +155,9 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                     container.boardWinDescription(
                         "${gameResult.winner.name}${unicodeStone(gameResult.winColor)}".asHighlightFormat()
                     )
+                }
+                is GameResult.FiveInRow -> {
+                    container.boardWinDescription(unicodeStone(gameResult.winner()).asHighlightFormat())
                 }
                 is GameResult.Full -> { container.boardTieDescription().asHighlightFormat() }
             }
@@ -206,7 +212,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             is MoveStageOpeningSession -> posList
                 .filterNot { session.inSquare(it) }
             is OfferStageOpeningSession -> posList
-                .filter { session.board.field()[it.idx()] == Flag.EMPTY() && it in session.symmetryMoves }
+                .filter { session.board.field[it.idx()] == Color.emptyFlag() && it in session.symmetryMoves }
             else -> null
         }
 
@@ -428,12 +434,12 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             val playerWasBlack = record.blackId == player.id
             val resultString = when {
                 record.gameResult.cause == GameResult.Cause.DRAW -> "$UNICODE_PENCIL${container.replayEmbedDraw()}"
-                (record.gameResult.winColorId == Notation.FlagInstance.BLACK().toShort()) == playerWasBlack -> "$UNICODE_TROPHY${container.replayEmbedWin()}"
+                (record.gameResult.winColorId == Color.Black.flag().toShort()) == playerWasBlack -> "$UNICODE_TROPHY${container.replayEmbedWin()}"
                 else -> "$UNICODE_WHITE_FLAG${container.replayEmbedLose()}"
             }
 
-            val playerColor = if (playerWasBlack) Notation.Color.Black else Notation.Color.White
-            val opponentColor = if (playerWasBlack) Notation.Color.White else Notation.Color.Black
+            val playerColor = if (playerWasBlack) Color.Black else Color.White
+            val opponentColor = if (playerWasBlack) Color.White else Color.Black
 
             embedBuilder.field {
                 name = "#${idx + 1}: ``${player.withColor(playerColor)}`` vs ``${opponent.withColor(opponentColor)}``, $resultString"
@@ -441,10 +447,12 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                 inline = false
             }
 
-            selectMenuOptions.add(SelectOption(
-                label = "#${idx + 1}: ${player.withColor(playerColor)} vs ${opponent.withColor(opponentColor)}, $resultString",
-                value = "$REPLAY-${record.gameRecordId.getOrNull()!!.id}-1-${player.id.validationKey}"
-            ))
+            selectMenuOptions.add(
+                SelectOption.of(
+                    "#${idx + 1}: ${player.withColor(playerColor)} vs ${opponent.withColor(opponentColor)}, $resultString",
+                    "$REPLAY-${record.gameRecordId.getOrNull()!!.id}-1-${player.id.validationKey}"
+                )
+            )
         }
 
         return (publisher sends embedBuilder.build())
@@ -483,7 +491,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             }
 
             footer {
-                name = "$UNICODE_ZAP Powered by Kotlin, Scala, Project Reactor, R2DBC, gRPC, JDA"
+                name = "$UNICODE_ZAP Powered by Kotlin, Rust, Project Reactor, R2DBC, gRPC, JDA"
             }
         }
     }

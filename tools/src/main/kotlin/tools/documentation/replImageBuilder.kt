@@ -1,6 +1,6 @@
 package tools.documentation
 
-import renju.notation.Renju
+import renju.notation.Pos
 import java.nio.file.Paths
 
 private fun main() {
@@ -11,7 +11,7 @@ private fun main() {
 
     while (true) {
         print("board: ")
-        val boardSource = (0 until Renju.BOARD_WIDTH() + 2)
+        val boardSource = (0 until Pos.BOARD_WIDTH + 2)
             .joinToString { readln() }
 
         print("lastMove: ")

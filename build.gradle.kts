@@ -44,8 +44,7 @@ subprojects {
 
         implementation("io.arrow-kt:arrow-core:2.0.1")
 
-        implementation("com.github.junghyun397.kvine:renju_sjs1_2.13:fc91655c9a") // jitpack
-        implementation("com.github.junghyun397.kvine:engine_3:fc91655c9a") // jitpack
+        implementation("net.java.dev.jna:jna:5.17.0")
 
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 

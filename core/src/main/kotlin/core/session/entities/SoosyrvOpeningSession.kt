@@ -47,20 +47,20 @@ data class SoosyrvMoveStageSession(
             SoosyrvDeclareStageOpeningSession(
                 owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
                 messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
-                board = this.board.makeMove(move),
+                board = this.board.set(move),
                 history = this.history + move,
             )
         else if (this.board.moves() < 2)
             this.copy(
                 messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
-                board = this.board.makeMove(move),
+                board = this.board.set(move),
                 history = this.history + move,
             )
         else // moves == 3
             SoosyrvSwapStageSession(
                 owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
                 messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
-                board = this.board.makeMove(move),
+                board = this.board.set(move),
                 history = this.history + move,
                 offerCount = None
             )
@@ -178,7 +178,7 @@ data class SoosyrvSelectStageOpeningSession(
     override fun select(move: Pos): PvpGameSession =
         PvpGameSession(
             owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
-            board = this.board.makeMove(move),
+            board = this.board.set(move),
             gameResult = this.gameResult,
             history = this.history + move,
             messageBufferKey = MessageBufferKey.issue(),

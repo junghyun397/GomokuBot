@@ -71,7 +71,7 @@ data class TaraguchiMoveStageSession(
         if (this.board.moves() == 3)
             TaraguchiBranchingSession(
                 owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
-                board = this.board.makeMove(move),
+                board = this.board.set(move),
                 history = this.history + move,
                 messageBufferKey = MessageBufferKey.issue(),
                 expireService = this.expireService.next()
@@ -79,7 +79,7 @@ data class TaraguchiMoveStageSession(
         else
             TaraguchiSwapStageSession(
                 owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
-                board = this.board.makeMove(move),
+                board = this.board.set(move),
                 history = this.history + move,
                 messageBufferKey = MessageBufferKey.issue(),
                 expireService = this.expireService.next(),
@@ -162,7 +162,7 @@ data class TaraguchiSelectStageSession(
     override fun select(move: Pos): PvpGameSession =
         PvpGameSession(
             owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
-            board = this.board.makeMove(move),
+            board = this.board.set(move),
             gameResult = this.gameResult,
             history = this.history + move,
             messageBufferKey = MessageBufferKey.issue(),

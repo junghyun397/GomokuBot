@@ -1,12 +1,9 @@
 package core.assets
 
-import arrow.core.None
-import arrow.core.Option
-import arrow.core.Some
 import core.database.DatabaseConnection
 import core.database.repositories.UserProfileRepository
 import io.r2dbc.spi.Statement
-import renju.notation.Flag
+import renju.notation.ForbiddenKind
 import java.util.*
 
 const val GENERIC_PLATFORM_ID: Short = 0
@@ -32,21 +29,15 @@ suspend fun UserUid?.retrieveUserOrAiUser(connection: DatabaseConnection) =
     } ?: aiUser
 
 fun forbiddenFlagToText(flag: Byte) =
-    when (flag) {
-        Flag.FORBIDDEN_33() -> "3-3"
-        Flag.FORBIDDEN_44() -> "4-4"
-        Flag.FORBIDDEN_6() -> "≥6"
-        else -> "UNKNOWN"
+    when (ForbiddenKind.fromFieldFlag(flag)) {
+        ForbiddenKind.DoubleThree -> "3-3"
+        ForbiddenKind.DoubleFour -> "4-4"
+        ForbiddenKind.Overline -> "≥6"
+        null -> "UNKNOWN"
     }
 
 inline fun <reified T : Any> Statement.bindNullable(name: String, value: T?): Statement =
     when (value) {
         null -> bindNull(name, T::class.java)
         else -> bind(name, value)
-    }
-
-fun <T> scala.Option<T>.toOption(): Option<T> =
-    when (this.isDefined()) {
-        true -> Some(this.get())
-        else -> None
     }

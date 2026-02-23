@@ -14,9 +14,9 @@ import core.interact.message.graphics.HistoryRenderType
 import core.session.Rule
 import core.session.entities.ChannelConfig
 import core.session.entities.DeclareStageOpeningSession
-import core.session.entities.GameResult
 import core.session.entities.GameSession
 import kotlinx.coroutines.flow.Flow
+import renju.notation.GameResult
 import renju.notation.Pos
 
 interface MessagingService<A, B> {

@@ -12,7 +12,11 @@ import core.interact.reports.writeCommandReport
 import core.session.GameManager
 import core.session.SessionManager
 import core.session.SwapType
-import core.session.entities.*
+import core.session.entities.AiGameSession
+import core.session.entities.ChannelConfig
+import core.session.entities.PvpGameSession
+import core.session.entities.RenjuSession
+import renju.notation.GameResult
 import renju.notation.Pos
 import utils.lang.tuple
 
@@ -34,7 +38,7 @@ class SetCommand(
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        if (session.board.validateMove(this.pos).isDefined()) throw IllegalStateException()
+        if (session.board.validateMove(this.pos).isSome()) throw IllegalStateException()
 
         val thenSession = GameManager.makeMove(this.session, this.pos)
 
@@ -106,7 +110,7 @@ class SetCommand(
                                             guidePublisher,
                                             config.language.container,
                                             nextSession.owner,
-                                            nextSession.board.lastPos().get()
+                                            nextSession.board.lastPos().getOrNull() ?: this@SetCommand.pos
                                         )
                                             .retrieve()()
 
@@ -140,7 +144,14 @@ class SetCommand(
                                             publishers.plain,
                                             config.language.container,
                                             nextSession.owner,
-                                            nextSession.board.lastPos().get()
+                                            nextSession.board.lastPos().getOrNull() ?: this@SetCommand.pos
+                                        )
+                                    is GameResult.FiveInRow ->
+                                        service.buildLosePVE(
+                                            publishers.plain,
+                                            config.language.container,
+                                            nextSession.owner,
+                                            nextSession.board.lastPos().getOrNull() ?: this@SetCommand.pos
                                         )
                                     is GameResult.Full ->
                                         service.buildTiePVE(publishers.plain, config.language.container, nextSession.owner)
@@ -178,6 +189,14 @@ class SetCommand(
                                         thenSession.player,
                                         pos
                                     )
+                                is GameResult.FiveInRow ->
+                                    service.buildWinPVP(
+                                        publishers.plain,
+                                        config.language.container,
+                                        thenSession.nextPlayer,
+                                        thenSession.player,
+                                        pos
+                                    )
                                 is GameResult.Full ->
                                     service.buildTiePVP(publishers.plain, config.language.container, thenSession.owner, thenSession.opponent)
                             }.launch()()
@@ -200,6 +219,8 @@ class SetCommand(
                         val io = effect {
                             when (result) {
                                 is GameResult.Win ->
+                                    service.buildWinPVE(publishers.plain, config.language.container, thenSession.owner, pos)
+                                is GameResult.FiveInRow ->
                                     service.buildWinPVE(publishers.plain, config.language.container, thenSession.owner, pos)
                                 is GameResult.Full ->
                                     service.buildTiePVE(publishers.plain, config.language.container, thenSession.owner)

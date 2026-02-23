@@ -11,7 +11,6 @@ import core.session.entities.OpeningSession
 import core.session.entities.SelectStageOpeningSession
 import kotlinx.coroutines.flow.flowOf
 import renju.notation.Color
-import renju.notation.Flag
 import renju.notation.Pos
 import utils.assets.MarkdownAnchorMapping
 import utils.assets.SimplifiedMarkdownDocument
@@ -36,16 +35,16 @@ abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
         this@MessagingServiceImpl.sendString(message, this)
 
     protected fun unicodeStone(color: Color) =
-        if (color == Notation.Color.Black) UNICODE_BLACK_CIRCLE else UNICODE_WHITE_CIRCLE
+        if (color == Color.Black) UNICODE_BLACK_CIRCLE else UNICODE_WHITE_CIRCLE
 
     protected fun User.withColor(color: Color) =
         "${this.name}${this@MessagingServiceImpl.unicodeStone(color)}"
 
     protected fun GameSession.ownerWithColor() =
-        if (this.ownerHasBlack) this.owner.withColor(Notation.Color.Black) else this.owner.withColor(Notation.Color.White)
+        if (this.ownerHasBlack) this.owner.withColor(Color.Black) else this.owner.withColor(Color.White)
 
     protected fun GameSession.opponentWithColor() =
-        if (this.ownerHasBlack) this.opponent.withColor(Notation.Color.White) else opponent.withColor(Notation.Color.Black)
+        if (this.ownerHasBlack) this.opponent.withColor(Color.White) else opponent.withColor(Color.Black)
 
     override fun generateFocusedField(session: GameSession, focusInfo: FocusSolver.FocusInfo): FocusedFields {
         val half = this.focusWidth / 2
@@ -55,16 +54,16 @@ abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
                 val absolutePos = Pos(focusInfo.focus.row() + rowOffset, focusInfo.focus.col() + colOffset)
 
                 val buttonFlag = when (val idx = absolutePos.idx()) {
-                    session.board.lastMove() -> when (session.board.field()[session.board.lastMove()]) {
-                        Flag.BLACK() -> ButtonFlag.BLACK_RECENT
-                        Flag.WHITE() -> ButtonFlag.WHITE_RECENT
+                    session.board.lastMove() -> when (session.board.field[session.board.lastMove()]) {
+                        Color.Black.flag() -> ButtonFlag.BLACK_RECENT
+                        Color.White.flag() -> ButtonFlag.WHITE_RECENT
                         else -> throw IllegalStateException()
                     }
-                    else -> when (val flag = session.board.field()[idx]) {
-                        Flag.BLACK() -> ButtonFlag.BLACK
-                        Flag.WHITE() -> ButtonFlag.WHITE
+                    else -> when (val flag = session.board.field[idx]) {
+                        Color.Black.flag() -> ButtonFlag.BLACK
+                        Color.White.flag() -> ButtonFlag.WHITE
                         else -> when {
-                            Notation.FlagInstance.isForbid(flag, session.board.nextColorFlag()) -> ButtonFlag.FORBIDDEN
+                            Color.isForbidden(flag, session.board.playerColor()) -> ButtonFlag.FORBIDDEN
                             else -> when (absolutePos) {
                                 in focusInfo.highlights -> ButtonFlag.HIGHLIGHTED
                                 else -> when (session) {

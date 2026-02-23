@@ -13,7 +13,6 @@ import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.session.ArchivePolicy
 import core.session.entities.AiGameSession
-import core.session.entities.GameResult
 import core.session.entities.PvpGameSession
 import core.session.entities.RenjuSession
 import dev.minn.jda.ktx.coroutines.await
@@ -35,6 +34,7 @@ import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.requests.RestAction
+import renju.notation.GameResult
 import utils.lang.memoize
 import utils.lang.replaceIf
 import utils.lang.tuple

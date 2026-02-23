@@ -1,0 +1,4 @@
+[submodule "native/mintaka"]
+	path = native/mintaka
+	url = https://github.com/junghyun397/mintaka
+	branch = main

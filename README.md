@@ -4,7 +4,7 @@
 
 Now play Gomoku in your chat room. GomokuBot can do it. ― GomokuBot is an AI Chatbot designed to collect data for reinforcement learning. GomokuBot can be services with any platform and can handle many requests reliably based on reactive streams. 
 
-*For the Renju engine and inference server used by GomokuBot, please refer to the [ResRenju](https://github.com/junghyun397/ResRenju) repository.*
+*For the Renju engine and inference server used by GomokuBot, please refer to the [mintaka](https://github.com/junghyun397/mintaka) repository.*
 
 ## Features
 

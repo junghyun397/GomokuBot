@@ -4,7 +4,7 @@ import core.database.repositories.AnnounceRepository
 import io.r2dbc.spi.ConnectionFactories
 import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitLast
-import renju.notation.Flag
+import renju.notation.Color
 
 object DatabaseManager {
 
@@ -110,9 +110,9 @@ object DatabaseManager {
                         
                             IF p_black_id IS NOT NULL THEN
                                 INSERT INTO user_stats (user_id) VALUES (p_black_id) ON CONFLICT (user_id) DO NOTHING;
-                                IF p_win_color = ${Flag.BLACK()} THEN
+                                IF p_win_color = ${Color.Black.flag()} THEN
                                     UPDATE user_stats SET black_wins = black_wins + 1 WHERE user_id = p_black_id;
-                                ELSIF p_win_color = ${Flag.WHITE()} THEN
+                                ELSIF p_win_color = ${Color.White.flag()} THEN
                                     UPDATE user_stats SET black_losses = black_losses + 1 WHERE user_id = p_black_id;
                                 ELSE
                                     UPDATE user_stats SET black_draws = black_draws + 1 WHERE user_id = p_black_id;
@@ -121,9 +121,9 @@ object DatabaseManager {
                             
                             IF p_white_id IS NOT NULL THEN
                                 INSERT INTO user_stats (user_id) VALUES (p_white_id) ON CONFLICT (user_id) DO NOTHING;
-                                IF p_win_color = ${Flag.WHITE()} THEN
+                                IF p_win_color = ${Color.White.flag()} THEN
                                     UPDATE user_stats SET white_wins = white_wins + 1 WHERE user_id = p_white_id;
-                                ELSIF p_win_color = ${Flag.BLACK()} THEN
+                                ELSIF p_win_color = ${Color.Black.flag()} THEN
                                     UPDATE user_stats SET white_losses = white_losses + 1 WHERE user_id = p_white_id;
                                 ELSE
                                     UPDATE user_stats SET white_draws = white_draws + 1 WHERE user_id = p_white_id;

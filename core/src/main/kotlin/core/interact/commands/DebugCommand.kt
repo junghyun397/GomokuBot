@@ -8,7 +8,6 @@ import arrow.core.toOption
 import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
-import core.assets.Notation
 import core.assets.User
 import core.database.entities.GameRecordId
 import core.database.entities.asGameSession
@@ -21,15 +20,13 @@ import core.interact.reports.writeCommandReport
 import core.session.Rule
 import core.session.SessionManager
 import core.session.entities.*
-import renju.BoardIO
+import renju.Board
 import renju.notation.Pos
-import renju.notation.Renju
 import utils.assets.LinuxTime
-import utils.lang.toInputStream
 import utils.lang.tuple
 
 enum class DebugType {
-    ANALYSIS, SELF_REQUEST, VCF, INJECT, STATUS, SESSIONS, GIF
+    SELF_REQUEST, INJECT, STATUS, SESSIONS, GIF
 }
 
 class DebugCommand(
@@ -51,20 +48,6 @@ class DebugCommand(
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching { when (debugType) {
-        DebugType.ANALYSIS -> {
-            SessionManager.retrieveGameSession(bot.sessions, guild, user.id)?.let { session ->
-                effect {
-                    service.buildSessionArchive(publishers.plain, session, session.gameResult, false)
-                        .addFile(
-                            Notation.BoardIOInstance.buildBoardDebugString(session.board).toInputStream(),
-                            "analysis-report-${System.currentTimeMillis()}.txt"
-                        )
-                        .launch()()
-
-                    emptyOrders
-                }.let { tuple(it, this.writeCommandReport("succeed", guild, user)) }
-            } ?: (tuple(effect { emptyOrders }, this.writeCommandReport("failed", guild, user)))
-        }
         DebugType.SELF_REQUEST -> {
             if (SessionManager.retrieveGameSession(bot.sessions, guild, user.id) != null ||
                         SessionManager.retrieveRequestSession(bot.sessions, guild, user.id) != null)
@@ -91,7 +74,8 @@ class DebugCommand(
             }
         }
         DebugType.INJECT -> {
-            val board = BoardIO.fromBoardText(this.payload, Renju.BOARD_CENTER_POS().idx()).get()
+            val board = Board.fromBoardText(this.payload, Pos.CENTER.idx()).getOrNull()
+                ?: throw IllegalStateException("invalid board payload")
 
             val session = AiGameSession(
                 owner = user,
@@ -109,7 +93,12 @@ class DebugCommand(
             SessionManager.putGameSession(bot.sessions, guild, session)
 
             val io = effect {
-                service.buildNextMovePVE(publishers.plain, config.language.container, user, session.board.lastPos().get())
+                service.buildNextMovePVE(
+                    publishers.plain,
+                    config.language.container,
+                    user,
+                    session.board.lastPos().getOrNull() ?: Pos.CENTER
+                )
                     .launch()()
 
                 buildBoardProcedure(bot, guild, config, service, publishers.plain, session)()
@@ -150,54 +139,6 @@ class DebugCommand(
                 service.buildDebugMessage(publishers.plain, "report here")
                     .addFile(sessionMessage.byteInputStream(), "sessions.txt")
                     .launch()()
-
-                emptyOrders
-            }
-
-            tuple(io, this.writeCommandReport("succeed", guild, user))
-        }
-        DebugType.VCF -> {
-            val vcfCase = """
-                       A B C D E F G H I J K L M N O
-                    15 O . . . X . . . . . . . X . X 15
-                    14 X . . . . O . . . O . . O . X 14
-                    13 . . . . . . . O . . . . . O . 13
-                    12 O . . . . . . . . . . X . . X 12
-                    11 X . . . . . . . . . . . O . . 11
-                    10 O . O . . . . . . . . . . . . 10
-                     9 O O X O . . . . X . . . O . . 9
-                     8 O . O O . . . X . O . . . . . 8
-                     7 . X . . . . . . . O . . X . . 7
-                     6 . . . . . . . . O . . . . . X 6
-                     5 X . . . . . . . . . . . X . X 5
-                     4 . . . . . . . . . . . . . X O 4
-                     3 X . . . . . . . . . . . X X . 3
-                     2 . . . . . . . X . . . . . . O 2
-                     1 X O O O . X . . X . X . . . . 1
-                       A B C D E F G H I J K L M N O
-                """.trimIndent()
-                .let { BoardIO.fromBoardText(it, Pos.fromCartesian("m3").get().idx()).get() }
-
-            val session = AiGameSession(
-                owner = user,
-                aiLevel = AiLevel.AMOEBA,
-                solution = None,
-                ownerHasBlack = false,
-                board = vcfCase,
-                history = List(vcfCase.moves()) { null },
-                messageBufferKey = MessageBufferKey.issue(),
-                expireService = ExpireService(bot.config.gameExpireOffset),
-                ruleKind = Rule.TARAGUCHI_10,
-                recording = false,
-            )
-
-            SessionManager.putGameSession(bot.sessions, guild, session)
-
-            val io = effect {
-                service.buildNextMovePVE(publishers.plain, config.language.container, user, session.board.lastPos().get())
-                    .launch()()
-
-                buildBoardProcedure(bot, guild, config, service, publishers.plain, session)()
 
                 emptyOrders
             }
