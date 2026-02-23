@@ -8,7 +8,7 @@ import core.interact.commands.DebugType
 import core.interact.emptyOrders
 import core.interact.parse.CommandParser
 import core.interact.parse.asParseFailure
-import discord.interact.GuildManager
+import discord.interact.ChannelManager
 import discord.interact.UserInteractionContext
 import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
@@ -23,7 +23,7 @@ object DebugCommandParser : CommandParser, ParsableCommand {
         DebugType.entries.firstOrNull { it.name == option }
 
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<DiscordParseFailure, Command> {
-        if (!GuildManager.hasDebugPermission(context.discordConfig, context.event.author))
+        if (!ChannelManager.hasDebugPermission(context.discordConfig, context.event.author))
             return Either.Left(this.asParseFailure("tester permission not granted", context.guild, context.user) { _, _, _ ->
                 effect { emptyOrders }
             })
@@ -38,7 +38,7 @@ object DebugCommandParser : CommandParser, ParsableCommand {
 
         val customPayload = when (type) {
             DebugType.STATUS ->
-                "node = #${context.event.jda.shardInfo.shardId}, ${context.event.jda.guildCache.size()} guilds, ${context.event.jda.userCache.size()} users"
+                "node = #${context.event.jda.shardInfo.shardId}, ${context.event.jda.channelCache.size()} guilds, ${context.event.jda.userCache.size()} users"
             else -> null
         }
 

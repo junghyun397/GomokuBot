@@ -7,14 +7,14 @@ import core.BotContext
 import core.interact.message.MessagePublisher
 import core.interact.message.MessagingService
 import core.session.SessionManager
-import core.session.entities.GuildConfig
+import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
 import utils.assets.LinuxTime
 
 fun <A, B> buildHelpProcedure(
     bot: BotContext,
-    config: GuildConfig,
+    config: ChannelConfig,
     publisher: MessagePublisher<A, B>,
     service: MessagingService<A, B>,
     page: Int
@@ -44,7 +44,7 @@ fun <A, B> buildHelpProcedure(
 
 fun <A, B> buildCombinedHelpProcedure(
     bot: BotContext,
-    config: GuildConfig,
+    config: ChannelConfig,
     publisher: MessagePublisher<A, B>,
     service: MessagingService<A, B>,
     settingsPage: Int

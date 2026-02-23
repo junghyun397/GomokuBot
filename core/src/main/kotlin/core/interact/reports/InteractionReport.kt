@@ -1,12 +1,12 @@
 package core.interact.reports
 
-import core.assets.Guild
+import core.assets.Channel
 
 interface InteractionReport : Report {
 
     val commandName: String
 
-    val guild: Guild
+    val guild: Channel
 
     override fun buildBody(): String = "${guild}\t $commandName\t $comment"
 

@@ -2,7 +2,7 @@ package core.interact.commands
 
 import arrow.core.raise.effect
 import core.BotContext
-import core.assets.Guild
+import core.assets.Channel
 import core.interact.Order
 import core.interact.emptyOrders
 import core.interact.message.MessagingService
@@ -16,7 +16,7 @@ import utils.lang.replaceIf
 import utils.lang.tuple
 
 class ExpireGameCommand(
-    private val guildSession: GuildSession,
+    private val channelSession: ChannelSession,
     private val session: GameSession,
     private val channelAvailable: Boolean,
 ) : InternalCommand {
@@ -25,14 +25,14 @@ class ExpireGameCommand(
 
     override suspend fun <A, B> execute(
         bot: BotContext,
-        config: GuildConfig,
-        guild: Guild,
+        config: ChannelConfig,
+        guild: Channel,
         service: MessagingService<A, B>,
         publisher: PublisherSet<A, B>,
     ) = runCatching {
         val (finishedSession, result) = GameManager.resignSession(session, GameResult.Cause.TIMEOUT, session.player)
 
-        GameManager.finishSession(bot, guildSession.guild, finishedSession, result)
+        GameManager.finishSession(bot, channelSession.guild, finishedSession, result)
 
         val io = if (this.channelAvailable) {
             effect {
@@ -41,25 +41,25 @@ class ExpireGameCommand(
                 val noticePublisher = publisher.plain
 
                 val boardPublisher = noticePublisher
-                    .replaceIf(guildSession.config.swapType == SwapType.EDIT && message != null) { publisher.edit(message!!) }
+                    .replaceIf(channelSession.config.swapType == SwapType.EDIT && message != null) { publisher.edit(message!!) }
 
                 when (session) {
                     is PvpGameSession, is OpeningSession -> service
-                        .buildTimeoutPVP(noticePublisher, guildSession.config.language.container, session.nextPlayer, session.player)
+                        .buildTimeoutPVP(noticePublisher, channelSession.config.language.container, session.nextPlayer, session.player)
                     is AiGameSession -> service
-                        .buildTimeoutPVE(noticePublisher, guildSession.config.language.container, session.owner)
+                        .buildTimeoutPVE(noticePublisher, channelSession.config.language.container, session.owner)
                 }.launch()()
 
                 val finishOrders = buildFinishProcedure(
                     bot,
                     service,
                     boardPublisher,
-                    guildSession.config,
+                    channelSession.config,
                     session,
                     finishedSession
                 )()
 
-                finishOrders + Order.ArchiveSession(finishedSession, guildSession.config.archivePolicy)
+                finishOrders + Order.ArchiveSession(finishedSession, channelSession.config.archivePolicy)
             }
         } else effect { emptyOrders }
 

@@ -1,21 +1,21 @@
 package tools.migration
 
 import core.assets.GENERIC_PLATFORM_ID
-import core.assets.Guild
-import core.assets.GuildId
-import core.assets.GuildUid
+import core.assets.Channel
+import core.assets.ChannelId
+import core.assets.ChannelUid
 import core.database.DatabaseManager
 import core.database.LocalCaches
-import core.database.repositories.GuildProfileRepository
+import core.database.repositories.ChannelProfileRepository
 import java.sql.DriverManager
 import java.util.*
 
 const val DISCORD_PLATFORM_ID: Short = 1
 
-private val unknownGuild = Guild(
-    id = GuildUid(UUID.randomUUID()),
+private val unknownChannel = Channel(
+    id = ChannelUid(UUID.randomUUID()),
     platform = GENERIC_PLATFORM_ID,
-    givenId = GuildId(0),
+    givenId = ChannelId(0),
     name = "unknown"
 )
 
@@ -34,11 +34,11 @@ suspend fun main() {
         }
     )
 
-    val genericGuild = GuildProfileRepository.retrieveOrInsertGuild(gomokuBotConnection, unknownGuild.platform, unknownGuild.givenId) {
-        unknownGuild
+    val genericChannel = ChannelProfileRepository.retrieveOrInsertChannel(gomokuBotConnection, unknownChannel.platform, unknownChannel.givenId) {
+        unknownChannel
     }
 
-    migrateGuildInfoTable(gomokuBotConnection, mysqlConnection)
+    migrateChannelInfoTable(gomokuBotConnection, mysqlConnection)
     migrateUserInfoTable(gomokuBotConnection, mysqlConnection)
-    migrateGameRecordTable(gomokuBotConnection, mysqlConnection, genericGuild)
+    migrateGameRecordTable(gomokuBotConnection, mysqlConnection, genericChannel)
 }

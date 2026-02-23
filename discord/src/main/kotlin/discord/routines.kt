@@ -9,8 +9,8 @@ import core.interact.reports.ErrorReport
 import core.interact.reports.Report
 import core.interact.reports.RoutineReport
 import core.session.SessionManager
-import discord.assets.JDAGuild
-import discord.assets.getGuildMessageChannelById
+import discord.assets.JDAChannel
+import discord.assets.getChannelMessageSubChannelById
 import discord.interact.DiscordConfig
 import discord.interact.TaskContext
 import discord.interact.message.DiscordMessagingService
@@ -31,7 +31,7 @@ private suspend fun executeCommand(
     discordConfig: DiscordConfig,
     command: InternalCommand,
     channel: MessageChannel,
-    jdaGuild: JDAGuild,
+    jdaChannel: JDAChannel,
 ): Report =
     command.execute(
         bot = botContext,
@@ -44,7 +44,7 @@ private suspend fun executeCommand(
         )
     ).fold(
         onSuccess = { (io, report) ->
-            executeIO(discordConfig, io, jdaGuild)
+            executeIO(discordConfig, io, jdaChannel)
             report
         },
         onFailure = { throwable ->
@@ -58,21 +58,21 @@ private suspend fun executeCommand(
 
 fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flux<Report> =
     schedule(bot.config.gameExpireCycle, {
-        SessionManager.cleanExpiredGameSession(bot.sessions).forEach { (_, guildSession, _, session) ->
-            val context = TaskContext(bot, guildSession.guild, guildSession.config, LinuxTime.now(), "SCH")
+        SessionManager.cleanExpiredGameSession(bot.sessions).forEach { (_, channelSession, _, session) ->
+            val context = TaskContext(bot, channelSession.guild, channelSession.config, LinuxTime.now(), "SCH")
 
             val maybeMessage = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
-            val maybeGuild = jda.getGuildById(guildSession.guild.givenId.idLong)
-            val maybeChannel = maybeMessage?.let { maybeGuild?.getGuildMessageChannelById(it.channelId.idLong) }
+            val maybeChannel = jda.getGuildById(channelSession.guild.givenId.idLong)
+            val maybeSubChannel = maybeMessage?.let { maybeChannel?.getChannelMessageSubChannelById(it.subChannelId.idLong) }
 
             val command = ExpireGameCommand(
-                guildSession = guildSession,
+                channelSession = channelSession,
                 session = session,
-                channelAvailable = maybeGuild != null && maybeChannel != null
+                channelAvailable = maybeChannel != null && maybeSubChannel != null
             )
 
-            val result = executeCommand(context, bot, discordConfig, command, maybeChannel!!, maybeGuild!!)
+            val result = executeCommand(context, bot, discordConfig, command, maybeSubChannel!!, maybeChannel!!)
 
             emit(result)
         }
@@ -82,22 +82,22 @@ fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: J
 
 fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flux<Report> =
     schedule(bot.config.requestExpireCycle, {
-        SessionManager.cleanExpiredRequestSessions(bot.sessions).forEach { (_, guildSession, _, session) ->
-            val context = TaskContext(bot, guildSession.guild, guildSession.config, LinuxTime.now(), "SCH")
+        SessionManager.cleanExpiredRequestSessions(bot.sessions).forEach { (_, channelSession, _, session) ->
+            val context = TaskContext(bot, channelSession.guild, channelSession.config, LinuxTime.now(), "SCH")
 
             val maybeMessage = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
-            val maybeGuild = jda.getGuildById(guildSession.guild.givenId.idLong)
-            val maybeChannel = maybeMessage?.let { maybeGuild?.getGuildMessageChannelById(it.channelId.idLong) }
+            val maybeChannel = jda.getGuildById(channelSession.guild.givenId.idLong)
+            val maybeSubChannel = maybeMessage?.let { maybeChannel?.getChannelMessageSubChannelById(it.subChannelId.idLong) }
 
             val command = ExpireRequestCommand(
-                guildSession = guildSession,
+                channelSession = channelSession,
                 session = session,
-                channelAvailable = maybeGuild != null && maybeChannel != null,
+                channelAvailable = maybeChannel != null && maybeSubChannel != null,
                 messageAvailable = maybeMessage != null
             )
 
-            val result = executeCommand(context, bot, discordConfig, command, maybeChannel!!, maybeGuild!!)
+            val result = executeCommand(context, bot, discordConfig, command, maybeSubChannel!!, maybeChannel!!)
 
             emit(result)
         }

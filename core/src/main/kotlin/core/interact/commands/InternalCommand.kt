@@ -1,10 +1,10 @@
 package core.interact.commands
 
 import core.BotContext
-import core.assets.Guild
+import core.assets.Channel
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
-import core.session.entities.GuildConfig
+import core.session.entities.ChannelConfig
 
 interface InternalCommand {
 
@@ -12,8 +12,8 @@ interface InternalCommand {
 
     suspend fun <A, B> execute(
         bot: BotContext,
-        config: GuildConfig,
-        guild: Guild,
+        config: ChannelConfig,
+        guild: Channel,
         service: MessagingService<A, B>,
         publisher: PublisherSet<A, B>
     ): CommandResult

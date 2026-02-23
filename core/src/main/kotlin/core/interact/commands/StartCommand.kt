@@ -2,7 +2,7 @@ package core.interact.commands
 
 import arrow.core.raise.effect
 import core.BotContext
-import core.assets.Guild
+import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
 import core.inference.AiLevel
@@ -13,7 +13,7 @@ import core.interact.reports.writeCommandReport
 import core.session.GameManager
 import core.session.Rule
 import core.session.SessionManager
-import core.session.entities.GuildConfig
+import core.session.entities.ChannelConfig
 import core.session.entities.MessageBufferKey
 import core.session.entities.RequestSession
 import utils.assets.LinuxTime
@@ -27,8 +27,8 @@ class StartCommand(val opponent: User?, val rule: Rule) : Command {
 
     override suspend fun <A, B> execute(
         bot: BotContext,
-        config: GuildConfig,
-        guild: Guild,
+        config: ChannelConfig,
+        guild: Channel,
         user: User,
         service: MessagingService<A, B>,
         messageRef: MessageRef,

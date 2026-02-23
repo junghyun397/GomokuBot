@@ -9,7 +9,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 data class LocalCaches(
-    val guildProfileUidCache: Cache<GuildUid, Guild> = CacheBuilder
+    val channelProfileUidCache: Cache<ChannelUid, Channel> = CacheBuilder
         .newBuilder()
         .maximumSize(1000)
         .expireAfterAccess(1, TimeUnit.DAYS)
@@ -21,7 +21,7 @@ data class LocalCaches(
         .expireAfterAccess(6, TimeUnit.HOURS)
         .build(),
 
-    val guildProfileGivenIdCache: Cache<GuildId, Guild> = CacheBuilder
+    val channelProfileGivenIdCache: Cache<ChannelId, Channel> = CacheBuilder
         .newBuilder()
         .maximumSize(1000)
         .expireAfterAccess(1, TimeUnit.DAYS)

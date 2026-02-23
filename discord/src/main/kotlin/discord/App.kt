@@ -5,7 +5,7 @@ import club.minnced.jda.reactor.on
 import core.BotConfig
 import core.BotContext
 import core.assets.ChannelId
-import core.assets.GuildId
+import core.assets.SubChannelId
 import core.database.DatabaseManager
 import core.database.LocalCaches
 import core.database.repositories.AnnounceRepository
@@ -17,8 +17,8 @@ import dev.minn.jda.ktx.coroutines.await
 import discord.assets.ASCII_SPLASH
 import discord.assets.COMMAND_PREFIX
 import discord.assets.NAVIGATION_EMOJIS
+import discord.interact.ChannelManager
 import discord.interact.DiscordConfig
-import discord.interact.GuildManager
 import discord.interact.InternalInteractionContext
 import discord.interact.UserInteractionContext
 import discord.route.*
@@ -64,8 +64,8 @@ private data class ResRenjuConfig(val serverAddress: String, val serverPort: Int
 object DiscordConfigBuilder {
     fun fromEnv(): DiscordConfig = DiscordConfig(
         token = System.getenv("GOMOKUBOT_DISCORD_TOKEN"),
-        officialServerId = GuildId(System.getenv("GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID").toLong()),
-        archiveChannelId = ChannelId(System.getenv("GOMOKUBOT_DISCORD_ARCHIVE_CHANNEL_ID").toLong()),
+        officialServerId = ChannelId(System.getenv("GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID").toLong()),
+        archiveSubChannelId = SubChannelId(System.getenv("GOMOKUBOT_DISCORD_ARCHIVE_CHANNEL_ID").toLong()),
         testerRoleId = System.getenv("GOMOKUBOT_DISCORD_TESTER_ROLE_ID").toLong()
     )
 }
@@ -172,7 +172,7 @@ object GomokuBot {
                             && !(it.user?.isBot ?: false)
                             && it.channel.type == ChannelType.TEXT
                             && NAVIGATION_EMOJIS.contains(it.emoji)
-                            && !GuildManager.lookupPermission(it.channel.asGuildMessageChannel(), Permission.MESSAGE_MANAGE)
+                            && !ChannelManager.lookupPermission(it.channel.asGuildMessageChannel(), Permission.MESSAGE_MANAGE)
                 }
                 .flatMap { mono {
                     val user = it.guild
@@ -189,11 +189,11 @@ object GomokuBot {
 
             eventManager.on<GuildJoinEvent>()
                 .flatMap { event -> InternalInteractionContext.fromJDAEvent(botContext, discordConfig, event, event.guild) }
-                .flatMap(::guildJoinRouter),
+                .flatMap(::channelJoinRouter),
 
             eventManager.on<GuildLeaveEvent>()
                 .flatMap { event -> InternalInteractionContext.fromJDAEvent(botContext, discordConfig, event, event.guild) }
-                .flatMap(::guildLeaveRouter),
+                .flatMap(::channelLeaveRouter),
 
             scheduleGameExpiration(botContext, discordConfig, jda),
             scheduleRequestExpiration(botContext, discordConfig, jda),
@@ -218,7 +218,7 @@ object GomokuBot {
 
         logger.info("reactive event manager ready.")
 
-        GuildManager.initGlobalCommand(jda)
+        ChannelManager.initGlobalCommand(jda)
 
         logger.info("discord global command uploaded.")
     }

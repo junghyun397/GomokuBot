@@ -4,7 +4,7 @@ import arrow.core.Option
 import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import core.BotContext
-import core.assets.Guild
+import core.assets.Channel
 import core.inference.FocusSolver
 import core.interact.Order
 import core.interact.message.MessageAdaptor
@@ -30,8 +30,8 @@ fun <A, B> buildAppendGameMessageProcedure(
 
 fun <A, B> buildNextMoveProcedure(
     bot: BotContext,
-    guild: Guild,
-    config: GuildConfig,
+    guild: Channel,
+    config: ChannelConfig,
     service: MessagingService<A, B>,
     publisher: MessagePublisher<A, B>,
     session: GameSession,
@@ -43,8 +43,8 @@ fun <A, B> buildNextMoveProcedure(
 
 fun <A, B> buildBoardProcedure(
     bot: BotContext,
-    guild: Guild,
-    config: GuildConfig,
+    guild: Channel,
+    config: ChannelConfig,
     service: MessagingService<A, B>,
     publisher: MessagePublisher<A, B>,
     session: GameSession,
@@ -82,7 +82,7 @@ fun <A, B> buildBoardProcedure(
 
 private fun buildSwapProcedure(
     bot: BotContext,
-    config: GuildConfig,
+    config: ChannelConfig,
     session: GameSession
 ): Effect<Nothing, List<Order>> = effect { when (config.swapType) {
     SwapType.RELAY -> listOf(Order.BulkDelete(SessionManager.checkoutMessages(bot.sessions, session.messageBufferKey).orEmpty()))
@@ -98,7 +98,7 @@ fun <A, B> buildFinishProcedure(
     bot: BotContext,
     service: MessagingService<A, B>,
     publisher: MessagePublisher<A, B>,
-    config: GuildConfig,
+    config: ChannelConfig,
     session: GameSession,
     thenSession: GameSession
 ): Effect<Nothing, List<Order>> = effect {

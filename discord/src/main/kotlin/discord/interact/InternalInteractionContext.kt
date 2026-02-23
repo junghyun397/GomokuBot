@@ -1,10 +1,10 @@
 package discord.interact
 
 import core.BotContext
-import core.assets.Guild
-import core.database.repositories.GuildProfileRepository
+import core.assets.Channel
+import core.database.repositories.ChannelProfileRepository
 import core.session.SessionManager
-import core.session.entities.GuildConfig
+import core.session.entities.ChannelConfig
 import discord.assets.*
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.events.Event
@@ -15,17 +15,17 @@ data class InternalInteractionContext<out E : Event> (
     override val bot: BotContext,
     override val discordConfig: DiscordConfig,
     override val event: E,
-    override val guild: Guild,
-    override val config: GuildConfig,
+    override val guild: Channel,
+    override val config: ChannelConfig,
     override val emittedTime: LinuxTime,
     override val source: String
 ) : InteractionContext<E> {
 
     companion object {
 
-        fun <E: Event> fromJDAEvent(bot: BotContext, discordConfig: DiscordConfig, event: E, jdaGuild: JDAGuild): Mono<InternalInteractionContext<E>> = mono {
-            val guild = GuildProfileRepository.retrieveOrInsertGuild(bot.dbConnection, DISCORD_PLATFORM_ID, jdaGuild.extractId()) {
-                jdaGuild.extractProfile()
+        fun <E: Event> fromJDAEvent(bot: BotContext, discordConfig: DiscordConfig, event: E, jdaChannel: JDAChannel): Mono<InternalInteractionContext<E>> = mono {
+            val guild = ChannelProfileRepository.retrieveOrInsertChannel(bot.dbConnection, DISCORD_PLATFORM_ID, jdaChannel.extractId()) {
+                jdaChannel.extractProfile()
             }
 
             InternalInteractionContext(
@@ -33,7 +33,7 @@ data class InternalInteractionContext<out E : Event> (
                 discordConfig = discordConfig,
                 event = event,
                 guild = guild,
-                config = SessionManager.retrieveGuildConfig(bot.sessions, guild),
+                config = SessionManager.retrieveChannelConfig(bot.sessions, guild),
                 emittedTime = LinuxTime.now(),
                 source = event.abbreviation()
             )

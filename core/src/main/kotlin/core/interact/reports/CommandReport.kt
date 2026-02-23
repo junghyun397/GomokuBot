@@ -1,6 +1,6 @@
 package core.interact.reports
 
-import core.assets.Guild
+import core.assets.Channel
 import core.assets.User
 import core.interact.commands.Command
 import utils.assets.LinuxTime
@@ -8,7 +8,7 @@ import utils.assets.LinuxTime
 data class CommandReport(
     override val commandName: String,
     override val comment: String,
-    override val guild: Guild,
+    override val guild: Channel,
     val user: User,
     override var interactionSource: String? = null,
     override var emittedTime: LinuxTime? = null,
@@ -20,5 +20,5 @@ data class CommandReport(
 
 }
 
-fun Command.writeCommandReport(comment: String, guild: Guild, user: User) =
+fun Command.writeCommandReport(comment: String, guild: Channel, user: User) =
     CommandReport(this.name, comment, guild, user)

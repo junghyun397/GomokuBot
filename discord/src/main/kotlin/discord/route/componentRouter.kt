@@ -71,7 +71,7 @@ fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInte
                         plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
                         windowed = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate()).setEphemeral(true)) },
                         editSelf = { msg -> MessageEditAdaptor(context.event.hook.editOriginal(msg.buildEdit())) },
-                        editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg.buildEdit()) } },
+                        editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
                         component = { components -> MessageEditAdaptor(context.event.hook.editOriginalComponents(components)) }
                     )
                     else -> TransMessagePublisherSet(
@@ -79,7 +79,7 @@ fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInte
                             plain = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate())) },
                             windowed = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate()).setEphemeral(true)) },
                             editSelf = { msg -> WebHookMessageEditAdaptor(context.event.editMessage(msg.buildEdit())) },
-                            editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg.buildEdit()) } },
+                            editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
                             component = { components -> WebHookMessageEditAdaptor(context.event.editComponents(components)) },
                             selfRef = messageRef
                         ),
@@ -87,7 +87,7 @@ fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInte
                             plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
                             windowed = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate()).setEphemeral(true)) },
                             editSelf = { msg -> MessageEditAdaptor(context.event.hook.editOriginal(msg.buildEdit())) },
-                            editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg.buildEdit()) } },
+                            editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
                             component = { components -> MessageEditAdaptor(context.event.hook.editOriginalComponents(components)) },
                             selfRef = messageRef
                         )
@@ -95,7 +95,7 @@ fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInte
                 }
             ).fold(
                 onSuccess = { (io, report) ->
-                    executeIO(context.discordConfig, io, context.jdaGuild, messageRef)
+                    executeIO(context.discordConfig, io, context.jdaChannel, messageRef)
                     report
                 },
                 onFailure = { throwable ->

@@ -220,7 +220,7 @@ object GameManager {
             }
         }
 
-    suspend fun finishSession(bot: BotContext, guild: Guild, session: GameSession, result: GameResult) {
+    suspend fun finishSession(bot: BotContext, guild: Channel, session: GameSession, result: GameResult) {
         SessionManager.removeGameSession(bot.sessions, guild, session.owner.id)
 
         session.extractGameRecord(guild.id).onSome { record ->

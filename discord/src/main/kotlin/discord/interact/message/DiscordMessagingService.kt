@@ -23,7 +23,7 @@ import dev.minn.jda.ktx.messages.Embed
 import dev.minn.jda.ktx.messages.EmbedBuilder
 import dev.minn.jda.ktx.messages.InlineEmbed
 import discord.assets.*
-import discord.interact.GuildManager
+import discord.interact.ChannelManager
 import discord.interact.message.DiscordMessagingService.IdConvention.ACCEPT
 import discord.interact.message.DiscordMessagingService.IdConvention.NO_FEATURE
 import discord.interact.message.DiscordMessagingService.IdConvention.OPENING
@@ -364,8 +364,8 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             message.original
                 .filter {
                     !it.isEphemeral
-                            && GuildManager.lookupPermission(it.guildChannel, Permission.MESSAGE_ADD_REACTION)
-                            && GuildManager.lookupPermission(it.guildChannel, Permission.MESSAGE_HISTORY)
+                            && ChannelManager.lookupPermission(it.guildChannel, Permission.MESSAGE_ADD_REACTION)
+                            && ChannelManager.lookupPermission(it.guildChannel, Permission.MESSAGE_HISTORY)
                 }
                 .onSome { original ->
                     try {
@@ -551,7 +551,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
     override fun buildPaginatedHelp(publisher: DiscordMessagePublisher, container: LanguageContainer, page: Int) =
         this.buildHelpMessage(publisher, container, page)
 
-    private fun buildSettingsMessage(publisher: DiscordMessagePublisher, config: GuildConfig, page: Int) =
+    private fun buildSettingsMessage(publisher: DiscordMessagePublisher, config: ChannelConfig, page: Int) =
         when (page) {
             0 -> publisher(DiscordMessageData(embed = this.languageEmbed))
             1 -> publisher(DiscordMessageData(embed = this.settingEmbed(BoardStyle::class)(config.language.container)))
@@ -569,10 +569,10 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             else -> throw IllegalStateException()
         }
 
-    override fun buildSettings(publisher: DiscordMessagePublisher, config: GuildConfig, page: Int) =
+    override fun buildSettings(publisher: DiscordMessagePublisher, config: ChannelConfig, page: Int) =
         this.buildSettingsMessage(publisher, config, page)
 
-    override fun buildPaginatedSettings(publisher: DiscordMessagePublisher, config: GuildConfig, page: Int) =
+    override fun buildPaginatedSettings(publisher: DiscordMessagePublisher, config: ChannelConfig, page: Int) =
         this.buildSettingsMessage(publisher, config, page)
 
     // RANK
@@ -645,7 +645,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             }
         } }
 
-    private val settingMenu: (KClass<*>) -> (LanguageContainer) -> (GuildConfig) -> SelectMenu =
+    private val settingMenu: (KClass<*>) -> (LanguageContainer) -> (ChannelConfig) -> SelectMenu =
         memoize { classTag -> memoize { container -> { config ->
             val (settingElement, optionElements) = SettingMapping.map[classTag]!!
 

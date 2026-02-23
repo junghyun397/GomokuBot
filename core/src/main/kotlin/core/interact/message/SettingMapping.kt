@@ -6,7 +6,7 @@ import core.assets.*
 import core.interact.i18n.LanguageContainer
 import core.interact.message.graphics.HistoryRenderType
 import core.session.*
-import core.session.entities.GuildConfig
+import core.session.entities.ChannelConfig
 import utils.assets.toEnumString
 import utils.lang.tuple
 import utils.structs.Identifiable
@@ -17,9 +17,9 @@ data class SettingElement(
     val stringId: String,
     val label: (LanguageContainer) -> String,
     val description: (LanguageContainer) -> String,
-    val extract: (GuildConfig) -> Identifiable,
+    val extract: (ChannelConfig) -> Identifiable,
     val find: (String) -> Option<Identifiable>,
-    val mutate: (GuildConfig, Identifiable) -> GuildConfig
+    val mutate: (ChannelConfig, Identifiable) -> ChannelConfig
 )
 
 data class OptionElement(
@@ -225,7 +225,7 @@ object SettingMapping {
         return tuple(settingElement.label(container), map[diff]!!.label(container))
     }
 
-    fun buildDifference(config: GuildConfig, kind: String, choice: String): Option<Pair<Identifiable, GuildConfig>> =
+    fun buildDifference(config: ChannelConfig, kind: String, choice: String): Option<Pair<Identifiable, ChannelConfig>> =
         this.map.values.firstOrNull { (settlingElement, _) -> settlingElement.stringId == kind }
             .toOption()
             .flatMap { (settingElement, _) ->

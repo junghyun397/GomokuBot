@@ -1,11 +1,11 @@
 package core.interact.reports
 
-import core.assets.Guild
+import core.assets.Channel
 import utils.assets.LinuxTime
 
 data class ErrorReport(
     private val error: Throwable,
-    override val guild: Guild,
+    override val guild: Channel,
     override var interactionSource: String? = null,
     override var emittedTime: LinuxTime? = null,
     override val commandTime: LinuxTime = LinuxTime.now(),

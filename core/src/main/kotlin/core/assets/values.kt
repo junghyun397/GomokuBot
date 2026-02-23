@@ -2,10 +2,10 @@ package core.assets
 
 import java.util.*
 
-data class Guild(
-    val id: GuildUid,
+data class Channel(
+    val id: ChannelUid,
     val platform: Short,
-    val givenId: GuildId,
+    val givenId: ChannelId,
     val name: String,
 ) {
 
@@ -27,11 +27,11 @@ data class User(
 
 }
 
-data class MessageRef(val id: MessageId, val guildId: GuildId, val channelId: ChannelId)
+data class MessageRef(val id: MessageId, val channelId: ChannelId, val subChannelId: SubChannelId)
 
-val DUMMY_MESSAGE_REF = MessageRef(MessageId(-1), GuildId(-1), ChannelId(-1))
+val DUMMY_MESSAGE_REF = MessageRef(MessageId(-1), ChannelId(-1), SubChannelId(-1))
 
-@JvmInline value class GuildUid(val uuid: UUID)
+@JvmInline value class ChannelUid(val uuid: UUID)
 
 @JvmInline value class UserUid(val uuid: UUID) {
 
@@ -41,8 +41,8 @@ val DUMMY_MESSAGE_REF = MessageRef(MessageId(-1), GuildId(-1), ChannelId(-1))
 
 @JvmInline value class UserId(val idLong: Long)
 
-@JvmInline value class GuildId(val idLong: Long)
+@JvmInline value class ChannelId(val idLong: Long)
 
 @JvmInline value class MessageId(val idLong: Long)
 
-@JvmInline value class ChannelId(val idLong: Long)
+@JvmInline value class SubChannelId(val idLong: Long)

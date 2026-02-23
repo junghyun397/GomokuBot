@@ -14,7 +14,7 @@ import core.interact.message.MonoPublisherSet
 import core.interact.reports.ErrorReport
 import core.interact.reports.Report
 import discord.assets.*
-import discord.interact.GuildManager
+import discord.interact.ChannelManager
 import discord.interact.UserInteractionContext
 import discord.interact.message.DiscordMessagingService
 import discord.interact.message.MessageCreateAdaptor
@@ -37,15 +37,15 @@ import utils.lang.replaceIf
 import java.util.concurrent.TimeUnit
 
 private fun buildPermissionNode(context: UserInteractionContext<*>, parsableCommand: ParsableCommand, channel: GuildMessageChannel, jdaUser: User): Either<DiscordParseFailure, ParsableCommand> =
-    GuildManager.permissionDependedRun(
+    ChannelManager.permissionDependedRun(
         channel, Permission.MESSAGE_SEND,
         onMissed = { Either.Left(
             DiscordParseFailure(parsableCommand.name, "message permission not granted in $channel", context.guild, context.user) { _, _, container ->
                 effect {
                     jdaUser.openPrivateChannel()
-                        .flatMap { privateChannel ->
+                        .flatMap { privateSubChannel ->
                             DiscordMessagingService.sendPermissionNotGrantedEmbed(
-                                publisher = { msg -> privateChannel.sendMessage(msg.buildCreate()) },
+                                publisher = { msg -> privateSubChannel.sendMessage(msg.buildCreate()) },
                                 container = container,
                                 channelName = channel.name
                             )
@@ -68,23 +68,23 @@ private fun <T : Event> buildAnnounceNode(context: UserInteractionContext<T>, co
 
 private fun <T : Event> buildUpdateProfileNode(context: UserInteractionContext<T>, jdaUser: User, command: Command): Command {
     val user = jdaUser.extractProfile(uid = context.user.id, announceId = context.user.announceId)
-    val guild = context.jdaGuild.extractProfile(uid = context.guild.id)
+    val guild = context.jdaChannel.extractProfile(uid = context.guild.id)
 
     val maybeThenUser = if (user != context.user) Some(user) else None
-    val maybeThenGuild = if (guild != context.guild) Some(guild) else None
+    val maybeThenChannel = if (guild != context.guild) Some(guild) else None
 
-    return command.replaceIf(maybeThenUser is Some<*> || maybeThenGuild is Some<*>) {
-        UpdateProfileCommand(command, maybeThenUser, maybeThenGuild)
+    return command.replaceIf(maybeThenUser is Some<*> || maybeThenChannel is Some<*>) {
+        UpdateProfileCommand(command, maybeThenUser, maybeThenChannel)
     }
 }
 
 private suspend fun <T : Event> buildUpdateCommandsNode(context: UserInteractionContext<T>, command: Command): Command {
-    if (context.guild.id in GuildManager.updateCommandBypassGuilds)
+    if (context.guild.id in ChannelManager.updateCommandBypassChannels)
         return command
 
-    GuildManager.updateCommandBypassGuilds += context.guild.id
+    ChannelManager.updateCommandBypassChannels += context.guild.id
     
-    val (deprecates, adds) = GuildManager.buildCommandUpdates(context.jdaGuild, context.config.language.container)
+    val (deprecates, adds) = ChannelManager.buildCommandUpdates(context.jdaChannel, context.config.language.container)
     
     if (deprecates.isEmpty() && adds.isEmpty())
         return command
@@ -153,7 +153,7 @@ fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEv
                             is ResponseFlag.Defer -> AdaptivePublisherSet(
                                 plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
                                 windowed = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
-                                editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg.buildEdit()) } },
+                                editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
                             )
                             else -> AdaptivePublisherSet(
                                 plain = TransMessagePublisher(
@@ -161,7 +161,7 @@ fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEv
                                     tail = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) }
                                 ),
                                 windowed = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate()).setEphemeral(true)) },
-                                editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg.buildEdit()) } }
+                                editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } }
                             )
                         }
                     )
@@ -178,7 +178,7 @@ fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEv
                 }
             ).fold(
                 onSuccess = { (io, report) ->
-                    executeIO(context.discordConfig, io, context.jdaGuild)
+                    executeIO(context.discordConfig, io, context.jdaChannel)
                     report
                 },
                 onFailure = { throwable ->
@@ -226,7 +226,7 @@ fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mo
         .filter { it is Some<*> }
         .map { (it as Some<Either<DiscordParseFailure, Command>>).value }
         .doOnNext { parsed ->
-            GuildManager.permissionGrantedRun(context.event.channel.asGuildMessageChannel(), Permission.MESSAGE_ADD_REACTION) {
+            ChannelManager.permissionGrantedRun(context.event.channel.asGuildMessageChannel(), Permission.MESSAGE_ADD_REACTION) {
                 parsed.fold(
                     ifRight = { context.event.message.addReaction(EMOJI_CHECK).queue() },
                     ifLeft = { context.event.message.addReaction(EMOJI_CROSS).queue() },
@@ -245,7 +245,7 @@ fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mo
                         messageRef = context.event.message.extractMessageRef(),
                         publishers = MonoPublisherSet(
                             publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.buildCreate())) },
-                            editGlobal = { ref -> { msg -> context.jdaGuild.editMessageByMessageRef(ref, msg.buildEdit()) } },
+                            editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
                         ),
                     )
                 },
@@ -258,7 +258,7 @@ fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mo
                 }
             ).fold(
                 onSuccess = { (io, report) ->
-                    executeIO(context.discordConfig, io, context.jdaGuild)
+                    executeIO(context.discordConfig, io, context.jdaChannel)
                     report
                 },
                 onFailure = { throwable ->

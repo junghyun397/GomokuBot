@@ -1,6 +1,6 @@
 package core.database.repositories
 
-import core.assets.GuildUid
+import core.assets.ChannelUid
 import core.assets.Notation
 import core.assets.UserUid
 import core.assets.aiUser
@@ -71,11 +71,11 @@ object UserStatsRepository {
             .collectList()
             .awaitSingle()
 
-    suspend fun fetchRankings(connection: DatabaseConnection, guildUid: GuildUid): List<UserStats> =
+    suspend fun fetchRankings(connection: DatabaseConnection, channelUid: ChannelUid): List<UserStats> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
                 .createStatement("SELECT * FROM game_record WHERE guild_id = $1 AND ai_level IS NOT NULL")
-                .bind("$1", guildUid.uuid)
+                .bind("$1", channelUid.uuid)
                 .execute()
             }
             .flatMap { result -> result

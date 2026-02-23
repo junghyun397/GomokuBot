@@ -15,7 +15,7 @@ import core.session.entities.NavigationState
 import core.session.entities.PageNavigationState
 import dev.minn.jda.ktx.coroutines.await
 import discord.assets.extractMessageRef
-import discord.interact.GuildManager
+import discord.interact.ChannelManager
 import discord.interact.UserInteractionContext
 import discord.interact.message.DiscordMessagingService
 import discord.interact.message.MessageCreateAdaptor
@@ -60,7 +60,7 @@ fun reactionRouter(context: UserInteractionContext<GenericMessageReactionEvent>)
         .map { it.getOrNull()!! }
         .doOnNext {
             if (context.event is MessageReactionAddEvent) {
-                GuildManager.permissionGrantedRun(context.event.channel.asGuildMessageChannel(), Permission.MESSAGE_MANAGE) {
+                ChannelManager.permissionGrantedRun(context.event.channel.asGuildMessageChannel(), Permission.MESSAGE_MANAGE) {
                     context.event.reaction.removeReaction(context.event.user!!).queue()
                 }
             }
@@ -83,7 +83,7 @@ fun reactionRouter(context: UserInteractionContext<GenericMessageReactionEvent>)
                     ),
                 ).fold(
                     onSuccess = { (io, report) ->
-                        executeIO(context.discordConfig, io, context.jdaGuild, messageRef)
+                        executeIO(context.discordConfig, io, context.jdaChannel, messageRef)
                         report
                     },
                     onFailure = { throwable ->

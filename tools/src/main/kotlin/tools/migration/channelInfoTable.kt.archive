@@ -1,0 +1,51 @@
+package tools.migration
+
+import core.assets.Channel
+import core.assets.ChannelId
+import core.assets.ChannelUid
+import core.database.DatabaseConnection
+import core.database.repositories.ChannelConfigRepository
+import core.database.repositories.ChannelProfileRepository
+import core.interact.i18n.Language
+import core.session.entities.ChannelConfig
+import utils.lang.tuple
+import java.sql.Connection
+import java.util.*
+
+suspend fun migrateChannelInfoTable(gomokuBotConnection: DatabaseConnection, mysqlConnection: Connection) {
+    val results = mysqlConnection.createStatement()
+        .executeQuery("SELECT * FROM guild_info")
+
+    val channelAndConfigs = mutableListOf<Pair<Channel, ChannelConfig>>()
+
+    while (results.next()) {
+        val channelId = ChannelId(results.getLong("guild_id"))
+        val language = results.getString("lang")
+            .let { if (results.wasNull()) null else it }
+            ?.let { languageRaw ->
+                Language.entries
+                    .find { language -> language.container.languageCode().uppercase() == languageRaw.uppercase() }
+            }
+
+        val channelUid = ChannelUid(UUID.randomUUID())
+
+        val guild = Channel(
+            id = channelUid,
+            platform = DISCORD_PLATFORM_ID,
+            givenId = channelId,
+            name = "unknown"
+        )
+
+        val config = ChannelConfig(
+            language = language ?: Language.ENG
+        )
+
+        channelAndConfigs.add(tuple(guild, config))
+    }
+
+    channelAndConfigs.forEach { (guild, config) ->
+        ChannelProfileRepository.upsertChannel(gomokuBotConnection, guild)
+        ChannelConfigRepository.upsertChannelConfig(gomokuBotConnection, guild.id, config)
+    }
+
+}

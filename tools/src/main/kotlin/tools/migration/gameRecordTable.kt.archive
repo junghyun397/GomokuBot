@@ -1,6 +1,6 @@
 package tools.migration
 
-import core.assets.Guild
+import core.assets.Channel
 import core.assets.Notation
 import core.assets.UserId
 import core.assets.bindNullable
@@ -22,7 +22,7 @@ import utils.structs.Option
 import utils.structs.getOrException
 import java.sql.Connection
 
-suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysqlConnection: Connection, genericGuild: Guild) {
+suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysqlConnection: Connection, genericChannel: Channel) {
     val results = mysqlConnection.createStatement()
         .executeQuery("SELECT * FROM game_record WHERE reason != 'PVPWIN' ORDER BY record_index ASC")
 
@@ -98,7 +98,7 @@ suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysq
             boardState = board.field(),
             history = history,
             gameResult = gameResult,
-            guildId = genericGuild.id,
+            channelId = genericChannel.id,
             blackId = blackUser?.id,
             whiteId = whiteUser?.id,
             aiLevel = AiLevel.APE,
@@ -124,7 +124,7 @@ suspend fun migrateGameRecordTable(gomokuBotConnection: DatabaseConnection, mysq
                     .bind("$2", record.history.map { it.idx() }.toTypedArray())
                     .bind("$3", record.gameResult.cause.id)
                     .bindNullable("$4", record.gameResult.winColorId)
-                    .bind("$5", record.guildId.uuid)
+                    .bind("$5", record.channelId.uuid)
                     .bindNullable("$6", record.blackId?.uuid)
                     .bindNullable("$7", record.whiteId?.uuid)
                     .bindNullable("$8", record.aiLevel?.id)

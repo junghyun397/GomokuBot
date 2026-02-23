@@ -1,18 +1,18 @@
 package discord.route
 
 import arrow.core.getOrElse
-import core.assets.Guild
-import core.assets.GuildUid
-import core.database.repositories.GuildConfigRepository
-import core.database.repositories.GuildProfileRepository
-import core.interact.commands.GuildJoinCommand
-import core.interact.commands.GuildLeaveCommand
+import core.assets.Channel
+import core.assets.ChannelUid
+import core.database.repositories.ChannelConfigRepository
+import core.database.repositories.ChannelProfileRepository
+import core.interact.commands.ChannelJoinCommand
+import core.interact.commands.ChannelLeaveCommand
 import core.interact.i18n.Language
 import core.interact.message.MonoPublisherSet
 import core.interact.reports.ErrorReport
 import core.interact.reports.Report
 import core.session.SessionManager
-import core.session.entities.GuildConfig
+import core.session.entities.ChannelConfig
 import discord.assets.DISCORD_PLATFORM_ID
 import discord.assets.extractId
 import discord.interact.InternalInteractionContext
@@ -34,21 +34,21 @@ private fun matchLocale(locale: DiscordLocale): Language =
         else -> Language.ENG
     }
 
-fun guildJoinRouter(context: InternalInteractionContext<GuildJoinEvent>): Mono<Report> =
+fun channelJoinRouter(context: InternalInteractionContext<GuildJoinEvent>): Mono<Report> =
     mono {
-        val guild = GuildProfileRepository.retrieveOrInsertGuild(context.bot.dbConnection, DISCORD_PLATFORM_ID, context.event.guild.extractId()) {
-            Guild(
-                id = GuildUid(UUID.randomUUID()),
+        val guild = ChannelProfileRepository.retrieveOrInsertChannel(context.bot.dbConnection, DISCORD_PLATFORM_ID, context.event.guild.extractId()) {
+            Channel(
+                id = ChannelUid(UUID.randomUUID()),
                 platform = DISCORD_PLATFORM_ID,
                 givenId = context.event.guild.extractId(),
                 name = context.event.guild.name,
             )
         }
 
-        val config = GuildConfigRepository.fetchGuildConfig(context.bot.dbConnection, guild.id)
-            .getOrElse { GuildConfig(language = matchLocale(context.event.guild.locale)) }
+        val config = ChannelConfigRepository.fetchChannelConfig(context.bot.dbConnection, guild.id)
+            .getOrElse { ChannelConfig(language = matchLocale(context.event.guild.locale)) }
 
-        val command = GuildJoinCommand(context.event.guild.locale.languageName)
+        val command = ChannelJoinCommand(context.event.guild.locale.languageName)
 
         command.execute(
             bot = context.bot,
@@ -61,7 +61,7 @@ fun guildJoinRouter(context: InternalInteractionContext<GuildJoinEvent>): Mono<R
             )
         ).fold(
             onSuccess = { (io, report) ->
-                executeIO(context.discordConfig, io, context.jdaGuild)
+                executeIO(context.discordConfig, io, context.jdaChannel)
                 report
             },
             onFailure = { throwable ->
@@ -75,15 +75,15 @@ fun guildJoinRouter(context: InternalInteractionContext<GuildJoinEvent>): Mono<R
     }
 
 // TODO: bad smell
-fun guildLeaveRouter(context: InternalInteractionContext<GuildLeaveEvent>): Mono<Report> =
+fun channelLeaveRouter(context: InternalInteractionContext<GuildLeaveEvent>): Mono<Report> =
     mono {
-        val maybeGuild = GuildProfileRepository.retrieveGuild(context.bot.dbConnection, DISCORD_PLATFORM_ID, context.event.guild.extractId())
+        val maybeChannel = ChannelProfileRepository.retrieveChannel(context.bot.dbConnection, DISCORD_PLATFORM_ID, context.event.guild.extractId())
 
-        maybeGuild.fold(
+        maybeChannel.fold(
             ifSome = { guild ->
-                GuildLeaveCommand.execute(
+                ChannelLeaveCommand.execute(
                     bot = context.bot,
-                    config = SessionManager.retrieveGuildConfig(context.bot.sessions, guild),
+                    config = SessionManager.retrieveChannelConfig(context.bot.sessions, guild),
                     guild = guild,
                     service = DiscordMessagingService,
                     publisher = MonoPublisherSet(

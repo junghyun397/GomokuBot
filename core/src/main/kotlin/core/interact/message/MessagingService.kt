@@ -12,10 +12,10 @@ import core.interact.i18n.LanguageContainer
 import core.interact.message.graphics.BoardRenderer
 import core.interact.message.graphics.HistoryRenderType
 import core.session.Rule
+import core.session.entities.ChannelConfig
 import core.session.entities.DeclareStageOpeningSession
 import core.session.entities.GameResult
 import core.session.entities.GameSession
-import core.session.entities.GuildConfig
 import kotlinx.coroutines.flow.Flow
 import renju.notation.Pos
 
@@ -96,9 +96,9 @@ interface MessagingService<A, B> {
 
     fun buildPaginatedHelp(publisher: MessagePublisher<A, B>, container: LanguageContainer, page: Int): MessageBuilder<A, B>
 
-    fun buildSettings(publisher: MessagePublisher<A, B>, config: GuildConfig, page: Int): MessageBuilder<A, B>
+    fun buildSettings(publisher: MessagePublisher<A, B>, config: ChannelConfig, page: Int): MessageBuilder<A, B>
 
-    fun buildPaginatedSettings(publisher: MessagePublisher<A, B>, config: GuildConfig, page: Int): MessageBuilder<A, B>
+    fun buildPaginatedSettings(publisher: MessagePublisher<A, B>, config: ChannelConfig, page: Int): MessageBuilder<A, B>
 
     // RANK
 

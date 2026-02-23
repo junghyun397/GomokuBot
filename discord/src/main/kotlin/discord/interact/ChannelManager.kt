@@ -5,7 +5,7 @@ import arrow.core.Option
 import arrow.core.Some
 import arrow.core.getOrElse
 import arrow.core.raise.get
-import core.assets.GuildUid
+import core.assets.ChannelUid
 import core.assets.MessageRef
 import core.assets.aiUser
 import core.assets.anonymousUser
@@ -17,9 +17,9 @@ import core.session.entities.GameResult
 import core.session.entities.PvpGameSession
 import core.session.entities.RenjuSession
 import dev.minn.jda.ktx.coroutines.await
-import discord.assets.JDAGuild
+import discord.assets.JDAChannel
 import discord.assets.awaitOption
-import discord.assets.getGuildMessageChannelById
+import discord.assets.getChannelMessageSubChannelById
 import discord.interact.message.DiscordMessageData
 import discord.interact.message.DiscordMessagePublisher
 import discord.interact.message.DiscordMessagingService
@@ -39,9 +39,9 @@ import utils.lang.memoize
 import utils.lang.replaceIf
 import utils.lang.tuple
 
-object GuildManager {
+object ChannelManager {
 
-    val updateCommandBypassGuilds = mutableSetOf<GuildUid>()
+    val updateCommandBypassChannels = mutableSetOf<ChannelUid>()
 
     fun lookupPermission(channel: GuildMessageChannel, permission: Permission) =
         channel.guild.selfMember.hasPermission(channel, permission)
@@ -73,7 +73,7 @@ object GuildManager {
     private val engBuildableCommandIndexes: Map<String, BuildableCommand> =
         engBuildableCommands.associateBy { it.getLocalizedName(Language.ENG.container) }
 
-    suspend fun buildCommandUpdates(guild: JDAGuild, container: LanguageContainer): Pair<List<Command>, List<BuildableCommand>> =
+    suspend fun buildCommandUpdates(guild: JDAChannel, container: LanguageContainer): Pair<List<Command>, List<BuildableCommand>> =
         guild.retrieveCommands()
             .map { commands ->
                 val localCommands = commands.toSet()
@@ -93,8 +93,8 @@ object GuildManager {
             }
             .await()
 
-    fun upsertCommands(jdaGuild: JDAGuild, container: LanguageContainer) {
-        buildableCommands.fold(jdaGuild.updateCommands()) { action, command ->
+    fun upsertCommands(jdaChannel: JDAChannel, container: LanguageContainer) {
+        buildableCommands.fold(jdaChannel.updateCommands()) { action, command ->
             command.buildCommandData(action, container)
         }.queue()
     }
@@ -105,7 +105,7 @@ object GuildManager {
             else -> anonymousUser
         }
 
-    suspend fun archiveSession(archiveChannel: MessageChannel, session: RenjuSession, archivePolicy: ArchivePolicy) {
+    suspend fun archiveSession(archiveSubChannel: MessageChannel, session: RenjuSession, archivePolicy: ArchivePolicy) {
         if (session.board.moves() < 20 || archivePolicy == ArchivePolicy.PRIVACY) return
 
         val modSession = session.replaceIf(archivePolicy == ArchivePolicy.BY_ANONYMOUS) {
@@ -127,7 +127,7 @@ object GuildManager {
             }
         }
 
-        val publisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(archiveChannel.sendMessage(msg.buildCreate())) }
+        val publisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(archiveSubChannel.sendMessage(msg.buildCreate())) }
 
         DiscordMessagingService.buildSessionArchive(publisher, modSession, modResult, false)
             .launch()
@@ -135,19 +135,19 @@ object GuildManager {
     }
 
     suspend fun retrieveJDAMessage(jda: JDA, messageRef: MessageRef): net.dv8tion.jda.api.entities.Message? =
-        jda.getGuildById(messageRef.guildId.idLong)
-            ?.getTextChannelById(messageRef.channelId.idLong)
+        jda.getGuildById(messageRef.channelId.idLong)
+            ?.getTextChannelById(messageRef.subChannelId.idLong)
             ?.retrieveMessageById(messageRef.id.idLong)
             ?.awaitOption()
             ?.getOrNull()
 
-    fun bulkDelete(jdaGuild: JDAGuild, messageRefs: List<MessageRef>) {
+    fun bulkDelete(jdaChannel: JDAChannel, messageRefs: List<MessageRef>) {
         if (messageRefs.isEmpty()) return
 
         messageRefs
-            .groupBy { it.channelId }
-            .flatMap { (channelId, messageRefs) ->
-                when (val channel = jdaGuild.getGuildMessageChannelById(channelId.idLong)) {
+            .groupBy { it.subChannelId }
+            .flatMap { (subChannelId, messageRefs) ->
+                when (val channel = jdaChannel.getChannelMessageSubChannelById(subChannelId.idLong)) {
                     null -> emptyList<RestAction<*>>()
                     else -> {
                         this.permissionDependedRun(
@@ -174,10 +174,10 @@ object GuildManager {
             .queue()
     }
 
-    fun deleteSingle(jdaGuild: JDAGuild, messageRef: MessageRef) {
-        val maybeChannel = jdaGuild.getTextChannelById(messageRef.channelId.idLong)
+    fun deleteSingle(jdaChannel: JDAChannel, messageRef: MessageRef) {
+        val maybeSubChannel = jdaChannel.getTextChannelById(messageRef.subChannelId.idLong)
 
-        maybeChannel?.deleteMessageById(messageRef.id.idLong)?.queue()
+        maybeSubChannel?.deleteMessageById(messageRef.id.idLong)?.queue()
     }
 
     fun clearReaction(message: net.dv8tion.jda.api.entities.Message) {

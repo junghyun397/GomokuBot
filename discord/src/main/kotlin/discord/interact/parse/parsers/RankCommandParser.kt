@@ -63,7 +63,7 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<DiscordParseFailure, Command> =
         when (context.event.subcommandName) {
             context.config.language.container.rankCommandSubServer() ->
-                Either.Right(RankCommand(RankScope.Guild(context.guild)))
+                Either.Right(RankCommand(RankScope.Channel(context.guild)))
             context.config.language.container.rankCommandSubUser() ->
                 context.event.getOption(context.config.language.container.rankCommandOptionPlayer())
                     ?.asUser
@@ -75,7 +75,7 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<DiscordParseFailure, Command> =
         when (payload.getOrNull(1)) {
             context.config.language.container.rankCommandSubServer() ->
-                Either.Right(RankCommand(RankScope.Guild(context.guild)))
+                Either.Right(RankCommand(RankScope.Channel(context.guild)))
             context.config.language.container.rankCommandSubUser() ->
                 context.event.message.mentions.members.firstOrNull()
                     ?.user

@@ -6,7 +6,7 @@ import arrow.core.None
 import arrow.core.raise.effect
 import arrow.core.toOption
 import core.BotContext
-import core.assets.Guild
+import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.Notation
 import core.assets.User
@@ -44,8 +44,8 @@ class DebugCommand(
     @Suppress("DuplicatedCode")
     override suspend fun <A, B> execute(
         bot: BotContext,
-        config: GuildConfig,
-        guild: Guild,
+        config: ChannelConfig,
+        guild: Channel,
         user: User,
         service: MessagingService<A, B>,
         messageRef: MessageRef,

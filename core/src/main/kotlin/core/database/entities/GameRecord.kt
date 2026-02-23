@@ -21,7 +21,7 @@ data class GameRecord(
 
     val gameResult: GameResult,
 
-    val guildId: GuildUid,
+    val channelId: ChannelUid,
     val blackId: UserUid?,
     val whiteId: UserUid?,
 
@@ -35,7 +35,7 @@ data class GameRecord(
 @JvmInline value class GameRecordId(val id: Long)
 
 private val invalidPos: Pos = Pos.fromIdx(-1)
-fun GameSession.extractGameRecord(guildUid: GuildUid): Option<GameRecord> =
+fun GameSession.extractGameRecord(channelUid: ChannelUid): Option<GameRecord> =
     if (this.gameResult.isSome() && this.recording && !this.history.contains(null))
         Some(
             GameRecord(
@@ -46,7 +46,7 @@ fun GameSession.extractGameRecord(guildUid: GuildUid): Option<GameRecord> =
 
                 gameResult = gameResult.getOrNull()!!,
 
-                guildId = guildUid,
+                channelId = channelUid,
                 blackId = when {
                     ownerHasBlack -> owner.id
                     else -> opponent.id

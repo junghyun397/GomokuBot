@@ -9,6 +9,6 @@ interface InteractionContext<out E : Event> : ExecutionContext {
 
     val event: E
 
-    val jdaGuild get() = this.event.jda.getGuildById(guild.givenId.idLong)!!
+    val jdaChannel get() = this.event.jda.getGuildById(guild.givenId.idLong)!!
 
 }

@@ -30,7 +30,7 @@ const val DISCORD_PLATFORM_ID: Short = 1
 
 typealias JDAUser = net.dv8tion.jda.api.entities.User
 
-typealias JDAGuild = net.dv8tion.jda.api.entities.Guild
+typealias JDAChannel = net.dv8tion.jda.api.entities.Guild
 
 fun net.dv8tion.jda.api.entities.Message.extractMessageRef(): MessageRef =
     MessageRef(this.extractId(), this.guild.extractId(), this.channel.extractId())
@@ -38,22 +38,22 @@ fun net.dv8tion.jda.api.entities.Message.extractMessageRef(): MessageRef =
 fun GenericMessageReactionEvent.extractMessageRef(): MessageRef =
     MessageRef(MessageId(this.messageIdLong), this.guild.extractId(), this.channel.extractId())
 
-fun net.dv8tion.jda.api.entities.Guild.extractId(): GuildId = GuildId(this.idLong)
+fun net.dv8tion.jda.api.entities.Guild.extractId(): ChannelId = ChannelId(this.idLong)
 
 fun net.dv8tion.jda.api.entities.User.extractId(): UserId = UserId(this.idLong)
 
 fun net.dv8tion.jda.api.entities.Message.extractId(): MessageId = MessageId(this.idLong)
 
-fun net.dv8tion.jda.api.entities.channel.Channel.extractId(): ChannelId = ChannelId(this.idLong)
+fun net.dv8tion.jda.api.entities.channel.Channel.extractId(): SubChannelId = SubChannelId(this.idLong)
 
-fun net.dv8tion.jda.api.entities.Guild.extractProfile(uid: GuildUid = GuildUid(UUID.randomUUID())): Guild =
-    Guild(uid, DISCORD_PLATFORM_ID, this.extractId(), this.name)
+fun net.dv8tion.jda.api.entities.Guild.extractProfile(uid: ChannelUid = ChannelUid(UUID.randomUUID())): Channel =
+    Channel(uid, DISCORD_PLATFORM_ID, this.extractId(), this.name)
 
 fun net.dv8tion.jda.api.entities.User.extractProfile(uid: UserUid = UserUid(UUID.randomUUID()), announceId: Int? = null): User =
     User(uid, DISCORD_PLATFORM_ID, this.extractId(), this.effectiveName, this.name, announceId, this.avatarUrl)
 
 fun net.dv8tion.jda.api.entities.Guild.editMessageByMessageRef(ref: MessageRef, newContent: MessageEditData): DiscordMessageBuilder =
-    MessageEditAdaptor(this.getGuildMessageChannelById(ref.channelId.idLong)!!.editMessageById(ref.id.idLong, newContent))
+    MessageEditAdaptor(this.getChannelMessageSubChannelById(ref.subChannelId.idLong)!!.editMessageById(ref.id.idLong, newContent))
 
 fun net.dv8tion.jda.api.entities.Message.extractMessageData(): DiscordMessageData =
     DiscordMessageData(
@@ -65,7 +65,7 @@ fun net.dv8tion.jda.api.entities.Message.extractMessageData(): DiscordMessageDat
         Some(this)
     )
 
-fun net.dv8tion.jda.api.entities.Guild.getGuildMessageChannelById(idLong: Long): GuildMessageChannel? =
+fun net.dv8tion.jda.api.entities.Guild.getChannelMessageSubChannelById(idLong: Long): GuildMessageChannel? =
     this.getTextChannelById(idLong)
         ?: let { this.getThreadChannelById(idLong) }
         ?: let { this.getVoiceChannelById(idLong) }
@@ -88,8 +88,8 @@ fun <T : Event> T.abbreviation(): String =
         else -> "UNK"
     }
 
-fun ExecutionContext.retrieveJDAGuild(jda: JDA): JDAGuild =
+fun ExecutionContext.retrieveJDAChannel(jda: JDA): JDAChannel =
     when (this) {
-        is InteractionContext<*> -> this.jdaGuild
+        is InteractionContext<*> -> this.jdaChannel
         else -> jda.getGuildById(this.guild.givenId.idLong)!!
     }

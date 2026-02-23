@@ -3,7 +3,7 @@ package core.database.repositories
 import arrow.core.Option
 import arrow.core.Some
 import arrow.core.toOption
-import core.assets.GuildUid
+import core.assets.ChannelUid
 import core.assets.Notation
 import core.assets.UserUid
 import core.assets.bindNullable
@@ -36,7 +36,7 @@ object GameRecordRepository {
                 .bind("$2", record.history.map { it.idx() }.toTypedArray())
                 .bind("$3", record.gameResult.cause.id)
                 .bindNullable("$4", record.gameResult.winColorId)
-                .bind("$5", record.guildId.uuid)
+                .bind("$5", record.channelId.uuid)
                 .bindNullable("$6", record.blackId?.uuid)
                 .bindNullable("$7", record.whiteId?.uuid)
                 .bindNullable("$8", record.aiLevel?.id)
@@ -47,11 +47,11 @@ object GameRecordRepository {
             .awaitFirstOrNull()
     }
 
-    suspend fun retrieveGameRecordsByGuildUid(connection: DatabaseConnection, guildUid: GuildUid, limit: Int): MutableList<GameRecord> =
+    suspend fun retrieveGameRecordsByChannelUid(connection: DatabaseConnection, channelUid: ChannelUid, limit: Int): MutableList<GameRecord> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
                 .createStatement("SELECT * FROM game_record WHERE guild_id = $1 ORDER BY create_date DESC LIMIT $2")
-                .bind("$1", guildUid.uuid)
+                .bind("$1", channelUid.uuid)
                 .bind("$2", limit)
                 .execute()
             }
@@ -136,7 +136,7 @@ object GameRecordRepository {
                 blackUser = blackUser,
                 whiteUser = whiteUser
             )!!,
-            guildId = GuildUid(gameRecordRow.guildId),
+            channelId = ChannelUid(gameRecordRow.channelId),
             blackId = blackUser?.id,
             whiteId = whiteUser?.id,
             aiLevel = gameRecordRow.aiLevel?.let { AiLevel.entries.find(it) },
@@ -153,7 +153,7 @@ object GameRecordRepository {
         val history: IntArray,
         val winColor: Byte?,
         val cause: Short,
-        val guildId: UUID,
+        val channelId: UUID,
         val aiLevel: Short?,
         val rule: Short,
         val data: LocalDateTime

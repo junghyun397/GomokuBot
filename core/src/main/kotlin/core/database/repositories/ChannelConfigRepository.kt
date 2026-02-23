@@ -3,29 +3,29 @@ package core.database.repositories
 import arrow.core.None
 import arrow.core.Option
 import arrow.core.Some
-import core.assets.GuildUid
+import core.assets.ChannelUid
 import core.database.DatabaseConnection
 import core.interact.i18n.Language
 import core.interact.message.graphics.HistoryRenderType
 import core.session.*
-import core.session.entities.GuildConfig
+import core.session.entities.ChannelConfig
 import kotlinx.coroutines.reactive.awaitSingle
 import utils.structs.find
 
-object GuildConfigRepository {
+object ChannelConfigRepository {
 
-    suspend fun fetchGuildConfig(connection: DatabaseConnection, guildUid: GuildUid): Option<GuildConfig> =
+    suspend fun fetchChannelConfig(connection: DatabaseConnection, channelUid: ChannelUid): Option<ChannelConfig> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
                 .createStatement(
                     "SELECT * FROM guild_config WHERE guild_id = $1"
                 )
-                .bind("$1", guildUid.uuid)
+                .bind("$1", channelUid.uuid)
                 .execute()
             }
-            .flatMap<Option<GuildConfig>> { result -> result
+            .flatMap<Option<ChannelConfig>> { result -> result
                 .map { row, _ ->
-                    Some(GuildConfig(
+                    Some(ChannelConfig(
                         language = Language.entries.find(row["language"] as Short),
                         boardStyle = BoardStyle.entries.find(row["board_style"] as Short),
                         focusType = FocusType.entries.find(row["focus_type"] as Short),
@@ -39,7 +39,7 @@ object GuildConfigRepository {
             .defaultIfEmpty(None)
             .awaitSingle()
 
-    suspend fun upsertGuildConfig(connection: DatabaseConnection, guildUid: GuildUid, guildConfig: GuildConfig) {
+    suspend fun upsertChannelConfig(connection: DatabaseConnection, channelUid: ChannelUid, channelConfig: ChannelConfig) {
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
                 .createStatement(
@@ -48,14 +48,14 @@ object GuildConfigRepository {
                             ON CONFLICT (guild_id) DO UPDATE SET language = $2, board_style = $3, focus_type = $4, hint_type = $5, mark_type = $6, swap_type = $7, archive_policy = $8
                     """.trimIndent()
                 )
-                .bind("$1", guildUid.uuid)
-                .bind("$2", guildConfig.language.id)
-                .bind("$3", guildConfig.boardStyle.id)
-                .bind("$4", guildConfig.focusType.id)
-                .bind("$5", guildConfig.hintType.id)
-                .bind("$6", guildConfig.markType.id)
-                .bind("$7", guildConfig.swapType.id)
-                .bind("$8", guildConfig.archivePolicy.id)
+                .bind("$1", channelUid.uuid)
+                .bind("$2", channelConfig.language.id)
+                .bind("$3", channelConfig.boardStyle.id)
+                .bind("$4", channelConfig.focusType.id)
+                .bind("$5", channelConfig.hintType.id)
+                .bind("$6", channelConfig.markType.id)
+                .bind("$7", channelConfig.swapType.id)
+                .bind("$8", channelConfig.archivePolicy.id)
                 .execute()
             }
             .flatMap { it.rowsUpdated }

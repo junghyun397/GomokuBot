@@ -4,7 +4,7 @@ import core.interact.i18n.Language
 import core.interact.message.graphics.HistoryRenderType
 import core.session.*
 
-data class GuildConfig(
+data class ChannelConfig(
     val language: Language = Language.ENG,
     val boardStyle: BoardStyle = BoardStyle.IMAGE,
     val focusType: FocusType = FocusType.INTELLIGENCE,
