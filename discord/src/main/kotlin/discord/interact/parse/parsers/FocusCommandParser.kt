@@ -1,5 +1,6 @@
 package discord.interact.parse.parsers
 
+import arrow.core.toOption
 import core.interact.commands.Direction
 import core.interact.commands.FocusCommand
 import core.interact.parse.CommandParser
@@ -12,10 +13,6 @@ import discord.interact.parse.NavigableCommand
 import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import utils.lang.tuple
-import utils.structs.asOption
-import utils.structs.filter
-import utils.structs.flatMap
-import utils.structs.map
 
 object FocusCommandParser : CommandParser, NavigableCommand {
 
@@ -33,11 +30,11 @@ object FocusCommandParser : CommandParser, NavigableCommand {
 
     override suspend fun parseReaction(context: UserInteractionContext<GenericMessageReactionEvent>, state: NavigationState) =
         SessionManager.retrieveGameSession(context.bot.sessions, context.guild, context.user.id)
-            .asOption()
+            .toOption()
             .filter { state is BoardNavigationState }
             .flatMap { session ->
                 this.matchDirection(context.event.reaction.emoji.asUnicode())
-                    .asOption()
+                    .toOption()
                     .map { tuple(session, it) }
             }
             .map { (session, direction) -> FocusCommand(state as BoardNavigationState, session, direction) }

@@ -1,5 +1,6 @@
 package discord.interact.parse.parsers
 
+import arrow.core.Either
 import core.interact.commands.Command
 import core.interact.commands.HelpCommand
 import core.interact.commands.ViewAnnounceCommand
@@ -18,7 +19,6 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import utils.lang.replaceIf
-import utils.structs.Either
 
 object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
@@ -47,14 +47,14 @@ object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     private fun checkCrossLanguageCommand(container: LanguageContainer, command: String) =
         container.helpCommand() != command
 
-    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either.Left<Command> {
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either.Right<Command> {
         val isCrossLanguageCommand = this.checkCrossLanguageCommand(context.config.language.container, context.event.name.lowercase())
 
         val language =
             if (isCrossLanguageCommand) Language.ENG
             else context.config.language
 
-        return Either.Left(
+        return Either.Right(
             this.matchPage(language.container, context.event.getOption(language.container.helpCommandOptionShortcut())?.asString)
                 ?.let { page ->
                     HelpCommand(
@@ -66,14 +66,14 @@ object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
         )
     }
 
-    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either.Left<Command> {
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either.Right<Command> {
         val isCrossLanguageCommand = this.checkCrossLanguageCommand(context.config.language.container, payload[0].lowercase())
 
         val language =
             if (isCrossLanguageCommand) Language.ENG
             else context.config.language
 
-        return Either.Left(
+        return Either.Right(
             this.matchPage(language.container, payload.getOrNull(1))
                 ?.let { page ->
                     HelpCommand(

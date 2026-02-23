@@ -1,10 +1,12 @@
 package core.assets
 
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
 import core.database.DatabaseConnection
 import core.database.repositories.UserProfileRepository
 import io.r2dbc.spi.Statement
 import renju.notation.Flag
-import utils.structs.Option
 import java.util.*
 
 const val GENERIC_PLATFORM_ID: Short = 0
@@ -44,7 +46,7 @@ inline fun <reified T : Any> Statement.bindNullable(name: String, value: T?): St
     }
 
 fun <T> scala.Option<T>.toOption(): Option<T> =
-    when (this.isDefined) {
-        true -> Option.Some(this.get())
-        else -> Option.Empty
+    when (this.isDefined()) {
+        true -> Some(this.get())
+        else -> None
     }

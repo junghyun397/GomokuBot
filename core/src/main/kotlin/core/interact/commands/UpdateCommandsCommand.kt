@@ -1,5 +1,7 @@
 package core.interact.commands
 
+import arrow.core.raise.Effect
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -10,7 +12,6 @@ import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
 import utils.lang.tuple
-import utils.structs.IO
 
 class UpdateCommandsCommand(
     command: Command,
@@ -29,7 +30,7 @@ class UpdateCommandsCommand(
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {
-        val io = IO.unit { listOf(Order.UpsertCommands(config.language.container)) }
+        val io: Effect<Nothing, List<Order>> = effect { listOf(Order.UpsertCommands(config.language.container)) }
 
         val report = this.writeCommandReport("deprecates = $deprecates, adds = $adds", guild, user)
 

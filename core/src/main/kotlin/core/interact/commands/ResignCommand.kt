@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -12,8 +13,6 @@ import core.session.GameManager
 import core.session.SessionManager
 import core.session.SwapType
 import core.session.entities.*
-import utils.structs.flatMap
-import utils.structs.map
 
 class ResignCommand(private val session: GameSession) : Command {
 
@@ -43,15 +42,18 @@ class ResignCommand(private val session: GameSession) : Command {
                 publishers.plain
         }
 
-        val io = when (finishedSession) {
-            is AiGameSession ->
-                service.buildSurrenderedPVE(publishers.plain, config.language.container, finishedSession.owner)
-            is PvpGameSession, is OpeningSession ->
-                service.buildSurrenderedPVP(publishers.plain, config.language.container, result.winner, result.loser)
+        val io = effect {
+            when (finishedSession) {
+                is AiGameSession ->
+                    service.buildSurrenderedPVE(publishers.plain, config.language.container, finishedSession.owner)
+                is PvpGameSession, is OpeningSession ->
+                    service.buildSurrenderedPVP(publishers.plain, config.language.container, result.winner, result.loser)
+            }.launch()()
+
+            val finishOrders = buildFinishProcedure(bot, service, publisher, config, this@ResignCommand.session, finishedSession)()
+
+            finishOrders + Order.ArchiveSession(finishedSession, config.archivePolicy)
         }
-            .launch()
-            .flatMap { buildFinishProcedure(bot, service, publisher, config, this.session, finishedSession) }
-            .map { it + Order.ArchiveSession(finishedSession, config.archivePolicy) }
 
         io to this.writeCommandReport("surrendered, terminate session by $result", guild, user)
     }

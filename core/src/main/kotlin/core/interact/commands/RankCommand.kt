@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -13,7 +14,6 @@ import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
 import utils.lang.tuple
-import utils.structs.map
 
 sealed interface RankScope {
 
@@ -54,9 +54,11 @@ class RankCommand(private val scope: RankScope) : Command {
                 }
         }
 
-        val io = service.buildRankings(publishers.plain, config.language.container, rankings)
-            .launch()
-            .map { emptyOrders }
+        val io = effect {
+            service.buildRankings(publishers.plain, config.language.container, rankings)
+                .launch()()
+            emptyOrders
+        }
 
         tuple(io, this.writeCommandReport("$scope scope", guild, user))
     }

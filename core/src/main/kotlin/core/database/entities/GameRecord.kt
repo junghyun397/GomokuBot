@@ -1,16 +1,16 @@
 package core.database.entities
 
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
 import core.assets.*
 import core.database.DatabaseConnection
 import core.database.repositories.UserProfileRepository
 import core.inference.AiLevel
-import core.inference.Token
 import core.session.Rule
 import core.session.entities.*
 import renju.notation.Pos
 import utils.assets.LinuxTime
-import utils.structs.Option
-import utils.structs.getOrException
 
 @Suppress("ArrayInDataClass")
 data class GameRecord(
@@ -36,35 +36,37 @@ data class GameRecord(
 
 private val invalidPos: Pos = Pos.fromIdx(-1)
 fun GameSession.extractGameRecord(guildUid: GuildUid): Option<GameRecord> =
-    Option.cond(this.gameResult.isDefined && this.recording && !this.history.contains(null)) {
-        GameRecord(
-            gameRecordId = Option.Empty,
+    if (this.gameResult.isSome() && this.recording && !this.history.contains(null))
+        Some(
+            GameRecord(
+                gameRecordId = None,
 
-            boardState = board.field(),
-            history = history.map { it ?: invalidPos },
+                boardState = board.field(),
+                history = history.map { it ?: invalidPos },
 
-            gameResult = gameResult.getOrException(),
+                gameResult = gameResult.getOrNull()!!,
 
-            guildId = guildUid,
-            blackId = when {
-                ownerHasBlack -> owner.id
-                else -> opponent.id
-            }.takeIf { it != aiUser.id },
-            whiteId = when {
-                ownerHasBlack -> opponent.id
-                else -> owner.id
-            }.takeIf { it != aiUser.id },
+                guildId = guildUid,
+                blackId = when {
+                    ownerHasBlack -> owner.id
+                    else -> opponent.id
+                }.takeIf { it != aiUser.id },
+                whiteId = when {
+                    ownerHasBlack -> opponent.id
+                    else -> owner.id
+                }.takeIf { it != aiUser.id },
 
-            aiLevel = when (this) {
-                is AiGameSession -> this.aiLevel
-                else -> null
-            },
+                aiLevel = when (this) {
+                    is AiGameSession -> this.aiLevel
+                    else -> null
+                },
 
-            rule = ruleKind,
+                rule = ruleKind,
 
-            date = LinuxTime.now()
+                date = LinuxTime.now()
+            )
         )
-    }
+    else None
 
 suspend fun GameRecord.asGameSession(dbConnection: DatabaseConnection, owner: User): GameSession {
     val board = Notation.BoardIOInstance.fromFieldArray(boardState, history.last().idx()).get()
@@ -81,7 +83,7 @@ suspend fun GameRecord.asGameSession(dbConnection: DatabaseConnection, owner: Us
                     UserProfileRepository.retrieveUser(dbConnection, blackId),
                 ownerHasBlack = ownerHasBlack,
                 board = board,
-                gameResult = Option.Some(gameResult),
+                gameResult = Some(gameResult),
                 history = history,
                 messageBufferKey = MessageBufferKey.issue(),
                 expireService = ExpireService(0, date, date),
@@ -94,12 +96,11 @@ suspend fun GameRecord.asGameSession(dbConnection: DatabaseConnection, owner: Us
 
             AiGameSession(
                 aiLevel = aiLevel!!,
-                solution = Option.Empty,
-                resRenjuToken = Token(""),
+                solution = None,
                 owner = owner,
                 ownerHasBlack = ownerHasBlack,
                 board = board,
-                gameResult = Option.Some(gameResult),
+                gameResult = Some(gameResult),
                 history = history,
                 messageBufferKey = MessageBufferKey.issue(),
                 expireService = ExpireService(0, date, date),

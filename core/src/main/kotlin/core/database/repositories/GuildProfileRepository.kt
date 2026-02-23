@@ -1,47 +1,47 @@
 package core.database.repositories
 
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
 import core.assets.Guild
 import core.assets.GuildId
 import core.assets.GuildUid
 import core.database.DatabaseConnection
 import kotlinx.coroutines.reactive.awaitSingle
-import utils.structs.*
 import java.util.*
 
 object GuildProfileRepository {
 
     suspend fun retrieveOrInsertGuild(connection: DatabaseConnection, platform: Short, givenId: GuildId, produce: () -> Guild): Guild =
-        this.retrieveGuild(connection, platform, givenId)
-            .orElseGet {
-                produce()
-                    .also { this.upsertGuild(connection, it) }
-            }
+        when (val maybeGuild = this.retrieveGuild(connection, platform, givenId)) {
+            is Some -> maybeGuild.value
+            None -> produce()
+                .also { this.upsertGuild(connection, it) }
+        }
 
     suspend fun retrieveGuild(connection: DatabaseConnection, guildUid: GuildUid): Guild =
         connection.localCaches.guildProfileUidCache
             .getIfPresent(guildUid)
-            .asOption()
-            .orElseGet {
-                this.fetchGuild(connection, guildUid)
-                    .also { guild ->
-                        connection.localCaches.guildProfileGivenIdCache.put(guild.givenId, guild)
-                        connection.localCaches.guildProfileUidCache.put(guild.id, guild)
-                    }
-            }
+            ?: this.fetchGuild(connection, guildUid)
+                .also { guild ->
+                    connection.localCaches.guildProfileGivenIdCache.put(guild.givenId, guild)
+                    connection.localCaches.guildProfileUidCache.put(guild.id, guild)
+                }
 
-    suspend fun retrieveGuild(connection: DatabaseConnection, platform: Short, givenId: GuildId): Option<Guild> =
+    suspend fun retrieveGuild(connection: DatabaseConnection, platform: Short, givenId: GuildId): Option<Guild> {
         connection.localCaches.guildProfileGivenIdCache
             .getIfPresent(givenId)
-            .asOption()
-            .orElse {
-                this.fetchGuild(connection, platform, givenId)
-                    .also { maybeGuild -> maybeGuild
-                        .forEach {guild ->
-                            connection.localCaches.guildProfileGivenIdCache.put(guild.givenId, guild)
-                            connection.localCaches.guildProfileUidCache.put(guild.id, guild)
-                        }
-                    }
-            }
+            ?.let { return Some(it) }
+
+        val maybeGuild = this.fetchGuild(connection, platform, givenId)
+
+        if (maybeGuild is Some) {
+            connection.localCaches.guildProfileGivenIdCache.put(maybeGuild.value.givenId, maybeGuild.value)
+            connection.localCaches.guildProfileUidCache.put(maybeGuild.value.id, maybeGuild.value)
+        }
+
+        return maybeGuild
+    }
 
     private suspend fun fetchGuild(connection: DatabaseConnection, guildUid: GuildUid): Guild =
         connection.liftConnection()
@@ -72,7 +72,7 @@ object GuildProfileRepository {
             }
             .flatMap<Option<Guild>> { result -> result
                 .map { row, _ ->
-                    Option.Some(Guild(
+                    Some(Guild(
                         id = GuildUid(row["guild_id"] as UUID),
                         platform = platform,
                         givenId = givenId,
@@ -80,7 +80,7 @@ object GuildProfileRepository {
                     ))
                 }
             }
-            .defaultIfEmpty(Option.Empty)
+            .defaultIfEmpty(None)
             .awaitSingle()
 
     suspend fun upsertGuild(connection: DatabaseConnection, guild: Guild) {

@@ -1,10 +1,10 @@
 package core.session.entities
 
+import arrow.core.None
 import core.assets.User
 import core.session.Rule
 import renju.Board
 import renju.notation.Pos
-import utils.structs.Option
 
 sealed interface TaraguchiOpeningSession : OpeningSession {
 
@@ -23,7 +23,7 @@ data class TaraguchiSwapStageSession(
     override val isBranched: Boolean
 ) : TaraguchiOpeningSession, SwapStageOpeningSession {
 
-    override val offerCount = Option.Empty
+    override val offerCount = None
 
     override fun swap(doSwap: Boolean): GameSession =
         if (this.isBranched && this.board.moves() == 5)

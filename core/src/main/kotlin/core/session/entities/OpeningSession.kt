@@ -1,12 +1,14 @@
 package core.session.entities
 
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
 import renju.notation.Pos
-import utils.structs.Option
 import kotlin.math.pow
 
 sealed interface OpeningSession : GameSession {
 
-    override val gameResult get() = Option.Empty
+    override val gameResult get() = None
 
     override val recording get() = false
 
@@ -142,7 +144,7 @@ fun OpeningSession.asFinishedPvpSession(result: GameResult): PvpGameSession =
         opponent = opponent,
         ownerHasBlack = ownerHasBlack,
         board = board,
-        gameResult = Option.Some(result),
+        gameResult = Some(result),
         history = history,
         messageBufferKey = messageBufferKey,
         recording = false,

@@ -1,5 +1,8 @@
 package discord.route
 
+import arrow.core.Option
+import arrow.core.Some
+import arrow.core.toOption
 import core.BotContext
 import core.assets.COLOR_NORMAL_HEX
 import core.assets.MessageRef
@@ -27,20 +30,22 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import reactor.core.publisher.Mono
 import utils.assets.LinuxTime
 import utils.lang.tuple
-import utils.structs.*
 
 private fun recoverNavigationState(bot: BotContext, message: Message, messageRef: MessageRef): Option<NavigationState> =
     message.embeds.firstOrNull()
-        .asOption()
+        .toOption()
         .flatMap { PageNavigationState.decodeFromColor(COLOR_NORMAL_HEX, it.colorRaw, bot.config, messageRef, bot.dbConnection) }
-        .onEach { SessionManager.addNavigation(bot.sessions, messageRef, it) }
+        .onSome { SessionManager.addNavigation(bot.sessions, messageRef, it) }
 
 fun reactionRouter(context: UserInteractionContext<GenericMessageReactionEvent>): Mono<Report> {
     val messageRef = context.event.extractMessageRef()
 
     return mono {
-        SessionManager.getNavigationState(context.bot.sessions, messageRef).asOption()
-            .orElse { recoverNavigationState(context.bot, context.event.retrieveMessage().await(), messageRef) }
+        SessionManager.getNavigationState(context.bot.sessions, messageRef).toOption()
+            .fold(
+                ifEmpty = { recoverNavigationState(context.bot, context.event.retrieveMessage().await(), messageRef) },
+                ifSome = { Some(it) }
+            )
             .map { state ->
                 tuple(state, when (state) {
                     is BoardNavigationState -> FocusCommandParser
@@ -51,8 +56,8 @@ fun reactionRouter(context: UserInteractionContext<GenericMessageReactionEvent>)
                 parsable.parseReaction(context, state)
             }
     }
-        .filter { it.isDefined }
-        .map { it.getOrException() }
+        .filter { it.isSome() }
+        .map { it.getOrNull()!! }
         .doOnNext {
             if (context.event is MessageReactionAddEvent) {
                 GuildManager.permissionGrantedRun(context.event.channel.asGuildMessageChannel(), Permission.MESSAGE_MANAGE) {

@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -14,8 +15,6 @@ import core.session.entities.GuildConfig
 import core.session.entities.OpeningSession
 import renju.notation.Pos
 import utils.lang.tuple
-import utils.structs.IO
-import utils.structs.flatMap
 
 abstract class OpeningMoveCommand<T : OpeningSession>(
     protected val session: T,
@@ -43,21 +42,26 @@ abstract class OpeningMoveCommand<T : OpeningSession>(
         }
 
         val guideIO = when {
-            config.swapType == SwapType.EDIT && this.deployAt == null -> IO.empty
+            config.swapType == SwapType.EDIT && this.deployAt == null -> effect { Unit }
             else -> {
                 val guidePublisher = when (config.swapType) {
                     SwapType.EDIT -> publishers.windowed
                     else -> publishers.plain
                 }
 
-                service.buildNextMoveOpening(guidePublisher, config.language.container, this.move)
-                    .retrieve()
-                    .flatMap { buildAppendGameMessageProcedure(it, bot, thenSession) }
+                effect {
+                    val maybeGuideMessage = service.buildNextMoveOpening(guidePublisher, config.language.container, this@OpeningMoveCommand.move)
+                        .retrieve()()
+
+                    buildAppendGameMessageProcedure(maybeGuideMessage, bot, thenSession)()
+                }
             }
         }
 
-        val io = guideIO
-            .flatMap { buildNextMoveProcedure(bot, guild, config, service, boardPublisher, this.session, thenSession) }
+        val io = effect {
+            guideIO()
+            buildNextMoveProcedure(bot, guild, config, service, boardPublisher, this@OpeningMoveCommand.session, thenSession)()
+        }
 
         tuple(io, this.writeCommandReport(this.writeLog(), guild, user))
     }

@@ -1,5 +1,7 @@
 package discord.interact.parse.parsers
 
+import arrow.core.Either
+import arrow.core.raise.effect
 import core.assets.Guild
 import core.assets.User
 import core.interact.commands.Command
@@ -19,9 +21,6 @@ import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
-import utils.structs.Either
-import utils.structs.flatMap
-import utils.structs.map
 
 object LangCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
@@ -46,29 +45,31 @@ object LangCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     private fun matchLang(option: String): Language? =
         Language.entries.firstOrNull { it.container.languageCode() == option }
 
-    private fun composeMissMatchFailure(guild: Guild, user: User): Either<Command, DiscordParseFailure> =
-        Either.Right(this.asParseFailure("option mismatch", guild, user) { messagingService, publisher, _ ->
-            messagingService.buildLanguageNotFound(publisher).launch()
-                .flatMap { messagingService.buildLanguageGuide(publisher).launch() }
-                .map { emptyList() }
+    private fun composeMissMatchFailure(guild: Guild, user: User): Either<DiscordParseFailure, Command> =
+        Either.Left(this.asParseFailure("option mismatch", guild, user) { messagingService, publisher, _ ->
+            effect {
+                messagingService.buildLanguageNotFound(publisher).launch()()
+                messagingService.buildLanguageGuide(publisher).launch()()
+                emptyList()
+            }
         })
 
-    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<DiscordParseFailure, Command> {
         val lang = context.event.getOption(context.config.language.container.languageCommandOptionCode())?.asString?.uppercase()?.let {
             matchLang(it)
         } ?: return this.composeMissMatchFailure(context.guild, context.user)
 
-        return Either.Left(LangCommand(lang))
+        return Either.Right(LangCommand(lang))
     }
 
-    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<DiscordParseFailure, Command> {
         val lang = payload
             .getOrNull(1)
             ?.uppercase()
             ?.let { matchLang(it) }
             ?: return this.composeMissMatchFailure(context.guild, context.user)
 
-        return Either.Left(LangCommand(lang))
+        return Either.Right(LangCommand(lang))
     }
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

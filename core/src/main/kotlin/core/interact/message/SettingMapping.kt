@@ -1,5 +1,7 @@
 package core.interact.message
 
+import arrow.core.Option
+import arrow.core.toOption
 import core.assets.*
 import core.interact.i18n.LanguageContainer
 import core.interact.message.graphics.HistoryRenderType
@@ -7,7 +9,7 @@ import core.session.*
 import core.session.entities.GuildConfig
 import utils.assets.toEnumString
 import utils.lang.tuple
-import utils.structs.*
+import utils.structs.Identifiable
 import kotlin.reflect.KClass
 
 data class SettingElement(
@@ -48,7 +50,7 @@ object SettingMapping {
                 label = LanguageContainer::style,
                 description = LanguageContainer::styleEmbedDescription,
                 extract = { it.boardStyle },
-                find = { name -> option { BoardStyle.valueOf(name) } }
+                find = { name -> runCatching { BoardStyle.valueOf(name) }.getOrNull().toOption() }
             ) { config, value -> config.copy(boardStyle = value as BoardStyle) },
             second = mapOf(
                 BoardStyle.IMAGE to OptionElement.fromIdentifiableEnum(
@@ -84,7 +86,7 @@ object SettingMapping {
                 label = LanguageContainer::focus,
                 description = LanguageContainer::focusEmbedDescription,
                 extract = { it.focusType },
-                find = { name -> option { FocusType.valueOf(name) } }
+                find = { name -> runCatching { FocusType.valueOf(name) }.getOrNull().toOption() }
             ) { config, value -> config.copy(focusType = value as FocusType) },
             second = mapOf(
                 FocusType.INTELLIGENCE to OptionElement.fromIdentifiableEnum(
@@ -108,7 +110,7 @@ object SettingMapping {
                 label = LanguageContainer::hint,
                 description = LanguageContainer::hintEmbedDescription,
                 extract = { it.hintType },
-                find = { name -> option { HintType.valueOf(name) } }
+                find = { name -> runCatching { HintType.valueOf(name) }.getOrNull().toOption() }
             ) { config, value -> config.copy(hintType = value as HintType) },
             second = mapOf(
                 HintType.FIVE to OptionElement.fromIdentifiableEnum(
@@ -132,7 +134,7 @@ object SettingMapping {
                 label = LanguageContainer::mark,
                 description = LanguageContainer::markEmbedDescription,
                 extract = { it.markType },
-                find = { name -> option { HistoryRenderType.valueOf(name) } }
+                find = { name -> runCatching { HistoryRenderType.valueOf(name) }.getOrNull().toOption() }
             ) { config, value -> config.copy(markType = value as HistoryRenderType) },
             second = mapOf(
                 HistoryRenderType.LAST to OptionElement.fromIdentifiableEnum(
@@ -162,7 +164,7 @@ object SettingMapping {
                 label = LanguageContainer::swap,
                 description = LanguageContainer::swapEmbedDescription,
                 extract = { it.swapType },
-                find = { name -> option { SwapType.valueOf(name) } }
+                find = { name -> runCatching { SwapType.valueOf(name) }.getOrNull().toOption() }
             ) { config, value -> config.copy(swapType = value as SwapType) },
             second = mapOf(
                 SwapType.RELAY to OptionElement.fromIdentifiableEnum(
@@ -192,7 +194,7 @@ object SettingMapping {
                 label = LanguageContainer::archive,
                 description = LanguageContainer::archiveEmbedDescription,
                 extract = { it.archivePolicy },
-                find = { name -> option { ArchivePolicy.valueOf(name) } }
+                find = { name -> runCatching { ArchivePolicy.valueOf(name) }.getOrNull().toOption() }
             ) { config, value -> config.copy(archivePolicy = value as ArchivePolicy) },
             second = mapOf(
                 ArchivePolicy.BY_ANONYMOUS to OptionElement.fromIdentifiableEnum(
@@ -225,7 +227,7 @@ object SettingMapping {
 
     fun buildDifference(config: GuildConfig, kind: String, choice: String): Option<Pair<Identifiable, GuildConfig>> =
         this.map.values.firstOrNull { (settlingElement, _) -> settlingElement.stringId == kind }
-            .asOption()
+            .toOption()
             .flatMap { (settingElement, _) ->
                 settingElement.find(choice)
                     .map { choiceValue -> tuple(choiceValue, settingElement.mutate(config, choiceValue)) }

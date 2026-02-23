@@ -1,5 +1,8 @@
 package core.database.repositories
 
+import arrow.core.Option
+import arrow.core.Some
+import arrow.core.toOption
 import core.assets.GuildUid
 import core.assets.Notation
 import core.assets.UserUid
@@ -17,10 +20,7 @@ import kotlinx.coroutines.reactor.awaitSingle
 import renju.notation.Flag
 import renju.notation.Pos
 import utils.assets.LinuxTime
-import utils.structs.Option
-import utils.structs.asOption
 import utils.structs.find
-import utils.structs.map
 import java.nio.ByteBuffer
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -90,7 +90,7 @@ object GameRecordRepository {
                 .map { row, _ -> this.extractGameRecordData(row) }
             }
             .awaitFirstOrNull()
-            .asOption()
+            .toOption()
             .map { this.buildGameRecord(connection, it) }
 
     suspend fun retrieveGameRecordByRecordId(connection: DatabaseConnection, recordId: GameRecordId): Option<GameRecord> =
@@ -104,7 +104,7 @@ object GameRecordRepository {
                 .map { row, _ -> this.extractGameRecordData(row) }
             }
             .awaitFirstOrNull()
-            .asOption()
+            .toOption()
             .map { this.buildGameRecord(connection, it) }
 
     private fun extractGameRecordData(row: Row): GameRecordRow =
@@ -127,7 +127,7 @@ object GameRecordRepository {
         val whiteUser = gameRecordRow.whiteId?.let { UserProfileRepository.retrieveUser(connection, UserUid(it)) }
 
         return GameRecord(
-            gameRecordId = Option.Some(GameRecordId(gameRecordRow.recordId)),
+            gameRecordId = Some(GameRecordId(gameRecordRow.recordId)),
             boardState = gameRecordRow.boardState,
             history = gameRecordRow.history.map { Pos.fromIdx(it) },
             gameResult = GameResult.build(

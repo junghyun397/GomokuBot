@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -10,7 +11,6 @@ import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
 import utils.lang.tuple
-import utils.structs.map
 
 class HelpCommand(
     private val sendSettings: Boolean,
@@ -30,11 +30,13 @@ class HelpCommand(
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        val io = when (this.sendSettings) {
-            true -> buildCombinedHelpProcedure(bot, config, publishers.plain, service, page)
-            else -> buildHelpProcedure(bot, config, publishers.plain, service, page)
+        val io = effect {
+            when (this@HelpCommand.sendSettings) {
+                true -> buildCombinedHelpProcedure(bot, config, publishers.plain, service, page)
+                else -> buildHelpProcedure(bot, config, publishers.plain, service, page)
+            }()
+            emptyOrders
         }
-            .map { emptyOrders }
 
         tuple(io, this.writeCommandReport("sent", guild, user))
     }

@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -14,8 +15,6 @@ import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
 import utils.assets.LinuxTime
 import utils.lang.tuple
-import utils.structs.flatMapOption
-import utils.structs.map
 
 class SettingsCommand : Command {
 
@@ -32,23 +31,29 @@ class SettingsCommand : Command {
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        val io = service.buildSettings(publishers.plain, config, 0)
-            .retrieve()
-            .flatMapOption { settingsMessage ->
-                SessionManager.addNavigation(
-                    bot.sessions,
-                    settingsMessage.messageRef,
-                    PageNavigationState(
-                        settingsMessage.messageRef,
-                        NavigationKind.SETTINGS,
-                        0,
-                        LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
-                    )
+        val io = effect {
+            service.buildSettings(publishers.plain, config, 0)
+                .retrieve()()
+                .fold(
+                    ifSome = { settingsMessage ->
+                        SessionManager.addNavigation(
+                            bot.sessions,
+                            settingsMessage.messageRef,
+                            PageNavigationState(
+                                settingsMessage.messageRef,
+                                NavigationKind.SETTINGS,
+                                0,
+                                LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
+                            )
+                        )
+
+                        service.attachBinaryNavigators(settingsMessage.messageData)()
+                    },
+                    ifEmpty = { }
                 )
 
-                service.attachBinaryNavigators(settingsMessage.messageData)
-            }
-            .map { emptyOrders }
+            emptyOrders
+        }
 
         tuple(io, this.writeCommandReport("sent", guild, user))
     }

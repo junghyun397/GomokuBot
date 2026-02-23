@@ -1,7 +1,7 @@
 package core.interact.message
 
-import utils.structs.IO
-import utils.structs.Option
+import arrow.core.Option
+import arrow.core.raise.Effect
 import java.io.InputStream
 
 interface MessageBuilder<A, B> {
@@ -10,8 +10,8 @@ interface MessageBuilder<A, B> {
 
     fun addComponents(components: B): MessageBuilder<A, B>
 
-    fun launch(): IO<Unit>
+    fun launch(): Effect<Nothing, Unit>
 
-    fun retrieve(): IO<Option<MessageAdaptor<A, B>>>
+    fun retrieve(): Effect<Nothing, Option<MessageAdaptor<A, B>>>
 
 }

@@ -1,5 +1,7 @@
 package discord.interact.parse.parsers
 
+import arrow.core.Either
+import arrow.core.raise.effect
 import core.interact.commands.Command
 import core.interact.commands.DebugCommand
 import core.interact.commands.DebugType
@@ -12,8 +14,6 @@ import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
-import utils.structs.Either
-import utils.structs.IO
 
 object DebugCommandParser : CommandParser, ParsableCommand {
 
@@ -22,18 +22,18 @@ object DebugCommandParser : CommandParser, ParsableCommand {
     private fun matchType(option: String): DebugType? =
         DebugType.entries.firstOrNull { it.name == option }
 
-    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<DiscordParseFailure, Command> {
         if (!GuildManager.hasDebugPermission(context.discordConfig, context.event.author))
-            return Either.Right(this.asParseFailure("tester permission not granted", context.guild, context.user) { _, _, _ ->
-                IO.value(emptyOrders)
+            return Either.Left(this.asParseFailure("tester permission not granted", context.guild, context.user) { _, _, _ ->
+                effect { emptyOrders }
             })
 
         val type = run { when {
             payload.size < 2 -> null
             else -> matchType(payload.component2().uppercase())
         } }
-            ?: return Either.Right(this.asParseFailure("unknown debug type", context.guild, context.user) { _,  _, _ ->
-                IO.value(emptyOrders)
+            ?: return Either.Left(this.asParseFailure("unknown debug type", context.guild, context.user) { _,  _, _ ->
+                effect { emptyOrders }
             })
 
         val customPayload = when (type) {
@@ -42,12 +42,12 @@ object DebugCommandParser : CommandParser, ParsableCommand {
             else -> null
         }
 
-        return Either.Left(DebugCommand(type, customPayload ?: payload.joinToString(separator = " ")))
+        return Either.Right(DebugCommand(type, customPayload ?: payload.joinToString(separator = " ")))
     }
 
-    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
-        Either.Right(this.asParseFailure("slash commands not supported", context.guild, context.user) { _, _, _ ->
-            IO.value(emptyOrders)
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<DiscordParseFailure, Command> =
+        Either.Left(this.asParseFailure("slash commands not supported", context.guild, context.user) { _, _, _ ->
+            effect { emptyOrders }
         })
 
 }

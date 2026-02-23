@@ -1,5 +1,10 @@
 package discord.interact.message
 
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
+import arrow.core.raise.Effect
+import arrow.core.raise.effect
 import core.interact.message.MessageBuilder
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.interactions.InteractionHook
@@ -8,8 +13,6 @@ import net.dv8tion.jda.api.utils.FileUpload
 import net.dv8tion.jda.api.utils.messages.MessageCreateRequest
 import net.dv8tion.jda.api.utils.messages.MessageEditRequest
 import utils.lang.replaceIf
-import utils.structs.IO
-import utils.structs.Option
 import java.io.InputStream
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -25,17 +28,17 @@ class MessageCreateAdaptor<T>(private val original: T) : DiscordMessageBuilder
     override fun addComponents(components: DiscordComponents): DiscordMessageBuilder =
         MessageCreateAdaptor(components.fold(this.original) { acc, component -> acc.addActionRow(component.actionComponents) })
 
-    override fun launch(): IO<Unit> = IO.effect {
-        this.original.queue()
+    override fun launch(): Effect<Nothing, Unit> = effect {
+        this@MessageCreateAdaptor.original.queue()
     }
 
-    override fun retrieve(): IO<Option<DiscordMessageAdaptor>> = IO { suspendCoroutine { control ->
-        this.original
+    override fun retrieve(): Effect<Nothing, Option<DiscordMessageAdaptor>> = effect { suspendCoroutine { control ->
+        this@MessageCreateAdaptor.original
             .mapToResult()
             .queue { maybeMessage ->
                 maybeMessage
-                    .onSuccess { control.resume(Option.Some(DiscordMessageAdaptor(it))) }
-                    .onFailure { control.resume(Option.Empty) }
+                    .onSuccess { control.resume(Some(DiscordMessageAdaptor(it))) }
+                    .onFailure { control.resume(None) }
             }
     } }
 
@@ -50,19 +53,19 @@ class WebHookMessageCreateAdaptor<T>(private val original: T) : DiscordMessageBu
     override fun addComponents(components: DiscordComponents): DiscordMessageBuilder =
         WebHookMessageCreateAdaptor(components.fold(this.original) { acc, component -> acc.addActionRow(component.actionComponents) })
 
-    override fun launch(): IO<Unit> = IO.effect {
-        this.original.queue()
+    override fun launch(): Effect<Nothing, Unit> = effect {
+        this@WebHookMessageCreateAdaptor.original.queue()
     }
 
-    override fun retrieve(): IO<Option<DiscordMessageAdaptor>> = IO { suspendCoroutine { control ->
-        this.original
+    override fun retrieve(): Effect<Nothing, Option<DiscordMessageAdaptor>> = effect { suspendCoroutine { control ->
+        this@WebHookMessageCreateAdaptor.original
             .queue { hook -> hook
                 .retrieveOriginal()
                 .mapToResult()
                 .queue { maybeMessage ->
                     maybeMessage
-                        .onSuccess { control.resume(Option.Some(DiscordMessageAdaptor(it))) }
-                        .onFailure { control.resume(Option.Empty) }
+                        .onSuccess { control.resume(Some(DiscordMessageAdaptor(it))) }
+                        .onFailure { control.resume(None) }
                 }
             }
     } }
@@ -95,17 +98,17 @@ data class MessageEditAdaptor<T>(
     override fun addComponents(components: DiscordComponents): DiscordMessageBuilder =
         this.copy(components = this.components + components)
 
-    override fun launch(): IO<Unit> = IO.effect {
-        this.applyAttachments().queue()
+    override fun launch(): Effect<Nothing, Unit> = effect {
+        this@MessageEditAdaptor.applyAttachments().queue()
     }
 
-    override fun retrieve(): IO<Option<DiscordMessageAdaptor>> = IO { suspendCoroutine { control ->
-        this.applyAttachments()
+    override fun retrieve(): Effect<Nothing, Option<DiscordMessageAdaptor>> = effect { suspendCoroutine { control ->
+        this@MessageEditAdaptor.applyAttachments()
             .mapToResult()
             .queue { maybeMessage ->
                 maybeMessage
-                    .onSuccess { control.resume(Option.Some(DiscordMessageAdaptor(it))) }
-                    .onFailure { control.resume(Option.Empty) }
+                    .onSuccess { control.resume(Some(DiscordMessageAdaptor(it))) }
+                    .onFailure { control.resume(None) }
             }
     } }
 
@@ -124,19 +127,19 @@ data class WebHookMessageEditAdaptor<T>(
     override fun addComponents(components: DiscordComponents): DiscordMessageBuilder =
         this.copy(components = this.components + components)
 
-    override fun launch(): IO<Unit> = IO.effect {
-        this.applyAttachments().queue()
+    override fun launch(): Effect<Nothing, Unit> = effect {
+        this@WebHookMessageEditAdaptor.applyAttachments().queue()
     }
 
-    override fun retrieve(): IO<Option<DiscordMessageAdaptor>> = IO { suspendCoroutine { control ->
-        this.applyAttachments()
+    override fun retrieve(): Effect<Nothing, Option<DiscordMessageAdaptor>> = effect { suspendCoroutine { control ->
+        this@WebHookMessageEditAdaptor.applyAttachments()
             .queue { hook -> hook
                 .retrieveOriginal()
                 .mapToResult()
                 .queue { maybeMessage ->
                     maybeMessage
-                        .onSuccess { control.resume(Option.Some(DiscordMessageAdaptor(it))) }
-                        .onFailure { control.resume(Option.Empty) }
+                        .onSuccess { control.resume(Some(DiscordMessageAdaptor(it))) }
+                        .onFailure { control.resume(None) }
                 }
             }
     } }

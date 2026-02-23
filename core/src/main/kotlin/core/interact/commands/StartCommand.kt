@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -17,10 +18,6 @@ import core.session.entities.MessageBufferKey
 import core.session.entities.RequestSession
 import utils.assets.LinuxTime
 import utils.lang.tuple
-import utils.structs.IO
-import utils.structs.flatMap
-import utils.structs.flatMapOption
-import utils.structs.map
 
 class StartCommand(val opponent: User?, val rule: Rule) : Command {
 
@@ -43,10 +40,12 @@ class StartCommand(val opponent: User?, val rule: Rule) : Command {
 
                 SessionManager.putGameSession(bot.sessions, guild, gameSession)
 
-                val io = service.buildBeginsPVE(publishers.plain, config.language.container, user, gameSession.ownerHasBlack)
-                    .launch()
-                    .flatMap { buildBoardProcedure(bot, guild, config, service, publishers.plain, gameSession) }
-                    .map { emptyOrders }
+                val io = effect {
+                    service.buildBeginsPVE(publishers.plain, config.language.container, user, gameSession.ownerHasBlack)
+                        .launch()()
+                    buildBoardProcedure(bot, guild, config, service, publishers.plain, gameSession)()
+                    emptyOrders
+                }
 
                 tuple(io, this.writeCommandReport("start game session with AI", guild, user))
             }
@@ -60,10 +59,16 @@ class StartCommand(val opponent: User?, val rule: Rule) : Command {
 
                 SessionManager.putRequestSession(bot.sessions, guild, requestSession)
 
-                val io = service.buildRequest(publishers.plain, config.language.container, user, opponent, this.rule)
-                    .retrieve()
-                    .flatMapOption { IO { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.messageRef) } }
-                    .map { emptyOrders }
+                val io = effect {
+                    service.buildRequest(publishers.plain, config.language.container, user, opponent, this@StartCommand.rule)
+                        .retrieve()()
+                        .fold(
+                            ifSome = { SessionManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.messageRef) },
+                            ifEmpty = { }
+                        )
+
+                    emptyOrders
+                }
 
                 tuple(io, this.writeCommandReport("make request to ${this.opponent}", guild, user))
             }

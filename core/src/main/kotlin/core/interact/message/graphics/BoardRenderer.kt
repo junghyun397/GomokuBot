@@ -1,8 +1,8 @@
 package core.interact.message.graphics
 
+import arrow.core.Either
 import renju.Board
 import renju.notation.Pos
-import utils.structs.Either
 import utils.structs.Identifiable
 import java.io.InputStream
 

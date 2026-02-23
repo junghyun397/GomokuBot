@@ -1,9 +1,9 @@
 package core.interact.message.graphics
 
+import arrow.core.Either
 import core.assets.Notation
 import renju.Board
 import renju.notation.Pos
-import utils.structs.Either
 
 open class TextBoardRenderer : BoardRenderer {
 

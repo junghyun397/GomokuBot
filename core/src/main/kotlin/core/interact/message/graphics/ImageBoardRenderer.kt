@@ -1,5 +1,6 @@
 package core.interact.message.graphics
 
+import arrow.core.Either
 import com.sksamuel.scrimage.AwtImage
 import com.sksamuel.scrimage.nio.StreamingGifWriter
 import core.assets.*
@@ -9,7 +10,6 @@ import renju.notation.Pos
 import renju.notation.Renju
 import utils.lang.clone
 import utils.lang.toInputStream
-import utils.structs.Either
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.RenderingHints

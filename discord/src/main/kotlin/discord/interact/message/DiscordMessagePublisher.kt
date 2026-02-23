@@ -2,7 +2,9 @@
 
 package discord.interact.message
 
-import core.interact.message.*
+import core.interact.message.ComponentPublisher
+import core.interact.message.MessagePublisher
+import core.interact.message.PublisherSet
 
 typealias DiscordMessagePublisher = MessagePublisher<DiscordMessageData, DiscordComponents>
 

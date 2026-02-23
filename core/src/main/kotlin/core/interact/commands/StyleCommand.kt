@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -12,7 +13,6 @@ import core.session.BoardStyle
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import utils.lang.tuple
-import utils.structs.map
 
 class StyleCommand(private val style: BoardStyle) : Command {
 
@@ -31,9 +31,11 @@ class StyleCommand(private val style: BoardStyle) : Command {
     ) = runCatching {
         SessionManager.updateGuildConfig(bot.sessions, guild, config.copy(boardStyle = style))
 
-        val io = service.buildStyleUpdated(publishers.windowed, config.language.container, style.sample.styleName)
-            .launch()
-            .map { emptyOrders }
+        val io = effect {
+            service.buildStyleUpdated(publishers.windowed, config.language.container, style.sample.styleName)
+                .launch()()
+            emptyOrders
+        }
 
         tuple(io, this.writeCommandReport("set style ${config.boardStyle.name} to ${style.name}", guild, user))
     }

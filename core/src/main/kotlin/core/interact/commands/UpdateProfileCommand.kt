@@ -1,21 +1,22 @@
 package core.interact.commands
 
+import arrow.core.Option
+import arrow.core.getOrElse
+import arrow.core.raise.Effect
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
 import core.database.repositories.GuildProfileRepository
 import core.database.repositories.UserProfileRepository
+import core.interact.Order
 import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
 import utils.lang.tuple
-import utils.structs.IO
-import utils.structs.Option
-import utils.structs.forEach
-import utils.structs.orElseGet
 
 class UpdateProfileCommand(
     command: Command,
@@ -34,19 +35,19 @@ class UpdateProfileCommand(
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {
-        this.newUser.forEach {
+        this.newUser.onSome {
             UserProfileRepository.upsertUser(bot.dbConnection, it)
         }
 
-        val thenUser = this.newUser.orElseGet { user }
+        val thenUser = this.newUser.getOrElse { user }
 
-        this.newGuild.forEach {
+        this.newGuild.onSome {
             GuildProfileRepository.upsertGuild(bot.dbConnection, it)
         }
 
-        val thenGuild = this.newGuild.orElseGet { guild }
+        val thenGuild = this.newGuild.getOrElse { guild }
 
-        val io = IO.unit { emptyOrders }
+        val io: Effect<Nothing, List<Order>> = effect { emptyOrders }
 
         val report = this.writeCommandReport("succeed", guild, user)
 

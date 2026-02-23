@@ -1,5 +1,8 @@
 package discord.interact.parse.parsers
 
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
 import core.database.entities.GameRecordId
 import core.interact.commands.Command
 import core.interact.commands.ReplayCommand
@@ -8,8 +11,6 @@ import discord.interact.parse.EmbeddableCommand
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent
 import renju.notation.Renju
-import utils.structs.Option
-import utils.structs.flatten
 
 object ReplayCommandParser : EmbeddableCommand {
 
@@ -22,10 +23,14 @@ object ReplayCommandParser : EmbeddableCommand {
                 .split("-")
                 .drop(1)
 
-        Option.cond(validationKey == context.user.id.validationKey) {
-            ReplayCommand(GameRecordId(recordIdRaw.toLong()), movesRaw.toInt().coerceIn(0 .. Renju.BOARD_SIZE()))
-        }
+        if (validationKey == context.user.id.validationKey)
+            Some(ReplayCommand(GameRecordId(recordIdRaw.toLong()), movesRaw.toInt().coerceIn(0 .. Renju.BOARD_SIZE())))
+        else
+            None
     }
-        .flatten()
+        .fold(
+            onSuccess = { it },
+            onFailure = { None }
+        )
 
 }

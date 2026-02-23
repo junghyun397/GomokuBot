@@ -9,7 +9,6 @@ import core.assets.GuildId
 import core.database.DatabaseManager
 import core.database.LocalCaches
 import core.database.repositories.AnnounceRepository
-import core.inference.ResRenjuClient
 import core.interact.reports.ErrorReport
 import core.interact.reports.Report
 import core.session.SessionManager
@@ -100,14 +99,9 @@ object GomokuBot {
 
         logger.info("postgresql database connected.")
 
-        val resRenjuClient = ResRenjuClient
-            .connectionFrom(resRenjuConfig.serverAddress, resRenjuConfig.serverPort)
-
-        logger.info("resrenju renju inference service connected.")
-
         val sessionPool = SessionPool(dbConnection = dbConnection)
 
-        val botContext = BotContext(botConfig, dbConnection, resRenjuClient, sessionPool)
+        val botContext = BotContext(botConfig, dbConnection, sessionPool)
 
         val eventManager = ReactiveEventManager()
 

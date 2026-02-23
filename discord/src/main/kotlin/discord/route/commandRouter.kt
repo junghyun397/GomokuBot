@@ -2,6 +2,8 @@
 
 package discord.route
 
+import arrow.core.*
+import arrow.core.raise.effect
 import core.assets.DUMMY_MESSAGE_REF
 import core.database.repositories.AnnounceRepository
 import core.interact.commands.*
@@ -32,15 +34,14 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import reactor.core.publisher.Mono
 import utils.assets.LinuxTime
 import utils.lang.replaceIf
-import utils.structs.*
 import java.util.concurrent.TimeUnit
 
-private fun buildPermissionNode(context: UserInteractionContext<*>, parsableCommand: ParsableCommand, channel: GuildMessageChannel, jdaUser: User): Either<ParsableCommand, DiscordParseFailure> =
+private fun buildPermissionNode(context: UserInteractionContext<*>, parsableCommand: ParsableCommand, channel: GuildMessageChannel, jdaUser: User): Either<DiscordParseFailure, ParsableCommand> =
     GuildManager.permissionDependedRun(
         channel, Permission.MESSAGE_SEND,
-        onMissed = { Either.Right(
+        onMissed = { Either.Left(
             DiscordParseFailure(parsableCommand.name, "message permission not granted in $channel", context.guild, context.user) { _, _, container ->
-                IO {
+                effect {
                     jdaUser.openPrivateChannel()
                         .flatMap { privateChannel ->
                             DiscordMessagingService.sendPermissionNotGrantedEmbed(
@@ -57,7 +58,7 @@ private fun buildPermissionNode(context: UserInteractionContext<*>, parsableComm
                 }
             }
         ) },
-        onGranted = { Either.Left(parsableCommand) }
+        onGranted = { Either.Right(parsableCommand) }
     )
 
 private fun <T : Event> buildAnnounceNode(context: UserInteractionContext<T>, command: Command): Command =
@@ -69,10 +70,10 @@ private fun <T : Event> buildUpdateProfileNode(context: UserInteractionContext<T
     val user = jdaUser.extractProfile(uid = context.user.id, announceId = context.user.announceId)
     val guild = context.jdaGuild.extractProfile(uid = context.guild.id)
 
-    val maybeThenUser = Option.cond(user != context.user) { user }
-    val maybeThenGuild = Option.cond(guild != context.guild) { guild }
+    val maybeThenUser = if (user != context.user) Some(user) else None
+    val maybeThenGuild = if (guild != context.guild) Some(guild) else None
 
-    return command.replaceIf(maybeThenUser.isDefined || maybeThenGuild.isDefined) {
+    return command.replaceIf(maybeThenUser is Some<*> || maybeThenGuild is Some<*>) {
         UpdateProfileCommand(command, maybeThenUser, maybeThenGuild)
     }
 }
@@ -93,19 +94,19 @@ private suspend fun <T : Event> buildUpdateCommandsNode(context: UserInteraction
 
 private fun matchCommand(command: String, container: LanguageContainer): Option<ParsableCommand> =
     when (command.lowercase()) {
-        "help" -> Option.Some(HelpCommandParser)
-        container.helpCommand() -> Option.Some(HelpCommandParser)
-        container.settingsCommand() -> Option.Some(SettingsCommandParser)
-        container.startCommand() -> Option.Some(StartCommandParser)
-        "s" -> Option.Some(SetCommandParser)
-        container.resignCommand() -> Option.Some(ResignCommandParser)
-        container.languageCommand() -> Option.Some(LangCommandParser)
-        container.styleCommand() -> Option.Some(StyleCommandParser)
-        container.rankCommand() -> Option.Some(RankCommandParser)
-        container.ratingCommand() -> Option.Some(RatingCommandParser)
-        container.replayCommand() -> Option.Some(ReplayListCommandParser)
-        "debug" -> Option.Some(DebugCommandParser)
-        else -> Option.Empty
+        "help" -> Some(HelpCommandParser)
+        container.helpCommand() -> Some(HelpCommandParser)
+        container.settingsCommand() -> Some(SettingsCommandParser)
+        container.startCommand() -> Some(StartCommandParser)
+        "s" -> Some(SetCommandParser)
+        container.resignCommand() -> Some(ResignCommandParser)
+        container.languageCommand() -> Some(LangCommandParser)
+        container.styleCommand() -> Some(StyleCommandParser)
+        container.rankCommand() -> Some(RankCommandParser)
+        container.ratingCommand() -> Some(RatingCommandParser)
+        container.replayCommand() -> Some(ReplayListCommandParser)
+        "debug" -> Some(DebugCommandParser)
+        else -> None
     }
 
 fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEvent>): Mono<Report> =
@@ -113,10 +114,10 @@ fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEv
         matchCommand(context.event.name, context.config.language.container)
             .map { parsable ->
                 buildPermissionNode(context, parsable, context.event.channel.asGuildMessageChannel(), context.event.user)
-                    .flatMapLeft {
+                    .flatMap {
                         parsable.parseSlash(context)
                     }
-                    .mapLeft { command ->
+                    .map { command ->
                         buildAnnounceNode(context,
                             buildUpdateProfileNode(context, context.event.user,
                                 buildUpdateCommandsNode(context, command)
@@ -125,19 +126,22 @@ fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEv
                     }
             }
     }
-        .filter { it.isDefined }
-        .map { it.getOrException() }
+        .filter { it is Some<*> }
+        .map { (it as Some<Either<DiscordParseFailure, Command>>).value }
         .doOnNext { parsed ->
-            parsed.onLeft { command ->
-                val responseFlag = command.responseFlag
+            parsed.fold(
+                ifLeft = { },
+                ifRight = { command ->
+                    val responseFlag = command.responseFlag
 
-                if (responseFlag is ResponseFlag.Defer)
-                    context.event.deferReply().setEphemeral(responseFlag.windowed).queue()
-            }
+                    if (responseFlag is ResponseFlag.Defer)
+                        context.event.deferReply().setEphemeral(responseFlag.windowed).queue()
+                }
+            )
         }
         .flatMap { parsed -> mono {
             parsed.fold(
-                onLeft = { command ->
+                ifRight = { command ->
                     command.execute(
                         bot = context.bot,
                         config = context.config,
@@ -162,7 +166,7 @@ fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEv
                         }
                     )
                 },
-                onRight = { parseFailure ->
+                ifLeft = { parseFailure ->
                     parseFailure.notice(
                         config = context.config,
                         service = DiscordMessagingService,
@@ -207,10 +211,10 @@ fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mo
         matchCommand(command = payload.first(), container = context.config.language.container)
             .map { parsable ->
                 buildPermissionNode(context, parsable, context.event.channel.asGuildMessageChannel(), context.event.author)
-                    .flatMapLeft {
+                    .flatMap {
                         parsable.parseText(context, payload)
                     }
-                    .mapLeft { command ->
+                    .map { command ->
                         buildUpdateCommandsNode(context,
                             buildUpdateProfileNode(context, context.event.author,
                                 buildAnnounceNode(context, command)
@@ -219,19 +223,19 @@ fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mo
                     }
             }
     }
-        .filter { it.isDefined }
-        .map { it.getOrException() }
+        .filter { it is Some<*> }
+        .map { (it as Some<Either<DiscordParseFailure, Command>>).value }
         .doOnNext { parsed ->
             GuildManager.permissionGrantedRun(context.event.channel.asGuildMessageChannel(), Permission.MESSAGE_ADD_REACTION) {
                 parsed.fold(
-                    onLeft = { context.event.message.addReaction(EMOJI_CHECK).queue() },
-                    onRight = { context.event.message.addReaction(EMOJI_CROSS).queue() },
+                    ifRight = { context.event.message.addReaction(EMOJI_CHECK).queue() },
+                    ifLeft = { context.event.message.addReaction(EMOJI_CROSS).queue() },
                 )
             }
         }
         .flatMap { parsed -> mono {
             parsed.fold(
-                onLeft = { command ->
+                ifRight = { command ->
                     command.execute(
                         bot = context.bot,
                         config = context.config,
@@ -245,7 +249,7 @@ fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mo
                         ),
                     )
                 },
-                onRight = { parseFailure ->
+                ifLeft = { parseFailure ->
                     parseFailure.notice(
                         config = context.config,
                         service = DiscordMessagingService,

@@ -1,7 +1,6 @@
 package core.assets
 
 import renju.Board
-import renju.BoardIO
 import renju.`BoardIO$`
 import renju.`EmptyScalaBoard$`
 import renju.FieldStatus

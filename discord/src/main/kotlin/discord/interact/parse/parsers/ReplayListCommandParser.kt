@@ -1,5 +1,8 @@
 package discord.interact.parse.parsers
 
+import arrow.core.Either
+import arrow.core.None
+import arrow.core.Some
 import core.interact.commands.ReplayListCommand
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.CommandParser
@@ -13,9 +16,6 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
-import utils.structs.Either
-import utils.structs.Option
-import utils.structs.flatten
 
 object ReplayListCommandParser : CommandParser, ParsableCommand, BuildableCommand, EmbeddableCommand {
 
@@ -31,10 +31,10 @@ object ReplayListCommandParser : CommandParser, ParsableCommand, BuildableComman
     )
 
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>) =
-        Either.Left(ReplayListCommand(false))
+        Either.Right(ReplayListCommand(false))
 
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>) =
-        Either.Left(ReplayListCommand(false))
+        Either.Right(ReplayListCommand(false))
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.apply {
@@ -45,10 +45,14 @@ object ReplayListCommandParser : CommandParser, ParsableCommand, BuildableComman
         }
 
     override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>) = runCatching {
-        Option.cond(context.event.componentId.split("-")[1] == context.user.id.validationKey) {
-            ReplayListCommand(edit = true)
-        }
+        if (context.event.componentId.split("-")[1] == context.user.id.validationKey)
+            Some(ReplayListCommand(edit = true))
+        else
+            None
     }
-        .flatten()
+        .fold(
+            onSuccess = { it },
+            onFailure = { None }
+        )
 
 }

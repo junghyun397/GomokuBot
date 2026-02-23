@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -15,8 +16,6 @@ import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
 import utils.assets.LinuxTime
 import utils.lang.tuple
-import utils.structs.IO
-import utils.structs.map
 
 class NavigationCommand(
     private val navigationState: PageNavigationState,
@@ -49,28 +48,30 @@ class NavigationCommand(
         )
 
         if (this.navigationState.page == newState.page)
-            return@runCatching tuple(IO.value(emptyOrders), this.writeCommandReport("navigate ${navigationState.kind} bounded", guild, user))
+            return@runCatching tuple(effect { emptyOrders }, this.writeCommandReport("navigate ${navigationState.kind} bounded", guild, user))
 
         SessionManager.addNavigation(bot.sessions, messageRef, newState)
 
-        val io = when (this.navigationState.kind) {
-            NavigationKind.ABOUT ->
-                service.buildPaginatedHelp(publishers.edit(messageRef), config.language.container, newState.page)
-            NavigationKind.SETTINGS ->
-                service.buildPaginatedSettings(publishers.edit(messageRef), config, newState.page)
-            NavigationKind.ANNOUNCE -> {
-                val announceMap = bot.dbConnection.localCaches.announceCache[newState.page]!!
+        val io = effect {
+            when (this@NavigationCommand.navigationState.kind) {
+                NavigationKind.ABOUT ->
+                    service.buildPaginatedHelp(publishers.edit(messageRef), config.language.container, newState.page)
+                NavigationKind.SETTINGS ->
+                    service.buildPaginatedSettings(publishers.edit(messageRef), config, newState.page)
+                NavigationKind.ANNOUNCE -> {
+                    val announceMap = bot.dbConnection.localCaches.announceCache[newState.page]!!
 
-                service.buildAnnounce(
-                    publishers.edit(messageRef),
-                    config.language.container,
-                    announceMap[config.language] ?: announceMap[Language.ENG]!!
-                )
-            }
-            NavigationKind.BOARD -> throw Exception()
+                    service.buildAnnounce(
+                        publishers.edit(messageRef),
+                        config.language.container,
+                        announceMap[config.language] ?: announceMap[Language.ENG]!!
+                    )
+                }
+                NavigationKind.BOARD -> throw Exception()
+            }.launch()()
+
+            emptyOrders
         }
-            .launch()
-            .map { emptyOrders  }
 
         tuple(io, this.writeCommandReport("navigate ${newState.kind} as ${newState.page}", guild, user))
     }

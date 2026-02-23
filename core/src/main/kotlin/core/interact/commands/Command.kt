@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.Effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -9,7 +10,6 @@ import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.Report
 import core.session.entities.GuildConfig
-import utils.structs.IO
 
 sealed interface Command {
 
@@ -29,4 +29,4 @@ sealed interface Command {
 
 }
 
-typealias CommandResult = Result<Pair<IO<List<Order>>, Report>>
+typealias CommandResult = Result<Pair<Effect<Nothing, List<Order>>, Report>>

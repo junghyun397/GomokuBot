@@ -1,5 +1,8 @@
 package core.interact.commands
 
+import arrow.core.raise.Effect
+import arrow.core.raise.effect
+import arrow.core.raise.ioZip
 import core.BotContext
 import core.interact.message.MessagePublisher
 import core.interact.message.MessagingService
@@ -8,7 +11,6 @@ import core.session.entities.GuildConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
 import utils.assets.LinuxTime
-import utils.structs.*
 
 fun <A, B> buildHelpProcedure(
     bot: BotContext,
@@ -16,26 +18,28 @@ fun <A, B> buildHelpProcedure(
     publisher: MessagePublisher<A, B>,
     service: MessagingService<A, B>,
     page: Int
-): IO<Unit> = service.buildHelp(publisher, config.language.container, page)
+): Effect<Nothing, Unit> = service.buildHelp(publisher, config.language.container, page)
     .retrieve()
-    .flatMap { maybeHelpMessage ->
-        maybeHelpMessage.fold(
-            onDefined = { helpMessage ->
-                SessionManager.addNavigation(
-                    bot.sessions,
-                    helpMessage.messageRef,
-                    PageNavigationState(
+    .let { io ->
+        effect {
+            io().fold(
+                ifSome = { helpMessage ->
+                    SessionManager.addNavigation(
+                        bot.sessions,
                         helpMessage.messageRef,
-                        NavigationKind.ABOUT,
-                        page,
-                        LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
+                        PageNavigationState(
+                            helpMessage.messageRef,
+                            NavigationKind.ABOUT,
+                            page,
+                            LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
+                        )
                     )
-                )
 
-                service.attachBinaryNavigators(helpMessage.messageData)
-            },
-            onEmpty = { IO.empty }
-        )
+                    service.attachBinaryNavigators(helpMessage.messageData)()
+                },
+                ifEmpty = { }
+            )
+        }
     }
 
 fun <A, B> buildCombinedHelpProcedure(
@@ -44,39 +48,47 @@ fun <A, B> buildCombinedHelpProcedure(
     publisher: MessagePublisher<A, B>,
     service: MessagingService<A, B>,
     settingsPage: Int
-): IO<Unit> = IO.zip(
+): Effect<Nothing, Unit> = ioZip(
     service.buildHelp(publisher, config.language.container, 0).retrieve(),
     service.buildSettings(publisher, config, settingsPage).retrieve(),
 )
-    .map { (maybeHelp, maybeSettings) -> Option.zip(maybeHelp, maybeSettings) }
-    .flatMap { maybeTuple ->
-        maybeTuple.fold(
-            onDefined = { (helpMessage, settingsMessage) ->
-                SessionManager.addNavigation(
-                    bot.sessions,
-                    helpMessage.messageRef,
-                    PageNavigationState(
-                        helpMessage.messageRef,
-                        NavigationKind.ABOUT,
-                        page = 0,
-                        LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
-                    )
-                )
+    .let { zipped ->
+        effect {
+            val (maybeHelp, maybeSettings) = zipped()
 
-                SessionManager.addNavigation(
-                    bot.sessions,
-                    settingsMessage.messageRef,
-                    PageNavigationState(
-                        settingsMessage.messageRef,
-                        NavigationKind.SETTINGS,
-                        settingsPage,
-                        LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
-                    )
-                )
+            maybeHelp.fold(
+                ifSome = { helpMessage ->
+                    maybeSettings.fold(
+                        ifSome = { settingsMessage ->
+                            SessionManager.addNavigation(
+                                bot.sessions,
+                                helpMessage.messageRef,
+                                PageNavigationState(
+                                    helpMessage.messageRef,
+                                    NavigationKind.ABOUT,
+                                    page = 0,
+                                    LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
+                                )
+                            )
 
-                service.attachBinaryNavigators(helpMessage.messageData)
-                    .flatMap { service.attachBinaryNavigators(settingsMessage.messageData) }
-            },
-            onEmpty = { IO.empty }
-        )
+                            SessionManager.addNavigation(
+                                bot.sessions,
+                                settingsMessage.messageRef,
+                                PageNavigationState(
+                                    settingsMessage.messageRef,
+                                    NavigationKind.SETTINGS,
+                                    settingsPage,
+                                    LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
+                                )
+                            )
+
+                            service.attachBinaryNavigators(helpMessage.messageData)()
+                            service.attachBinaryNavigators(settingsMessage.messageData)()
+                        },
+                        ifEmpty = { }
+                    )
+                },
+                ifEmpty = { }
+            )
+        }
     }

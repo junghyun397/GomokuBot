@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -14,7 +15,6 @@ import core.session.SessionManager
 import core.session.entities.GuildConfig
 import utils.lang.tuple
 import utils.structs.Identifiable
-import utils.structs.map
 
 class ApplySettingCommand(
     private val newConfig: GuildConfig,
@@ -38,9 +38,11 @@ class ApplySettingCommand(
 
         val (localKind, localChoice) = SettingMapping.buildKindNamePair(config.language.container, this.diff)
 
-        val io = service.buildSettingApplied(publishers.windowed, config.language.container, localKind, localChoice)
-            .launch()
-            .map { emptyOrders }
+        val io = effect {
+            service.buildSettingApplied(publishers.windowed, config.language.container, localKind, localChoice)
+                .launch()()
+            emptyOrders
+        }
 
         val (kind, choice) = SettingMapping.buildKindNamePair(Language.ENG.container, this.diff)
 

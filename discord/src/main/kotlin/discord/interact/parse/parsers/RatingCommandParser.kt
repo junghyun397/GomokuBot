@@ -1,5 +1,7 @@
 package discord.interact.parse.parsers
 
+import arrow.core.Either
+import arrow.core.raise.effect
 import core.interact.commands.Command
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.CommandParser
@@ -14,8 +16,6 @@ import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
-import utils.structs.Either
-import utils.structs.map
 
 object RatingCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
@@ -30,18 +30,22 @@ object RatingCommandParser : CommandParser, ParsableCommand, BuildableCommand {
         ),
     )
 
-    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> =
-        Either.Right(this.asParseFailure("not yet implemented", context.guild, context.user) { messagingService, publisher, container ->
-            messagingService.buildNotYetImplemented(publisher, container)
-                .launch()
-                .map { emptyList() }
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<DiscordParseFailure, Command> =
+        Either.Left(this.asParseFailure("not yet implemented", context.guild, context.user) { messagingService, publisher, container ->
+            effect {
+                messagingService.buildNotYetImplemented(publisher, container)
+                    .launch()()
+                emptyList()
+            }
         })
 
-    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> =
-        Either.Right(this.asParseFailure("not yet implemented", context.guild, context.user) { messagingService, publisher, container ->
-            messagingService.buildNotYetImplemented(publisher, container)
-                .launch()
-                .map { emptyList() }
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<DiscordParseFailure, Command> =
+        Either.Left(this.asParseFailure("not yet implemented", context.guild, context.user) { messagingService, publisher, container ->
+            effect {
+                messagingService.buildNotYetImplemented(publisher, container)
+                    .launch()()
+                emptyList()
+            }
         })
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

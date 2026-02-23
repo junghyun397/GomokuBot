@@ -1,14 +1,16 @@
 package core.interact.commands
 
+import arrow.core.raise.Effect
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
+import core.interact.Order
 import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
 import utils.lang.tuple
-import utils.structs.IO
 
 object GuildLeaveCommand : InternalCommand {
 
@@ -21,7 +23,8 @@ object GuildLeaveCommand : InternalCommand {
         service: MessagingService<A, B>,
         publisher: PublisherSet<A, B>,
     ) = runCatching {
-        tuple(IO.value(emptyOrders), this.writeCommandReport("goodbye", guild))
+        val io: Effect<Nothing, List<Order>> = effect { emptyOrders }
+        tuple(io, this.writeCommandReport("goodbye", guild))
     }
 
 }

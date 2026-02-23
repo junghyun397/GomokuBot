@@ -1,21 +1,23 @@
 package core.interact.parse
 
+import arrow.core.Either
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.User
 import core.session.SessionManager
 import core.session.entities.GameSession
-import utils.structs.Either
-import utils.structs.map
 
 abstract class SessionSideParser<A, B> : CommandParser {
 
-    protected suspend fun retrieveSession(context: BotContext, guild: Guild, user: User): Either<GameSession, ParseFailure<A, B>> =
-        SessionManager.retrieveGameSession(context.sessions, guild, user.id)?.let { Either.Left(it) }
-            ?: Either.Right(ParseFailure(this.name, "$user session not found", guild, user) { messagingService, publisher, container ->
-                messagingService.buildSessionNotFound(publisher, container)
-                    .launch()
-                    .map { emptyList() }
+    protected suspend fun retrieveSession(context: BotContext, guild: Guild, user: User): Either<ParseFailure<A, B>, GameSession> =
+        SessionManager.retrieveGameSession(context.sessions, guild, user.id)?.let { Either.Right(it) }
+            ?: Either.Left(ParseFailure(this.name, "$user session not found", guild, user) { messagingService, publisher, container ->
+                effect {
+                    messagingService.buildSessionNotFound(publisher, container)
+                        .launch()()
+                    emptyList()
+                }
             })
 
 }

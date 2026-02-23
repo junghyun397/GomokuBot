@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -14,8 +15,6 @@ import core.session.entities.GuildConfig
 import core.session.entities.OpeningSession
 import core.session.entities.RequestSession
 import utils.lang.tuple
-import utils.structs.flatMap
-import utils.structs.map
 
 class AcceptCommand(
     private val requestSession: RequestSession,
@@ -53,9 +52,11 @@ class AcceptCommand(
 
         val boardIO = buildBoardProcedure(bot, guild, config, service, publishers.plain, gameSession)
 
-        val io = beginIO
-            .flatMap { boardIO }
-            .map { emptyOrders }
+        val io = effect {
+            beginIO()
+            boardIO()
+            emptyOrders
+        }
 
         tuple(io, this.writeCommandReport("accept ${requestSession.owner}'s request", guild, user))
     }

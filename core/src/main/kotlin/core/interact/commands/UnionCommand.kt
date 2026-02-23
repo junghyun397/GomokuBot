@@ -1,5 +1,7 @@
 package core.interact.commands
 
+import arrow.core.raise.Effect
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -10,10 +12,7 @@ import core.interact.message.PublisherSet
 import core.interact.reports.InteractionReport
 import core.session.entities.GuildConfig
 import utils.lang.tuple
-import utils.structs.IO
 import utils.structs.Quadruple
-import utils.structs.flatMap
-import utils.structs.map
 
 abstract class UnionCommand(private val command: Command) : Command {
 
@@ -34,7 +33,13 @@ abstract class UnionCommand(private val command: Command) : Command {
         val (originalIO, report) = this.command.execute(bot, config, thenGuild, thenUser, service, messageRef, publishers)
             .getOrThrow()
 
-        tuple(unionIO.flatMap { unionOrders -> originalIO.map { originalOrders -> unionOrders + originalOrders } }, unionReport + report)
+        val io = effect {
+            val unionOrders = unionIO()
+            val originalOrders = originalIO()
+            unionOrders + originalOrders
+        }
+
+        tuple(io, unionReport + report)
     }
 
     protected abstract suspend fun <A, B> executeSelf(
@@ -45,6 +50,6 @@ abstract class UnionCommand(private val command: Command) : Command {
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
-    ): Result<Quadruple<IO<List<Order>>, InteractionReport, Guild, User>>
+    ): Result<Quadruple<Effect<Nothing, List<Order>>, InteractionReport, Guild, User>>
 
 }

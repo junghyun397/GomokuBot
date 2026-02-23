@@ -1,5 +1,6 @@
 package discord.interact.parse.parsers
 
+import arrow.core.toOption
 import core.interact.commands.NavigationCommand
 import core.session.entities.NavigationState
 import core.session.entities.PageNavigationState
@@ -9,9 +10,6 @@ import discord.interact.UserInteractionContext
 import discord.interact.parse.NavigableCommand
 import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
-import utils.structs.asOption
-import utils.structs.flatMap
-import utils.structs.map
 
 object NavigationCommandParser : NavigableCommand {
 
@@ -25,10 +23,10 @@ object NavigationCommandParser : NavigableCommand {
     override suspend fun parseReaction(context: UserInteractionContext<GenericMessageReactionEvent>, state: NavigationState) =
         state
             .takeIf { it is PageNavigationState }
-            .asOption()
+            .toOption()
             .flatMap {
                 this.matchIsForward(context.event.reaction.emoji.asUnicode())
-                    .asOption()
+                    .toOption()
                     .map { NavigationCommand(state as PageNavigationState, it) }
             }
 

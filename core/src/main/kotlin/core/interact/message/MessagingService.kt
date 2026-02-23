@@ -1,5 +1,7 @@
 package core.interact.message
 
+import arrow.core.Option
+import arrow.core.raise.Effect
 import core.assets.User
 import core.database.entities.Announce
 import core.database.entities.GameRecord
@@ -16,8 +18,6 @@ import core.session.entities.GameSession
 import core.session.entities.GuildConfig
 import kotlinx.coroutines.flow.Flow
 import renju.notation.Pos
-import utils.structs.IO
-import utils.structs.Option
 
 interface MessagingService<A, B> {
 
@@ -44,11 +44,11 @@ interface MessagingService<A, B> {
 
     fun buildDeclareButtons(container: LanguageContainer, session: DeclareStageOpeningSession): B
 
-    fun attachNavigators(flow: Flow<String>, message: A, checkTerminated: suspend () -> Boolean): IO<Unit>
+    fun attachNavigators(flow: Flow<String>, message: A, checkTerminated: suspend () -> Boolean): Effect<Nothing, Unit>
 
-    fun attachFocusNavigators(message: A, checkTerminated: suspend () -> Boolean): IO<Unit>
+    fun attachFocusNavigators(message: A, checkTerminated: suspend () -> Boolean): Effect<Nothing, Unit>
 
-    fun attachBinaryNavigators(message: A): IO<Unit>
+    fun attachBinaryNavigators(message: A): Effect<Nothing, Unit>
 
     // GAME
 

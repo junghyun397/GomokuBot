@@ -1,5 +1,6 @@
 package discord.interact.parse.parsers
 
+import arrow.core.Either
 import core.interact.commands.SettingsCommand
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.CommandParser
@@ -11,7 +12,6 @@ import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
-import utils.structs.Either
 
 object SettingsCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
@@ -27,10 +27,10 @@ object SettingsCommandParser : CommandParser, ParsableCommand, BuildableCommand 
     )
 
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>) =
-        Either.Left(SettingsCommand())
+        Either.Right(SettingsCommand())
 
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>) =
-        Either.Left(SettingsCommand())
+        Either.Right(SettingsCommand())
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.apply {

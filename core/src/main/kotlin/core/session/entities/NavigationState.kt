@@ -1,5 +1,9 @@
 package core.session.entities
 
+import arrow.core.Either
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
 import core.BotConfig
 import core.assets.*
 import core.database.DatabaseConnection
@@ -10,21 +14,22 @@ import core.interact.message.SettingMapping
 import renju.notation.Renju
 import utils.assets.LinuxTime
 import utils.assets.toBytes
-import utils.structs.*
+import utils.structs.Identifiable
+import utils.structs.find
 
-enum class NavigationKind(override val id: Short, val range: Either<IntRange, (DatabaseConnection) -> IntRange>, val navigators: Set<String>) : Identifiable {
+enum class NavigationKind(override val id: Short, val range: Either<(DatabaseConnection) -> IntRange, IntRange>, val navigators: Set<String>) : Identifiable {
 
-    BOARD(0, Either.Left(0 until Renju.BOARD_SIZE()), setOf(UNICODE_LEFT, UNICODE_DOWN, UNICODE_UP, UNICODE_RIGHT, UNICODE_FOCUS)),
+    BOARD(0, Either.Right(0 until Renju.BOARD_SIZE()), setOf(UNICODE_LEFT, UNICODE_DOWN, UNICODE_UP, UNICODE_RIGHT, UNICODE_FOCUS)),
     // 0: language setting
-    SETTINGS(1, Either.Left(0 .. SettingMapping.map.size), setOf(UNICODE_LEFT, UNICODE_RIGHT)),
+    SETTINGS(1, Either.Right(0 .. SettingMapping.map.size), setOf(UNICODE_LEFT, UNICODE_RIGHT)),
     // 0: about gomokubot
-    ABOUT(2, Either.Left(0 .. MessagingServiceImpl.aboutRenjuDocument[Language.ENG.container]!!.first.size), setOf(UNICODE_LEFT, UNICODE_RIGHT)),
-    ANNOUNCE(3, Either.Right { connection -> 1 .. connection.localCaches.announceCache.size }, setOf(UNICODE_LEFT, UNICODE_RIGHT));
+    ABOUT(2, Either.Right(0 .. MessagingServiceImpl.aboutRenjuDocument[Language.ENG.container]!!.first.size), setOf(UNICODE_LEFT, UNICODE_RIGHT)),
+    ANNOUNCE(3, Either.Left { connection -> 1 .. connection.localCaches.announceCache.size }, setOf(UNICODE_LEFT, UNICODE_RIGHT));
 
     fun fetchRange(dbConnection: DatabaseConnection): IntRange =
         this.range.fold(
-            onLeft = { it },
-            onRight = { fetcher -> fetcher(dbConnection) }
+            ifLeft = { fetcher -> fetcher(dbConnection) },
+            ifRight = { it }
         )
 
     companion object {
@@ -73,9 +78,9 @@ data class PageNavigationState(
             val kind = NavigationKind.entries.find(kindRaw.toShort())
             val page = pageTop + pageBottom
 
-            return Option.cond(kind != NavigationKind.BOARD && page in kind.fetchRange(dbConnection)) {
-                PageNavigationState(messageRef, kind, page, LinuxTime.nowWithOffset(config.navigatorExpireOffset))
-            }
+            return if (kind != NavigationKind.BOARD && page in kind.fetchRange(dbConnection))
+                Some(PageNavigationState(messageRef, kind, page, LinuxTime.nowWithOffset(config.navigatorExpireOffset)))
+            else None
         }
 
     }

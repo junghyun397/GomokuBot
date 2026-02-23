@@ -2,6 +2,10 @@
 
 package discord.route
 
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
+import arrow.core.toOption
 import core.interact.commands.ResponseFlag
 import core.interact.message.AdaptivePublisherSet
 import core.interact.reports.ErrorReport
@@ -16,27 +20,23 @@ import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import reactor.core.publisher.Mono
 import utils.assets.LinuxTime
-import utils.structs.Option
-import utils.structs.asOption
-import utils.structs.flatMap
-import utils.structs.getOrException
 
 private fun matchAction(prefix: Char?): Option<EmbeddableCommand> =
     when (prefix) {
-        DiscordMessagingService.IdConvention.SET -> Option.Some(SetCommandParser)
-        DiscordMessagingService.IdConvention.ACCEPT -> Option.Some(AcceptCommandParser)
-        DiscordMessagingService.IdConvention.REJECT -> Option.Some(RejectCommandParser)
-        DiscordMessagingService.IdConvention.APPLY_SETTING -> Option.Some(ApplySettingCommandParser)
-        DiscordMessagingService.IdConvention.OPENING -> Option.Some(OpeningCommandParser)
-        DiscordMessagingService.IdConvention.REPLAY_LIST -> Option.Some(ReplayListCommandParser)
-        DiscordMessagingService.IdConvention.REPLAY -> Option.Some(ReplayCommandParser)
-        else -> Option.Empty
+        DiscordMessagingService.IdConvention.SET -> Some(SetCommandParser)
+        DiscordMessagingService.IdConvention.ACCEPT -> Some(AcceptCommandParser)
+        DiscordMessagingService.IdConvention.REJECT -> Some(RejectCommandParser)
+        DiscordMessagingService.IdConvention.APPLY_SETTING -> Some(ApplySettingCommandParser)
+        DiscordMessagingService.IdConvention.OPENING -> Some(OpeningCommandParser)
+        DiscordMessagingService.IdConvention.REPLAY_LIST -> Some(ReplayListCommandParser)
+        DiscordMessagingService.IdConvention.REPLAY -> Some(ReplayCommandParser)
+        else -> None
     }
 
 fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Mono<Report> =
     mono {
         context.event.component.id
-            .asOption()
+            .toOption()
             .flatMap { rawId ->
                 matchAction(rawId.split("-").first().getOrNull(0))
             }
@@ -44,8 +44,8 @@ fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInte
                 parsable.parseComponent(context)
             }
     }
-        .filter { it.isDefined }
-        .map { it.getOrException() }
+        .filter { it.isSome() }
+        .map { it.getOrNull()!! }
         .doOnNext { command ->
             val responseFlag = command.responseFlag
 

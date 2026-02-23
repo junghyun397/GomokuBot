@@ -1,9 +1,9 @@
 package utils.assets
 
+import arrow.core.Either
 import utils.lang.tuple
-import utils.structs.Either
 
-typealias SimplifiedMarkdownDocument = List<Pair<String, List<Pair<String?, List<Either<String, URL>>>>>>
+typealias SimplifiedMarkdownDocument = List<Pair<String, List<Pair<String?, List<Either<URL, String>>>>>>
 typealias MarkdownAnchorMapping = Map<String, Int>
 
 // ## h2Title
@@ -50,11 +50,11 @@ fun parseSimplifiedMarkdownDocument(source: String): Pair<SimplifiedMarkdownDocu
                                     .trim()
 
                                 when {
-                                    text.isEmpty() -> listOf(Either.Right(URL(ref)))
-                                    else -> listOf(Either.Right(URL(ref)), Either.Left(text))
+                                    text.isEmpty() -> listOf(Either.Left(URL(ref)))
+                                    else -> listOf(Either.Left(URL(ref)), Either.Right(text))
                                 }
                             }
-                            else -> listOf(Either.Left(block))
+                            else -> listOf(Either.Right(block))
                         } }
 
                     tuple(h3Head, blocks)

@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -12,8 +13,6 @@ import core.interact.reports.writeCommandReport
 import core.session.SessionManager
 import core.session.entities.GuildConfig
 import utils.lang.tuple
-import utils.structs.flatMap
-import utils.structs.map
 
 class LangCommand(private val language: Language) : Command {
 
@@ -34,10 +33,11 @@ class LangCommand(private val language: Language) : Command {
 
         SessionManager.updateGuildConfig(bot.sessions, guild, thenConfig)
 
-        val io = service.buildLanguageUpdated(publishers.plain, language.container)
-            .launch()
-            .flatMap { buildHelpProcedure(bot, thenConfig, publishers.plain, service, 0) }
-            .map { listOf(Order.UpsertCommands(thenConfig.language.container)) }
+        val io = effect {
+            service.buildLanguageUpdated(publishers.plain, language.container).launch()()
+            buildHelpProcedure(bot, thenConfig, publishers.plain, service, 0)()
+            listOf(Order.UpsertCommands(thenConfig.language.container))
+        }
 
         tuple(io, this.writeCommandReport("set language ${config.language.name} to ${thenConfig.language.name}", guild, user))
     }

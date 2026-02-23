@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -12,7 +13,6 @@ import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
 import utils.lang.tuple
-import utils.structs.map
 
 class ReplayListCommand(val edit: Boolean) : Command {
 
@@ -45,9 +45,11 @@ class ReplayListCommand(val edit: Boolean) : Command {
                 tuple(opponent, record)
             }
 
-            val io = service.buildReplayList(publisher, config.language.container, user, gameResults)
-                .launch()
-                .map { emptyOrders }
+            val io = effect {
+                service.buildReplayList(publisher, config.language.container, user, gameResults)
+                    .launch()()
+                emptyOrders
+            }
 
             tuple(io, this.writeCommandReport("total ${gameRecords.size} records", guild, user))
         }

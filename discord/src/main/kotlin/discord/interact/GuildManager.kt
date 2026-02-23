@@ -1,5 +1,10 @@
 package discord.interact
 
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
+import arrow.core.getOrElse
+import arrow.core.raise.get
 import core.assets.GuildUid
 import core.assets.MessageRef
 import core.assets.aiUser
@@ -33,10 +38,6 @@ import net.dv8tion.jda.api.requests.RestAction
 import utils.lang.memoize
 import utils.lang.replaceIf
 import utils.lang.tuple
-import utils.structs.Option
-import utils.structs.getOrNull
-import utils.structs.map
-import utils.structs.orElseGet
 
 object GuildManager {
 
@@ -51,11 +52,11 @@ object GuildManager {
             .retrieveMemberById(user.idLong)
             .awaitOption()
             .map { member -> member.roles.any { it.idLong == config.testerRoleId } }
-            .orElseGet { false }
+            .getOrElse { false }
 
     inline fun <T> permissionGrantedRun(channel: GuildMessageChannel, permission: Permission, block: () -> T): Option<T> =
-        if (this.lookupPermission(channel, permission)) Option.Some(block())
-        else Option.Empty
+        if (this.lookupPermission(channel, permission)) Some(block())
+        else None
 
     inline fun <T> permissionDependedRun(channel: GuildMessageChannel, permission: Permission, onGranted: () -> T, onMissed: () -> T): T =
         if (this.lookupPermission(channel, permission)) onGranted()
@@ -130,7 +131,7 @@ object GuildManager {
 
         DiscordMessagingService.buildSessionArchive(publisher, modSession, modResult, false)
             .launch()
-            .run()
+            .get()
     }
 
     suspend fun retrieveJDAMessage(jda: JDA, messageRef: MessageRef): net.dv8tion.jda.api.entities.Message? =

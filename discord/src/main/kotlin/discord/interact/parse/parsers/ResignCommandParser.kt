@@ -13,7 +13,6 @@ import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
-import utils.structs.mapLeft
 
 object ResignCommandParser : SessionSideParser<DiscordMessageData, DiscordComponents>(), ParsableCommand, BuildableCommand {
 
@@ -29,12 +28,12 @@ object ResignCommandParser : SessionSideParser<DiscordMessageData, DiscordCompon
     )
 
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>) =
-        this.retrieveSession(context.bot, context.guild, context.user).mapLeft { session ->
+        this.retrieveSession(context.bot, context.guild, context.user).map { session ->
             ResignCommand(session)
         }
 
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>) =
-        this.retrieveSession(context.bot, context.guild, context.user).mapLeft { session ->
+        this.retrieveSession(context.bot, context.guild, context.user).map { session ->
             ResignCommand(session)
         }
 

@@ -1,13 +1,14 @@
 package core.session
 
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
 import core.BotContext
 import core.assets.*
 import core.database.entities.extractGameRecord
 import core.database.repositories.GameRecordRepository
 import core.inference.AiLevel
 import core.inference.FocusSolver
-import core.inference.ResRenjuClient
-import core.inference.Token
 import core.interact.message.graphics.*
 import core.session.entities.*
 import renju.ScalaBoard
@@ -18,7 +19,7 @@ import renju.notation.Renju
 import renju.notation.Result
 import renju.protocol.SolutionNode
 import utils.lang.tuple
-import utils.structs.*
+import utils.structs.Identifiable
 import kotlin.random.Random
 
 enum class BoardStyle(override val id: Short, val renderer: BoardRenderer, val sample: BoardRendererSample) : Identifiable {
@@ -97,16 +98,10 @@ object GameManager {
 
         val aiColor = if (ownerHasBlack) Notation.Color.White else Notation.Color.Black
 
-        val token = when (aiLevel) {
-            AiLevel.AMOEBA -> Token("AMOEBA")
-            else -> bot.resRenjuClient.begins(aiLevel.aiPreset, aiColor, board)
-        }
-
         return AiGameSession(
             owner = owner,
             aiLevel = aiLevel,
-            resRenjuToken = token,
-            solution = Option.Empty,
+            solution = None,
             ownerHasBlack = ownerHasBlack,
             board = board,
             history = history,
@@ -120,17 +115,21 @@ object GameManager {
     fun validateMove(session: GameSession, move: Pos): Option<InvalidKind> =
         session.board.validateMove(move.idx())
             .toOption()
-            .orElse {
-                Option.cond(session is OpeningSession && !session.validateMove(move)) {
-                    Notation.InvalidKind.Forbidden
-                }
-            }
+            .fold(
+                ifEmpty = {
+                    if (session is OpeningSession && !session.validateMove(move))
+                        Some(Notation.InvalidKind.Forbidden)
+                    else
+                        None
+                },
+                ifSome = { Some(it) }
+            )
 
     fun makeMove(session: RenjuSession, pos: Pos): RenjuSession {
         val thenBoard = session.board.makeMove(pos)
 
         return thenBoard.winner().fold(
-            { session.next(thenBoard, pos, Option.Empty, MessageBufferKey.issue()) },
+            { session.next(thenBoard, pos, None, MessageBufferKey.issue()) },
             { result ->
                 val gameResult = when (result) {
                     is Result.FiveInRow ->
@@ -138,35 +137,30 @@ object GameManager {
                     else -> GameResult.Full
                 }
 
-                session.next(thenBoard, pos, Option.Some(gameResult), session.messageBufferKey)
+                session.next(thenBoard, pos, Some(gameResult), session.messageBufferKey)
             }
         )
     }
 
-    suspend fun makeAiMove(session: AiGameSession, resRenjuClient: ResRenjuClient): AiGameSession {
+    suspend fun makeAiMove(session: AiGameSession): AiGameSession {
         val (aiMove, solutionNode) = session.solution
             .flatMap { solutionNode ->
                 solutionNode.child().get(session.board.lastMove()).fold(
-                    { Option.Empty },
-                    { Option.Some(it) }
+                    { None },
+                    { Some(it) }
                 )
             }
             .fold(
-                onDefined = {
+                ifSome = {
                     when (it) {
-                        is SolutionNode -> tuple(it.idx(), Option.Some(it))
-                        else -> tuple(it.idx(), Option.Empty)
+                        is SolutionNode -> tuple(it.idx(), Some(it))
+                        else -> tuple(it.idx(), None)
                     }
                 },
-                onEmpty = {
-                    val solution = when (session.aiLevel) {
-                        AiLevel.AMOEBA -> FocusSolver.findSolution(session.board)
-                        else -> resRenjuClient.update(session.resRenjuToken, session.board)
-                    }
-
-                    when (solution) {
-                        is SolutionNode -> tuple(solution.idx(), Option.Some(solution))
-                        else -> tuple(solution.idx(), Option.Empty)
+                ifEmpty = {
+                    when (val solution = FocusSolver.findSolution(session.board)) {
+                        is SolutionNode -> tuple(solution.idx(), Some(solution))
+                        else -> tuple(solution.idx(), None)
                     }
                 },
             )
@@ -190,7 +184,7 @@ object GameManager {
 
                 session.copy(
                     board = thenBoard,
-                    gameResult = Option.Some(gameResult),
+                    gameResult = Some(gameResult),
                     history = session.history + Pos.fromIdx(aiMove),
                 )
             }
@@ -209,7 +203,7 @@ object GameManager {
 
                 val result = GameResult.Win(cause, winColor, aiUser, session.owner)
 
-                tuple(session.copy(gameResult = Option.Some(result)), result)
+                tuple(session.copy(gameResult = Some(result)), result)
             }
             is OpeningSession, is PvpGameSession -> {
                 val winColor =
@@ -229,12 +223,8 @@ object GameManager {
     suspend fun finishSession(bot: BotContext, guild: Guild, session: GameSession, result: GameResult) {
         SessionManager.removeGameSession(bot.sessions, guild, session.owner.id)
 
-        session.extractGameRecord(guild.id).forEach { record ->
+        session.extractGameRecord(guild.id).onSome { record ->
             GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
-        }
-
-        if (session is AiGameSession && session.aiLevel != AiLevel.AMOEBA) {
-            bot.resRenjuClient.report(session.resRenjuToken, session.board, result)
         }
     }
 

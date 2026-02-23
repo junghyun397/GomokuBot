@@ -1,5 +1,8 @@
 package discord.interact.message
 
+import arrow.core.Option
+import arrow.core.raise.Effect
+import arrow.core.raise.effect
 import core.assets.*
 import core.database.entities.Announce
 import core.database.entities.GameRecord
@@ -49,7 +52,6 @@ import renju.notation.Flag
 import renju.notation.Renju
 import utils.lang.memoize
 import utils.lang.tuple
-import utils.structs.*
 import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
 
@@ -105,7 +107,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                 append(", ")
 
                 when {
-                    session.gameResult.isDefined -> append(container.boardFinished())
+                    session.gameResult.isSome() -> append(container.boardFinished())
                     session is OpeningSession -> append(container.boardInOpening())
                     else -> append(container.boardInProgress())
                 }
@@ -159,12 +161,12 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
     private fun MutableList<MessageEmbed>.buildGuideEmbed(session: GameSession, container: LanguageContainer) {
         val text = when {
-            (session is RenjuSession || session is MoveStageOpeningSession) && session.gameResult.isEmpty ->
+            (session is RenjuSession || session is MoveStageOpeningSession) && session.gameResult.isNone() ->
                 container.boardCommandGuide()
             session is SwapStageOpeningSession -> session.offerCount
                 .fold(
-                    onDefined = { count -> container.boardStatefulSwapGuide(count) },
-                    onEmpty = { container.boardSwapGuide() }
+                    ifSome = { count -> container.boardStatefulSwapGuide(count) },
+                    ifEmpty = { container.boardSwapGuide() }
                 )
             session is BranchingStageOpeningSession -> container.boardBranchGuide()
             session is DeclareStageOpeningSession -> container.boardDeclareGuide()
@@ -190,10 +192,10 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
     override fun buildBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession): DiscordMessageBuilder {
         val barColor = session.gameResult
-            .fold(onDefined = { COLOR_RED_HEX }, onEmpty = { COLOR_GREEN_HEX })
+            .fold(ifSome = { COLOR_RED_HEX }, ifEmpty = { COLOR_GREEN_HEX })
 
         val modRenderType = session.gameResult
-            .fold(onDefined = { HistoryRenderType.SEQUENCE }, onEmpty = { renderType })
+            .fold(ifSome = { HistoryRenderType.SEQUENCE }, ifEmpty = { renderType })
 
         val offers = when (session) {
             is NegotiateStageOpeningSession -> session.moveCandidates
@@ -209,7 +211,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
         }
 
         return renderer.renderBoard(session.board, session.history, modRenderType, offers, blinds?.toSet()).fold(
-            onLeft = { textBoard ->
+            ifLeft = { textBoard ->
                 publisher sends buildList {
                     add(Embed {
                         color = barColor
@@ -218,15 +220,15 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                         description = textBoard
 
                         session.gameResult.fold(
-                            onDefined = { buildResultFields(container, session, it) },
-                            onEmpty = { buildStatusFields(container, session) },
+                            ifSome = { buildResultFields(container, session, it) },
+                            ifEmpty = { buildStatusFields(container, session) },
                         )
                     })
 
                     buildGuideEmbed(session, container)
                 }
             },
-            onRight = { imageStream ->
+            ifRight = { imageStream ->
                 val fName = ImageBoardRenderer.newFileName()
 
                 val messageBuilder = publisher sends buildList {
@@ -236,8 +238,8 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                         buildBoardAuthor(container, session)
 
                         session.gameResult.fold(
-                            onDefined = { buildResultFields(container, session, it) },
-                            onEmpty = { buildStatusFields(container, session) },
+                            ifSome = { buildResultFields(container, session, it) },
+                            ifEmpty = { buildStatusFields(container, session) },
                         )
 
                         image = "attachment://$fName"
@@ -252,10 +254,10 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
     }
 
     override fun buildReplayBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession, totalMoves: Int): DiscordMessageBuilder {
-        val gameResult = session.gameResult.getOrException()
+        val gameResult = session.gameResult.getOrNull()!!
 
         return renderer.renderBoard(session.board, session.history, renderType, null, null).fold(
-            onLeft = { textBoard ->
+            ifLeft = { textBoard ->
                 publisher sends buildList {
                     add(Embed {
                         color = COLOR_NORMAL_HEX
@@ -268,7 +270,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                     buildGuideEmbed(session, container)
                 }
             },
-            onRight = { imageStream ->
+            ifRight = { imageStream ->
                 val fName = ImageBoardRenderer.newFileName()
 
                 val messageBuilder = publisher sends buildList {
@@ -303,8 +305,8 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             buildBoardAuthor(Language.ENG.container, session)
 
             result.fold(
-                onDefined = { buildResultFields(Language.ENG.container, session, it) },
-                onEmpty = { buildStatusFields(Language.ENG.container, session) },
+                ifSome = { buildResultFields(Language.ENG.container, session, it) },
+                ifEmpty = { buildStatusFields(Language.ENG.container, session) },
             )
 
             image = "attachment://${fName}"
@@ -357,31 +359,32 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             }
         }.liftToButtons()
 
-    override fun attachNavigators(flow: Flow<String>, message: DiscordMessageData, checkTerminated: suspend () -> Boolean) =
-        IO { message.original
-            .filter {
-                !it.isEphemeral
-                        && GuildManager.lookupPermission(it.guildChannel, Permission.MESSAGE_ADD_REACTION)
-                        && GuildManager.lookupPermission(it.guildChannel, Permission.MESSAGE_HISTORY)
-            }
-            .forEach { original ->
-                try {
-                    coroutineScope {
-                        flow
-                            .map { original.addReaction(Emoji.fromUnicode(it)).mapToResult() }
-                            .collect { action ->
-                                when {
-                                    checkTerminated() -> cancel()
-                                    else -> {
-                                        action.queue()
-                                        delay(500) // TODO: sync on rate limit
+    override fun attachNavigators(flow: Flow<String>, message: DiscordMessageData, checkTerminated: suspend () -> Boolean): Effect<Nothing, Unit> =
+        effect {
+            message.original
+                .filter {
+                    !it.isEphemeral
+                            && GuildManager.lookupPermission(it.guildChannel, Permission.MESSAGE_ADD_REACTION)
+                            && GuildManager.lookupPermission(it.guildChannel, Permission.MESSAGE_HISTORY)
+                }
+                .onSome { original ->
+                    try {
+                        coroutineScope {
+                            flow
+                                .map { original.addReaction(Emoji.fromUnicode(it)).mapToResult() }
+                                .collect { action ->
+                                    when {
+                                        checkTerminated() -> cancel()
+                                        else -> {
+                                            action.queue()
+                                            delay(500) // TODO: sync on rate limit
+                                        }
                                     }
                                 }
-                            }
+                        }
+                    } catch (_: CancellationException) {
                     }
                 }
-                catch (_: CancellationException) {}
-            }
         }
 
     // REPLAY
@@ -440,7 +443,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
             selectMenuOptions.add(SelectOption(
                 label = "#${idx + 1}: ${player.withColor(playerColor)} vs ${opponent.withColor(opponentColor)}, $resultString",
-                value = "$REPLAY-${record.gameRecordId.getOrException().id}-1-${player.id.validationKey}"
+                value = "$REPLAY-${record.gameRecordId.getOrNull()!!.id}-1-${player.id.validationKey}"
             ))
         }
 
@@ -524,8 +527,8 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                         }
 
                         block.fold(
-                            onLeft = { description = it },
-                            onRight = { image = it.ref }
+                            ifLeft = { image = it.ref },
+                            ifRight = { description = it }
                         )
                     }
                 }

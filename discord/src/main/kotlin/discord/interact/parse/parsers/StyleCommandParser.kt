@@ -1,5 +1,7 @@
 package discord.interact.parse.parsers
 
+import arrow.core.Either
+import arrow.core.raise.effect
 import core.interact.commands.Command
 import core.interact.commands.StyleCommand
 import core.interact.i18n.LanguageContainer
@@ -17,9 +19,6 @@ import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
-import utils.structs.Either
-import utils.structs.flatMap
-import utils.structs.map
 
 object StyleCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
@@ -37,29 +36,31 @@ object StyleCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     private fun matchStyle(option: String): BoardStyle? =
         BoardStyle.entries.firstOrNull { it.sample.styleShortcut == option || it.sample.styleName == option }
 
-    private fun composeMissMatchFailure(context: UserInteractionContext<*>): Either<Command, DiscordParseFailure> =
-        Either.Right(this.asParseFailure("option mismatch", context.guild, context.user) { messagingService, publisher, container ->
-            messagingService.buildStyleNotFound(publisher, container).launch()
-                .flatMap { messagingService.buildStyleGuide(publisher, container).launch() }
-                .map { emptyList() }
+    private fun composeMissMatchFailure(context: UserInteractionContext<*>): Either<DiscordParseFailure, Command> =
+        Either.Left(this.asParseFailure("option mismatch", context.guild, context.user) { messagingService, publisher, container ->
+            effect {
+                messagingService.buildStyleNotFound(publisher, container).launch()()
+                messagingService.buildStyleGuide(publisher, container).launch()()
+                emptyList()
+            }
         })
 
-    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<DiscordParseFailure, Command> {
         val style = context.event.getOption(context.config.language.container.styleCommandOptionCode())?.asString?.uppercase()?.let {
             matchStyle(it)
         } ?: return this.composeMissMatchFailure(context)
 
-        return Either.Left(StyleCommand(style))
+        return Either.Right(StyleCommand(style))
     }
 
-    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<DiscordParseFailure, Command> {
         val style = payload
             .getOrNull(1)
             ?.uppercase()
             ?.let { matchStyle(it) }
             ?: return this.composeMissMatchFailure(context)
 
-        return Either.Left(StyleCommand(style))
+        return Either.Right(StyleCommand(style))
     }
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.interact.emptyOrders
@@ -11,9 +12,6 @@ import core.session.entities.GuildConfig
 import core.session.entities.GuildSession
 import core.session.entities.RequestSession
 import utils.lang.tuple
-import utils.structs.IO
-import utils.structs.flatMap
-import utils.structs.map
 
 class ExpireRequestCommand(
     private val guildSession: GuildSession,
@@ -32,25 +30,24 @@ class ExpireRequestCommand(
         publisher: PublisherSet<A, B>,
     ) = runCatching {
         val io = if (this.channelAvailable) {
-            val message = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
+            effect {
+                val message = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
+                val noticePublisher = publisher.plain
 
-            val noticePublisher = publisher.plain
+                if (message != null && this@ExpireRequestCommand.messageAvailable) {
+                    val editPublisher = publisher.edit(message)
 
-            val noticeIO = service
-                .buildRequestExpired(noticePublisher, guildSession.config.language.container, session.owner, session.opponent)
-                .launch()
+                    service.buildRejectedRequest(editPublisher, config.language.container, session.owner, session.opponent)
+                        .launch()()
+                }
 
-            val finishIO = if (message != null && this.messageAvailable) {
-                val editPublisher = publisher.edit(message)
+                service
+                    .buildRequestExpired(noticePublisher, guildSession.config.language.container, session.owner, session.opponent)
+                    .launch()()
 
-                service.buildRejectedRequest(editPublisher, config.language.container, session.owner, session.opponent)
-                    .launch()
-            } else IO.empty
-
-            finishIO
-                .flatMap { noticeIO }
-                .map { emptyOrders }
-        } else IO.value(emptyOrders)
+                emptyOrders
+            }
+        } else effect { emptyOrders }
 
         tuple(io, this.writeCommandReport("expired, $session rejected", guild))
     }

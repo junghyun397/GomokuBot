@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -16,8 +17,6 @@ import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
 import utils.assets.LinuxTime
 import utils.lang.tuple
-import utils.structs.flatMapOption
-import utils.structs.map
 
 class ViewAnnounceCommand(val language: Language) : Command {
 
@@ -37,26 +36,32 @@ class ViewAnnounceCommand(val language: Language) : Command {
         val latestAnnounceId = AnnounceRepository.getLatestAnnounceId(bot.dbConnection)!!
         val announcements = AnnounceRepository.getLatestAnnounce(bot.dbConnection)
 
-        val io = service.buildAnnounce(
-            publishers.plain,
-            language.container,
-            announcements[language] ?: announcements[Language.ENG]!!
-        ).retrieve()
-            .flatMapOption { announceMessage ->
-                SessionManager.addNavigation(
-                    bot.sessions,
-                    announceMessage.messageRef,
-                    PageNavigationState(
-                        announceMessage.messageRef,
-                        NavigationKind.ANNOUNCE,
-                        latestAnnounceId,
-                        LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
-                    )
+        val io = effect {
+            service.buildAnnounce(
+                publishers.plain,
+                language.container,
+                announcements[language] ?: announcements[Language.ENG]!!
+            ).retrieve()()
+                .fold(
+                    ifSome = { announceMessage ->
+                        SessionManager.addNavigation(
+                            bot.sessions,
+                            announceMessage.messageRef,
+                            PageNavigationState(
+                                announceMessage.messageRef,
+                                NavigationKind.ANNOUNCE,
+                                latestAnnounceId,
+                                LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
+                            )
+                        )
+
+                        service.attachBinaryNavigators(announceMessage.messageData)()
+                    },
+                    ifEmpty = { }
                 )
 
-                service.attachBinaryNavigators(announceMessage.messageData)
-            }
-            .map { emptyList<Order>() }
+            emptyList<Order>()
+        }
 
         tuple(io, this.writeCommandReport("sent", guild, user))
     }

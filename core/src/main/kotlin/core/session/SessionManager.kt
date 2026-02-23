@@ -9,10 +9,6 @@ import core.session.entities.*
 import utils.assets.LinuxTime
 import utils.lang.tuple
 import utils.structs.Quadruple
-import utils.structs.fold
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.set
 
 object SessionManager {
 
@@ -20,8 +16,8 @@ object SessionManager {
         pool.sessions.getOrElse(guild.id) {
             GuildConfigRepository.fetchGuildConfig(pool.dbConnection, guild.id)
                 .fold(
-                    onDefined = { GuildSession(guild = guild, config = it) },
-                    onEmpty = { GuildSession(guild = guild, GuildConfig()) }
+                    ifSome = { GuildSession(guild = guild, config = it) },
+                    ifEmpty = { GuildSession(guild = guild, GuildConfig()) }
                 )
                 .also {
                     pool.sessions[guild.id] = it

@@ -1,11 +1,12 @@
 package core.session.entities
 
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
 import core.assets.User
 import core.session.Rule
 import renju.Board
 import renju.notation.Pos
-import utils.structs.Option
-import utils.structs.fold
 
 sealed interface SoosyrvOpeningSession : OpeningSession {
 
@@ -61,7 +62,7 @@ data class SoosyrvMoveStageSession(
                 messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
                 board = this.board.makeMove(move),
                 history = this.history + move,
-                offerCount = Option.Empty
+                offerCount = None
             )
 
 }
@@ -81,7 +82,7 @@ data class SoosyrvSwapStageSession(
 
     override fun swap(doSwap: Boolean): SoosyrvOpeningSession =
         this.offerCount.fold(
-            onEmpty = {
+            ifEmpty = {
                 SoosyrvMoveStageSession(
                     owner = this.owner, opponent = this.opponent,
                     ownerHasBlack = this.ownerHasBlack xor doSwap,
@@ -90,7 +91,7 @@ data class SoosyrvSwapStageSession(
                     isBranched = true
                 )
             },
-            onDefined = { count ->
+            ifSome = { count ->
                 SoosyrvOfferStageOpeningSession(
                     owner = this.owner, opponent = this.opponent,
                     ownerHasBlack = this.ownerHasBlack xor doSwap,
@@ -126,7 +127,7 @@ data class SoosyrvDeclareStageOpeningSession(
             owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
             board = this.board, history = this.history,
             messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
-            offerCount = Option.Some(count)
+            offerCount = Some(count)
         )
 
 }

@@ -1,5 +1,6 @@
 package core.interact.parse
 
+import arrow.core.raise.Effect
 import core.assets.Guild
 import core.assets.User
 import core.interact.Order
@@ -9,22 +10,21 @@ import core.interact.message.MessagingService
 import core.interact.reports.CommandReport
 import core.session.entities.GuildConfig
 import utils.lang.tuple
-import utils.structs.IO
 
 class ParseFailure<A, B>(
     val name: String,
     val comment: String,
     val guild: Guild,
     val user: User,
-    private val onFailure: (MessagingService<A, B>, MessagePublisher<A, B>, LanguageContainer) -> IO<List<Order>>
+    private val onFailure: (MessagingService<A, B>, MessagePublisher<A, B>, LanguageContainer) -> Effect<Nothing, List<Order>>
 ) {
 
-    fun notice(config: GuildConfig, service: MessagingService<A, B>, publisher: MessagePublisher<A, B>): Result<Pair<IO<List<Order>>, CommandReport>> =
+    fun notice(config: GuildConfig, service: MessagingService<A, B>, publisher: MessagePublisher<A, B>): Result<Pair<Effect<Nothing, List<Order>>, CommandReport>> =
         Result.success(tuple(onFailure(service, publisher, config.language.container), this.asCommandReport()))
 
 }
 
-fun <A, B> CommandParser.asParseFailure(comment: String, guild: Guild, user: User, onFailure: (MessagingService<A, B>, MessagePublisher<A, B>, LanguageContainer) -> IO<List<Order>>) =
+fun <A, B> CommandParser.asParseFailure(comment: String, guild: Guild, user: User, onFailure: (MessagingService<A, B>, MessagePublisher<A, B>, LanguageContainer) -> Effect<Nothing, List<Order>>) =
     ParseFailure(this.name, comment, guild, user, onFailure)
 
 fun ParseFailure<*, *>.asCommandReport() =

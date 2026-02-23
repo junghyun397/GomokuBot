@@ -1,14 +1,15 @@
 package core.session.entities
 
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
 import core.assets.User
 import core.assets.aiUser
 import core.inference.AiLevel
-import core.inference.Token
 import core.session.Rule
 import renju.Board
 import renju.notation.Pos
 import renju.protocol.SolutionNode
-import utils.structs.Option
 
 sealed interface RenjuSession : GameSession {
 
@@ -19,11 +20,10 @@ sealed interface RenjuSession : GameSession {
 data class AiGameSession(
     val aiLevel: AiLevel,
     val solution: Option<SolutionNode>,
-    val resRenjuToken: Token,
     override val owner: User,
     override val ownerHasBlack: Boolean,
     override val board: Board,
-    override val gameResult: Option<GameResult> = Option.Empty,
+    override val gameResult: Option<GameResult> = None,
     override val history: List<Pos?>,
     override val messageBufferKey: MessageBufferKey,
     override val recording: Boolean,
@@ -42,7 +42,7 @@ data class AiGameSession(
             messageBufferKey = messageBufferKey
         )
 
-    override fun updateResult(gameResult: GameResult) = this.copy(gameResult = Option.Some(gameResult))
+    override fun updateResult(gameResult: GameResult) = this.copy(gameResult = Some(gameResult))
 
 }
 
@@ -51,7 +51,7 @@ data class PvpGameSession(
     override val opponent: User,
     override val ownerHasBlack: Boolean,
     override val board: Board,
-    override val gameResult: Option<GameResult> = Option.Empty,
+    override val gameResult: Option<GameResult> = None,
     override val history: List<Pos?>,
     override val messageBufferKey: MessageBufferKey,
     override val recording: Boolean,
@@ -68,6 +68,6 @@ data class PvpGameSession(
             messageBufferKey = messageBufferKey
         )
 
-    override fun updateResult(gameResult: GameResult) = this.copy(gameResult = Option.Some(gameResult))
+    override fun updateResult(gameResult: GameResult) = this.copy(gameResult = Some(gameResult))
 
 }

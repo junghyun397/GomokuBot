@@ -1,5 +1,6 @@
 package discord.interact.parse.parsers
 
+import arrow.core.Option
 import core.interact.commands.ApplySettingCommand
 import core.interact.commands.Command
 import core.interact.message.SettingMapping
@@ -7,8 +8,6 @@ import discord.interact.UserInteractionContext
 import discord.interact.parse.EmbeddableCommand
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent
-import utils.structs.Option
-import utils.structs.map
 
 object ApplySettingCommandParser : EmbeddableCommand {
 

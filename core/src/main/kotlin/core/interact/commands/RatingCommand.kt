@@ -1,16 +1,18 @@
 package core.interact.commands
 
+import arrow.core.raise.Effect
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
 import core.assets.User
+import core.interact.Order
 import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
 import utils.lang.tuple
-import utils.structs.IO
 
 class RatingCommand() : Command {
 
@@ -27,7 +29,8 @@ class RatingCommand() : Command {
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        tuple(IO.value(emptyOrders), this.writeCommandReport("sent", guild, user))
+        val io: Effect<Nothing, List<Order>> = effect { emptyOrders }
+        tuple(io, this.writeCommandReport("sent", guild, user))
     }
 
 }

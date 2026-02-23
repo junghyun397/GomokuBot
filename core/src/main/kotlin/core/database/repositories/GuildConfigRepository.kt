@@ -1,5 +1,8 @@
 package core.database.repositories
 
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
 import core.assets.GuildUid
 import core.database.DatabaseConnection
 import core.interact.i18n.Language
@@ -7,7 +10,6 @@ import core.interact.message.graphics.HistoryRenderType
 import core.session.*
 import core.session.entities.GuildConfig
 import kotlinx.coroutines.reactive.awaitSingle
-import utils.structs.Option
 import utils.structs.find
 
 object GuildConfigRepository {
@@ -23,7 +25,7 @@ object GuildConfigRepository {
             }
             .flatMap<Option<GuildConfig>> { result -> result
                 .map { row, _ ->
-                    Option.Some(GuildConfig(
+                    Some(GuildConfig(
                         language = Language.entries.find(row["language"] as Short),
                         boardStyle = BoardStyle.entries.find(row["board_style"] as Short),
                         focusType = FocusType.entries.find(row["focus_type"] as Short),
@@ -34,7 +36,7 @@ object GuildConfigRepository {
                     ))
                 }
             }
-            .defaultIfEmpty(Option.Empty)
+            .defaultIfEmpty(None)
             .awaitSingle()
 
     suspend fun upsertGuildConfig(connection: DatabaseConnection, guildUid: GuildUid, guildConfig: GuildConfig) {

@@ -1,5 +1,6 @@
 package core.interact.message
 
+import arrow.core.raise.Effect
 import core.assets.*
 import core.inference.FocusSolver
 import core.interact.i18n.Language
@@ -16,7 +17,6 @@ import utils.assets.MarkdownAnchorMapping
 import utils.assets.SimplifiedMarkdownDocument
 import utils.assets.parseSimplifiedMarkdownDocument
 import utils.lang.tuple
-import utils.structs.IO
 
 abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
 
@@ -89,12 +89,12 @@ abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
 
     private val focusNavigatorFlow = flowOf(UNICODE_LEFT, UNICODE_DOWN, UNICODE_UP, UNICODE_RIGHT, UNICODE_FOCUS)
 
-    override fun attachFocusNavigators(message: A, checkTerminated: suspend () -> Boolean): IO<Unit> =
+    override fun attachFocusNavigators(message: A, checkTerminated: suspend () -> Boolean): Effect<Nothing, Unit> =
         this.attachNavigators(this.focusNavigatorFlow, message, checkTerminated)
 
     private val binaryNavigatorFlow = flowOf(UNICODE_LEFT, UNICODE_RIGHT)
 
-    override fun attachBinaryNavigators(message: A): IO<Unit> =
+    override fun attachBinaryNavigators(message: A): Effect<Nothing, Unit> =
         this.attachNavigators(this.binaryNavigatorFlow, message) { false }
 
     // RANK

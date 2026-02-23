@@ -1,10 +1,10 @@
 package discord.interact.parse
 
+import arrow.core.Option
 import core.interact.commands.Command
 import core.session.entities.NavigationState
 import discord.interact.UserInteractionContext
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
-import utils.structs.Option
 
 interface NavigableCommand {
 

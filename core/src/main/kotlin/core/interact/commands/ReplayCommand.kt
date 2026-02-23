@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -14,8 +15,6 @@ import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.GuildConfig
 import utils.lang.tuple
-import utils.structs.getOrException
-import utils.structs.map
 
 class ReplayCommand(private val recordId: GameRecordId, private val moves: Int) : Command {
 
@@ -32,13 +31,15 @@ class ReplayCommand(private val recordId: GameRecordId, private val moves: Int) 
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        val originalRecord = GameRecordRepository.retrieveGameRecordByRecordId(bot.dbConnection, this.recordId).getOrException()
+        val originalRecord = GameRecordRepository.retrieveGameRecordByRecordId(bot.dbConnection, this.recordId).getOrNull()!!
 
         if (originalRecord.history.isEmpty()) {
-            val io = service.buildUnableToReplay(publishers.edit(messageRef), config.language.container)
-                .addComponents(service.buildBackToListButton())
-                .launch()
-                .map { emptyOrders }
+            val io = effect {
+                service.buildUnableToReplay(publishers.edit(messageRef), config.language.container)
+                    .addComponents(service.buildBackToListButton())
+                    .launch()()
+                emptyOrders
+            }
 
             return@runCatching tuple(io, this.writeCommandReport("${this.recordId} is empty", guild, user))
         }
@@ -54,17 +55,20 @@ class ReplayCommand(private val recordId: GameRecordId, private val moves: Int) 
 
         val session = modRecord.asGameSession(bot.dbConnection, user)
 
-        val io = service.buildReplayBoard(
-            publishers.edit(messageRef),
-            config.language.container,
-            config.boardStyle.renderer,
-            config.markType,
-            session,
-            originalRecord.history.size
-        )
-            .addComponents(service.buildReplayButtons(this.recordId, user.id.validationKey, originalRecord.history.size, moves))
-            .launch()
-            .map { emptyOrders }
+        val io = effect {
+            service.buildReplayBoard(
+                publishers.edit(messageRef),
+                config.language.container,
+                config.boardStyle.renderer,
+                config.markType,
+                session,
+                originalRecord.history.size
+            )
+                .addComponents(service.buildReplayButtons(this@ReplayCommand.recordId, user.id.validationKey, originalRecord.history.size, moves))
+                .launch()()
+
+            emptyOrders
+        }
 
         tuple(io, this.writeCommandReport("gameId = ${this.recordId.id}, moves = $moves", guild, user))
     }

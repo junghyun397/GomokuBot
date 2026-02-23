@@ -1,49 +1,49 @@
 package core.database.repositories
 
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.Some
 import core.assets.User
 import core.assets.UserId
 import core.assets.UserUid
 import core.assets.bindNullable
 import core.database.DatabaseConnection
 import kotlinx.coroutines.reactive.awaitSingle
-import utils.structs.*
 import java.util.*
 
 object UserProfileRepository {
 
     suspend fun retrieveOrInsertUser(connection: DatabaseConnection, platform: Short, givenId: UserId, produce: () -> User): User =
-        this.retrieveUser(connection, platform, givenId)
-            .orElseGet {
-                produce()
-                    .copy(announceId = AnnounceRepository.getLatestAnnounceId(connection))
-                    .also { this.upsertUser(connection, it) }
-            }
+        when (val maybeUser = this.retrieveUser(connection, platform, givenId)) {
+            is Some -> maybeUser.value
+            None -> produce()
+                .copy(announceId = AnnounceRepository.getLatestAnnounceId(connection))
+                .also { this.upsertUser(connection, it) }
+        }
 
     suspend fun retrieveUser(connection: DatabaseConnection, userUid: UserUid): User =
         connection.localCaches.userProfileUidCache
             .getIfPresent(userUid)
-            .asOption()
-            .orElseGet {
-                this.fetchUser(connection, userUid)
-                    .also { user ->
-                        connection.localCaches.userProfileUidCache.put(user.id, user)
-                        connection.localCaches.userProfileGivenIdCache.put(user.givenId, user)
-                    }
-            }
+            ?: this.fetchUser(connection, userUid)
+                .also { user ->
+                    connection.localCaches.userProfileUidCache.put(user.id, user)
+                    connection.localCaches.userProfileGivenIdCache.put(user.givenId, user)
+                }
 
-    suspend fun retrieveUser(connection: DatabaseConnection, platform: Short, givenId: UserId): Option<User> =
+    suspend fun retrieveUser(connection: DatabaseConnection, platform: Short, givenId: UserId): Option<User> {
         connection.localCaches.userProfileGivenIdCache
             .getIfPresent(givenId)
-            .asOption()
-            .orElse {
-                this.fetchUser(connection, platform, givenId)
-                    .also { maybeUser -> maybeUser
-                        .forEach { user ->
-                            connection.localCaches.userProfileUidCache.put(user.id, user)
-                            connection.localCaches.userProfileGivenIdCache.put(user.givenId, user)
-                        }
-                    }
-            }
+            ?.let { return Some(it) }
+
+        val maybeUser = this.fetchUser(connection, platform, givenId)
+
+        if (maybeUser is Some) {
+            connection.localCaches.userProfileUidCache.put(maybeUser.value.id, maybeUser.value)
+            connection.localCaches.userProfileGivenIdCache.put(maybeUser.value.givenId, maybeUser.value)
+        }
+
+        return maybeUser
+    }
 
     private suspend fun fetchUser(connection: DatabaseConnection, userUid: UserUid): User =
         connection.liftConnection()
@@ -77,7 +77,7 @@ object UserProfileRepository {
             }
             .flatMap<Option<User>> { result -> result
                 .map { row, _ ->
-                    Option.Some(User(
+                    Some(User(
                         id = UserUid(row["user_id"] as UUID),
                         platform = platform,
                         givenId = givenId,
@@ -88,7 +88,7 @@ object UserProfileRepository {
                     ))
                 }
             }
-            .defaultIfEmpty(Option.Empty)
+            .defaultIfEmpty(None)
             .awaitSingle()
 
     suspend fun upsertUser(connection: DatabaseConnection, user: User) {

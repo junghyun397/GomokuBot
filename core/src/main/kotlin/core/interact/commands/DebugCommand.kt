@@ -2,6 +2,9 @@
 
 package core.interact.commands
 
+import arrow.core.None
+import arrow.core.raise.effect
+import arrow.core.toOption
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -11,7 +14,6 @@ import core.database.entities.GameRecordId
 import core.database.entities.asGameSession
 import core.database.repositories.GameRecordRepository
 import core.inference.AiLevel
-import core.inference.Token
 import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
@@ -25,7 +27,6 @@ import renju.notation.Renju
 import utils.assets.LinuxTime
 import utils.lang.toInputStream
 import utils.lang.tuple
-import utils.structs.*
 
 enum class DebugType {
     ANALYSIS, SELF_REQUEST, VCF, INJECT, STATUS, SESSIONS, GIF
@@ -52,20 +53,22 @@ class DebugCommand(
     ) = runCatching { when (debugType) {
         DebugType.ANALYSIS -> {
             SessionManager.retrieveGameSession(bot.sessions, guild, user.id)?.let { session ->
-                service.buildSessionArchive(publishers.plain, session, session.gameResult, false)
-                    .addFile(
-                        Notation.BoardIOInstance.buildBoardDebugString(session.board).toInputStream(),
-                        "analysis-report-${System.currentTimeMillis()}.txt"
-                    )
-                    .launch()
-                    .map { emptyOrders }
-                    .let { tuple(it, this.writeCommandReport("succeed", guild, user)) }
-            } ?: (tuple(IO.value(emptyOrders), this.writeCommandReport("failed", guild, user)))
+                effect {
+                    service.buildSessionArchive(publishers.plain, session, session.gameResult, false)
+                        .addFile(
+                            Notation.BoardIOInstance.buildBoardDebugString(session.board).toInputStream(),
+                            "analysis-report-${System.currentTimeMillis()}.txt"
+                        )
+                        .launch()()
+
+                    emptyOrders
+                }.let { tuple(it, this.writeCommandReport("succeed", guild, user)) }
+            } ?: (tuple(effect { emptyOrders }, this.writeCommandReport("failed", guild, user)))
         }
         DebugType.SELF_REQUEST -> {
             if (SessionManager.retrieveGameSession(bot.sessions, guild, user.id) != null ||
                         SessionManager.retrieveRequestSession(bot.sessions, guild, user.id) != null)
-                tuple(IO.value(emptyOrders), this.writeCommandReport("failed", guild, user))
+                tuple(effect { emptyOrders }, this.writeCommandReport("failed", guild, user))
             else {
                 val requestSession =
                     RequestSession(
@@ -77,9 +80,12 @@ class DebugCommand(
 
                     SessionManager.putRequestSession(bot.sessions, guild, requestSession)
 
-                    val io = service.buildRequest(publishers.plain, config.language.container, user, user, Rule.RENJU)
-                        .launch()
-                        .map { emptyOrders  }
+                    val io = effect {
+                        service.buildRequest(publishers.plain, config.language.container, user, user, Rule.RENJU)
+                            .launch()()
+
+                        emptyOrders
+                    }
 
                     tuple(io, this.writeCommandReport("succeed", guild, user))
             }
@@ -90,8 +96,7 @@ class DebugCommand(
             val session = AiGameSession(
                 owner = user,
                 aiLevel = AiLevel.AMOEBA,
-                resRenjuToken = Token(""),
-                solution = Option.Empty,
+                solution = None,
                 ownerHasBlack = board.isNextColorBlack,
                 board = board,
                 history = List(board.moves()) { null },
@@ -103,10 +108,14 @@ class DebugCommand(
 
             SessionManager.putGameSession(bot.sessions, guild, session)
 
-            val io = service.buildNextMovePVE(publishers.plain, config.language.container, user, session.board.lastPos().get())
-                .launch()
-                .flatMap { buildBoardProcedure(bot, guild, config, service, publishers.plain, session) }
-                .map { emptyOrders }
+            val io = effect {
+                service.buildNextMovePVE(publishers.plain, config.language.container, user, session.board.lastPos().get())
+                    .launch()()
+
+                buildBoardProcedure(bot, guild, config, service, publishers.plain, session)()
+
+                emptyOrders
+            }
 
             tuple(io, this.writeCommandReport("succeed", guild, user))
         }
@@ -118,9 +127,12 @@ class DebugCommand(
                 navigates = ${bot.sessions.navigates.size}
             """.trimIndent()
 
-            val io = service.buildDebugMessage(publishers.plain, message)
-                .launch()
-                .map { emptyOrders }
+            val io = effect {
+                service.buildDebugMessage(publishers.plain, message)
+                    .launch()()
+
+                emptyOrders
+            }
 
             tuple(io, this.writeCommandReport("succeed", guild, user))
         }
@@ -134,10 +146,13 @@ class DebugCommand(
                     else -> sessions.reduce { acc, s -> "$acc\n$s" }
                 } }
 
-            val io = service.buildDebugMessage(publishers.plain, "report here")
-                .addFile(sessionMessage.byteInputStream(), "sessions.txt")
-                .launch()
-                .map { emptyOrders }
+            val io = effect {
+                service.buildDebugMessage(publishers.plain, "report here")
+                    .addFile(sessionMessage.byteInputStream(), "sessions.txt")
+                    .launch()()
+
+                emptyOrders
+            }
 
             tuple(io, this.writeCommandReport("succeed", guild, user))
         }
@@ -166,8 +181,7 @@ class DebugCommand(
             val session = AiGameSession(
                 owner = user,
                 aiLevel = AiLevel.AMOEBA,
-                resRenjuToken = Token(""),
-                solution = Option.Empty,
+                solution = None,
                 ownerHasBlack = false,
                 board = vcfCase,
                 history = List(vcfCase.moves()) { null },
@@ -179,10 +193,14 @@ class DebugCommand(
 
             SessionManager.putGameSession(bot.sessions, guild, session)
 
-            val io = service.buildNextMovePVE(publishers.plain, config.language.container, user, session.board.lastPos().get())
-                .launch()
-                .flatMap { buildBoardProcedure(bot, guild, config, service, publishers.plain, session) }
-                .map { emptyOrders }
+            val io = effect {
+                service.buildNextMovePVE(publishers.plain, config.language.container, user, session.board.lastPos().get())
+                    .launch()()
+
+                buildBoardProcedure(bot, guild, config, service, publishers.plain, session)()
+
+                emptyOrders
+            }
 
             tuple(io, this.writeCommandReport("succeed", guild, user))
         }
@@ -192,18 +210,21 @@ class DebugCommand(
                 ?.getOrNull(2)
                 ?.toLongOrNull()
                 ?.let { GameRecordId(it) }
-                .asOption()
+                .toOption()
                 .fold(
-                    onDefined = { GameRecordRepository.retrieveGameRecordByRecordId(bot.sessions.dbConnection, it) },
-                    onEmpty = { GameRecordRepository.retrieveLastGameRecordByUserUid(bot.sessions.dbConnection, user.id) }
+                    ifSome = { GameRecordRepository.retrieveGameRecordByRecordId(bot.sessions.dbConnection, it) },
+                    ifEmpty = { GameRecordRepository.retrieveLastGameRecordByUserUid(bot.sessions.dbConnection, user.id) }
                 )
-                .getOrException()
+                .getOrNull()!!
 
             val session = gameRecord.asGameSession(bot.dbConnection, user)
 
-            val io = service.buildSessionArchive(publishers.plain, session, session.gameResult, true)
-                .launch()
-                .map { emptyOrders }
+            val io = effect {
+                service.buildSessionArchive(publishers.plain, session, session.gameResult, true)
+                    .launch()()
+
+                emptyOrders
+            }
 
             tuple(io, this.writeCommandReport("succeed", guild, user))
         }

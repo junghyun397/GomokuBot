@@ -1,11 +1,11 @@
 package core.interact.message.graphics
 
+import arrow.core.Either
 import renju.Board
 import renju.notation.Flag
 import renju.notation.Pos
 import renju.notation.Renju
 import utils.lang.asString
-import utils.structs.Either
 
 object UnicodeBoardRenderer : BoardRenderer, BoardRendererSample {
 

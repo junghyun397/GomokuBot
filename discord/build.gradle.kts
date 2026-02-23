@@ -1,7 +1,7 @@
 plugins {
     application
     idea
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("com.gradleup.shadow") version "9.3.0"
 }
 
 repositories {
@@ -13,11 +13,11 @@ dependencies {
     implementation(project(":utils"))
     implementation(project(":core"))
 
-    implementation("net.dv8tion:JDA:5.0.0-beta.24")
-    implementation("com.github.minndevelopment:jda-ktx:e8b0a7080cc234727abf5a83871ae0c9b6603a58")
-    implementation("com.github.minndevelopment:jda-reactor:e01a635")
+    implementation("net.dv8tion:JDA:5.6.1")
+    implementation("com.github.minndevelopment:jda-ktx:0.12.0")
+    implementation("com.github.minndevelopment:jda-reactor:1.6.0")
 
-    implementation("ch.qos.logback:logback-classic:1.4.12")
+    implementation("ch.qos.logback:logback-classic:1.5.20")
 }
 
 application {

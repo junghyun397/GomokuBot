@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -17,9 +18,6 @@ import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
 import utils.assets.LinuxTime
 import utils.lang.tuple
-import utils.structs.flatMap
-import utils.structs.flatMapOption
-import utils.structs.map
 
 class AnnounceCommand(command: Command) : UnionCommand(command) {
 
@@ -38,30 +36,35 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
 
         UserProfileRepository.upsertUser(bot.dbConnection, thenUser)
 
-        val io = AnnounceRepository.getAnnouncesSince(bot.dbConnection, user.announceId ?: 0)
-            .mapIndexed { index, announces ->
-                service.buildAnnounce(
-                    publishers.plain,
-                    config.language.container,
-                    announces[config.language] ?: announces[Language.ENG]!!
-                ).retrieve()
-                    .flatMapOption { announceMessage ->
-                        SessionManager.addNavigation(
-                            bot.sessions,
-                            announceMessage.messageRef,
-                            PageNavigationState(
-                                announceMessage.messageRef,
-                                NavigationKind.ANNOUNCE,
-                                index + 1,
-                                LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
-                            )
-                        )
+        val io = effect {
+            AnnounceRepository.getAnnouncesSince(bot.dbConnection, user.announceId ?: 0)
+                .forEachIndexed { index, announces ->
+                    service.buildAnnounce(
+                        publishers.plain,
+                        config.language.container,
+                        announces[config.language] ?: announces[Language.ENG]!!
+                    ).retrieve()()
+                        .fold(
+                            ifSome = { announceMessage ->
+                                SessionManager.addNavigation(
+                                    bot.sessions,
+                                    announceMessage.messageRef,
+                                    PageNavigationState(
+                                        announceMessage.messageRef,
+                                        NavigationKind.ANNOUNCE,
+                                        index + 1,
+                                        LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
+                                    )
+                                )
 
-                        service.attachBinaryNavigators(announceMessage.messageData)
-                    }
-            }
-            .reduce { acc, io -> acc.flatMap { io } }
-            .map { listOf(Order.UpsertCommands(config.language.container)) }
+                                service.attachBinaryNavigators(announceMessage.messageData)()
+                            },
+                            ifEmpty = { }
+                        )
+                }
+
+            listOf(Order.UpsertCommands(config.language.container))
+        }
 
         val report = this.writeCommandReport("sent", guild, thenUser)
 

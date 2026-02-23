@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -12,8 +13,6 @@ import core.session.SessionManager
 import core.session.entities.GuildConfig
 import core.session.entities.RequestSession
 import utils.lang.tuple
-import utils.structs.flatMap
-import utils.structs.map
 
 class RejectCommand(private val requestSession: RequestSession) : Command {
 
@@ -38,9 +37,11 @@ class RejectCommand(private val requestSession: RequestSession) : Command {
         val noticeIO = service.buildRequestRejected(publishers.plain, config.language.container, requestSession.owner, requestSession.opponent)
             .launch()
 
-        val io = editIO
-            .flatMap { noticeIO }
-            .map { emptyOrders }
+        val io = effect {
+            editIO()
+            noticeIO()
+            emptyOrders
+        }
 
         tuple(io, this.writeCommandReport("reject ${requestSession.owner}'s request", guild, user))
     }

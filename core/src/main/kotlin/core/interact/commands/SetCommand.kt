@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -14,10 +15,6 @@ import core.session.SwapType
 import core.session.entities.*
 import renju.notation.Pos
 import utils.lang.tuple
-import utils.structs.IO
-import utils.structs.flatMap
-import utils.structs.fold
-import utils.structs.map
 
 class SetCommand(
     private val session: RenjuSession,
@@ -37,7 +34,7 @@ class SetCommand(
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        if (session.board.validateMove(this.pos).isDefined) throw IllegalStateException()
+        if (session.board.validateMove(this.pos).isDefined()) throw IllegalStateException()
 
         val thenSession = GameManager.makeMove(this.session, this.pos)
 
@@ -47,105 +44,178 @@ class SetCommand(
         }
 
         thenSession.gameResult.fold(
-            onEmpty = { when (thenSession) {
+            ifEmpty = { when (thenSession) {
                 is PvpGameSession -> {
                     SessionManager.putGameSession(bot.sessions, guild, thenSession)
 
                     val guideIO = when {
-                        config.swapType == SwapType.EDIT && this.deployAt == null -> IO.empty
+                        config.swapType == SwapType.EDIT && this.deployAt == null -> effect { Unit }
                         else -> {
                             val guidePublisher = when (config.swapType) {
                                 SwapType.EDIT -> publishers.windowed
                                 else -> publishers.plain
                             }
 
-                            service.buildNextMovePVP(guidePublisher, config.language.container, thenSession.player, thenSession.nextPlayer, pos)
-                                .retrieve()
-                                .flatMap { buildAppendGameMessageProcedure(it, bot, thenSession) }
+                            effect {
+                                val maybeGuideMessage = service.buildNextMovePVP(
+                                    guidePublisher,
+                                    config.language.container,
+                                    thenSession.player,
+                                    thenSession.nextPlayer,
+                                    pos
+                                )
+                                    .retrieve()()
+
+                                buildAppendGameMessageProcedure(maybeGuideMessage, bot, thenSession)()
+                            }
                         }
                     }
 
-                    val io = guideIO
-                        .flatMap { buildNextMoveProcedure(bot, guild, config,
-                            service, boardPublisher, this.session, thenSession) }
+                    val io = effect {
+                        guideIO()
+                        buildNextMoveProcedure(
+                            bot,
+                            guild,
+                            config,
+                            service,
+                            boardPublisher,
+                            this@SetCommand.session,
+                            thenSession
+                        )()
+                    }
 
                     tuple(io, this.writeCommandReport("make move $pos", guild, user))
                 }
                 is AiGameSession -> {
-                    val nextSession = GameManager.makeAiMove(thenSession, bot.resRenjuClient)
+                    val nextSession = GameManager.makeAiMove(thenSession)
 
                     nextSession.gameResult.fold(
-                        onEmpty = {
+                        ifEmpty = {
                             SessionManager.putGameSession(bot.sessions, guild, nextSession)
 
                             val guideIO = when {
-                                config.swapType == SwapType.EDIT && this.deployAt == null -> IO.empty
+                                config.swapType == SwapType.EDIT && this.deployAt == null -> effect { Unit }
                                 else -> {
                                     val guidePublisher = when (config.swapType) {
                                         SwapType.EDIT -> publishers.windowed
                                         else -> publishers.plain
                                     }
 
-                                    service.buildNextMovePVE(guidePublisher, config.language.container, nextSession.owner, nextSession.board.lastPos().get())
-                                        .retrieve()
-                                        .flatMap { buildAppendGameMessageProcedure(it, bot, thenSession) }
+                                    effect {
+                                        val maybeGuideMessage = service.buildNextMovePVE(
+                                            guidePublisher,
+                                            config.language.container,
+                                            nextSession.owner,
+                                            nextSession.board.lastPos().get()
+                                        )
+                                            .retrieve()()
+
+                                        buildAppendGameMessageProcedure(maybeGuideMessage, bot, thenSession)()
+                                    }
                                 }
                             }
 
-                            val io = guideIO
-                                .flatMap { buildNextMoveProcedure(bot, guild, config,
-                                    service, boardPublisher, this.session, nextSession) }
+                            val io = effect {
+                                guideIO()
+                                buildNextMoveProcedure(
+                                    bot,
+                                    guild,
+                                    config,
+                                    service,
+                                    boardPublisher,
+                                    this@SetCommand.session,
+                                    nextSession
+                                )()
+                            }
 
                             tuple(io, this.writeCommandReport("make move $pos", guild, user))
                         },
-                        onDefined = { result ->
+                        ifSome = { result ->
                             GameManager.finishSession(bot, guild, nextSession, result)
 
-                            val io = when (result) {
-                                is GameResult.Win ->
-                                    service.buildLosePVE(publishers.plain, config.language.container, nextSession.owner, nextSession.board.lastPos().get())
-                                is GameResult.Full ->
-                                    service.buildTiePVE(publishers.plain, config.language.container, nextSession.owner)
+                            val io = effect {
+                                when (result) {
+                                    is GameResult.Win ->
+                                        service.buildLosePVE(
+                                            publishers.plain,
+                                            config.language.container,
+                                            nextSession.owner,
+                                            nextSession.board.lastPos().get()
+                                        )
+                                    is GameResult.Full ->
+                                        service.buildTiePVE(publishers.plain, config.language.container, nextSession.owner)
+                                }.launch()()
+
+                                val finishOrders = buildFinishProcedure(
+                                    bot,
+                                    service,
+                                    boardPublisher,
+                                    config,
+                                    this@SetCommand.session,
+                                    nextSession
+                                )()
+
+                                finishOrders + Order.ArchiveSession(nextSession, config.archivePolicy)
                             }
-                                .launch()
-                                .flatMap { buildFinishProcedure(bot,
-                                    service, boardPublisher, config, this.session, nextSession) }
-                                .map { it + Order.ArchiveSession(nextSession, config.archivePolicy) }
 
                             tuple(io, this.writeCommandReport("make move $pos, terminate session by $result", guild, user))
                         }
                     )
                 }
             } },
-            onDefined = { result ->
+            ifSome = { result ->
                 GameManager.finishSession(bot, guild, thenSession, result)
 
                 when (thenSession) {
                     is PvpGameSession -> {
-                        val io = when (result) {
-                            is GameResult.Win ->
-                                service.buildWinPVP(publishers.plain, config.language.container, thenSession.nextPlayer, thenSession.player, pos)
-                            is GameResult.Full ->
-                                service.buildTiePVP(publishers.plain, config.language.container, thenSession.owner, thenSession.opponent)
+                        val io = effect {
+                            when (result) {
+                                is GameResult.Win ->
+                                    service.buildWinPVP(
+                                        publishers.plain,
+                                        config.language.container,
+                                        thenSession.nextPlayer,
+                                        thenSession.player,
+                                        pos
+                                    )
+                                is GameResult.Full ->
+                                    service.buildTiePVP(publishers.plain, config.language.container, thenSession.owner, thenSession.opponent)
+                            }.launch()()
+
+                            val finishOrders = buildFinishProcedure(
+                                bot,
+                                service,
+                                boardPublisher,
+                                config,
+                                this@SetCommand.session,
+                                thenSession
+                            )()
+
+                            finishOrders + Order.ArchiveSession(thenSession, config.archivePolicy)
                         }
-                            .launch()
-                            .flatMap { buildFinishProcedure(bot,
-                                service, boardPublisher, config, this.session, thenSession) }
-                            .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
                         tuple(io, this.writeCommandReport("make move $pos, terminate session by $result", guild, user))
                     }
                     is AiGameSession -> {
-                        val io = when (result) {
-                            is GameResult.Win ->
-                                service.buildWinPVE(publishers.plain, config.language.container, thenSession.owner, pos)
-                            is GameResult.Full ->
-                                service.buildTiePVE(publishers.plain, config.language.container, thenSession.owner)
+                        val io = effect {
+                            when (result) {
+                                is GameResult.Win ->
+                                    service.buildWinPVE(publishers.plain, config.language.container, thenSession.owner, pos)
+                                is GameResult.Full ->
+                                    service.buildTiePVE(publishers.plain, config.language.container, thenSession.owner)
+                            }.launch()()
+
+                            val finishOrders = buildFinishProcedure(
+                                bot,
+                                service,
+                                boardPublisher,
+                                config,
+                                this@SetCommand.session,
+                                thenSession
+                            )()
+
+                            finishOrders + Order.ArchiveSession(thenSession, config.archivePolicy)
                         }
-                            .launch()
-                            .flatMap { buildFinishProcedure(bot,
-                                service, boardPublisher, config, this.session, thenSession) }
-                            .map { it + Order.ArchiveSession(thenSession, config.archivePolicy) }
 
                         tuple(io, this.writeCommandReport("make move $pos, terminate session by $result", guild, user))
                     }

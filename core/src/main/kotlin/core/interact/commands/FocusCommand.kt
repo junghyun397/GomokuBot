@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.assets.MessageRef
@@ -14,8 +15,6 @@ import core.session.entities.GameSession
 import core.session.entities.GuildConfig
 import renju.notation.Pos
 import utils.lang.tuple
-import utils.structs.IO
-import utils.structs.map
 
 enum class Direction {
     LEFT, DOWN, UP, RIGHT, CENTER
@@ -58,13 +57,16 @@ class FocusCommand(
         val newFocusInfo = this.navigationState.focusInfo.copy(focus = newFocus)
 
         when(newFocus.idx()) {
-            this.navigationState.page -> tuple(IO.value(emptyOrders), this.writeCommandReport("focus bounded", guild, user))
+            this.navigationState.page -> tuple(effect { emptyOrders }, this.writeCommandReport("focus bounded", guild, user))
             else -> {
                 SessionManager.addNavigation(bot.sessions, messageRef, this.navigationState.copy(page = newFocus.idx()))
 
-                val action = service.dispatchFocusButtons(publishers.component, service.generateFocusedField(session, newFocusInfo))
-                    .launch()
-                    .map { emptyOrders }
+                val action = effect {
+                    service.dispatchFocusButtons(publishers.component, service.generateFocusedField(session, newFocusInfo))
+                        .launch()()
+
+                    emptyOrders
+                }
 
                 tuple(action, this.writeCommandReport("move focus $direction", guild, user))
             }

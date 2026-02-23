@@ -1,5 +1,8 @@
 package core.interact.commands
 
+import arrow.core.Option
+import arrow.core.raise.Effect
+import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Guild
 import core.inference.FocusSolver
@@ -13,18 +16,16 @@ import core.session.SessionManager
 import core.session.SwapType
 import core.session.entities.*
 import utils.lang.replaceIf
-import utils.lang.tuple
-import utils.structs.*
 
 fun <A, B> buildAppendGameMessageProcedure(
     maybeMessage: Option<MessageAdaptor<A, B>>,
     bot: BotContext,
     session: GameSession
-): IO<Unit> = maybeMessage.fold(
-    onDefined = { message ->
-        IO { SessionManager.appendMessage(bot.sessions, session.messageBufferKey, message.messageRef) }
+): Effect<Nothing, Unit> = maybeMessage.fold(
+    ifSome = { message ->
+        effect { SessionManager.appendMessage(bot.sessions, session.messageBufferKey, message.messageRef) }
     },
-    onEmpty = { IO.empty }
+    ifEmpty = { effect { Unit } }
 )
 
 fun <A, B> buildNextMoveProcedure(
@@ -35,8 +36,10 @@ fun <A, B> buildNextMoveProcedure(
     publisher: MessagePublisher<A, B>,
     session: GameSession,
     thenSession: GameSession,
-): IO<List<Order>> = buildBoardProcedure(bot, guild, config, service, publisher, thenSession)
-    .flatMap { buildSwapProcedure(bot, config, session) }
+): Effect<Nothing, List<Order>> = effect {
+    buildBoardProcedure(bot, guild, config, service, publisher, thenSession)()
+    buildSwapProcedure(bot, config, session)()
+}
 
 fun <A, B> buildBoardProcedure(
     bot: BotContext,
@@ -45,42 +48,43 @@ fun <A, B> buildBoardProcedure(
     service: MessagingService<A, B>,
     publisher: MessagePublisher<A, B>,
     session: GameSession,
-): IO<Unit> {
+): Effect<Nothing, Unit> {
     val focusInfo = when (config.focusType) {
         FocusType.INTELLIGENCE -> FocusSolver.resolveFocus(session.board, service.focusWidth, config.hintType == HintType.FIVE)
         FocusType.FALLOWING -> FocusSolver.resolveCenter(session.board, service.focusRange)
     }
 
-    return service.buildBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, session)
-        .replaceIf(session.board.winner().isEmpty) { io -> io.addComponents(
-            when (session) {
-                is SwapStageOpeningSession -> service.buildSwapButtons(config.language.container)
-                is BranchingStageOpeningSession -> service.buildBranchingButtons(config.language.container)
-                is DeclareStageOpeningSession -> service.buildDeclareButtons(config.language.container, session)
-                else -> service.buildFocusedButtons(service.generateFocusedField(session, focusInfo))
-            }
-        ) }
-        .retrieve()
-        .flatMap { maybeMessage ->
-            maybeMessage.fold(
-                onDefined = { message ->
-                    SessionManager.addNavigation(bot.sessions, message.messageRef, BoardNavigationState(focusInfo.focus.idx(), focusInfo, session.expireDate))
-                    SessionManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.messageRef)
-                    service.attachFocusNavigators(message.messageData) {
-                        SessionManager.retrieveGameSession(bot.sessions, guild, session.owner.id)
-                            ?.board?.moves() != session.board.moves()
-                    }
-                },
-                onEmpty = { IO.empty }
-            )
-        }
+    return effect {
+        val maybeMessage = service.buildBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, session)
+            .replaceIf(session.board.winner().isEmpty) { io -> io.addComponents(
+                when (session) {
+                    is SwapStageOpeningSession -> service.buildSwapButtons(config.language.container)
+                    is BranchingStageOpeningSession -> service.buildBranchingButtons(config.language.container)
+                    is DeclareStageOpeningSession -> service.buildDeclareButtons(config.language.container, session)
+                    else -> service.buildFocusedButtons(service.generateFocusedField(session, focusInfo))
+                }
+            ) }
+            .retrieve()()
+
+        maybeMessage.fold(
+            ifSome = { message ->
+                SessionManager.addNavigation(bot.sessions, message.messageRef, BoardNavigationState(focusInfo.focus.idx(), focusInfo, session.expireDate))
+                SessionManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.messageRef)
+                service.attachFocusNavigators(message.messageData) {
+                    SessionManager.retrieveGameSession(bot.sessions, guild, session.owner.id)
+                        ?.board?.moves() != session.board.moves()
+                }()
+            },
+            ifEmpty = { }
+        )
+    }
 }
 
 private fun buildSwapProcedure(
     bot: BotContext,
     config: GuildConfig,
     session: GameSession
-): IO<List<Order>> = IO { when (config.swapType) {
+): Effect<Nothing, List<Order>> = effect { when (config.swapType) {
     SwapType.RELAY -> listOf(Order.BulkDelete(SessionManager.checkoutMessages(bot.sessions, session.messageBufferKey).orEmpty()))
     SwapType.ARCHIVE -> {
         SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
@@ -97,14 +101,16 @@ fun <A, B> buildFinishProcedure(
     config: GuildConfig,
     session: GameSession,
     thenSession: GameSession
-): IO<List<Order>> = service.buildBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, thenSession)
-    .retrieve()
-    .flatMap { maybeMessage -> buildSwapProcedure(bot, config, session).map { tuple(maybeMessage, it) } }
-    .map { (maybeMessage, originalOrder) ->
-        maybeMessage
-            .filter { thenSession.gameResult.isDefined && config.swapType == SwapType.EDIT }
-            .fold(
-                onDefined = { message -> originalOrder + Order.RemoveNavigators(message.messageRef, reduceComponents = true) },
-                onEmpty = { originalOrder }
-            )
-    }
+): Effect<Nothing, List<Order>> = effect {
+    val maybeMessage = service.buildBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, thenSession)
+        .retrieve()()
+
+    val originalOrder = buildSwapProcedure(bot, config, session)()
+
+    maybeMessage
+        .filter { thenSession.gameResult.isSome() && config.swapType == SwapType.EDIT }
+        .fold(
+            ifSome = { message -> originalOrder + Order.RemoveNavigators(message.messageRef, reduceComponents = true) },
+            ifEmpty = { originalOrder }
+        )
+}

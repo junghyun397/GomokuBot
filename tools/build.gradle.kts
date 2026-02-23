@@ -1,7 +1,7 @@
 plugins {
     application
     idea
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("com.gradleup.shadow") version "9.3.0"
 }
 
 repositories {
@@ -12,7 +12,7 @@ dependencies {
     implementation(project(":utils"))
     implementation(project(":core"))
 
-    implementation("ch.qos.logback:logback-classic:1.4.14")
+    implementation("ch.qos.logback:logback-classic:1.5.20")
 }
 
 application {

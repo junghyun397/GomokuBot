@@ -1,5 +1,8 @@
 package discord.interact.parse.parsers
 
+import arrow.core.*
+import arrow.core.raise.Effect
+import arrow.core.raise.effect
 import core.assets.MessageRef
 import core.assets.Notation
 import core.assets.User
@@ -30,7 +33,6 @@ import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import renju.notation.Pos
 import renju.notation.Renju
 import utils.lang.tuple
-import utils.structs.*
 
 object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponents>(), ParsableCommand, EmbeddableCommand, BuildableCommand {
 
@@ -50,43 +52,47 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
             ?.takeIf { it in 1 .. Renju.BOARD_WIDTH() }
             ?.let { it - 1 }
 
-    private fun buildAppendMessageProcedure(maybeMessage: Option<MessageAdaptor<DiscordMessageData, DiscordComponents>>, context: UserInteractionContext<*>, session: GameSession): IO<List<Order>> =
+    private fun buildAppendMessageProcedure(maybeMessage: Option<MessageAdaptor<DiscordMessageData, DiscordComponents>>, context: UserInteractionContext<*>, session: GameSession): Effect<Nothing, List<Order>> =
         maybeMessage.fold(
-            onDefined = { IO { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef); emptyList() } },
-            onEmpty = { IO.value(emptyOrders) }
+            ifSome = { effect { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef); emptyList() } },
+            ifEmpty = { effect { emptyOrders } }
         )
 
     private fun buildOrderFailure(context: UserInteractionContext<*>, session: GameSession, player: User): DiscordParseFailure =
         this.asParseFailure("try move but now $player's turn", context.guild, context.user) { messagingService, publisher, container ->
-            messagingService.buildSetOrderFailure(publisher, container, player)
-                .retrieve()
-                .flatMap { this.buildAppendMessageProcedure(it, context, session) }
+            effect {
+                val maybeMessage = messagingService.buildSetOrderFailure(publisher, container, player).retrieve()()
+                this@SetCommandParser.buildAppendMessageProcedure(maybeMessage, context, session)()
+            }
         }
 
     private fun buildMissMatchFailure(context: UserInteractionContext<*>, session: GameSession): DiscordParseFailure =
         this.asParseFailure("try move but argument mismatch", context.guild, context.user) { messagingService, publisher, container ->
-            messagingService.buildSetIllegalArgumentFailure(publisher, container)
-                .retrieve()
-                .flatMap { this.buildAppendMessageProcedure(it, context, session) }
+            effect {
+                val maybeMessage = messagingService.buildSetIllegalArgumentFailure(publisher, container).retrieve()()
+                this@SetCommandParser.buildAppendMessageProcedure(maybeMessage, context, session)()
+            }
         }
 
     private fun buildExistFailure(context: UserInteractionContext<*>, session: GameSession, pos: Pos): DiscordParseFailure =
         this.asParseFailure("make move but already exist", context.guild, context.user) { messagingService, publisher, container ->
-            messagingService.buildSetAlreadyExistFailure(publisher, container, pos)
-                .retrieve()
-                .flatMap { this.buildAppendMessageProcedure(it, context, session) }
+            effect {
+                val maybeMessage = messagingService.buildSetAlreadyExistFailure(publisher, container, pos).retrieve()()
+                this@SetCommandParser.buildAppendMessageProcedure(maybeMessage, context, session)()
+            }
         }
 
     private fun buildForbiddenMoveFailure(context: UserInteractionContext<*>, session: GameSession, pos: Pos, flag: Byte): DiscordParseFailure =
         this.asParseFailure("make move but forbidden", context.guild, context.user) { messagingService, publisher, container ->
-            messagingService.buildSetForbiddenMoveFailure(publisher, container, pos, flag)
-                .retrieve()
-                .flatMap { this.buildAppendMessageProcedure(it, context, session) }
+            effect {
+                val maybeMessage = messagingService.buildSetForbiddenMoveFailure(publisher, container, pos, flag).retrieve()()
+                this@SetCommandParser.buildAppendMessageProcedure(maybeMessage, context, session)()
+            }
         }
 
     private fun buildSilentFailure(context: UserInteractionContext<*>): DiscordParseFailure =
         this.asParseFailure("unknown error", context.guild, context.user) { _, _, _ ->
-            IO.value(emptyOrders)
+            effect { emptyOrders }
         }
 
     private fun branchCommandBySession(session: GameSession, pos: Pos, ref: MessageRef?, responseFlag: ResponseFlag): Command? =
@@ -98,19 +104,19 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
             else -> null
         }
 
-    private suspend fun parseRawCommand(context: UserInteractionContext<*>, user: User, rawRow: String?, rawColumn: String?): Either<Command, DiscordParseFailure> =
-        this.retrieveSession(context.bot, context.guild, user).flatMapLeft { session ->
+    private suspend fun parseRawCommand(context: UserInteractionContext<*>, user: User, rawRow: String?, rawColumn: String?): Either<DiscordParseFailure, Command> =
+        this.retrieveSession(context.bot, context.guild, user).flatMap { session ->
             if (session.player.id != user.id)
-                return@flatMapLeft Either.Right(this.buildOrderFailure(context, session, session.player))
+                return@flatMap Either.Left(this.buildOrderFailure(context, session, session.player))
 
             if (rawRow == null || rawColumn == null)
-                return@flatMapLeft Either.Right(buildMissMatchFailure(context, session))
+                return@flatMap Either.Left(buildMissMatchFailure(context, session))
 
             val row = this.matchRow(rawRow)
             val column = this.matchColumn(rawColumn.lowercase())
 
             if (row == null || column == null)
-                return@flatMapLeft Either.Right(buildMissMatchFailure(context, session))
+                return@flatMap Either.Left(buildMissMatchFailure(context, session))
 
             val pos = Pos(row, column)
 
@@ -122,37 +128,37 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
             GameManager.validateMove(session, pos)
                 .flatMap { invalidKind ->
                     when (invalidKind) {
-                        Notation.InvalidKind.Exist -> Option.Some(this.buildExistFailure(context, session, pos))
+                        Notation.InvalidKind.Exist -> Some(this.buildExistFailure(context, session, pos))
                         Notation.InvalidKind.Forbidden -> when(session.board.nextColor()) {
-                            Notation.Color.Black -> Option.Some(this.buildForbiddenMoveFailure(context, session, pos, session.board.field()[pos.idx()]))
-                            else -> Option.Empty
+                            Notation.Color.Black -> Some(this.buildForbiddenMoveFailure(context, session, pos, session.board.field()[pos.idx()]))
+                            else -> None
                         }
-                        else -> Option.Empty
+                        else -> None
                     }
                 }
                 .fold(
-                    onDefined = { Either.Right(it) },
-                    onEmpty = {
+                    ifSome = { Either.Left(it) },
+                    ifEmpty = {
                         val responseFlag = when (context.config.swapType) {
                             SwapType.EDIT -> ResponseFlag.DeferWindowed
                             else -> ResponseFlag.Defer
                         }
 
                         this.branchCommandBySession(session, pos, ref, responseFlag)
-                            ?.let { Either.Left(it) }
-                            ?: Either.Right(this.buildSilentFailure(context))
+                            ?.let { Either.Right(it) }
+                            ?: Either.Left(this.buildSilentFailure(context))
                     }
                 )
         }
 
-    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<Command, DiscordParseFailure> {
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<DiscordParseFailure, Command> {
         val rawColumn = context.event.getOption(context.config.language.container.setCommandOptionColumn())?.asString
         val rawRow = context.event.getOption(context.config.language.container.setCommandOptionRow())?.asString
 
         return this.parseRawCommand(context, context.user, rawRow, rawColumn)
     }
 
-    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<Command, DiscordParseFailure> {
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<DiscordParseFailure, Command> {
         val (rawColumn, rawRow) = payload
             .drop(1)
             .take(2)
@@ -168,24 +174,24 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
             .drop(2)
             .let { tuple(this.matchColumn(it.take(1)), this.matchRow(it.drop(1))) }
 
-        if (row == null || column == null) return Option.Empty
+        if (row == null || column == null) return None
 
         val pos = Pos(row, column)
 
         val userId = context.user.id
 
         val session = SessionManager.retrieveGameSession(context.bot.sessions, context.guild, userId)
-            ?: return Option.Empty
+            ?: return None
 
         if (session.player.id != userId)
-            return Option.Empty
+            return None
 
         return GameManager.validateMove(session, pos)
             .fold(
-                onDefined = { Option.Empty },
-                onEmpty = {
+                ifSome = { None },
+                ifEmpty = {
                     this.branchCommandBySession(session, pos, null, ResponseFlag.Defer(context.config.swapType == SwapType.EDIT))
-                        .asOption()
+                        .toOption()
                 }
             )
     }

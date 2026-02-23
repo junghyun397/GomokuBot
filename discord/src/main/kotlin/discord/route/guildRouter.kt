@@ -1,5 +1,6 @@
 package discord.route
 
+import arrow.core.getOrElse
 import core.assets.Guild
 import core.assets.GuildUid
 import core.database.repositories.GuildConfigRepository
@@ -23,8 +24,6 @@ import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import reactor.core.publisher.Mono
 import utils.assets.LinuxTime
-import utils.structs.fold
-import utils.structs.orElseGet
 import java.util.*
 
 private fun matchLocale(locale: DiscordLocale): Language =
@@ -47,7 +46,7 @@ fun guildJoinRouter(context: InternalInteractionContext<GuildJoinEvent>): Mono<R
         }
 
         val config = GuildConfigRepository.fetchGuildConfig(context.bot.dbConnection, guild.id)
-            .orElseGet { GuildConfig(language = matchLocale(context.event.guild.locale)) }
+            .getOrElse { GuildConfig(language = matchLocale(context.event.guild.locale)) }
 
         val command = GuildJoinCommand(context.event.guild.locale.languageName)
 
@@ -81,7 +80,7 @@ fun guildLeaveRouter(context: InternalInteractionContext<GuildLeaveEvent>): Mono
         val maybeGuild = GuildProfileRepository.retrieveGuild(context.bot.dbConnection, DISCORD_PLATFORM_ID, context.event.guild.extractId())
 
         maybeGuild.fold(
-            onDefined = { guild ->
+            ifSome = { guild ->
                 GuildLeaveCommand.execute(
                     bot = context.bot,
                     config = SessionManager.retrieveGuildConfig(context.bot.sessions, guild),
@@ -100,6 +99,6 @@ fun guildLeaveRouter(context: InternalInteractionContext<GuildLeaveEvent>): Mono
                     onFailure = { ErrorReport(IllegalStateException(), context.guild) }
                 )
             },
-            onEmpty = { ErrorReport(IllegalStateException(), context.guild) }
+            ifEmpty = { ErrorReport(IllegalStateException(), context.guild) }
         )
     }
