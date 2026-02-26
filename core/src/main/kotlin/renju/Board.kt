@@ -3,13 +3,14 @@ package renju
 import arrow.core.None
 import arrow.core.Option
 import arrow.core.Some
-import com.sun.jna.Pointer
 import renju.native.RustyRenjuC
 import renju.native.RustyRenjuCApi
 import renju.notation.Color
 import renju.notation.ForbiddenKind
 import renju.notation.GameResult
 import renju.notation.Pos
+import java.lang.foreign.MemorySegment
+import java.lang.foreign.ValueLayout
 import java.lang.ref.Cleaner
 
 enum class MoveError {
@@ -18,7 +19,7 @@ enum class MoveError {
 }
 
 class Board private constructor (
-    private val nativePointer: Pointer,
+    private val nativePointer: MemorySegment,
     private val lastMoveIndex: Int,
 ) {
 
@@ -155,12 +156,14 @@ class Board private constructor (
         return moves.toIntArray()
     }
 
-    internal fun nativeHandle(): Pointer = nativePointer
+    internal fun nativeHandle(): MemorySegment = nativePointer
 
-    override fun toString(): String =
-        RustyRenjuCApi.lib.rusty_renju_board_to_string(nativePointer)
-            ?.getString(0)
+    override fun toString(): String {
+        val stringPointer = RustyRenjuCApi.lib.rusty_renju_board_to_string(nativePointer)
             ?: throw IllegalStateException()
+
+        return readNativeUtf8String(stringPointer)
+    }
 
     companion object {
 
@@ -223,12 +226,30 @@ class Board private constructor (
             if (Pos.isValidIdx(lastMove)) lastMove
             else -1
 
-        internal fun fromNative(pointer: Pointer, lastMoveIndex: Int = -1): Board =
+        private const val MAX_NATIVE_STRING_BYTES = 4_096L
+
+        internal fun fromNative(pointer: MemorySegment, lastMoveIndex: Int = -1): Board =
             Board(pointer, lastMoveIndex)
+
+        private fun readNativeUtf8String(pointer: MemorySegment): String {
+            val cString = pointer.reinterpret(MAX_NATIVE_STRING_BYTES)
+            var length = 0L
+
+            while (length < MAX_NATIVE_STRING_BYTES && cString.get(ValueLayout.JAVA_BYTE, length) != 0.toByte()) {
+                length++
+            }
+
+            val bytes = ByteArray(length.toInt())
+            for (index in bytes.indices) {
+                bytes[index] = cString.get(ValueLayout.JAVA_BYTE, index.toLong())
+            }
+
+            return bytes.toString(Charsets.UTF_8)
+        }
 
     }
 
-    private class NativeBoardCleaner(private val pointer: Pointer?) : Runnable {
+    private class NativeBoardCleaner(private val pointer: MemorySegment?) : Runnable {
 
         override fun run() {
             RustyRenjuCApi.lib.rusty_renju_board_free(pointer)

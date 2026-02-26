@@ -1,26 +1,32 @@
 package renju.native
 
-import com.sun.jna.NativeLibrary
+import java.lang.foreign.Arena
+import java.lang.foreign.SymbolLookup
+import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.ConcurrentHashMap
 
 internal object NativeLibraryLoader {
 
-    private val initialized = AtomicBoolean(false)
-    private val nativeLibraryPaths = listOf(
-        Paths.get("native/mintaka/target/release").toAbsolutePath().normalize().toString(),
-        Paths.get("native/mintaka/target/debug").toAbsolutePath().normalize().toString(),
+    private val lookupArena: Arena = Arena.global()
+    private val lookups = ConcurrentHashMap<String, SymbolLookup>()
+    private val searchRoots = listOf(
+        Paths.get("native/mintaka/target/release").toAbsolutePath().normalize(),
+        Paths.get("native/mintaka/target/debug").toAbsolutePath().normalize(),
     )
 
-    fun ensureLoaded() {
-        if (!initialized.compareAndSet(false, true)) {
-            return
-        }
+    fun libraryLookup(name: String): SymbolLookup =
+        lookups.computeIfAbsent(name) { libraryName ->
+            val mappedFileName = System.mapLibraryName(libraryName)
+            val libraryPath = searchRoots
+                .firstNotNullOfOrNull { root ->
+                    root.resolve(mappedFileName).takeIf(Files::isRegularFile)
+                }
+                ?: throw IllegalStateException(
+                    "Native library '$libraryName' not found. Looked for '$mappedFileName' in: " +
+                        searchRoots.joinToString(", ")
+                )
 
-        for (name in listOf("rusty_renju_c", "rusty_renju_image")) {
-            for (path in nativeLibraryPaths) {
-                NativeLibrary.addSearchPath(name, path)
-            }
+            SymbolLookup.libraryLookup(libraryPath, lookupArena)
         }
-    }
 }

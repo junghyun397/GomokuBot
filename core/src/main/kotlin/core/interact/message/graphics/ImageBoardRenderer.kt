@@ -12,6 +12,8 @@ import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.lang.foreign.MemorySegment
+import java.lang.foreign.ValueLayout
 import java.time.Duration
 import javax.imageio.ImageIO
 
@@ -93,21 +95,22 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
         )
 
         val pointer = rendered.ptr
-            ?: throw IllegalStateException("Native renderer returned null pointer")
-
-        val length = rendered.len.toLong().toInt()
-        if (length <= 0) {
-            throw IllegalStateException("Native renderer returned empty payload")
+        if (pointer == MemorySegment.NULL) {
+            throw IllegalStateException("Native renderer returned null pointer")
         }
 
-        val bytes = pointer.getByteArray(0, length)
+        if (rendered.len <= 0 || rendered.len > Int.MAX_VALUE.toLong()) {
+            throw IllegalStateException("Native renderer returned empty payload")
+        }
+        val length = rendered.len.toInt()
+
+        val bytes = pointer.reinterpret(length.toLong()).toArray(ValueLayout.JAVA_BYTE)
 
         RustyRenjuImageApi.lib.rusty_renju_image_free_byte_buffer(
-            RustyRenjuImage.ByteBuffer().apply {
-                ptr = rendered.ptr
-                len = rendered.len
-                write()
-            }
+            RustyRenjuImage.ByteBuffer(
+                ptr = pointer,
+                len = rendered.len,
+            )
         )
 
         return bytes

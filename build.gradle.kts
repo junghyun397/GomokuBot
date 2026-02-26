@@ -21,16 +21,24 @@ allprojects {
 
     tasks.withType<KotlinJvmCompile> {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
+            jvmTarget.set(JvmTarget.JVM_25)
         }
     }
 
     pluginManager.withPlugin("java") {
-        extensions.getByType(JavaPluginExtension::class.java).toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+        extensions.getByType(JavaPluginExtension::class.java).toolchain.languageVersion.set(JavaLanguageVersion.of(25))
     }
 
     tasks.withType<JavaCompile>().configureEach {
-        options.release.set(17)
+        options.release.set(25)
+    }
+
+    tasks.withType<Test>().configureEach {
+        jvmArgs("--enable-native-access=ALL-UNNAMED")
+    }
+
+    tasks.withType<JavaExec>().configureEach {
+        jvmArgs("--enable-native-access=ALL-UNNAMED")
     }
 }
 
@@ -43,8 +51,6 @@ subprojects {
         implementation(kotlin("stdlib"))
 
         implementation("io.arrow-kt:arrow-core:2.0.1")
-
-        implementation("net.java.dev.jna:jna:5.17.0")
 
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 
