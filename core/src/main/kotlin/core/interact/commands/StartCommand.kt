@@ -5,7 +5,7 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
-import core.inference.AiLevel
+import core.mintaka.AiLevel
 import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet

@@ -38,14 +38,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.components.actionrow.ActionRow
+import net.dv8tion.jda.api.components.actionrow.ActionRowChildComponent
+import net.dv8tion.jda.api.components.buttons.Button
+import net.dv8tion.jda.api.components.buttons.ButtonStyle
+import net.dv8tion.jda.api.components.selections.SelectMenu
+import net.dv8tion.jda.api.components.selections.SelectOption
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.emoji.Emoji
-import net.dv8tion.jda.api.interactions.components.ActionRow
-import net.dv8tion.jda.api.interactions.components.ItemComponent
-import net.dv8tion.jda.api.interactions.components.buttons.Button
-import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
-import net.dv8tion.jda.api.interactions.components.selections.SelectMenu
-import net.dv8tion.jda.api.interactions.components.selections.SelectOption
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction
 import renju.notation.Color
 import renju.notation.GameResult
@@ -93,7 +93,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
     // FORMAT
 
-    private fun ItemComponent.liftToButtons() = listOf(ActionRow.of(this))
+    private fun ActionRowChildComponent.liftToButtons() = listOf(ActionRow.of(this))
 
     // BOARD
 

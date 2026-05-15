@@ -7,7 +7,7 @@ import core.database.entities.Announce
 import core.database.entities.GameRecord
 import core.database.entities.GameRecordId
 import core.database.entities.UserStats
-import core.inference.FocusSolver
+import core.mintaka.FocusSolver
 import core.interact.i18n.LanguageContainer
 import core.interact.message.graphics.BoardRenderer
 import core.interact.message.graphics.HistoryRenderType

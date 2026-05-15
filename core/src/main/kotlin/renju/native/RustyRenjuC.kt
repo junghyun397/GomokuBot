@@ -3,214 +3,134 @@ package renju.native
 import renju.notation.Pos
 import java.lang.foreign.*
 import java.lang.foreign.MemoryLayout.PathElement.groupElement
-import java.lang.invoke.MethodHandle
 
 internal class RustyRenjuC internal constructor(
     lookup: SymbolLookup,
 ) {
 
-    private val linker = Linker.nativeLinker()
+    private val symbols = NativeSymbols(lookup, "rusty_renju")
 
-    private val rustyRenjuColorBlack = downcall(lookup, "rusty_renju_color_black", FunctionDescriptor.of(ValueLayout.JAVA_BYTE))
-    private val rustyRenjuColorWhite = downcall(lookup, "rusty_renju_color_white", FunctionDescriptor.of(ValueLayout.JAVA_BYTE))
-    private val rustyRenjuColorNone = downcall(lookup, "rusty_renju_color_none", FunctionDescriptor.of(ValueLayout.JAVA_BYTE))
-
-    private val rustyRenjuForbiddenKindNone = downcall(lookup, "rusty_renju_forbidden_kind_none", FunctionDescriptor.of(ValueLayout.JAVA_BYTE))
-    private val rustyRenjuForbiddenKindDoubleThree = downcall(lookup, "rusty_renju_forbidden_kind_double_three", FunctionDescriptor.of(ValueLayout.JAVA_BYTE))
-    private val rustyRenjuForbiddenKindDoubleFour = downcall(lookup, "rusty_renju_forbidden_kind_double_four", FunctionDescriptor.of(ValueLayout.JAVA_BYTE))
-    private val rustyRenjuForbiddenKindDoubleOverline = downcall(lookup, "rusty_renju_forbidden_kind_double_overline", FunctionDescriptor.of(ValueLayout.JAVA_BYTE))
-
-    private val rustyRenjuPosNone = downcall(lookup, "rusty_renju_pos_none", FunctionDescriptor.of(ValueLayout.JAVA_BYTE))
-
-    private val rustyRenjuBoardExportItemEmpty = downcall(lookup, "rusty_renju_board_export_item_empty", FunctionDescriptor.of(ValueLayout.JAVA_BYTE))
-    private val rustyRenjuBoardExportItemStone = downcall(lookup, "rusty_renju_board_export_item_stone", FunctionDescriptor.of(ValueLayout.JAVA_BYTE))
-    private val rustyRenjuBoardExportItemForbidden = downcall(lookup, "rusty_renju_board_export_item_forbidden", FunctionDescriptor.of(ValueLayout.JAVA_BYTE))
-
-    private val rustyRenjuClosedFourMask = downcall(lookup, "rusty_renju_closed_four_mask", FunctionDescriptor.of(ValueLayout.JAVA_INT))
-    private val rustyRenjuOpenFourMask = downcall(lookup, "rusty_renju_open_four_mask", FunctionDescriptor.of(ValueLayout.JAVA_INT))
-    private val rustyRenjuFiveMask = downcall(lookup, "rusty_renju_five_mask", FunctionDescriptor.of(ValueLayout.JAVA_INT))
-    private val rustyRenjuOpenThreeMask = downcall(lookup, "rusty_renju_open_three_mask", FunctionDescriptor.of(ValueLayout.JAVA_INT))
-    private val rustyRenjuCloseThreeMask = downcall(lookup, "rusty_renju_close_three_mask", FunctionDescriptor.of(ValueLayout.JAVA_INT))
-    private val rustyRenjuPotentialMask = downcall(lookup, "rusty_renju_potential_mask", FunctionDescriptor.of(ValueLayout.JAVA_INT))
-
-    private val rustyRenjuDefaultBoard = downcall(lookup, "rusty_renju_default_board", FunctionDescriptor.of(ValueLayout.ADDRESS))
-    private val rustyRenjuBoardFromHistory = downcall(
-        lookup,
-        "rusty_renju_board_from_history",
-        FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG),
-    )
-    private val rustyRenjuBoardFromString = downcall(
-        lookup,
-        "rusty_renju_board_from_string",
-        FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS),
-    )
-    private val rustyRenjuBoardToString = downcall(
-        lookup,
-        "rusty_renju_board_to_string",
-        FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS),
+    val constants: Constants = Constants(
+        colorBlack = symbols.byte("color_black"),
+        colorWhite = symbols.byte("color_white"),
+        colorNone = symbols.byte("color_none"),
+        forbiddenNone = symbols.byte("forbidden_kind_none"),
+        forbiddenDoubleThree = symbols.byte("forbidden_kind_double_three"),
+        forbiddenDoubleFour = symbols.byte("forbidden_kind_double_four"),
+        forbiddenOverline = symbols.byte("forbidden_kind_double_overline"),
+        posNone = symbols.byte("pos_none"),
+        exportItemEmpty = symbols.byte("board_export_item_empty"),
+        exportItemStone = symbols.byte("board_export_item_stone"),
+        exportItemForbidden = symbols.byte("board_export_item_forbidden"),
+        closedFourMask = symbols.int("closed_four_mask"),
+        openFourMask = symbols.int("open_four_mask"),
+        fiveMask = symbols.int("five_mask"),
+        openThreeMask = symbols.int("open_three_mask"),
+        closeThreeMask = symbols.int("close_three_mask"),
+        potentialMask = symbols.int("potential_mask"),
     )
 
-    private val rustyRenjuBoardPlayerColor = downcall(
-        lookup,
-        "rusty_renju_board_player_color",
-        FunctionDescriptor.of(ValueLayout.JAVA_BYTE, ValueLayout.ADDRESS),
-    )
-    private val rustyRenjuBoardStones = downcall(
-        lookup,
-        "rusty_renju_board_stones",
-        FunctionDescriptor.of(ValueLayout.JAVA_BYTE, ValueLayout.ADDRESS),
-    )
-    private val rustyRenjuBoardPattern = downcall(
-        lookup,
-        "rusty_renju_board_pattern",
-        FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE, ValueLayout.JAVA_BYTE),
-    )
-    private val rustyRenjuBoardIsPosEmpty = downcall(
-        lookup,
-        "rusty_renju_board_is_pos_empty",
-        FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE),
-    )
-    private val rustyRenjuBoardIsLegalMove = downcall(
-        lookup,
-        "rusty_renju_board_is_legal_move",
-        FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE),
-    )
-    private val rustyRenjuBoardStoneKind = downcall(
-        lookup,
-        "rusty_renju_board_stone_kind",
-        FunctionDescriptor.of(ValueLayout.JAVA_BYTE, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE),
-    )
-
-    private val rustyRenjuBoardSet = downcall(
-        lookup,
-        "rusty_renju_board_set",
-        FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE),
-    )
-    private val rustyRenjuBoardUnset = downcall(
-        lookup,
-        "rusty_renju_board_unset",
-        FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE),
-    )
-    private val rustyRenjuBoardFree = downcall(
-        lookup,
-        "rusty_renju_board_free",
-        FunctionDescriptor.ofVoid(ValueLayout.ADDRESS),
-    )
-
-    private val rustyRenjuBoardDescribe = downcall(
-        lookup,
-        "rusty_renju_board_describe",
-        FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG),
-    )
-    private val rustyRenjuBoardDescribeFree = downcall(
-        lookup,
-        "rusty_renju_board_describe_free",
-        FunctionDescriptor.ofVoid(ValueLayout.ADDRESS),
-    )
-
-    fun rusty_renju_color_black(): Byte = rustyRenjuColorBlack.callByte()
-
-    fun rusty_renju_color_white(): Byte = rustyRenjuColorWhite.callByte()
-
-    fun rusty_renju_color_none(): Byte = rustyRenjuColorNone.callByte()
-
-    fun rusty_renju_forbidden_kind_none(): Byte = rustyRenjuForbiddenKindNone.callByte()
-
-    fun rusty_renju_forbidden_kind_double_three(): Byte = rustyRenjuForbiddenKindDoubleThree.callByte()
-
-    fun rusty_renju_forbidden_kind_double_four(): Byte = rustyRenjuForbiddenKindDoubleFour.callByte()
-
-    fun rusty_renju_forbidden_kind_double_overline(): Byte = rustyRenjuForbiddenKindDoubleOverline.callByte()
-
-    fun rusty_renju_pos_none(): Byte = rustyRenjuPosNone.callByte()
-
-    fun rusty_renju_board_export_item_empty(): Byte = rustyRenjuBoardExportItemEmpty.callByte()
-
-    fun rusty_renju_board_export_item_stone(): Byte = rustyRenjuBoardExportItemStone.callByte()
-
-    fun rusty_renju_board_export_item_forbidden(): Byte = rustyRenjuBoardExportItemForbidden.callByte()
-
-    fun rusty_renju_closed_four_mask(): Int = rustyRenjuClosedFourMask.callInt()
-
-    fun rusty_renju_open_four_mask(): Int = rustyRenjuOpenFourMask.callInt()
-
-    fun rusty_renju_five_mask(): Int = rustyRenjuFiveMask.callInt()
-
-    fun rusty_renju_open_three_mask(): Int = rustyRenjuOpenThreeMask.callInt()
-
-    fun rusty_renju_close_three_mask(): Int = rustyRenjuCloseThreeMask.callInt()
-
-    fun rusty_renju_potential_mask(): Int = rustyRenjuPotentialMask.callInt()
+    private val defaultBoard = symbols.function("default_board", ValueLayout.ADDRESS)
+    private val boardFromHistory = symbols.function("board_from_history", ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
+    private val boardFromString = symbols.function("board_from_string", ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+    private val boardToString = symbols.function("board_to_string", ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+    private val boardPlayerColor = symbols.function("board_player_color", ValueLayout.JAVA_BYTE, ValueLayout.ADDRESS)
+    private val boardStones = symbols.function("board_stones", ValueLayout.JAVA_BYTE, ValueLayout.ADDRESS)
+    private val boardPattern = symbols.function("board_pattern", ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE, ValueLayout.JAVA_BYTE)
+    private val boardIsPosEmpty = symbols.function("board_is_pos_empty", ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE)
+    private val boardIsLegalMove = symbols.function("board_is_legal_move", ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE)
+    private val boardStoneKind = symbols.function("board_stone_kind", ValueLayout.JAVA_BYTE, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE)
+    private val boardSet = symbols.function("board_set", ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE)
+    private val boardUnset = symbols.function("board_unset", ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE)
+    private val boardFree = symbols.voidFunction("board_free", ValueLayout.ADDRESS)
+    private val boardDescribe = symbols.function("board_describe", ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
+    private val boardDescribeFree = symbols.voidFunction("board_describe_free", ValueLayout.ADDRESS)
 
     fun rusty_renju_default_board(): MemorySegment? =
-        rustyRenjuDefaultBoard.callAddress().nullIfNull()
+        (defaultBoard.invokeWithArguments() as MemorySegment).nullIfNull()
 
     fun rusty_renju_board_from_history(actions: ByteArray?, len: Long): MemorySegment? {
         return Arena.ofConfined().use { arena ->
-            val actionSegment = actions.toNativeSegmentOrNull(arena)
-            rustyRenjuBoardFromHistory.callAddress(actionSegment, len).nullIfNull()
+            (boardFromHistory.invokeWithArguments(actions.toNativeSegmentOrNull(arena), len) as MemorySegment)
+                .nullIfNull()
         }
     }
 
     fun rusty_renju_board_from_string(source: String?): MemorySegment? {
         return Arena.ofConfined().use { arena ->
-            val sourceSegment = source?.let { arena.allocateCString(it) } ?: MemorySegment.NULL
-            rustyRenjuBoardFromString.callAddress(sourceSegment).nullIfNull()
+            val sourceSegment = source?.let(arena::allocateFrom) ?: MemorySegment.NULL
+            (boardFromString.invokeWithArguments(sourceSegment) as MemorySegment).nullIfNull()
         }
     }
 
     fun rusty_renju_board_to_string(board: MemorySegment?): MemorySegment? =
-        rustyRenjuBoardToString.callAddress(board.orNullAddress()).nullIfNull()
+        (boardToString.invokeWithArguments(board.orNullAddress()) as MemorySegment).nullIfNull()
 
     fun rusty_renju_board_player_color(board: MemorySegment?): Byte =
-        rustyRenjuBoardPlayerColor.callByte(board.orNullAddress())
+        boardPlayerColor.invokeWithArguments(board.orNullAddress()) as Byte
 
     fun rusty_renju_board_stones(board: MemorySegment?): Byte =
-        rustyRenjuBoardStones.callByte(board.orNullAddress())
+        boardStones.invokeWithArguments(board.orNullAddress()) as Byte
 
     fun rusty_renju_board_pattern(board: MemorySegment?, color: Byte, pos: Byte): Int =
-        rustyRenjuBoardPattern.callInt(board.orNullAddress(), color, pos)
+        boardPattern.invokeWithArguments(board.orNullAddress(), color, pos) as Int
 
     fun rusty_renju_board_is_pos_empty(board: MemorySegment?, pos: Byte): Boolean =
-        rustyRenjuBoardIsPosEmpty.callBoolean(board.orNullAddress(), pos)
+        boardIsPosEmpty.invokeWithArguments(board.orNullAddress(), pos) as Boolean
 
     fun rusty_renju_board_is_legal_move(board: MemorySegment?, pos: Byte): Boolean =
-        rustyRenjuBoardIsLegalMove.callBoolean(board.orNullAddress(), pos)
+        boardIsLegalMove.invokeWithArguments(board.orNullAddress(), pos) as Boolean
 
     fun rusty_renju_board_stone_kind(board: MemorySegment?, pos: Byte): Byte =
-        rustyRenjuBoardStoneKind.callByte(board.orNullAddress(), pos)
+        boardStoneKind.invokeWithArguments(board.orNullAddress(), pos) as Byte
 
     fun rusty_renju_board_set(board: MemorySegment?, pos: Byte): MemorySegment? =
-        rustyRenjuBoardSet.callAddress(board.orNullAddress(), pos).nullIfNull()
+        (boardSet.invokeWithArguments(board.orNullAddress(), pos) as MemorySegment).nullIfNull()
 
     fun rusty_renju_board_unset(board: MemorySegment?, pos: Byte): MemorySegment? =
-        rustyRenjuBoardUnset.callAddress(board.orNullAddress(), pos).nullIfNull()
+        (boardUnset.invokeWithArguments(board.orNullAddress(), pos) as MemorySegment).nullIfNull()
 
     fun rusty_renju_board_free(board: MemorySegment?) {
-        rustyRenjuBoardFree.callVoid(board.orNullAddress())
+        boardFree.invokeWithArguments(board.orNullAddress())
     }
 
     fun rusty_renju_board_describe(board: MemorySegment?, maybePosSlice: ByteArray?, len: Long): MemorySegment? {
         return Arena.ofConfined().use { arena ->
-            val maybePosSegment = maybePosSlice.toNativeSegmentOrNull(arena)
-            rustyRenjuBoardDescribe.callAddress(board.orNullAddress(), maybePosSegment, len).nullIfNull()
+            (boardDescribe.invokeWithArguments(
+                board.orNullAddress(),
+                maybePosSlice.toNativeSegmentOrNull(arena),
+                len,
+            ) as MemorySegment).nullIfNull()
         }
     }
 
     fun rusty_renju_board_describe_free(describe: MemorySegment?) {
-        rustyRenjuBoardDescribeFree.callVoid(describe.orNullAddress())
+        boardDescribeFree.invokeWithArguments(describe.orNullAddress())
     }
 
-    data class BoardExportStone(
-        val color: Byte,
-        val sequence: Byte,
+    data class Constants(
+        val colorBlack: Byte,
+        val colorWhite: Byte,
+        val colorNone: Byte,
+        val forbiddenNone: Byte,
+        val forbiddenDoubleThree: Byte,
+        val forbiddenDoubleFour: Byte,
+        val forbiddenOverline: Byte,
+        val posNone: Byte,
+        val exportItemEmpty: Byte,
+        val exportItemStone: Byte,
+        val exportItemForbidden: Byte,
+        val closedFourMask: Int,
+        val openFourMask: Int,
+        val fiveMask: Int,
+        val openThreeMask: Int,
+        val closeThreeMask: Int,
+        val potentialMask: Int,
     )
 
-    data class BoardExportItem(
-        val kind: Byte,
-        val stone: BoardExportStone,
-        val forbidden_kind: Byte,
-    )
+    data class BoardExportStone(val color: Byte, val sequence: Byte)
+
+    data class BoardExportItem(val kind: Byte, val stone: BoardExportStone, val forbidden_kind: Byte)
 
     class BoardDescribe(pointer: MemorySegment) {
 
@@ -249,64 +169,6 @@ internal class RustyRenjuC internal constructor(
 
     }
 
-    private fun downcall(
-        lookup: SymbolLookup,
-        symbolName: String,
-        descriptor: FunctionDescriptor,
-    ): MethodHandle {
-        val symbol = lookup.find(symbolName)
-            .orElseThrow { IllegalStateException("Native symbol '$symbolName' not found") }
-
-        return linker.downcallHandle(symbol, descriptor)
-    }
-
-    private fun Arena.allocateCString(value: String): MemorySegment {
-        val encoded = value.toByteArray(Charsets.UTF_8)
-        val segment = allocate((encoded.size + 1).toLong())
-
-        for (idx in encoded.indices) {
-            segment.set(ValueLayout.JAVA_BYTE, idx.toLong(), encoded[idx])
-        }
-        segment.set(ValueLayout.JAVA_BYTE, encoded.size.toLong(), 0)
-
-        return segment
-    }
-
-    private fun ByteArray?.toNativeSegmentOrNull(arena: Arena): MemorySegment {
-        val data = this ?: return MemorySegment.NULL
-        if (data.isEmpty()) {
-            return MemorySegment.NULL
-        }
-
-        val segment = arena.allocate(data.size.toLong())
-        for (idx in data.indices) {
-            segment.set(ValueLayout.JAVA_BYTE, idx.toLong(), data[idx])
-        }
-
-        return segment
-    }
-
-    private fun MemorySegment?.orNullAddress(): MemorySegment = this ?: MemorySegment.NULL
-
-    private fun MemorySegment.nullIfNull(): MemorySegment? =
-        if (this == MemorySegment.NULL) null else this
-
-    private fun MethodHandle.callByte(vararg args: Any): Byte =
-        invokeWithArguments(*args) as Byte
-
-    private fun MethodHandle.callInt(vararg args: Any): Int =
-        invokeWithArguments(*args) as Int
-
-    private fun MethodHandle.callBoolean(vararg args: Any): Boolean =
-        invokeWithArguments(*args) as Boolean
-
-    private fun MethodHandle.callAddress(vararg args: Any): MemorySegment =
-        invokeWithArguments(*args) as MemorySegment
-
-    private fun MethodHandle.callVoid(vararg args: Any) {
-        invokeWithArguments(*args)
-    }
-
     private companion object {
 
         private val BOARD_EXPORT_STONE_LAYOUT = MemoryLayout.structLayout(
@@ -342,50 +204,8 @@ internal class RustyRenjuC internal constructor(
 
 internal object RustyRenjuCApi {
 
-    val lib: RustyRenjuC by lazy {
-        RustyRenjuC(NativeLibraryLoader.libraryLookup("rusty_renju_c"))
-    }
+    val lib: RustyRenjuC by lazy { RustyRenjuC(NativeLibraryLoader.libraryLookup("rusty_renju_c")) }
 
-    val constants: Constants by lazy {
-        Constants(
-            colorBlack = lib.rusty_renju_color_black(),
-            colorWhite = lib.rusty_renju_color_white(),
-            colorNone = lib.rusty_renju_color_none(),
-            forbiddenNone = lib.rusty_renju_forbidden_kind_none(),
-            forbiddenDoubleThree = lib.rusty_renju_forbidden_kind_double_three(),
-            forbiddenDoubleFour = lib.rusty_renju_forbidden_kind_double_four(),
-            forbiddenOverline = lib.rusty_renju_forbidden_kind_double_overline(),
-            posNone = lib.rusty_renju_pos_none(),
-            exportItemEmpty = lib.rusty_renju_board_export_item_empty(),
-            exportItemStone = lib.rusty_renju_board_export_item_stone(),
-            exportItemForbidden = lib.rusty_renju_board_export_item_forbidden(),
-            closedFourMask = lib.rusty_renju_closed_four_mask(),
-            openFourMask = lib.rusty_renju_open_four_mask(),
-            fiveMask = lib.rusty_renju_five_mask(),
-            openThreeMask = lib.rusty_renju_open_three_mask(),
-            closeThreeMask = lib.rusty_renju_close_three_mask(),
-            potentialMask = lib.rusty_renju_potential_mask(),
-        )
-    }
-
-    data class Constants(
-        val colorBlack: Byte,
-        val colorWhite: Byte,
-        val colorNone: Byte,
-        val forbiddenNone: Byte,
-        val forbiddenDoubleThree: Byte,
-        val forbiddenDoubleFour: Byte,
-        val forbiddenOverline: Byte,
-        val posNone: Byte,
-        val exportItemEmpty: Byte,
-        val exportItemStone: Byte,
-        val exportItemForbidden: Byte,
-        val closedFourMask: Int,
-        val openFourMask: Int,
-        val fiveMask: Int,
-        val openThreeMask: Int,
-        val closeThreeMask: Int,
-        val potentialMask: Int,
-    )
+    val constants: RustyRenjuC.Constants get() = lib.constants
 
 }

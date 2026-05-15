@@ -146,8 +146,8 @@ sealed interface LanguageContainer {
     fun focusSelectIntelligence(): String
     fun focusSelectIntelligenceDescription(): String
 
-    fun focusSelectFallowing(): String
-    fun focusSelectFallowingDescription(): String
+    fun focusSelectFollowing(): String
+    fun focusSelectFollowingDescription(): String
 
     fun hint(): String
 

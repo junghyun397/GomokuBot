@@ -1,0 +1,13 @@
+.git
+.gradle
+.idea
+.env
+**/build
+discord-logs
+mintaka-sessions
+native/mintaka/target
+native/mintaka/temp
+native/mintaka/sessions
+native/mintaka/mintaka_webui/*
+!native/mintaka/mintaka_webui/dist
+!native/mintaka/mintaka_webui/dist/**

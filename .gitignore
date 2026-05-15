@@ -9,3 +9,4 @@ logs/
 *.tar
 temp.kt
 .secrets
+Mintaka.kt.raw

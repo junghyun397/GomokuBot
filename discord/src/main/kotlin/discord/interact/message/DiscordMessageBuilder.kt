@@ -26,7 +26,7 @@ class MessageCreateAdaptor<T>(private val original: T) : DiscordMessageBuilder
         MessageCreateAdaptor(this.original.addFiles(FileUpload.fromData(file, name)))
 
     override fun addComponents(components: DiscordComponents): DiscordMessageBuilder =
-        MessageCreateAdaptor(components.fold(this.original) { acc, component -> acc.addActionRow(component.actionComponents) })
+        MessageCreateAdaptor(this.original.addComponents(components))
 
     override fun launch(): Effect<Nothing, Unit> = effect {
         this@MessageCreateAdaptor.original.queue()
@@ -51,7 +51,7 @@ class WebHookMessageCreateAdaptor<T>(private val original: T) : DiscordMessageBu
         WebHookMessageCreateAdaptor(this.original.addFiles(FileUpload.fromData(file, name)))
 
     override fun addComponents(components: DiscordComponents): DiscordMessageBuilder =
-        WebHookMessageCreateAdaptor(components.fold(this.original) { acc, component -> acc.addActionRow(component.actionComponents) })
+        WebHookMessageCreateAdaptor(this.original.addComponents(components))
 
     override fun launch(): Effect<Nothing, Unit> = effect {
         this@WebHookMessageCreateAdaptor.original.queue()

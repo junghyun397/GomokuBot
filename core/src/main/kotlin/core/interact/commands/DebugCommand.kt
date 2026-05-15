@@ -12,7 +12,7 @@ import core.assets.User
 import core.database.entities.GameRecordId
 import core.database.entities.asGameSession
 import core.database.repositories.GameRecordRepository
-import core.inference.AiLevel
+import core.mintaka.AiLevel
 import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet

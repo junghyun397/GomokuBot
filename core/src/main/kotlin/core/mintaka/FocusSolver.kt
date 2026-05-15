@@ -1,4 +1,4 @@
-package core.inference
+package core.mintaka
 
 import renju.Board
 import renju.native.RustyRenjuCApi

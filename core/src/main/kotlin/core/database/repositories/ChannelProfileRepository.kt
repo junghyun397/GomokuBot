@@ -46,14 +46,14 @@ object ChannelProfileRepository {
     private suspend fun fetchChannel(connection: DatabaseConnection, channelUid: ChannelUid): Channel =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
-                .createStatement("SELECT * FROM guild_profile WHERE guild_id = $1")
+                .createStatement("SELECT * FROM channel_profile WHERE channel_id = $1")
                 .bind("$1", channelUid.uuid)
                 .execute()
             }
             .flatMap { result -> result
                 .map { row, _ ->
                     Channel(
-                        id = ChannelUid(row["guild_id"] as UUID),
+                        id = ChannelUid(row["channel_id"] as UUID),
                         platform = row["platform"] as Short,
                         givenId = ChannelId(row["given_id"] as Long),
                         name = row["name"] as String
@@ -65,7 +65,7 @@ object ChannelProfileRepository {
     private suspend fun fetchChannel(connection: DatabaseConnection, platform: Short, givenId: ChannelId): Option<Channel> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
-                .createStatement("SELECT * FROM guild_profile WHERE platform = $1 AND given_id = $2")
+                .createStatement("SELECT * FROM channel_profile WHERE platform = $1 AND given_id = $2")
                 .bind("$1", platform)
                 .bind("$2", givenId.idLong)
                 .execute()
@@ -73,7 +73,7 @@ object ChannelProfileRepository {
             .flatMap<Option<Channel>> { result -> result
                 .map { row, _ ->
                     Some(Channel(
-                        id = ChannelUid(row["guild_id"] as UUID),
+                        id = ChannelUid(row["channel_id"] as UUID),
                         platform = platform,
                         givenId = givenId,
                         name = row["name"] as String
@@ -91,8 +91,8 @@ object ChannelProfileRepository {
             .flatMapMany { dbc -> dbc
                 .createStatement(
                     """
-                        INSERT INTO guild_profile (guild_id, platform, given_id, name) VALUES ($1, $2, $3, $4)
-                            ON CONFLICT (guild_id) DO UPDATE SET name = $4
+                        INSERT INTO channel_profile (channel_id, platform, given_id, name) VALUES ($1, $2, $3, $4)
+                            ON CONFLICT (channel_id) DO UPDATE SET name = $4
                     """.trimIndent()
                 )
                 .bind("$1", guild.id.uuid)

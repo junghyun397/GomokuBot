@@ -9,7 +9,7 @@ import core.assets.UserUid
 import core.assets.aiUser
 import core.database.DatabaseConnection
 import core.database.repositories.UserProfileRepository
-import core.inference.AiLevel
+import core.mintaka.AiLevel
 import core.session.Rule
 import core.session.entities.*
 import renju.Board

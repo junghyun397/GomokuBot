@@ -5,7 +5,7 @@ import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
-import core.inference.FocusSolver
+import core.mintaka.FocusSolver
 import core.interact.Order
 import core.interact.message.MessageAdaptor
 import core.interact.message.MessagePublisher

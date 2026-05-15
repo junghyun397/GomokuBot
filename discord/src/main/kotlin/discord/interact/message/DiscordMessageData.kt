@@ -4,9 +4,9 @@ import arrow.core.None
 import arrow.core.Option
 import dev.minn.jda.ktx.messages.MessageCreate
 import dev.minn.jda.ktx.messages.MessageEdit
+import net.dv8tion.jda.api.components.MessageTopLevelComponent
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageEmbed
-import net.dv8tion.jda.api.interactions.components.LayoutComponent
 import net.dv8tion.jda.api.utils.AttachedFile
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import net.dv8tion.jda.api.utils.messages.MessageEditData
@@ -15,7 +15,7 @@ data class DiscordMessageData(
     val content: String = "",
     val embeds: List<MessageEmbed> = emptyList(),
     val files: List<AttachedFile> = emptyList(),
-    val components: List<LayoutComponent> = emptyList(),
+    val components: List<MessageTopLevelComponent> = emptyList(),
     val tts: Boolean = false,
     val original: Option<Message> = None
 ) {

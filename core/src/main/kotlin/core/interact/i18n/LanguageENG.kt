@@ -158,8 +158,8 @@ open class LanguageENG : LanguageContainer {
     override fun focusSelectIntelligenceDescription() =
         "The GomokuBot inference engine will focus on the most optimal places."
 
-    override fun focusSelectFallowing() = "Fallow"
-    override fun focusSelectFallowingDescription() =
+    override fun focusSelectFollowing() = "Follow"
+    override fun focusSelectFollowingDescription() =
         "Always focus on the last move."
 
     override fun hint() = "Hint"

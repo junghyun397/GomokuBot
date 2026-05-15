@@ -82,7 +82,6 @@ object GomokuBot {
         val dbConnection = runBlocking {
             DatabaseManager.newConnectionFrom(postgresqlConfig.serverURL, caches)
                 .also { connection ->
-                    DatabaseManager.initDatabase(connection)
                     DatabaseManager.initCaches(connection)
                 }
         }

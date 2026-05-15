@@ -10,7 +10,7 @@ import core.database.DatabaseConnection
 import core.database.DatabaseManager.smallIntToMaybeByte
 import core.database.entities.GameRecord
 import core.database.entities.GameRecordId
-import core.inference.AiLevel
+import core.mintaka.AiLevel
 import core.session.Rule
 import io.r2dbc.spi.Row
 import kotlinx.coroutines.reactive.awaitFirstOrNull
@@ -30,7 +30,12 @@ object GameRecordRepository {
     suspend fun uploadGameRecord(connection: DatabaseConnection, record: GameRecord) {
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
-                .createStatement("CALL upload_game_record($1, $2, $3, $4, $5, $6, $7, $8, $9)")
+                .createStatement(
+                    """
+                    INSERT INTO game_record (board_state, history, cause, win_color, channel_id, black_id, white_id, ai_level, rule)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    """.trimIndent()
+                )
                 .bind("$1", record.boardState)
                 .bind("$2", record.history.map { it.idx() }.toTypedArray())
                 .bind("$3", record.gameResult.cause.id)
@@ -49,7 +54,7 @@ object GameRecordRepository {
     suspend fun retrieveGameRecordsByChannelUid(connection: DatabaseConnection, channelUid: ChannelUid, limit: Int): MutableList<GameRecord> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
-                .createStatement("SELECT * FROM game_record WHERE guild_id = $1 ORDER BY create_date DESC LIMIT $2")
+                .createStatement("SELECT * FROM game_record WHERE channel_id = $1 ORDER BY create_date DESC LIMIT $2")
                 .bind("$1", channelUid.uuid)
                 .bind("$2", limit)
                 .execute()
@@ -115,7 +120,7 @@ object GameRecordRepository {
             (row["history"] as Array<*>).map { it as Int }.toIntArray(),
             smallIntToMaybeByte(row["win_color"]),
             row["cause"] as Short,
-            row["guild_id"] as UUID,
+            row["channel_id"] as UUID,
             row["ai_level"] as Short?,
             row["rule"] as Short,
             row["create_date"] as LocalDateTime

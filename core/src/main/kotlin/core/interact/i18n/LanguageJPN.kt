@@ -131,8 +131,8 @@ class LanguageJPN : LanguageENG() {
     override fun focusSelectIntelligenceDescription() =
         "GomokuBot推論エンジンは、最適な場所に焦点を当てます。"
 
-    override fun focusSelectFallowing() = "フォロー"
-    override fun focusSelectFallowingDescription() =
+    override fun focusSelectFollowing() = "フォロー"
+    override fun focusSelectFollowingDescription() =
         "常に最後の手に焦点を当てます。"
 
     override fun hint() = "ヒント"

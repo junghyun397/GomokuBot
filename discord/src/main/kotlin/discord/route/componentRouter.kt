@@ -35,7 +35,7 @@ private fun matchAction(prefix: Char?): Option<EmbeddableCommand> =
 
 fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Mono<Report> =
     mono {
-        context.event.component.id
+        context.event.componentId
             .toOption()
             .flatMap { rawId ->
                 matchAction(rawId.split("-").first().getOrNull(0))

@@ -18,7 +18,7 @@ object ChannelConfigRepository {
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
                 .createStatement(
-                    "SELECT * FROM guild_config WHERE guild_id = $1"
+                    "SELECT * FROM channel_config WHERE channel_id = $1"
                 )
                 .bind("$1", channelUid.uuid)
                 .execute()
@@ -44,8 +44,8 @@ object ChannelConfigRepository {
             .flatMapMany { dbc -> dbc
                 .createStatement(
                     """
-                        INSERT INTO guild_config (guild_id, language, board_style, focus_type, hint_type, mark_type, swap_type, archive_policy) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                            ON CONFLICT (guild_id) DO UPDATE SET language = $2, board_style = $3, focus_type = $4, hint_type = $5, mark_type = $6, swap_type = $7, archive_policy = $8
+                        INSERT INTO channel_config (channel_id, language, board_style, focus_type, hint_type, mark_type, swap_type, archive_policy) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                            ON CONFLICT (channel_id) DO UPDATE SET language = $2, board_style = $3, focus_type = $4, hint_type = $5, mark_type = $6, swap_type = $7, archive_policy = $8
                     """.trimIndent()
                 )
                 .bind("$1", channelUid.uuid)

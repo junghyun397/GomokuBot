@@ -97,8 +97,8 @@ object SettingMapping {
                 ),
                 FocusType.FALLOWING to OptionElement.fromIdentifiableEnum(
                     enum = FocusType.FALLOWING,
-                    label = LanguageContainer::focusSelectFallowing,
-                    description = LanguageContainer::focusSelectFallowingDescription,
+                    label = LanguageContainer::focusSelectFollowing,
+                    description = LanguageContainer::focusSelectFollowingDescription,
                     emoji = UNICODE_MAG
                 )
             )

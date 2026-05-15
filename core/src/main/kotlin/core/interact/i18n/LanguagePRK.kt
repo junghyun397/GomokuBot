@@ -123,8 +123,8 @@ open class LanguagePRK : LanguageKOR() {
     override fun focusSelectIntelligenceDescription() =
         "GomokuBot 추론 엔진으로 가장 적절한 위치를 분석해 확대하오."
 
-    override fun focusSelectFallowing() = "수동적"
-    override fun focusSelectFallowingDescription() =
+    override fun focusSelectFollowing() = "수동적"
+    override fun focusSelectFollowingDescription() =
         "항상 마지막 수를 가운데 둡니다."
 
     override fun hint() = "힌트"

@@ -2,58 +2,38 @@ package renju.native
 
 import java.lang.foreign.*
 import java.lang.foreign.MemoryLayout.PathElement.groupElement
-import java.lang.invoke.MethodHandle
 
 internal class RustyRenjuImage internal constructor(
     lookup: SymbolLookup,
 ) {
 
-    private val linker = Linker.nativeLinker()
+    private val symbols = NativeSymbols(lookup, "rusty_renju_image")
 
-    private val rustyRenjuImageFormatPng = downcall(lookup, "rusty_renju_image_format_png", FunctionDescriptor.of(ValueLayout.JAVA_BYTE))
-    private val rustyRenjuImageFormatWebp = downcall(lookup, "rusty_renju_image_format_webp", FunctionDescriptor.of(ValueLayout.JAVA_BYTE))
-
-    private val rustyRenjuImageRendererNone = downcall(lookup, "rusty_renju_image_renderer_none", FunctionDescriptor.of(ValueLayout.JAVA_BYTE))
-    private val rustyRenjuImageRendererLast = downcall(lookup, "rusty_renju_image_renderer_last", FunctionDescriptor.of(ValueLayout.JAVA_BYTE))
-    private val rustyRenjuImageRendererPair = downcall(lookup, "rusty_renju_image_renderer_pair", FunctionDescriptor.of(ValueLayout.JAVA_BYTE))
-    private val rustyRenjuImageRendererSequence = downcall(lookup, "rusty_renju_image_renderer_sequence", FunctionDescriptor.of(ValueLayout.JAVA_BYTE))
-
-    private val rustyRenjuImageRender = downcall(
-        lookup,
-        "rusty_renju_image_render",
-        FunctionDescriptor.of(
-            BYTE_BUFFER_LAYOUT,
-            ValueLayout.JAVA_BYTE,
-            ValueLayout.JAVA_FLOAT,
-            ValueLayout.JAVA_BYTE,
-            ValueLayout.JAVA_BOOLEAN,
-            ValueLayout.ADDRESS,
-            ValueLayout.ADDRESS,
-            ValueLayout.JAVA_LONG,
-            ValueLayout.ADDRESS,
-            ValueLayout.JAVA_LONG,
-            ValueLayout.ADDRESS,
-            ValueLayout.JAVA_LONG,
-        ),
+    val constants: Constants = Constants(
+        formatPng = symbols.byte("format_png"),
+        formatWebp = symbols.byte("format_webp"),
+        rendererNone = symbols.byte("renderer_none"),
+        rendererLast = symbols.byte("renderer_last"),
+        rendererPair = symbols.byte("renderer_pair"),
+        rendererSequence = symbols.byte("renderer_sequence"),
     )
 
-    private val rustyRenjuImageFreeByteBuffer = downcall(
-        lookup,
-        "rusty_renju_image_free_byte_buffer",
-        FunctionDescriptor.ofVoid(ValueLayout.ADDRESS),
+    private val imageRender = symbols.function(
+        "render",
+        BYTE_BUFFER_LAYOUT,
+        ValueLayout.JAVA_BYTE,
+        ValueLayout.JAVA_FLOAT,
+        ValueLayout.JAVA_BYTE,
+        ValueLayout.JAVA_BOOLEAN,
+        ValueLayout.ADDRESS,
+        ValueLayout.ADDRESS,
+        ValueLayout.JAVA_LONG,
+        ValueLayout.ADDRESS,
+        ValueLayout.JAVA_LONG,
+        ValueLayout.ADDRESS,
+        ValueLayout.JAVA_LONG,
     )
-
-    fun rusty_renju_image_format_png(): Byte = rustyRenjuImageFormatPng.callByte()
-
-    fun rusty_renju_image_format_webp(): Byte = rustyRenjuImageFormatWebp.callByte()
-
-    fun rusty_renju_image_renderer_none(): Byte = rustyRenjuImageRendererNone.callByte()
-
-    fun rusty_renju_image_renderer_last(): Byte = rustyRenjuImageRendererLast.callByte()
-
-    fun rusty_renju_image_renderer_pair(): Byte = rustyRenjuImageRendererPair.callByte()
-
-    fun rusty_renju_image_renderer_sequence(): Byte = rustyRenjuImageRendererSequence.callByte()
+    private val freeByteBuffer = symbols.voidFunction("free_byte_buffer", ValueLayout.ADDRESS)
 
     fun rusty_renju_image_render(
         imageFormat: Byte,
@@ -69,23 +49,19 @@ internal class RustyRenjuImage internal constructor(
         blindsLen: Long,
     ): ByteBuffer {
         return Arena.ofConfined().use { arena ->
-            val actionsSegment = actions.toNativeSegmentOrNull(arena)
-            val offersSegment = offers.toNativeSegmentOrNull(arena)
-            val blindsSegment = blinds.toNativeSegmentOrNull(arena)
-
-            val byteBufferSegment = rustyRenjuImageRender.callStruct(
+            val byteBufferSegment = imageRender.invokeWithArguments(
                 imageFormat,
                 webpQuality,
                 option,
                 enableForbidden,
                 board.orNullAddress(),
-                actionsSegment,
+                actions.toNativeSegmentOrNull(arena),
                 actionsLen,
-                offersSegment,
+                offers.toNativeSegmentOrNull(arena),
                 offersLen,
-                blindsSegment,
+                blinds.toNativeSegmentOrNull(arena),
                 blindsLen,
-            )
+            ) as MemorySegment
 
             ByteBuffer(
                 ptr = byteBufferSegment.get(ValueLayout.ADDRESS, BYTE_BUFFER_PTR_OFFSET),
@@ -100,51 +76,20 @@ internal class RustyRenjuImage internal constructor(
             bufferSegment.set(ValueLayout.ADDRESS, BYTE_BUFFER_PTR_OFFSET, byteBuffer.ptr)
             bufferSegment.set(ValueLayout.JAVA_LONG, BYTE_BUFFER_LEN_OFFSET, byteBuffer.len)
 
-            rustyRenjuImageFreeByteBuffer.callVoid(bufferSegment)
+            freeByteBuffer.invokeWithArguments(bufferSegment)
         }
     }
 
-    data class ByteBuffer(
-        val ptr: MemorySegment,
-        val len: Long,
+    data class Constants(
+        val formatPng: Byte,
+        val formatWebp: Byte,
+        val rendererNone: Byte,
+        val rendererLast: Byte,
+        val rendererPair: Byte,
+        val rendererSequence: Byte,
     )
 
-    private fun downcall(
-        lookup: SymbolLookup,
-        symbolName: String,
-        descriptor: FunctionDescriptor,
-    ): MethodHandle {
-        val symbol = lookup.find(symbolName)
-            .orElseThrow { IllegalStateException("Native symbol '$symbolName' not found") }
-
-        return linker.downcallHandle(symbol, descriptor)
-    }
-
-    private fun ByteArray?.toNativeSegmentOrNull(arena: Arena): MemorySegment {
-        val data = this ?: return MemorySegment.NULL
-        if (data.isEmpty()) {
-            return MemorySegment.NULL
-        }
-
-        val segment = arena.allocate(data.size.toLong())
-        for (idx in data.indices) {
-            segment.set(ValueLayout.JAVA_BYTE, idx.toLong(), data[idx])
-        }
-
-        return segment
-    }
-
-    private fun MemorySegment?.orNullAddress(): MemorySegment = this ?: MemorySegment.NULL
-
-    private fun MethodHandle.callByte(vararg args: Any): Byte =
-        invokeWithArguments(*args) as Byte
-
-    private fun MethodHandle.callStruct(vararg args: Any): MemorySegment =
-        invokeWithArguments(*args) as MemorySegment
-
-    private fun MethodHandle.callVoid(vararg args: Any) {
-        invokeWithArguments(*args)
-    }
+    data class ByteBuffer(val ptr: MemorySegment, val len: Long)
 
     private companion object {
 
@@ -162,28 +107,8 @@ internal class RustyRenjuImage internal constructor(
 
 internal object RustyRenjuImageApi {
 
-    val lib: RustyRenjuImage by lazy {
-        RustyRenjuImage(NativeLibraryLoader.libraryLookup("rusty_renju_image"))
-    }
+    val lib: RustyRenjuImage by lazy { RustyRenjuImage(NativeLibraryLoader.libraryLookup("rusty_renju_image")) }
 
-    val constants: Constants by lazy {
-        Constants(
-            formatPng = lib.rusty_renju_image_format_png(),
-            formatWebp = lib.rusty_renju_image_format_webp(),
-            rendererNone = lib.rusty_renju_image_renderer_none(),
-            rendererLast = lib.rusty_renju_image_renderer_last(),
-            rendererPair = lib.rusty_renju_image_renderer_pair(),
-            rendererSequence = lib.rusty_renju_image_renderer_sequence(),
-        )
-    }
-
-    data class Constants(
-        val formatPng: Byte,
-        val formatWebp: Byte,
-        val rendererNone: Byte,
-        val rendererLast: Byte,
-        val rendererPair: Byte,
-        val rendererSequence: Byte,
-    )
+    val constants: RustyRenjuImage.Constants get() = lib.constants
 
 }

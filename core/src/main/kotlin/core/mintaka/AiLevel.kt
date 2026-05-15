@@ -1,4 +1,4 @@
-package core.inference
+package core.mintaka
 
 import utils.structs.Identifiable
 

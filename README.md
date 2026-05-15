@@ -8,7 +8,7 @@ Now play Gomoku in your chat room. GomokuBot can do it. ― GomokuBot is an AI C
 
 ## Features
 
-* **Renju Rule Support.** With the ResRenju renju engine, GomokuBot always correctly applies [Renju rules](https://www.renju.net/rules/).
+* **Renju Rule Support.** With the [rusty-renju](https://github.com/junghyun397/mintaka) renju engine, GomokuBot always correctly applies [Renju rules](https://www.renju.net/rules/).
 * **Multilingual Support.** Currently, six languages are supported: English, 한국어, 조선말, 日本語, 國漢文混用體, and Tiếng Việt. Thanks to the [community translators](https://github.com/junghyun397/GomokuBot/blob/master/documents/community-translations.md). 
 * **Fully Customizable.** Various elements such as board style, focus type, and hint type can be set.
 * **Intuitive Input.** Within chatbot's environment, the [ResRenju](https://github.com/junghyun397/ResRenju) renju engine helps intuitive input.
@@ -36,31 +36,21 @@ WIP
 
 ## Quick Start
 
-### build jar
-
-```shell
-gradlew build
-```
-
-### build DockerFile
-
-```shell
-cd discord
-docker build -t gomokubot-discord .
-```
-
 ### docker-compose
 
 ```shell
-echo "GOMOKUBOT_DISCORD_TOKEN=discordapplicationtoken
-GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID=0
-GOMOKUBOT_DISCORD_ARCHIVE_CHANNEL_ID=0
-GOMOKUBOT_DISCORD_TESTER_ROLE_ID=0
-" > .env
+docker compose up
+```
+
+### Build
+
+```shell
+cd native/mintaka
+cargo build --release -p rusty_renju_c -p rusty_renju_image
 ```
 
 ```shell
-docker-compose up -d
+gradlew build
 ```
 
 ## Contributing

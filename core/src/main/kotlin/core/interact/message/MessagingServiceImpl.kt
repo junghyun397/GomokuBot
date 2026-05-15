@@ -2,7 +2,7 @@ package core.interact.message
 
 import arrow.core.raise.Effect
 import core.assets.*
-import core.inference.FocusSolver
+import core.mintaka.FocusSolver
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.session.Rule

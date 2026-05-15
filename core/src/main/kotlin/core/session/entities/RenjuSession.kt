@@ -5,7 +5,7 @@ import arrow.core.Option
 import arrow.core.Some
 import core.assets.User
 import core.assets.aiUser
-import core.inference.AiLevel
+import core.mintaka.AiLevel
 import core.session.Rule
 import renju.Board
 import renju.notation.GameResult

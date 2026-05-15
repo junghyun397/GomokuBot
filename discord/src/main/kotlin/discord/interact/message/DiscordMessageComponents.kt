@@ -1,5 +1,5 @@
 package discord.interact.message
 
-import net.dv8tion.jda.api.interactions.components.LayoutComponent
+import net.dv8tion.jda.api.components.MessageTopLevelComponent
 
-typealias DiscordComponents = List<LayoutComponent>
+typealias DiscordComponents = List<MessageTopLevelComponent>

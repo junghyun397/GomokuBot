@@ -7,7 +7,7 @@ import arrow.core.Some
 import core.BotConfig
 import core.assets.*
 import core.database.DatabaseConnection
-import core.inference.FocusSolver
+import core.mintaka.FocusSolver
 import core.interact.i18n.Language
 import core.interact.message.MessagingServiceImpl
 import core.interact.message.SettingMapping

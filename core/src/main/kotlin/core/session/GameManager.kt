@@ -9,7 +9,7 @@ import core.assets.User
 import core.assets.aiUser
 import core.database.entities.extractGameRecord
 import core.database.repositories.GameRecordRepository
-import core.inference.AiLevel
+import core.mintaka.AiLevel
 import core.interact.message.graphics.*
 import core.session.entities.*
 import renju.Board

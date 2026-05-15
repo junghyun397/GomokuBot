@@ -13,8 +13,8 @@ dependencies {
     implementation(project(":utils"))
     implementation(project(":core"))
 
-    implementation("net.dv8tion:JDA:5.6.1")
-    implementation("com.github.minndevelopment:jda-ktx:0.12.0")
+    implementation("net.dv8tion:JDA:6.4.1")
+    implementation("club.minnced:jda-ktx:0.14.2")
     implementation("com.github.minndevelopment:jda-reactor:1.6.0")
 
     implementation("ch.qos.logback:logback-classic:1.5.20")

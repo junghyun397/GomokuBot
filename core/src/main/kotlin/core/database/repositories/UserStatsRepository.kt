@@ -72,7 +72,7 @@ object UserStatsRepository {
     suspend fun fetchRankings(connection: DatabaseConnection, channelUid: ChannelUid): List<UserStats> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
-                .createStatement("SELECT * FROM game_record WHERE guild_id = $1 AND ai_level IS NOT NULL")
+                .createStatement("SELECT * FROM game_record WHERE channel_id = $1 AND ai_level IS NOT NULL")
                 .bind("$1", channelUid.uuid)
                 .execute()
             }

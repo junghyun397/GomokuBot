@@ -1,46 +1,66 @@
-version: "3"
-
 services:
-
   database:
     container_name: gomokubot-postgres
     image: postgres:14.11-bullseye
-    ports:
-      - "54329:5432"
     volumes:
-      - db:/var/lib/postgresql/data
+      - ./db:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
     environment:
-      - "POSTGRES_USER=gomokubot"
-      - "POSTGRES_DB=gomokubot"
-      - "POSTGRES_PASSWORD=${POSTGRESQL_PASSWORD}"
+      POSTGRES_USER: "gomokubot"
+      POSTGRES_DB: "gomokubot"
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-verycomplexedpassword}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
+      test: ["CMD-SHELL", "pg_isready -U gomokubot -d gomokubot"]
       interval: 1s
       timeout: 3s
-      retries: 100
+      retries: 30
+      start_period: 1s
     restart: always
 
-  gomokubot:
+  discord:
     container_name: gomokubot-discord
+    build:
+      context: .
+      dockerfile: discord/Dockerfile
     image: gomokubot-discord:latest
-    ports:
-      - "80:80"
     volumes:
-      - logs:/app/logs
+      - ./discord-logs:/app/logs
     environment:
-      - "GOMOKUBOT_DB_URL=r2dbc:postgresql://gomokubot:${POSTGRESQL_PASSWORD}@gomokubot-postgres/gomokubot"
+      GOMOKUBOT_DB_URL: "r2dbc:postgresql://gomokubot:${POSTGRES_PASSWORD:-verycomplexedpassword}@gomokubot-postgres/gomokubot"
+      GOMOKUBOT_MINTAKA_URL: "http://mintaka:8085"
 
-      - "GOMOKUBOT_DISCORD_TOKEN=${GOMOKUBOT_DISCORD_TOKEN}"
-      - "GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID=${GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID}"
-      - "GOMOKUBOT_DISCORD_ARCHIVE_CHANNEL_ID=${GOMOKUBOT_DISCORD_ARCHIVE_CHANNEL_ID}"
-      - "GOMOKUBOT_DISCORD_TESTER_ROLE_ID=${GOMOKUBOT_DISCORD_TESTER_ROLE_ID}"
+      GOMOKUBOT_MINTAKA_API_PASSWORD: ${MINTAKA_API_PASSWORD:-verycomplexedpassword}
+
+      GOMOKUBOT_DISCORD_TOKEN: ${GOMOKUBOT_DISCORD_TOKEN}
+      GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID: ${GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID}
+      GOMOKUBOT_DISCORD_ARCHIVE_CHANNEL_ID: ${GOMOKUBOT_DISCORD_ARCHIVE_CHANNEL_ID}
+      GOMOKUBOT_DISCORD_TESTER_ROLE_ID: ${GOMOKUBOT_DISCORD_TESTER_ROLE_ID}
     depends_on:
       database:
         condition: service_healthy
+      mintaka:
+        condition: service_healthy
     restart: always
 
-volumes:
-  db:
-    driver: local
-  logs:
-    driver: local
+  mintaka:
+    container_name: gomokubot-mintaka
+    build:
+      context: ./native/mintaka
+      dockerfile: Dockerfile
+    image: mintaka-server:latest
+    volumes:
+      - ./mintaka-sessions:/var/lib/mintaka/sessions
+    environment:
+      WEBUI: false
+      ADDRESS: "0.0.0.0:8085"
+      CORES: ${MINTAKA_CORES:-8}
+      MEMORY_LIMIT_MIB: ${MINTAKA_MEMORY_LIMIT_MIB:-8192}
+      API_PASSWORD: ${MINTAKA_API_PASSWORD:-verycomplexedpassword}
+      SESSION_TOKEN_SECRET: ${MINTAKA_TOKEN_SECRET:-verycomplexedtokensecret}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${MINTAKA_PORT:-8085}/status"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+      start_period: 1s
+    restart: always
