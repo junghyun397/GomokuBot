@@ -1,23 +1,19 @@
 package renju.notation
 
-import arrow.core.None
-import arrow.core.Option
-import arrow.core.Some
-
 data class Pos(private val value: Int) {
 
     constructor(row: Int, col: Int) : this(rowColToIdx(row, col))
 
-    fun idx(): Int = value
+    val idx get(): Int = value
 
-    fun row(): Int = idxToRow(value)
+    val row get(): Int = idxToRow(value)
 
-    fun col(): Int = idxToCol(value)
+    val col get(): Int = idxToCol(value)
 
     fun isValid(): Boolean = value in 0 until BOARD_SIZE
 
     override fun toString(): String =
-        if (isValid()) "${('a'.code + col()).toChar()}${row() + 1}"
+        if (isValid()) "${('a'.code + col).toChar()}${row + 1}"
         else "invalid"
 
     companion object {
@@ -28,38 +24,33 @@ data class Pos(private val value: Int) {
 
         val CENTER: Pos = fromIdx(BOARD_SIZE / 2)
 
-        @JvmStatic
         fun isValidIdx(idx: Int): Boolean = idx in 0 until BOARD_SIZE
 
-        @JvmStatic
         fun rowColToIdx(row: Int, col: Int): Int =
             row * BOARD_WIDTH + col
 
-        @JvmStatic
         fun idxToRow(idx: Int): Int =
             idx / BOARD_WIDTH
 
-        @JvmStatic
         fun idxToCol(idx: Int): Int =
             idx % BOARD_WIDTH
 
-        @JvmStatic
         fun fromIdx(idx: Int): Pos =
             if (isValidIdx(idx)) Pos(idx)
             else throw IllegalArgumentException()
 
-        @JvmStatic
-        fun fromCartesian(source: String?): Option<Pos> {
-            val normalized = source?.trim()?.lowercase() ?: return None
+        fun fromCartesian(source: String?): Pos? {
+            val normalized = source?.trim()?.lowercase() ?: return null
+
             if (normalized.length !in 2..3) {
-                return None
+                return null
             }
 
             val col = normalized.first().code - 'a'.code
-            val row = (normalized.drop(1).toIntOrNull() ?: return None) - 1
+            val row = (normalized.drop(1).toIntOrNull() ?: return null) - 1
 
-            return if (row in 0 until BOARD_WIDTH && col in 0 until BOARD_WIDTH) Some(Pos(row, col))
-            else None
+            return if (row in 0 until BOARD_WIDTH && col in 0 until BOARD_WIDTH) Pos(row, col)
+            else null
         }
 
     }

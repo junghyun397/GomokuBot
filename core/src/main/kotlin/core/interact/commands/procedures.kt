@@ -10,7 +10,8 @@ import core.session.SessionManager
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
-import utils.assets.LinuxTime
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 
 fun <A, B> buildHelpProcedure(
     bot: BotContext,
@@ -31,7 +32,7 @@ fun <A, B> buildHelpProcedure(
                             helpMessage.messageRef,
                             NavigationKind.ABOUT,
                             page,
-                            LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
+                            Clock.System.now() + bot.config.navigatorExpireAfter.milliseconds
                         )
                     )
 
@@ -67,7 +68,7 @@ fun <A, B> buildCombinedHelpProcedure(
                                     helpMessage.messageRef,
                                     NavigationKind.ABOUT,
                                     page = 0,
-                                    LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
+                                    Clock.System.now() + bot.config.navigatorExpireAfter.milliseconds
                                 )
                             )
 
@@ -78,7 +79,7 @@ fun <A, B> buildCombinedHelpProcedure(
                                     settingsMessage.messageRef,
                                     NavigationKind.SETTINGS,
                                     settingsPage,
-                                    LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
+                                    Clock.System.now() + bot.config.navigatorExpireAfter.milliseconds
                                 )
                             )
 

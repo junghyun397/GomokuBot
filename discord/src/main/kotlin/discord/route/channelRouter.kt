@@ -23,8 +23,8 @@ import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import reactor.core.publisher.Mono
-import utils.assets.LinuxTime
 import java.util.*
+import kotlin.time.Clock
 
 private fun matchLocale(locale: DiscordLocale): Language =
     when (locale) {
@@ -70,7 +70,7 @@ fun channelJoinRouter(context: InternalInteractionContext<GuildJoinEvent>): Mono
         ).apply {
             interactionSource = context.source
             emittedTime = context.emittedTime
-            apiTime = LinuxTime.now()
+            apiTime = Clock.System.now()
         }
     }
 
@@ -94,7 +94,7 @@ fun channelLeaveRouter(context: InternalInteractionContext<GuildLeaveEvent>): Mo
                     onSuccess = { (_, report) -> report.apply {
                         interactionSource = context.source
                         emittedTime = context.emittedTime
-                        apiTime = LinuxTime.now()
+                        apiTime = Clock.System.now()
                     } },
                     onFailure = { ErrorReport(IllegalStateException(), context.guild) }
                 )

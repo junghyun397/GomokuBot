@@ -45,6 +45,7 @@ allprojects {
 subprojects {
     apply {
         plugin("org.jetbrains.kotlin.jvm")
+        plugin("org.jetbrains.kotlin.plugin.serialization")
     }
 
     dependencies {

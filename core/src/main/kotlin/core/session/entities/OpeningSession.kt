@@ -72,9 +72,9 @@ interface OfferStageOpeningSession : NegotiateStageOpeningSession {
     fun add(move: Pos): NegotiateStageOpeningSession
 
     private fun calculateSymmetryMoves(ref1: Pos, ref2: Pos, move: Pos): Set<Pos> =
-        if (ref1.row() == ref2.row() || ref1.col() == ref2.col()) {
-            val reversedRow = ref1.row() + ref2.row() - move.row()
-            val reversedCol = ref1.col() + ref2.col() - move.col()
+        if (ref1.row == ref2.row || ref1.col == ref2.col) {
+            val reversedRow = ref1.row + ref2.row - move.row
+            val reversedCol = ref1.col + ref2.col - move.col
 
             // . . | . .
             // . M | X .
@@ -83,23 +83,23 @@ interface OfferStageOpeningSession : NegotiateStageOpeningSession {
             // . . | . .
             setOf(
                 Pos(reversedRow, reversedCol),
-                Pos(move.row(), reversedCol),
-                Pos(reversedRow, move.col())
+                Pos(move.row, reversedCol),
+                Pos(reversedRow, move.col)
             )
         } else {
             // y=ax+b
             // a=(y1-y2)/(x1-x2)
-            val slope = (ref1.row() - ref2.row()).toDouble() / (ref1.col() - ref2.col().toDouble())
+            val slope = (ref1.row - ref2.row).toDouble() / (ref1.col - ref2.col.toDouble())
             // b=y-ax
-            val intercept = ref1.row() - slope * ref1.col()
+            val intercept = ref1.row - slope * ref1.col
 
             // 2(ax-y+b)/(a^2+1)
-            val baseEval = 2 * (slope * move.col() - move.row() + intercept) / (slope.pow(2) + 1)
+            val baseEval = 2 * (slope * move.col - move.row + intercept) / (slope.pow(2) + 1)
 
             // x'=x-2a(ax-y+b)/(a^2+1)
-            val reversedCol = (move.col() - slope * baseEval).toInt()
+            val reversedCol = (move.col - slope * baseEval).toInt()
             // y'=y+2(ax-y+b)/(a^2+1)
-            val reversedRow = (move.row() + baseEval).toInt()
+            val reversedRow = (move.row + baseEval).toInt()
 
             // . M . . .
             // X 1 . . .
@@ -107,8 +107,8 @@ interface OfferStageOpeningSession : NegotiateStageOpeningSession {
             // . . . X .
             setOf(
                 Pos(reversedRow, reversedCol),
-                Pos(ref1.row() + ref2.row() - reversedRow, ref1.col() + ref2.col() - reversedCol),
-                Pos(ref1.row() + ref2.row() - move.row(), ref1.col() + ref2.col() - move.col())
+                Pos(ref1.row + ref2.row - reversedRow, ref1.col + ref2.col - reversedCol),
+                Pos(ref1.row + ref2.row - move.row, ref1.col + ref2.col - move.col)
             )
         }
 
@@ -144,9 +144,8 @@ fun OpeningSession.asFinishedPvpSession(result: GameResult): PvpGameSession =
         owner = owner,
         opponent = opponent,
         ownerHasBlack = ownerHasBlack,
-        board = board,
+        state = state,
         gameResult = Some(result),
-        history = history,
         messageBufferKey = messageBufferKey,
         recording = false,
         ruleKind = ruleKind,

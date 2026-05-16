@@ -91,7 +91,7 @@ class SetCommand(
                     tuple(io, this.writeCommandReport("make move $pos", guild, user))
                 }
                 is AiGameSession -> {
-                    val nextSession = GameManager.makeAiMove(thenSession)
+                    val nextSession = GameManager.makeAiMove(bot.mintakaServer, thenSession)
 
                     nextSession.gameResult.fold(
                         ifEmpty = {
@@ -110,7 +110,7 @@ class SetCommand(
                                             guidePublisher,
                                             config.language.container,
                                             nextSession.owner,
-                                            nextSession.board.lastPos().getOrNull() ?: this@SetCommand.pos
+                                            nextSession.history.lastAction ?: this@SetCommand.pos
                                         )
                                             .retrieve()()
 
@@ -144,14 +144,14 @@ class SetCommand(
                                             publishers.plain,
                                             config.language.container,
                                             nextSession.owner,
-                                            nextSession.board.lastPos().getOrNull() ?: this@SetCommand.pos
+                                            nextSession.history.lastAction ?: this@SetCommand.pos
                                         )
                                     is GameResult.FiveInRow ->
                                         service.buildLosePVE(
                                             publishers.plain,
                                             config.language.container,
                                             nextSession.owner,
-                                            nextSession.board.lastPos().getOrNull() ?: this@SetCommand.pos
+                                            nextSession.history.lastAction ?: this@SetCommand.pos
                                         )
                                     is GameResult.Full ->
                                         service.buildTiePVE(publishers.plain, config.language.container, nextSession.owner)

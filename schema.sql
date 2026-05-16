@@ -38,7 +38,6 @@ CREATE TABLE IF NOT EXISTS user_profile (
 
 CREATE TABLE IF NOT EXISTS game_record (
     record_id SERIAL PRIMARY KEY,
-    board_state bytea NOT NULL,
     history int[] NOT NULL,
     cause smallint NOT NULL,
     win_color smallint,

@@ -10,7 +10,7 @@ internal class RustyRenjuC internal constructor(
 
     private val symbols = NativeSymbols(lookup, "rusty_renju")
 
-    val constants: Constants = Constants(
+    val constants = Constants(
         colorBlack = symbols.byte("color_black"),
         colorWhite = symbols.byte("color_white"),
         colorNone = symbols.byte("color_none"),
@@ -28,6 +28,7 @@ internal class RustyRenjuC internal constructor(
         openThreeMask = symbols.int("open_three_mask"),
         closeThreeMask = symbols.int("close_three_mask"),
         potentialMask = symbols.int("potential_mask"),
+        emptyHash = symbols.long("empty_hash")
     )
 
     private val defaultBoard = symbols.function("default_board", ValueLayout.ADDRESS)
@@ -126,6 +127,7 @@ internal class RustyRenjuC internal constructor(
         val openThreeMask: Int,
         val closeThreeMask: Int,
         val potentialMask: Int,
+        val emptyHash: Long,
     )
 
     data class BoardExportStone(val color: Byte, val sequence: Byte)

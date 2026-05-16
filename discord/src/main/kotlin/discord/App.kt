@@ -11,6 +11,8 @@ import core.database.LocalCaches
 import core.database.repositories.AnnounceRepository
 import core.interact.reports.ErrorReport
 import core.interact.reports.Report
+import core.mintaka.MintakaProvider
+import core.mintaka.MintakaServer
 import core.session.SessionManager
 import core.session.SessionPool
 import dev.minn.jda.ktx.coroutines.await
@@ -43,23 +45,21 @@ import net.dv8tion.jda.api.requests.GatewayIntent
 import reactor.core.publisher.Flux
 import utils.lang.tuple
 import utils.log.getLogger
+import kotlin.system.exitProcess
 
-private data class PostgreSQLConfig(val serverURL: String) {
-    companion object {
-        fun fromEnv(): PostgreSQLConfig = PostgreSQLConfig(
-            serverURL = System.getenv("GOMOKUBOT_DB_URL")
-        )
-    }
-}
+fun postgresqlUrlFromEnv(): String = System.getenv("GOMOKUBOT_DB_URL")
 
-object DiscordConfigBuilder {
-    fun fromEnv(): DiscordConfig = DiscordConfig(
-        token = System.getenv("GOMOKUBOT_DISCORD_TOKEN"),
-        officialServerId = ChannelId(System.getenv("GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID").toLong()),
-        archiveSubChannelId = SubChannelId(System.getenv("GOMOKUBOT_DISCORD_ARCHIVE_CHANNEL_ID").toLong()),
-        testerRoleId = System.getenv("GOMOKUBOT_DISCORD_TESTER_ROLE_ID").toLong()
-    )
-}
+fun mintakaServerFromEnv(): MintakaServer = MintakaServer(
+    url = System.getenv("GOMOKUBOT_MINTAKA_URL"),
+    password = System.getenv("GOMOKUBOT_MINTAKA_API_PASSWORD")
+)
+
+fun discordConfigFromEnv(): DiscordConfig = DiscordConfig(
+    token = System.getenv("GOMOKUBOT_DISCORD_TOKEN"),
+    officialServerId = ChannelId(System.getenv("GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID").toLong()),
+    archiveSubChannelId = SubChannelId(System.getenv("GOMOKUBOT_DISCORD_ARCHIVE_CHANNEL_ID").toLong()),
+    testerRoleId = System.getenv("GOMOKUBOT_DISCORD_TESTER_ROLE_ID").toLong()
+)
 
 fun leaveLog(report: Report) {
     when (report) {
@@ -73,14 +73,14 @@ object GomokuBot {
     fun launch() {
         val botConfig = BotConfig()
 
-        val postgresqlConfig = PostgreSQLConfig.fromEnv()
-
-        val discordConfig = DiscordConfigBuilder.fromEnv()
+        val postgresqlUrl = postgresqlUrlFromEnv()
+        val mintakaServer = mintakaServerFromEnv()
+        val discordConfig = discordConfigFromEnv()
 
         val caches = LocalCaches()
 
         val dbConnection = runBlocking {
-            DatabaseManager.newConnectionFrom(postgresqlConfig.serverURL, caches)
+            DatabaseManager.newConnectionFrom(postgresqlUrl, caches)
                 .also { connection ->
                     DatabaseManager.initCaches(connection)
                 }
@@ -88,9 +88,20 @@ object GomokuBot {
 
         logger.info("postgresql database connected.")
 
+        runBlocking {
+            val result = MintakaProvider.validateServer(mintakaServer)
+
+            if (!result) {
+                logger.error("mintaka server is not available.")
+                exitProcess(1)
+            }
+        }
+
+        logger.info("mintaka server connected.")
+
         val sessionPool = SessionPool(dbConnection = dbConnection)
 
-        val botContext = BotContext(botConfig, dbConnection, sessionPool)
+        val botContext = BotContext(botConfig, dbConnection, mintakaServer, sessionPool)
 
         val eventManager = ReactiveEventManager()
 
@@ -187,13 +198,13 @@ object GomokuBot {
             scheduleGameExpiration(botContext, discordConfig, jda),
             scheduleRequestExpiration(botContext, discordConfig, jda),
 
-            routine(botConfig.navigatorExpireCycle) {
+            routine(botConfig.navigatorExpireChecks) {
                 val expires = SessionManager.cleanExpiredNavigators(sessionPool)
 
                 "cleaned $expires expired navigators"
             },
 
-            routine(botConfig.announceUpdateCycle) {
+            routine(botConfig.announceUpdateChecks) {
                 val announces = AnnounceRepository.fetchAnnounces(dbConnection)
                 val updated = announces.size - dbConnection.localCaches.announceCache.size
 

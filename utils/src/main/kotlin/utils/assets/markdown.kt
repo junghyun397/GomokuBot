@@ -3,12 +3,13 @@ package utils.assets
 import arrow.core.Either
 import utils.lang.tuple
 
-typealias SimplifiedMarkdownDocument = List<Pair<String, List<Pair<String?, List<Either<URL, String>>>>>>
+typealias SimplifiedMarkdownBlock = Either<String, String>
+typealias SimplifiedMarkdownDocument = List<Pair<String, List<Pair<String?, List<SimplifiedMarkdownBlock>>>>>
 typealias MarkdownAnchorMapping = Map<String, Int>
 
 // ## h2Title
 // ### h3Title
-// ![](https://URL(ref))
+// ![](https://example.com/image.png)
 // text
 fun parseSimplifiedMarkdownDocument(source: String): Pair<SimplifiedMarkdownDocument, MarkdownAnchorMapping> {
     val anchorMapping = hashMapOf<String, Int>()
@@ -50,8 +51,8 @@ fun parseSimplifiedMarkdownDocument(source: String): Pair<SimplifiedMarkdownDocu
                                     .trim()
 
                                 when {
-                                    text.isEmpty() -> listOf(Either.Left(URL(ref)))
-                                    else -> listOf(Either.Left(URL(ref)), Either.Right(text))
+                                    text.isEmpty() -> listOf(Either.Left(ref))
+                                    else -> listOf(Either.Left(ref), Either.Right(text))
                                 }
                             }
                             else -> listOf(Either.Right(block))

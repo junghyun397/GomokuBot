@@ -115,11 +115,11 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
         }
 
     private fun InlineEmbed.buildStatusFields(container: LanguageContainer, session: GameSession) {
-        session.board.lastPos().fold(
-            ifSome = { lastPos ->
+        session.history.lastAction
+            ?.let { lastPos ->
                 field {
                     name = container.boardMoves()
-                    value = session.board.moves().toString().asHighlightFormat()
+                    value = session.board.stones.toString().asHighlightFormat()
                     inline = true
                 }
 
@@ -130,16 +130,14 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                     value = "${colorInfo}${lastPos}".asHighlightFormat()
                     inline = true
                 }
-            },
-            ifEmpty = { Unit }
-        )
+            }
     }
 
     private fun InlineEmbed.buildResultFields(container: LanguageContainer, session: GameSession, gameResult: GameResult) =
-        this.buildResultFields(container, gameResult, session.board.moves().toString().asHighlightFormat())
+        this.buildResultFields(container, gameResult, session.board.stones.toString().asHighlightFormat())
 
     private fun InlineEmbed.buildResultFields(container: LanguageContainer, session: GameSession, gameResult: GameResult, totalMoves: Int) =
-        this.buildResultFields(container, gameResult, "${session.board.moves()}/$totalMoves".asHighlightFormat())
+        this.buildResultFields(container, gameResult, "${session.board.stones}/$totalMoves".asHighlightFormat())
 
     private fun InlineEmbed.buildResultFields(container: LanguageContainer, gameResult: GameResult, movesFieldString: String) {
         field {
@@ -209,14 +207,14 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
         }
 
         val blinds = when (session) {
-            is MoveStageOpeningSession -> posList
+            is MoveStageOpeningSession -> (0 until Pos.BOARD_SIZE).map { Pos.fromIdx(it) }
                 .filterNot { session.inSquare(it) }
-            is OfferStageOpeningSession -> posList
-                .filter { session.board.field[it.idx()] == Color.emptyFlag() && it in session.symmetryMoves }
+            is OfferStageOpeningSession -> (0 until Pos.BOARD_SIZE).map { Pos.fromIdx(it) }
+                .filter { session.board.field(session.history)[it.idx] == Color.emptyFlag() && it in session.symmetryMoves }
             else -> null
         }
 
-        return renderer.renderBoard(session.board, session.history, modRenderType, offers, blinds?.toSet()).fold(
+        return renderer.renderBoard(session.state, modRenderType, offers, blinds?.toSet()).fold(
             ifLeft = { textBoard ->
                 publisher sends buildList {
                     add(Embed {
@@ -262,7 +260,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
     override fun buildReplayBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession, totalMoves: Int): DiscordMessageBuilder {
         val gameResult = session.gameResult.getOrNull()!!
 
-        return renderer.renderBoard(session.board, session.history, renderType, null, null).fold(
+        return renderer.renderBoard(session.state, renderType, null, null).fold(
             ifLeft = { textBoard ->
                 publisher sends buildList {
                     add(Embed {
@@ -299,9 +297,9 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
     override fun buildSessionArchive(publisher: DiscordMessagePublisher, session: GameSession, result: Option<GameResult>, animate: Boolean): DiscordMessageBuilder {
         val imageStream = if (animate)
-            ImageBoardRenderer.renderHistoryAnimation(session.history.filterNotNull())
+            ImageBoardRenderer.renderHistoryAnimation(session.history.inner.filterNotNull())
         else
-            ImageBoardRenderer.renderInputStream(session.board, session.history, HistoryRenderType.SEQUENCE, null, null, true)
+            ImageBoardRenderer.renderInputStream(session.state, HistoryRenderType.SEQUENCE, null, null, true)
 
         val fName = if (animate) ImageBoardRenderer.newGifFileName() else ImageBoardRenderer.newFileName()
 
@@ -535,7 +533,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                         }
 
                         block.fold(
-                            ifLeft = { image = it.ref },
+                            ifLeft = { image = it },
                             ifRight = { description = it }
                         )
                     }

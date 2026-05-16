@@ -32,9 +32,9 @@ import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import reactor.core.publisher.Mono
-import utils.assets.LinuxTime
 import utils.lang.replaceIf
 import java.util.concurrent.TimeUnit
+import kotlin.time.Clock
 
 private fun buildPermissionNode(context: UserInteractionContext<*>, parsableCommand: ParsableCommand, channel: GuildMessageChannel, jdaUser: User): Either<DiscordParseFailure, ParsableCommand> =
     ChannelManager.permissionDependedRun(
@@ -187,7 +187,7 @@ fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEv
             ).apply {
                 interactionSource = context.source
                 emittedTime = context.emittedTime
-                apiTime = LinuxTime.now()
+                apiTime = Clock.System.now()
             }
         } }
 
@@ -267,7 +267,7 @@ fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Mo
             ).apply {
                 interactionSource = context.source
                 emittedTime = context.emittedTime
-                apiTime = LinuxTime.now()
+                apiTime = Clock.System.now()
             }
         } }
 }

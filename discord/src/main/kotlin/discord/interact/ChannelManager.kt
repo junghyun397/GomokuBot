@@ -106,7 +106,7 @@ object ChannelManager {
         }
 
     suspend fun archiveSession(archiveSubChannel: MessageChannel, session: RenjuSession, archivePolicy: ArchivePolicy) {
-        if (session.board.moves() < 20 || archivePolicy == ArchivePolicy.PRIVACY) return
+        if (session.board.stones < 20 || archivePolicy == ArchivePolicy.PRIVACY) return
 
         val modSession = session.replaceIf(archivePolicy == ArchivePolicy.BY_ANONYMOUS) {
             when (session) {

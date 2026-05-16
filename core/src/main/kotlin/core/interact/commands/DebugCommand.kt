@@ -2,7 +2,6 @@
 
 package core.interact.commands
 
-import arrow.core.None
 import arrow.core.raise.effect
 import arrow.core.toOption
 import core.BotContext
@@ -10,7 +9,6 @@ import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
 import core.database.entities.GameRecordId
-import core.database.entities.asGameSession
 import core.database.repositories.GameRecordRepository
 import core.mintaka.AiLevel
 import core.interact.emptyOrders
@@ -22,11 +20,12 @@ import core.session.SessionManager
 import core.session.entities.*
 import renju.Board
 import renju.notation.Pos
-import utils.assets.LinuxTime
 import utils.lang.tuple
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 
 enum class DebugType {
-    SELF_REQUEST, INJECT, STATUS, SESSIONS, GIF
+    SELF_REQUEST, STATUS, SESSIONS
 }
 
 class DebugCommand(
@@ -58,7 +57,7 @@ class DebugCommand(
                         user, user,
                         MessageBufferKey.issue(),
                         Rule.RENJU,
-                        LinuxTime.nowWithOffset(bot.config.gameExpireOffset),
+                        Clock.System.now() + bot.config.gameExpireAfter.milliseconds,
                     )
 
                     SessionManager.putRequestSession(bot.sessions, guild, requestSession)
@@ -72,41 +71,6 @@ class DebugCommand(
 
                     tuple(io, this.writeCommandReport("succeed", guild, user))
             }
-        }
-        DebugType.INJECT -> {
-            val board = Board.fromBoardText(this.payload, Pos.CENTER.idx()).getOrNull()
-                ?: throw IllegalStateException("invalid board payload")
-
-            val session = AiGameSession(
-                owner = user,
-                aiLevel = AiLevel.AMOEBA,
-                solution = None,
-                ownerHasBlack = board.isNextColorBlack,
-                board = board,
-                history = List(board.moves()) { null },
-                messageBufferKey = MessageBufferKey.issue(),
-                expireService = ExpireService(bot.config.gameExpireOffset),
-                ruleKind = Rule.RENJU,
-                recording = false,
-            )
-
-            SessionManager.putGameSession(bot.sessions, guild, session)
-
-            val io = effect {
-                service.buildNextMovePVE(
-                    publishers.plain,
-                    config.language.container,
-                    user,
-                    session.board.lastPos().getOrNull() ?: Pos.CENTER
-                )
-                    .launch()()
-
-                buildBoardProcedure(bot, guild, config, service, publishers.plain, session)()
-
-                emptyOrders
-            }
-
-            tuple(io, this.writeCommandReport("succeed", guild, user))
         }
         DebugType.STATUS -> {
             val message = """
@@ -128,7 +92,7 @@ class DebugCommand(
         DebugType.SESSIONS -> {
             val sessionMessage = bot.sessions.sessions
                 .flatMap { (_, session) -> session.gameSessions.values }
-                .sortedBy { it.expireService.createDate.timestamp }
+                .sortedBy { it.expireService.createDate }
                 .map { it.toString() }
                 .let { sessions -> when {
                     sessions.isEmpty() -> "empty"
@@ -138,30 +102,6 @@ class DebugCommand(
             val io = effect {
                 service.buildDebugMessage(publishers.plain, "report here")
                     .addFile(sessionMessage.byteInputStream(), "sessions.txt")
-                    .launch()()
-
-                emptyOrders
-            }
-
-            tuple(io, this.writeCommandReport("succeed", guild, user))
-        }
-        DebugType.GIF -> {
-            val gameRecord = payload
-                ?.split(" ")
-                ?.getOrNull(2)
-                ?.toLongOrNull()
-                ?.let { GameRecordId(it) }
-                .toOption()
-                .fold(
-                    ifSome = { GameRecordRepository.retrieveGameRecordByRecordId(bot.sessions.dbConnection, it) },
-                    ifEmpty = { GameRecordRepository.retrieveLastGameRecordByUserUid(bot.sessions.dbConnection, user.id) }
-                )
-                .getOrNull()!!
-
-            val session = gameRecord.asGameSession(bot.dbConnection, user)
-
-            val io = effect {
-                service.buildSessionArchive(publishers.plain, session, session.gameResult, true)
                     .launch()()
 
                 emptyOrders

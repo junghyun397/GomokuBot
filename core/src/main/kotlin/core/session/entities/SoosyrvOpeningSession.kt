@@ -5,7 +5,7 @@ import arrow.core.Option
 import arrow.core.Some
 import core.assets.User
 import core.session.Rule
-import renju.Board
+import renju.GameState
 import renju.notation.Pos
 
 sealed interface SoosyrvOpeningSession : OpeningSession {
@@ -18,8 +18,7 @@ data class SoosyrvMoveStageSession(
     override val owner: User,
     override val opponent: User,
     override val ownerHasBlack: Boolean,
-    override val board: Board,
-    override val history: List<Pos?>,
+    override val state: GameState,
     override val messageBufferKey: MessageBufferKey,
     override val expireService: ExpireService,
     override val isBranched: Boolean
@@ -29,17 +28,17 @@ data class SoosyrvMoveStageSession(
 
     override fun inSquare(move: Pos): Boolean =
         this.isBranched ||
-                6 - board.moves() < move.row() && move.row() < 8 + board.moves() &&
-                6 - board.moves() < move.col() && move.col() < 8 + board.moves()
+                6 - board.stones < move.row && move.row < 8 + board.stones &&
+                6 - board.stones < move.col && move.col < 8 + board.stones
 
     override val player get() =
-        if (this.board.moves() < 2)
+        if (this.board.stones < 2)
             if (this.ownerHasBlack) this.owner
             else this.opponent
         else super<MoveStageOpeningSession>.player
 
     override val nextPlayer get() =
-        if (this.board.moves() < 2) this.player
+        if (this.board.stones < 2) this.player
         else super<MoveStageOpeningSession>.nextPlayer
 
     override fun next(move: Pos): SoosyrvOpeningSession =
@@ -47,21 +46,18 @@ data class SoosyrvMoveStageSession(
             SoosyrvDeclareStageOpeningSession(
                 owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
                 messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
-                board = this.board.set(move),
-                history = this.history + move,
+                state = this.state.play(move),
             )
-        else if (this.board.moves() < 2)
+        else if (this.board.stones < 2)
             this.copy(
                 messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
-                board = this.board.set(move),
-                history = this.history + move,
+                state = this.state.play(move),
             )
         else // moves == 3
             SoosyrvSwapStageSession(
                 owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
                 messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
-                board = this.board.set(move),
-                history = this.history + move,
+                state = this.state.play(move),
                 offerCount = None
             )
 
@@ -71,8 +67,7 @@ data class SoosyrvSwapStageSession(
     override val owner: User,
     override val opponent: User,
     override val ownerHasBlack: Boolean,
-    override val board: Board,
-    override val history: List<Pos?>,
+    override val state: GameState,
     override val messageBufferKey: MessageBufferKey,
     override val expireService: ExpireService,
     override val offerCount: Option<Int>
@@ -87,7 +82,7 @@ data class SoosyrvSwapStageSession(
                     owner = this.owner, opponent = this.opponent,
                     ownerHasBlack = this.ownerHasBlack xor doSwap,
                     messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
-                    board = this.board, history = this.history,
+                    state = this.state,
                     isBranched = true
                 )
             },
@@ -96,7 +91,7 @@ data class SoosyrvSwapStageSession(
                     owner = this.owner, opponent = this.opponent,
                     ownerHasBlack = this.ownerHasBlack xor doSwap,
                     messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
-                    board = this.board, history = this.history,
+                    state = this.state,
                     moveCandidates = emptySet(),
                     symmetryMoves = emptySet(),
                     offerCount = count
@@ -110,8 +105,7 @@ data class SoosyrvDeclareStageOpeningSession(
     override val owner: User,
     override val opponent: User,
     override val ownerHasBlack: Boolean,
-    override val board: Board,
-    override val history: List<Pos?>,
+    override val state: GameState,
     override val messageBufferKey: MessageBufferKey,
     override val expireService: ExpireService,
 ) : SoosyrvOpeningSession, DeclareStageOpeningSession {
@@ -125,7 +119,7 @@ data class SoosyrvDeclareStageOpeningSession(
     override fun declare(count: Int) =
         SoosyrvSwapStageSession(
             owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
-            board = this.board, history = this.history,
+            state = this.state,
             messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
             offerCount = Some(count)
         )
@@ -136,8 +130,7 @@ data class SoosyrvOfferStageOpeningSession(
     override val owner: User,
     override val opponent: User,
     override val ownerHasBlack: Boolean,
-    override val board: Board,
-    override val history: List<Pos?>,
+    override val state: GameState,
     override val messageBufferKey: MessageBufferKey,
     override val expireService: ExpireService,
     override val moveCandidates: Set<Pos>,
@@ -151,7 +144,7 @@ data class SoosyrvOfferStageOpeningSession(
         if (this.remainingMoves == 1)
             SoosyrvSelectStageOpeningSession(
                 owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
-                board = this.board, history = this.history,
+                state = this.state,
                 messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
                 moveCandidates = this.moveCandidates + move
             )
@@ -168,8 +161,7 @@ data class SoosyrvSelectStageOpeningSession(
     override val owner: User,
     override val opponent: User,
     override val ownerHasBlack: Boolean,
-    override val board: Board,
-    override val history: List<Pos?>,
+    override val state: GameState,
     override val messageBufferKey: MessageBufferKey,
     override val expireService: ExpireService,
     override val moveCandidates: Set<Pos>,
@@ -178,9 +170,8 @@ data class SoosyrvSelectStageOpeningSession(
     override fun select(move: Pos): PvpGameSession =
         PvpGameSession(
             owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
-            board = this.board.set(move),
+            state = this.state.play(move),
             gameResult = this.gameResult,
-            history = this.history + move,
             messageBufferKey = MessageBufferKey.issue(),
             recording = true,
             ruleKind = Rule.SOOSYRV_8,

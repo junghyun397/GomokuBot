@@ -4,7 +4,8 @@ import arrow.core.Either
 import com.sksamuel.scrimage.AwtImage
 import com.sksamuel.scrimage.nio.StreamingGifWriter
 import renju.Board
-import renju.native.RustyRenjuCApi
+import renju.GameState
+import renju.History
 import renju.native.RustyRenjuImage
 import renju.native.RustyRenjuImageApi
 import renju.notation.Pos
@@ -30,15 +31,14 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
         "board-animated-${System.currentTimeMillis()}.gif"
 
     override fun renderBoard(
-        board: Board,
-        history: List<Pos?>,
+        state: GameState,
         historyRenderType: HistoryRenderType,
         offers: Set<Pos>?,
         blinds: Set<Pos>?
     ) = runCatching {
-        Either.Right(renderInputStream(board, history, historyRenderType, offers, blinds))
+        Either.Right(renderInputStream(state, historyRenderType, offers, blinds))
     }.getOrElse {
-        Either.Left("```\n${board.toString().replace(".", " ")} ```")
+        Either.Left("```\n${state.board.toString().replace(".", " ")} ```")
     }
 
     private fun historyRenderOption(historyRenderType: HistoryRenderType): Byte =
@@ -48,35 +48,25 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
             HistoryRenderType.SEQUENCE -> RustyRenjuImageApi.constants.rendererSequence
         }
 
-    private fun asMaybePosBuffer(history: List<Pos?>): ByteArray? =
-        if (history.isEmpty()) {
-            null
-        } else {
-            ByteArray(history.size) { index ->
-                history[index]?.idx()?.toByte() ?: RustyRenjuCApi.constants.posNone
-            }
-        }
-
     private fun asPosBuffer(posSet: Set<Pos>?): ByteArray? {
         if (posSet.isNullOrEmpty()) {
             return null
         }
 
         return posSet
-            .sortedBy { it.idx() }
-            .map { it.idx().toByte() }
+            .sortedBy { it.idx }
+            .map { it.idx.toByte() }
             .toByteArray()
     }
 
     private fun renderBytes(
-        board: Board,
-        history: List<Pos?>,
+        state: GameState,
         historyRenderType: HistoryRenderType,
         offers: Set<Pos>?,
         blinds: Set<Pos>?,
         enableForbiddenPoints: Boolean,
     ): ByteArray {
-        val actions = asMaybePosBuffer(history)
+        val actions = state.history.toMaybePosBuffer()
         val offerBuffer = asPosBuffer(offers)
         val blindBuffer = asPosBuffer(blinds)
 
@@ -85,9 +75,9 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
             1.0f,
             historyRenderOption(historyRenderType),
             enableForbiddenPoints,
-            board.nativeHandle(),
+            state.board.nativeHandle(),
             actions,
-            actions?.size?.toLong() ?: 0L,
+            state.history.moves.toLong(),
             offerBuffer,
             offerBuffer?.size?.toLong() ?: 0L,
             blindBuffer,
@@ -117,15 +107,14 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
     }
 
     fun renderInputStream(
-        board: Board,
-        history: List<Pos?>,
+        state: GameState,
         historyRenderType: HistoryRenderType,
         offers: Set<Pos>?,
         blinds: Set<Pos>?,
         enableForbiddenPoints: Boolean = true
     ): InputStream =
         ByteArrayInputStream(
-            renderBytes(board, history, historyRenderType, offers, blinds, enableForbiddenPoints)
+            renderBytes(state, historyRenderType, offers, blinds, enableForbiddenPoints)
         )
 
     fun renderHistoryAnimation(history: List<Pos>): InputStream {
@@ -134,14 +123,13 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
         val gifBuilder = StreamingGifWriter(Duration.ofSeconds(1), false, false)
 
         gifBuilder.prepareStream(outputStream, BufferedImage.TYPE_INT_ARGB).apply {
-            var board: Board = Board.newBoard()
+            var state = GameState(Board.newBoard(), History.empty())
 
             history.forEachIndexed { index, pos ->
-                board = board.set(pos)
+                state = state.play(pos)
 
                 val frame = renderBytes(
-                    board = board,
-                    history = history.subList(0, index + 1),
+                    state = state,
                     historyRenderType = HistoryRenderType.SEQUENCE,
                     offers = null,
                     blinds = null,

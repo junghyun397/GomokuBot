@@ -4,25 +4,28 @@ import arrow.core.Option
 import core.assets.User
 import core.session.Rule
 import renju.Board
+import renju.GameState
+import renju.History
 import renju.notation.GameResult
-import renju.notation.Pos
-import utils.assets.LinuxTime
+import kotlin.time.Instant
 
 sealed interface GameSession : Expirable {
 
     val expireService: ExpireService
 
-    override val expireDate: LinuxTime get() = this.expireService.expireAt
+    override val expireDate: Instant get() = this.expireService.expireAt
 
     val owner: User
     val opponent: User
     val ownerHasBlack: Boolean
 
-    val board: Board
+    val state: GameState
+
+    val board: Board get() = this.state.board
+
+    val history: History get() = this.state.history
 
     val gameResult: Option<GameResult>
-
-    val history: List<Pos?>
 
     val messageBufferKey: MessageBufferKey
 

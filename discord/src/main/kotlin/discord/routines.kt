@@ -21,9 +21,9 @@ import kotlinx.coroutines.reactor.asFlux
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import reactor.core.publisher.Flux
-import utils.assets.LinuxTime
 import utils.lang.schedule
 import java.time.Duration
+import kotlin.time.Clock
 
 private suspend fun executeCommand(
     taskContext: TaskContext,
@@ -53,13 +53,13 @@ private suspend fun executeCommand(
     ).apply {
         interactionSource = taskContext.source
         emittedTime = taskContext.emittedTime
-        apiTime = LinuxTime.now()
+        apiTime = Clock.System.now()
     }
 
 fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flux<Report> =
-    schedule(bot.config.gameExpireCycle, {
+    schedule(bot.config.gameExpireChecks, {
         SessionManager.cleanExpiredGameSession(bot.sessions).forEach { (_, channelSession, _, session) ->
-            val context = TaskContext(bot, channelSession.guild, channelSession.config, LinuxTime.now(), "SCH")
+            val context = TaskContext(bot, channelSession.guild, channelSession.config, Clock.System.now(), "SCH")
 
             val maybeMessage = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
@@ -81,9 +81,9 @@ fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: J
     }).asFlux()
 
 fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flux<Report> =
-    schedule(bot.config.requestExpireCycle, {
+    schedule(bot.config.requestExpireChecks, {
         SessionManager.cleanExpiredRequestSessions(bot.sessions).forEach { (_, channelSession, _, session) ->
-            val context = TaskContext(bot, channelSession.guild, channelSession.config, LinuxTime.now(), "SCH")
+            val context = TaskContext(bot, channelSession.guild, channelSession.config, Clock.System.now(), "SCH")
 
             val maybeMessage = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
@@ -105,9 +105,9 @@ fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, jda
 
 inline fun routine(interval: Duration, crossinline job: suspend () -> String): Flux<RoutineReport> =
     schedule<RoutineReport>(interval, {
-        val time = LinuxTime.now()
+        val time = Clock.System.now()
 
         val comment = job()
 
-        RoutineReport(comment, time, LinuxTime.now(), LinuxTime.now(),"SCH")
+        RoutineReport(comment, time, Clock.System.now(), Clock.System.now(),"SCH")
     }).asFlux()

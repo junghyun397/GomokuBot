@@ -1,3 +1,3 @@
-typeshare native/mintaka --lang=kotlin --output-file=mintaka.kt.raw
+typeshare native/mintaka --lang=kotlin --output-file=types.kt.raw
 
-cat mintaka.kt.header.raw mintaka.kt.raw > core/src/main/kotlin/core/mintaka/mintaka.kt
+cat types.kt.header types.kt.raw > core/src/main/kotlin/core/mintaka/types/types.generated.kt

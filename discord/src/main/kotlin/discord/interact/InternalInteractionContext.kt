@@ -9,7 +9,8 @@ import discord.assets.*
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.events.Event
 import reactor.core.publisher.Mono
-import utils.assets.LinuxTime
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 data class InternalInteractionContext<out E : Event> (
     override val bot: BotContext,
@@ -17,7 +18,7 @@ data class InternalInteractionContext<out E : Event> (
     override val event: E,
     override val guild: Channel,
     override val config: ChannelConfig,
-    override val emittedTime: LinuxTime,
+    override val emittedTime: Instant,
     override val source: String
 ) : InteractionContext<E> {
 
@@ -34,7 +35,7 @@ data class InternalInteractionContext<out E : Event> (
                 event = event,
                 guild = guild,
                 config = SessionManager.retrieveChannelConfig(bot.sessions, guild),
-                emittedTime = LinuxTime.now(),
+                emittedTime = Clock.System.now(),
                 source = event.abbreviation()
             )
         }

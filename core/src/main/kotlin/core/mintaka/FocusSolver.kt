@@ -1,6 +1,6 @@
 package core.mintaka
 
-import renju.Board
+import renju.GameState
 import renju.native.RustyRenjuCApi
 import renju.notation.Color
 import renju.notation.Pos
@@ -83,32 +83,32 @@ object FocusSolver {
         return forkWeight + treatWeight + fourWeight + fiveWeight
     }
 
-    private fun isLegalEmptyMove(board: Board, field: ByteArray, idx: Int): Boolean =
-        !Color.isStone(field[idx]) && board.validateMove(idx).isNone()
+    private fun isLegalEmptyMove(state: GameState, field: ByteArray, idx: Int): Boolean =
+        !Color.isStone(field[idx]) && state.board.validateMove(idx).isNone()
 
-    private fun collectFiveHighlights(board: Board, field: ByteArray): List<Pos> {
+    private fun collectFiveHighlights(state: GameState, field: ByteArray): List<Pos> {
         val fiveMask = RustyRenjuCApi.constants.fiveMask
-        val nextColor = board.playerColor()
+        val nextColor = state.board.playerColor
 
         return (0 until Pos.BOARD_SIZE)
             .asSequence()
-            .filter { idx -> isLegalEmptyMove(board, field, idx) }
-            .filter { idx -> (board.pattern(idx, nextColor) and fiveMask) != 0 }
+            .filter { idx -> isLegalEmptyMove(state, field, idx) }
+            .filter { idx -> (state.board.pattern(idx, nextColor) and fiveMask) != 0 }
             .map { idx -> Pos.fromIdx(idx) }
             .toList()
     }
 
-    private fun evaluateBoard(board: Board, field: ByteArray): MutableList<MutableList<Int>> {
-        val nextColor = board.playerColor()
+    private fun evaluateBoard(state: GameState, field: ByteArray): MutableList<MutableList<Int>> {
+        val nextColor = state.board.playerColor
         val opponentColor = nextColor.reversed()
 
         return (0 until Pos.BOARD_SIZE)
             .map { idx ->
-                if (!isLegalEmptyMove(board, field, idx)) {
+                if (!isLegalEmptyMove(state, field, idx)) {
                     0
                 } else {
-                    val self = buildPatternStats(board.pattern(idx, nextColor))
-                    val opponent = buildPatternStats(board.pattern(idx, opponentColor))
+                    val self = buildPatternStats(state.board.pattern(idx, nextColor))
+                    val opponent = buildPatternStats(state.board.pattern(idx, opponentColor))
 
                     evaluateParticle(FocusWeights, self, opponent, true) +
                             evaluateParticle(FocusWeights, opponent, self, false) +
@@ -120,31 +120,30 @@ object FocusSolver {
     }
 
     // Prefix Sum Algorithm, O(N)
-    fun resolveFocus(board: Board, kernelWidth: Int, buildHighlights: Boolean): FocusInfo =
-        board.lastPos().fold(
-            ifEmpty = { FocusInfo(Pos.CENTER, listOf(Pos.CENTER)) },
-            ifSome = { lastPos ->
+    fun resolveFocus(state: GameState, kernelWidth: Int, buildHighlights: Boolean): FocusInfo =
+        state.history.lastAction
+            ?.let { lastPos ->
                 val boardWidth = Pos.BOARD_WIDTH
                 val boardMaxIdx = Pos.BOARD_BOUND
                 val normalizedKernelWidth = kernelWidth.coerceIn(1, boardWidth)
                 val kernelHalf = normalizedKernelWidth / 2
                 val kernelQuarter = normalizedKernelWidth / 4
 
-                val field = board.field
-                val evaluated = evaluateBoard(board, field)
-                val highlights = if (buildHighlights) collectFiveHighlights(board, field) else emptyList()
+                val field = state.board.field(state.history)
+                val evaluated = evaluateBoard(state, field)
+                val highlights = if (buildHighlights) collectFiveHighlights(state, field) else emptyList()
 
-                evaluated[lastPos.row()][lastPos.col()] += FocusWeights.lastMove
+                evaluated[lastPos.row][lastPos.col] += FocusWeights.lastMove
 
-                for (row in max(0, lastPos.row() - kernelHalf)..min(boardMaxIdx, lastPos.row() + kernelHalf)) {
-                    for (col in max(0, lastPos.col() - kernelHalf)..min(boardMaxIdx, lastPos.col() + kernelHalf)) {
+                for (row in max(0, lastPos.row - kernelHalf)..min(boardMaxIdx, lastPos.row + kernelHalf)) {
+                    for (col in max(0, lastPos.col - kernelHalf)..min(boardMaxIdx, lastPos.col + kernelHalf)) {
                         evaluated[row][col] += FocusWeights.centerExtra
                     }
                 }
 
-                if (board.moves() < 5) {
-                    for (row in max(0, lastPos.row() - kernelQuarter)..min(boardMaxIdx, lastPos.row() + kernelQuarter)) {
-                        for (col in max(0, lastPos.col() - kernelQuarter)..min(boardMaxIdx, lastPos.col() + kernelQuarter)) {
+                if (state.board.stones < 5) {
+                    for (row in max(0, lastPos.row - kernelQuarter)..min(boardMaxIdx, lastPos.row + kernelQuarter)) {
+                        for (col in max(0, lastPos.col - kernelQuarter)..min(boardMaxIdx, lastPos.col + kernelQuarter)) {
                             evaluated[row][col] += FocusWeights.centerExtra
                         }
                     }
@@ -164,8 +163,8 @@ object FocusSolver {
                 val step = boardWidth - normalizedKernelWidth
 
                 var maxScore = Int.MIN_VALUE
-                var maxRow = lastPos.row().coerceIn(0, step)
-                var maxCol = lastPos.col().coerceIn(0, step)
+                var maxRow = lastPos.row.coerceIn(0, step)
+                var maxCol = lastPos.col.coerceIn(0, step)
 
                 for (row in 0..step) {
                     for (col in 0..step) {
@@ -191,16 +190,16 @@ object FocusSolver {
 
                 FocusInfo(focus, highlights)
             }
-        )
+            ?: FocusInfo(Pos.CENTER, listOf(Pos.CENTER))
 
-    fun resolveCenter(board: Board, range: IntRange): FocusInfo {
-        val lastPos = board.lastPos().getOrNull()
+    fun resolveCenter(state: GameState, range: IntRange): FocusInfo {
+        val lastPos = state.history.lastAction
 
         return if (lastPos == null) {
             FocusInfo(Pos.CENTER, listOf(Pos.CENTER))
         } else {
             FocusInfo(
-                Pos(lastPos.row().coerceIn(range), lastPos.col().coerceIn(range)),
+                Pos(lastPos.row.coerceIn(range), lastPos.col.coerceIn(range)),
                 emptyList(),
             )
         }

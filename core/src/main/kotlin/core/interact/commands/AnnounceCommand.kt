@@ -16,8 +16,9 @@ import core.session.SessionManager
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
-import utils.assets.LinuxTime
 import utils.lang.tuple
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 
 class AnnounceCommand(command: Command) : UnionCommand(command) {
 
@@ -53,7 +54,7 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
                                         announceMessage.messageRef,
                                         NavigationKind.ANNOUNCE,
                                         index + 1,
-                                        LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
+                                        Clock.System.now() + bot.config.navigatorExpireAfter.milliseconds
                                     )
                                 )
 

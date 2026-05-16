@@ -56,10 +56,10 @@ class FocusCommand(
 
         val newFocusInfo = this.navigationState.focusInfo.copy(focus = newFocus)
 
-        when(newFocus.idx()) {
+        when(newFocus.idx) {
             this.navigationState.page -> tuple(effect { emptyOrders }, this.writeCommandReport("focus bounded", guild, user))
             else -> {
-                SessionManager.addNavigation(bot.sessions, messageRef, this.navigationState.copy(page = newFocus.idx()))
+                SessionManager.addNavigation(bot.sessions, messageRef, this.navigationState.copy(page = newFocus.idx))
 
                 val action = effect {
                     service.dispatchFocusButtons(publishers.component, service.generateFocusedField(session, newFocusInfo))

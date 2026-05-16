@@ -11,8 +11,13 @@ import core.database.entities.extractGameRecord
 import core.database.repositories.GameRecordRepository
 import core.mintaka.AiLevel
 import core.interact.message.graphics.*
+import core.mintaka.MintakaIdleSession
+import core.mintaka.MintakaProvider
+import core.mintaka.MintakaServer
 import core.session.entities.*
 import renju.Board
+import renju.GameState
+import renju.History
 import renju.MoveError
 import renju.notation.Color
 import renju.notation.GameResult
@@ -58,31 +63,28 @@ object GameManager {
                 owner = owner,
                 opponent = opponent,
                 ownerHasBlack = ownerHasBlack,
-                board = Board.newBoard(),
-                history = emptyList(),
+                state = GameState(Board.newBoard(), History.empty()),
                 messageBufferKey = MessageBufferKey.issue(),
                 recording = true,
                 ruleKind = rule,
-                expireService = ExpireService(bot.config.gameExpireOffset),
+                expireService = ExpireService(bot.config.gameExpireAfter),
             )
             Rule.TARAGUCHI_10 -> TaraguchiSwapStageSession(
                 owner = owner,
                 opponent = opponent,
                 ownerHasBlack = ownerHasBlack,
-                board = Board.newBoard().set(Pos.CENTER),
-                history = listOf(Pos.CENTER),
+                state = GameState(Board.newBoard(), History.empty()).play(Pos.CENTER),
                 messageBufferKey = MessageBufferKey.issue(),
-                expireService = ExpireService(bot.config.gameExpireOffset),
+                expireService = ExpireService(bot.config.gameExpireAfter),
                 isBranched = false
             )
             Rule.SOOSYRV_8 -> SoosyrvMoveStageSession(
                 owner = owner,
                 opponent = opponent,
                 ownerHasBlack = ownerHasBlack,
-                board = Board.newBoard().set(Pos.CENTER),
-                history = listOf(Pos.CENTER),
+                state = GameState(Board.newBoard(), History.empty()).play(Pos.CENTER),
                 messageBufferKey = MessageBufferKey.issue(),
-                expireService = ExpireService(bot.config.gameExpireOffset),
+                expireService = ExpireService(bot.config.gameExpireAfter),
                 isBranched = false
             )
         }
@@ -91,26 +93,28 @@ object GameManager {
     suspend fun generateAiSession(bot: BotContext, owner: User, aiLevel: AiLevel): GameSession {
         val ownerHasBlack = Random(System.nanoTime()).nextBoolean()
 
-        val board = if (ownerHasBlack) Board.newBoard() else Board.newBoard().set(Pos.CENTER)
+        val state = if (ownerHasBlack)
+            GameState(Board.newBoard(), History.empty())
+        else
+            GameState(Board.newBoard(), History.empty()).play(Pos.CENTER)
 
-        val history = if (ownerHasBlack) emptyList() else listOf(Pos.CENTER)
+        // TODO: PoC
+        val sessionHandle = MintakaProvider.createSession(bot.mintakaServer, MintakaProvider.DefaultConfig, MintakaProvider.EmptyBoard)
 
         return AiGameSession(
+            mintakaSession = sessionHandle.session.await(),
             owner = owner,
-            aiLevel = aiLevel,
-            solution = None,
             ownerHasBlack = ownerHasBlack,
-            board = board,
-            history = history,
+            state = state,
             messageBufferKey = MessageBufferKey.issue(),
             recording = true,
             ruleKind = Rule.RENJU,
-            expireService = ExpireService(bot.config.gameExpireOffset),
+            expireService = ExpireService(bot.config.gameExpireAfter),
         )
     }
 
     fun validateMove(session: GameSession, move: Pos): Option<MoveError> =
-        session.board.validateMove(move.idx())
+        session.board.validateMove(move)
             .fold(
                 ifEmpty = {
                     if (session is OpeningSession && !session.validateMove(move))
@@ -122,10 +126,10 @@ object GameManager {
             )
 
     fun makeMove(session: RenjuSession, pos: Pos): RenjuSession {
-        val thenBoard = session.board.set(pos)
+        val thenState = session.state.play(pos)
 
-        return thenBoard.winner().fold(
-            { session.next(thenBoard, pos, None, MessageBufferKey.issue()) },
+        return thenState.board.winner().fold(
+            { session.next(thenState, None, MessageBufferKey.issue()) },
             { result ->
                 val gameResult = when (result) {
                     is GameResult.FiveInRow ->
@@ -133,26 +137,23 @@ object GameManager {
                     else -> GameResult.Full
                 }
 
-                session.next(thenBoard, pos, Some(gameResult), session.messageBufferKey)
+                session.next(thenState, Some(gameResult), session.messageBufferKey)
             }
         )
     }
 
-    suspend fun makeAiMove(session: AiGameSession): AiGameSession {
-        // PoC placeholder: choose the first legal move without search/VCF.
-        val aiMove = session.board.legalMoves().firstOrNull() ?: return session.copy(
-            gameResult = Some(GameResult.Full),
-            solution = None,
-        )
+    suspend fun makeAiMove(server: MintakaServer, session: AiGameSession): AiGameSession {
+        // TODO: PoC
+        val launchHandle = MintakaProvider.launchSession(server, session.mintakaSession as MintakaIdleSession)
 
-        val thenBoard = session.board.set(aiMove)
+        val aiMove = Pos.fromCartesian(launchHandle.bestmove.await().best_move)!!
 
-        return thenBoard.winner().fold(
+        val thenState = session.state.play(aiMove)
+
+        return thenState.board.winner().fold(
             {
                 session.copy(
-                    board = thenBoard,
-                    history = session.history + Pos.fromIdx(aiMove),
-                    solution = None,
+                    state = thenState,
                 )
             },
             { result ->
@@ -163,10 +164,8 @@ object GameManager {
                 }
 
                 session.copy(
-                    board = thenBoard,
+                    state = thenState,
                     gameResult = Some(gameResult),
-                    history = session.history + Pos.fromIdx(aiMove),
-                    solution = None,
                 )
             }
         )
@@ -176,10 +175,10 @@ object GameManager {
         when (session) {
             is AiGameSession -> {
                 val winColor =
-                    if (session.board.moves() == 0)
+                    if (session.board.stones == 0)
                         if (session.ownerHasBlack) Color.White
                         else Color.Black
-                    else session.board.color()
+                    else session.board.opponentColor
 
                 val result = GameResult.Win(cause, winColor, aiUser, session.owner)
 

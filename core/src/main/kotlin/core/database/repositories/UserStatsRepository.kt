@@ -10,11 +10,11 @@ import core.database.entities.UserStats
 import kotlinx.coroutines.reactive.awaitSingle
 import renju.notation.Color
 import renju.notation.GameResult
-import utils.assets.LinuxTime
-import utils.lang.toLinuxTime
+import utils.lang.toUtcInstant
 import utils.lang.tuple
 import java.time.LocalDateTime
 import java.util.*
+import kotlin.time.Clock
 
 object UserStatsRepository {
 
@@ -37,7 +37,7 @@ object UserStatsRepository {
                         whiteLosses = row["white_losses"] as Int,
                         whiteDraws = row["white_draws"] as Int,
 
-                        lastUpdate = (row["last_update"] as LocalDateTime).toLinuxTime()
+                        lastUpdate = (row["last_update"] as LocalDateTime).toUtcInstant()
                     )
                 }
             }
@@ -62,7 +62,7 @@ object UserStatsRepository {
                         whiteLosses = row["white_losses"] as Int,
                         whiteDraws = row["white_draws"] as Int,
 
-                        lastUpdate = (row["last_update"] as LocalDateTime).toLinuxTime()
+                        lastUpdate = (row["last_update"] as LocalDateTime).toUtcInstant()
                     )
                 }
             }
@@ -153,7 +153,7 @@ object UserStatsRepository {
                     whiteWins = whiteWins,
                     whiteLosses = whiteLosses,
                     whiteDraws = whiteTotal - whiteWins - whiteLosses,
-                    lastUpdate = LinuxTime.now()
+                    lastUpdate = Clock.System.now()
                 )
             }
 

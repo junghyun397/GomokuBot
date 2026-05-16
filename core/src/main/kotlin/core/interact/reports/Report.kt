@@ -1,21 +1,21 @@
 package core.interact.reports
 
-import utils.assets.LinuxTime
+import kotlin.time.Instant
 
 interface Report {
 
     val comment: String
 
-    var emittedTime: LinuxTime?
+    var emittedTime: Instant?
 
-    var apiTime: LinuxTime?
+    var apiTime: Instant?
 
-    val commandTime: LinuxTime
+    val commandTime: Instant
 
     var interactionSource: String?
 
     val executionTime: Long
-        get() = this.emittedTime?.let { emitted -> this.commandTime.timestamp - emitted.timestamp } ?: 0
+        get() = this.emittedTime?.let { emitted -> this.commandTime.toEpochMilliseconds() - emitted.toEpochMilliseconds() } ?: 0
 
     operator fun plus(other: Report): Report =
         LinkedReportProxy(other, this)

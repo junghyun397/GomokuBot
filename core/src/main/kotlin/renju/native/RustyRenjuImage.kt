@@ -50,6 +50,7 @@ internal class RustyRenjuImage internal constructor(
     ): ByteBuffer {
         return Arena.ofConfined().use { arena ->
             val byteBufferSegment = imageRender.invokeWithArguments(
+                arena,
                 imageFormat,
                 webpQuality,
                 option,

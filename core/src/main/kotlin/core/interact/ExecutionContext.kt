@@ -3,7 +3,7 @@ package core.interact
 import core.BotContext
 import core.assets.Channel
 import core.session.entities.ChannelConfig
-import utils.assets.LinuxTime
+import kotlin.time.Instant
 
 interface ExecutionContext {
 
@@ -13,7 +13,7 @@ interface ExecutionContext {
 
     val config: ChannelConfig
 
-    val emittedTime: LinuxTime
+    val emittedTime: Instant
 
     val source: String
 

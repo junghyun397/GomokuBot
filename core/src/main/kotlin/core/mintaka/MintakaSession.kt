@@ -1,5 +1,7 @@
 package core.mintaka
 
+import core.mintaka.types.ResponseSchema
+import renju.notation.HashKey
 import kotlin.time.Instant
 
 sealed interface WaitingState {
@@ -59,7 +61,7 @@ data class MintakaStreamingSession(
     override val sid: String,
     override val token: String,
     override val hash: HashKey,
-    val lastResponse: Response,
+    val lastResponse: MintakaResponse,
     val aborted: Boolean = false,
 ) : MintakaSession {
 

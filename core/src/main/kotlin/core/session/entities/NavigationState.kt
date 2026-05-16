@@ -12,10 +12,12 @@ import core.interact.i18n.Language
 import core.interact.message.MessagingServiceImpl
 import core.interact.message.SettingMapping
 import renju.notation.Pos
-import utils.assets.LinuxTime
 import utils.assets.toBytes
 import utils.structs.Identifiable
 import utils.structs.find
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Instant
 
 enum class NavigationKind(override val id: Short, val range: Either<(DatabaseConnection) -> IntRange, IntRange>, val navigators: Set<String>) : Identifiable {
 
@@ -54,7 +56,7 @@ data class PageNavigationState(
     private val messageRef: MessageRef,
     override val kind: NavigationKind,
     override val page: Int,
-    override val expireDate: LinuxTime,
+    override val expireDate: Instant,
 ) : NavigationState {
 
     companion object {
@@ -79,7 +81,7 @@ data class PageNavigationState(
             val page = pageTop + pageBottom
 
             return if (kind != NavigationKind.BOARD && page in kind.fetchRange(dbConnection))
-                Some(PageNavigationState(messageRef, kind, page, LinuxTime.nowWithOffset(config.navigatorExpireOffset)))
+                Some(PageNavigationState(messageRef, kind, page, Clock.System.now() + config.navigatorExpireAfter.milliseconds))
             else None
         }
 
@@ -90,7 +92,7 @@ data class PageNavigationState(
 data class BoardNavigationState(
     override val page: Int,
     val focusInfo: FocusSolver.FocusInfo,
-    override val expireDate: LinuxTime,
+    override val expireDate: Instant,
 ): NavigationState {
 
     override val kind = NavigationKind.BOARD

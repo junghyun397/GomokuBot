@@ -6,9 +6,9 @@ import core.assets.MessageRef
 import core.assets.UserUid
 import core.database.repositories.ChannelConfigRepository
 import core.session.entities.*
-import utils.assets.LinuxTime
 import utils.lang.tuple
 import utils.structs.Quadruple
+import kotlin.time.Clock
 
 object SessionManager {
 
@@ -118,13 +118,13 @@ object SessionManager {
         crossinline extract: (ChannelSession) -> Map<UserUid, T>,
         crossinline mutate: (ChannelSession, Set<UserUid>) -> ChannelSession
     ): Sequence<Quadruple<ChannelUid, ChannelSession, UserUid, T>> {
-        val referenceTime = LinuxTime.now()
+        val referenceTime = Clock.System.now()
 
         return pool.sessions
             .asSequence()
             .flatMap { (channelId, session) ->
                 extract(session)
-                    .filter { referenceTime.timestamp > it.value.expireDate.timestamp }
+                    .filter { referenceTime > it.value.expireDate }
                     .map { (userId, expired) -> tuple(channelId, session, userId, expired) }
                     .also { expires ->
                         pool.sessions[channelId] = mutate(pool.sessions[channelId]!!, expires.map { it.third }.toSet())
@@ -152,10 +152,10 @@ object SessionManager {
     }
 
     fun cleanExpiredNavigators(pool: SessionPool): Map<MessageRef, NavigationState> {
-        val referenceTime = LinuxTime.now()
+        val referenceTime = Clock.System.now()
 
         return pool.navigates
-            .filterValues { referenceTime.timestamp > it.expireDate.timestamp }
+            .filterValues { referenceTime > it.expireDate }
             .also { pool.navigates - it.keys }
     }
 

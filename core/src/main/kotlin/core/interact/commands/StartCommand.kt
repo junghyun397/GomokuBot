@@ -16,8 +16,9 @@ import core.session.SessionManager
 import core.session.entities.ChannelConfig
 import core.session.entities.MessageBufferKey
 import core.session.entities.RequestSession
-import utils.assets.LinuxTime
 import utils.lang.tuple
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 
 class StartCommand(val opponent: User?, val rule: Rule) : Command {
 
@@ -54,7 +55,7 @@ class StartCommand(val opponent: User?, val rule: Rule) : Command {
                     user, opponent,
                     MessageBufferKey.issue(),
                     this.rule,
-                    LinuxTime.nowWithOffset(bot.config.requestExpireOffset),
+                    Clock.System.now() + bot.config.requestExpireAfter.milliseconds,
                 )
 
                 SessionManager.putRequestSession(bot.sessions, guild, requestSession)

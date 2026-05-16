@@ -1,7 +1,8 @@
 package core.database.entities
 
 import core.assets.UserUid
-import utils.assets.LinuxTime
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 data class UserStats(
     val userId: UserUid,
@@ -14,7 +15,7 @@ data class UserStats(
     val whiteLosses: Int = 0,
     val whiteDraws: Int = 0,
 
-    val lastUpdate: LinuxTime = LinuxTime.now()
+    val lastUpdate: Instant = Clock.System.now()
 ) : Comparable<UserStats> {
 
     val isEmpty: Boolean get() =

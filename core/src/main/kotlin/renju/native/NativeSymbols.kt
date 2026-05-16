@@ -10,9 +10,11 @@ internal class NativeSymbols(
 
     private val linker = Linker.nativeLinker()
 
-    fun byte(name: String): Byte = function(name, ValueLayout.JAVA_BYTE).invokeWithArguments() as Byte
+    fun byte(name: String) = function(name, ValueLayout.JAVA_BYTE).invokeWithArguments() as Byte
 
-    fun int(name: String): Int = function(name, ValueLayout.JAVA_INT).invokeWithArguments() as Int
+    fun int(name: String) = function(name, ValueLayout.JAVA_INT).invokeWithArguments() as Int
+
+    fun long(name: String) = function(name, ValueLayout.JAVA_LONG).invokeWithArguments() as Long
 
     fun function(name: String, result: MemoryLayout, vararg arguments: MemoryLayout): MethodHandle =
         linker.downcallHandle(symbol(name), FunctionDescriptor.of(result, *arguments))

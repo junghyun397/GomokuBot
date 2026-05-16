@@ -1,9 +1,9 @@
 package core.session.entities
 
-import utils.assets.LinuxTime
+import kotlin.time.Instant
 
 sealed interface Expirable {
 
-    val expireDate: LinuxTime
+    val expireDate: Instant
 
 }

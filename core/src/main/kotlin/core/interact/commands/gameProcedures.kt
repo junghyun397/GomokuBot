@@ -50,8 +50,8 @@ fun <A, B> buildBoardProcedure(
     session: GameSession,
 ): Effect<Nothing, Unit> {
     val focusInfo = when (config.focusType) {
-        FocusType.INTELLIGENCE -> FocusSolver.resolveFocus(session.board, service.focusWidth, config.hintType == HintType.FIVE)
-        FocusType.FALLOWING -> FocusSolver.resolveCenter(session.board, service.focusRange)
+        FocusType.INTELLIGENCE -> FocusSolver.resolveFocus(session.state, service.focusWidth, config.hintType == HintType.FIVE)
+        FocusType.FALLOWING -> FocusSolver.resolveCenter(session.state, service.focusRange)
     }
 
     return effect {
@@ -68,11 +68,11 @@ fun <A, B> buildBoardProcedure(
 
         maybeMessage.fold(
             ifSome = { message ->
-                SessionManager.addNavigation(bot.sessions, message.messageRef, BoardNavigationState(focusInfo.focus.idx(), focusInfo, session.expireDate))
+                SessionManager.addNavigation(bot.sessions, message.messageRef, BoardNavigationState(focusInfo.focus.idx, focusInfo, session.expireDate))
                 SessionManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.messageRef)
                 service.attachFocusNavigators(message.messageData) {
                     SessionManager.retrieveGameSession(bot.sessions, guild, session.owner.id)
-                        ?.board?.moves() != session.board.moves()
+                        ?.board?.stones != session.board.stones
                 }()
             },
             ifEmpty = { }

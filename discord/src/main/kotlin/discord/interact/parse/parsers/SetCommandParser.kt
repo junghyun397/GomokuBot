@@ -129,8 +129,8 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
                 .flatMap { invalidKind ->
                     when (invalidKind) {
                         MoveError.Exist -> Some(this.buildExistFailure(context, session, pos))
-                        MoveError.Forbidden -> when(session.board.playerColor()) {
-                            Color.Black -> Some(this.buildForbiddenMoveFailure(context, session, pos, session.board.field[pos.idx()]))
+                        MoveError.Forbidden -> when(session.board.playerColor) {
+                            Color.Black -> Some(this.buildForbiddenMoveFailure(context, session, pos, session.board.field(session.history)[pos.idx]))
                             else -> None
                         }
                     }

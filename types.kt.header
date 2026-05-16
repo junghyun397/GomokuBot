@@ -1,4 +1,4 @@
-package core.mintaka
+package core.mintaka.types
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

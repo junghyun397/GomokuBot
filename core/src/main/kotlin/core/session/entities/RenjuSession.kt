@@ -5,27 +5,23 @@ import arrow.core.Option
 import arrow.core.Some
 import core.assets.User
 import core.assets.aiUser
-import core.mintaka.AiLevel
+import core.mintaka.MintakaSession
 import core.session.Rule
-import renju.Board
+import renju.GameState
 import renju.notation.GameResult
-import renju.notation.Pos
-import renju.protocol.SolutionNode
 
 sealed interface RenjuSession : GameSession {
 
-    fun next(board: Board, move: Pos, gameResult: Option<GameResult>, messageBufferKey: MessageBufferKey): RenjuSession
+    fun next(state: GameState, gameResult: Option<GameResult>, messageBufferKey: MessageBufferKey): RenjuSession
 
 }
 
 data class AiGameSession(
-    val aiLevel: AiLevel,
-    val solution: Option<SolutionNode>,
+    val mintakaSession: MintakaSession,
     override val owner: User,
     override val ownerHasBlack: Boolean,
-    override val board: Board,
+    override val state: GameState,
     override val gameResult: Option<GameResult> = None,
-    override val history: List<Pos?>,
     override val messageBufferKey: MessageBufferKey,
     override val recording: Boolean,
     override val ruleKind: Rule,
@@ -34,10 +30,9 @@ data class AiGameSession(
 
     override val opponent = aiUser
 
-    override fun next(board: Board, move: Pos, gameResult: Option<GameResult>, messageBufferKey: MessageBufferKey) =
+    override fun next(state: GameState, gameResult: Option<GameResult>, messageBufferKey: MessageBufferKey) =
         this.copy(
-            board = board,
-            history = this.history + move,
+            state = state,
             gameResult = gameResult,
             expireService = this.expireService.next(),
             messageBufferKey = messageBufferKey
@@ -51,19 +46,17 @@ data class PvpGameSession(
     override val owner: User,
     override val opponent: User,
     override val ownerHasBlack: Boolean,
-    override val board: Board,
+    override val state: GameState,
     override val gameResult: Option<GameResult> = None,
-    override val history: List<Pos?>,
     override val messageBufferKey: MessageBufferKey,
     override val recording: Boolean,
     override val ruleKind: Rule,
     override val expireService: ExpireService
 ) : RenjuSession {
 
-    override fun next(board: Board, move: Pos, gameResult: Option<GameResult>, messageBufferKey: MessageBufferKey) =
+    override fun next(state: GameState, gameResult: Option<GameResult>, messageBufferKey: MessageBufferKey) =
         this.copy(
-            board = board,
-            history = this.history + move,
+            state = state,
             gameResult = gameResult,
             expireService = this.expireService.next(),
             messageBufferKey = messageBufferKey

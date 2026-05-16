@@ -20,92 +20,96 @@ enum class MoveError {
 
 class Board private constructor (
     private val nativePointer: MemorySegment,
-    private val lastMoveIndex: Int,
 ) {
 
     private val cleanable = cleaner.register(this, NativeBoardCleaner(nativePointer))
 
     val isNextColorBlack: Boolean
-        get() = this.playerColor() == Color.Black
+        get() = this.playerColor == Color.Black
 
-    fun playerColor(): Color = Color.fromNative(RustyRenjuCApi.lib.rusty_renju_board_player_color(nativePointer))
+    val playerColor: Color get() = Color.fromNative(RustyRenjuCApi.lib.rusty_renju_board_player_color(nativePointer))
 
-    fun color(): Color = this.playerColor().reversed()
+    val opponentColor: Color get() = this.playerColor.reversed()
 
-    fun stones(): Int = RustyRenjuCApi.lib.rusty_renju_board_stones(nativePointer).toUByte().toInt()
+    val stones: Int get() = RustyRenjuCApi.lib.rusty_renju_board_stones(nativePointer).toUByte().toInt()
 
-    fun moves(): Int = this.stones()
+    fun pattern(pos: Pos, color: Color): Int = this.pattern(pos.idx, color)
 
-    fun pattern(pos: Pos, color: Color): Int = this.pattern(pos.idx(), color)
-
-    fun pattern(posIndex: Int, color: Color): Int {
-        return RustyRenjuCApi.lib.rusty_renju_board_pattern(nativePointer, color.flag(), posIndex.toByte())
+    fun pattern(idx: Int, color: Color): Int {
+        return RustyRenjuCApi.lib.rusty_renju_board_pattern(nativePointer, color.flag(), idx.toByte())
     }
 
-    fun isPosEmpty(pos: Pos): Boolean = this.isPosEmpty(pos.idx())
+    fun isPosEmpty(pos: Pos): Boolean = this.isPosEmpty(pos.idx)
 
-    fun isPosEmpty(posIndex: Int): Boolean =
-        RustyRenjuCApi.lib.rusty_renju_board_is_pos_empty(nativePointer, posIndex.toByte())
+    fun isPosEmpty(idx: Int): Boolean =
+        RustyRenjuCApi.lib.rusty_renju_board_is_pos_empty(nativePointer, idx.toByte())
 
-    fun isLegalMove(pos: Pos): Boolean = this.isLegalMove(pos.idx())
+    fun isLegalMove(pos: Pos): Boolean = this.isLegalMove(pos.idx)
 
-    fun isLegalMove(posIndex: Int): Boolean =
-        RustyRenjuCApi.lib.rusty_renju_board_is_pos_empty(nativePointer, posIndex.toByte()) &&
-        RustyRenjuCApi.lib.rusty_renju_board_is_legal_move(nativePointer, posIndex.toByte())
+    fun isLegalMove(idx: Int): Boolean =
+        RustyRenjuCApi.lib.rusty_renju_board_is_pos_empty(nativePointer, idx.toByte()) &&
+        RustyRenjuCApi.lib.rusty_renju_board_is_legal_move(nativePointer, idx.toByte())
 
     fun stoneKind(pos: Pos): Color? =
-        this.stoneKind(pos.idx())
+        this.stoneKind(pos.idx)
 
-    fun stoneKind(posIndex: Int): Color? =
-        Color.fromFlag(RustyRenjuCApi.lib.rusty_renju_board_stone_kind(nativePointer, posIndex.toByte()))
+    fun stoneKind(idx: Int): Color? =
+        Color.fromFlag(RustyRenjuCApi.lib.rusty_renju_board_stone_kind(nativePointer, idx.toByte()))
 
-    fun lastMove(): Int = this.lastMoveIndex
+    fun set(pos: Pos?): Board = this.setMaybe(pos?.idx)
 
-    fun lastPos(): Option<Pos> =
-        if (Pos.isValidIdx(this.lastMoveIndex)) {
-            Some(Pos.fromIdx(this.lastMoveIndex))
-        } else {
-            None
-        }
+    fun set(idx: Int): Board = this.setMaybe(idx)
 
-    fun set(pos: Pos): Board = this.set(pos.idx())
-
-    fun set(posIndex: Int): Board {
-        val pointer = RustyRenjuCApi.lib.rusty_renju_board_set(nativePointer, posIndex.toByte())
+    private fun setMaybe(idx: Int?): Board {
+        val pointer = RustyRenjuCApi.lib.rusty_renju_board_set(
+            nativePointer,
+            idx?.toByte() ?: RustyRenjuCApi.constants.posNone,
+        )
             ?: return this
 
-        return Board(pointer, posIndex)
+        return Board(pointer)
     }
 
-    fun unset(pos: Pos): Board = this.unset(pos.idx())
+    fun unset(pos: Pos?): Board = this.unsetMaybe(pos?.idx)
 
-    fun unset(posIndex: Int): Board {
-        val pointer = RustyRenjuCApi.lib.rusty_renju_board_unset(nativePointer, posIndex.toByte())
+    fun unset(idx: Int): Board = this.unsetMaybe(idx)
+
+    private fun unsetMaybe(idx: Int?): Board {
+        val pointer = RustyRenjuCApi.lib.rusty_renju_board_unset(
+            nativePointer,
+            idx?.toByte() ?: RustyRenjuCApi.constants.posNone,
+        )
             ?: return this
 
-        return Board(pointer, -1)
+        return Board(pointer)
     }
 
     fun validateMove(pos: Pos): Option<MoveError> =
-        this.validateMove(pos.idx())
+        this.validateMove(pos.idx)
 
-    fun validateMove(posIndex: Int): Option<MoveError> {
-        if (!this.isPosEmpty(posIndex)) {
+    fun validateMove(idx: Int): Option<MoveError> {
+        if (!this.isPosEmpty(idx)) {
             return Some(MoveError.Exist)
         }
 
-        if (!this.isLegalMove(posIndex)) {
+        if (!this.isLegalMove(idx)) {
             return Some(MoveError.Forbidden)
         }
 
         return None
     }
 
-    val field: ByteArray by lazy {
-        val field = ByteArray(Pos.BOARD_SIZE) { Color.emptyFlag() }
+    val field: ByteArray by lazy { this.field(History.empty()) }
 
-        val describePointer = RustyRenjuCApi.lib.rusty_renju_board_describe(nativePointer, null, 0)
-            ?: return@lazy field
+    fun field(history: History): ByteArray {
+        val field = ByteArray(Pos.BOARD_SIZE) { Color.emptyFlag() }
+        val actions = history.toMaybePosBuffer()
+
+        val describePointer = RustyRenjuCApi.lib.rusty_renju_board_describe(
+            nativePointer,
+            actions,
+            history.moves.toLong(),
+        ) ?: return field
 
         try {
             val describe = RustyRenjuC.BoardDescribe(describePointer)
@@ -126,7 +130,7 @@ class Board private constructor (
             RustyRenjuCApi.lib.rusty_renju_board_describe_free(describePointer)
         }
 
-        field
+        return field
     }
 
     fun winner(): Option<GameResult> {
@@ -140,7 +144,7 @@ class Board private constructor (
             }
         }
 
-        return if (this.stones() >= Pos.BOARD_SIZE) Some(GameResult.Full)
+        return if (this.stones >= Pos.BOARD_SIZE) Some(GameResult.Full)
         else None
     }
 
@@ -171,65 +175,17 @@ class Board private constructor (
 
         fun newBoard(): Board {
             return Board(RustyRenjuCApi.lib.rusty_renju_default_board()
-                ?: throw IllegalStateException(), -1)
+                ?: throw IllegalStateException())
         }
 
-        fun fromBoardText(source: String?, lastMove: Int): Option<Board> {
-            val text = source?.takeIf { it.isNotBlank() } ?: return None
-
-            val pointer = RustyRenjuCApi.lib.rusty_renju_board_from_string(text)
-                ?: return None
-
-            return Some(fromNative(pointer, normalizeLastMove(lastMove)))
+        fun fromHistory(history: History): Board {
+            return Board(RustyRenjuCApi.lib.rusty_renju_board_from_history(
+                history.toMaybePosBuffer(),
+                history.moves.toLong(),
+            ) ?: throw IllegalStateException())
         }
-
-        fun fromFieldArray(field: ByteArray, lastMove: Int): Option<Board> {
-            val blackMoves = ArrayList<Int>()
-            val whiteMoves = ArrayList<Int>()
-
-            for (idx in 0 until Pos.BOARD_SIZE) {
-                when (Color.fromFlag(field.getOrElse(idx) { Color.emptyFlag() })) {
-                    Color.Black -> blackMoves += idx
-                    Color.White -> whiteMoves += idx
-                    null -> Unit
-                }
-            }
-
-            if (whiteMoves.size > blackMoves.size || blackMoves.size - whiteMoves.size > 1) {
-                return None
-            }
-
-            val history = ByteArray(blackMoves.size + whiteMoves.size)
-            var blackIndex = 0
-            var whiteIndex = 0
-            var historyIndex = 0
-
-            while (blackIndex < blackMoves.size || whiteIndex < whiteMoves.size) {
-                if (blackIndex >= blackMoves.size) {
-                    return None
-                }
-
-                history[historyIndex++] = blackMoves[blackIndex++].toByte()
-
-                if (whiteIndex < whiteMoves.size) {
-                    history[historyIndex++] = whiteMoves[whiteIndex++].toByte()
-                }
-            }
-
-            val pointer = RustyRenjuCApi.lib.rusty_renju_board_from_history(history, history.size.toLong())
-                ?: return None
-
-            return Some(fromNative(pointer, normalizeLastMove(lastMove)))
-        }
-
-        private fun normalizeLastMove(lastMove: Int): Int =
-            if (Pos.isValidIdx(lastMove)) lastMove
-            else -1
 
         private const val MAX_NATIVE_STRING_BYTES = 4_096L
-
-        internal fun fromNative(pointer: MemorySegment, lastMoveIndex: Int = -1): Board =
-            Board(pointer, lastMoveIndex)
 
         private fun readNativeUtf8String(pointer: MemorySegment): String {
             val cString = pointer.reinterpret(MAX_NATIVE_STRING_BYTES)

@@ -51,19 +51,21 @@ abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
 
         return (-half .. half).map { rowOffset ->
             (-half .. half).map { colOffset ->
-                val absolutePos = Pos(focusInfo.focus.row() + rowOffset, focusInfo.focus.col() + colOffset)
+                val absolutePos = Pos(focusInfo.focus.row + rowOffset, focusInfo.focus.col + colOffset)
+                val lastMove = session.history.lastAction?.idx
+                val field = session.board.field(session.history)
 
-                val buttonFlag = when (val idx = absolutePos.idx()) {
-                    session.board.lastMove() -> when (session.board.field[session.board.lastMove()]) {
+                val buttonFlag = when (val idx = absolutePos.idx) {
+                    lastMove -> when (field[idx]) {
                         Color.Black.flag() -> ButtonFlag.BLACK_RECENT
                         Color.White.flag() -> ButtonFlag.WHITE_RECENT
                         else -> throw IllegalStateException()
                     }
-                    else -> when (val flag = session.board.field[idx]) {
+                    else -> when (val flag = field[idx]) {
                         Color.Black.flag() -> ButtonFlag.BLACK
                         Color.White.flag() -> ButtonFlag.WHITE
                         else -> when {
-                            Color.isForbidden(flag, session.board.playerColor()) -> ButtonFlag.FORBIDDEN
+                            Color.isForbidden(flag, session.board.playerColor) -> ButtonFlag.FORBIDDEN
                             else -> when (absolutePos) {
                                 in focusInfo.highlights -> ButtonFlag.HIGHLIGHTED
                                 else -> when (session) {

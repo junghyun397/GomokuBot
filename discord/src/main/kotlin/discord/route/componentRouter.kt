@@ -19,7 +19,7 @@ import discord.interact.parse.parsers.*
 import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import reactor.core.publisher.Mono
-import utils.assets.LinuxTime
+import kotlin.time.Clock
 
 private fun matchAction(prefix: Char?): Option<EmbeddableCommand> =
     when (prefix) {
@@ -29,7 +29,6 @@ private fun matchAction(prefix: Char?): Option<EmbeddableCommand> =
         DiscordMessagingService.IdConvention.APPLY_SETTING -> Some(ApplySettingCommandParser)
         DiscordMessagingService.IdConvention.OPENING -> Some(OpeningCommandParser)
         DiscordMessagingService.IdConvention.REPLAY_LIST -> Some(ReplayListCommandParser)
-        DiscordMessagingService.IdConvention.REPLAY -> Some(ReplayCommandParser)
         else -> None
     }
 
@@ -104,6 +103,6 @@ fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInte
             ).apply {
                 interactionSource = context.source
                 emittedTime = context.emittedTime
-                apiTime = LinuxTime.now()
+                apiTime = Clock.System.now()
             }
         } }

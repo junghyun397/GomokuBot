@@ -12,7 +12,7 @@ interface InteractionReport : Report {
 
     override fun buildTime(): String {
         val apiTime = this.emittedTime
-            ?.let { emitted -> this.apiTime?.let { api -> api.timestamp - emitted.timestamp - executionTime } }
+            ?.let { emitted -> this.apiTime?.let { api -> api.toEpochMilliseconds() - emitted.toEpochMilliseconds() - executionTime } }
             ?: 0
 
         return "${executionTime}/${apiTime}ms"

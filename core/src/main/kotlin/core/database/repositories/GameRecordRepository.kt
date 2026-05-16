@@ -18,11 +18,9 @@ import kotlinx.coroutines.reactor.awaitSingle
 import renju.notation.Color
 import renju.notation.GameResult
 import renju.notation.Pos
-import utils.assets.LinuxTime
+import utils.lang.toUtcInstant
 import utils.structs.find
-import java.nio.ByteBuffer
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.util.*
 
 object GameRecordRepository {
@@ -32,19 +30,18 @@ object GameRecordRepository {
             .flatMapMany { dbc -> dbc
                 .createStatement(
                     """
-                    INSERT INTO game_record (board_state, history, cause, win_color, channel_id, black_id, white_id, ai_level, rule)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    INSERT INTO game_record (history, cause, win_color, channel_id, black_id, white_id, ai_level, rule)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                     """.trimIndent()
                 )
-                .bind("$1", record.boardState)
-                .bind("$2", record.history.map { it.idx() }.toTypedArray())
-                .bind("$3", record.gameResult.cause.id)
-                .bindNullable("$4", record.gameResult.winColorId)
-                .bind("$5", record.channelId.uuid)
-                .bindNullable("$6", record.blackId?.uuid)
-                .bindNullable("$7", record.whiteId?.uuid)
-                .bindNullable("$8", record.aiLevel?.id)
-                .bind("$9", record.rule.id)
+                .bind("$1", record.history.map { it.idx }.toTypedArray())
+                .bind("$2", record.gameResult.cause.id)
+                .bindNullable("$3", record.gameResult.winColorId)
+                .bind("$4", record.channelId.uuid)
+                .bindNullable("$5", record.blackId?.uuid)
+                .bindNullable("$6", record.whiteId?.uuid)
+                .bindNullable("$7", record.aiLevel?.id)
+                .bind("$8", record.rule.id)
                 .execute()
             }
             .flatMap { it.rowsUpdated }
@@ -116,7 +113,6 @@ object GameRecordRepository {
             (row["record_id"] as Int).toLong(),
             row["black_id"] as UUID?,
             row["white_id"] as UUID?,
-            (row["board_state"] as ByteBuffer).array(),
             (row["history"] as Array<*>).map { it as Int }.toIntArray(),
             smallIntToMaybeByte(row["win_color"]),
             row["cause"] as Short,
@@ -132,7 +128,6 @@ object GameRecordRepository {
 
         return GameRecord(
             gameRecordId = Some(GameRecordId(gameRecordRow.recordId)),
-            boardState = gameRecordRow.boardState,
             history = gameRecordRow.history.map { Pos.fromIdx(it) },
             gameResult = GameResult.build(
                 gameResult = GameResult.fromFlag(gameRecordRow.winColor ?: Color.emptyFlag()),
@@ -145,7 +140,7 @@ object GameRecordRepository {
             whiteId = whiteUser?.id,
             aiLevel = gameRecordRow.aiLevel?.let { AiLevel.entries.find(it) },
             rule = Rule.entries.find(gameRecordRow.rule),
-            date = LinuxTime(gameRecordRow.data.toInstant(ZoneOffset.UTC).toEpochMilli()),
+            date = gameRecordRow.data.toUtcInstant(),
         )
     }
 
@@ -153,7 +148,6 @@ object GameRecordRepository {
         val recordId: Long,
         val blackId: UUID?,
         val whiteId: UUID?,
-        val boardState: ByteArray,
         val history: IntArray,
         val winColor: Byte?,
         val cause: Short,

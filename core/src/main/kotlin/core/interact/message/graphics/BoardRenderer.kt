@@ -1,7 +1,7 @@
 package core.interact.message.graphics
 
 import arrow.core.Either
-import renju.Board
+import renju.GameState
 import renju.notation.Pos
 import utils.structs.Identifiable
 import java.io.InputStream
@@ -20,6 +20,6 @@ sealed interface BoardRendererSample {
 
 sealed interface BoardRenderer {
 
-    fun renderBoard(board: Board, history: List<Pos?>, historyRenderType: HistoryRenderType, offers: Set<Pos>?, blinds: Set<Pos>?): Either<String, InputStream>
+    fun renderBoard(state: GameState, historyRenderType: HistoryRenderType, offers: Set<Pos>?, blinds: Set<Pos>?): Either<String, InputStream>
 
 }

@@ -28,8 +28,8 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import reactor.core.publisher.Mono
-import utils.assets.LinuxTime
 import utils.lang.tuple
+import kotlin.time.Clock
 
 private fun recoverNavigationState(bot: BotContext, message: Message, messageRef: MessageRef): Option<NavigationState> =
     message.embeds.firstOrNull()
@@ -92,7 +92,7 @@ fun reactionRouter(context: UserInteractionContext<GenericMessageReactionEvent>)
                 ).apply {
                     interactionSource = context.source
                     emittedTime = context.emittedTime
-                    apiTime = LinuxTime.now()
+                    apiTime = Clock.System.now()
                 }
             }
         }

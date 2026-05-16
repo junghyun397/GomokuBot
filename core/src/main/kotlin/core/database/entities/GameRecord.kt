@@ -12,16 +12,14 @@ import core.database.repositories.UserProfileRepository
 import core.mintaka.AiLevel
 import core.session.Rule
 import core.session.entities.*
-import renju.Board
 import renju.notation.GameResult
 import renju.notation.Pos
-import utils.assets.LinuxTime
+import kotlin.time.Clock
+import kotlin.time.Instant
 
-@Suppress("ArrayInDataClass")
 data class GameRecord(
     val gameRecordId: Option<GameRecordId>,
 
-    val boardState: ByteArray,
     val history: List<Pos>,
 
     val gameResult: GameResult,
@@ -34,20 +32,18 @@ data class GameRecord(
 
     val rule: Rule,
 
-    val date: LinuxTime
+    val date: Instant
 )
 
 @JvmInline value class GameRecordId(val id: Long)
 
-private val invalidPos: Pos = Pos.fromIdx(-1)
 fun GameSession.extractGameRecord(channelUid: ChannelUid): Option<GameRecord> =
-    if (this.gameResult.isSome() && this.recording && !this.history.contains(null))
+    if (this.gameResult.isSome() && this.recording && null !in this.history)
         Some(
             GameRecord(
                 gameRecordId = None,
 
-                boardState = board.field,
-                history = history.map { it ?: invalidPos },
+                history = history.inner.filterNotNull(),
 
                 gameResult = gameResult.getOrNull()!!,
 
@@ -62,57 +58,13 @@ fun GameSession.extractGameRecord(channelUid: ChannelUid): Option<GameRecord> =
                 }.takeIf { it != aiUser.id },
 
                 aiLevel = when (this) {
-                    is AiGameSession -> this.aiLevel
+                    is AiGameSession -> AiLevel.AMOEBA
                     else -> null
                 },
 
                 rule = ruleKind,
 
-                date = LinuxTime.now()
+                date = Clock.System.now()
             )
         )
     else None
-
-suspend fun GameRecord.asGameSession(dbConnection: DatabaseConnection, owner: User): GameSession {
-    val board = Board.fromFieldArray(boardState, history.last().idx()).getOrNull()
-        ?: error("invalid game record board data")
-
-    return when {
-        whiteId != null && blackId != null -> {
-            val ownerHasBlack = blackId == owner.id
-
-            PvpGameSession(
-                owner = owner,
-                opponent = if (ownerHasBlack)
-                    UserProfileRepository.retrieveUser(dbConnection, whiteId)
-                else
-                    UserProfileRepository.retrieveUser(dbConnection, blackId),
-                ownerHasBlack = ownerHasBlack,
-                board = board,
-                gameResult = Some(gameResult),
-                history = history,
-                messageBufferKey = MessageBufferKey.issue(),
-                expireService = ExpireService(0, date, date),
-                ruleKind = rule,
-                recording = false,
-            )
-        }
-        else -> {
-            val ownerHasBlack = whiteId == null
-
-            AiGameSession(
-                aiLevel = aiLevel!!,
-                solution = None,
-                owner = owner,
-                ownerHasBlack = ownerHasBlack,
-                board = board,
-                gameResult = Some(gameResult),
-                history = history,
-                messageBufferKey = MessageBufferKey.issue(),
-                expireService = ExpireService(0, date, date),
-                ruleKind = rule,
-                recording = false,
-            )
-        }
-    }
-}

@@ -14,8 +14,9 @@ import core.session.SessionManager
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
-import utils.assets.LinuxTime
 import utils.lang.tuple
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 
 class NavigationCommand(
     private val navigationState: PageNavigationState,
@@ -44,7 +45,7 @@ class NavigationCommand(
                 else
                     (this.navigationState.page - 1).coerceIn(range)
             },
-            expireDate = LinuxTime.nowWithOffset(bot.config.navigatorExpireOffset)
+            expireDate = Clock.System.now() + bot.config.navigatorExpireAfter.milliseconds
         )
 
         if (this.navigationState.page == newState.page)

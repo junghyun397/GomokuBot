@@ -1,7 +1,7 @@
 package core.interact.message.graphics
 
 import arrow.core.Either
-import renju.Board
+import renju.GameState
 import renju.notation.Color
 import renju.notation.ForbiddenKind
 import renju.notation.Pos
@@ -52,15 +52,15 @@ object UnicodeBoardRenderer : BoardRenderer, BoardRendererSample {
             .map { it.toChar() }
             .asString()
 
-    override fun renderBoard(board: Board, history: List<Pos?>, historyRenderType: HistoryRenderType, offers: Set<Pos>?, blinds: Set<Pos>?) =
-        Either.Left(this.renderUnicodeBoard(board))
+    override fun renderBoard(state: GameState, historyRenderType: HistoryRenderType, offers: Set<Pos>?, blinds: Set<Pos>?) =
+        Either.Left(this.renderUnicodeBoard(state))
 
-    private fun renderUnicodeBoard(board: Board) =
-        board.field
+    private fun renderUnicodeBoard(state: GameState) =
+        state.board.field(state.history)
             .mapIndexed { index, flag ->
                 when (flag) {
-                    Color.Black.flag() -> if (board.lastMove() == index) LAST_BLACK else BLACK
-                    Color.White.flag() -> if (board.lastMove() == index) LAST_WHITE else WHITE
+                    Color.Black.flag() -> if (state.history.lastAction?.idx == index) LAST_BLACK else BLACK
+                    Color.White.flag() -> if (state.history.lastAction?.idx == index) LAST_WHITE else WHITE
                     ForbiddenKind.DoubleThree.fieldFlag() -> FORBIDDEN_33
                     ForbiddenKind.DoubleFour.fieldFlag() -> FORBIDDEN_44
                     ForbiddenKind.Overline.fieldFlag() -> FORBIDDEN_6
