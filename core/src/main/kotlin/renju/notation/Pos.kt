@@ -1,6 +1,6 @@
 package renju.notation
 
-data class Pos(private val value: Int) {
+@JvmInline value class Pos(private val value: Int) {
 
     constructor(row: Int, col: Int) : this(rowColToIdx(row, col))
 
@@ -55,4 +55,8 @@ data class Pos(private val value: Int) {
 
     }
 
+}
+
+fun Pos?.toStringOrNone(): String {
+    return this?.toString() ?: "none"
 }

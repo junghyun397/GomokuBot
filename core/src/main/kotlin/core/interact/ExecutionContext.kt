@@ -9,7 +9,7 @@ interface ExecutionContext {
 
     val bot: BotContext
 
-    val guild: Channel
+    val channel: Channel
 
     val config: ChannelConfig
 

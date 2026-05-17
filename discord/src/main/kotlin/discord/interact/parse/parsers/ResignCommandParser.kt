@@ -28,12 +28,12 @@ object ResignCommandParser : SessionSideParser<DiscordMessageData, DiscordCompon
     )
 
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>) =
-        this.retrieveSession(context.bot, context.guild, context.user).map { session ->
+        this.retrieveSession(context.bot, context.channel, context.user).map { session ->
             ResignCommand(session)
         }
 
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>) =
-        this.retrieveSession(context.bot, context.guild, context.user).map { session ->
+        this.retrieveSession(context.bot, context.channel, context.user).map { session ->
             ResignCommand(session)
         }
 

@@ -1,7 +1,5 @@
 package discord
 
-import club.minnced.jda.reactor.ReactiveEventManager
-import club.minnced.jda.reactor.on
 import core.BotConfig
 import core.BotContext
 import core.assets.ChannelId
@@ -16,6 +14,8 @@ import core.mintaka.MintakaServer
 import core.session.SessionManager
 import core.session.SessionPool
 import dev.minn.jda.ktx.coroutines.await
+import dev.minn.jda.ktx.events.CoroutineEventManager
+import dev.minn.jda.ktx.events.listener
 import discord.assets.ASCII_SPLASH
 import discord.assets.COMMAND_PREFIX
 import discord.assets.NAVIGATION_EMOJIS
@@ -24,13 +24,22 @@ import discord.interact.DiscordConfig
 import discord.interact.InternalInteractionContext
 import discord.interact.UserInteractionContext
 import discord.route.*
-import kotlinx.coroutines.reactor.mono
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Activity
+import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.channel.ChannelType
+import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -42,8 +51,6 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent
 import net.dv8tion.jda.api.events.session.ReadyEvent
 import net.dv8tion.jda.api.events.session.ShutdownEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
-import reactor.core.publisher.Flux
-import utils.lang.tuple
 import utils.log.getLogger
 import kotlin.system.exitProcess
 
@@ -67,6 +74,31 @@ fun leaveLog(report: Report) {
         else -> logger.info(report.buildLog())
     }
 }
+
+private inline fun <reified E : GenericEvent> JDA.eventFlow(): Flow<E> =
+    callbackFlow {
+        val events = this@callbackFlow
+        val listener = this@eventFlow.listener<E> { event ->
+            events.send(event)
+        }
+
+        awaitClose { listener.cancel() }
+    }
+
+private fun <E> Flow<E>.route(transform: suspend (E) -> Report?): Flow<Report> =
+    channelFlow {
+        collect { event ->
+            launch {
+                runCatching {
+                    transform(event)
+                }.onSuccess { report ->
+                    report?.let { send(it) }
+                }.onFailure { error ->
+                    logger.error(error.stackTraceToString())
+                }
+            }
+        }
+    }
 
 object GomokuBot {
 
@@ -103,7 +135,7 @@ object GomokuBot {
 
         val botContext = BotContext(botConfig, dbConnection, mintakaServer, sessionPool)
 
-        val eventManager = ReactiveEventManager()
+        val eventManager = CoroutineEventManager()
 
         val jda = JDABuilder.createLight(discordConfig.token)
             .useSharding(0, 1)
@@ -117,19 +149,22 @@ object GomokuBot {
             )
             .build()
 
-        eventManager.on<ReadyEvent>()
-            .subscribe { logger.info("jda ready, complete loading.") }
+        jda.listener<ReadyEvent> {
+            logger.info("jda ready, complete loading.")
+        }
 
-        eventManager.on<ShutdownEvent>()
-            .subscribe { logger.info("jda shutdown.") }
+        jda.listener<ShutdownEvent> {
+            logger.info("jda shutdown.")
+        }
 
-        val commandFlux = Flux.merge(
-            eventManager.on<SlashCommandInteractionEvent>()
+        val commandFlow: Flow<Report> = merge(
+            jda.eventFlow<SlashCommandInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
-                .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!) }
-                .flatMap(::slashCommandRouter),
+                .route {
+                    slashCommandRouter(UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!))
+                },
 
-            eventManager.on<MessageReceivedEvent>()
+            jda.eventFlow<MessageReceivedEvent>()
                 .filter {
                     it.isFromGuild
                             && !it.author.isBot
@@ -140,20 +175,23 @@ object GomokuBot {
                                 )
                             )
                 }
-                .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.author, it.guild) }
-                .flatMap(::textCommandRouter),
+                .route {
+                    textCommandRouter(UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.author, it.guild))
+                },
 
-            eventManager.on<ButtonInteractionEvent>()
+            jda.eventFlow<ButtonInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
-                .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!) }
-                .flatMap(::buttonInteractionRouter),
+                .route {
+                    buttonInteractionRouter(UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!))
+                },
 
-            eventManager.on<StringSelectInteractionEvent>()
+            jda.eventFlow<StringSelectInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
-                .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!) }
-                .flatMap(::buttonInteractionRouter),
+                .route {
+                    buttonInteractionRouter(UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!))
+                },
 
-            eventManager.on<MessageReactionAddEvent>()
+            jda.eventFlow<MessageReactionAddEvent>()
                 .filter {
                     it.isFromGuild
                             && it.userIdLong != jda.selfUser.idLong
@@ -162,10 +200,11 @@ object GomokuBot {
                             && NAVIGATION_EMOJIS.contains(it.emoji)
                             && !(it.user?.isBot ?: false)
                 }
-                .flatMap { UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user!!, it.guild) }
-                .flatMap(::reactionRouter),
+                .route {
+                    reactionRouter(UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user!!, it.guild))
+                },
 
-            eventManager.on<MessageReactionRemoveEvent>()
+            jda.eventFlow<MessageReactionRemoveEvent>()
                 .filter {
                     it.isFromGuild
                             && it.userIdLong != jda.selfUser.idLong
@@ -174,26 +213,29 @@ object GomokuBot {
                             && NAVIGATION_EMOJIS.contains(it.emoji)
                             && !ChannelManager.lookupPermission(it.channel.asGuildMessageChannel(), Permission.MESSAGE_MANAGE)
                 }
-                .flatMap { mono {
+                .route {
                     val user = it.guild
                         .retrieveMemberById(it.userId)
                         .mapToResult()
-                        .map { maybeMember -> maybeMember.map { it.user } }
+                        .map { maybeMember -> maybeMember.map(Member::getUser) }
                         .await()
 
-                    tuple(it, user)
-                } }
-                .filter { (_, maybeUser) -> maybeUser.isSuccess && !maybeUser.get().isBot }
-                .flatMap { (event, user) -> UserInteractionContext.fromJDAEvent(botContext, discordConfig, event, user.get(), event.guild) }
-                .flatMap(::reactionRouter),
+                    if (user.isSuccess && !user.get().isBot) {
+                        reactionRouter(UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, user.get(), it.guild))
+                    } else {
+                        null
+                    }
+                },
 
-            eventManager.on<GuildJoinEvent>()
-                .flatMap { event -> InternalInteractionContext.fromJDAEvent(botContext, discordConfig, event, event.guild) }
-                .flatMap(::channelJoinRouter),
+            jda.eventFlow<GuildJoinEvent>()
+                .route { event ->
+                    channelJoinRouter(InternalInteractionContext.fromJDAEvent(botContext, discordConfig, event, event.guild))
+                },
 
-            eventManager.on<GuildLeaveEvent>()
-                .flatMap { event -> InternalInteractionContext.fromJDAEvent(botContext, discordConfig, event, event.guild) }
-                .flatMap(::channelLeaveRouter),
+            jda.eventFlow<GuildLeaveEvent>()
+                .route { event ->
+                    channelLeaveRouter(InternalInteractionContext.fromJDAEvent(botContext, discordConfig, event, event.guild))
+                },
 
             scheduleGameExpiration(botContext, discordConfig, jda),
             scheduleRequestExpiration(botContext, discordConfig, jda),
@@ -212,11 +254,11 @@ object GomokuBot {
             }
         )
 
-        commandFlux
-            .onErrorContinue { error, _ -> logger.error(error.stackTraceToString()) }
-            .subscribe(::leaveLog)
+        eventManager.launch {
+            commandFlow.collect { report -> leaveLog(report) }
+        }
 
-        logger.info("reactive event manager ready.")
+        logger.info("coroutine event manager ready.")
 
         ChannelManager.initGlobalCommand(jda)
 

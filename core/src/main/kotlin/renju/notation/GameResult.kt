@@ -1,56 +1,57 @@
 package renju.notation
 
 import core.assets.User
-import core.assets.aiUser
 import utils.structs.Identifiable
 
-sealed class GameResult {
+sealed interface GameResult {
 
-    abstract val cause: Cause
+    val cause: Cause
 
-    abstract val message: String
+    val message: String
 
-    abstract val winColorId: Short?
+    val winnerColor: Color?
 
-    abstract fun flag(): Byte
+    val winColorId: Short?
+
+    fun flag(): Byte = winnerColor?.naiveFlag ?: Color.emptyFlag()
 
     enum class Cause(override val id: Short) : Identifiable {
         FIVE_IN_A_ROW(0), RESIGN(1), TIMEOUT(2), DRAW(3)
     }
 
-    data class FiveInRow(private val winnerColor: Color) : GameResult() {
+    data class FiveInRow(private val winColor: Color) : GameResult {
 
         override val cause = Cause.FIVE_IN_A_ROW
 
         override val message get() = "five in row by $winnerColor"
 
-        override val winColorId = winnerColor.flag().toShort()
+        override val winnerColor: Color = winColor
+
+        override val winColorId = winnerColor.naiveFlag.toShort()
 
         fun winner(): Color = winnerColor
 
-        override fun flag(): Byte = winnerColor.flag()
-
     }
 
-    data class Win(override val cause: Cause, val winColor: Color, val winner: User, val loser: User) : GameResult() {
+    data class Win(override val cause: Cause, val winColor: Color, val winner: User, val loser: User) : GameResult {
 
         override val message get() = "$winner wins over $loser by $cause"
 
-        override val winColorId = this.winColor.flag().toShort()
+        override val winnerColor: Color = winColor
 
-        override fun flag(): Byte = winColor.flag()
+        override val winColorId = this.winColor.naiveFlag.toShort()
 
     }
 
-    data object Full : GameResult() {
+    data object Full : GameResult {
 
         override val cause = Cause.DRAW
 
         override val message get() = "tie caused by full"
 
-        override val winColorId = null
+        override val winnerColor: Color? = null
 
-        override fun flag(): Byte = Color.emptyFlag()
+        override val winColorId = null
 
     }
 
@@ -58,7 +59,7 @@ sealed class GameResult {
 
         @JvmStatic
         fun fromFlag(flag: Byte): GameResult =
-            when (Color.fromFlag(flag)) {
+            when (Color.from(flag)) {
                 Color.Black -> FiveInRow(Color.Black)
                 Color.White -> FiveInRow(Color.White)
                 null -> Full
@@ -66,11 +67,11 @@ sealed class GameResult {
 
         fun build(gameResult: GameResult, cause: Cause, blackUser: User?, whiteUser: User?): GameResult? =
             when (cause) {
-                Cause.FIVE_IN_A_ROW, Cause.RESIGN, Cause.TIMEOUT -> when (gameResult.flag()) {
-                    Color.Black.flag() ->
-                        Win(cause, Color.Black, blackUser ?: aiUser, whiteUser ?: aiUser)
-                    Color.White.flag() ->
-                        Win(cause, Color.White, whiteUser ?: aiUser, blackUser ?: aiUser)
+                Cause.FIVE_IN_A_ROW, Cause.RESIGN, Cause.TIMEOUT -> when (gameResult.winnerColor) {
+                    Color.Black ->
+                        Win(cause, Color.Black, blackUser ?: User.GomokuBot, whiteUser ?: User.GomokuBot)
+                    Color.White ->
+                        Win(cause, Color.White, whiteUser ?: User.GomokuBot, blackUser ?: User.GomokuBot)
                     else -> null
                 }
                 Cause.DRAW -> Full

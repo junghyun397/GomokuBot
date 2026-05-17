@@ -4,6 +4,7 @@ import core.assets.Channel
 import core.assets.ChannelUid
 import core.assets.MessageRef
 import core.assets.UserUid
+import core.assets.humanId
 import core.database.repositories.ChannelConfigRepository
 import core.session.entities.*
 import utils.lang.tuple
@@ -12,80 +13,82 @@ import kotlin.time.Clock
 
 object SessionManager {
 
-    private suspend fun retrieveChannelSession(pool: SessionPool, guild: Channel): ChannelSession =
-        pool.sessions.getOrElse(guild.id) {
-            ChannelConfigRepository.fetchChannelConfig(pool.dbConnection, guild.id)
+    private suspend fun retrieveChannelSession(pool: SessionPool, channel: Channel): ChannelSession =
+        pool.sessions.getOrElse(channel.id) {
+            ChannelConfigRepository.fetchChannelConfig(pool.dbConnection, channel.id)
                 .fold(
-                    ifSome = { ChannelSession(guild = guild, config = it) },
-                    ifEmpty = { ChannelSession(guild = guild, ChannelConfig()) }
+                    ifSome = { ChannelSession(channel, config = it) },
+                    ifEmpty = { ChannelSession(channel, ChannelConfig()) }
                 )
                 .also {
-                    pool.sessions[guild.id] = it
+                    pool.sessions[channel.id] = it
                 }
         }
 
-    private suspend inline fun mapChannelSession(pool: SessionPool, guild: Channel, mapper: (ChannelSession) -> ChannelSession): ChannelSession =
-        mapper(this.retrieveChannelSession(pool, guild)).also {
-            pool.sessions[guild.id] = it
+    private suspend inline fun mapChannelSession(pool: SessionPool, channel: Channel, mapper: (ChannelSession) -> ChannelSession): ChannelSession =
+        mapper(this.retrieveChannelSession(pool, channel)).also {
+            pool.sessions[channel.id] = it
         }
 
-    suspend fun retrieveChannelConfig(pool: SessionPool, guild: Channel): ChannelConfig =
-        this.retrieveChannelSession(pool, guild).config
+    suspend fun retrieveChannelConfig(pool: SessionPool, channel: Channel): ChannelConfig =
+        this.retrieveChannelSession(pool, channel).config
 
-    suspend fun updateChannelConfig(pool: SessionPool, guild: Channel, channelConfig: ChannelConfig) {
-        this.mapChannelSession(pool, guild) {
+    suspend fun updateChannelConfig(pool: SessionPool, channel: Channel, channelConfig: ChannelConfig) {
+        this.mapChannelSession(pool, channel) {
             it.copy(config = channelConfig)
         }.also {
-            ChannelConfigRepository.upsertChannelConfig(pool.dbConnection, guild.id, it.config)
+            ChannelConfigRepository.upsertChannelConfig(pool.dbConnection, channel.id, it.config)
         }
     }
 
-    suspend fun hasRequestSession(pool: SessionPool, guild: Channel, user1: UserUid, user2: UserUid): Boolean =
-        this.retrieveChannelSession(pool, guild).requestSessions
+    suspend fun hasRequestSession(pool: SessionPool, channel: Channel, user1: UserUid, user2: UserUid): Boolean =
+        this.retrieveChannelSession(pool, channel).requestSessions
             .values
-            .firstOrNull { it.owner.id == user1 || it.owner.id == user2 || it.opponent.id == user1 || it.opponent.id == user2 } != null
+            .firstOrNull { it.owner.humanId == user1 || it.owner.humanId == user2 || it.opponent.humanId == user1 || it.opponent.humanId == user2 } != null
 
-    suspend fun retrieveRequestSession(pool: SessionPool, guild: Channel, userUid: UserUid): RequestSession? =
-        this.retrieveChannelSession(pool, guild).requestSessions
+    suspend fun retrieveRequestSession(pool: SessionPool, channel: Channel, userUid: UserUid): RequestSession? =
+        this.retrieveChannelSession(pool, channel).requestSessions
             .values
-            .firstOrNull { it.owner.id == userUid || it.opponent.id == userUid }
+            .firstOrNull { it.owner.humanId == userUid || it.opponent.humanId == userUid }
 
-    suspend fun retrieveRequestSessionByOwner(pool: SessionPool, guild: Channel, ownerId: UserUid): RequestSession? =
-        this.retrieveChannelSession(pool, guild).requestSessions[ownerId]
+    suspend fun retrieveRequestSessionByOwner(pool: SessionPool, channel: Channel, ownerId: UserUid): RequestSession? =
+        this.retrieveChannelSession(pool, channel).requestSessions[ownerId]
 
-    suspend fun retrieveRequestSessionByOpponent(pool: SessionPool, guild: Channel, opponentId: UserUid): RequestSession? =
-        this.retrieveChannelSession(pool, guild).requestSessions.values.firstOrNull { it.opponent.id == opponentId }
+    suspend fun retrieveRequestSessionByOpponent(pool: SessionPool, channel: Channel, opponentId: UserUid): RequestSession? =
+        this.retrieveChannelSession(pool, channel).requestSessions.values.firstOrNull { it.opponent.humanId == opponentId }
 
-    suspend fun putRequestSession(pool: SessionPool, guild: Channel, requestSession: RequestSession) {
-        this.mapChannelSession(pool, guild) {
+    suspend fun putRequestSession(pool: SessionPool, hannel: Channel, requestSession: RequestSession) {
+        this.mapChannelSession(pool, hannel) {
             it.copy(requestSessions = it.requestSessions + (requestSession.owner.id to requestSession))
         }
     }
 
-    suspend fun removeRequestSession(pool: SessionPool, guild: Channel, ownerId: UserUid) {
-        this.mapChannelSession(pool, guild) {
+    suspend fun removeRequestSession(pool: SessionPool, channel: Channel, ownerId: UserUid) {
+        this.mapChannelSession(pool, channel) {
             it.copy(requestSessions = it.requestSessions - ownerId)
         }
     }
 
-    suspend fun hasGameSession(pool: SessionPool, guild: Channel, user1: UserUid, user2: UserUid): Boolean =
-        this.retrieveChannelSession(pool, guild).gameSessions
+    suspend fun hasGameSession(pool: SessionPool, channel: Channel, user1: UserUid, user2: UserUid): Boolean =
+        this.retrieveChannelSession(pool, channel).gameSessions
             .values
-            .firstOrNull { it.owner.id == user1 || it.owner.id == user2 || it.opponent.id == user1 || it.opponent.id == user2 } != null
+            .firstOrNull { it.owner.humanId == user1 || it.owner.humanId == user2 || it.opponent.humanId == user1 || it.opponent.humanId == user2 } != null
 
-    suspend fun retrieveGameSession(pool: SessionPool, guild: Channel, userUid: UserUid): GameSession? =
-        this.retrieveChannelSession(pool, guild).gameSessions
+    suspend fun retrieveGameSession(pool: SessionPool, channel: Channel, userUid: UserUid): GameSession? =
+        this.retrieveChannelSession(pool, channel).gameSessions
             .values
-            .firstOrNull { it.owner.id == userUid || it.opponent.id == userUid }
+            .firstOrNull { it.owner.humanId == userUid || it.opponent.humanId == userUid }
 
-    suspend fun putGameSession(pool: SessionPool, guild: Channel, gameSession: GameSession) {
-        this.mapChannelSession(pool, guild) {
-            it.copy(gameSessions = it.gameSessions + (gameSession.owner.id to gameSession))
+    suspend fun putGameSession(pool: SessionPool, channel: Channel, gameSession: GameSession) {
+        this.mapChannelSession(pool, channel) {
+            val ownerId = gameSession.owner.humanId ?: throw IllegalStateException()
+
+            it.copy(gameSessions = it.gameSessions + (ownerId to gameSession))
         }
     }
 
-    suspend fun removeGameSession(pool: SessionPool, guild: Channel, ownerId: UserUid) {
-        this.mapChannelSession(pool, guild) {
+    suspend fun removeGameSession(pool: SessionPool, channel: Channel, ownerId: UserUid) {
+        this.mapChannelSession(pool, channel) {
             it.copy(gameSessions = it.gameSessions - ownerId)
         }
     }

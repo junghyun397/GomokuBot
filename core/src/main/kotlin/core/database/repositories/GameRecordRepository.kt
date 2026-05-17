@@ -10,7 +10,7 @@ import core.database.DatabaseConnection
 import core.database.DatabaseManager.smallIntToMaybeByte
 import core.database.entities.GameRecord
 import core.database.entities.GameRecordId
-import core.mintaka.AiLevel
+import core.mintaka.EngineLevel
 import core.session.Rule
 import io.r2dbc.spi.Row
 import kotlinx.coroutines.reactive.awaitFirstOrNull
@@ -30,7 +30,7 @@ object GameRecordRepository {
             .flatMapMany { dbc -> dbc
                 .createStatement(
                     """
-                    INSERT INTO game_record (history, cause, win_color, channel_id, black_id, white_id, ai_level, rule)
+                    INSERT INTO game_record (history, cause, win_color, channel_id, black_id, white_id, engine_level, rule)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                     """.trimIndent()
                 )
@@ -40,7 +40,7 @@ object GameRecordRepository {
                 .bind("$4", record.channelId.uuid)
                 .bindNullable("$5", record.blackId?.uuid)
                 .bindNullable("$6", record.whiteId?.uuid)
-                .bindNullable("$7", record.aiLevel?.id)
+                .bindNullable("$7", record.engineLevel?.id)
                 .bind("$8", record.rule.id)
                 .execute()
             }
@@ -117,7 +117,7 @@ object GameRecordRepository {
             smallIntToMaybeByte(row["win_color"]),
             row["cause"] as Short,
             row["channel_id"] as UUID,
-            row["ai_level"] as Short?,
+            row["engine_level"] as Short?,
             row["rule"] as Short,
             row["create_date"] as LocalDateTime
         )
@@ -138,7 +138,7 @@ object GameRecordRepository {
             channelId = ChannelUid(gameRecordRow.channelId),
             blackId = blackUser?.id,
             whiteId = whiteUser?.id,
-            aiLevel = gameRecordRow.aiLevel?.let { AiLevel.entries.find(it) },
+            engineLevel = gameRecordRow.engineLevel?.let { EngineLevel.entries.find(it) },
             rule = Rule.entries.find(gameRecordRow.rule),
             date = gameRecordRow.data.toUtcInstant(),
         )
@@ -152,7 +152,7 @@ object GameRecordRepository {
         val winColor: Byte?,
         val cause: Short,
         val channelId: UUID,
-        val aiLevel: Short?,
+        val engineLevel: Short?,
         val rule: Short,
         val data: LocalDateTime
     )

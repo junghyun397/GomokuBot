@@ -28,17 +28,17 @@ data class SoosyrvMoveStageSession(
 
     override fun inSquare(move: Pos): Boolean =
         this.isBranched ||
-                6 - board.stones < move.row && move.row < 8 + board.stones &&
-                6 - board.stones < move.col && move.col < 8 + board.stones
+                6 - history.moves < move.row && move.row < 8 + history.moves &&
+                6 - history.moves < move.col && move.col < 8 + history.moves
 
     override val player get() =
-        if (this.board.stones < 2)
+        if (this.history.moves < 2)
             if (this.ownerHasBlack) this.owner
             else this.opponent
         else super<MoveStageOpeningSession>.player
 
     override val nextPlayer get() =
-        if (this.board.stones < 2) this.player
+        if (this.history.moves < 2) this.player
         else super<MoveStageOpeningSession>.nextPlayer
 
     override fun next(move: Pos): SoosyrvOpeningSession =
@@ -48,7 +48,7 @@ data class SoosyrvMoveStageSession(
                 messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
                 state = this.state.play(move),
             )
-        else if (this.board.stones < 2)
+        else if (this.history.moves < 2)
             this.copy(
                 messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
                 state = this.state.play(move),

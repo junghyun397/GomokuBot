@@ -8,7 +8,7 @@ import kotlin.time.Instant
 
 data class TaskContext(
     override val bot: BotContext,
-    override val guild: Channel,
+    override val channel: Channel,
     override val config: ChannelConfig,
     override val emittedTime: Instant,
     override val source: String

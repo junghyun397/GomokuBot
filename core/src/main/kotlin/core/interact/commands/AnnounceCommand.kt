@@ -27,8 +27,8 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
     override suspend fun <A, B> executeSelf(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
@@ -67,9 +67,9 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
             listOf(Order.UpsertCommands(config.language.container))
         }
 
-        val report = this.writeCommandReport("sent", guild, thenUser)
+        val report = this.writeCommandReport("sent", channel, thenUser)
 
-        tuple(io, report, guild, user)
+        tuple(io, report, channel, user)
     }
 
 }

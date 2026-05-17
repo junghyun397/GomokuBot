@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS game_record (
     channel_id UUID NOT NULL REFERENCES channel_profile (channel_id),
     black_id UUID REFERENCES user_profile (user_id),
     white_id UUID REFERENCES user_profile (user_id),
-    ai_level smallint,
+    engine_level smallint,
     rule smallint,
     create_date timestamp without time zone DEFAULT now()
 );
@@ -66,7 +66,7 @@ FROM (
         win_color,
         create_date
     FROM game_record
-    WHERE ai_level IS NOT NULL
+    WHERE engine_level IS NOT NULL
       AND black_id IS NOT NULL
 
     UNION ALL
@@ -77,7 +77,7 @@ FROM (
         win_color,
         create_date
     FROM game_record
-    WHERE ai_level IS NOT NULL
+    WHERE engine_level IS NOT NULL
       AND white_id IS NOT NULL
 ) AS ai_game_record
 GROUP BY user_id;

@@ -6,12 +6,12 @@ import arrow.core.Some
 import core.BotContext
 import core.assets.Channel
 import core.assets.User
-import core.assets.aiUser
+import core.assets.humanId
 import core.database.entities.extractGameRecord
 import core.database.repositories.GameRecordRepository
-import core.mintaka.AiLevel
+import core.mintaka.EngineLevel
 import core.interact.message.graphics.*
-import core.mintaka.MintakaIdleSession
+import core.session.entities.MintakaIdleSession
 import core.mintaka.MintakaProvider
 import core.mintaka.MintakaServer
 import core.session.entities.*
@@ -21,6 +21,7 @@ import renju.History
 import renju.MoveError
 import renju.notation.Color
 import renju.notation.GameResult
+import renju.notation.HashKey
 import renju.notation.Pos
 import utils.lang.tuple
 import utils.structs.Identifiable
@@ -30,11 +31,10 @@ enum class BoardStyle(override val id: Short, val renderer: BoardRenderer, val s
     IMAGE(0, ImageBoardRenderer, ImageBoardRenderer),
     TEXT(1, TextBoardRenderer(), TextBoardRenderer),
     DOTTED_TEXT(2, DottedTextBoardRenderer(), DottedTextBoardRenderer),
-    UNICODE(3, UnicodeBoardRenderer, UnicodeBoardRenderer)
 }
 
 enum class FocusType(override val id: Short) : Identifiable {
-    INTELLIGENCE(0), FALLOWING(1)
+    INTELLIGENCE(0), CENTER(1)
 }
 
 enum class HintType(override val id: Short) : Identifiable {
@@ -55,7 +55,7 @@ enum class Rule(override val id: Short, val isOpening: Boolean) : Identifiable {
 
 object GameManager {
 
-    fun generatePvpSession(bot: BotContext, owner: User, opponent: User, rule: Rule): GameSession {
+    fun generatePvpSession(bot: BotContext, owner: User.Human, opponent: User.Human, rule: Rule): GameSession {
         val ownerHasBlack = Random(System.nanoTime()).nextBoolean()
 
         return when (rule) {
@@ -90,7 +90,7 @@ object GameManager {
         }
     }
 
-    suspend fun generateAiSession(bot: BotContext, owner: User, aiLevel: AiLevel): GameSession {
+    suspend fun generateEngineSession(bot: BotContext, owner: User.Human, engineLevel: EngineLevel): GameSession {
         val ownerHasBlack = Random(System.nanoTime()).nextBoolean()
 
         val state = if (ownerHasBlack)
@@ -99,9 +99,9 @@ object GameManager {
             GameState(Board.newBoard(), History.empty()).play(Pos.CENTER)
 
         // TODO: PoC
-        val sessionHandle = MintakaProvider.createSession(bot.mintakaServer, MintakaProvider.DefaultConfig, MintakaProvider.EmptyBoard)
+        val sessionHandle = MintakaProvider.createSession(bot.mintakaServer, engineLevel, state)
 
-        return AiGameSession(
+        return EngineGameSession(
             mintakaSession = sessionHandle.session.await(),
             owner = owner,
             ownerHasBlack = ownerHasBlack,
@@ -142,11 +142,16 @@ object GameManager {
         )
     }
 
-    suspend fun makeAiMove(server: MintakaServer, session: AiGameSession): AiGameSession {
+    suspend fun makeAiMove(server: MintakaServer, session: EngineGameSession, beforeHash: HashKey, playerMove: Pos): EngineGameSession {
         // TODO: PoC
-        val launchHandle = MintakaProvider.launchSession(server, session.mintakaSession as MintakaIdleSession)
+        MintakaProvider.playSession(server, session.mintakaSession as MintakaIdleSession, beforeHash, playerMove)
+
+        val launchHandle = MintakaProvider.launchSession(server, session.mintakaSession, session.state.board.hashKey)
 
         val aiMove = Pos.fromCartesian(launchHandle.bestmove.await().best_move)!!
+
+        MintakaProvider.playSession(server, session.mintakaSession, session.state.board.hashKey, aiMove)
+        // TODO: PoC
 
         val thenState = session.state.play(aiMove)
 
@@ -159,7 +164,7 @@ object GameManager {
             { result ->
                 val gameResult = when (result) {
                     is GameResult.FiveInRow ->
-                        GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, result.winner(), aiUser, session.owner)
+                        GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, result.winner(), User.GomokuBot, session.owner)
                     else -> GameResult.Full
                 }
 
@@ -173,24 +178,26 @@ object GameManager {
 
     fun resignSession(session: GameSession, cause: GameResult.Cause, user: User): Pair<RenjuSession, GameResult.Win> =
         when (session) {
-            is AiGameSession -> {
+            is EngineGameSession -> {
                 val winColor =
-                    if (session.board.stones == 0)
+                    if (session.history.moves == 0)
                         if (session.ownerHasBlack) Color.White
                         else Color.Black
                     else session.board.opponentColor
 
-                val result = GameResult.Win(cause, winColor, aiUser, session.owner)
+                val result = GameResult.Win(cause, winColor, User.GomokuBot, session.owner)
 
                 tuple(session.copy(gameResult = Some(result)), result)
             }
             is OpeningSession, is PvpGameSession -> {
+                val playerId = session.player.humanId ?: throw IllegalStateException()
+                val userId = user.humanId ?: throw IllegalStateException()
                 val winColor =
-                    if ((session.player.id == user.id) == session.ownerHasBlack) Color.White
+                    if ((playerId == userId) == session.ownerHasBlack) Color.White
                     else Color.Black
 
                 val result =
-                    if (user.id == session.owner.id)
+                    if (session.owner.humanId == userId)
                         GameResult.Win(cause, winColor, session.opponent, session.owner)
                     else
                         GameResult.Win(cause, winColor, session.owner, session.opponent)
@@ -199,10 +206,12 @@ object GameManager {
             }
         }
 
-    suspend fun finishSession(bot: BotContext, guild: Channel, session: GameSession, result: GameResult) {
-        SessionManager.removeGameSession(bot.sessions, guild, session.owner.id)
+    suspend fun finishSession(bot: BotContext, channel: Channel, session: GameSession, result: GameResult) {
+        val ownerId = session.owner.humanId ?: throw IllegalStateException()
 
-        session.extractGameRecord(guild.id).onSome { record ->
+        SessionManager.removeGameSession(bot.sessions, channel, ownerId)
+
+        session.extractGameRecord(channel.id).onSome { record ->
             GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
         }
     }

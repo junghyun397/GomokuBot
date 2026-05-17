@@ -19,12 +19,12 @@ object ChannelLeaveCommand : InternalCommand {
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
+        channel: Channel,
         service: MessagingService<A, B>,
         publisher: PublisherSet<A, B>,
     ) = runCatching {
         val io: Effect<Nothing, List<Order>> = effect { emptyOrders }
-        tuple(io, this.writeCommandReport("goodbye", guild))
+        tuple(io, this.writeCommandReport("goodbye", channel))
     }
 
 }

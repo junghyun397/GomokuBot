@@ -5,6 +5,7 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
+import core.assets.humanId
 import core.interact.Order
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
@@ -12,7 +13,7 @@ import core.interact.reports.writeCommandReport
 import core.session.GameManager
 import core.session.SessionManager
 import core.session.SwapType
-import core.session.entities.AiGameSession
+import core.session.entities.EngineGameSession
 import core.session.entities.ChannelConfig
 import core.session.entities.PvpGameSession
 import core.session.entities.RenjuSession
@@ -20,8 +21,7 @@ import renju.notation.GameResult
 import renju.notation.Pos
 import utils.lang.tuple
 
-class SetCommand(
-    private val session: RenjuSession,
+class PlayCommand(
     private val pos: Pos,
     private val deployAt: MessageRef?,
     override val responseFlag: ResponseFlag,
@@ -32,15 +32,21 @@ class SetCommand(
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
+        val session = SessionManager.retrieveGameSession(bot.sessions, channel, user.id) as? RenjuSession
+            ?: throw IllegalStateException()
+
+        if (session.player.humanId != user.id) throw IllegalStateException()
         if (session.board.validateMove(this.pos).isSome()) throw IllegalStateException()
 
-        val thenSession = GameManager.makeMove(this.session, this.pos)
+        val beforeHash = session.board.hashKey
+
+        val thenSession = GameManager.makeMove(session, this.pos)
 
         val boardPublisher = when (config.swapType) {
             SwapType.EDIT -> publishers.edit(this.deployAt ?: messageRef)
@@ -50,7 +56,7 @@ class SetCommand(
         thenSession.gameResult.fold(
             ifEmpty = { when (thenSession) {
                 is PvpGameSession -> {
-                    SessionManager.putGameSession(bot.sessions, guild, thenSession)
+                    SessionManager.putGameSession(bot.sessions, channel, thenSession)
 
                     val guideIO = when {
                         config.swapType == SwapType.EDIT && this.deployAt == null -> effect { Unit }
@@ -79,23 +85,23 @@ class SetCommand(
                         guideIO()
                         buildNextMoveProcedure(
                             bot,
-                            guild,
+                            channel,
                             config,
                             service,
                             boardPublisher,
-                            this@SetCommand.session,
+                            session,
                             thenSession
                         )()
                     }
 
-                    tuple(io, this.writeCommandReport("make move $pos", guild, user))
+                    tuple(io, this.writeCommandReport("make move $pos", channel, user))
                 }
-                is AiGameSession -> {
-                    val nextSession = GameManager.makeAiMove(bot.mintakaServer, thenSession)
+                is EngineGameSession -> {
+                    val nextSession = GameManager.makeAiMove(bot.mintakaServer, thenSession, beforeHash, pos)
 
                     nextSession.gameResult.fold(
                         ifEmpty = {
-                            SessionManager.putGameSession(bot.sessions, guild, nextSession)
+                            SessionManager.putGameSession(bot.sessions, channel, nextSession)
 
                             val guideIO = when {
                                 config.swapType == SwapType.EDIT && this.deployAt == null -> effect { Unit }
@@ -110,7 +116,7 @@ class SetCommand(
                                             guidePublisher,
                                             config.language.container,
                                             nextSession.owner,
-                                            nextSession.history.lastAction ?: this@SetCommand.pos
+                                            nextSession.history.lastAction ?: this@PlayCommand.pos
                                         )
                                             .retrieve()()
 
@@ -123,19 +129,19 @@ class SetCommand(
                                 guideIO()
                                 buildNextMoveProcedure(
                                     bot,
-                                    guild,
+                                    channel,
                                     config,
                                     service,
                                     boardPublisher,
-                                    this@SetCommand.session,
+                                    session,
                                     nextSession
                                 )()
                             }
 
-                            tuple(io, this.writeCommandReport("make move $pos", guild, user))
+                            tuple(io, this.writeCommandReport("make move $pos", channel, user))
                         },
                         ifSome = { result ->
-                            GameManager.finishSession(bot, guild, nextSession, result)
+                            GameManager.finishSession(bot, channel, nextSession, result)
 
                             val io = effect {
                                 when (result) {
@@ -144,14 +150,14 @@ class SetCommand(
                                             publishers.plain,
                                             config.language.container,
                                             nextSession.owner,
-                                            nextSession.history.lastAction ?: this@SetCommand.pos
+                                            nextSession.history.lastAction ?: this@PlayCommand.pos
                                         )
                                     is GameResult.FiveInRow ->
                                         service.buildLosePVE(
                                             publishers.plain,
                                             config.language.container,
                                             nextSession.owner,
-                                            nextSession.history.lastAction ?: this@SetCommand.pos
+                                            nextSession.history.lastAction ?: this@PlayCommand.pos
                                         )
                                     is GameResult.Full ->
                                         service.buildTiePVE(publishers.plain, config.language.container, nextSession.owner)
@@ -162,20 +168,21 @@ class SetCommand(
                                     service,
                                     boardPublisher,
                                     config,
-                                    this@SetCommand.session,
+                                    session,
                                     nextSession
                                 )()
 
                                 finishOrders + Order.ArchiveSession(nextSession, config.archivePolicy)
                             }
 
-                            tuple(io, this.writeCommandReport("make move $pos, terminate session by $result", guild, user))
+                            tuple(io, this.writeCommandReport("make move $pos, terminate session by $result",
+                                channel, user))
                         }
                     )
                 }
             } },
             ifSome = { result ->
-                GameManager.finishSession(bot, guild, thenSession, result)
+                GameManager.finishSession(bot, channel, thenSession, result)
 
                 when (thenSession) {
                     is PvpGameSession -> {
@@ -206,16 +213,16 @@ class SetCommand(
                                 service,
                                 boardPublisher,
                                 config,
-                                this@SetCommand.session,
+                                session,
                                 thenSession
                             )()
 
                             finishOrders + Order.ArchiveSession(thenSession, config.archivePolicy)
                         }
 
-                        tuple(io, this.writeCommandReport("make move $pos, terminate session by $result", guild, user))
+                        tuple(io, this.writeCommandReport("make move $pos, terminate session by $result", channel, user))
                     }
-                    is AiGameSession -> {
+                    is EngineGameSession -> {
                         val io = effect {
                             when (result) {
                                 is GameResult.Win ->
@@ -231,14 +238,14 @@ class SetCommand(
                                 service,
                                 boardPublisher,
                                 config,
-                                this@SetCommand.session,
+                                session,
                                 thenSession
                             )()
 
                             finishOrders + Order.ArchiveSession(thenSession, config.archivePolicy)
                         }
 
-                        tuple(io, this.writeCommandReport("make move $pos, terminate session by $result", guild, user))
+                        tuple(io, this.writeCommandReport("make move $pos, terminate session by $result", channel, user))
                     }
                 }
             }

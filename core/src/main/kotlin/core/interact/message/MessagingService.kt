@@ -16,6 +16,7 @@ import core.session.entities.ChannelConfig
 import core.session.entities.DeclareStageOpeningSession
 import core.session.entities.GameSession
 import kotlinx.coroutines.flow.Flow
+import renju.notation.ForbiddenKind
 import renju.notation.GameResult
 import renju.notation.Pos
 
@@ -88,7 +89,7 @@ interface MessagingService<A, B> {
 
     fun buildBackToListButton(): B
 
-    fun buildReplayList(publisher: MessagePublisher<A, B>, container: LanguageContainer, player: User, records: List<Pair<User, GameRecord>>): MessageBuilder<A, B>
+    fun buildReplayList(publisher: MessagePublisher<A, B>, container: LanguageContainer, player: User.Human, records: List<Pair<User, GameRecord>>): MessageBuilder<A, B>
 
     // HELP
 
@@ -154,11 +155,11 @@ interface MessagingService<A, B> {
 
     fun buildSetAlreadyExistFailure(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos): MessageBuilder<A, B>
 
-    fun buildSetForbiddenMoveFailure(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos, forbiddenFlag: Byte): MessageBuilder<A, B>
+    fun buildSetForbiddenMoveFailure(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos, forbiddenKind: ForbiddenKind?): MessageBuilder<A, B>
 
     // REQUEST
 
-    fun buildRequest(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User, rule: Rule): MessageBuilder<A, B>
+    fun buildRequest(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User.Human, opponent: User.Human, rule: Rule): MessageBuilder<A, B>
 
     fun buildRejectedRequest(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): MessageBuilder<A, B>
 

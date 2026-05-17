@@ -29,7 +29,7 @@ object FocusCommandParser : CommandParser, NavigableCommand {
         }
 
     override suspend fun parseReaction(context: UserInteractionContext<GenericMessageReactionEvent>, state: NavigationState) =
-        SessionManager.retrieveGameSession(context.bot.sessions, context.guild, context.user.id)
+        SessionManager.retrieveGameSession(context.bot.sessions, context.channel, context.user.id)
             .toOption()
             .filter { state is BoardNavigationState }
             .flatMap { session ->

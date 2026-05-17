@@ -23,9 +23,9 @@ object ChannelProfileRepository {
         connection.localCaches.channelProfileUidCache
             .getIfPresent(channelUid)
             ?: this.fetchChannel(connection, channelUid)
-                .also { guild ->
-                    connection.localCaches.channelProfileGivenIdCache.put(guild.givenId, guild)
-                    connection.localCaches.channelProfileUidCache.put(guild.id, guild)
+                .also { channel ->
+                    connection.localCaches.channelProfileGivenIdCache.put(channel.givenId, channel)
+                    connection.localCaches.channelProfileUidCache.put(channel.id, channel)
                 }
 
     suspend fun retrieveChannel(connection: DatabaseConnection, platform: Short, givenId: ChannelId): Option<Channel> {
@@ -83,9 +83,9 @@ object ChannelProfileRepository {
             .defaultIfEmpty(None)
             .awaitSingle()
 
-    suspend fun upsertChannel(connection: DatabaseConnection, guild: Channel) {
-        connection.localCaches.channelProfileGivenIdCache.put(guild.givenId, guild)
-        connection.localCaches.channelProfileUidCache.put(guild.id, guild)
+    suspend fun upsertChannel(connection: DatabaseConnection, channel: Channel) {
+        connection.localCaches.channelProfileGivenIdCache.put(channel.givenId, channel)
+        connection.localCaches.channelProfileUidCache.put(channel.id, channel)
 
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
@@ -95,10 +95,10 @@ object ChannelProfileRepository {
                             ON CONFLICT (channel_id) DO UPDATE SET name = $4
                     """.trimIndent()
                 )
-                .bind("$1", guild.id.uuid)
-                .bind("$2", guild.platform)
-                .bind("$3", guild.givenId.idLong)
-                .bind("$4", guild.name)
+                .bind("$1", channel.id.uuid)
+                .bind("$2", channel.platform)
+                .bind("$3", channel.givenId.idLong)
+                .bind("$4", channel.name)
                 .execute()
             }
             .flatMap { it.rowsUpdated }

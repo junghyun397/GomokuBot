@@ -24,15 +24,15 @@ class ResignCommand(private val session: GameSession) : Command {
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
         val (finishedSession, result) = GameManager.resignSession(this.session, GameResult.Cause.RESIGN, user)
 
-        GameManager.finishSession(bot, guild, finishedSession, result)
+        GameManager.finishSession(bot, channel, finishedSession, result)
 
         val publisher = run {
             val boardMessage = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
@@ -45,7 +45,7 @@ class ResignCommand(private val session: GameSession) : Command {
 
         val io = effect {
             when (finishedSession) {
-                is AiGameSession ->
+                is EngineGameSession ->
                     service.buildSurrenderedPVE(publishers.plain, config.language.container, finishedSession.owner)
                 is PvpGameSession, is OpeningSession ->
                     service.buildSurrenderedPVP(publishers.plain, config.language.container, result.winner, result.loser)
@@ -56,7 +56,7 @@ class ResignCommand(private val session: GameSession) : Command {
             finishOrders + Order.ArchiveSession(finishedSession, config.archivePolicy)
         }
 
-        io to this.writeCommandReport("surrendered, terminate session by $result", guild, user)
+        io to this.writeCommandReport("surrendered, terminate session by $result", channel, user)
     }
 
 }

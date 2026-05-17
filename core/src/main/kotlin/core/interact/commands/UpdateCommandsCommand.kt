@@ -24,17 +24,17 @@ class UpdateCommandsCommand(
     override suspend fun <A, B> executeSelf(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {
         val io: Effect<Nothing, List<Order>> = effect { listOf(Order.UpsertCommands(config.language.container)) }
 
-        val report = this.writeCommandReport("deprecates = $deprecates, adds = $adds", guild, user)
+        val report = this.writeCommandReport("deprecates = $deprecates, adds = $adds", channel, user)
 
-        tuple(io, report, guild, user)
+        tuple(io, report, channel, user)
     }
 
 }

@@ -5,6 +5,7 @@ import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import core.assets.MessageRef
 import core.assets.User
+import core.assets.humanId
 import core.interact.Order
 import core.interact.commands.*
 import core.interact.emptyOrders
@@ -31,6 +32,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import renju.MoveError
 import renju.notation.Color
+import renju.notation.ForbiddenKind
 import renju.notation.Pos
 import utils.lang.tuple
 
@@ -59,7 +61,7 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
         )
 
     private fun buildOrderFailure(context: UserInteractionContext<*>, session: GameSession, player: User): DiscordParseFailure =
-        this.asParseFailure("try move but now $player's turn", context.guild, context.user) { messagingService, publisher, container ->
+        this.asParseFailure("try move but now $player's turn", context.channel, context.user) { messagingService, publisher, container ->
             effect {
                 val maybeMessage = messagingService.buildSetOrderFailure(publisher, container, player).retrieve()()
                 this@SetCommandParser.buildAppendMessageProcedure(maybeMessage, context, session)()
@@ -67,7 +69,7 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
         }
 
     private fun buildMissMatchFailure(context: UserInteractionContext<*>, session: GameSession): DiscordParseFailure =
-        this.asParseFailure("try move but argument mismatch", context.guild, context.user) { messagingService, publisher, container ->
+        this.asParseFailure("try move but argument mismatch", context.channel, context.user) { messagingService, publisher, container ->
             effect {
                 val maybeMessage = messagingService.buildSetIllegalArgumentFailure(publisher, container).retrieve()()
                 this@SetCommandParser.buildAppendMessageProcedure(maybeMessage, context, session)()
@@ -75,38 +77,38 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
         }
 
     private fun buildExistFailure(context: UserInteractionContext<*>, session: GameSession, pos: Pos): DiscordParseFailure =
-        this.asParseFailure("make move but already exist", context.guild, context.user) { messagingService, publisher, container ->
+        this.asParseFailure("make move but already exist", context.channel, context.user) { messagingService, publisher, container ->
             effect {
                 val maybeMessage = messagingService.buildSetAlreadyExistFailure(publisher, container, pos).retrieve()()
                 this@SetCommandParser.buildAppendMessageProcedure(maybeMessage, context, session)()
             }
         }
 
-    private fun buildForbiddenMoveFailure(context: UserInteractionContext<*>, session: GameSession, pos: Pos, flag: Byte): DiscordParseFailure =
-        this.asParseFailure("make move but forbidden", context.guild, context.user) { messagingService, publisher, container ->
+    private fun buildForbiddenMoveFailure(context: UserInteractionContext<*>, session: GameSession, pos: Pos, forbiddenKind: ForbiddenKind?): DiscordParseFailure =
+        this.asParseFailure("make move but forbidden", context.channel, context.user) { messagingService, publisher, container ->
             effect {
-                val maybeMessage = messagingService.buildSetForbiddenMoveFailure(publisher, container, pos, flag).retrieve()()
+                val maybeMessage = messagingService.buildSetForbiddenMoveFailure(publisher, container, pos, forbiddenKind).retrieve()()
                 this@SetCommandParser.buildAppendMessageProcedure(maybeMessage, context, session)()
             }
         }
 
     private fun buildSilentFailure(context: UserInteractionContext<*>): DiscordParseFailure =
-        this.asParseFailure("unknown error", context.guild, context.user) { _, _, _ ->
+        this.asParseFailure("unknown error", context.channel, context.user) { _, _, _ ->
             effect { emptyOrders }
         }
 
     private fun branchCommandBySession(session: GameSession, pos: Pos, ref: MessageRef?, responseFlag: ResponseFlag): Command? =
         when (session) {
-            is RenjuSession -> SetCommand(session, pos, ref, responseFlag)
+            is RenjuSession -> PlayCommand(pos, ref, responseFlag)
             is MoveStageOpeningSession -> OpeningSetCommand(session, pos, ref, responseFlag)
             is OfferStageOpeningSession -> OpeningOfferCommand(session, pos, ref, responseFlag)
             is SelectStageOpeningSession -> OpeningSelectCommand(session, pos, ref, responseFlag)
             else -> null
         }
 
-    private suspend fun parseRawCommand(context: UserInteractionContext<*>, user: User, rawRow: String?, rawColumn: String?): Either<DiscordParseFailure, Command> =
-        this.retrieveSession(context.bot, context.guild, user).flatMap { session ->
-            if (session.player.id != user.id)
+    private suspend fun parseRawCommand(context: UserInteractionContext<*>, user: User.Human, rawRow: String?, rawColumn: String?): Either<DiscordParseFailure, Command> =
+        this.retrieveSession(context.bot, context.channel, user).flatMap { session ->
+            if (session.player.humanId != user.id)
                 return@flatMap Either.Left(this.buildOrderFailure(context, session, session.player))
 
             if (rawRow == null || rawColumn == null)
@@ -130,7 +132,7 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
                     when (invalidKind) {
                         MoveError.Exist -> Some(this.buildExistFailure(context, session, pos))
                         MoveError.Forbidden -> when(session.board.playerColor) {
-                            Color.Black -> Some(this.buildForbiddenMoveFailure(context, session, pos, session.board.field(session.history)[pos.idx]))
+                            Color.Black -> Some(this.buildForbiddenMoveFailure(context, session, pos, session.board.forbiddenKind(pos)))
                             else -> None
                         }
                     }
@@ -179,10 +181,10 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
 
         val userId = context.user.id
 
-        val session = SessionManager.retrieveGameSession(context.bot.sessions, context.guild, userId)
+        val session = SessionManager.retrieveGameSession(context.bot.sessions, context.channel, userId)
             ?: return None
 
-        if (session.player.id != userId)
+        if (session.player.humanId != userId)
             return None
 
         return GameManager.validateMove(session, pos)

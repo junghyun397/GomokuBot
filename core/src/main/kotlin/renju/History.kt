@@ -2,38 +2,44 @@ package renju
 
 import renju.native.RustyRenjuCApi
 import renju.notation.Pos
+import renju.notation.toStringOrNone
 
-@JvmInline value class History(val inner: List<Pos?>) {
+@JvmInline value class History(val sequence: List<Pos?>) {
 
-    val moves: Int get() = this.inner.size
+    val moves: Int get() = this.sequence.size
 
-    val lastAction: Pos? get() = this.inner.lastOrNull()
+    val started: Boolean get() = this.sequence.isNotEmpty()
 
-    val isEmpty: Boolean get() = this.inner.isEmpty()
+    val lastAction: Pos? get() = this.sequence.lastOrNull()
+
+    val isEmpty: Boolean get() = this.sequence.isEmpty()
 
     fun play(pos: Pos): History =
-        History(this.inner + pos)
+        History(this.sequence + pos)
 
     fun pass(): History =
-        History(this.inner + null)
+        History(this.sequence + null)
 
     fun undo(): History =
-        History(this.inner.dropLast(1))
+        History(this.sequence.dropLast(1))
 
     operator fun get(index: Int): Pos? =
-        this.inner[index]
+        this.sequence[index]
 
     operator fun contains(action: Pos?): Boolean =
-        action in this.inner
+        action in this.sequence
 
     fun toMaybePosBuffer(): ByteArray? =
-        if (this.inner.isEmpty()) {
+        if (this.sequence.isEmpty()) {
             null
         } else {
-            ByteArray(this.inner.size) { index ->
-                this.inner[index]?.idx?.toByte() ?: RustyRenjuCApi.constants.posNone
+            ByteArray(this.sequence.size) { index ->
+                this.sequence[index]?.idx?.toByte() ?: RustyRenjuCApi.constants.posNone
             }
         }
+
+    fun toStringList(): List<String> =
+        this.sequence.map { it.toStringOrNone() }
 
     companion object {
 

@@ -23,7 +23,7 @@ typealias Board = BoardData
 sealed class BoardExportItemSchema {
 	@Serializable
 	@SerialName("Stone")
-	data class Stone(val content: BoardExportStone): BoardExportItemSchema()
+	data class Stone(val content: Color): BoardExportItemSchema()
 	@Serializable
 	@SerialName("Empty")
 	object Empty: BoardExportItemSchema()
@@ -221,17 +221,17 @@ data class BestMove (
 )
 
 @Serializable
+data class BoardWinner (
+	val color: Color,
+	val moves: List<Pos>
+)
+
+@Serializable
 data class BoardDescribe (
 	val hash_key: HashKey,
 	val player_color: Color,
 	val field: List<BoardExportItem>,
-	val winner: Color? = null
-)
-
-@Serializable
-data class BoardExportStone (
-	val color: Color,
-	val sequence: UByte
+	val winner: BoardWinner? = null
 )
 
 @Serializable
@@ -250,7 +250,7 @@ data class CompactGameState (
 data class ComputingResource (
 	val workers: UInt,
 	val tt_size: ByteSize,
-	val time: DurationSchema,
+	val time: DurationSchema? = null,
 	val nodes_in_1k: UInt? = null
 )
 

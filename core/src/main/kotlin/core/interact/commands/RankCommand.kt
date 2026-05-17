@@ -5,7 +5,6 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
-import core.assets.aiUser
 import core.database.repositories.UserProfileRepository
 import core.database.repositories.UserStatsRepository
 import core.interact.emptyOrders
@@ -21,7 +20,7 @@ sealed interface RankScope {
 
     data class Channel(val target: core.assets.Channel) : RankScope
 
-    data class User(val target: core.assets.User) : RankScope
+    data class User(val target: core.assets.User.Human) : RankScope
 
 }
 
@@ -34,8 +33,8 @@ class RankCommand(private val scope: RankScope) : Command {
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
@@ -46,11 +45,11 @@ class RankCommand(private val scope: RankScope) : Command {
             is RankScope.Channel -> UserStatsRepository.fetchRankings(bot.dbConnection, scope.target.id)
                 .map { tuple(UserProfileRepository.retrieveUser(bot.dbConnection, it.userId), it) }
             is RankScope.User -> UserStatsRepository.fetchRankings(bot.dbConnection, scope.target.id)
-                .map { stats ->
-                    when (stats.userId) {
-                        aiUser.id -> tuple(aiUser, stats)
-                        else -> tuple(UserProfileRepository.retrieveUser(bot.dbConnection, stats.userId), stats)
-                    }
+                .map { (userUid, stats) ->
+                    tuple(
+                        userUid?.let { UserProfileRepository.retrieveUser(bot.dbConnection, it) } ?: User.GomokuBot,
+                        stats
+                    )
                 }
         }
 
@@ -60,7 +59,7 @@ class RankCommand(private val scope: RankScope) : Command {
             emptyOrders
         }
 
-        tuple(io, this.writeCommandReport("$scope scope", guild, user))
+        tuple(io, this.writeCommandReport("$scope scope", channel, user))
     }
 
 }

@@ -135,9 +135,6 @@ sealed interface LanguageContainer {
     fun styleSelectDottedText(): String
     fun styleSelectDottedTextDescription(): String
 
-    fun styleSelectUnicodeText(): String
-    fun styleSelectUnicodeTextDescription(): String
-
     fun focus(): String
 
     fun focusEmbedTitle(): String
@@ -146,8 +143,8 @@ sealed interface LanguageContainer {
     fun focusSelectIntelligence(): String
     fun focusSelectIntelligenceDescription(): String
 
-    fun focusSelectFollowing(): String
-    fun focusSelectFollowingDescription(): String
+    fun focusSelectCenter(): String
+    fun focusSelectCenterDescription(): String
 
     fun hint(): String
 

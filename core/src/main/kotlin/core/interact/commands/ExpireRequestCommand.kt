@@ -25,7 +25,7 @@ class ExpireRequestCommand(
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
+        channel: Channel,
         service: MessagingService<A, B>,
         publisher: PublisherSet<A, B>,
     ) = runCatching {
@@ -49,7 +49,7 @@ class ExpireRequestCommand(
             }
         } else effect { emptyOrders }
 
-        tuple(io, this.writeCommandReport("expired, $session rejected", guild))
+        tuple(io, this.writeCommandReport("expired, $session rejected", channel))
     }
 
 }

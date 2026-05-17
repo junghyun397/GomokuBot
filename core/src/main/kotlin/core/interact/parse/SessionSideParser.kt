@@ -10,9 +10,9 @@ import core.session.entities.GameSession
 
 abstract class SessionSideParser<A, B> : CommandParser {
 
-    protected suspend fun retrieveSession(context: BotContext, guild: Channel, user: User): Either<ParseFailure<A, B>, GameSession> =
-        SessionManager.retrieveGameSession(context.sessions, guild, user.id)?.let { Either.Right(it) }
-            ?: Either.Left(ParseFailure(this.name, "$user session not found", guild, user) { messagingService, publisher, container ->
+    protected suspend fun retrieveSession(context: BotContext, channel: Channel, user: User.Human): Either<ParseFailure<A, B>, GameSession> =
+        SessionManager.retrieveGameSession(context.sessions, channel, user.id)?.let { Either.Right(it) }
+            ?: Either.Left(ParseFailure(this.name, "$user session not found", channel, user) { messagingService, publisher, container ->
                 effect {
                     messagingService.buildSessionNotFound(publisher, container)
                         .launch()()

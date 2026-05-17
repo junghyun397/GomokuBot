@@ -25,7 +25,7 @@ data class TaraguchiSwapStageSession(
     override val offerCount = None
 
     override fun swap(doSwap: Boolean): GameSession =
-        if (this.isBranched && this.board.stones == 5)
+        if (this.isBranched && this.history.moves == 5)
             PvpGameSession(
                 owner = this.owner, opponent = this.opponent,
                 ownerHasBlack = this.ownerHasBlack xor doSwap,
@@ -61,11 +61,11 @@ data class TaraguchiMoveStageSession(
     override fun validateMove(move: Pos) = this.inSquare(move)
 
     override fun inSquare(move: Pos): Boolean =
-        6 - board.stones < move.row && move.row < 8 + board.stones &&
-                6 - board.stones < move.col && move.col < 8 + board.stones
+        6 - history.moves < move.row && move.row < 8 + history.moves &&
+                6 - history.moves < move.col && move.col < 8 + history.moves
 
     override fun next(move: Pos): TaraguchiOpeningSession =
-        if (this.board.stones == 3)
+        if (this.history.moves == 3)
             TaraguchiBranchingSession(
                 owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
                 state = this.state.play(move),

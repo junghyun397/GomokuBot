@@ -6,7 +6,7 @@ import kotlin.time.Instant
 
 data class ErrorReport(
     private val error: Throwable,
-    override val guild: Channel,
+    override val channel: Channel,
     override var interactionSource: String? = null,
     override var emittedTime: Instant? = null,
     override val commandTime: Instant = Clock.System.now(),

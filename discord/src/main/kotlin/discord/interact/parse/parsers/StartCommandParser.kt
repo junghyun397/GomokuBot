@@ -52,12 +52,12 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             else -> Rule.RENJU
         }
 
-    private suspend fun lookupRequestSent(context: UserInteractionContext<*>, owner: User): Option<DiscordParseFailure> =
-        SessionManager.retrieveRequestSessionByOwner(context.bot.sessions, context.guild, owner.id)
+    private suspend fun lookupRequestSent(context: UserInteractionContext<*>, owner: User.Human): Option<DiscordParseFailure> =
+        SessionManager.retrieveRequestSessionByOwner(context.bot.sessions, context.channel, owner.id)
             .toOption()
             .fold(
                 ifSome = { session ->
-                    Some(this.asParseFailure("already sent request session", context.guild, owner) { messagingService, publisher, container ->
+                    Some(this.asParseFailure("already sent request session", context.channel, owner) { messagingService, publisher, container ->
                         effect {
                             messagingService.buildRequestAlreadySent(publisher, container, session.opponent)
                                 .launch()()
@@ -68,12 +68,12 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                 ifEmpty = { None }
             )
 
-    private suspend fun lookupRequestOwner(context: UserInteractionContext<*>, owner: User): Option<DiscordParseFailure> =
-        SessionManager.retrieveRequestSession(context.bot.sessions, context.guild, owner.id)
+    private suspend fun lookupRequestOwner(context: UserInteractionContext<*>, owner: User.Human): Option<DiscordParseFailure> =
+        SessionManager.retrieveRequestSession(context.bot.sessions, context.channel, owner.id)
             .toOption()
             .fold(
                 ifSome = { session ->
-                    Some(this.asParseFailure("already has request session", context.guild, owner) { messagingService, publisher, container ->
+                    Some(this.asParseFailure("already has request session", context.channel, owner) { messagingService, publisher, container ->
                         effect {
                             messagingService.buildRequestAlready(publisher, container, session.owner)
                                 .launch()()
@@ -84,12 +84,12 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                 ifEmpty = { None }
             )
 
-    private suspend fun lookupRequestOpponent(context: UserInteractionContext<*>, owner: User, opponent: User): Option<DiscordParseFailure> =
-        SessionManager.retrieveRequestSession(context.bot.sessions, context.guild, opponent.id)
+    private suspend fun lookupRequestOpponent(context: UserInteractionContext<*>, owner: User.Human, opponent: User.Human): Option<DiscordParseFailure> =
+        SessionManager.retrieveRequestSession(context.bot.sessions, context.channel, opponent.id)
             .toOption()
             .fold(
                 ifSome = {
-                    Some(this.asParseFailure("try to send request session but $opponent already has request session", context.guild, owner) { messagingService, publisher, container ->
+                    Some(this.asParseFailure("try to send request session but $opponent already has request session", context.channel, owner) { messagingService, publisher, container ->
                         effect {
                             messagingService.buildOpponentRequestAlready(publisher, container, opponent)
                                 .launch()()
@@ -100,12 +100,12 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                 ifEmpty = { None }
             )
 
-    private suspend fun lookupSessionOwner(context: UserInteractionContext<*>, user: User): Option<DiscordParseFailure> =
-        SessionManager.retrieveGameSession(context.bot.sessions, context.guild, user.id)
+    private suspend fun lookupSessionOwner(context: UserInteractionContext<*>, user: User.Human): Option<DiscordParseFailure> =
+        SessionManager.retrieveGameSession(context.bot.sessions, context.channel, user.id)
             .toOption()
             .fold(
                 ifSome = { session ->
-                    Some(this.asParseFailure("already has game session", context.guild, user) { messagingService, publisher, container ->
+                    Some(this.asParseFailure("already has game session", context.channel, user) { messagingService, publisher, container ->
                         effect {
                             val maybeMessage = messagingService.buildSessionAlready(publisher, container)
                                 .retrieve()()
@@ -117,7 +117,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
                             when (context.config.swapType) {
                                 SwapType.EDIT -> Unit
-                                else -> buildBoardProcedure(context.bot, context.guild, context.config, messagingService, publisher, session)()
+                                else -> buildBoardProcedure(context.bot, context.channel, context.config, messagingService, publisher, session)()
                             }
 
                             emptyList()
@@ -127,12 +127,12 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                 ifEmpty = { None }
             )
 
-    private suspend fun lookupSessionOpponent(context: UserInteractionContext<*>, user: User, opponent: User): Option<DiscordParseFailure> =
-        SessionManager.retrieveGameSession(context.bot.sessions, context.guild, opponent.id)
+    private suspend fun lookupSessionOpponent(context: UserInteractionContext<*>, user: User.Human, opponent: User.Human): Option<DiscordParseFailure> =
+        SessionManager.retrieveGameSession(context.bot.sessions, context.channel, opponent.id)
             .toOption()
             .fold(
                 ifSome = {
-                    Some(this.asParseFailure("try to send request session but $opponent already has game session", context.guild, user) { messagingService, publisher, container ->
+                    Some(this.asParseFailure("try to send request session but $opponent already has game session", context.channel, user) { messagingService, publisher, container ->
                         effect {
                             messagingService.buildOpponentSessionAlready(publisher, container, opponent)
                                 .launch()()
@@ -143,7 +143,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                 ifEmpty = { None }
             )
 
-    private suspend fun parseActually(context: UserInteractionContext<*>, owner: User, opponent: Option<User>, rule: Rule): Either<DiscordParseFailure, Command> {
+    private suspend fun parseActually(context: UserInteractionContext<*>, owner: User.Human, opponent: Option<User.Human>, rule: Rule): Either<DiscordParseFailure, Command> {
         when (val failure = this.lookupSessionOwner(context, owner)) {
             is Some -> return Either.Left(failure.value)
             None -> Unit
@@ -177,7 +177,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             StartCommand(
                 opponent = when (opponent) {
                     is Some -> opponent.value
-                    None -> null
+                    None -> User.GomokuBot
                 },
                 rule = rule
             )

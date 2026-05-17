@@ -27,16 +27,16 @@ class AcceptCommand(
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
         val gameSession = GameManager.generatePvpSession(bot, this.requestSession.owner, this.requestSession.opponent, this.requestSession.rule)
 
-        SessionManager.removeRequestSession(bot.sessions, guild, this.requestSession.owner.id)
-        SessionManager.putGameSession(bot.sessions, guild, gameSession)
+        SessionManager.removeRequestSession(bot.sessions, channel, this.requestSession.owner.id)
+        SessionManager.putGameSession(bot.sessions, channel, gameSession)
 
         val guidePublisher = SessionManager.checkoutMessages(bot.sessions, requestSession.messageBufferKey)
             ?.let { publishers.edit(it.first()) }
@@ -50,7 +50,7 @@ class AcceptCommand(
         }
             .launch()
 
-        val boardIO = buildBoardProcedure(bot, guild, config, service, publishers.plain, gameSession)
+        val boardIO = buildBoardProcedure(bot, channel, config, service, publishers.plain, gameSession)
 
         val io = effect {
             beginIO()
@@ -58,7 +58,7 @@ class AcceptCommand(
             emptyOrders
         }
 
-        tuple(io, this.writeCommandReport("accept ${requestSession.owner}'s request", guild, user))
+        tuple(io, this.writeCommandReport("accept ${requestSession.owner}'s request", channel, user))
     }
 
 }

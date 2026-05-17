@@ -51,7 +51,7 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             .flatMap { UserProfileRepository.retrieveUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, it.extractId()) }
             .fold(
                 ifSome = { Either.Right(RankCommand(RankScope.User(it))) },
-                ifEmpty = { Either.Left(this.asParseFailure("target user not found", context.guild, context.user) { messagingService, publisher, container ->
+                ifEmpty = { Either.Left(this.asParseFailure("target user not found", context.channel, context.user) { messagingService, publisher, container ->
                     effect {
                         messagingService.buildUserNotFound(publisher, container)
                             .launch()()
@@ -63,7 +63,7 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<DiscordParseFailure, Command> =
         when (context.event.subcommandName) {
             context.config.language.container.rankCommandSubServer() ->
-                Either.Right(RankCommand(RankScope.Channel(context.guild)))
+                Either.Right(RankCommand(RankScope.Channel(context.channel)))
             context.config.language.container.rankCommandSubUser() ->
                 context.event.getOption(context.config.language.container.rankCommandOptionPlayer())
                     ?.asUser
@@ -75,7 +75,7 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<DiscordParseFailure, Command> =
         when (payload.getOrNull(1)) {
             context.config.language.container.rankCommandSubServer() ->
-                Either.Right(RankCommand(RankScope.Channel(context.guild)))
+                Either.Right(RankCommand(RankScope.Channel(context.channel)))
             context.config.language.container.rankCommandSubUser() ->
                 context.event.message.mentions.members.firstOrNull()
                     ?.user

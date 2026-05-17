@@ -85,7 +85,11 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
     private infix fun DiscordMessagePublisher.sends(embeds: List<MessageEmbed>) =
         this(DiscordMessageData(embeds = embeds))
 
-    override fun User.asMentionFormat() = "<@${this.givenId.idLong}>"
+    override fun User.asMentionFormat() =
+        when (this) {
+            is User.Human -> "<@${this.givenId.idLong}>"
+            User.Anonymous, User.GomokuBot -> this.name
+        }
 
     override fun String.asHighlightFormat() = "``$this``"
 
@@ -119,7 +123,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             ?.let { lastPos ->
                 field {
                     name = container.boardMoves()
-                    value = session.board.stones.toString().asHighlightFormat()
+                    value = session.history.moves.toString().asHighlightFormat()
                     inline = true
                 }
 
@@ -134,10 +138,10 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
     }
 
     private fun InlineEmbed.buildResultFields(container: LanguageContainer, session: GameSession, gameResult: GameResult) =
-        this.buildResultFields(container, gameResult, session.board.stones.toString().asHighlightFormat())
+        this.buildResultFields(container, gameResult, session.history.moves.toString().asHighlightFormat())
 
     private fun InlineEmbed.buildResultFields(container: LanguageContainer, session: GameSession, gameResult: GameResult, totalMoves: Int) =
-        this.buildResultFields(container, gameResult, "${session.board.stones}/$totalMoves".asHighlightFormat())
+        this.buildResultFields(container, gameResult, "${session.history.moves}/$totalMoves".asHighlightFormat())
 
     private fun InlineEmbed.buildResultFields(container: LanguageContainer, gameResult: GameResult, movesFieldString: String) {
         field {
@@ -210,7 +214,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             is MoveStageOpeningSession -> (0 until Pos.BOARD_SIZE).map { Pos.fromIdx(it) }
                 .filterNot { session.inSquare(it) }
             is OfferStageOpeningSession -> (0 until Pos.BOARD_SIZE).map { Pos.fromIdx(it) }
-                .filter { session.board.field(session.history)[it.idx] == Color.emptyFlag() && it in session.symmetryMoves }
+                .filter { session.board.stoneKind(it) == null && session.board.forbiddenKind(it) == null && it in session.symmetryMoves }
             else -> null
         }
 
@@ -297,7 +301,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
     override fun buildSessionArchive(publisher: DiscordMessagePublisher, session: GameSession, result: Option<GameResult>, animate: Boolean): DiscordMessageBuilder {
         val imageStream = if (animate)
-            ImageBoardRenderer.renderHistoryAnimation(session.history.inner.filterNotNull())
+            ImageBoardRenderer.renderHistoryAnimation(session.history.sequence.filterNotNull())
         else
             ImageBoardRenderer.renderInputStream(session.state, HistoryRenderType.SEQUENCE, null, null, true)
 
@@ -421,7 +425,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
     override fun buildBackToListButton() =
         Button.of(ButtonStyle.SECONDARY, "$REPLAY_LIST", EMOJI_RETURN).liftToButtons()
 
-    override fun buildReplayList(publisher: MessagePublisher<DiscordMessageData, DiscordComponents>, container: LanguageContainer, player: User, records: List<Pair<User, GameRecord>>): MessageBuilder<DiscordMessageData, DiscordComponents> {
+    override fun buildReplayList(publisher: MessagePublisher<DiscordMessageData, DiscordComponents>, container: LanguageContainer, player: User.Human, records: List<Pair<User, GameRecord>>): MessageBuilder<DiscordMessageData, DiscordComponents> {
         val embedBuilder = EmbedBuilder(
             color = COLOR_NORMAL_HEX
         )
@@ -432,7 +436,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             val playerWasBlack = record.blackId == player.id
             val resultString = when {
                 record.gameResult.cause == GameResult.Cause.DRAW -> "$UNICODE_PENCIL${container.replayEmbedDraw()}"
-                (record.gameResult.winColorId == Color.Black.flag().toShort()) == playerWasBlack -> "$UNICODE_TROPHY${container.replayEmbedWin()}"
+                (record.gameResult.winColorId == Color.Black.naiveFlag.toShort()) == playerWasBlack -> "$UNICODE_TROPHY${container.replayEmbedWin()}"
                 else -> "$UNICODE_WHITE_FLAG${container.replayEmbedLose()}"
             }
 
@@ -674,7 +678,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
     // REQUEST
 
-    override fun buildRequest(publisher: MessagePublisher<DiscordMessageData, DiscordComponents>, container: LanguageContainer, owner: User, opponent: User, rule: Rule) =
+    override fun buildRequest(publisher: MessagePublisher<DiscordMessageData, DiscordComponents>, container: LanguageContainer, owner: User.Human, opponent: User.Human, rule: Rule) =
         publisher(DiscordMessageData(embed = Embed {
             color = COLOR_GREEN_HEX
             title = container.requestEmbedTitle()

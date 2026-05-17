@@ -8,9 +8,7 @@ import core.database.repositories.UserProfileRepository
 import core.session.SessionManager
 import core.session.entities.ChannelConfig
 import discord.assets.*
-import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.events.Event
-import reactor.core.publisher.Mono
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -18,8 +16,8 @@ data class UserInteractionContext<out E : Event>(
     override val bot: BotContext,
     override val discordConfig: DiscordConfig,
     override val event: E,
-    val user: User,
-    override val guild: Channel,
+    val user: User.Human,
+    override val channel: Channel,
     override val config: ChannelConfig,
     override val emittedTime: Instant,
     override val source: String
@@ -27,22 +25,22 @@ data class UserInteractionContext<out E : Event>(
 
     companion object {
 
-        fun <E: Event> fromJDAEvent(bot: BotContext, discordConfig: DiscordConfig, event: E, jdaUser: JDAUser, jdaChannel: JDAChannel): Mono<UserInteractionContext<E>> = mono {
+        suspend fun <E: Event> fromJDAEvent(bot: BotContext, discordConfig: DiscordConfig, event: E, jdaUser: JDAUser, jdaChannel: JDAChannel): UserInteractionContext<E> {
             val user = UserProfileRepository.retrieveOrInsertUser(bot.dbConnection, DISCORD_PLATFORM_ID, jdaUser.extractId()) {
                 jdaUser.extractProfile()
             }
 
-            val guild = ChannelProfileRepository.retrieveOrInsertChannel(bot.dbConnection, DISCORD_PLATFORM_ID, jdaChannel.extractId()) {
+            val channel = ChannelProfileRepository.retrieveOrInsertChannel(bot.dbConnection, DISCORD_PLATFORM_ID, jdaChannel.extractId()) {
                 jdaChannel.extractProfile()
             }
 
-            UserInteractionContext(
+            return UserInteractionContext(
                 bot = bot,
                 discordConfig = discordConfig,
                 event = event,
                 user = user,
-                guild = guild,
-                config = SessionManager.retrieveChannelConfig(bot.sessions, guild),
+                channel = channel,
+                config = SessionManager.retrieveChannelConfig(bot.sessions, channel),
                 emittedTime = Clock.System.now(),
                 source = event.abbreviation()
             )

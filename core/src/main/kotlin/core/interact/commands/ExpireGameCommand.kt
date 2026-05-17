@@ -27,13 +27,13 @@ class ExpireGameCommand(
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
+        channel: Channel,
         service: MessagingService<A, B>,
         publisher: PublisherSet<A, B>,
     ) = runCatching {
         val (finishedSession, result) = GameManager.resignSession(session, GameResult.Cause.TIMEOUT, session.player)
 
-        GameManager.finishSession(bot, channelSession.guild, finishedSession, result)
+        GameManager.finishSession(bot, channelSession.channel, finishedSession, result)
 
         val io = if (this.channelAvailable) {
             effect {
@@ -47,7 +47,7 @@ class ExpireGameCommand(
                 when (session) {
                     is PvpGameSession, is OpeningSession -> service
                         .buildTimeoutPVP(noticePublisher, channelSession.config.language.container, session.nextPlayer, session.player)
-                    is AiGameSession -> service
+                    is EngineGameSession -> service
                         .buildTimeoutPVE(noticePublisher, channelSession.config.language.container, session.owner)
                 }.launch()()
 
@@ -64,7 +64,7 @@ class ExpireGameCommand(
             }
         } else effect { emptyOrders }
 
-        val report = this.writeCommandReport("expired, terminate session by $result", guild)
+        val report = this.writeCommandReport("expired, terminate session by $result", channel)
 
         tuple(io, report)
     }

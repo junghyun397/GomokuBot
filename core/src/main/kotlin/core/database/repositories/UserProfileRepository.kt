@@ -13,7 +13,7 @@ import java.util.*
 
 object UserProfileRepository {
 
-    suspend fun retrieveOrInsertUser(connection: DatabaseConnection, platform: Short, givenId: UserId, produce: () -> User): User =
+    suspend fun retrieveOrInsertUser(connection: DatabaseConnection, platform: Short, givenId: UserId, produce: () -> User.Human): User.Human =
         when (val maybeUser = this.retrieveUser(connection, platform, givenId)) {
             is Some -> maybeUser.value
             None -> produce()
@@ -21,7 +21,7 @@ object UserProfileRepository {
                 .also { this.upsertUser(connection, it) }
         }
 
-    suspend fun retrieveUser(connection: DatabaseConnection, userUid: UserUid): User =
+    suspend fun retrieveUser(connection: DatabaseConnection, userUid: UserUid): User.Human =
         connection.localCaches.userProfileUidCache
             .getIfPresent(userUid)
             ?: this.fetchUser(connection, userUid)
@@ -30,7 +30,7 @@ object UserProfileRepository {
                     connection.localCaches.userProfileGivenIdCache.put(user.givenId, user)
                 }
 
-    suspend fun retrieveUser(connection: DatabaseConnection, platform: Short, givenId: UserId): Option<User> {
+    suspend fun retrieveUser(connection: DatabaseConnection, platform: Short, givenId: UserId): Option<User.Human> {
         connection.localCaches.userProfileGivenIdCache
             .getIfPresent(givenId)
             ?.let { return Some(it) }
@@ -45,7 +45,7 @@ object UserProfileRepository {
         return maybeUser
     }
 
-    private suspend fun fetchUser(connection: DatabaseConnection, userUid: UserUid): User =
+    private suspend fun fetchUser(connection: DatabaseConnection, userUid: UserUid): User.Human =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
                 .createStatement("SELECT * FROM user_profile WHERE user_id = $1")
@@ -54,7 +54,7 @@ object UserProfileRepository {
             }
             .flatMap { result -> result
                 .map { row, _ ->
-                    User(
+                    User.Human(
                         id = userUid,
                         platform = row["platform"] as Short,
                         givenId = UserId(row["given_id"] as Long),
@@ -67,7 +67,7 @@ object UserProfileRepository {
             }
             .awaitSingle()
 
-    private suspend fun fetchUser(connection: DatabaseConnection, platform: Short, givenId: UserId): Option<User> =
+    private suspend fun fetchUser(connection: DatabaseConnection, platform: Short, givenId: UserId): Option<User.Human> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
                 .createStatement("SELECT * FROM user_profile WHERE platform = $1 AND given_id = $2")
@@ -75,9 +75,9 @@ object UserProfileRepository {
                 .bind("$2", givenId.idLong)
                 .execute()
             }
-            .flatMap<Option<User>> { result -> result
+            .flatMap<Option<User.Human>> { result -> result
                 .map { row, _ ->
-                    Some(User(
+                    Some(User.Human(
                         id = UserUid(row["user_id"] as UUID),
                         platform = platform,
                         givenId = givenId,
@@ -91,7 +91,7 @@ object UserProfileRepository {
             .defaultIfEmpty(None)
             .awaitSingle()
 
-    suspend fun upsertUser(connection: DatabaseConnection, user: User) {
+    suspend fun upsertUser(connection: DatabaseConnection, user: User.Human) {
         connection.localCaches.userProfileGivenIdCache.put(user.givenId, user)
         connection.localCaches.userProfileUidCache.put(user.id, user)
 

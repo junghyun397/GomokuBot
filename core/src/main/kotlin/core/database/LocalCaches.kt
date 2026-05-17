@@ -15,7 +15,7 @@ data class LocalCaches(
         .expireAfterAccess(1, TimeUnit.DAYS)
         .build(),
 
-    val userProfileUidCache: Cache<UserUid, User> = CacheBuilder
+    val userProfileUidCache: Cache<UserUid, User.Human> = CacheBuilder
         .newBuilder()
         .maximumSize(1000)
         .expireAfterAccess(6, TimeUnit.HOURS)
@@ -27,7 +27,7 @@ data class LocalCaches(
         .expireAfterAccess(1, TimeUnit.DAYS)
         .build(),
 
-    val userProfileGivenIdCache: Cache<UserId, User> = CacheBuilder
+    val userProfileGivenIdCache: Cache<UserId, User.Human> = CacheBuilder
         .newBuilder()
         .maximumSize(1000)
         .expireAfterAccess(6, TimeUnit.HOURS)

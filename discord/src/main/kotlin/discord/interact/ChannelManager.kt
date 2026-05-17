@@ -7,12 +7,10 @@ import arrow.core.getOrElse
 import arrow.core.raise.get
 import core.assets.ChannelUid
 import core.assets.MessageRef
-import core.assets.aiUser
-import core.assets.anonymousUser
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.session.ArchivePolicy
-import core.session.entities.AiGameSession
+import core.session.entities.EngineGameSession
 import core.session.entities.PvpGameSession
 import core.session.entities.RenjuSession
 import dev.minn.jda.ktx.coroutines.await
@@ -101,17 +99,17 @@ object ChannelManager {
 
     private fun core.assets.User.switchToAnonymousUser() =
         when (this) {
-            aiUser -> aiUser
-            else -> anonymousUser
+            core.assets.User.GomokuBot -> core.assets.User.GomokuBot
+            is core.assets.User.Human, core.assets.User.Anonymous -> core.assets.User.Anonymous
         }
 
     suspend fun archiveSession(archiveSubChannel: MessageChannel, session: RenjuSession, archivePolicy: ArchivePolicy) {
-        if (session.board.stones < 20 || archivePolicy == ArchivePolicy.PRIVACY) return
+        if (session.history.moves < 20 || archivePolicy == ArchivePolicy.PRIVACY) return
 
         val modSession = session.replaceIf(archivePolicy == ArchivePolicy.BY_ANONYMOUS) {
             when (session) {
-                is AiGameSession -> session.copy(owner = anonymousUser)
-                is PvpGameSession -> session.copy(owner = anonymousUser, opponent = anonymousUser)
+                is EngineGameSession -> session.copy(owner = core.assets.User.Anonymous)
+                is PvpGameSession -> session.copy(owner = core.assets.User.Anonymous, opponent = core.assets.User.Anonymous)
             }
         }
 

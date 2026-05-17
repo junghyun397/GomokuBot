@@ -71,12 +71,6 @@ object SettingMapping {
                     description = LanguageContainer::styleSelectDottedTextDescription,
                     emoji = UNICODE_T
                 ),
-                BoardStyle.UNICODE to OptionElement.fromIdentifiableEnum(
-                    enum = BoardStyle.UNICODE,
-                    label = LanguageContainer::styleSelectUnicodeText,
-                    description = LanguageContainer::styleSelectUnicodeTextDescription,
-                    emoji = UNICODE_GEM
-                )
             )
         ),
         FocusType::class to Pair(
@@ -95,10 +89,10 @@ object SettingMapping {
                     description = LanguageContainer::focusSelectIntelligenceDescription,
                     emoji = UNICODE_ZAP
                 ),
-                FocusType.FALLOWING to OptionElement.fromIdentifiableEnum(
-                    enum = FocusType.FALLOWING,
-                    label = LanguageContainer::focusSelectFollowing,
-                    description = LanguageContainer::focusSelectFollowingDescription,
+                FocusType.CENTER to OptionElement.fromIdentifiableEnum(
+                    enum = FocusType.CENTER,
+                    label = LanguageContainer::focusSelectCenter,
+                    description = LanguageContainer::focusSelectCenterDescription,
                     emoji = UNICODE_MAG
                 )
             )

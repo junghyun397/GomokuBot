@@ -33,8 +33,8 @@ class FocusCommand(
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
@@ -57,7 +57,8 @@ class FocusCommand(
         val newFocusInfo = this.navigationState.focusInfo.copy(focus = newFocus)
 
         when(newFocus.idx) {
-            this.navigationState.page -> tuple(effect { emptyOrders }, this.writeCommandReport("focus bounded", guild, user))
+            this.navigationState.page -> tuple(effect { emptyOrders }, this.writeCommandReport("focus bounded",
+                channel, user))
             else -> {
                 SessionManager.addNavigation(bot.sessions, messageRef, this.navigationState.copy(page = newFocus.idx))
 
@@ -68,7 +69,7 @@ class FocusCommand(
                     emptyOrders
                 }
 
-                tuple(action, this.writeCommandReport("move focus $direction", guild, user))
+                tuple(action, this.writeCommandReport("move focus $direction", channel, user))
             }
         }
     }

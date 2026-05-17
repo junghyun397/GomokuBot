@@ -5,8 +5,8 @@ import core.session.Rule
 import kotlin.time.Instant
 
 data class RequestSession(
-    val owner: User,
-    val opponent: User,
+    val owner: User.Human,
+    val opponent: User.Human,
     val messageBufferKey: MessageBufferKey,
     val rule: Rule,
     override val expireDate: Instant,

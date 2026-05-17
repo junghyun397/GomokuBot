@@ -24,18 +24,18 @@ class BoardCommand(
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
         val io = effect {
-            buildBoardProcedure(bot, guild, config, service, publishers.plain, session)()
+            buildBoardProcedure(bot, channel, config, service, publishers.plain, session)()
             emptyOrders
         }
 
-        tuple(io, this.writeCommandReport("reopen board", guild, user))
+        tuple(io, this.writeCommandReport("reopen board", channel, user))
     }
 
 }

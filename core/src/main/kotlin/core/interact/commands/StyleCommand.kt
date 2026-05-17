@@ -23,13 +23,13 @@ class StyleCommand(private val style: BoardStyle) : Command {
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        SessionManager.updateChannelConfig(bot.sessions, guild, config.copy(boardStyle = style))
+        SessionManager.updateChannelConfig(bot.sessions, channel, config.copy(boardStyle = style))
 
         val io = effect {
             service.buildStyleUpdated(publishers.windowed, config.language.container, style.sample.styleName)
@@ -37,7 +37,7 @@ class StyleCommand(private val style: BoardStyle) : Command {
             emptyOrders
         }
 
-        tuple(io, this.writeCommandReport("set style ${config.boardStyle.name} to ${style.name}", guild, user))
+        tuple(io, this.writeCommandReport("set style ${config.boardStyle.name} to ${style.name}", channel, user))
     }
 
 }

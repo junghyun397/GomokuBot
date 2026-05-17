@@ -28,8 +28,8 @@ class ViewAnnounceCommand(val language: Language) : Command {
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
@@ -64,7 +64,7 @@ class ViewAnnounceCommand(val language: Language) : Command {
             emptyList<Order>()
         }
 
-        tuple(io, this.writeCommandReport("sent", guild, user))
+        tuple(io, this.writeCommandReport("sent", channel, user))
     }
 
 }

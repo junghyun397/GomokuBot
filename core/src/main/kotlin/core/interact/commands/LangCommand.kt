@@ -23,15 +23,15 @@ class LangCommand(private val language: Language) : Command {
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
         val thenConfig = config.copy(language = this.language)
 
-        SessionManager.updateChannelConfig(bot.sessions, guild, thenConfig)
+        SessionManager.updateChannelConfig(bot.sessions, channel, thenConfig)
 
         val io = effect {
             service.buildLanguageUpdated(publishers.plain, language.container).launch()()
@@ -39,7 +39,8 @@ class LangCommand(private val language: Language) : Command {
             listOf(Order.UpsertCommands(thenConfig.language.container))
         }
 
-        tuple(io, this.writeCommandReport("set language ${config.language.name} to ${thenConfig.language.name}", guild, user))
+        tuple(io, this.writeCommandReport("set language ${config.language.name} to ${thenConfig.language.name}",
+            channel, user))
     }
 
 }

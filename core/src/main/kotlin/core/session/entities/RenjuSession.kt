@@ -4,8 +4,6 @@ import arrow.core.None
 import arrow.core.Option
 import arrow.core.Some
 import core.assets.User
-import core.assets.aiUser
-import core.mintaka.MintakaSession
 import core.session.Rule
 import renju.GameState
 import renju.notation.GameResult
@@ -16,7 +14,7 @@ sealed interface RenjuSession : GameSession {
 
 }
 
-data class AiGameSession(
+data class EngineGameSession(
     val mintakaSession: MintakaSession,
     override val owner: User,
     override val ownerHasBlack: Boolean,
@@ -28,7 +26,7 @@ data class AiGameSession(
     override val expireService: ExpireService
 ) : RenjuSession {
 
-    override val opponent = aiUser
+    override val opponent = User.GomokuBot
 
     override fun next(state: GameState, gameResult: Option<GameResult>, messageBufferKey: MessageBufferKey) =
         this.copy(

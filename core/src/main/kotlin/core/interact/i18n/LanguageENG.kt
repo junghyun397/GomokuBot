@@ -142,10 +142,6 @@ open class LanguageENG : LanguageContainer {
     override fun styleSelectDottedText() = "Solid Text"
     override fun styleSelectDottedTextDescription() = "Same as Text - but with dots instead of blanks."
 
-    override fun styleSelectUnicodeText() = "Unicode"
-    override fun styleSelectUnicodeTextDescription() =
-        "Render as Unicode characters. Depending on the font settings, it may look broken."
-
     // chunk
 
     override fun focus() = "Focus"
@@ -158,8 +154,8 @@ open class LanguageENG : LanguageContainer {
     override fun focusSelectIntelligenceDescription() =
         "The GomokuBot inference engine will focus on the most optimal places."
 
-    override fun focusSelectFollowing() = "Follow"
-    override fun focusSelectFollowingDescription() =
+    override fun focusSelectCenter() = "Center"
+    override fun focusSelectCenterDescription() =
         "Always focus on the last move."
 
     override fun hint() = "Hint"
@@ -246,7 +242,7 @@ open class LanguageENG : LanguageContainer {
     override fun startCommandOptionRuleDescription() = "Specific the rules for the new game."
 
     override fun startErrorSessionAlready() =
-        "There is already a game in progress. Please finish the game in progress first."
+        "There is already a game in progress. Please finish your game in progress first."
     override fun startErrorOpponentSessionAlready(opponent: String) =
         "$opponent is already playing another game. Please wait until $opponent's game is over."
     override fun startErrorRequestAlreadySent(opponent: String) =
@@ -625,7 +621,7 @@ Now you know everything you need to know about Renju. You know what's wrong with
 
 Renju is a straightforward but very engaging game with an interesting and endless strategy. With GomokuBot, challenge more complex problems with your friends. It will definitely be fun.
 
-If you have any questions, please feel free to visit the GomokuBot [support channel](https://discord.gg/vq8pkfF). I hope you have a good time with GomokuBot. — *GomokuBot developer junghyun397.*
+If you have any questions, please feel free to visit the GomokuBot [support channel](https://discord.gg/vq8pkfF). I hope you have a good time with GomokuBot. — *GomokuBot developer JeongHyeon Choi.*
 
 ## Taraguchi-10 {#taraguchi-10}
 

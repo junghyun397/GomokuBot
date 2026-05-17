@@ -116,10 +116,6 @@ open class LanguageKOR : LanguageENG() {
     override fun styleSelectDottedText() = "점박이 텍스트"
     override fun styleSelectDottedTextDescription() = "텍스트와 거의 같습니다. 다만 빈 자리에 공백이 아닌 점을 표시합니다."
 
-    override fun styleSelectUnicodeText() = "유니코드"
-    override fun styleSelectUnicodeTextDescription() =
-        "오목 판을 유니코드 이모지로 표시합니다. 폰트 설정에 따라 완전히 망가져 보일 수 있습니다."
-
     override fun focus() = "확대"
 
     override fun focusEmbedTitle() = "GomokuBot / 확대"
@@ -130,8 +126,8 @@ open class LanguageKOR : LanguageENG() {
     override fun focusSelectIntelligenceDescription() =
         "GomokuBot 추론 엔진으로 가장 적절한 위치를 분석해 확대합니다."
 
-    override fun focusSelectFollowing() = "수동적"
-    override fun focusSelectFollowingDescription() =
+    override fun focusSelectCenter() = "수동적"
+    override fun focusSelectCenterDescription() =
         "항상 마지막 수를 가운데 둡니다."
 
     override fun hint() = "힌트"

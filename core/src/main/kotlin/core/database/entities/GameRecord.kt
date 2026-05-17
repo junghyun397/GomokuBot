@@ -4,14 +4,12 @@ import arrow.core.None
 import arrow.core.Option
 import arrow.core.Some
 import core.assets.ChannelUid
-import core.assets.User
 import core.assets.UserUid
-import core.assets.aiUser
-import core.database.DatabaseConnection
-import core.database.repositories.UserProfileRepository
-import core.mintaka.AiLevel
+import core.assets.humanId
+import core.mintaka.EngineLevel
 import core.session.Rule
-import core.session.entities.*
+import core.session.entities.EngineGameSession
+import core.session.entities.GameSession
 import renju.notation.GameResult
 import renju.notation.Pos
 import kotlin.time.Clock
@@ -28,7 +26,7 @@ data class GameRecord(
     val blackId: UserUid?,
     val whiteId: UserUid?,
 
-    val aiLevel: AiLevel?,
+    val engineLevel: EngineLevel?,
 
     val rule: Rule,
 
@@ -43,22 +41,22 @@ fun GameSession.extractGameRecord(channelUid: ChannelUid): Option<GameRecord> =
             GameRecord(
                 gameRecordId = None,
 
-                history = history.inner.filterNotNull(),
+                history = history.sequence.filterNotNull(),
 
                 gameResult = gameResult.getOrNull()!!,
 
                 channelId = channelUid,
                 blackId = when {
-                    ownerHasBlack -> owner.id
-                    else -> opponent.id
-                }.takeIf { it != aiUser.id },
+                    ownerHasBlack -> owner.humanId
+                    else -> opponent.humanId
+                },
                 whiteId = when {
-                    ownerHasBlack -> opponent.id
-                    else -> owner.id
-                }.takeIf { it != aiUser.id },
+                    ownerHasBlack -> opponent.humanId
+                    else -> owner.humanId
+                },
 
-                aiLevel = when (this) {
-                    is AiGameSession -> AiLevel.AMOEBA
+                engineLevel = when (this) {
+                    is EngineGameSession -> EngineLevel.AMOEBA
                     else -> null
                 },
 

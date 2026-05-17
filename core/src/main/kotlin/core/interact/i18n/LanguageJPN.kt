@@ -117,10 +117,6 @@ class LanguageJPN : LanguageENG() {
     override fun styleSelectDottedText() = "ドット入りテキスト"
     override fun styleSelectDottedTextDescription() = "ブランクの代わりにドットを使ってレンダリングします。"
 
-    override fun styleSelectUnicodeText() = "ユニコード"
-    override fun styleSelectUnicodeTextDescription() =
-        "ユニコード文字としてレンダリングします。フォント設定によっては、壊れた表示になる場合があります。"
-
     override fun focus() = "フォーカス"
 
     override fun focusEmbedTitle() = "GomokuBot / フォーカス"
@@ -131,8 +127,8 @@ class LanguageJPN : LanguageENG() {
     override fun focusSelectIntelligenceDescription() =
         "GomokuBot推論エンジンは、最適な場所に焦点を当てます。"
 
-    override fun focusSelectFollowing() = "フォロー"
-    override fun focusSelectFollowingDescription() =
+    override fun focusSelectCenter() = "フォロー"
+    override fun focusSelectCenterDescription() =
         "常に最後の手に焦点を当てます。"
 
     override fun hint() = "ヒント"

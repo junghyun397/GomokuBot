@@ -30,8 +30,8 @@ class NavigationCommand(
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
@@ -49,7 +49,8 @@ class NavigationCommand(
         )
 
         if (this.navigationState.page == newState.page)
-            return@runCatching tuple(effect { emptyOrders }, this.writeCommandReport("navigate ${navigationState.kind} bounded", guild, user))
+            return@runCatching tuple(effect { emptyOrders }, this.writeCommandReport("navigate ${navigationState.kind} bounded",
+                channel, user))
 
         SessionManager.addNavigation(bot.sessions, messageRef, newState)
 
@@ -74,7 +75,7 @@ class NavigationCommand(
             emptyOrders
         }
 
-        tuple(io, this.writeCommandReport("navigate ${newState.kind} as ${newState.page}", guild, user))
+        tuple(io, this.writeCommandReport("navigate ${newState.kind} as ${newState.page}", channel, user))
     }
 
 }

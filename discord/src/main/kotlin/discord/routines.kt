@@ -17,10 +17,9 @@ import discord.interact.message.DiscordMessagingService
 import discord.interact.message.MessageCreateAdaptor
 import discord.interact.message.MessageEditAdaptor
 import discord.route.executeIO
-import kotlinx.coroutines.reactor.asFlux
+import kotlinx.coroutines.flow.Flow
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
-import reactor.core.publisher.Flux
 import utils.lang.schedule
 import java.time.Duration
 import kotlin.time.Clock
@@ -36,7 +35,7 @@ private suspend fun executeCommand(
     command.execute(
         bot = botContext,
         config = taskContext.config,
-        guild = taskContext.guild,
+        channel = taskContext.channel,
         service = DiscordMessagingService,
         publisher = MonoPublisherSet(
             publisher = { msg -> MessageCreateAdaptor(channel.sendMessage(msg.buildCreate())) },
@@ -48,7 +47,7 @@ private suspend fun executeCommand(
             report
         },
         onFailure = { throwable ->
-            ErrorReport(throwable, taskContext.guild)
+            ErrorReport(throwable, taskContext.channel)
         }
     ).apply {
         interactionSource = taskContext.source
@@ -56,14 +55,14 @@ private suspend fun executeCommand(
         apiTime = Clock.System.now()
     }
 
-fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flux<Report> =
+fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flow<Report> =
     schedule(bot.config.gameExpireChecks, {
         SessionManager.cleanExpiredGameSession(bot.sessions).forEach { (_, channelSession, _, session) ->
-            val context = TaskContext(bot, channelSession.guild, channelSession.config, Clock.System.now(), "SCH")
+            val context = TaskContext(bot, channelSession.channel, channelSession.config, Clock.System.now(), "SCH")
 
             val maybeMessage = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
-            val maybeChannel = jda.getGuildById(channelSession.guild.givenId.idLong)
+            val maybeChannel = jda.getGuildById(channelSession.channel.givenId.idLong)
             val maybeSubChannel = maybeMessage?.let { maybeChannel?.getChannelMessageSubChannelById(it.subChannelId.idLong) }
 
             val command = ExpireGameCommand(
@@ -78,16 +77,16 @@ fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: J
         }
 
         SessionManager.cleanEmptySessions(bot.sessions)
-    }).asFlux()
+    })
 
-fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flux<Report> =
+fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flow<Report> =
     schedule(bot.config.requestExpireChecks, {
         SessionManager.cleanExpiredRequestSessions(bot.sessions).forEach { (_, channelSession, _, session) ->
-            val context = TaskContext(bot, channelSession.guild, channelSession.config, Clock.System.now(), "SCH")
+            val context = TaskContext(bot, channelSession.channel, channelSession.config, Clock.System.now(), "SCH")
 
             val maybeMessage = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
-            val maybeChannel = jda.getGuildById(channelSession.guild.givenId.idLong)
+            val maybeChannel = jda.getGuildById(channelSession.channel.givenId.idLong)
             val maybeSubChannel = maybeMessage?.let { maybeChannel?.getChannelMessageSubChannelById(it.subChannelId.idLong) }
 
             val command = ExpireRequestCommand(
@@ -101,13 +100,13 @@ fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, jda
 
             emit(result)
         }
-    }).asFlux()
+    })
 
-inline fun routine(interval: Duration, crossinline job: suspend () -> String): Flux<RoutineReport> =
+inline fun routine(interval: Duration, crossinline job: suspend () -> String): Flow<RoutineReport> =
     schedule<RoutineReport>(interval, {
         val time = Clock.System.now()
 
         val comment = job()
 
         RoutineReport(comment, time, Clock.System.now(), Clock.System.now(),"SCH")
-    }).asFlux()
+    })

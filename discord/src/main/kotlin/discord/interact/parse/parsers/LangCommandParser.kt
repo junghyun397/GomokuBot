@@ -45,8 +45,8 @@ object LangCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     private fun matchLang(option: String): Language? =
         Language.entries.firstOrNull { it.container.languageCode() == option }
 
-    private fun composeMissMatchFailure(guild: Channel, user: User): Either<DiscordParseFailure, Command> =
-        Either.Left(this.asParseFailure("option mismatch", guild, user) { messagingService, publisher, _ ->
+    private fun composeMissMatchFailure(channel: Channel, user: User.Human): Either<DiscordParseFailure, Command> =
+        Either.Left(this.asParseFailure("option mismatch", channel, user) { messagingService, publisher, _ ->
             effect {
                 messagingService.buildLanguageNotFound(publisher).launch()()
                 messagingService.buildLanguageGuide(publisher).launch()()
@@ -57,7 +57,7 @@ object LangCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<DiscordParseFailure, Command> {
         val lang = context.event.getOption(context.config.language.container.languageCommandOptionCode())?.asString?.uppercase()?.let {
             matchLang(it)
-        } ?: return this.composeMissMatchFailure(context.guild, context.user)
+        } ?: return this.composeMissMatchFailure(context.channel, context.user)
 
         return Either.Right(LangCommand(lang))
     }
@@ -67,7 +67,7 @@ object LangCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             .getOrNull(1)
             ?.uppercase()
             ?.let { matchLang(it) }
-            ?: return this.composeMissMatchFailure(context.guild, context.user)
+            ?: return this.composeMissMatchFailure(context.channel, context.user)
 
         return Either.Right(LangCommand(lang))
     }

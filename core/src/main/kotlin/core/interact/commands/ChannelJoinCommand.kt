@@ -18,11 +18,11 @@ class ChannelJoinCommand(private val localeComment: String) : InternalCommand {
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
+        channel: Channel,
         service: MessagingService<A, B>,
         publisher: PublisherSet<A, B>,
     ) = runCatching {
-        SessionManager.updateChannelConfig(bot.sessions, guild, config)
+        SessionManager.updateChannelConfig(bot.sessions, channel, config)
 
         val helpProcedure = buildCombinedHelpProcedure(
             bot = bot,
@@ -37,7 +37,7 @@ class ChannelJoinCommand(private val localeComment: String) : InternalCommand {
             listOf(Order.UpsertCommands(config.language.container))
         }
 
-        tuple(io, this.writeCommandReport(localeComment, guild))
+        tuple(io, this.writeCommandReport(localeComment, channel))
     }
 
 }

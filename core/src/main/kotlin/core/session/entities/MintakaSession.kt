@@ -1,5 +1,6 @@
-package core.mintaka
+package core.session.entities
 
+import core.mintaka.MintakaResponse
 import core.mintaka.types.ResponseSchema
 import renju.notation.HashKey
 import kotlin.time.Instant

@@ -28,13 +28,13 @@ class ApplySettingCommand(
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {
-        SessionManager.updateChannelConfig(bot.sessions, guild, newConfig)
+        SessionManager.updateChannelConfig(bot.sessions, channel, newConfig)
 
         val (localKind, localChoice) = SettingMapping.buildKindNamePair(config.language.container, this.diff)
 
@@ -46,7 +46,7 @@ class ApplySettingCommand(
 
         val (kind, choice) = SettingMapping.buildKindNamePair(Language.ENG.container, this.diff)
 
-        tuple(io, this.writeCommandReport("update $kind as [$choice](${diff.id})", guild, user))
+        tuple(io, this.writeCommandReport("update $kind as [$choice](${diff.id})", channel, user))
     }
 
 }

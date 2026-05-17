@@ -36,3 +36,19 @@ internal fun ByteArray?.toNativeSegmentOrNull(arena: Arena): MemorySegment =
 internal fun MemorySegment?.orNullAddress(): MemorySegment = this ?: MemorySegment.NULL
 
 internal fun MemorySegment.nullIfNull(): MemorySegment? = if (this == MemorySegment.NULL) null else this
+
+internal fun MemorySegment.readNativeUtf8String(maxBytes: Long): String {
+    val cString = this.reinterpret(maxBytes)
+    var length = 0L
+
+    while (length < maxBytes && cString.get(ValueLayout.JAVA_BYTE, length) != 0.toByte()) {
+        length++
+    }
+
+    val bytes = ByteArray(length.toInt())
+    for (index in bytes.indices) {
+        bytes[index] = cString.get(ValueLayout.JAVA_BYTE, index.toLong())
+    }
+
+    return bytes.toString(Charsets.UTF_8)
+}

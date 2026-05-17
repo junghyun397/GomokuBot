@@ -5,7 +5,7 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
-import core.assets.retrieveUserOrAiUser
+import core.assets.retrieveUserOrGomokuBot
 import core.database.repositories.GameRecordRepository
 import core.interact.emptyOrders
 import core.interact.message.MessagingService
@@ -25,8 +25,8 @@ class ReplayListCommand(val edit: Boolean) : Command {
         override suspend fun <A, B> execute(
             bot: BotContext,
             config: ChannelConfig,
-            guild: Channel,
-            user: User,
+            channel: Channel,
+            user: User.Human,
             service: MessagingService<A, B>,
             messageRef: MessageRef,
             publishers: PublisherSet<A, B>,
@@ -39,8 +39,8 @@ class ReplayListCommand(val edit: Boolean) : Command {
 
             val gameResults = gameRecords.map { record ->
                 val opponent =
-                    if (record.blackId == user.id) record.whiteId.retrieveUserOrAiUser(bot.dbConnection)
-                    else record.blackId.retrieveUserOrAiUser(bot.dbConnection)
+                    if (record.blackId == user.id) record.whiteId.retrieveUserOrGomokuBot(bot.dbConnection)
+                    else record.blackId.retrieveUserOrGomokuBot(bot.dbConnection)
 
                 tuple(opponent, record)
             }
@@ -51,7 +51,7 @@ class ReplayListCommand(val edit: Boolean) : Command {
                 emptyOrders
             }
 
-            tuple(io, this.writeCommandReport("total ${gameRecords.size} records", guild, user))
+            tuple(io, this.writeCommandReport("total ${gameRecords.size} records", channel, user))
         }
 
 }

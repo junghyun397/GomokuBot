@@ -3,6 +3,7 @@ package discord.interact.parse.parsers
 import arrow.core.None
 import arrow.core.Some
 import arrow.core.toOption
+import core.assets.humanId
 import core.interact.commands.OpeningBranchingCommand
 import core.interact.commands.OpeningDeclareCommand
 import core.interact.commands.OpeningSwapCommand
@@ -19,14 +20,14 @@ import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionE
 object OpeningCommandParser : EmbeddableCommand {
 
     override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>) =
-        SessionManager.retrieveGameSession(context.bot.sessions, context.guild, context.user.id).toOption()
+        SessionManager.retrieveGameSession(context.bot.sessions, context.channel, context.user.id).toOption()
             .flatMap { session ->
                 val ref = when (context.config.swapType) {
                     SwapType.EDIT -> SessionManager.viewHeadMessage(context.bot.sessions, session.messageBufferKey)
                     else -> null
                 }
 
-                if (session.player.id != context.user.id) return@flatMap None
+                if (session.player.humanId != context.user.id) return@flatMap None
 
                 val id = when (context.event) {
                     is StringSelectInteractionEvent -> context.event.interaction.selectedOptions.first().value

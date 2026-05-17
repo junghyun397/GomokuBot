@@ -5,7 +5,7 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
-import core.mintaka.AiLevel
+import core.mintaka.EngineLevel
 import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
@@ -20,7 +20,7 @@ import utils.lang.tuple
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 
-class StartCommand(val opponent: User?, val rule: Rule) : Command {
+class StartCommand(val opponent: User, val rule: Rule) : Command {
 
     override val name: String = "start"
 
@@ -29,28 +29,28 @@ class StartCommand(val opponent: User?, val rule: Rule) : Command {
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
         when(this.opponent) {
-            null -> {
-                val gameSession = GameManager.generateAiSession(bot, user, AiLevel.AMOEBA)
+             is User.GomokuBot -> {
+                val gameSession = GameManager.generateEngineSession(bot, user, EngineLevel.AMOEBA)
 
-                SessionManager.putGameSession(bot.sessions, guild, gameSession)
+                SessionManager.putGameSession(bot.sessions, channel, gameSession)
 
                 val io = effect {
                     service.buildBeginsPVE(publishers.plain, config.language.container, user, gameSession.ownerHasBlack)
                         .launch()()
-                    buildBoardProcedure(bot, guild, config, service, publishers.plain, gameSession)()
+                    buildBoardProcedure(bot, channel, config, service, publishers.plain, gameSession)()
                     emptyOrders
                 }
 
-                tuple(io, this.writeCommandReport("start game session with AI", guild, user))
+                tuple(io, this.writeCommandReport("start game session with AI", channel, user))
             }
-            else -> {
+            is User.Human -> {
                 val requestSession = RequestSession(
                     user, opponent,
                     MessageBufferKey.issue(),
@@ -58,7 +58,7 @@ class StartCommand(val opponent: User?, val rule: Rule) : Command {
                     Clock.System.now() + bot.config.requestExpireAfter.milliseconds,
                 )
 
-                SessionManager.putRequestSession(bot.sessions, guild, requestSession)
+                SessionManager.putRequestSession(bot.sessions, channel, requestSession)
 
                 val io = effect {
                     service.buildRequest(publishers.plain, config.language.container, user, opponent, this@StartCommand.rule)
@@ -71,8 +71,9 @@ class StartCommand(val opponent: User?, val rule: Rule) : Command {
                     emptyOrders
                 }
 
-                tuple(io, this.writeCommandReport("make request to ${this.opponent}", guild, user))
+                tuple(io, this.writeCommandReport("make request to ${this.opponent}", channel, user))
             }
+            else -> throw IllegalStateException()
         }
     }
 

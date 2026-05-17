@@ -26,24 +26,24 @@ class OpeningDeclareCommand(
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
         val thenSession = session.declare(this.maxOfferCount)
 
-        SessionManager.putGameSession(bot.sessions, guild, thenSession)
+        SessionManager.putGameSession(bot.sessions, channel, thenSession)
 
         val boardPublisher = when (config.swapType) {
             SwapType.EDIT -> publishers.edit(this.deployAt ?: messageRef)
             else -> publishers.plain
         }
 
-        val io = buildNextMoveProcedure(bot, guild, config, service, boardPublisher, this.session, thenSession)
+        val io = buildNextMoveProcedure(bot, channel, config, service, boardPublisher, this.session, thenSession)
 
-        tuple(io, this.writeCommandReport("declare 5th moves $maxOfferCount", guild, user))
+        tuple(io, this.writeCommandReport("declare 5th moves $maxOfferCount", channel, user))
     }
 
 }

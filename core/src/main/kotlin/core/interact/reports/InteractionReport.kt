@@ -6,9 +6,9 @@ interface InteractionReport : Report {
 
     val commandName: String
 
-    val guild: Channel
+    val channel: Channel
 
-    override fun buildBody(): String = "${guild}\t $commandName\t $comment"
+    override fun buildBody(): String = "${channel}\t $commandName\t $comment"
 
     override fun buildTime(): String {
         val apiTime = this.emittedTime

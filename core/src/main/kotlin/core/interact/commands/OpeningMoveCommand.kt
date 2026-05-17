@@ -26,15 +26,15 @@ abstract class OpeningMoveCommand<T : OpeningSession>(
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {
         val thenSession = this.executeSelf()
 
-        SessionManager.putGameSession(bot.sessions, guild, thenSession)
+        SessionManager.putGameSession(bot.sessions, channel, thenSession)
 
         val boardPublisher = when (config.swapType) {
             SwapType.EDIT -> publishers.edit(this.deployAt ?: messageRef)
@@ -60,10 +60,11 @@ abstract class OpeningMoveCommand<T : OpeningSession>(
 
         val io = effect {
             guideIO()
-            buildNextMoveProcedure(bot, guild, config, service, boardPublisher, this@OpeningMoveCommand.session, thenSession)()
+            buildNextMoveProcedure(bot,
+                channel, config, service, boardPublisher, this@OpeningMoveCommand.session, thenSession)()
         }
 
-        tuple(io, this.writeCommandReport(this.writeLog(), guild, user))
+        tuple(io, this.writeCommandReport(this.writeLog(), channel, user))
     }
 
     protected abstract fun executeSelf(): GameSession

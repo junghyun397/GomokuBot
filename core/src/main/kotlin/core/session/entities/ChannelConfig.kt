@@ -9,7 +9,7 @@ data class ChannelConfig(
     val boardStyle: BoardStyle = BoardStyle.IMAGE,
     val focusType: FocusType = FocusType.INTELLIGENCE,
     val hintType: HintType = HintType.FIVE,
-    val markType: HistoryRenderType = HistoryRenderType.LAST,
+    val markType: HistoryRenderType = HistoryRenderType.RECENT,
     val swapType: SwapType = SwapType.EDIT,
     val archivePolicy: ArchivePolicy = ArchivePolicy.BY_ANONYMOUS
 )

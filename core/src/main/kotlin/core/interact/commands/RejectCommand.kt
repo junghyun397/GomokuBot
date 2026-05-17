@@ -23,13 +23,13 @@ class RejectCommand(private val requestSession: RequestSession) : Command {
     override suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        SessionManager.removeRequestSession(bot.sessions, guild, requestSession.owner.id)
+        SessionManager.removeRequestSession(bot.sessions, channel, requestSession.owner.id)
 
         val editIO = service.buildRejectedRequest(publishers.edit(messageRef), config.language.container, requestSession.owner, requestSession.opponent)
             .launch()
@@ -43,7 +43,7 @@ class RejectCommand(private val requestSession: RequestSession) : Command {
             emptyOrders
         }
 
-        tuple(io, this.writeCommandReport("reject ${requestSession.owner}'s request", guild, user))
+        tuple(io, this.writeCommandReport("reject ${requestSession.owner}'s request", channel, user))
     }
 
 }

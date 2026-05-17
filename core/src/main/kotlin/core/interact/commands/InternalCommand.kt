@@ -13,7 +13,7 @@ interface InternalCommand {
     suspend fun <A, B> execute(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
+        channel: Channel,
         service: MessagingService<A, B>,
         publisher: PublisherSet<A, B>
     ): CommandResult

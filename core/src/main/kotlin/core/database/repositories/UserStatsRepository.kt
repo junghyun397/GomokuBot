@@ -2,7 +2,6 @@ package core.database.repositories
 
 import core.assets.ChannelUid
 import core.assets.UserUid
-import core.assets.aiUser
 import core.database.DatabaseConnection
 import core.database.DatabaseManager.smallIntToByte
 import core.database.DatabaseManager.smallIntToMaybeByte
@@ -72,7 +71,7 @@ object UserStatsRepository {
     suspend fun fetchRankings(connection: DatabaseConnection, channelUid: ChannelUid): List<UserStats> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
-                .createStatement("SELECT * FROM game_record WHERE channel_id = $1 AND ai_level IS NOT NULL")
+                .createStatement("SELECT * FROM game_record WHERE channel_id = $1 AND engine_level IS NOT NULL")
                 .bind("$1", channelUid.uuid)
                 .execute()
             }
@@ -94,11 +93,11 @@ object UserStatsRepository {
             .map { records -> this.buildUserStats(records).sortedDescending() }
             .awaitSingle()
 
-    suspend fun fetchRankings(connection: DatabaseConnection, userUid: UserUid): List<UserStats> =
+    suspend fun fetchRankings(connection: DatabaseConnection, userUid: UserUid): List<Pair<UserUid?, UserStats>> =
         connection.liftConnection()
             .flatMapMany { dbc -> dbc
                 .createStatement(
-                    "SELECT * FROM game_record WHERE ((black_id = $1 AND white_id IS NOT NULL) OR (white_id = $1 AND black_id IS NOT NULL)) AND ai_level IS NULL"
+                    "SELECT * FROM game_record WHERE ((black_id = $1 AND white_id IS NOT NULL) OR (white_id = $1 AND black_id IS NOT NULL)) AND engine_level IS NULL"
                 )
                 .bind("$1", userUid.uuid)
                 .execute()
@@ -120,16 +119,16 @@ object UserStatsRepository {
             .collectList()
             .awaitSingle()
             .let { records ->
-                val userStats = this.buildUserStats(records)
+                val userStats = this.buildUserStats(records).map { it.userId to it }
 
-                val aiStats = this.fetchUserStats(connection, userUid).reversed().copy(userId = aiUser.id)
+                val aiStats = this.fetchUserStats(connection, userUid).reversed()
 
                 val unionRanking = when (aiStats.isEmpty) {
                     true -> userStats
-                    else -> userStats + aiStats
+                    else -> userStats + (null to aiStats)
                 }
 
-                unionRanking.sortedDescending()
+                unionRanking.sortedByDescending { it.second }
             }
 
     private fun buildUserStats(records: List<Triple<UserUid, Color, GameResult>>): List<UserStats> =
@@ -139,11 +138,11 @@ object UserStatsRepository {
                 val blackTotal = tuples.count { (_, color, _) -> color == Color.Black }
                 val whiteTotal = tuples.size - blackTotal
 
-                val blackWins = tuples.count { (_, color, result) -> color == Color.Black && result.flag() == Color.Black.flag() }
-                val whiteWins = tuples.count { (_, color, result) -> color == Color.White && result.flag() == Color.White.flag() }
+                val blackWins = tuples.count { (_, color, result) -> color == Color.Black && result.flag() == Color.Black.naiveFlag }
+                val whiteWins = tuples.count { (_, color, result) -> color == Color.White && result.flag() == Color.White.naiveFlag }
 
-                val blackLosses = tuples.count { (_, color, result) -> color == Color.Black && result.flag() == Color.White.flag() }
-                val whiteLosses = tuples.count { (_, color, result) -> color == Color.White && result.flag() == Color.Black.flag() }
+                val blackLosses = tuples.count { (_, color, result) -> color == Color.Black && result.flag() == Color.White.naiveFlag }
+                val whiteLosses = tuples.count { (_, color, result) -> color == Color.White && result.flag() == Color.Black.naiveFlag }
 
                 UserStats(
                     userId = id,

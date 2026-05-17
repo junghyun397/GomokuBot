@@ -22,13 +22,10 @@ import discord.interact.message.MessageCreateAdaptor
 import discord.interact.message.MessageEditAdaptor
 import discord.interact.parse.parsers.FocusCommandParser
 import discord.interact.parse.parsers.NavigationCommandParser
-import kotlinx.coroutines.reactor.mono
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
-import reactor.core.publisher.Mono
-import utils.lang.tuple
 import kotlin.time.Clock
 
 private fun recoverNavigationState(bot: BotContext, message: Message, messageRef: MessageRef): Option<NavigationState> =
@@ -37,63 +34,56 @@ private fun recoverNavigationState(bot: BotContext, message: Message, messageRef
         .flatMap { PageNavigationState.decodeFromColor(COLOR_NORMAL_HEX, it.colorRaw, bot.config, messageRef, bot.dbConnection) }
         .onSome { SessionManager.addNavigation(bot.sessions, messageRef, it) }
 
-fun reactionRouter(context: UserInteractionContext<GenericMessageReactionEvent>): Mono<Report> {
+suspend fun reactionRouter(context: UserInteractionContext<GenericMessageReactionEvent>): Report? {
     val messageRef = context.event.extractMessageRef()
 
-    return mono {
-        SessionManager.getNavigationState(context.bot.sessions, messageRef).toOption()
-            .fold(
-                ifEmpty = { recoverNavigationState(context.bot, context.event.retrieveMessage().await(), messageRef) },
-                ifSome = { Some(it) }
-            )
-            .map { state ->
-                tuple(state, when (state) {
-                    is BoardNavigationState -> FocusCommandParser
-                    is PageNavigationState -> NavigationCommandParser
-                })
-            }
-            .flatMap { (state, parsable) ->
-                parsable.parseReaction(context, state)
-            }
+    val state = SessionManager.getNavigationState(context.bot.sessions, messageRef).toOption()
+        .fold(
+            ifEmpty = { recoverNavigationState(context.bot, context.event.retrieveMessage().await(), messageRef) },
+            ifSome = { Some(it) }
+        )
+        .getOrNull()
+        ?: return null
+
+    val parsable = when (state) {
+        is BoardNavigationState -> FocusCommandParser
+        is PageNavigationState -> NavigationCommandParser
     }
-        .filter { it.isSome() }
-        .map { it.getOrNull()!! }
-        .doOnNext {
-            if (context.event is MessageReactionAddEvent) {
-                ChannelManager.permissionGrantedRun(context.event.channel.asGuildMessageChannel(), Permission.MESSAGE_MANAGE) {
-                    context.event.reaction.removeReaction(context.event.user!!).queue()
-                }
-            }
+
+    val command = parsable.parseReaction(context, state).getOrNull()
+        ?: return null
+
+    if (context.event is MessageReactionAddEvent) {
+        ChannelManager.permissionGrantedRun(context.event.channel.asGuildMessageChannel(), Permission.MESSAGE_MANAGE) {
+            context.event.reaction.removeReaction(context.event.user!!).queue()
         }
-        .flatMap { command ->
-            mono {
-                command.execute(
-                    bot = context.bot,
-                    config = context.config,
-                    guild = context.guild,
-                    user = context.user,
-                    service = DiscordMessagingService,
-                    messageRef = messageRef,
-                    publishers = AdaptivePublisherSet(
-                        plain = { msg -> MessageCreateAdaptor(context.event.channel.sendMessage(msg.buildCreate())) },
-                        windowed = { msg -> MessageCreateAdaptor(context.event.channel.sendMessage(msg.buildCreate())) },
-                        editSelf = { msg -> MessageEditAdaptor(context.event.channel.editMessageById(messageRef.id.idLong, msg.buildEdit())) },
-                        component = { components -> MessageEditAdaptor(context.event.channel.editMessageComponentsById(messageRef.id.idLong, components)) },
-                        selfRef = messageRef,
-                    ),
-                ).fold(
-                    onSuccess = { (io, report) ->
-                        executeIO(context.discordConfig, io, context.jdaChannel, messageRef)
-                        report
-                    },
-                    onFailure = { throwable ->
-                        ErrorReport(throwable, context.guild)
-                    }
-                ).apply {
-                    interactionSource = context.source
-                    emittedTime = context.emittedTime
-                    apiTime = Clock.System.now()
-                }
-            }
+    }
+
+    return command.execute(
+        bot = context.bot,
+        config = context.config,
+        channel = context.channel,
+        user = context.user,
+        service = DiscordMessagingService,
+        messageRef = messageRef,
+        publishers = AdaptivePublisherSet(
+            plain = { msg -> MessageCreateAdaptor(context.event.channel.sendMessage(msg.buildCreate())) },
+            windowed = { msg -> MessageCreateAdaptor(context.event.channel.sendMessage(msg.buildCreate())) },
+            editSelf = { msg -> MessageEditAdaptor(context.event.channel.editMessageById(messageRef.id.idLong, msg.buildEdit())) },
+            component = { components -> MessageEditAdaptor(context.event.channel.editMessageComponentsById(messageRef.id.idLong, components)) },
+            selfRef = messageRef,
+        ),
+    ).fold(
+        onSuccess = { (io, report) ->
+            executeIO(context.discordConfig, io, context.jdaChannel, messageRef)
+            report
+        },
+        onFailure = { throwable ->
+            ErrorReport(throwable, context.channel)
         }
+    ).apply {
+        interactionSource = context.source
+        emittedTime = context.emittedTime
+        apiTime = Clock.System.now()
+    }
 }

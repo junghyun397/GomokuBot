@@ -11,6 +11,7 @@ import core.session.entities.OpeningSession
 import core.session.entities.SelectStageOpeningSession
 import kotlinx.coroutines.flow.flowOf
 import renju.notation.Color
+import renju.notation.ForbiddenKind
 import renju.notation.Pos
 import utils.assets.MarkdownAnchorMapping
 import utils.assets.SimplifiedMarkdownDocument
@@ -48,40 +49,35 @@ abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
 
     override fun generateFocusedField(session: GameSession, focusInfo: FocusSolver.FocusInfo): FocusedFields {
         val half = this.focusWidth / 2
+        val lastMove = session.history.lastAction
+
+        fun focusedButtonFlag(pos: Pos): ButtonFlag =
+            when (val stone = session.board.stoneKind(pos)) {
+                Color.Black ->
+                    if (pos == lastMove) ButtonFlag.BLACK_RECENT
+                    else ButtonFlag.BLACK
+                Color.White ->
+                    if (pos == lastMove) ButtonFlag.WHITE_RECENT
+                    else ButtonFlag.WHITE
+                null -> when {
+                    session.board.playerColor == Color.Black && session.board.forbiddenKind(pos) != null ->
+                        ButtonFlag.FORBIDDEN
+                    pos in focusInfo.highlights ->
+                        ButtonFlag.HIGHLIGHTED
+                    session is OpeningSession && !session.validateMove(pos) ->
+                        ButtonFlag.DISABLED
+                    session is SelectStageOpeningSession ->
+                        ButtonFlag.HIGHLIGHTED
+                    else ->
+                        ButtonFlag.FREE
+                }
+            }
 
         return (-half .. half).map { rowOffset ->
             (-half .. half).map { colOffset ->
                 val absolutePos = Pos(focusInfo.focus.row + rowOffset, focusInfo.focus.col + colOffset)
-                val lastMove = session.history.lastAction?.idx
-                val field = session.board.field(session.history)
 
-                val buttonFlag = when (val idx = absolutePos.idx) {
-                    lastMove -> when (field[idx]) {
-                        Color.Black.flag() -> ButtonFlag.BLACK_RECENT
-                        Color.White.flag() -> ButtonFlag.WHITE_RECENT
-                        else -> throw IllegalStateException()
-                    }
-                    else -> when (val flag = field[idx]) {
-                        Color.Black.flag() -> ButtonFlag.BLACK
-                        Color.White.flag() -> ButtonFlag.WHITE
-                        else -> when {
-                            Color.isForbidden(flag, session.board.playerColor) -> ButtonFlag.FORBIDDEN
-                            else -> when (absolutePos) {
-                                in focusInfo.highlights -> ButtonFlag.HIGHLIGHTED
-                                else -> when (session) {
-                                    is OpeningSession ->
-                                        if (session.validateMove(absolutePos))
-                                            if (session is SelectStageOpeningSession) ButtonFlag.HIGHLIGHTED
-                                            else ButtonFlag.FREE
-                                        else ButtonFlag.DISABLED
-                                    else -> ButtonFlag.FREE
-                                }
-                            }
-                        }
-                    }
-                }
-
-                tuple(absolutePos.toString(), buttonFlag)
+                tuple(absolutePos.toString(), focusedButtonFlag(absolutePos))
             }
         }
     }
@@ -199,8 +195,8 @@ abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
     override fun buildSetAlreadyExistFailure(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos) =
         publisher sends container.setErrorExist(pos.toString().asHighlightFormat())
 
-    override fun buildSetForbiddenMoveFailure(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos, forbiddenFlag: Byte) =
-        publisher sends container.setErrorForbidden(pos.toString().asHighlightFormat(), forbiddenFlagToText(forbiddenFlag).asHighlightFormat())
+    override fun buildSetForbiddenMoveFailure(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos, forbiddenKind: ForbiddenKind?) =
+        publisher sends container.setErrorForbidden(pos.toString().asHighlightFormat(), forbiddenKindToText(forbiddenKind).asHighlightFormat())
 
     // STYLE
 

@@ -14,8 +14,8 @@ import utils.lang.tuple
 class ParseFailure<A, B>(
     val name: String,
     val comment: String,
-    val guild: Channel,
-    val user: User,
+    val channel: Channel,
+    val user: User.Human,
     private val onFailure: (MessagingService<A, B>, MessagePublisher<A, B>, LanguageContainer) -> Effect<Nothing, List<Order>>
 ) {
 
@@ -24,8 +24,8 @@ class ParseFailure<A, B>(
 
 }
 
-fun <A, B> CommandParser.asParseFailure(comment: String, guild: Channel, user: User, onFailure: (MessagingService<A, B>, MessagePublisher<A, B>, LanguageContainer) -> Effect<Nothing, List<Order>>) =
-    ParseFailure(this.name, comment, guild, user, onFailure)
+fun <A, B> CommandParser.asParseFailure(comment: String, channel: Channel, user: User.Human, onFailure: (MessagingService<A, B>, MessagePublisher<A, B>, LanguageContainer) -> Effect<Nothing, List<Order>>) =
+    ParseFailure(this.name, comment, channel, user, onFailure)
 
 fun ParseFailure<*, *>.asCommandReport() =
-    CommandReport("PARSE-FAILURE-${this.name}", this.comment, this.guild, this.user)
+    CommandReport("PARSE-FAILURE-${this.name}", this.comment, this.channel, this.user)

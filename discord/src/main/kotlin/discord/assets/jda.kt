@@ -49,8 +49,8 @@ fun net.dv8tion.jda.api.entities.channel.Channel.extractId(): SubChannelId = Sub
 fun net.dv8tion.jda.api.entities.Guild.extractProfile(uid: ChannelUid = ChannelUid(UUID.randomUUID())): Channel =
     Channel(uid, DISCORD_PLATFORM_ID, this.extractId(), this.name)
 
-fun net.dv8tion.jda.api.entities.User.extractProfile(uid: UserUid = UserUid(UUID.randomUUID()), announceId: Int? = null): User =
-    User(uid, DISCORD_PLATFORM_ID, this.extractId(), this.effectiveName, this.name, announceId, this.avatarUrl)
+fun net.dv8tion.jda.api.entities.User.extractProfile(uid: UserUid = UserUid(UUID.randomUUID()), announceId: Int? = null): User.Human =
+    User.Human(this.effectiveName, this.avatarUrl, uid, DISCORD_PLATFORM_ID, this.extractId(), this.name, announceId)
 
 fun net.dv8tion.jda.api.entities.Guild.editMessageByMessageRef(ref: MessageRef, newContent: MessageEditData): DiscordMessageBuilder =
     MessageEditAdaptor(this.getChannelMessageSubChannelById(ref.subChannelId.idLong)!!.editMessageById(ref.id.idLong, newContent))
@@ -91,5 +91,5 @@ fun <T : Event> T.abbreviation(): String =
 fun ExecutionContext.retrieveJDAChannel(jda: JDA): JDAChannel =
     when (this) {
         is InteractionContext<*> -> this.jdaChannel
-        else -> jda.getGuildById(this.guild.givenId.idLong)!!
+        else -> jda.getGuildById(this.channel.givenId.idLong)!!
     }

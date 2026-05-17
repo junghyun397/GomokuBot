@@ -4,32 +4,14 @@ import core.database.DatabaseConnection
 import core.database.repositories.UserProfileRepository
 import io.r2dbc.spi.Statement
 import renju.notation.ForbiddenKind
-import java.util.*
 
-const val GENERIC_PLATFORM_ID: Short = 0
-
-val anonymousUser = User(
-    id = UserUid(UUID.fromString("d20fa7d1-8107-406d-8fe0-ff5335b2d559")),
-    platform = GENERIC_PLATFORM_ID,
-    givenId = UserId(0L),
-    name = "Anon",
-    uniqueName = "anon",
-    announceId = null,
-    profileURL = null,
-)
-
-val aiUser = anonymousUser.copy(
-    name = "AI",
-    uniqueName = "gomokubot"
-)
-
-suspend fun UserUid?.retrieveUserOrAiUser(connection: DatabaseConnection) =
+suspend fun UserUid?.retrieveUserOrGomokuBot(connection: DatabaseConnection): User =
     this?.let {
-        UserProfileRepository.retrieveUser(connection, this)
-    } ?: aiUser
+        UserProfileRepository.retrieveUser(connection, it)
+    } ?: User.GomokuBot
 
-fun forbiddenFlagToText(flag: Byte) =
-    when (ForbiddenKind.fromFieldFlag(flag)) {
+fun forbiddenKindToText(kind: ForbiddenKind?) =
+    when (kind) {
         ForbiddenKind.DoubleThree -> "3-3"
         ForbiddenKind.DoubleFour -> "4-4"
         ForbiddenKind.Overline -> "≥6"

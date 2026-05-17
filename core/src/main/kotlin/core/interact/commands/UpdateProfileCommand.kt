@@ -20,7 +20,7 @@ import utils.lang.tuple
 
 class UpdateProfileCommand(
     command: Command,
-    private val newUser: Option<User>,
+    private val newUser: Option<User.Human>,
     private val newChannel: Option<Channel>,
 ) : UnionCommand(command) {
 
@@ -29,8 +29,8 @@ class UpdateProfileCommand(
     override suspend fun <A, B> executeSelf(
         bot: BotContext,
         config: ChannelConfig,
-        guild: Channel,
-        user: User,
+        channel: Channel,
+        user: User.Human,
         service: MessagingService<A, B>,
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
@@ -45,11 +45,11 @@ class UpdateProfileCommand(
             ChannelProfileRepository.upsertChannel(bot.dbConnection, it)
         }
 
-        val thenChannel = this.newChannel.getOrElse { guild }
+        val thenChannel = this.newChannel.getOrElse { channel }
 
         val io: Effect<Nothing, List<Order>> = effect { emptyOrders }
 
-        val report = this.writeCommandReport("succeed", guild, user)
+        val report = this.writeCommandReport("succeed", channel, user)
 
         tuple(io, report, thenChannel, thenUser)
     }

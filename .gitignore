@@ -7,6 +7,6 @@ local.properties
 .env
 logs/
 *.tar
-temp.kt
-.secrets
-Mintaka.kt.raw
+mintaka-sessions/
+discord-logs/
+db/

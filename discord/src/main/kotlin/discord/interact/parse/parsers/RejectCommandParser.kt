@@ -12,7 +12,7 @@ import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteract
 object RejectCommandParser : EmbeddableCommand {
 
     override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>) =
-        SessionManager.retrieveRequestSessionByOpponent(context.bot.sessions, context.guild, context.user.id)
+        SessionManager.retrieveRequestSessionByOpponent(context.bot.sessions, context.channel, context.user.id)
             ?.let { Some(RejectCommand(it)) }
             ?: None
 

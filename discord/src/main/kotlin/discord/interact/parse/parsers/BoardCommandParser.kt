@@ -28,12 +28,12 @@ object BoardCommandParser: SessionSideParser<DiscordMessageData, DiscordComponen
     )
 
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>) =
-        this.retrieveSession(context.bot, context.guild, context.user).map { session ->
+        this.retrieveSession(context.bot, context.channel, context.user).map { session ->
             BoardCommand(session)
         }
 
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>) =
-        this.retrieveSession(context.bot, context.guild, context.user).map { session ->
+        this.retrieveSession(context.bot, context.channel, context.user).map { session ->
             BoardCommand(session)
         }
 
