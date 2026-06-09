@@ -46,14 +46,8 @@ fun GameSession.extractGameRecord(channelUid: ChannelUid): Option<GameRecord> =
                 gameResult = gameResult.getOrNull()!!,
 
                 channelId = channelUid,
-                blackId = when {
-                    ownerHasBlack -> owner.humanId
-                    else -> opponent.humanId
-                },
-                whiteId = when {
-                    ownerHasBlack -> opponent.humanId
-                    else -> owner.humanId
-                },
+                blackId = this.blackPlayer.humanId,
+                whiteId = this.whitePlayer.humanId,
 
                 engineLevel = when (this) {
                     is EngineGameSession -> EngineLevel.AMOEBA

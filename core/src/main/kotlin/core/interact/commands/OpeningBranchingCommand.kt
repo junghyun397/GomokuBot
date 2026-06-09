@@ -4,6 +4,7 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
+import core.assets.humanId
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
@@ -11,10 +12,12 @@ import core.session.SessionManager
 import core.session.SwapType
 import core.session.entities.BranchingStageOpeningSession
 import core.session.entities.ChannelConfig
+import core.session.entities.GameSession
+import core.session.entities.SessionId
 import utils.lang.tuple
 
 class OpeningBranchingCommand(
-    private val session: BranchingStageOpeningSession,
+    private val sessionId: SessionId,
     private val takeBranch: Boolean,
     private val deployAt: MessageRef?
 ) : Command {
@@ -32,18 +35,22 @@ class OpeningBranchingCommand(
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        val thenSession = session.branch(this.takeBranch)
+        var session: BranchingStageOpeningSession? = null
+        val thenSession = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { currentSession ->
+            val branchingSession = currentSession as? BranchingStageOpeningSession ?: throw IllegalStateException()
+            if (branchingSession.player.humanId != user.id) throw IllegalStateException()
 
-        SessionManager.putGameSession(bot.sessions, channel, thenSession)
-
+            session = branchingSession
+            branchingSession.branch(this.takeBranch)
+        }
         val boardPublisher = when (config.swapType) {
             SwapType.EDIT -> publishers.edit(this.deployAt ?: messageRef)
             else -> publishers.plain
         }
 
-        val io = buildNextMoveProcedure(bot, channel, config, service, boardPublisher, this.session, thenSession)
+        val io = buildNextMoveProcedure(bot, channel, config, service, boardPublisher, session ?: throw IllegalStateException(), thenSession)
 
-        tuple(io, this.writeCommandReport("has chosen $takeBranch", channel, user))
+        tuple(io, this.writeCommandReport("has chosen ${this.takeBranch}", channel, user))
     }
 
 }

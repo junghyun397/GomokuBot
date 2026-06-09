@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import core.session.MessageManager
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
@@ -15,7 +16,7 @@ import core.session.SwapType
 import core.session.entities.*
 import renju.notation.GameResult
 
-class ResignCommand(private val session: GameSession) : Command {
+class ResignCommand(private val sessionId: SessionId) : Command {
 
     override val name = "resign"
 
@@ -30,12 +31,23 @@ class ResignCommand(private val session: GameSession) : Command {
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        val (finishedSession, result) = GameManager.resignSession(this.session, GameResult.Cause.RESIGN, user)
+        var session: GameSession? = null
+        var result: GameResult.Win? = null
 
-        GameManager.finishSession(bot, channel, finishedSession, result)
+        val finishedSession = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { currentSession ->
+            session = currentSession
+            val (finishedSession, finishedResult) = GameManager.resignSession(currentSession, GameResult.Cause.RESIGN, user)
+            result = finishedResult
+            finishedSession
+        } as RenjuSession
+
+        val sessionValue = session ?: throw IllegalStateException()
+        val resultValue = result ?: throw IllegalStateException()
+
+        GameManager.finishSession(bot, channel, finishedSession, resultValue)
 
         val publisher = run {
-            val boardMessage = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
+            val boardMessage = MessageManager.viewHeadMessage(bot.sessions, sessionValue.messageBufferKey)
 
             if (config.swapType == SwapType.EDIT && boardMessage != null)
                 publishers.edit(boardMessage)
@@ -46,17 +58,17 @@ class ResignCommand(private val session: GameSession) : Command {
         val io = effect {
             when (finishedSession) {
                 is EngineGameSession ->
-                    service.buildSurrenderedPVE(publishers.plain, config.language.container, finishedSession.owner)
+                    service.buildSurrenderedPVE(publishers.plain, config.language.container, finishedSession.humanPlayer)
                 is PvpGameSession, is OpeningSession ->
-                    service.buildSurrenderedPVP(publishers.plain, config.language.container, result.winner, result.loser)
+                    service.buildSurrenderedPVP(publishers.plain, config.language.container, resultValue.winner, resultValue.loser)
             }.launch()()
 
-            val finishOrders = buildFinishProcedure(bot, service, publisher, config, this@ResignCommand.session, finishedSession)()
+            val finishOrders = buildFinishProcedure(bot, service, publisher, config, sessionValue, finishedSession)()
 
             finishOrders + Order.ArchiveSession(finishedSession, config.archivePolicy)
         }
 
-        io to this.writeCommandReport("surrendered, terminate session by $result", channel, user)
+        io to this.writeCommandReport("surrendered, terminate session by $resultValue", channel, user)
     }
 
 }

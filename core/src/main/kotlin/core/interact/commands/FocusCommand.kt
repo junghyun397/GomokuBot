@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import core.session.MessageManager
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
@@ -12,7 +13,7 @@ import core.interact.reports.writeCommandReport
 import core.session.SessionManager
 import core.session.entities.BoardNavigationState
 import core.session.entities.ChannelConfig
-import core.session.entities.GameSession
+import core.session.entities.SessionId
 import renju.notation.Pos
 import utils.lang.tuple
 
@@ -22,7 +23,7 @@ enum class Direction {
 
 class FocusCommand(
     private val navigationState: BoardNavigationState,
-    private val session: GameSession,
+    private val sessionId: SessionId,
     private val direction: Direction,
 ) : Command {
 
@@ -39,6 +40,7 @@ class FocusCommand(
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {
+        val session = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).snapshot()
         val newFocus = run {
             val step = service.focusWidth / 2 + 1
 
@@ -60,7 +62,7 @@ class FocusCommand(
             this.navigationState.page -> tuple(effect { emptyOrders }, this.writeCommandReport("focus bounded",
                 channel, user))
             else -> {
-                SessionManager.addNavigation(bot.sessions, messageRef, this.navigationState.copy(page = newFocus.idx))
+                MessageManager.addNavigation(bot.sessions, messageRef, this.navigationState.copy(page = newFocus.idx))
 
                 val action = effect {
                     service.dispatchFocusButtons(publishers.component, service.generateFocusedField(session, newFocusInfo))
@@ -69,7 +71,7 @@ class FocusCommand(
                     emptyOrders
                 }
 
-                tuple(action, this.writeCommandReport("move focus $direction", channel, user))
+                tuple(action, this.writeCommandReport("move focus ${this.direction}", channel, user))
             }
         }
     }

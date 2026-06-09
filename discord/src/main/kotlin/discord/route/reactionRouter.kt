@@ -1,5 +1,6 @@
 package discord.route
 
+import core.session.MessageManager
 import arrow.core.Option
 import arrow.core.Some
 import arrow.core.toOption
@@ -32,12 +33,12 @@ private fun recoverNavigationState(bot: BotContext, message: Message, messageRef
     message.embeds.firstOrNull()
         .toOption()
         .flatMap { PageNavigationState.decodeFromColor(COLOR_NORMAL_HEX, it.colorRaw, bot.config, messageRef, bot.dbConnection) }
-        .onSome { SessionManager.addNavigation(bot.sessions, messageRef, it) }
+        .onSome { MessageManager.addNavigation(bot.sessions, messageRef, it) }
 
 suspend fun reactionRouter(context: UserInteractionContext<GenericMessageReactionEvent>): Report? {
     val messageRef = context.event.extractMessageRef()
 
-    val state = SessionManager.getNavigationState(context.bot.sessions, messageRef).toOption()
+    val state = MessageManager.getNavigationState(context.bot.sessions, messageRef).toOption()
         .fold(
             ifEmpty = { recoverNavigationState(context.bot, context.event.retrieveMessage().await(), messageRef) },
             ifSome = { Some(it) }

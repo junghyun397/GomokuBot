@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import core.session.MessageManager
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
@@ -52,7 +53,7 @@ class NavigationCommand(
             return@runCatching tuple(effect { emptyOrders }, this.writeCommandReport("navigate ${navigationState.kind} bounded",
                 channel, user))
 
-        SessionManager.addNavigation(bot.sessions, messageRef, newState)
+        MessageManager.addNavigation(bot.sessions, messageRef, newState)
 
         val io = effect {
             when (this@NavigationCommand.navigationState.kind) {

@@ -1,5 +1,6 @@
 package discord
 
+import core.session.MessageManager
 import core.BotConfig
 import core.BotContext
 import core.assets.ChannelId
@@ -241,7 +242,7 @@ object GomokuBot {
             scheduleRequestExpiration(botContext, discordConfig, jda),
 
             routine(botConfig.navigatorExpireChecks) {
-                val expires = SessionManager.cleanExpiredNavigators(sessionPool)
+                val expires = MessageManager.cleanExpiredNavigators(sessionPool)
 
                 "cleaned $expires expired navigators"
             },

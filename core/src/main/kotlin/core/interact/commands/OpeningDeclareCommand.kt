@@ -4,6 +4,7 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
+import core.assets.humanId
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
@@ -11,10 +12,12 @@ import core.session.SessionManager
 import core.session.SwapType
 import core.session.entities.ChannelConfig
 import core.session.entities.DeclareStageOpeningSession
+import core.session.entities.GameSession
+import core.session.entities.SessionId
 import utils.lang.tuple
 
 class OpeningDeclareCommand(
-    private val session: DeclareStageOpeningSession,
+    private val sessionId: SessionId,
     private val maxOfferCount: Int,
     private val deployAt: MessageRef?
 ) : Command {
@@ -32,18 +35,22 @@ class OpeningDeclareCommand(
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        val thenSession = session.declare(this.maxOfferCount)
+        var session: DeclareStageOpeningSession? = null
+        val thenSession = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { currentSession ->
+            val declareSession = currentSession as? DeclareStageOpeningSession ?: throw IllegalStateException()
+            if (declareSession.player.humanId != user.id) throw IllegalStateException()
 
-        SessionManager.putGameSession(bot.sessions, channel, thenSession)
-
+            session = declareSession
+            declareSession.declare(this.maxOfferCount)
+        }
         val boardPublisher = when (config.swapType) {
             SwapType.EDIT -> publishers.edit(this.deployAt ?: messageRef)
             else -> publishers.plain
         }
 
-        val io = buildNextMoveProcedure(bot, channel, config, service, boardPublisher, this.session, thenSession)
+        val io = buildNextMoveProcedure(bot, channel, config, service, boardPublisher, session ?: throw IllegalStateException(), thenSession)
 
-        tuple(io, this.writeCommandReport("declare 5th moves $maxOfferCount", channel, user))
+        tuple(io, this.writeCommandReport("declare 5th moves ${this.maxOfferCount}", channel, user))
     }
 
 }

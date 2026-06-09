@@ -103,11 +103,11 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
     private fun InlineEmbed.buildBoardAuthor(container: LanguageContainer, session: GameSession) =
         author {
-            iconUrl = session.owner.profileURL
+            iconUrl = session.blackPlayer.profileURL ?: session.whitePlayer.profileURL
             name = buildString {
-                append(session.ownerWithColor())
+                append(session.blackPlayerWithColor())
                 append(" vs ")
-                append(session.opponentWithColor())
+                append(session.whitePlayerWithColor())
                 append(", ")
 
                 when {
@@ -299,13 +299,10 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
         )
     }
 
-    override fun buildSessionArchive(publisher: DiscordMessagePublisher, session: GameSession, result: Option<GameResult>, animate: Boolean): DiscordMessageBuilder {
-        val imageStream = if (animate)
-            ImageBoardRenderer.renderHistoryAnimation(session.history.sequence.filterNotNull())
-        else
-            ImageBoardRenderer.renderInputStream(session.state, HistoryRenderType.SEQUENCE, null, null, true)
+    override fun buildSessionArchive(publisher: DiscordMessagePublisher, session: GameSession, result: Option<GameResult>): DiscordMessageBuilder {
+        val imageStream = ImageBoardRenderer.renderInputStream(session.state, HistoryRenderType.SEQUENCE, null, null, true)
 
-        val fName = if (animate) ImageBoardRenderer.newGifFileName() else ImageBoardRenderer.newFileName()
+        val fName = ImageBoardRenderer.newFileName()
 
         val messageBuilder = publisher sends Embed {
             color = COLOR_NORMAL_HEX

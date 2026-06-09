@@ -1,5 +1,6 @@
 package discord.interact.parse.parsers
 
+import core.session.MessageManager
 import arrow.core.*
 import arrow.core.raise.Effect
 import arrow.core.raise.effect
@@ -56,7 +57,7 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
 
     private fun buildAppendMessageProcedure(maybeMessage: Option<MessageAdaptor<DiscordMessageData, DiscordComponents>>, context: UserInteractionContext<*>, session: GameSession): Effect<Nothing, List<Order>> =
         maybeMessage.fold(
-            ifSome = { effect { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef); emptyList() } },
+            ifSome = { effect { MessageManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef); emptyList() } },
             ifEmpty = { effect { emptyOrders } }
         )
 
@@ -97,17 +98,17 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
             effect { emptyOrders }
         }
 
-    private fun branchCommandBySession(session: GameSession, pos: Pos, ref: MessageRef?, responseFlag: ResponseFlag): Command? =
+    private fun branchCommandBySession(sessionId: SessionId, session: GameSession, pos: Pos, ref: MessageRef?, responseFlag: ResponseFlag): Command? =
         when (session) {
-            is RenjuSession -> PlayCommand(pos, ref, responseFlag)
-            is MoveStageOpeningSession -> OpeningSetCommand(session, pos, ref, responseFlag)
-            is OfferStageOpeningSession -> OpeningOfferCommand(session, pos, ref, responseFlag)
-            is SelectStageOpeningSession -> OpeningSelectCommand(session, pos, ref, responseFlag)
+            is RenjuSession -> PlayCommand(sessionId, pos, ref, responseFlag)
+            is MoveStageOpeningSession -> OpeningSetCommand(sessionId, pos, ref, responseFlag)
+            is OfferStageOpeningSession -> OpeningOfferCommand(sessionId, pos, ref, responseFlag)
+            is SelectStageOpeningSession -> OpeningSelectCommand(sessionId, pos, ref, responseFlag)
             else -> null
         }
 
     private suspend fun parseRawCommand(context: UserInteractionContext<*>, user: User.Human, rawRow: String?, rawColumn: String?): Either<DiscordParseFailure, Command> =
-        this.retrieveSession(context.bot, context.channel, user).flatMap { session ->
+        this.retrieveSession(context.bot, context.channel, user).flatMap { (sessionId, session) ->
             if (session.player.humanId != user.id)
                 return@flatMap Either.Left(this.buildOrderFailure(context, session, session.player))
 
@@ -123,7 +124,7 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
             val pos = Pos(row, column)
 
             val ref = when (context.config.swapType) {
-                SwapType.EDIT -> SessionManager.viewHeadMessage(context.bot.sessions, session.messageBufferKey)
+                SwapType.EDIT -> MessageManager.viewHeadMessage(context.bot.sessions, session.messageBufferKey)
                 else -> null
             }
 
@@ -145,7 +146,7 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
                             else -> ResponseFlag.Defer
                         }
 
-                        this.branchCommandBySession(session, pos, ref, responseFlag)
+                        this.branchCommandBySession(sessionId, session, pos, ref, responseFlag)
                             ?.let { Either.Right(it) }
                             ?: Either.Left(this.buildSilentFailure(context))
                     }
@@ -181,8 +182,9 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
 
         val userId = context.user.id
 
-        val session = SessionManager.retrieveGameSession(context.bot.sessions, context.channel, userId)
+        val sessionId = SessionManager.findGameSessionId(context.bot.sessions, context.channel.id, userId)
             ?: return None
+        val session = SessionManager.retrieveGameSession(context.bot.sessions, sessionId).snapshot()
 
         if (session.player.humanId != userId)
             return None
@@ -191,7 +193,7 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
             .fold(
                 ifSome = { None },
                 ifEmpty = {
-                    this.branchCommandBySession(session, pos, null, ResponseFlag.Defer(context.config.swapType == SwapType.EDIT))
+                    this.branchCommandBySession(sessionId, session, pos, null, ResponseFlag.Defer(context.config.swapType == SwapType.EDIT))
                         .toOption()
                 }
             )

@@ -5,7 +5,7 @@ import core.session.entities.MintakaIdleSession
 import core.session.entities.WaitingState
 import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.engine.cio.*
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.sse.*
 import io.ktor.client.request.*
@@ -45,9 +45,18 @@ object MintakaProvider {
 
     private val bitfieldEncoder = Base64.getUrlEncoder().withoutPadding()
 
-    private val client = HttpClient(CIO) {
+    private val client = HttpClient(OkHttp) {
+        engine {
+            config {
+                okhttp3.ConnectionPool(
+                    maxIdleConnections = 100,
+                    keepAliveDuration = 5,
+                    timeUnit = java.util.concurrent.TimeUnit.MINUTES,
+                )
+            }
+        }
         install(ContentNegotiation) {
-            json(jsonCodec)
+            json(this@MintakaProvider.jsonCodec)
         }
         install(SSE)
     }

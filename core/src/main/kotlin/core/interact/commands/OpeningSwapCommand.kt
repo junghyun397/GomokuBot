@@ -4,17 +4,20 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
+import core.assets.humanId
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.SessionManager
 import core.session.SwapType
 import core.session.entities.ChannelConfig
+import core.session.entities.GameSession
+import core.session.entities.SessionId
 import core.session.entities.SwapStageOpeningSession
 import utils.lang.tuple
 
 class OpeningSwapCommand(
-    private val session: SwapStageOpeningSession,
+    private val sessionId: SessionId,
     private val doSwap: Boolean,
     private val deployAt: MessageRef?
 ) : Command {
@@ -32,18 +35,23 @@ class OpeningSwapCommand(
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        val thenSession = session.swap(this.doSwap)
+        var session: SwapStageOpeningSession? = null
+        val thenSession = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { currentSession ->
+            val swapSession = currentSession as? SwapStageOpeningSession ?: throw IllegalStateException()
+            if (swapSession.player.humanId != user.id) throw IllegalStateException()
 
-        SessionManager.putGameSession(bot.sessions, channel, thenSession)
+            session = swapSession
+            swapSession.swap(this.doSwap)
+        }
 
         val boardPublisher = when (config.swapType) {
             SwapType.EDIT -> publishers.edit(this.deployAt ?: messageRef)
             else -> publishers.plain
         }
 
-        val io = buildNextMoveProcedure(bot, channel, config, service, boardPublisher, this.session, thenSession)
+        val io = buildNextMoveProcedure(bot, channel, config, service, boardPublisher, session ?: throw IllegalStateException(), thenSession)
 
-        tuple(io, this.writeCommandReport("make swap $doSwap", channel, user))
+        tuple(io, this.writeCommandReport("make swap ${this.doSwap}", channel, user))
     }
 
 }

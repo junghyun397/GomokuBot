@@ -1,5 +1,6 @@
 package discord.interact.parse.parsers
 
+import core.session.MessageManager
 import arrow.core.*
 import arrow.core.raise.effect
 import core.assets.User
@@ -13,6 +14,8 @@ import core.interact.parse.asParseFailure
 import core.session.Rule
 import core.session.SessionManager
 import core.session.SwapType
+import core.session.entities.GameSession
+import core.session.entities.RequestSession
 import dev.minn.jda.ktx.interactions.commands.choice
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
@@ -52,8 +55,23 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             else -> Rule.RENJU
         }
 
+    private suspend fun findRequestSession(context: UserInteractionContext<*>, user: User.Human): RequestSession? {
+        val sessionId = SessionManager.findRequestSessionId(context.bot.sessions, context.channel.id, user.id)
+            ?: return null
+
+        return SessionManager.retrieveRequestSession(context.bot.sessions, sessionId).snapshot()
+    }
+
+    private suspend fun findGameSession(context: UserInteractionContext<*>, user: User.Human): GameSession? {
+        val sessionId = SessionManager.findGameSessionId(context.bot.sessions, context.channel.id, user.id)
+            ?: return null
+
+        return SessionManager.retrieveGameSession(context.bot.sessions, sessionId).snapshot()
+    }
+
     private suspend fun lookupRequestSent(context: UserInteractionContext<*>, owner: User.Human): Option<DiscordParseFailure> =
-        SessionManager.retrieveRequestSessionByOwner(context.bot.sessions, context.channel, owner.id)
+        this.findRequestSession(context, owner)
+            ?.takeIf { it.owner.id == owner.id }
             .toOption()
             .fold(
                 ifSome = { session ->
@@ -69,7 +87,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             )
 
     private suspend fun lookupRequestOwner(context: UserInteractionContext<*>, owner: User.Human): Option<DiscordParseFailure> =
-        SessionManager.retrieveRequestSession(context.bot.sessions, context.channel, owner.id)
+        this.findRequestSession(context, owner)
             .toOption()
             .fold(
                 ifSome = { session ->
@@ -85,7 +103,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             )
 
     private suspend fun lookupRequestOpponent(context: UserInteractionContext<*>, owner: User.Human, opponent: User.Human): Option<DiscordParseFailure> =
-        SessionManager.retrieveRequestSession(context.bot.sessions, context.channel, opponent.id)
+        this.findRequestSession(context, opponent)
             .toOption()
             .fold(
                 ifSome = {
@@ -101,7 +119,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             )
 
     private suspend fun lookupSessionOwner(context: UserInteractionContext<*>, user: User.Human): Option<DiscordParseFailure> =
-        SessionManager.retrieveGameSession(context.bot.sessions, context.channel, user.id)
+        this.findGameSession(context, user)
             .toOption()
             .fold(
                 ifSome = { session ->
@@ -111,7 +129,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                                 .retrieve()()
 
                             maybeMessage.fold(
-                                ifSome = { SessionManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef) },
+                                ifSome = { MessageManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef) },
                                 ifEmpty = { }
                             )
 
@@ -128,7 +146,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             )
 
     private suspend fun lookupSessionOpponent(context: UserInteractionContext<*>, user: User.Human, opponent: User.Human): Option<DiscordParseFailure> =
-        SessionManager.retrieveGameSession(context.bot.sessions, context.channel, opponent.id)
+        this.findGameSession(context, opponent)
             .toOption()
             .fold(
                 ifSome = {

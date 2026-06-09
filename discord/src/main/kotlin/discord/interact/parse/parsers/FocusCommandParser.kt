@@ -29,14 +29,14 @@ object FocusCommandParser : CommandParser, NavigableCommand {
         }
 
     override suspend fun parseReaction(context: UserInteractionContext<GenericMessageReactionEvent>, state: NavigationState) =
-        SessionManager.retrieveGameSession(context.bot.sessions, context.channel, context.user.id)
+        SessionManager.findGameSessionId(context.bot.sessions, context.channel.id, context.user.id)
             .toOption()
             .filter { state is BoardNavigationState }
-            .flatMap { session ->
+            .flatMap { sessionId ->
                 this.matchDirection(context.event.reaction.emoji.asUnicode())
                     .toOption()
-                    .map { tuple(session, it) }
+                    .map { tuple(sessionId, it) }
             }
-            .map { (session, direction) -> FocusCommand(state as BoardNavigationState, session, direction) }
+            .map { (sessionId, direction) -> FocusCommand(state as BoardNavigationState, sessionId, direction) }
 
 }

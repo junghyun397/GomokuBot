@@ -1,5 +1,6 @@
 package discord
 
+import core.session.MessageManager
 import core.BotContext
 import core.interact.commands.ExpireGameCommand
 import core.interact.commands.ExpireRequestCommand
@@ -57,16 +58,16 @@ private suspend fun executeCommand(
 
 fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flow<Report> =
     schedule(bot.config.gameExpireChecks, {
-        SessionManager.cleanExpiredGameSession(bot.sessions).forEach { (_, channelSession, _, session) ->
-            val context = TaskContext(bot, channelSession.channel, channelSession.config, Clock.System.now(), "SCH")
+        SessionManager.cleanExpiredGameSession(bot.sessions).forEach { (_, channel, _, session) ->
+            val config = SessionManager.retrieveChannelConfig(bot.sessions, channel)
+            val context = TaskContext(bot, channel, config, Clock.System.now(), "SCH")
 
-            val maybeMessage = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
+            val maybeMessage = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
-            val maybeChannel = jda.getGuildById(channelSession.channel.givenId.idLong)
+            val maybeChannel = jda.getGuildById(channel.givenId.idLong)
             val maybeSubChannel = maybeMessage?.let { maybeChannel?.getChannelMessageSubChannelById(it.subChannelId.idLong) }
 
             val command = ExpireGameCommand(
-                channelSession = channelSession,
                 session = session,
                 channelAvailable = maybeChannel != null && maybeSubChannel != null
             )
@@ -75,22 +76,20 @@ fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: J
 
             emit(result)
         }
-
-        SessionManager.cleanEmptySessions(bot.sessions)
     })
 
 fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flow<Report> =
     schedule(bot.config.requestExpireChecks, {
-        SessionManager.cleanExpiredRequestSessions(bot.sessions).forEach { (_, channelSession, _, session) ->
-            val context = TaskContext(bot, channelSession.channel, channelSession.config, Clock.System.now(), "SCH")
+        SessionManager.cleanExpiredRequestSessions(bot.sessions).forEach { (_, channel, _, session) ->
+            val config = SessionManager.retrieveChannelConfig(bot.sessions, channel)
+            val context = TaskContext(bot, channel, config, Clock.System.now(), "SCH")
 
-            val maybeMessage = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
+            val maybeMessage = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
-            val maybeChannel = jda.getGuildById(channelSession.channel.givenId.idLong)
+            val maybeChannel = jda.getGuildById(channel.givenId.idLong)
             val maybeSubChannel = maybeMessage?.let { maybeChannel?.getChannelMessageSubChannelById(it.subChannelId.idLong) }
 
             val command = ExpireRequestCommand(
-                channelSession = channelSession,
                 session = session,
                 channelAvailable = maybeChannel != null && maybeSubChannel != null,
                 messageAvailable = maybeMessage != null

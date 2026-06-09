@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import core.session.MessageManager
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
@@ -47,7 +48,7 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
                     ).retrieve()()
                         .fold(
                             ifSome = { announceMessage ->
-                                SessionManager.addNavigation(
+                                MessageManager.addNavigation(
                                     bot.sessions,
                                     announceMessage.messageRef,
                                     PageNavigationState(

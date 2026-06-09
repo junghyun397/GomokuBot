@@ -128,7 +128,7 @@ class Board private constructor (
         private val cleaner: Cleaner = Cleaner.create()
 
         fun newBoard(): Board {
-            return fromNativePointer(RustyRenjuCApi.lib.rusty_renju_default_board()
+            return fromNativePointer(RustyRenjuCApi.lib.rusty_renju_empty_board()
                 ?: throw IllegalStateException())
         }
 

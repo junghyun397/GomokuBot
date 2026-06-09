@@ -35,7 +35,7 @@ interface MessagingService<A, B> {
 
     fun buildReplayBoard(publisher: MessagePublisher<A, B>, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession, totalMoves: Int): MessageBuilder<A, B>
 
-    fun buildSessionArchive(publisher: MessagePublisher<A, B>, session: GameSession, result: Option<GameResult>, animate: Boolean): MessageBuilder<A, B>
+    fun buildSessionArchive(publisher: MessagePublisher<A, B>, session: GameSession, result: Option<GameResult>): MessageBuilder<A, B>
 
     fun dispatchFocusButtons(publisher: ComponentPublisher<A, B>, focusedFields: FocusedFields): MessageBuilder<A, B>
 
@@ -55,7 +55,7 @@ interface MessagingService<A, B> {
 
     fun buildBeginsPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, blackPlayer: User, whitePlayer: User): MessageBuilder<A, B>
 
-    fun buildBeginsPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, ownerHasBlack: Boolean): MessageBuilder<A, B>
+    fun buildBeginsPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, humanHasBlack: Boolean): MessageBuilder<A, B>
 
     fun buildBeginsOpening(publisher: MessagePublisher<A, B>, container: LanguageContainer, blackPlayer: User, whitePlayer: User, rule: Rule): MessageBuilder<A, B>
 

@@ -1,11 +1,11 @@
 package core.interact.commands
 
+import core.session.MessageManager
 import arrow.core.Option
 import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
-import core.assets.humanId
 import core.mintaka.FocusSolver
 import core.interact.Order
 import core.interact.message.MessageAdaptor
@@ -24,7 +24,7 @@ fun <A, B> buildAppendGameMessageProcedure(
     session: GameSession
 ): Effect<Nothing, Unit> = maybeMessage.fold(
     ifSome = { message ->
-        effect { SessionManager.appendMessage(bot.sessions, session.messageBufferKey, message.messageRef) }
+        effect { MessageManager.appendMessage(bot.sessions, session.messageBufferKey, message.messageRef) }
     },
     ifEmpty = { effect { } }
 )
@@ -69,12 +69,13 @@ fun <A, B> buildBoardProcedure(
 
         maybeMessage.fold(
             ifSome = { message ->
-                SessionManager.addNavigation(bot.sessions, message.messageRef, BoardNavigationState(focusInfo.focus.idx, focusInfo, session.expireDate))
-                SessionManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.messageRef)
+                MessageManager.addNavigation(bot.sessions, message.messageRef, BoardNavigationState(focusInfo.focus.idx, focusInfo, session.expireDate))
+                MessageManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.messageRef)
                 service.attachFocusNavigators(message.messageData) {
-                    session.owner.humanId
-                        ?.let { SessionManager.retrieveGameSession(bot.sessions, channel, it) }
-                        ?.history?.moves != session.history.moves
+                    runCatching {
+                        val currentSession = SessionManager.retrieveGameSession(bot.sessions, session.id).snapshot()
+                        currentSession.history.moves != session.history.moves
+                    }.getOrElse { true }
                 }()
             },
             ifEmpty = { }
@@ -87,9 +88,9 @@ private fun buildSwapProcedure(
     config: ChannelConfig,
     session: GameSession
 ): Effect<Nothing, List<Order>> = effect { when (config.swapType) {
-    SwapType.RELAY -> listOf(Order.BulkDelete(SessionManager.checkoutMessages(bot.sessions, session.messageBufferKey).orEmpty()))
+    SwapType.RELAY -> listOf(Order.BulkDelete(MessageManager.checkoutMessages(bot.sessions, session.messageBufferKey).orEmpty()))
     SwapType.ARCHIVE -> {
-        SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
+        MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
             ?.let { listOf(Order.RemoveNavigators(it, reduceComponents = true)) }
             ?: emptyList()
     }

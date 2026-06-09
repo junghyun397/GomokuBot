@@ -108,8 +108,15 @@ object ChannelManager {
 
         val modSession = session.replaceIf(archivePolicy == ArchivePolicy.BY_ANONYMOUS) {
             when (session) {
-                is EngineGameSession -> session.copy(owner = core.assets.User.Anonymous)
-                is PvpGameSession -> session.copy(owner = core.assets.User.Anonymous, opponent = core.assets.User.Anonymous)
+                is EngineGameSession -> session.copy(
+                    humanPlayer = core.assets.User.Anonymous,
+                    blackPlayer = if (session.blackPlayer == session.humanPlayer) core.assets.User.Anonymous else session.blackPlayer,
+                    whitePlayer = if (session.whitePlayer == session.humanPlayer) core.assets.User.Anonymous else session.whitePlayer,
+                )
+                is PvpGameSession -> session.copy(
+                    blackPlayer = core.assets.User.Anonymous,
+                    whitePlayer = core.assets.User.Anonymous,
+                )
             }
         }
 
@@ -127,7 +134,7 @@ object ChannelManager {
 
         val publisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(archiveSubChannel.sendMessage(msg.buildCreate())) }
 
-        DiscordMessagingService.buildSessionArchive(publisher, modSession, modResult, false)
+        DiscordMessagingService.buildSessionArchive(publisher, modSession, modResult)
             .launch()
             .get()
     }

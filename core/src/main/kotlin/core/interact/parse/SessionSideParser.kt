@@ -7,11 +7,12 @@ import core.assets.Channel
 import core.assets.User
 import core.session.SessionManager
 import core.session.entities.GameSession
+import core.session.entities.SessionId
 
 abstract class SessionSideParser<A, B> : CommandParser {
 
-    protected suspend fun retrieveSession(context: BotContext, channel: Channel, user: User.Human): Either<ParseFailure<A, B>, GameSession> =
-        SessionManager.retrieveGameSession(context.sessions, channel, user.id)?.let { Either.Right(it) }
+    protected fun retrieveSessionId(context: BotContext, channel: Channel, user: User.Human): Either<ParseFailure<A, B>, SessionId> =
+        SessionManager.findGameSessionId(context.sessions, channel.id, user.id)?.let { Either.Right(it) }
             ?: Either.Left(ParseFailure(this.name, "$user session not found", channel, user) { messagingService, publisher, container ->
                 effect {
                     messagingService.buildSessionNotFound(publisher, container)
@@ -19,5 +20,13 @@ abstract class SessionSideParser<A, B> : CommandParser {
                     emptyList()
                 }
             })
+
+    protected fun retrieveSession(context: BotContext, channel: Channel, user: User.Human): Either<ParseFailure<A, B>, Pair<SessionId, GameSession>> =
+        when (val sessionId = this.retrieveSessionId(context, channel, user)) {
+            is Either.Left -> sessionId
+            is Either.Right -> Either.Right(
+                sessionId.value to SessionManager.retrieveGameSession(context.sessions, sessionId.value).snapshot()
+            )
+        }
 
 }

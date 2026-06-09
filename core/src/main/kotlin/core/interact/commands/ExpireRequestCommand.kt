@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import core.session.MessageManager
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
@@ -7,14 +8,11 @@ import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
-import core.session.SessionManager
 import core.session.entities.ChannelConfig
-import core.session.entities.ChannelSession
 import core.session.entities.RequestSession
 import utils.lang.tuple
 
 class ExpireRequestCommand(
-    private val channelSession: ChannelSession,
     private val session: RequestSession,
     private val channelAvailable: Boolean,
     private val messageAvailable: Boolean,
@@ -29,9 +27,10 @@ class ExpireRequestCommand(
         service: MessagingService<A, B>,
         publisher: PublisherSet<A, B>,
     ) = runCatching {
+        val session = this.session
         val io = if (this.channelAvailable) {
             effect {
-                val message = SessionManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
+                val message = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
                 val noticePublisher = publisher.plain
 
                 if (message != null && this@ExpireRequestCommand.messageAvailable) {
@@ -42,7 +41,7 @@ class ExpireRequestCommand(
                 }
 
                 service
-                    .buildRequestExpired(noticePublisher, channelSession.config.language.container, session.owner, session.opponent)
+                    .buildRequestExpired(noticePublisher, config.language.container, session.owner, session.opponent)
                     .launch()()
 
                 emptyOrders

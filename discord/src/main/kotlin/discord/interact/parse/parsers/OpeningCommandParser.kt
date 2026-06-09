@@ -1,9 +1,12 @@
 package discord.interact.parse.parsers
 
+import core.session.MessageManager
 import arrow.core.None
+import arrow.core.Option
 import arrow.core.Some
 import arrow.core.toOption
 import core.assets.humanId
+import core.interact.commands.Command
 import core.interact.commands.OpeningBranchingCommand
 import core.interact.commands.OpeningDeclareCommand
 import core.interact.commands.OpeningSwapCommand
@@ -19,47 +22,48 @@ import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionE
 
 object OpeningCommandParser : EmbeddableCommand {
 
-    override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>) =
-        SessionManager.retrieveGameSession(context.bot.sessions, context.channel, context.user.id).toOption()
-            .flatMap { session ->
-                val ref = when (context.config.swapType) {
-                    SwapType.EDIT -> SessionManager.viewHeadMessage(context.bot.sessions, session.messageBufferKey)
-                    else -> null
-                }
+    override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
+        val sessionId = SessionManager.findGameSessionId(context.bot.sessions, context.channel.id, context.user.id)
+            ?: return None
+        val session = SessionManager.retrieveGameSession(context.bot.sessions, sessionId).snapshot()
+        val ref = when (context.config.swapType) {
+            SwapType.EDIT -> MessageManager.viewHeadMessage(context.bot.sessions, session.messageBufferKey)
+            else -> null
+        }
 
-                if (session.player.humanId != context.user.id) return@flatMap None
+        if (session.player.humanId != context.user.id) return None
 
-                val id = when (context.event) {
-                    is StringSelectInteractionEvent -> context.event.interaction.selectedOptions.first().value
-                    else -> context.event.componentId
-                }
+        val id = when (context.event) {
+            is StringSelectInteractionEvent -> context.event.interaction.selectedOptions.first().value
+            else -> context.event.componentId
+        }
 
-                when (id[2]) {
-                    's' -> {
-                        if (session !is SwapStageOpeningSession) return@flatMap None
+        return when (id[2]) {
+            's' -> {
+                if (session !is SwapStageOpeningSession) return None
 
-                        val doSwap = id[3] == 'y'
+                val doSwap = id[3] == 'y'
 
-                        Some(OpeningSwapCommand(session, doSwap, ref))
-                    }
-                    'b' -> {
-                        if (session !is BranchingStageOpeningSession) return@flatMap None
-
-                        val takeBranch = id[3] == 'y'
-
-                        Some(OpeningBranchingCommand(session, takeBranch, ref))
-                    }
-                    'd' -> {
-                        if (session !is DeclareStageOpeningSession) return@flatMap None
-
-                        id
-                            .drop(3)
-                            .toIntOrNull()
-                            .toOption()
-                            .map { OpeningDeclareCommand(session, it, ref) }
-                    }
-                    else -> None
-                }
+                Some(OpeningSwapCommand(sessionId, doSwap, ref))
             }
+            'b' -> {
+                if (session !is BranchingStageOpeningSession) return None
+
+                val takeBranch = id[3] == 'y'
+
+                Some(OpeningBranchingCommand(sessionId, takeBranch, ref))
+            }
+            'd' -> {
+                if (session !is DeclareStageOpeningSession) return None
+
+                id
+                    .drop(3)
+                    .toIntOrNull()
+                    .toOption()
+                    .map { OpeningDeclareCommand(sessionId, it, ref) }
+            }
+            else -> None
+        }
+    }
 
 }

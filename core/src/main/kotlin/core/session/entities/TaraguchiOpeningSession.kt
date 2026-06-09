@@ -13,9 +13,9 @@ sealed interface TaraguchiOpeningSession : OpeningSession {
 }
 
 data class TaraguchiSwapStageSession(
-    override val owner: User,
-    override val opponent: User,
-    override val ownerHasBlack: Boolean,
+    override val id: SessionId,
+    override val blackPlayer: User,
+    override val whitePlayer: User,
     override val state: GameState,
     override val messageBufferKey: MessageBufferKey,
     override val expireService: ExpireService,
@@ -27,19 +27,21 @@ data class TaraguchiSwapStageSession(
     override fun swap(doSwap: Boolean): GameSession =
         if (this.isBranched && this.history.moves == 5)
             PvpGameSession(
-                owner = this.owner, opponent = this.opponent,
-                ownerHasBlack = this.ownerHasBlack xor doSwap,
+                id = this.id,
+                blackPlayer = if (doSwap) this.whitePlayer else this.blackPlayer,
+                whitePlayer = if (doSwap) this.blackPlayer else this.whitePlayer,
                 state = this.state,
                 gameResult = this.gameResult,
                 messageBufferKey = MessageBufferKey.issue(),
                 recording = true,
                 ruleKind = Rule.TARAGUCHI_10,
-                expireService = expireService.next()
+                expireService = this.expireService.next()
             )
         else
             TaraguchiMoveStageSession(
-                owner = this.owner, opponent = this.opponent,
-                ownerHasBlack = this.ownerHasBlack xor doSwap,
+                id = this.id,
+                blackPlayer = if (doSwap) this.whitePlayer else this.blackPlayer,
+                whitePlayer = if (doSwap) this.blackPlayer else this.whitePlayer,
                 state = this.state,
                 messageBufferKey = MessageBufferKey.issue(),
                 expireService = this.expireService.next(),
@@ -49,9 +51,9 @@ data class TaraguchiSwapStageSession(
 }
 
 data class TaraguchiMoveStageSession(
-    override val owner: User,
-    override val opponent: User,
-    override val ownerHasBlack: Boolean,
+    override val id: SessionId,
+    override val blackPlayer: User,
+    override val whitePlayer: User,
     override val state: GameState,
     override val messageBufferKey: MessageBufferKey,
     override val expireService: ExpireService,
@@ -67,14 +69,14 @@ data class TaraguchiMoveStageSession(
     override fun next(move: Pos): TaraguchiOpeningSession =
         if (this.history.moves == 3)
             TaraguchiBranchingSession(
-                owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
+                id = this.id, blackPlayer = this.blackPlayer, whitePlayer = this.whitePlayer,
                 state = this.state.play(move),
                 messageBufferKey = MessageBufferKey.issue(),
                 expireService = this.expireService.next()
             )
         else
             TaraguchiSwapStageSession(
-                owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
+                id = this.id, blackPlayer = this.blackPlayer, whitePlayer = this.whitePlayer,
                 state = this.state.play(move),
                 messageBufferKey = MessageBufferKey.issue(),
                 expireService = this.expireService.next(),
@@ -84,9 +86,9 @@ data class TaraguchiMoveStageSession(
 }
 
 data class TaraguchiBranchingSession(
-    override val owner: User,
-    override val opponent: User,
-    override val ownerHasBlack: Boolean,
+    override val id: SessionId,
+    override val blackPlayer: User,
+    override val whitePlayer: User,
     override val state: GameState,
     override val messageBufferKey: MessageBufferKey,
     override val expireService: ExpireService
@@ -95,7 +97,7 @@ data class TaraguchiBranchingSession(
     override fun branch(makeOffer: Boolean): TaraguchiOpeningSession =
         if (makeOffer)
             TaraguchiOfferStageSession(
-                owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
+                id = this.id, blackPlayer = this.blackPlayer, whitePlayer = this.whitePlayer,
                 state = this.state, expireService = this.expireService.next(),
                 messageBufferKey = MessageBufferKey.issue(),
                 moveCandidates = emptySet(),
@@ -103,8 +105,8 @@ data class TaraguchiBranchingSession(
             )
         else
             TaraguchiSwapStageSession(
-                owner = this.owner, opponent = this.opponent, ownerHasBlack = ownerHasBlack,
-                state = this.state, expireService = expireService.next(),
+                id = this.id, blackPlayer = this.blackPlayer, whitePlayer = this.whitePlayer,
+                state = this.state, expireService = this.expireService.next(),
                 messageBufferKey = MessageBufferKey.issue(),
                 isBranched = true
             )
@@ -112,9 +114,9 @@ data class TaraguchiBranchingSession(
 }
 
 data class TaraguchiOfferStageSession(
-    override val owner: User,
-    override val opponent: User,
-    override val ownerHasBlack: Boolean,
+    override val id: SessionId,
+    override val blackPlayer: User,
+    override val whitePlayer: User,
     override val state: GameState,
     override val messageBufferKey: MessageBufferKey,
     override val expireService: ExpireService,
@@ -133,7 +135,7 @@ data class TaraguchiOfferStageSession(
             )
         else
             TaraguchiSelectStageSession(
-                owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
+                id = this.id, blackPlayer = this.blackPlayer, whitePlayer = this.whitePlayer,
                 state = this.state, expireService = this.expireService.next(),
                 messageBufferKey = MessageBufferKey.issue(),
                 moveCandidates = this.moveCandidates + move,
@@ -142,9 +144,9 @@ data class TaraguchiOfferStageSession(
 }
 
 data class TaraguchiSelectStageSession(
-    override val owner: User,
-    override val opponent: User,
-    override val ownerHasBlack: Boolean,
+    override val id: SessionId,
+    override val blackPlayer: User,
+    override val whitePlayer: User,
     override val state: GameState,
     override val messageBufferKey: MessageBufferKey,
     override val expireService: ExpireService,
@@ -153,7 +155,7 @@ data class TaraguchiSelectStageSession(
 
     override fun select(move: Pos): PvpGameSession =
         PvpGameSession(
-            owner = this.owner, opponent = this.opponent, ownerHasBlack = this.ownerHasBlack,
+            id = this.id, blackPlayer = this.blackPlayer, whitePlayer = this.whitePlayer,
             state = this.state.play(move),
             gameResult = this.gameResult,
             messageBufferKey = MessageBufferKey.issue(),

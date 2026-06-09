@@ -15,9 +15,11 @@ sealed interface RenjuSession : GameSession {
 }
 
 data class EngineGameSession(
+    override val id: SessionId,
     val mintakaSession: MintakaSession,
-    override val owner: User,
-    override val ownerHasBlack: Boolean,
+    val humanPlayer: User,
+    override val blackPlayer: User,
+    override val whitePlayer: User,
     override val state: GameState,
     override val gameResult: Option<GameResult> = None,
     override val messageBufferKey: MessageBufferKey,
@@ -26,7 +28,9 @@ data class EngineGameSession(
     override val expireService: ExpireService
 ) : RenjuSession {
 
-    override val opponent = User.GomokuBot
+    override val owner: User get() = this.humanPlayer
+
+    override val opponent: User get() = User.GomokuBot
 
     override fun next(state: GameState, gameResult: Option<GameResult>, messageBufferKey: MessageBufferKey) =
         this.copy(
@@ -41,9 +45,9 @@ data class EngineGameSession(
 }
 
 data class PvpGameSession(
-    override val owner: User,
-    override val opponent: User,
-    override val ownerHasBlack: Boolean,
+    override val id: SessionId,
+    override val blackPlayer: User,
+    override val whitePlayer: User,
     override val state: GameState,
     override val gameResult: Option<GameResult> = None,
     override val messageBufferKey: MessageBufferKey,

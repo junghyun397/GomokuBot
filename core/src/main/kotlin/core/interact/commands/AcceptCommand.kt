@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import core.session.MessageManager
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
@@ -13,11 +14,11 @@ import core.session.GameManager
 import core.session.SessionManager
 import core.session.entities.ChannelConfig
 import core.session.entities.OpeningSession
-import core.session.entities.RequestSession
+import core.session.entities.SessionId
 import utils.lang.tuple
 
 class AcceptCommand(
-    private val requestSession: RequestSession,
+    private val requestSessionId: SessionId,
 ) : Command {
 
     override val name = "accept"
@@ -33,12 +34,15 @@ class AcceptCommand(
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
-        val gameSession = GameManager.generatePvpSession(bot, this.requestSession.owner, this.requestSession.opponent, this.requestSession.rule)
+        val requestSession = SessionManager.retrieveRequestSession(bot.sessions, this.requestSessionId).snapshot()
+        if (requestSession.opponent.id != user.id) throw IllegalStateException()
 
-        SessionManager.removeRequestSession(bot.sessions, channel, this.requestSession.owner.id)
-        SessionManager.putGameSession(bot.sessions, channel, gameSession)
+        val gameSession = GameManager.generatePvpSession(bot, requestSession.owner, requestSession.opponent, requestSession.rule)
 
-        val guidePublisher = SessionManager.checkoutMessages(bot.sessions, requestSession.messageBufferKey)
+        SessionManager.createGameSession(bot.sessions, channel, gameSession.participantIds, gameSession)
+        SessionManager.deleteRequestSession(bot.sessions, this.requestSessionId)
+
+        val guidePublisher = MessageManager.checkoutMessages(bot.sessions, requestSession.messageBufferKey)
             ?.let { publishers.edit(it.first()) }
             ?: publishers.plain
 

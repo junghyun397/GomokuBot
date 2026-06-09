@@ -11,70 +11,71 @@ internal class RustyRenjuC internal constructor(
     private val symbols = NativeSymbols(lookup, "rusty_renju")
 
     val constants = Constants(
-        colorBlack = symbols.byte("color_black"),
-        colorWhite = symbols.byte("color_white"),
-        colorNone = symbols.byte("color_none"),
-        forbiddenNone = symbols.byte("forbidden_kind_none"),
-        forbiddenDoubleThree = symbols.byte("forbidden_kind_double_three"),
-        forbiddenDoubleFour = symbols.byte("forbidden_kind_double_four"),
-        forbiddenOverline = symbols.byte("forbidden_kind_double_overline"),
-        posNone = symbols.byte("pos_none"),
-        exportItemEmpty = symbols.byte("board_export_item_empty"),
-        exportItemStone = symbols.byte("board_export_item_stone"),
-        exportItemForbidden = symbols.byte("board_export_item_forbidden"),
-        closedFourMask = symbols.int("closed_four_mask"),
-        openFourMask = symbols.int("open_four_mask"),
-        fiveMask = symbols.int("five_mask"),
-        openThreeMask = symbols.int("open_three_mask"),
-        closeThreeMask = symbols.int("close_three_mask"),
-        potentialMask = symbols.int("potential_mask"),
-        emptyHash = symbols.long("empty_hash")
+        colorBlack = this.symbols.byte("color_black"),
+        colorWhite = this.symbols.byte("color_white"),
+        colorNone = this.symbols.byte("color_none"),
+        ruleRenju = this.symbols.byte("rule_renju"),
+        forbiddenNone = this.symbols.byte("forbidden_kind_none"),
+        forbiddenDoubleThree = this.symbols.byte("forbidden_kind_double_three"),
+        forbiddenDoubleFour = this.symbols.byte("forbidden_kind_double_four"),
+        forbiddenOverline = this.symbols.byte("forbidden_kind_overline"),
+        posNone = this.symbols.byte("pos_none"),
+        exportItemEmpty = this.symbols.byte("board_export_item_empty"),
+        exportItemStone = this.symbols.byte("board_export_item_stone"),
+        exportItemForbidden = this.symbols.byte("board_export_item_forbidden"),
+        closedFourMask = this.symbols.int("closed_four_mask"),
+        openFourMask = this.symbols.int("open_four_mask"),
+        fiveMask = repeat4x(0b0000_0001),
+        openThreeMask = this.symbols.int("open_three_mask"),
+        closeThreeMask = this.symbols.int("close_three_mask"),
+        potentialMask = repeat4x(0b0000_0110),
+        emptyHash = this.symbols.long("empty_hash")
     )
 
-    private val defaultBoard = symbols.function("default_board", ValueLayout.ADDRESS)
-    private val boardFromHistory = symbols.function("board_from_history", ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
-    private val boardFromString = symbols.function("board_from_string", ValueLayout.ADDRESS, ValueLayout.ADDRESS)
-    private val boardToString = symbols.function("board_to_string", ValueLayout.ADDRESS, ValueLayout.ADDRESS)
-    private val boardSet = symbols.function("board_set", ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE)
-    private val boardUnset = symbols.function("board_unset", ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE)
-    private val boardFree = symbols.voidFunction("board_free", ValueLayout.ADDRESS)
-    private val boardDescribeInto = symbols.function("board_describe_into", ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
-    private val boardPattensInto = symbols.function("board_pattens_into", ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+    private val emptyBoard = this.symbols.function("empty_board", ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE)
+    private val boardFromHistory = this.symbols.function("board_from_history", ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
+    private val boardFromString = this.symbols.function("board_from_string", ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE, ValueLayout.ADDRESS)
+    private val boardToString = this.symbols.function("board_to_string", ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+    private val boardSet = this.symbols.function("board_set", ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE)
+    private val boardUnset = this.symbols.function("board_unset", ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE)
+    private val boardFree = this.symbols.voidFunction("board_free", ValueLayout.ADDRESS)
+    private val boardDescribe = this.symbols.function("board_describe", ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+    private val boardPattens = this.symbols.function("board_pattens", ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
 
-    fun rusty_renju_default_board(): MemorySegment? =
-        (defaultBoard.invokeWithArguments() as MemorySegment).nullIfNull()
+    fun rusty_renju_empty_board(ruleKind: Byte = this.constants.ruleRenju): MemorySegment? =
+        (this.emptyBoard.invokeWithArguments(ruleKind) as MemorySegment).nullIfNull()
 
-    fun rusty_renju_board_from_history(actions: ByteArray?, len: Long): MemorySegment? {
+    fun rusty_renju_board_from_history(actions: ByteArray?, len: Long, ruleKind: Byte = this.constants.ruleRenju): MemorySegment? {
         return Arena.ofConfined().use { arena ->
-            (boardFromHistory.invokeWithArguments(actions.toNativeSegmentOrNull(arena), len) as MemorySegment)
+            (this.boardFromHistory.invokeWithArguments(ruleKind, actions.toNativeSegmentOrNull(arena), len) as MemorySegment)
                 .nullIfNull()
         }
     }
 
-    fun rusty_renju_board_from_string(source: String?): MemorySegment? {
+    fun rusty_renju_board_from_string(source: String?, ruleKind: Byte = this.constants.ruleRenju): MemorySegment? {
         return Arena.ofConfined().use { arena ->
             val sourceSegment = source?.let(arena::allocateFrom) ?: MemorySegment.NULL
-            (boardFromString.invokeWithArguments(sourceSegment) as MemorySegment).nullIfNull()
+            (this.boardFromString.invokeWithArguments(ruleKind, sourceSegment) as MemorySegment).nullIfNull()
         }
     }
 
     fun rusty_renju_board_to_string(board: MemorySegment?): MemorySegment? =
-        (boardToString.invokeWithArguments(board.orNullAddress()) as MemorySegment).nullIfNull()
+        (this.boardToString.invokeWithArguments(board.orNullAddress()) as MemorySegment).nullIfNull()
 
     fun rusty_renju_board_set(board: MemorySegment?, pos: Byte): MemorySegment? =
-        (boardSet.invokeWithArguments(board.orNullAddress(), pos) as MemorySegment).nullIfNull()
+        (this.boardSet.invokeWithArguments(board.orNullAddress(), pos) as MemorySegment).nullIfNull()
 
     fun rusty_renju_board_unset(board: MemorySegment?, pos: Byte): MemorySegment? =
-        (boardUnset.invokeWithArguments(board.orNullAddress(), pos) as MemorySegment).nullIfNull()
+        (this.boardUnset.invokeWithArguments(board.orNullAddress(), pos) as MemorySegment).nullIfNull()
 
     fun rusty_renju_board_free(board: MemorySegment?) {
-        boardFree.invokeWithArguments(board.orNullAddress())
+        this.boardFree.invokeWithArguments(board.orNullAddress())
     }
 
     fun rusty_renju_board_describe(board: MemorySegment?): BoardDescribe? {
         return Arena.ofConfined().use { arena ->
             val describe = arena.allocate(BOARD_DESCRIBE_NATIVE_SIZE, BOARD_DESCRIBE_NATIVE_ALIGNMENT)
-            val success = boardDescribeInto.invokeWithArguments(
+            val success = this.boardDescribe.invokeWithArguments(
                 board.orNullAddress(),
                 describe,
             ) as Boolean
@@ -86,7 +87,7 @@ internal class RustyRenjuC internal constructor(
     fun rusty_renju_board_patterns(board: MemorySegment?): BoardPatterns? {
         return Arena.ofConfined().use { arena ->
             val patterns = arena.allocate(BOARD_PATTERNS_LAYOUT)
-            val success = boardPattensInto.invokeWithArguments(
+            val success = this.boardPattens.invokeWithArguments(
                 board.orNullAddress(),
                 patterns,
             ) as Boolean
@@ -99,6 +100,7 @@ internal class RustyRenjuC internal constructor(
         val colorBlack: Byte,
         val colorWhite: Byte,
         val colorNone: Byte,
+        val ruleRenju: Byte,
         val forbiddenNone: Byte,
         val forbiddenDoubleThree: Byte,
         val forbiddenDoubleFour: Byte,
@@ -188,6 +190,7 @@ internal class RustyRenjuC internal constructor(
     private companion object {
 
         private const val BOARD_WINNER_SEQUENCE_SIZE = 5
+        private const val BOARD_PATTERN_SIZE = 256
 
         private val BOARD_EXPORT_ITEM_LAYOUT = MemoryLayout.structLayout(
             ValueLayout.JAVA_BYTE.withName("kind"),
@@ -206,8 +209,8 @@ internal class RustyRenjuC internal constructor(
             BOARD_WINNER_LAYOUT.withName("winner"),
         )
         private val BOARD_PATTERNS_LAYOUT = MemoryLayout.structLayout(
-            MemoryLayout.sequenceLayout(Pos.BOARD_SIZE.toLong(), ValueLayout.JAVA_INT).withName("black_pattens"),
-            MemoryLayout.sequenceLayout(Pos.BOARD_SIZE.toLong(), ValueLayout.JAVA_INT).withName("white_pattens"),
+            MemoryLayout.sequenceLayout(BOARD_PATTERN_SIZE.toLong(), ValueLayout.JAVA_INT).withName("black_pattens"),
+            MemoryLayout.sequenceLayout(BOARD_PATTERN_SIZE.toLong(), ValueLayout.JAVA_INT).withName("white_pattens"),
         )
 
         private val BOARD_DESCRIBE_NATIVE_ALIGNMENT = ValueLayout.JAVA_LONG.byteAlignment()
@@ -230,6 +233,9 @@ internal class RustyRenjuC internal constructor(
 
         private fun align(size: Long, alignment: Long): Long =
             size + (alignment - size % alignment) % alignment
+
+        private fun repeat4x(value: Int): Int =
+            value or (value shl 8) or (value shl 16) or (value shl 24)
 
     }
 

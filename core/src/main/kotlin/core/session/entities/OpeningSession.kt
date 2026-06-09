@@ -125,15 +125,13 @@ interface SelectStageOpeningSession : NegotiateStageOpeningSession {
 
     override fun validateMove(move: Pos) = move in this.moveCandidates
 
-    override val player get() = when (this.ownerHasBlack) {
-        this.board.isNextColorBlack -> this.opponent
-        else -> this.owner
-    }
+    override val player get() =
+        if (this.board.isNextColorBlack) this.whitePlayer
+        else this.blackPlayer
 
-    override val nextPlayer get() = when (this.ownerHasBlack) {
-        this.board.isNextColorBlack -> this.owner
-        else -> this.opponent
-    }
+    override val nextPlayer get() =
+        if (this.board.isNextColorBlack) this.blackPlayer
+        else this.whitePlayer
 
     fun select(move: Pos): PvpGameSession
 
@@ -141,13 +139,13 @@ interface SelectStageOpeningSession : NegotiateStageOpeningSession {
 
 fun OpeningSession.asFinishedPvpSession(result: GameResult): PvpGameSession =
     PvpGameSession(
-        owner = owner,
-        opponent = opponent,
-        ownerHasBlack = ownerHasBlack,
-        state = state,
+        id = this.id,
+        blackPlayer = this.blackPlayer,
+        whitePlayer = this.whitePlayer,
+        state = this.state,
         gameResult = Some(result),
-        messageBufferKey = messageBufferKey,
+        messageBufferKey = this.messageBufferKey,
         recording = false,
-        ruleKind = ruleKind,
-        expireService = expireService,
+        ruleKind = this.ruleKind,
+        expireService = this.expireService,
     )

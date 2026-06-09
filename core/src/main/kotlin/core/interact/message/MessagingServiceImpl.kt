@@ -41,11 +41,11 @@ abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
     protected fun User.withColor(color: Color) =
         "${this.name}${this@MessagingServiceImpl.unicodeStone(color)}"
 
-    protected fun GameSession.ownerWithColor() =
-        if (this.ownerHasBlack) this.owner.withColor(Color.Black) else this.owner.withColor(Color.White)
+    protected fun GameSession.blackPlayerWithColor() =
+        this.blackPlayer.withColor(Color.Black)
 
-    protected fun GameSession.opponentWithColor() =
-        if (this.ownerHasBlack) this.opponent.withColor(Color.White) else opponent.withColor(Color.Black)
+    protected fun GameSession.whitePlayerWithColor() =
+        this.whitePlayer.withColor(Color.White)
 
     override fun generateFocusedField(session: GameSession, focusInfo: FocusSolver.FocusInfo): FocusedFields {
         val half = this.focusWidth / 2
@@ -112,9 +112,9 @@ abstract class MessagingServiceImpl<A, B> : MessagingService<A, B> {
     override fun buildBeginsPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, blackPlayer: User, whitePlayer: User) =
         publisher sends container.beginPVP(blackPlayer.asMentionFormat(), whitePlayer.asMentionFormat())
 
-    override fun buildBeginsPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, ownerHasBlack: Boolean) =
+    override fun buildBeginsPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, humanHasBlack: Boolean) =
         publisher sends when {
-            ownerHasBlack -> container.beginPVEAiWhite(owner.asMentionFormat())
+            humanHasBlack -> container.beginPVEAiWhite(owner.asMentionFormat())
             else -> container.beginPVEAiBlack(owner.asMentionFormat())
         }
 

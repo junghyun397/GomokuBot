@@ -9,12 +9,13 @@ import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
+import core.session.SessionManager
 import core.session.entities.ChannelConfig
-import core.session.entities.GameSession
+import core.session.entities.SessionId
 import utils.lang.tuple
 
 class BoardCommand(
-    private val session: GameSession
+    private val sessionId: SessionId
 ) : Command {
 
     override val name = "board"
@@ -30,6 +31,8 @@ class BoardCommand(
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>,
     ) = runCatching {
+        val session = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).snapshot()
+
         val io = effect {
             buildBoardProcedure(bot, channel, config, service, publishers.plain, session)()
             emptyOrders

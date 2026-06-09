@@ -1,5 +1,6 @@
 package core.interact.commands
 
+import core.session.MessageManager
 import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import arrow.core.raise.ioZip
@@ -25,7 +26,7 @@ fun <A, B> buildHelpProcedure(
         effect {
             io().fold(
                 ifSome = { helpMessage ->
-                    SessionManager.addNavigation(
+                    MessageManager.addNavigation(
                         bot.sessions,
                         helpMessage.messageRef,
                         PageNavigationState(
@@ -61,7 +62,7 @@ fun <A, B> buildCombinedHelpProcedure(
                 ifSome = { helpMessage ->
                     maybeSettings.fold(
                         ifSome = { settingsMessage ->
-                            SessionManager.addNavigation(
+                            MessageManager.addNavigation(
                                 bot.sessions,
                                 helpMessage.messageRef,
                                 PageNavigationState(
@@ -72,7 +73,7 @@ fun <A, B> buildCombinedHelpProcedure(
                                 )
                             )
 
-                            SessionManager.addNavigation(
+                            MessageManager.addNavigation(
                                 bot.sessions,
                                 settingsMessage.messageRef,
                                 PageNavigationState(

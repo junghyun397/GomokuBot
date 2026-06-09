@@ -27,9 +27,6 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
     fun newFileName(): String =
         "board-${System.currentTimeMillis()}.png"
 
-    fun newGifFileName(): String =
-        "board-animated-${System.currentTimeMillis()}.gif"
-
     override fun renderBoard(
         state: GameState,
         historyRenderType: HistoryRenderType,
