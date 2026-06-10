@@ -5,13 +5,13 @@ import arrow.core.raise.effect
 import core.interact.commands.Command
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.CommandParser
+import core.interact.parse.ParseFailure
 import core.interact.parse.asParseFailure
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.assets.COMMAND_PREFIX
 import discord.interact.UserInteractionContext
 import discord.interact.parse.BuildableCommand
-import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -30,7 +30,7 @@ object RatingCommandParser : CommandParser, ParsableCommand, BuildableCommand {
         ),
     )
 
-    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<DiscordParseFailure, Command> =
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<ParseFailure, Command> =
         Either.Left(this.asParseFailure("not yet implemented", context.channel, context.user) { messagingService, publisher, container ->
             effect {
                 messagingService.buildNotYetImplemented(publisher, container)
@@ -39,7 +39,7 @@ object RatingCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             }
         })
 
-    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<DiscordParseFailure, Command> =
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<ParseFailure, Command> =
         Either.Left(this.asParseFailure("not yet implemented", context.channel, context.user) { messagingService, publisher, container ->
             effect {
                 messagingService.buildNotYetImplemented(publisher, container)

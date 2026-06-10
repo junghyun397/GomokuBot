@@ -30,14 +30,14 @@ class RankCommand(private val scope: RankScope) : Command {
 
     override val responseFlag = ResponseFlag.Defer
 
-    override suspend fun <A, B> execute(
+    override suspend fun execute(
         bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService<A, B>,
+        service: MessagingService,
         messageRef: MessageRef,
-        publishers: PublisherSet<A, B>,
+        publishers: PublisherSet,
     ) = runCatching {
         val rankings = when (this.scope) {
             is RankScope.Global -> UserStatsRepository.fetchRankings(bot.dbConnection)

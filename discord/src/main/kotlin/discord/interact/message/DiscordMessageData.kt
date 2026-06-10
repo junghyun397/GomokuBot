@@ -1,5 +1,6 @@
 package discord.interact.message
 
+import core.interact.message.MessagePayload
 import dev.minn.jda.ktx.messages.MessageCreate
 import dev.minn.jda.ktx.messages.MessageEdit
 import net.dv8tion.jda.api.components.MessageTopLevelComponent
@@ -16,7 +17,7 @@ data class DiscordMessageData(
     val components: List<MessageTopLevelComponent> = emptyList(),
     val tts: Boolean = false,
     val original: Message? = null
-) {
+) : MessagePayload {
 
     constructor(content: String = "", embed: MessageEmbed): this(content, embeds = listOf(embed))
 
@@ -25,3 +26,6 @@ data class DiscordMessageData(
     fun buildEdit(): MessageEditData = MessageEdit(this.content, this.embeds, components = this.components, files = this.files)
 
 }
+
+fun MessagePayload.asDiscordMessageData(): DiscordMessageData =
+    this as DiscordMessageData

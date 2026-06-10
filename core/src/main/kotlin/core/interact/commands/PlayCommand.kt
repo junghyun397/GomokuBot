@@ -13,12 +13,7 @@ import core.interact.reports.writeCommandReport
 import core.session.GameManager
 import core.session.SessionManager
 import core.session.SwapType
-import core.session.entities.GameSession
-import core.session.entities.EngineGameSession
-import core.session.entities.ChannelConfig
-import core.session.entities.PvpGameSession
-import core.session.entities.RenjuSession
-import core.session.entities.SessionId
+import core.session.entities.*
 import renju.notation.GameResult
 import renju.notation.Pos
 import utils.lang.tuple
@@ -32,14 +27,14 @@ class PlayCommand(
 
     override val name = "set"
 
-    override suspend fun <A, B> execute(
+    override suspend fun execute(
         bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService<A, B>,
+        service: MessagingService,
         messageRef: MessageRef,
-        publishers: PublisherSet<A, B>,
+        publishers: PublisherSet,
     ) = runCatching {
         val boardPublisher = when (config.swapType) {
             SwapType.EDIT -> publishers.edit(this.deployAt ?: messageRef)

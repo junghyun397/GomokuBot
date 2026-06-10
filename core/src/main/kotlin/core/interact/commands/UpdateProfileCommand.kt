@@ -24,14 +24,14 @@ class UpdateProfileCommand(
 
     override val name = "update-profile"
 
-    override suspend fun <A, B> executeSelf(
+    override suspend fun executeSelf(
         bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService<A, B>,
+        service: MessagingService,
         messageRef: MessageRef,
-        publishers: PublisherSet<A, B>
+        publishers: PublisherSet
     ) = runCatching {
         this.newUser?.let {
             UserProfileRepository.upsertUser(bot.dbConnection, it)

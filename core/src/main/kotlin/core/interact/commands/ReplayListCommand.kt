@@ -22,14 +22,14 @@ class ReplayListCommand(val edit: Boolean) : Command {
             if (edit) ResponseFlag.DeferEdit
             else ResponseFlag.Immediately
 
-        override suspend fun <A, B> execute(
+        override suspend fun execute(
             bot: BotContext,
             config: ChannelConfig,
             channel: Channel,
             user: User.Human,
-            service: MessagingService<A, B>,
+            service: MessagingService,
             messageRef: MessageRef,
-            publishers: PublisherSet<A, B>,
+            publishers: PublisherSet,
         ) = runCatching {
             val gameRecords = GameRecordRepository.retrieveGameRecordsByUserUid(bot.dbConnection, user.id, 10)
 

@@ -8,6 +8,7 @@ import core.interact.commands.RankCommand
 import core.interact.commands.RankScope
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.CommandParser
+import core.interact.parse.ParseFailure
 import core.interact.parse.asParseFailure
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
@@ -17,7 +18,6 @@ import discord.assets.DISCORD_PLATFORM_ID
 import discord.assets.extractId
 import discord.interact.UserInteractionContext
 import discord.interact.parse.BuildableCommand
-import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -44,7 +44,7 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
         ),
     )
 
-    private suspend fun parseUserRank(context: UserInteractionContext<*>, maybeTarget: net.dv8tion.jda.api.entities.User?): Either<DiscordParseFailure, Command> {
+    private suspend fun parseUserRank(context: UserInteractionContext<*>, maybeTarget: net.dv8tion.jda.api.entities.User?): Either<ParseFailure, Command> {
         val user = maybeTarget
             ?.let { UserProfileRepository.retrieveUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, it.extractId()) }
 
@@ -59,7 +59,7 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                 })
     }
 
-    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<DiscordParseFailure, Command> =
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<ParseFailure, Command> =
         when (context.event.subcommandName) {
             context.config.language.container.rankCommandSubServer() ->
                 Either.Right(RankCommand(RankScope.Channel(context.channel)))
@@ -70,7 +70,7 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             else -> Either.Right(RankCommand(RankScope.Global))
         }
 
-    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<DiscordParseFailure, Command> =
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<ParseFailure, Command> =
         when (payload.getOrNull(1)) {
             context.config.language.container.rankCommandSubServer() ->
                 Either.Right(RankCommand(RankScope.Channel(context.channel)))

@@ -10,12 +10,12 @@ interface InternalCommand {
 
     val name: String
 
-    suspend fun <A, B> execute(
+    suspend fun execute(
         bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
-        service: MessagingService<A, B>,
-        publisher: PublisherSet<A, B>
+        service: MessagingService,
+        publisher: PublisherSet
     ): CommandResult
 
 }

@@ -6,9 +6,9 @@ import core.interact.message.ComponentPublisher
 import core.interact.message.MessagePublisher
 import core.interact.message.PublisherSet
 
-typealias DiscordMessagePublisher = MessagePublisher<DiscordMessageData, DiscordComponents>
+typealias DiscordMessagePublisher = MessagePublisher
 
-typealias DiscordComponentPublisher = ComponentPublisher<DiscordMessageData, DiscordComponents>
+typealias DiscordComponentPublisher = ComponentPublisher
 
 fun TransMessagePublisher(head: DiscordMessagePublisher, tail: DiscordMessagePublisher): DiscordMessagePublisher {
     var consumeTail = false
@@ -25,9 +25,9 @@ fun TransMessagePublisher(head: DiscordMessagePublisher, tail: DiscordMessagePub
 }
 
 class TransMessagePublisherSet(
-    private val head: PublisherSet<DiscordMessageData, DiscordComponents>,
-    private val tail: PublisherSet<DiscordMessageData, DiscordComponents>,
-) : PublisherSet<DiscordMessageData, DiscordComponents> {
+    private val head: PublisherSet,
+    private val tail: PublisherSet,
+) : PublisherSet {
 
     private var consumeTail = false
 

@@ -53,27 +53,27 @@ suspend fun buttonInteractionRouter(context: UserInteractionContext<GenericCompo
         messageRef = messageRef,
         publishers = when (command.responseFlag) {
             is ResponseFlag.Defer -> AdaptivePublisherSet(
-                plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
-                windowed = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate()).setEphemeral(true)) },
-                editSelf = { msg -> MessageEditAdaptor(context.event.hook.editOriginal(msg.buildEdit())) },
-                editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
-                component = { components -> MessageEditAdaptor(context.event.hook.editOriginalComponents(components)) }
+                plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate())) },
+                windowed = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate()).setEphemeral(true)) },
+                editSelf = { msg -> MessageEditAdaptor(context.event.hook.editOriginal(msg.asDiscordMessageData().buildEdit())) },
+                editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.asDiscordMessageData().buildEdit()) } },
+                component = { components -> MessageEditAdaptor(context.event.hook.editOriginalComponents(components.asJdaComponents())) }
             )
             else -> TransMessagePublisherSet(
                 head = AdaptivePublisherSet(
-                    plain = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate())) },
-                    windowed = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate()).setEphemeral(true)) },
-                    editSelf = { msg -> WebHookMessageEditAdaptor(context.event.editMessage(msg.buildEdit())) },
-                    editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
-                    component = { components -> WebHookMessageEditAdaptor(context.event.editComponents(components)) },
+                    plain = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.asDiscordMessageData().buildCreate())) },
+                    windowed = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.asDiscordMessageData().buildCreate()).setEphemeral(true)) },
+                    editSelf = { msg -> WebHookMessageEditAdaptor(context.event.editMessage(msg.asDiscordMessageData().buildEdit())) },
+                    editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.asDiscordMessageData().buildEdit()) } },
+                    component = { components -> WebHookMessageEditAdaptor(context.event.editComponents(components.asJdaComponents())) },
                     selfRef = messageRef
                 ),
                 tail = AdaptivePublisherSet(
-                    plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
-                    windowed = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate()).setEphemeral(true)) },
-                    editSelf = { msg -> MessageEditAdaptor(context.event.hook.editOriginal(msg.buildEdit())) },
-                    editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
-                    component = { components -> MessageEditAdaptor(context.event.hook.editOriginalComponents(components)) },
+                    plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate())) },
+                    windowed = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate()).setEphemeral(true)) },
+                    editSelf = { msg -> MessageEditAdaptor(context.event.hook.editOriginal(msg.asDiscordMessageData().buildEdit())) },
+                    editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.asDiscordMessageData().buildEdit()) } },
+                    component = { components -> MessageEditAdaptor(context.event.hook.editOriginalComponents(components.asJdaComponents())) },
                     selfRef = messageRef
                 )
             )

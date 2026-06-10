@@ -1,6 +1,5 @@
 package core.interact.commands
 
-import core.session.MessageManager
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
@@ -13,7 +12,7 @@ import core.interact.i18n.Language
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
-import core.session.SessionManager
+import core.session.MessageManager
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
@@ -25,14 +24,14 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
 
     override val name = "announce"
 
-    override suspend fun <A, B> executeSelf(
+    override suspend fun executeSelf(
         bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService<A, B>,
+        service: MessagingService,
         messageRef: MessageRef,
-        publishers: PublisherSet<A, B>
+        publishers: PublisherSet
     ) = runCatching {
         val thenUser = user.copy(announceId = AnnounceRepository.getLatestAnnounceId(bot.dbConnection))
 
@@ -49,16 +48,16 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
                         ?.let { announceMessage ->
                                 MessageManager.addNavigation(
                                     bot.sessions,
-                                    announceMessage.messageRef,
+                                    announceMessage.ref,
                                     PageNavigationState(
-                                        announceMessage.messageRef,
+                                        announceMessage.ref,
                                         NavigationKind.ANNOUNCE,
                                         index + 1,
                                         Clock.System.now() + bot.config.navigatorExpireAfter.milliseconds
                                     )
                                 )
 
-                                service.attachBinaryNavigators(announceMessage.messageData)()
+                                service.attachBinaryNavigators(announceMessage)()
                             }
                 }
 

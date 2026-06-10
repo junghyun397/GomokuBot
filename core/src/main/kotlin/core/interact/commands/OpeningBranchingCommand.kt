@@ -12,7 +12,6 @@ import core.session.SessionManager
 import core.session.SwapType
 import core.session.entities.BranchingStageOpeningSession
 import core.session.entities.ChannelConfig
-import core.session.entities.GameSession
 import core.session.entities.SessionId
 import utils.lang.tuple
 
@@ -26,14 +25,14 @@ class OpeningBranchingCommand(
 
     override val responseFlag = ResponseFlag.Immediately
 
-    override suspend fun <A, B> execute(
+    override suspend fun execute(
         bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService<A, B>,
+        service: MessagingService,
         messageRef: MessageRef,
-        publishers: PublisherSet<A, B>,
+        publishers: PublisherSet,
     ) = runCatching {
         var session: BranchingStageOpeningSession? = null
         val thenSession = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { currentSession ->

@@ -20,14 +20,14 @@ class RejectCommand(private val requestSessionId: SessionId) : Command {
 
     override val responseFlag = ResponseFlag.Immediately
 
-    override suspend fun <A, B> execute(
+    override suspend fun execute(
         bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService<A, B>,
+        service: MessagingService,
         messageRef: MessageRef,
-        publishers: PublisherSet<A, B>,
+        publishers: PublisherSet,
     ) = runCatching {
         val requestSession = SessionManager.retrieveRequestSession(bot.sessions, this.requestSessionId).snapshot()
 

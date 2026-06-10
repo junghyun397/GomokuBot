@@ -6,15 +6,13 @@ import core.interact.parse.SessionSideParser
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.assets.COMMAND_PREFIX
 import discord.interact.UserInteractionContext
-import discord.interact.message.DiscordComponents
-import discord.interact.message.DiscordMessageData
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 
-object BoardCommandParser: SessionSideParser<DiscordMessageData, DiscordComponents>(), ParsableCommand, BuildableCommand {
+object BoardCommandParser: SessionSideParser(), ParsableCommand, BuildableCommand {
 
     override val name = "board"
 

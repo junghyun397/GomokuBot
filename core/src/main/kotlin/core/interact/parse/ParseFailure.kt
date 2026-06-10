@@ -11,21 +11,21 @@ import core.interact.reports.CommandReport
 import core.session.entities.ChannelConfig
 import utils.lang.tuple
 
-class ParseFailure<A, B>(
+class ParseFailure(
     val name: String,
     val comment: String,
     val channel: Channel,
     val user: User.Human,
-    private val onFailure: (MessagingService<A, B>, MessagePublisher<A, B>, LanguageContainer) -> Effect<Nothing, List<Order>>
+    private val onFailure: (MessagingService, MessagePublisher, LanguageContainer) -> Effect<Nothing, List<Order>>
 ) {
 
-    fun notice(config: ChannelConfig, service: MessagingService<A, B>, publisher: MessagePublisher<A, B>): Result<Pair<Effect<Nothing, List<Order>>, CommandReport>> =
+    fun notice(config: ChannelConfig, service: MessagingService, publisher: MessagePublisher): Result<Pair<Effect<Nothing, List<Order>>, CommandReport>> =
         Result.success(tuple(onFailure(service, publisher, config.language.container), this.asCommandReport()))
 
 }
 
-fun <A, B> CommandParser.asParseFailure(comment: String, channel: Channel, user: User.Human, onFailure: (MessagingService<A, B>, MessagePublisher<A, B>, LanguageContainer) -> Effect<Nothing, List<Order>>) =
+fun CommandParser.asParseFailure(comment: String, channel: Channel, user: User.Human, onFailure: (MessagingService, MessagePublisher, LanguageContainer) -> Effect<Nothing, List<Order>>) =
     ParseFailure(this.name, comment, channel, user, onFailure)
 
-fun ParseFailure<*, *>.asCommandReport() =
+fun ParseFailure.asCommandReport() =
     CommandReport("PARSE-FAILURE-${this.name}", this.comment, this.channel, this.user)

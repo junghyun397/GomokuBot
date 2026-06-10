@@ -6,6 +6,7 @@ import core.interact.commands.Command
 import core.interact.commands.StyleCommand
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.CommandParser
+import core.interact.parse.ParseFailure
 import core.interact.parse.asParseFailure
 import core.session.BoardStyle
 import dev.minn.jda.ktx.interactions.commands.choice
@@ -14,7 +15,6 @@ import dev.minn.jda.ktx.interactions.commands.slash
 import discord.assets.COMMAND_PREFIX
 import discord.interact.UserInteractionContext
 import discord.interact.parse.BuildableCommand
-import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -36,7 +36,7 @@ object StyleCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     private fun matchStyle(option: String): BoardStyle? =
         BoardStyle.entries.firstOrNull { it.sample.styleShortcut == option || it.sample.styleName == option }
 
-    private fun composeMissMatchFailure(context: UserInteractionContext<*>): Either<DiscordParseFailure, Command> =
+    private fun composeMissMatchFailure(context: UserInteractionContext<*>): Either<ParseFailure, Command> =
         Either.Left(this.asParseFailure("option mismatch", context.channel, context.user) { messagingService, publisher, container ->
             effect {
                 messagingService.buildStyleNotFound(publisher, container).launch()()
@@ -45,7 +45,7 @@ object StyleCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             }
         })
 
-    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<DiscordParseFailure, Command> {
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<ParseFailure, Command> {
         val style = context.event.getOption(context.config.language.container.styleCommandOptionCode())?.asString?.uppercase()?.let {
             matchStyle(it)
         } ?: return this.composeMissMatchFailure(context)
@@ -53,7 +53,7 @@ object StyleCommandParser : CommandParser, ParsableCommand, BuildableCommand {
         return Either.Right(StyleCommand(style))
     }
 
-    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<DiscordParseFailure, Command> {
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<ParseFailure, Command> {
         val style = payload
             .getOrNull(1)
             ?.uppercase()

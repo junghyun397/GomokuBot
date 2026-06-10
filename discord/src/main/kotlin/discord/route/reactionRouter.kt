@@ -1,13 +1,12 @@
 package discord.route
 
-import core.session.MessageManager
 import core.BotContext
 import core.assets.COLOR_NORMAL_HEX
 import core.assets.MessageRef
 import core.interact.message.AdaptivePublisherSet
 import core.interact.reports.ErrorReport
 import core.interact.reports.Report
-import core.session.SessionManager
+import core.session.MessageManager
 import core.session.entities.BoardNavigationState
 import core.session.entities.NavigationState
 import core.session.entities.PageNavigationState
@@ -15,9 +14,7 @@ import dev.minn.jda.ktx.coroutines.await
 import discord.assets.extractMessageRef
 import discord.interact.ChannelManager
 import discord.interact.UserInteractionContext
-import discord.interact.message.DiscordMessagingService
-import discord.interact.message.MessageCreateAdaptor
-import discord.interact.message.MessageEditAdaptor
+import discord.interact.message.*
 import discord.interact.parse.parsers.FocusCommandParser
 import discord.interact.parse.parsers.NavigationCommandParser
 import net.dv8tion.jda.api.Permission
@@ -60,10 +57,10 @@ suspend fun reactionRouter(context: UserInteractionContext<GenericMessageReactio
         service = DiscordMessagingService,
         messageRef = messageRef,
         publishers = AdaptivePublisherSet(
-            plain = { msg -> MessageCreateAdaptor(context.event.channel.sendMessage(msg.buildCreate())) },
-            windowed = { msg -> MessageCreateAdaptor(context.event.channel.sendMessage(msg.buildCreate())) },
-            editSelf = { msg -> MessageEditAdaptor(context.event.channel.editMessageById(messageRef.id.idLong, msg.buildEdit())) },
-            component = { components -> MessageEditAdaptor(context.event.channel.editMessageComponentsById(messageRef.id.idLong, components)) },
+            plain = { msg -> MessageCreateAdaptor(context.event.channel.sendMessage(msg.asDiscordMessageData().buildCreate())) },
+            windowed = { msg -> MessageCreateAdaptor(context.event.channel.sendMessage(msg.asDiscordMessageData().buildCreate())) },
+            editSelf = { msg -> MessageEditAdaptor(context.event.channel.editMessageById(messageRef.id.idLong, msg.asDiscordMessageData().buildEdit())) },
+            component = { components -> MessageEditAdaptor(context.event.channel.editMessageComponentsById(messageRef.id.idLong, components.asJdaComponents())) },
             selfRef = messageRef,
         ),
     ).fold(

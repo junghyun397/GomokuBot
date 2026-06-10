@@ -13,10 +13,7 @@ import dev.minn.jda.ktx.coroutines.await
 import discord.assets.JDAChannel
 import discord.assets.awaitNullable
 import discord.assets.getChannelMessageSubChannelById
-import discord.interact.message.DiscordMessageData
-import discord.interact.message.DiscordMessagePublisher
-import discord.interact.message.DiscordMessagingService
-import discord.interact.message.MessageCreateAdaptor
+import discord.interact.message.*
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.buildableCommands
 import discord.interact.parse.engBuildableCommands
@@ -129,7 +126,7 @@ object ChannelManager {
             }
         }
 
-        val publisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(archiveSubChannel.sendMessage(msg.buildCreate())) }
+        val publisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(archiveSubChannel.sendMessage(msg.asDiscordMessageData().buildCreate())) }
 
         DiscordMessagingService.buildSessionArchive(publisher, modSession, modResult)
             .launch()

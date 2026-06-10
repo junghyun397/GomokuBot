@@ -1,6 +1,5 @@
 package discord
 
-import core.session.MessageManager
 import core.BotContext
 import core.interact.commands.ExpireGameCommand
 import core.interact.commands.ExpireRequestCommand
@@ -9,6 +8,7 @@ import core.interact.message.MonoPublisherSet
 import core.interact.reports.ErrorReport
 import core.interact.reports.Report
 import core.interact.reports.RoutineReport
+import core.session.MessageManager
 import core.session.SessionManager
 import discord.assets.JDAChannel
 import discord.assets.getChannelMessageSubChannelById
@@ -17,6 +17,7 @@ import discord.interact.TaskContext
 import discord.interact.message.DiscordMessagingService
 import discord.interact.message.MessageCreateAdaptor
 import discord.interact.message.MessageEditAdaptor
+import discord.interact.message.asDiscordMessageData
 import discord.route.executeIO
 import kotlinx.coroutines.flow.Flow
 import net.dv8tion.jda.api.JDA
@@ -39,8 +40,8 @@ private suspend fun executeCommand(
         channel = taskContext.channel,
         service = DiscordMessagingService,
         publisher = MonoPublisherSet(
-            publisher = { msg -> MessageCreateAdaptor(channel.sendMessage(msg.buildCreate())) },
-            editGlobal = { ref -> { msg -> MessageEditAdaptor(channel.editMessageById(ref.id.idLong, msg.buildEdit())) } }
+            publisher = { msg -> MessageCreateAdaptor(channel.sendMessage(msg.asDiscordMessageData().buildCreate())) },
+            editGlobal = { ref -> { msg -> MessageEditAdaptor(channel.editMessageById(ref.id.idLong, msg.asDiscordMessageData().buildEdit())) } }
         )
     ).fold(
         onSuccess = { (io, report) ->
@@ -62,17 +63,17 @@ fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: J
             val config = SessionManager.retrieveChannelConfig(bot.sessions, channel)
             val context = TaskContext(bot, channel, config, Clock.System.now(), "SCH")
 
-            val maybeMessage = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
+            val message = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
-            val maybeChannel = jda.getGuildById(channel.givenId.idLong)
-            val maybeSubChannel = maybeMessage?.let { maybeChannel?.getChannelMessageSubChannelById(it.subChannelId.idLong) }
+            val channel = jda.getGuildById(channel.givenId.idLong)
+            val subChannel = message?.let { channel?.getChannelMessageSubChannelById(it.subChannelId.idLong) }
 
             val command = ExpireGameCommand(
                 session = session,
-                channelAvailable = maybeChannel != null && maybeSubChannel != null
+                channelAvailable = channel != null && subChannel != null
             )
 
-            val result = executeCommand(context, bot, discordConfig, command, maybeSubChannel!!, maybeChannel!!)
+            val result = executeCommand(context, bot, discordConfig, command, subChannel!!, channel!!)
 
             emit(result)
         }
@@ -84,25 +85,25 @@ fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, jda
             val config = SessionManager.retrieveChannelConfig(bot.sessions, channel)
             val context = TaskContext(bot, channel, config, Clock.System.now(), "SCH")
 
-            val maybeMessage = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
+            val message = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
-            val maybeChannel = jda.getGuildById(channel.givenId.idLong)
-            val maybeSubChannel = maybeMessage?.let { maybeChannel?.getChannelMessageSubChannelById(it.subChannelId.idLong) }
+            val channel = jda.getGuildById(channel.givenId.idLong)
+            val subChannel = message?.let { channel?.getChannelMessageSubChannelById(it.subChannelId.idLong) }
 
             val command = ExpireRequestCommand(
                 session = session,
-                channelAvailable = maybeChannel != null && maybeSubChannel != null,
-                messageAvailable = maybeMessage != null
+                channelAvailable = channel != null && subChannel != null,
+                messageAvailable = message != null
             )
 
-            val result = executeCommand(context, bot, discordConfig, command, maybeSubChannel!!, maybeChannel!!)
+            val result = executeCommand(context, bot, discordConfig, command, subChannel!!, channel!!)
 
             emit(result)
         }
     })
 
 inline fun routine(interval: Duration, crossinline job: suspend () -> String): Flow<RoutineReport> =
-    schedule<RoutineReport>(interval, {
+    schedule(interval, {
         val time = Clock.System.now()
 
         val comment = job()

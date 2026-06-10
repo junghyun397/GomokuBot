@@ -12,16 +12,13 @@ import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.interact.message.AdaptivePublisherSet
 import core.interact.message.MonoPublisherSet
+import core.interact.parse.ParseFailure
 import core.interact.reports.ErrorReport
 import core.interact.reports.Report
 import discord.assets.*
 import discord.interact.ChannelManager
 import discord.interact.UserInteractionContext
-import discord.interact.message.DiscordMessagingService
-import discord.interact.message.MessageCreateAdaptor
-import discord.interact.message.TransMessagePublisher
-import discord.interact.message.WebHookMessageCreateAdaptor
-import discord.interact.parse.DiscordParseFailure
+import discord.interact.message.*
 import discord.interact.parse.ParsableCommand
 import discord.interact.parse.parsers.*
 import net.dv8tion.jda.api.Permission
@@ -35,16 +32,16 @@ import utils.lang.replaceIf
 import java.util.concurrent.TimeUnit
 import kotlin.time.Clock
 
-private fun buildPermissionNode(context: UserInteractionContext<*>, parsableCommand: ParsableCommand, channel: GuildMessageChannel, jdaUser: User): Either<DiscordParseFailure, ParsableCommand> =
+private fun buildPermissionNode(context: UserInteractionContext<*>, parsableCommand: ParsableCommand, channel: GuildMessageChannel, jdaUser: User): Either<ParseFailure, ParsableCommand> =
     ChannelManager.permissionDependedRun(
         channel, Permission.MESSAGE_SEND,
         onMissed = { Either.Left(
-            DiscordParseFailure(parsableCommand.name, "message permission not granted in $channel", context.channel, context.user) { _, _, container ->
+            ParseFailure(parsableCommand.name, "message permission not granted in $channel", context.channel, context.user) { _, _, container ->
                 effect {
                     jdaUser.openPrivateChannel()
                         .flatMap { privateSubChannel ->
                             DiscordMessagingService.sendPermissionNotGrantedEmbed(
-                                publisher = { msg -> privateSubChannel.sendMessage(msg.buildCreate()) },
+                                publisher = { msg -> privateSubChannel.sendMessage(msg.asDiscordMessageData().buildCreate()) },
                                 container = container,
                                 channelName = channel.name
                             )
@@ -111,7 +108,7 @@ suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInter
     val parsable = matchCommand(context.event.name, context.config.language.container)
         ?: return null
 
-    val parsed: Either<DiscordParseFailure, Command> = buildPermissionNode(
+    val parsed: Either<ParseFailure, Command> = buildPermissionNode(
         context,
         parsable,
         context.event.channel.asGuildMessageChannel(),
@@ -150,17 +147,17 @@ suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInter
                 messageRef = DUMMY_MESSAGE_REF,
                 publishers = when (command.responseFlag) {
                     is ResponseFlag.Defer -> AdaptivePublisherSet(
-                        plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
-                        windowed = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
-                        editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
+                        plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate())) },
+                        windowed = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate())) },
+                        editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.asDiscordMessageData().buildEdit()) } },
                     )
                     else -> AdaptivePublisherSet(
                         plain = TransMessagePublisher(
-                            head = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate())) },
-                            tail = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) }
+                            head = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.asDiscordMessageData().buildCreate())) },
+                            tail = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate())) }
                         ),
-                        windowed = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate()).setEphemeral(true)) },
-                        editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } }
+                        windowed = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.asDiscordMessageData().buildCreate()).setEphemeral(true)) },
+                        editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.asDiscordMessageData().buildEdit()) } }
                     )
                 }
             )
@@ -170,8 +167,8 @@ suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInter
                 config = context.config,
                 service = DiscordMessagingService,
                 publisher = TransMessagePublisher(
-                    head = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate()).setEphemeral(true)) },
-                    tail = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate()).setEphemeral(true)) }
+                    head = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.asDiscordMessageData().buildCreate()).setEphemeral(true)) },
+                    tail = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate()).setEphemeral(true)) }
                 )
             )
         }
@@ -209,7 +206,7 @@ suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEve
     val parsable = matchCommand(command = payload.first(), container = context.config.language.container)
         ?: return null
 
-    val parsed: Either<DiscordParseFailure, Command> = buildPermissionNode(
+    val parsed: Either<ParseFailure, Command> = buildPermissionNode(
         context,
         parsable,
         context.event.channel.asGuildMessageChannel(),
@@ -244,8 +241,8 @@ suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEve
                 service = DiscordMessagingService,
                 messageRef = context.event.message.extractMessageRef(),
                 publishers = MonoPublisherSet(
-                    publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.buildCreate())) },
-                    editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
+                    publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.asDiscordMessageData().buildCreate())) },
+                    editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.asDiscordMessageData().buildEdit()) } },
                 ),
             )
         },
@@ -253,7 +250,7 @@ suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEve
             parseFailure.notice(
                 config = context.config,
                 service = DiscordMessagingService,
-                publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.buildCreate())) },
+                publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.asDiscordMessageData().buildCreate())) },
             )
         }
     ).fold(

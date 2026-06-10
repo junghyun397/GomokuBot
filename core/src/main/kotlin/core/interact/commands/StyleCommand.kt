@@ -20,14 +20,14 @@ class StyleCommand(private val style: BoardStyle) : Command {
 
     override val responseFlag = ResponseFlag.Immediately
 
-    override suspend fun <A, B> execute(
+    override suspend fun execute(
         bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService<A, B>,
+        service: MessagingService,
         messageRef: MessageRef,
-        publishers: PublisherSet<A, B>,
+        publishers: PublisherSet,
     ) = runCatching {
         SessionManager.updateChannelConfig(bot.sessions, channel, config.copy(boardStyle = style))
 

@@ -3,14 +3,14 @@ package core.interact.message
 import arrow.core.raise.Effect
 import java.io.InputStream
 
-interface MessageBuilder<A, B> {
+interface MessageBuilder {
 
-    fun addFile(file: InputStream, name: String): MessageBuilder<A, B>
+    fun addFile(file: InputStream, name: String): MessageBuilder
 
-    fun addComponents(components: B): MessageBuilder<A, B>
+    fun addComponents(components: MessageComponents): MessageBuilder
 
     fun launch(): Effect<Nothing, Unit>
 
-    fun retrieve(): Effect<Nothing, MessageAdaptor<A, B>?>
+    fun retrieve(): Effect<Nothing, SentMessage?>
 
 }

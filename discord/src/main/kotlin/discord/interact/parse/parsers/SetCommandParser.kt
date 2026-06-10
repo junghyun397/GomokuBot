@@ -1,6 +1,5 @@
 package discord.interact.parse.parsers
 
-import core.session.MessageManager
 import arrow.core.Either
 import arrow.core.flatMap
 import arrow.core.raise.Effect
@@ -12,20 +11,19 @@ import core.interact.Order
 import core.interact.commands.*
 import core.interact.emptyOrders
 import core.interact.i18n.LanguageContainer
-import core.interact.message.MessageAdaptor
+import core.interact.message.SentMessage
+import core.interact.parse.ParseFailure
 import core.interact.parse.SessionSideParser
 import core.interact.parse.asParseFailure
 import core.session.GameManager
+import core.session.MessageManager
 import core.session.SessionManager
 import core.session.SwapType
 import core.session.entities.*
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.interact.UserInteractionContext
-import discord.interact.message.DiscordComponents
-import discord.interact.message.DiscordMessageData
 import discord.interact.parse.BuildableCommand
-import discord.interact.parse.DiscordParseFailure
 import discord.interact.parse.EmbeddableCommand
 import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -38,7 +36,7 @@ import renju.notation.ForbiddenKind
 import renju.notation.Pos
 import utils.lang.tuple
 
-object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponents>(), ParsableCommand, EmbeddableCommand, BuildableCommand {
+object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableCommand, BuildableCommand {
 
     override val name = "s"
 
@@ -56,49 +54,49 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
             ?.takeIf { it in 1 .. Pos.BOARD_WIDTH }
             ?.let { it - 1 }
 
-    private fun buildAppendMessageProcedure(maybeMessage: MessageAdaptor<DiscordMessageData, DiscordComponents>?, context: UserInteractionContext<*>, session: GameSession): Effect<Nothing, List<Order>> =
+    private fun buildAppendMessageProcedure(message: SentMessage?, context: UserInteractionContext<*>, session: GameSession): Effect<Nothing, List<Order>> =
         effect {
-            if (maybeMessage != null) {
-                MessageManager.appendMessage(context.bot.sessions, session.messageBufferKey, maybeMessage.messageRef)
+            if (message != null) {
+                MessageManager.appendMessage(context.bot.sessions, session.messageBufferKey, message.ref)
                 emptyList()
             } else {
                 emptyOrders
             }
         }
 
-    private fun buildOrderFailure(context: UserInteractionContext<*>, session: GameSession, player: User): DiscordParseFailure =
+    private fun buildOrderFailure(context: UserInteractionContext<*>, session: GameSession, player: User): ParseFailure =
         this.asParseFailure("try move but now $player's turn", context.channel, context.user) { messagingService, publisher, container ->
             effect {
-                val maybeMessage = messagingService.buildSetOrderFailure(publisher, container, player).retrieve()()
-                this@SetCommandParser.buildAppendMessageProcedure(maybeMessage, context, session)()
+                val message = messagingService.buildSetOrderFailure(publisher, container, player).retrieve()()
+                this@SetCommandParser.buildAppendMessageProcedure(message, context, session)()
             }
         }
 
-    private fun buildMissMatchFailure(context: UserInteractionContext<*>, session: GameSession): DiscordParseFailure =
+    private fun buildMissMatchFailure(context: UserInteractionContext<*>, session: GameSession): ParseFailure =
         this.asParseFailure("try move but argument mismatch", context.channel, context.user) { messagingService, publisher, container ->
             effect {
-                val maybeMessage = messagingService.buildSetIllegalArgumentFailure(publisher, container).retrieve()()
-                this@SetCommandParser.buildAppendMessageProcedure(maybeMessage, context, session)()
+                val message = messagingService.buildSetIllegalArgumentFailure(publisher, container).retrieve()()
+                this@SetCommandParser.buildAppendMessageProcedure(message, context, session)()
             }
         }
 
-    private fun buildExistFailure(context: UserInteractionContext<*>, session: GameSession, pos: Pos): DiscordParseFailure =
+    private fun buildExistFailure(context: UserInteractionContext<*>, session: GameSession, pos: Pos): ParseFailure =
         this.asParseFailure("make move but already exist", context.channel, context.user) { messagingService, publisher, container ->
             effect {
-                val maybeMessage = messagingService.buildSetAlreadyExistFailure(publisher, container, pos).retrieve()()
-                this@SetCommandParser.buildAppendMessageProcedure(maybeMessage, context, session)()
+                val message = messagingService.buildSetAlreadyExistFailure(publisher, container, pos).retrieve()()
+                this@SetCommandParser.buildAppendMessageProcedure(message, context, session)()
             }
         }
 
-    private fun buildForbiddenMoveFailure(context: UserInteractionContext<*>, session: GameSession, pos: Pos, forbiddenKind: ForbiddenKind?): DiscordParseFailure =
+    private fun buildForbiddenMoveFailure(context: UserInteractionContext<*>, session: GameSession, pos: Pos, forbiddenKind: ForbiddenKind?): ParseFailure =
         this.asParseFailure("make move but forbidden", context.channel, context.user) { messagingService, publisher, container ->
             effect {
-                val maybeMessage = messagingService.buildSetForbiddenMoveFailure(publisher, container, pos, forbiddenKind).retrieve()()
-                this@SetCommandParser.buildAppendMessageProcedure(maybeMessage, context, session)()
+                val message = messagingService.buildSetForbiddenMoveFailure(publisher, container, pos, forbiddenKind).retrieve()()
+                this@SetCommandParser.buildAppendMessageProcedure(message, context, session)()
             }
         }
 
-    private fun buildSilentFailure(context: UserInteractionContext<*>): DiscordParseFailure =
+    private fun buildSilentFailure(context: UserInteractionContext<*>): ParseFailure =
         this.asParseFailure("unknown error", context.channel, context.user) { _, _, _ ->
             effect { emptyOrders }
         }
@@ -112,7 +110,7 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
             else -> null
         }
 
-    private suspend fun parseRawCommand(context: UserInteractionContext<*>, user: User.Human, rawRow: String?, rawColumn: String?): Either<DiscordParseFailure, Command> =
+    private suspend fun parseRawCommand(context: UserInteractionContext<*>, user: User.Human, rawRow: String?, rawColumn: String?): Either<ParseFailure, Command> =
         this.retrieveSession(context.bot, context.channel, user).flatMap { (sessionId, session) ->
             if (session.player.humanId != user.id)
                 return@flatMap Either.Left(this.buildOrderFailure(context, session, session.player))
@@ -156,14 +154,14 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
             }
         }
 
-    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<DiscordParseFailure, Command> {
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<ParseFailure, Command> {
         val rawColumn = context.event.getOption(context.config.language.container.setCommandOptionColumn())?.asString
         val rawRow = context.event.getOption(context.config.language.container.setCommandOptionRow())?.asString
 
         return this.parseRawCommand(context, context.user, rawRow, rawColumn)
     }
 
-    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<DiscordParseFailure, Command> {
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<ParseFailure, Command> {
         val (rawColumn, rawRow) = payload
             .drop(1)
             .take(2)

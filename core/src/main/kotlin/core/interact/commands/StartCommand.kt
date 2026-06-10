@@ -1,17 +1,17 @@
 package core.interact.commands
 
-import core.session.MessageManager
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
-import core.mintaka.EngineLevel
 import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
+import core.mintaka.EngineLevel
 import core.session.GameManager
+import core.session.MessageManager
 import core.session.Rule
 import core.session.SessionManager
 import core.session.entities.ChannelConfig
@@ -28,14 +28,14 @@ class StartCommand(val opponent: User, val rule: Rule) : Command {
 
     override val responseFlag = ResponseFlag.Immediately
 
-    override suspend fun <A, B> execute(
+    override suspend fun execute(
         bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService<A, B>,
+        service: MessagingService,
         messageRef: MessageRef,
-        publishers: PublisherSet<A, B>,
+        publishers: PublisherSet,
     ) = runCatching {
         when(this.opponent) {
             is User.GomokuBot -> {
@@ -66,7 +66,7 @@ class StartCommand(val opponent: User, val rule: Rule) : Command {
                 val io = effect {
                     service.buildRequest(publishers.plain, config.language.container, user, opponent, this@StartCommand.rule)
                         .retrieve()()
-                        ?.let { MessageManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.messageRef) }
+                        ?.let { MessageManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.ref) }
 
                     emptyOrders
                 }

@@ -18,14 +18,14 @@ abstract class UnionCommand(private val command: Command) : Command {
 
     override val responseFlag = this.command.responseFlag
 
-    override suspend fun <A, B> execute(
+    override suspend fun execute(
         bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService<A, B>,
+        service: MessagingService,
         messageRef: MessageRef,
-        publishers: PublisherSet<A, B>
+        publishers: PublisherSet
     ) = runCatching {
         val (unionIO, unionReport, thenChannel, thenUser) = this.executeSelf(bot, config,
             channel, user, service, messageRef, publishers)
@@ -43,14 +43,14 @@ abstract class UnionCommand(private val command: Command) : Command {
         tuple(io, unionReport + report)
     }
 
-    protected abstract suspend fun <A, B> executeSelf(
+    protected abstract suspend fun executeSelf(
         bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService<A, B>,
+        service: MessagingService,
         messageRef: MessageRef,
-        publishers: PublisherSet<A, B>
+        publishers: PublisherSet
     ): Result<Quadruple<Effect<Nothing, List<Order>>, InteractionReport, Channel, User.Human>>
 
 }

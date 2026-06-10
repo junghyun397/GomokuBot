@@ -1,15 +1,17 @@
 package core.interact.message
 
 import arrow.core.raise.Effect
+import core.assets.DUMMY_MESSAGE_REF
+import core.assets.MessageRef
 import core.assets.User
 import core.database.entities.Announce
 import core.database.entities.GameRecord
 import core.database.entities.GameRecordId
 import core.database.entities.UserStats
-import core.mintaka.FocusSolver
 import core.interact.i18n.LanguageContainer
 import core.interact.message.graphics.BoardRenderer
 import core.interact.message.graphics.HistoryRenderType
+import core.mintaka.FocusSolver
 import core.session.Rule
 import core.session.entities.ChannelConfig
 import core.session.entities.DeclareStageOpeningSession
@@ -19,7 +21,62 @@ import renju.notation.ForbiddenKind
 import renju.notation.GameResult
 import renju.notation.Pos
 
-interface MessagingService<A, B> {
+interface MessagePayload
+
+typealias MessageComponents = List<*>
+
+typealias MessagePublisher = (MessagePayload) -> MessageBuilder
+
+typealias MessageEditPublisher = (MessageRef) -> MessagePublisher
+
+typealias ComponentPublisher = (MessageComponents) -> MessageBuilder
+
+interface PublisherSet {
+
+    val plain: MessagePublisher
+
+    val windowed: MessagePublisher
+
+    val edit: MessageEditPublisher
+
+    val component: ComponentPublisher
+
+}
+
+data class AdaptivePublisherSet(
+    override val plain: MessagePublisher,
+    override val windowed: MessagePublisher,
+    override val component: ComponentPublisher = { throw IllegalAccessError() },
+    private val editSelf: MessagePublisher = { throw IllegalAccessError() },
+    private val editGlobal: MessageEditPublisher = { throw IllegalAccessError() },
+    private val selfRef: MessageRef = DUMMY_MESSAGE_REF,
+) : PublisherSet {
+
+    override val edit: MessageEditPublisher get() = { ref ->
+        when (ref) {
+            this.selfRef -> this.editSelf
+            else -> this.editGlobal(ref)
+        }
+    }
+
+}
+
+data class MonoPublisherSet(
+    private val publisher: MessagePublisher,
+    private val editGlobal: MessageEditPublisher
+) : PublisherSet {
+
+    override val plain: MessagePublisher = this.publisher
+
+    override val windowed: MessagePublisher = this.publisher
+
+    override val edit: MessageEditPublisher = this.editGlobal
+
+    override val component: ComponentPublisher get() { throw IllegalAccessError() }
+
+}
+
+interface MessagingService {
 
     val focusWidth: Int
     val focusRange: IntRange
@@ -28,154 +85,154 @@ interface MessagingService<A, B> {
 
     fun generateFocusedField(session: GameSession, focusInfo: FocusSolver.FocusInfo): FocusedFields
 
-    fun buildFocusedButtons(focusedFields: FocusedFields): B
+    fun buildFocusedButtons(focusedFields: FocusedFields): MessageComponents
 
-    fun buildBoard(publisher: MessagePublisher<A, B>, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession): MessageBuilder<A, B>
+    fun buildBoard(publisher: MessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession): MessageBuilder
 
-    fun buildReplayBoard(publisher: MessagePublisher<A, B>, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession, totalMoves: Int): MessageBuilder<A, B>
+    fun buildReplayBoard(publisher: MessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession, totalMoves: Int): MessageBuilder
 
-    fun buildSessionArchive(publisher: MessagePublisher<A, B>, session: GameSession, result: GameResult?): MessageBuilder<A, B>
+    fun buildSessionArchive(publisher: MessagePublisher, session: GameSession, result: GameResult?): MessageBuilder
 
-    fun dispatchFocusButtons(publisher: ComponentPublisher<A, B>, focusedFields: FocusedFields): MessageBuilder<A, B>
+    fun dispatchFocusButtons(publisher: ComponentPublisher, focusedFields: FocusedFields): MessageBuilder
 
-    fun buildSwapButtons(container: LanguageContainer): B
+    fun buildSwapButtons(container: LanguageContainer): MessageComponents
 
-    fun buildBranchingButtons(container: LanguageContainer): B
+    fun buildBranchingButtons(container: LanguageContainer): MessageComponents
 
-    fun buildDeclareButtons(container: LanguageContainer, session: DeclareStageOpeningSession): B
+    fun buildDeclareButtons(container: LanguageContainer, session: DeclareStageOpeningSession): MessageComponents
 
-    fun attachNavigators(flow: Flow<String>, message: A, checkTerminated: suspend () -> Boolean): Effect<Nothing, Unit>
+    fun attachNavigators(flow: Flow<String>, message: SentMessage, checkTerminated: suspend () -> Boolean): Effect<Nothing, Unit>
 
-    fun attachFocusNavigators(message: A, checkTerminated: suspend () -> Boolean): Effect<Nothing, Unit>
+    fun attachFocusNavigators(message: SentMessage, checkTerminated: suspend () -> Boolean): Effect<Nothing, Unit>
 
-    fun attachBinaryNavigators(message: A): Effect<Nothing, Unit>
+    fun attachBinaryNavigators(message: SentMessage): Effect<Nothing, Unit>
 
     // GAME
 
-    fun buildBeginsPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, blackPlayer: User, whitePlayer: User): MessageBuilder<A, B>
+    fun buildBeginsPVP(publisher: MessagePublisher, container: LanguageContainer, blackPlayer: User, whitePlayer: User): MessageBuilder
 
-    fun buildBeginsPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, humanHasBlack: Boolean): MessageBuilder<A, B>
+    fun buildBeginsPVE(publisher: MessagePublisher, container: LanguageContainer, owner: User, humanHasBlack: Boolean): MessageBuilder
 
-    fun buildBeginsOpening(publisher: MessagePublisher<A, B>, container: LanguageContainer, blackPlayer: User, whitePlayer: User, rule: Rule): MessageBuilder<A, B>
+    fun buildBeginsOpening(publisher: MessagePublisher, container: LanguageContainer, blackPlayer: User, whitePlayer: User, rule: Rule): MessageBuilder
 
-    fun buildNextMovePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, previousPlayer: User, nextPlayer: User, lastMove: Pos): MessageBuilder<A, B>
+    fun buildNextMovePVP(publisher: MessagePublisher, container: LanguageContainer, previousPlayer: User, nextPlayer: User, lastMove: Pos): MessageBuilder
 
-    fun buildNextMoveOpening(publisher: MessagePublisher<A, B>, container: LanguageContainer, lastMove: Pos): MessageBuilder<A, B>
+    fun buildNextMoveOpening(publisher: MessagePublisher, container: LanguageContainer, lastMove: Pos): MessageBuilder
 
-    fun buildWinPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, loser: User, lastMove: Pos): MessageBuilder<A, B>
+    fun buildWinPVP(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User, lastMove: Pos): MessageBuilder
 
-    fun buildTiePVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): MessageBuilder<A, B>
+    fun buildTiePVP(publisher: MessagePublisher, container: LanguageContainer, owner: User, opponent: User): MessageBuilder
 
-    fun buildSurrenderedPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, loser: User): MessageBuilder<A, B>
+    fun buildSurrenderedPVP(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User): MessageBuilder
 
-    fun buildTimeoutPVP(publisher: MessagePublisher<A, B>, container: LanguageContainer, winner: User, loser: User): MessageBuilder<A, B>
+    fun buildTimeoutPVP(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User): MessageBuilder
 
-    fun buildNextMovePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, lastMove: Pos): MessageBuilder<A, B>
+    fun buildNextMovePVE(publisher: MessagePublisher, container: LanguageContainer, owner: User, lastMove: Pos): MessageBuilder
 
-    fun buildWinPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, lastMove: Pos): MessageBuilder<A, B>
+    fun buildWinPVE(publisher: MessagePublisher, container: LanguageContainer, owner: User, lastMove: Pos): MessageBuilder
 
-    fun buildLosePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, lastMove: Pos): MessageBuilder<A, B>
+    fun buildLosePVE(publisher: MessagePublisher, container: LanguageContainer, owner: User, lastMove: Pos): MessageBuilder
 
-    fun buildTiePVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User): MessageBuilder<A, B>
+    fun buildTiePVE(publisher: MessagePublisher, container: LanguageContainer, owner: User): MessageBuilder
 
-    fun buildSurrenderedPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User): MessageBuilder<A, B>
+    fun buildSurrenderedPVE(publisher: MessagePublisher, container: LanguageContainer, owner: User): MessageBuilder
 
-    fun buildTimeoutPVE(publisher: MessagePublisher<A, B>, container: LanguageContainer, player: User): MessageBuilder<A, B>
+    fun buildTimeoutPVE(publisher: MessagePublisher, container: LanguageContainer, player: User): MessageBuilder
 
     // REPLAY
 
-    fun buildReplayButtons(gameRecordId: GameRecordId, validationKey: String, totalMoves: Int, currentMoves: Int): B
+    fun buildReplayButtons(gameRecordId: GameRecordId, validationKey: String, totalMoves: Int, currentMoves: Int): MessageComponents
 
-    fun buildBackToListButton(): B
+    fun buildBackToListButton(): MessageComponents
 
-    fun buildReplayList(publisher: MessagePublisher<A, B>, container: LanguageContainer, player: User.Human, records: List<Pair<User, GameRecord>>): MessageBuilder<A, B>
+    fun buildReplayList(publisher: MessagePublisher, container: LanguageContainer, player: User.Human, records: List<Pair<User, GameRecord>>): MessageBuilder
 
     // HELP
 
-    fun buildHelp(publisher: MessagePublisher<A, B>, container: LanguageContainer, page: Int): MessageBuilder<A, B>
+    fun buildHelp(publisher: MessagePublisher, container: LanguageContainer, page: Int): MessageBuilder
 
-    fun buildPaginatedHelp(publisher: MessagePublisher<A, B>, container: LanguageContainer, page: Int): MessageBuilder<A, B>
+    fun buildPaginatedHelp(publisher: MessagePublisher, container: LanguageContainer, page: Int): MessageBuilder
 
-    fun buildSettings(publisher: MessagePublisher<A, B>, config: ChannelConfig, page: Int): MessageBuilder<A, B>
+    fun buildSettings(publisher: MessagePublisher, config: ChannelConfig, page: Int): MessageBuilder
 
-    fun buildPaginatedSettings(publisher: MessagePublisher<A, B>, config: ChannelConfig, page: Int): MessageBuilder<A, B>
+    fun buildPaginatedSettings(publisher: MessagePublisher, config: ChannelConfig, page: Int): MessageBuilder
 
     // RANK
 
-    fun buildRankings(publisher: MessagePublisher<A, B>, container: LanguageContainer, rankings: List<Pair<User, UserStats>>): MessageBuilder<A, B>
+    fun buildRankings(publisher: MessagePublisher, container: LanguageContainer, rankings: List<Pair<User, UserStats>>): MessageBuilder
 
-    fun buildUserNotFound(publisher: MessagePublisher<A, B>, container: LanguageContainer): MessageBuilder<A, B>
+    fun buildUserNotFound(publisher: MessagePublisher, container: LanguageContainer): MessageBuilder
 
     // RATING
 
-    fun buildRating(publisher: MessagePublisher<A, B>, container: LanguageContainer): MessageBuilder<A, B>
+    fun buildRating(publisher: MessagePublisher, container: LanguageContainer): MessageBuilder
 
     // LANG
 
-    fun buildLanguageGuide(publisher: MessagePublisher<A, B>): MessageBuilder<A, B>
+    fun buildLanguageGuide(publisher: MessagePublisher): MessageBuilder
 
-    fun buildLanguageNotFound(publisher: MessagePublisher<A, B>): MessageBuilder<A, B>
+    fun buildLanguageNotFound(publisher: MessagePublisher): MessageBuilder
 
-    fun buildLanguageUpdated(publisher: MessagePublisher<A, B>, container: LanguageContainer): MessageBuilder<A, B>
+    fun buildLanguageUpdated(publisher: MessagePublisher, container: LanguageContainer): MessageBuilder
 
     // STYLE
 
-    fun buildStyleGuide(publisher: MessagePublisher<A, B>, container: LanguageContainer): MessageBuilder<A, B>
+    fun buildStyleGuide(publisher: MessagePublisher, container: LanguageContainer): MessageBuilder
 
-    fun buildStyleNotFound(publisher: MessagePublisher<A, B>, container: LanguageContainer): MessageBuilder<A, B>
+    fun buildStyleNotFound(publisher: MessagePublisher, container: LanguageContainer): MessageBuilder
 
-    fun buildStyleUpdated(publisher: MessagePublisher<A, B>, container: LanguageContainer, style: String): MessageBuilder<A, B>
+    fun buildStyleUpdated(publisher: MessagePublisher, container: LanguageContainer, style: String): MessageBuilder
 
     // CONFIG
 
-    fun buildSettingApplied(publisher: MessagePublisher<A, B>, container: LanguageContainer, configKind: String, configChoice: String): MessageBuilder<A, B>
+    fun buildSettingApplied(publisher: MessagePublisher, container: LanguageContainer, configKind: String, configChoice: String): MessageBuilder
 
     // SESSION
 
-    fun buildSessionNotFound(publisher: MessagePublisher<A, B>, container: LanguageContainer): MessageBuilder<A, B>
+    fun buildSessionNotFound(publisher: MessagePublisher, container: LanguageContainer): MessageBuilder
 
     // START
 
-    fun buildSessionAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer): MessageBuilder<A, B>
+    fun buildSessionAlready(publisher: MessagePublisher, container: LanguageContainer): MessageBuilder
 
-    fun buildOpponentSessionAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer, opponent: User): MessageBuilder<A, B>
+    fun buildOpponentSessionAlready(publisher: MessagePublisher, container: LanguageContainer, opponent: User): MessageBuilder
 
-    fun buildRequestAlreadySent(publisher: MessagePublisher<A, B>, container: LanguageContainer, opponent: User): MessageBuilder<A, B>
+    fun buildRequestAlreadySent(publisher: MessagePublisher, container: LanguageContainer, opponent: User): MessageBuilder
 
-    fun buildRequestAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer, opponent: User): MessageBuilder<A, B>
+    fun buildRequestAlready(publisher: MessagePublisher, container: LanguageContainer, opponent: User): MessageBuilder
 
-    fun buildOpponentRequestAlready(publisher: MessagePublisher<A, B>, container: LanguageContainer, opponent: User): MessageBuilder<A, B>
+    fun buildOpponentRequestAlready(publisher: MessagePublisher, container: LanguageContainer, opponent: User): MessageBuilder
 
     // SET
 
-    fun buildSetOrderFailure(publisher: MessagePublisher<A, B>, container: LanguageContainer, player: User): MessageBuilder<A, B>
+    fun buildSetOrderFailure(publisher: MessagePublisher, container: LanguageContainer, player: User): MessageBuilder
 
-    fun buildSetIllegalArgumentFailure(publisher: MessagePublisher<A, B>, container: LanguageContainer): MessageBuilder<A, B>
+    fun buildSetIllegalArgumentFailure(publisher: MessagePublisher, container: LanguageContainer): MessageBuilder
 
-    fun buildSetAlreadyExistFailure(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos): MessageBuilder<A, B>
+    fun buildSetAlreadyExistFailure(publisher: MessagePublisher, container: LanguageContainer, pos: Pos): MessageBuilder
 
-    fun buildSetForbiddenMoveFailure(publisher: MessagePublisher<A, B>, container: LanguageContainer, pos: Pos, forbiddenKind: ForbiddenKind?): MessageBuilder<A, B>
+    fun buildSetForbiddenMoveFailure(publisher: MessagePublisher, container: LanguageContainer, pos: Pos, forbiddenKind: ForbiddenKind?): MessageBuilder
 
     // REQUEST
 
-    fun buildRequest(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User.Human, opponent: User.Human, rule: Rule): MessageBuilder<A, B>
+    fun buildRequest(publisher: MessagePublisher, container: LanguageContainer, owner: User.Human, opponent: User.Human, rule: Rule): MessageBuilder
 
-    fun buildRejectedRequest(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): MessageBuilder<A, B>
+    fun buildRejectedRequest(publisher: MessagePublisher, container: LanguageContainer, owner: User, opponent: User): MessageBuilder
 
-    fun buildRequestRejected(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): MessageBuilder<A, B>
+    fun buildRequestRejected(publisher: MessagePublisher, container: LanguageContainer, owner: User, opponent: User): MessageBuilder
 
-    fun buildRequestExpired(publisher: MessagePublisher<A, B>, container: LanguageContainer, owner: User, opponent: User): MessageBuilder<A, B>
+    fun buildRequestExpired(publisher: MessagePublisher, container: LanguageContainer, owner: User, opponent: User): MessageBuilder
 
     // UTILS
 
-    fun buildDebugMessage(publisher: MessagePublisher<A, B>, payload: String): MessageBuilder<A, B>
+    fun buildDebugMessage(publisher: MessagePublisher, payload: String): MessageBuilder
 
-    fun buildAnnounce(publisher: MessagePublisher<A, B>, container: LanguageContainer, announce: Announce): MessageBuilder<A, B>
+    fun buildAnnounce(publisher: MessagePublisher, container: LanguageContainer, announce: Announce): MessageBuilder
 
-    fun buildSomethingWrongMessage(publisher: MessagePublisher<A, B>, container: LanguageContainer, message: String): MessageBuilder<A, B>
+    fun buildSomethingWrongMessage(publisher: MessagePublisher, container: LanguageContainer, message: String): MessageBuilder
 
-    fun buildNotYetImplemented(publisher: MessagePublisher<A, B>, container: LanguageContainer): MessageBuilder<A, B>
+    fun buildNotYetImplemented(publisher: MessagePublisher, container: LanguageContainer): MessageBuilder
 
-    fun buildUnableToReplay(publisher: MessagePublisher<A, B>, container: LanguageContainer): MessageBuilder<A, B>
+    fun buildUnableToReplay(publisher: MessagePublisher, container: LanguageContainer): MessageBuilder
 
 }

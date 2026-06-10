@@ -17,14 +17,14 @@ sealed interface Command {
 
     val responseFlag: ResponseFlag
 
-    suspend fun <A, B> execute(
+    suspend fun execute(
         bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService<A, B>,
+        service: MessagingService,
         messageRef: MessageRef,
-        publishers: PublisherSet<A, B>,
+        publishers: PublisherSet,
     ): CommandResult
 
 }

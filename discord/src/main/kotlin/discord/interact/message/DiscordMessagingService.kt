@@ -53,8 +53,9 @@ import utils.lang.memoize
 import utils.lang.tuple
 import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
+import kotlin.time.Duration.Companion.milliseconds
 
-object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, DiscordComponents>() {
+object DiscordMessagingService : MessagingServiceImpl() {
 
     object IdConvention {
 
@@ -96,7 +97,8 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
     // FORMAT
 
-    private fun ActionRowChildComponent.liftToButtons() = listOf(ActionRow.of(this))
+    private fun ActionRowChildComponent.liftToButtons() =
+        listOf(ActionRow.of(this))
 
     // BOARD
 
@@ -329,7 +331,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
     override fun dispatchFocusButtons(publisher: DiscordComponentPublisher, focusedFields: FocusedFields): DiscordMessageBuilder =
         publisher(this.buildFocusedButtons(focusedFields))
 
-    override fun buildSwapButtons(container: LanguageContainer): DiscordComponents =
+    override fun buildSwapButtons(container: LanguageContainer): MessageComponents =
         listOf(
             ActionRow.of(
                 Button.of(ButtonStyle.PRIMARY, "$OPENING-sy", container.swapSelectYes()),
@@ -337,7 +339,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             )
         )
 
-    override fun buildBranchingButtons(container: LanguageContainer): DiscordComponents =
+    override fun buildBranchingButtons(container: LanguageContainer): MessageComponents =
         listOf(
             ActionRow.of(
                 Button.of(ButtonStyle.PRIMARY, "$OPENING-bn", container.branchSelectSwap()),
@@ -356,9 +358,11 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             }
         }.liftToButtons()
 
-    override fun attachNavigators(flow: Flow<String>, message: DiscordMessageData, checkTerminated: suspend () -> Boolean): Effect<Nothing, Unit> =
+    override fun attachNavigators(flow: Flow<String>, message: SentMessage, checkTerminated: suspend () -> Boolean): Effect<Nothing, Unit> =
         effect {
-            message.original
+            val discordMessage = message as? DiscordSentMessage ?: return@effect
+
+            discordMessage.messageData.original
                 ?.takeIf {
                     !it.isEphemeral
                             && ChannelManager.lookupPermission(it.guildChannel, Permission.MESSAGE_ADD_REACTION)
@@ -367,14 +371,14 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                 ?.let { original ->
                     try {
                         coroutineScope {
-                            flow
+                           flow
                                 .map { original.addReaction(Emoji.fromUnicode(it)).mapToResult() }
                                 .collect { action ->
                                     when {
                                         checkTerminated() -> cancel()
                                         else -> {
                                             action.queue()
-                                            delay(500) // TODO: sync on rate limit
+                                            delay(500.milliseconds) // TODO: sync on rate limit
                                         }
                                     }
                                 }
@@ -386,7 +390,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
     // REPLAY
 
-    override fun buildReplayButtons(gameRecordId: GameRecordId, validationKey: String, totalMoves: Int, currentMoves: Int): DiscordComponents =
+    override fun buildReplayButtons(gameRecordId: GameRecordId, validationKey: String, totalMoves: Int, currentMoves: Int): MessageComponents =
         listOf(when (currentMoves) {
             1 -> ActionRow.of(
                 Button.of(ButtonStyle.SECONDARY, "$REPLAY_LIST-$validationKey-1", EMOJI_RETURN),
@@ -414,7 +418,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
     override fun buildBackToListButton() =
         Button.of(ButtonStyle.SECONDARY, "$REPLAY_LIST", EMOJI_RETURN).liftToButtons()
 
-    override fun buildReplayList(publisher: MessagePublisher<DiscordMessageData, DiscordComponents>, container: LanguageContainer, player: User.Human, records: List<Pair<User, GameRecord>>): MessageBuilder<DiscordMessageData, DiscordComponents> {
+    override fun buildReplayList(publisher: MessagePublisher, container: LanguageContainer, player: User.Human, records: List<Pair<User, GameRecord>>): MessageBuilder {
         val embedBuilder = EmbedBuilder(
             color = COLOR_NORMAL_HEX
         )
@@ -667,7 +671,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
     // REQUEST
 
-    override fun buildRequest(publisher: MessagePublisher<DiscordMessageData, DiscordComponents>, container: LanguageContainer, owner: User.Human, opponent: User.Human, rule: Rule) =
+    override fun buildRequest(publisher: MessagePublisher, container: LanguageContainer, owner: User.Human, opponent: User.Human, rule: Rule) =
         publisher(DiscordMessageData(embed = Embed {
             color = COLOR_GREEN_HEX
             title = container.requestEmbedTitle()
@@ -699,7 +703,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             }
         }
 
-    override fun buildSomethingWrongMessage(publisher: MessagePublisher<DiscordMessageData, DiscordComponents>, container: LanguageContainer, message: String) =
+    override fun buildSomethingWrongMessage(publisher: MessagePublisher, container: LanguageContainer, message: String) =
         publisher sends Embed {
             color = COLOR_RED_HEX
             title = "$UNICODE_CONSTRUCTION ${container.somethingWrongEmbedTitle()}"

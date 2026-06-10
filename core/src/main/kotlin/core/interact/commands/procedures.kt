@@ -1,24 +1,23 @@
 package core.interact.commands
 
-import core.session.MessageManager
 import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import arrow.core.raise.ioZip
 import core.BotContext
 import core.interact.message.MessagePublisher
 import core.interact.message.MessagingService
-import core.session.SessionManager
+import core.session.MessageManager
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 
-fun <A, B> buildHelpProcedure(
+fun buildHelpProcedure(
     bot: BotContext,
     config: ChannelConfig,
-    publisher: MessagePublisher<A, B>,
-    service: MessagingService<A, B>,
+    publisher: MessagePublisher,
+    service: MessagingService,
     page: Int
 ): Effect<Nothing, Unit> = service.buildHelp(publisher, config.language.container, page)
     .retrieve()
@@ -27,25 +26,25 @@ fun <A, B> buildHelpProcedure(
             io()?.let { helpMessage ->
                     MessageManager.addNavigation(
                         bot.sessions,
-                        helpMessage.messageRef,
+                        helpMessage.ref,
                         PageNavigationState(
-                            helpMessage.messageRef,
+                            helpMessage.ref,
                             NavigationKind.ABOUT,
                             page,
                             Clock.System.now() + bot.config.navigatorExpireAfter.milliseconds
                         )
                     )
 
-                    service.attachBinaryNavigators(helpMessage.messageData)()
+                    service.attachBinaryNavigators(helpMessage)()
                 }
         }
     }
 
-fun <A, B> buildCombinedHelpProcedure(
+fun buildCombinedHelpProcedure(
     bot: BotContext,
     config: ChannelConfig,
-    publisher: MessagePublisher<A, B>,
-    service: MessagingService<A, B>,
+    publisher: MessagePublisher,
+    service: MessagingService,
     settingsPage: Int
 ): Effect<Nothing, Unit> = ioZip(
     service.buildHelp(publisher, config.language.container, 0).retrieve(),
@@ -61,9 +60,9 @@ fun <A, B> buildCombinedHelpProcedure(
 
                             MessageManager.addNavigation(
                                 bot.sessions,
-                                helpMessage.messageRef,
+                                helpMessage.ref,
                                 PageNavigationState(
-                                    helpMessage.messageRef,
+                                    helpMessage.ref,
                                     NavigationKind.ABOUT,
                                     page = 0,
                                     Clock.System.now() + bot.config.navigatorExpireAfter.milliseconds
@@ -72,17 +71,17 @@ fun <A, B> buildCombinedHelpProcedure(
 
                             MessageManager.addNavigation(
                                 bot.sessions,
-                                settingsMessage.messageRef,
+                                settingsMessage.ref,
                                 PageNavigationState(
-                                    settingsMessage.messageRef,
+                                    settingsMessage.ref,
                                     NavigationKind.SETTINGS,
                                     settingsPage,
                                     Clock.System.now() + bot.config.navigatorExpireAfter.milliseconds
                                 )
                             )
 
-                            service.attachBinaryNavigators(helpMessage.messageData)()
-                            service.attachBinaryNavigators(settingsMessage.messageData)()
+                            service.attachBinaryNavigators(helpMessage)()
+                            service.attachBinaryNavigators(settingsMessage)()
             }
         }
     }

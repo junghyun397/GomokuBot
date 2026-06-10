@@ -21,14 +21,14 @@ class UpdateCommandsCommand(
 
     override val name = "update-commands"
 
-    override suspend fun <A, B> executeSelf(
+    override suspend fun executeSelf(
         bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService<A, B>,
+        service: MessagingService,
         messageRef: MessageRef,
-        publishers: PublisherSet<A, B>
+        publishers: PublisherSet
     ) = runCatching {
         val io: Effect<Nothing, List<Order>> = effect { listOf(Order.UpsertCommands(config.language.container)) }
 

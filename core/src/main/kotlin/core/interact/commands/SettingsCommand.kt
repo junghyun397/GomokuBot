@@ -1,6 +1,5 @@
 package core.interact.commands
 
-import core.session.MessageManager
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
@@ -10,7 +9,7 @@ import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
-import core.session.SessionManager
+import core.session.MessageManager
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
@@ -24,14 +23,14 @@ class SettingsCommand : Command {
 
     override val responseFlag = ResponseFlag.Immediately
 
-    override suspend fun <A, B> execute(
+    override suspend fun execute(
         bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService<A, B>,
+        service: MessagingService,
         messageRef: MessageRef,
-        publishers: PublisherSet<A, B>,
+        publishers: PublisherSet,
     ) = runCatching {
         val io = effect {
             service.buildSettings(publishers.plain, config, 0)
@@ -39,16 +38,16 @@ class SettingsCommand : Command {
                 ?.let { settingsMessage ->
                         MessageManager.addNavigation(
                             bot.sessions,
-                            settingsMessage.messageRef,
+                            settingsMessage.ref,
                             PageNavigationState(
-                                settingsMessage.messageRef,
+                                settingsMessage.ref,
                                 NavigationKind.SETTINGS,
                                 0,
                                 Clock.System.now() + bot.config.navigatorExpireAfter.milliseconds
                             )
                         )
 
-                        service.attachBinaryNavigators(settingsMessage.messageData)()
+                        service.attachBinaryNavigators(settingsMessage)()
                     }
 
             emptyOrders
