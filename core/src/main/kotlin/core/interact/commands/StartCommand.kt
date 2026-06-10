@@ -66,10 +66,7 @@ class StartCommand(val opponent: User, val rule: Rule) : Command {
                 val io = effect {
                     service.buildRequest(publishers.plain, config.language.container, user, opponent, this@StartCommand.rule)
                         .retrieve()()
-                        .fold(
-                            ifSome = { MessageManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.messageRef) },
-                            ifEmpty = { }
-                        )
+                        ?.let { MessageManager.appendMessage(bot.sessions, requestSession.messageBufferKey, it.messageRef) }
 
                     emptyOrders
                 }

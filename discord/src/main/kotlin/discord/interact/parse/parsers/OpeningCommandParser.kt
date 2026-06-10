@@ -1,10 +1,6 @@
 package discord.interact.parse.parsers
 
 import core.session.MessageManager
-import arrow.core.None
-import arrow.core.Option
-import arrow.core.Some
-import arrow.core.toOption
 import core.assets.humanId
 import core.interact.commands.Command
 import core.interact.commands.OpeningBranchingCommand
@@ -22,16 +18,16 @@ import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionE
 
 object OpeningCommandParser : EmbeddableCommand {
 
-    override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
+    override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Command? {
         val sessionId = SessionManager.findGameSessionId(context.bot.sessions, context.channel.id, context.user.id)
-            ?: return None
+            ?: return null
         val session = SessionManager.retrieveGameSession(context.bot.sessions, sessionId).snapshot()
         val ref = when (context.config.swapType) {
             SwapType.EDIT -> MessageManager.viewHeadMessage(context.bot.sessions, session.messageBufferKey)
             else -> null
         }
 
-        if (session.player.humanId != context.user.id) return None
+        if (session.player.humanId != context.user.id) return null
 
         val id = when (context.event) {
             is StringSelectInteractionEvent -> context.event.interaction.selectedOptions.first().value
@@ -40,29 +36,28 @@ object OpeningCommandParser : EmbeddableCommand {
 
         return when (id[2]) {
             's' -> {
-                if (session !is SwapStageOpeningSession) return None
+                if (session !is SwapStageOpeningSession) return null
 
                 val doSwap = id[3] == 'y'
 
-                Some(OpeningSwapCommand(sessionId, doSwap, ref))
+                OpeningSwapCommand(sessionId, doSwap, ref)
             }
             'b' -> {
-                if (session !is BranchingStageOpeningSession) return None
+                if (session !is BranchingStageOpeningSession) return null
 
                 val takeBranch = id[3] == 'y'
 
-                Some(OpeningBranchingCommand(sessionId, takeBranch, ref))
+                OpeningBranchingCommand(sessionId, takeBranch, ref)
             }
             'd' -> {
-                if (session !is DeclareStageOpeningSession) return None
+                if (session !is DeclareStageOpeningSession) return null
 
                 id
                     .drop(3)
                     .toIntOrNull()
-                    .toOption()
-                    .map { OpeningDeclareCommand(sessionId, it, ref) }
+                    ?.let { OpeningDeclareCommand(sessionId, it, ref) }
             }
-            else -> None
+            else -> null
         }
     }
 

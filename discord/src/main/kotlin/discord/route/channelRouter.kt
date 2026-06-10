@@ -1,6 +1,5 @@
 package discord.route
 
-import arrow.core.getOrElse
 import core.assets.Channel
 import core.assets.ChannelUid
 import core.database.repositories.ChannelConfigRepository
@@ -43,7 +42,7 @@ suspend fun channelJoinRouter(context: InternalInteractionContext<GuildJoinEvent
     }
 
     val config = ChannelConfigRepository.fetchChannelConfig(context.bot.dbConnection, channel.id)
-        .getOrElse { ChannelConfig(language = matchLocale(context.event.guild.locale)) }
+        ?: ChannelConfig(language = matchLocale(context.event.guild.locale))
 
     val command = ChannelJoinCommand(context.event.guild.locale.languageName)
 
@@ -73,26 +72,23 @@ suspend fun channelJoinRouter(context: InternalInteractionContext<GuildJoinEvent
 
 // TODO: bad smell
 suspend fun channelLeaveRouter(context: InternalInteractionContext<GuildLeaveEvent>): Report {
-    val maybeChannel = ChannelProfileRepository.retrieveChannel(context.bot.dbConnection, DISCORD_PLATFORM_ID, context.event.guild.extractId())
+    val channel = ChannelProfileRepository.retrieveChannel(context.bot.dbConnection, DISCORD_PLATFORM_ID, context.event.guild.extractId())
 
-    return maybeChannel.fold(
-        ifSome = { channel ->
-            ChannelLeaveCommand.execute(
-                bot = context.bot,
-                config = SessionManager.retrieveChannelConfig(context.bot.sessions, channel),
-                channel = channel,
-                service = DiscordMessagingService,
-                publisher = MonoPublisherSet(
-                    publisher = { throw IllegalStateException() },
-                    editGlobal = { throw IllegalStateException() }
-                )
-            ).fold(
-                onSuccess = { (_, report) -> report },
-                onFailure = { ErrorReport(IllegalStateException(), context.channel) }
+    return (channel?.let {
+        ChannelLeaveCommand.execute(
+            bot = context.bot,
+            config = SessionManager.retrieveChannelConfig(context.bot.sessions, it),
+            channel = it,
+            service = DiscordMessagingService,
+            publisher = MonoPublisherSet(
+                publisher = { throw IllegalStateException() },
+                editGlobal = { throw IllegalStateException() }
             )
-        },
-        ifEmpty = { ErrorReport(IllegalStateException(), context.channel) }
-    ).apply {
+        ).fold(
+            onSuccess = { (_, report) -> report },
+            onFailure = { ErrorReport(IllegalStateException(), context.channel) }
+        )
+    } ?: ErrorReport(IllegalStateException(), context.channel)).apply {
         interactionSource = context.source
         emittedTime = context.emittedTime
         apiTime = Clock.System.now()

@@ -1,8 +1,5 @@
 package core.session.entities
 
-import arrow.core.None
-import arrow.core.Option
-import arrow.core.Some
 import core.assets.User
 import core.session.Rule
 import renju.GameState
@@ -57,7 +54,7 @@ data class SoosyrvMoveStageSession(
                 id = this.id, blackPlayer = this.blackPlayer, whitePlayer = this.whitePlayer,
                 messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
                 state = this.state.play(move),
-                offerCount = None
+                offerCount = null
             )
 
 }
@@ -69,36 +66,32 @@ data class SoosyrvSwapStageSession(
     override val state: GameState,
     override val messageBufferKey: MessageBufferKey,
     override val expireService: ExpireService,
-    override val offerCount: Option<Int>
+    override val offerCount: Int?
 ) : SoosyrvOpeningSession, SwapStageOpeningSession {
 
     override val isBranched = true
 
     override fun swap(doSwap: Boolean): SoosyrvOpeningSession =
-        this.offerCount.fold(
-            ifEmpty = {
-                SoosyrvMoveStageSession(
-                    id = this.id,
-                    blackPlayer = if (doSwap) this.whitePlayer else this.blackPlayer,
-                    whitePlayer = if (doSwap) this.blackPlayer else this.whitePlayer,
-                    messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
-                    state = this.state,
-                    isBranched = true
-                )
-            },
-            ifSome = { count ->
-                SoosyrvOfferStageOpeningSession(
-                    id = this.id,
-                    blackPlayer = if (doSwap) this.whitePlayer else this.blackPlayer,
-                    whitePlayer = if (doSwap) this.blackPlayer else this.whitePlayer,
-                    messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
-                    state = this.state,
-                    moveCandidates = emptySet(),
-                    symmetryMoves = emptySet(),
-                    offerCount = count
-                )
-            }
-        )
+        if (this.offerCount == null)
+            SoosyrvMoveStageSession(
+                id = this.id,
+                blackPlayer = if (doSwap) this.whitePlayer else this.blackPlayer,
+                whitePlayer = if (doSwap) this.blackPlayer else this.whitePlayer,
+                messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
+                state = this.state,
+                isBranched = true
+            )
+        else
+            SoosyrvOfferStageOpeningSession(
+                id = this.id,
+                blackPlayer = if (doSwap) this.whitePlayer else this.blackPlayer,
+                whitePlayer = if (doSwap) this.blackPlayer else this.whitePlayer,
+                messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
+                state = this.state,
+                moveCandidates = emptySet(),
+                symmetryMoves = emptySet(),
+                offerCount = this.offerCount
+            )
 
 }
 
@@ -122,7 +115,7 @@ data class SoosyrvDeclareStageOpeningSession(
             id = this.id, blackPlayer = this.blackPlayer, whitePlayer = this.whitePlayer,
             state = this.state,
             messageBufferKey = MessageBufferKey.issue(), expireService = this.expireService.next(),
-            offerCount = Some(count)
+            offerCount = count
         )
 
 }

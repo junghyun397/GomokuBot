@@ -1,9 +1,7 @@
 package discord.interact.parse.parsers
 
 import arrow.core.Either
-import arrow.core.Option
 import arrow.core.raise.effect
-import arrow.core.toOption
 import core.database.repositories.UserProfileRepository
 import core.interact.commands.Command
 import core.interact.commands.RankCommand
@@ -46,19 +44,20 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
         ),
     )
 
-    private suspend fun parseUserRank(context: UserInteractionContext<*>, maybeTarget: Option<net.dv8tion.jda.api.entities.User>): Either<DiscordParseFailure, Command> =
-        maybeTarget
-            .flatMap { UserProfileRepository.retrieveUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, it.extractId()) }
-            .fold(
-                ifSome = { Either.Right(RankCommand(RankScope.User(it))) },
-                ifEmpty = { Either.Left(this.asParseFailure("target user not found", context.channel, context.user) { messagingService, publisher, container ->
+    private suspend fun parseUserRank(context: UserInteractionContext<*>, maybeTarget: net.dv8tion.jda.api.entities.User?): Either<DiscordParseFailure, Command> {
+        val user = maybeTarget
+            ?.let { UserProfileRepository.retrieveUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, it.extractId()) }
+
+        return user
+            ?.let { Either.Right(RankCommand(RankScope.User(it))) }
+            ?: Either.Left(this.asParseFailure("target user not found", context.channel, context.user) { messagingService, publisher, container ->
                     effect {
                         messagingService.buildUserNotFound(publisher, container)
                             .launch()()
                         emptyList()
                     }
-                }) }
-            )
+                })
+    }
 
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<DiscordParseFailure, Command> =
         when (context.event.subcommandName) {
@@ -67,7 +66,6 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             context.config.language.container.rankCommandSubUser() ->
                 context.event.getOption(context.config.language.container.rankCommandOptionPlayer())
                     ?.asUser
-                    .toOption()
                     .let { this.parseUserRank(context, it) }
             else -> Either.Right(RankCommand(RankScope.Global))
         }
@@ -79,7 +77,6 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             context.config.language.container.rankCommandSubUser() ->
                 context.event.message.mentions.members.firstOrNull()
                     ?.user
-                    .toOption()
                     .let { this.parseUserRank(context, it) }
             else -> Either.Right(RankCommand(RankScope.Global))
         }

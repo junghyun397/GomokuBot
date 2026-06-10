@@ -51,7 +51,7 @@ class PlayCommand(
         val finalSession = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { currentSession ->
             val renjuSession = currentSession as? RenjuSession ?: throw IllegalStateException()
             if (renjuSession.player.humanId != user.id) throw IllegalStateException()
-            if (renjuSession.board.validateMove(this.pos).isSome()) throw IllegalStateException()
+            if (renjuSession.board.validateMove(this.pos) != null) throw IllegalStateException()
 
             session = renjuSession
             val beforeHash = renjuSession.board.hashKey
@@ -59,19 +59,19 @@ class PlayCommand(
 
             when (thenSession) {
                 is EngineGameSession ->
-                    thenSession.gameResult.fold(
-                        ifEmpty = {
-                            aiMoved = true
-                            GameManager.makeAiMove(bot.mintakaServer, thenSession, beforeHash, this.pos)
-                        },
-                        ifSome = { thenSession }
-                    )
+                    if (thenSession.gameResult == null) {
+                        aiMoved = true
+                        GameManager.makeAiMove(bot.mintakaServer, thenSession, beforeHash, this.pos)
+                    } else {
+                        thenSession
+                    }
                 is PvpGameSession -> thenSession
             }
         } as RenjuSession
 
-        finalSession.gameResult.fold(
-            ifEmpty = {
+        val result = finalSession.gameResult
+
+        if (result == null) {
                 val guideIO = when {
                     config.swapType == SwapType.EDIT && this.deployAt == null -> effect { Unit }
                     else -> {
@@ -118,8 +118,7 @@ class PlayCommand(
                 }
 
                 tuple(io, this.writeCommandReport("make move ${this.pos}", channel, user))
-            },
-            ifSome = { result ->
+        } else {
                 GameManager.finishSession(bot, channel, finalSession, result)
 
                 val io = effect {
@@ -175,8 +174,7 @@ class PlayCommand(
                 }
 
                 tuple(io, this.writeCommandReport("make move ${this.pos}, terminate session by $result", channel, user))
-            }
-        )
+        }
     }
 
 }

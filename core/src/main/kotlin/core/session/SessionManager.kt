@@ -33,10 +33,7 @@ object SessionManager {
     suspend fun retrieveChannelConfig(pool: SessionPool, channel: Channel): ChannelConfig =
         pool.channelConfigs.getOrElse(channel.id) {
             ChannelConfigRepository.fetchChannelConfig(pool.dbConnection, channel.id)
-                .fold(
-                    ifSome = { it },
-                    ifEmpty = { ChannelConfig() }
-                )
+                ?: ChannelConfig()
                 .also {
                     pool.channelConfigs[channel.id] = it
                 }

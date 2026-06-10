@@ -2,7 +2,6 @@ package core.assets
 
 import core.database.DatabaseConnection
 import core.database.repositories.UserProfileRepository
-import io.r2dbc.spi.Statement
 import renju.notation.ForbiddenKind
 
 suspend fun UserUid?.retrieveUserOrGomokuBot(connection: DatabaseConnection): User =
@@ -16,10 +15,4 @@ fun forbiddenKindToText(kind: ForbiddenKind?) =
         ForbiddenKind.DoubleFour -> "4-4"
         ForbiddenKind.Overline -> "≥6"
         null -> "UNKNOWN"
-    }
-
-inline fun <reified T : Any> Statement.bindNullable(name: String, value: T?): Statement =
-    when (value) {
-        null -> bindNull(name, T::class.java)
-        else -> bind(name, value)
     }

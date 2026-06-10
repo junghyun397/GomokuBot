@@ -24,8 +24,7 @@ fun <A, B> buildHelpProcedure(
     .retrieve()
     .let { io ->
         effect {
-            io().fold(
-                ifSome = { helpMessage ->
+            io()?.let { helpMessage ->
                     MessageManager.addNavigation(
                         bot.sessions,
                         helpMessage.messageRef,
@@ -38,9 +37,7 @@ fun <A, B> buildHelpProcedure(
                     )
 
                     service.attachBinaryNavigators(helpMessage.messageData)()
-                },
-                ifEmpty = { }
-            )
+                }
         }
     }
 
@@ -58,10 +55,10 @@ fun <A, B> buildCombinedHelpProcedure(
         effect {
             val (maybeHelp, maybeSettings) = zipped()
 
-            maybeHelp.fold(
-                ifSome = { helpMessage ->
-                    maybeSettings.fold(
-                        ifSome = { settingsMessage ->
+            if (maybeHelp != null && maybeSettings != null) {
+                val helpMessage = maybeHelp
+                val settingsMessage = maybeSettings
+
                             MessageManager.addNavigation(
                                 bot.sessions,
                                 helpMessage.messageRef,
@@ -86,11 +83,6 @@ fun <A, B> buildCombinedHelpProcedure(
 
                             service.attachBinaryNavigators(helpMessage.messageData)()
                             service.attachBinaryNavigators(settingsMessage.messageData)()
-                        },
-                        ifEmpty = { }
-                    )
-                },
-                ifEmpty = { }
-            )
+            }
         }
     }

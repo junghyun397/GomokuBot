@@ -1,6 +1,5 @@
 package discord.interact.parse.parsers
 
-import arrow.core.Option
 import core.interact.commands.ApplySettingCommand
 import core.interact.commands.Command
 import core.interact.message.SettingMapping
@@ -11,14 +10,14 @@ import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionE
 
 object ApplySettingCommandParser : EmbeddableCommand {
 
-    override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
+    override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Command? {
         val (kind, choice) = when(context.event) {
             is StringSelectInteractionEvent -> context.event.interaction.selectedOptions.first().value.split("-")
             else -> context.event.componentId.split("-").drop(1)
         }
 
         return SettingMapping.buildDifference(context.config, kind, choice)
-            .map { (diff, newConfig) -> ApplySettingCommand(newConfig, diff) }
+            ?.let { (diff, newConfig) -> ApplySettingCommand(newConfig, diff) }
     }
 
 }

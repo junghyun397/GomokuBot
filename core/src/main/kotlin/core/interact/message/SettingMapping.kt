@@ -1,7 +1,5 @@
 package core.interact.message
 
-import arrow.core.Option
-import arrow.core.toOption
 import core.assets.*
 import core.interact.i18n.LanguageContainer
 import core.interact.message.graphics.HistoryRenderType
@@ -18,7 +16,7 @@ data class SettingElement(
     val label: (LanguageContainer) -> String,
     val description: (LanguageContainer) -> String,
     val extract: (ChannelConfig) -> Identifiable,
-    val find: (String) -> Option<Identifiable>,
+    val find: (String) -> Identifiable?,
     val mutate: (ChannelConfig, Identifiable) -> ChannelConfig
 )
 
@@ -50,7 +48,7 @@ object SettingMapping {
                 label = LanguageContainer::style,
                 description = LanguageContainer::styleEmbedDescription,
                 extract = { it.boardStyle },
-                find = { name -> runCatching { BoardStyle.valueOf(name) }.getOrNull().toOption() }
+                find = { name -> runCatching { BoardStyle.valueOf(name) }.getOrNull() }
             ) { config, value -> config.copy(boardStyle = value as BoardStyle) },
             second = mapOf(
                 BoardStyle.IMAGE to OptionElement.fromIdentifiableEnum(
@@ -80,7 +78,7 @@ object SettingMapping {
                 label = LanguageContainer::focus,
                 description = LanguageContainer::focusEmbedDescription,
                 extract = { it.focusType },
-                find = { name -> runCatching { FocusType.valueOf(name) }.getOrNull().toOption() }
+                find = { name -> runCatching { FocusType.valueOf(name) }.getOrNull() }
             ) { config, value -> config.copy(focusType = value as FocusType) },
             second = mapOf(
                 FocusType.INTELLIGENCE to OptionElement.fromIdentifiableEnum(
@@ -104,7 +102,7 @@ object SettingMapping {
                 label = LanguageContainer::hint,
                 description = LanguageContainer::hintEmbedDescription,
                 extract = { it.hintType },
-                find = { name -> runCatching { HintType.valueOf(name) }.getOrNull().toOption() }
+                find = { name -> runCatching { HintType.valueOf(name) }.getOrNull() }
             ) { config, value -> config.copy(hintType = value as HintType) },
             second = mapOf(
                 HintType.FIVE to OptionElement.fromIdentifiableEnum(
@@ -128,7 +126,7 @@ object SettingMapping {
                 label = LanguageContainer::mark,
                 description = LanguageContainer::markEmbedDescription,
                 extract = { it.markType },
-                find = { name -> runCatching { HistoryRenderType.valueOf(name) }.getOrNull().toOption() }
+                find = { name -> runCatching { HistoryRenderType.valueOf(name) }.getOrNull() }
             ) { config, value -> config.copy(markType = value as HistoryRenderType) },
             second = mapOf(
                 HistoryRenderType.LAST to OptionElement.fromIdentifiableEnum(
@@ -158,7 +156,7 @@ object SettingMapping {
                 label = LanguageContainer::swap,
                 description = LanguageContainer::swapEmbedDescription,
                 extract = { it.swapType },
-                find = { name -> runCatching { SwapType.valueOf(name) }.getOrNull().toOption() }
+                find = { name -> runCatching { SwapType.valueOf(name) }.getOrNull() }
             ) { config, value -> config.copy(swapType = value as SwapType) },
             second = mapOf(
                 SwapType.RELAY to OptionElement.fromIdentifiableEnum(
@@ -188,7 +186,7 @@ object SettingMapping {
                 label = LanguageContainer::archive,
                 description = LanguageContainer::archiveEmbedDescription,
                 extract = { it.archivePolicy },
-                find = { name -> runCatching { ArchivePolicy.valueOf(name) }.getOrNull().toOption() }
+                find = { name -> runCatching { ArchivePolicy.valueOf(name) }.getOrNull() }
             ) { config, value -> config.copy(archivePolicy = value as ArchivePolicy) },
             second = mapOf(
                 ArchivePolicy.BY_ANONYMOUS to OptionElement.fromIdentifiableEnum(
@@ -219,12 +217,14 @@ object SettingMapping {
         return tuple(settingElement.label(container), map[diff]!!.label(container))
     }
 
-    fun buildDifference(config: ChannelConfig, kind: String, choice: String): Option<Pair<Identifiable, ChannelConfig>> =
-        this.map.values.firstOrNull { (settlingElement, _) -> settlingElement.stringId == kind }
-            .toOption()
-            .flatMap { (settingElement, _) ->
-                settingElement.find(choice)
-                    .map { choiceValue -> tuple(choiceValue, settingElement.mutate(config, choiceValue)) }
-            }
+    fun buildDifference(config: ChannelConfig, kind: String, choice: String): Pair<Identifiable, ChannelConfig>? {
+        val (settingElement, _) = this.map.values
+            .firstOrNull { (settlingElement, _) -> settlingElement.stringId == kind }
+            ?: return null
+
+        val choiceValue = settingElement.find(choice) ?: return null
+
+        return tuple(choiceValue, settingElement.mutate(config, choiceValue))
+    }
 
 }

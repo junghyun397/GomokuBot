@@ -1,7 +1,5 @@
 package core.interact.commands
 
-import arrow.core.Option
-import arrow.core.getOrElse
 import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import core.BotContext
@@ -20,8 +18,8 @@ import utils.lang.tuple
 
 class UpdateProfileCommand(
     command: Command,
-    private val newUser: Option<User.Human>,
-    private val newChannel: Option<Channel>,
+    private val newUser: User.Human?,
+    private val newChannel: Channel?,
 ) : UnionCommand(command) {
 
     override val name = "update-profile"
@@ -35,17 +33,17 @@ class UpdateProfileCommand(
         messageRef: MessageRef,
         publishers: PublisherSet<A, B>
     ) = runCatching {
-        this.newUser.onSome {
+        this.newUser?.let {
             UserProfileRepository.upsertUser(bot.dbConnection, it)
         }
 
-        val thenUser = this.newUser.getOrElse { user }
+        val thenUser = this.newUser ?: user
 
-        this.newChannel.onSome {
+        this.newChannel?.let {
             ChannelProfileRepository.upsertChannel(bot.dbConnection, it)
         }
 
-        val thenChannel = this.newChannel.getOrElse { channel }
+        val thenChannel = this.newChannel ?: channel
 
         val io: Effect<Nothing, List<Order>> = effect { emptyOrders }
 

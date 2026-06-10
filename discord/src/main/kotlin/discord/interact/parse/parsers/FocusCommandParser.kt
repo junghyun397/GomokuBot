@@ -1,6 +1,5 @@
 package discord.interact.parse.parsers
 
-import arrow.core.toOption
 import core.interact.commands.Direction
 import core.interact.commands.FocusCommand
 import core.interact.parse.CommandParser
@@ -12,7 +11,6 @@ import discord.interact.UserInteractionContext
 import discord.interact.parse.NavigableCommand
 import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
-import utils.lang.tuple
 
 object FocusCommandParser : CommandParser, NavigableCommand {
 
@@ -28,15 +26,15 @@ object FocusCommandParser : CommandParser, NavigableCommand {
             else -> null
         }
 
-    override suspend fun parseReaction(context: UserInteractionContext<GenericMessageReactionEvent>, state: NavigationState) =
-        SessionManager.findGameSessionId(context.bot.sessions, context.channel.id, context.user.id)
-            .toOption()
-            .filter { state is BoardNavigationState }
-            .flatMap { sessionId ->
-                this.matchDirection(context.event.reaction.emoji.asUnicode())
-                    .toOption()
-                    .map { tuple(sessionId, it) }
-            }
-            .map { (sessionId, direction) -> FocusCommand(state as BoardNavigationState, sessionId, direction) }
+    override suspend fun parseReaction(context: UserInteractionContext<GenericMessageReactionEvent>, state: NavigationState): FocusCommand? {
+        val sessionId = SessionManager.findGameSessionId(context.bot.sessions, context.channel.id, context.user.id)
+            ?: return null
+        val boardState = state as? BoardNavigationState
+            ?: return null
+        val direction = this.matchDirection(context.event.reaction.emoji.asUnicode())
+            ?: return null
+
+        return FocusCommand(boardState, sessionId, direction)
+    }
 
 }

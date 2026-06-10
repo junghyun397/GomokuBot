@@ -1,8 +1,5 @@
 package core.database.entities
 
-import arrow.core.None
-import arrow.core.Option
-import arrow.core.Some
 import core.assets.ChannelUid
 import core.assets.UserUid
 import core.assets.humanId
@@ -16,7 +13,7 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 
 data class GameRecord(
-    val gameRecordId: Option<GameRecordId>,
+    val gameRecordId: GameRecordId?,
 
     val history: List<Pos>,
 
@@ -35,28 +32,26 @@ data class GameRecord(
 
 @JvmInline value class GameRecordId(val id: Long)
 
-fun GameSession.extractGameRecord(channelUid: ChannelUid): Option<GameRecord> =
-    if (this.gameResult.isSome() && this.recording && null !in this.history)
-        Some(
-            GameRecord(
-                gameRecordId = None,
+fun GameSession.extractGameRecord(channelUid: ChannelUid): GameRecord? =
+    if (this.gameResult != null && this.recording && null !in this.history)
+        GameRecord(
+            gameRecordId = null,
 
-                history = history.sequence.filterNotNull(),
+            history = this.history.sequence.filterNotNull(),
 
-                gameResult = gameResult.getOrNull()!!,
+            gameResult = this.gameResult!!,
 
-                channelId = channelUid,
-                blackId = this.blackPlayer.humanId,
-                whiteId = this.whitePlayer.humanId,
+            channelId = channelUid,
+            blackId = this.blackPlayer.humanId,
+            whiteId = this.whitePlayer.humanId,
 
-                engineLevel = when (this) {
-                    is EngineGameSession -> EngineLevel.AMOEBA
-                    else -> null
-                },
+            engineLevel = when (this) {
+                is EngineGameSession -> EngineLevel.AMOEBA
+                else -> null
+            },
 
-                rule = ruleKind,
+            rule = this.ruleKind,
 
-                date = Clock.System.now()
-            )
+            date = Clock.System.now()
         )
-    else None
+    else null

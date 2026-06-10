@@ -1,6 +1,5 @@
 package core.session.entities
 
-import arrow.core.None
 import core.assets.User
 import core.session.Rule
 import renju.GameState
@@ -22,7 +21,7 @@ data class TaraguchiSwapStageSession(
     override val isBranched: Boolean
 ) : TaraguchiOpeningSession, SwapStageOpeningSession {
 
-    override val offerCount = None
+    override val offerCount = null
 
     override fun swap(doSwap: Boolean): GameSession =
         if (this.isBranched && this.history.moves == 5)

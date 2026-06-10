@@ -22,11 +22,9 @@ abstract class SessionSideParser<A, B> : CommandParser {
             })
 
     protected fun retrieveSession(context: BotContext, channel: Channel, user: User.Human): Either<ParseFailure<A, B>, Pair<SessionId, GameSession>> =
-        when (val sessionId = this.retrieveSessionId(context, channel, user)) {
-            is Either.Left -> sessionId
-            is Either.Right -> Either.Right(
-                sessionId.value to SessionManager.retrieveGameSession(context.sessions, sessionId.value).snapshot()
-            )
-        }
+        this.retrieveSessionId(context, channel, user)
+            .map { sessionId ->
+                sessionId to SessionManager.retrieveGameSession(context.sessions, sessionId).snapshot()
+            }
 
 }

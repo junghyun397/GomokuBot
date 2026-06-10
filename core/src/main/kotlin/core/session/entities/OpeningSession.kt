@@ -1,15 +1,12 @@
 package core.session.entities
 
-import arrow.core.None
-import arrow.core.Option
-import arrow.core.Some
 import renju.notation.GameResult
 import renju.notation.Pos
 import kotlin.math.pow
 
 sealed interface OpeningSession : GameSession {
 
-    override val gameResult get() = None
+    override val gameResult get() = null
 
     override val recording get() = false
 
@@ -27,7 +24,7 @@ sealed interface PlayStageOpeningSession : OpeningSession {
 
 interface SwapStageOpeningSession : PlayStageOpeningSession {
 
-    val offerCount: Option<Int>
+    val offerCount: Int?
 
     fun swap(doSwap: Boolean): GameSession
 
@@ -143,7 +140,7 @@ fun OpeningSession.asFinishedPvpSession(result: GameResult): PvpGameSession =
         blackPlayer = this.blackPlayer,
         whitePlayer = this.whitePlayer,
         state = this.state,
-        gameResult = Some(result),
+        gameResult = result,
         messageBufferKey = this.messageBufferKey,
         recording = false,
         ruleKind = this.ruleKind,

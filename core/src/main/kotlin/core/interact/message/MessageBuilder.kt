@@ -1,6 +1,5 @@
 package core.interact.message
 
-import arrow.core.Option
 import arrow.core.raise.Effect
 import java.io.InputStream
 
@@ -12,6 +11,6 @@ interface MessageBuilder<A, B> {
 
     fun launch(): Effect<Nothing, Unit>
 
-    fun retrieve(): Effect<Nothing, Option<MessageAdaptor<A, B>>>
+    fun retrieve(): Effect<Nothing, MessageAdaptor<A, B>?>
 
 }

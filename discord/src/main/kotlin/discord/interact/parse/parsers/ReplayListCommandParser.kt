@@ -1,8 +1,6 @@
 package discord.interact.parse.parsers
 
 import arrow.core.Either
-import arrow.core.None
-import arrow.core.Some
 import core.interact.commands.ReplayListCommand
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.CommandParser
@@ -46,13 +44,13 @@ object ReplayListCommandParser : CommandParser, ParsableCommand, BuildableComman
 
     override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>) = runCatching {
         if (context.event.componentId.split("-")[1] == context.user.id.validationKey)
-            Some(ReplayListCommand(edit = true))
+            ReplayListCommand(edit = true)
         else
-            None
+            null
     }
         .fold(
             onSuccess = { it },
-            onFailure = { None }
+            onFailure = { null }
         )
 
 }

@@ -2,13 +2,15 @@ package core.database.repositories
 
 import core.database.DatabaseConnection
 import core.database.entities.Announce
+import core.database.jooq.tables.records.AnnounceRecord
+import core.database.jooq.tables.references.ANNOUNCE
 import core.interact.i18n.Language
-import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import reactor.core.publisher.Flux
 import utils.lang.tuple
-import java.time.LocalDateTime
 import java.util.*
 
 object AnnounceRepository {
@@ -29,38 +31,37 @@ object AnnounceRepository {
         connection.localCaches.announceCache[this.getLatestAnnounceId(connection)]!!
 
     suspend fun fetchAnnounces(connection: DatabaseConnection): SortedMap<Int, Map<Language, Announce>> =
-        connection.liftConnection()
-            .flatMapMany { dbc -> dbc
-                .createStatement("SELECT * FROM announce")
-                .execute()
-            }
-            .flatMap { result -> result
-                .map { row, _ ->
-                    val date = row["create_date"] as LocalDateTime
-
-                    val announces = Json.parseToJsonElement(row["contents"] as String)
-                        .jsonObject
-                        .entries
-                        .associate { (languageCode, rawContent) ->
-                            val language = Language.entries
-                                .find { it.container.languageCode() == languageCode.uppercase() }
-                                ?: Language.ENG
-
-                            val announce = Announce(
-                                rawContent.jsonObject["title"]!!.jsonPrimitive.content,
-                                rawContent.jsonObject["content"]!!.jsonPrimitive.content,
-                                date
-                            )
-
-                            language to announce
-                        }
-
-                    tuple(row["announce_id"] as Int, announces)
-                }
-            }
+        Flux.from(
+            connection.jooq
+                .selectFrom(ANNOUNCE)
+        )
+            .map { this.extractAnnounces(it) }
             .filter { (_, announces) -> announces.containsKey(Language.ENG) }
             .collectList()
             .map { it.toMap().toSortedMap() }
             .awaitSingle()
+
+    private fun extractAnnounces(record: AnnounceRecord): Pair<Int, Map<Language, Announce>> {
+        val date = record.createDate!!
+
+        val announces = Json.parseToJsonElement(record.contents!!)
+            .jsonObject
+            .entries
+            .associate { (languageCode, rawContent) ->
+                val language = Language.entries
+                    .find { it.container.languageCode() == languageCode.uppercase() }
+                    ?: Language.ENG
+
+                val announce = Announce(
+                    rawContent.jsonObject["title"]!!.jsonPrimitive.content,
+                    rawContent.jsonObject["content"]!!.jsonPrimitive.content,
+                    date
+                )
+
+                language to announce
+            }
+
+        return tuple(record.announceId!!, announces)
+    }
 
 }

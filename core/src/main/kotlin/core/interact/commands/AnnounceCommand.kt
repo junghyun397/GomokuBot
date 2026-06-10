@@ -46,8 +46,7 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
                         config.language.container,
                         announces[config.language] ?: announces[Language.ENG]!!
                     ).retrieve()()
-                        .fold(
-                            ifSome = { announceMessage ->
+                        ?.let { announceMessage ->
                                 MessageManager.addNavigation(
                                     bot.sessions,
                                     announceMessage.messageRef,
@@ -60,9 +59,7 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
                                 )
 
                                 service.attachBinaryNavigators(announceMessage.messageData)()
-                            },
-                            ifEmpty = { }
-                        )
+                            }
                 }
 
             listOf(Order.UpsertCommands(config.language.container))

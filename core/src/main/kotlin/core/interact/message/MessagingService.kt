@@ -1,6 +1,5 @@
 package core.interact.message
 
-import arrow.core.Option
 import arrow.core.raise.Effect
 import core.assets.User
 import core.database.entities.Announce
@@ -35,7 +34,7 @@ interface MessagingService<A, B> {
 
     fun buildReplayBoard(publisher: MessagePublisher<A, B>, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession, totalMoves: Int): MessageBuilder<A, B>
 
-    fun buildSessionArchive(publisher: MessagePublisher<A, B>, session: GameSession, result: Option<GameResult>): MessageBuilder<A, B>
+    fun buildSessionArchive(publisher: MessagePublisher<A, B>, session: GameSession, result: GameResult?): MessageBuilder<A, B>
 
     fun dispatchFocusButtons(publisher: ComponentPublisher<A, B>, focusedFields: FocusedFields): MessageBuilder<A, B>
 

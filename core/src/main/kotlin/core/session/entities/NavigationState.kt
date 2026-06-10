@@ -1,9 +1,6 @@
 package core.session.entities
 
 import arrow.core.Either
-import arrow.core.None
-import arrow.core.Option
-import arrow.core.Some
 import core.BotConfig
 import core.assets.*
 import core.database.DatabaseConnection
@@ -72,7 +69,7 @@ data class PageNavigationState(
             return ((baseBytes[0] + kind.id) shl 16) or ((baseBytes[1] + headByte) shl 8) or (baseBytes[2] + tailByte)
         }
 
-        fun decodeFromColor(base: Int, code: Int, config: BotConfig, messageRef: MessageRef, dbConnection: DatabaseConnection): Option<PageNavigationState> {
+        fun decodeFromColor(base: Int, code: Int, config: BotConfig, messageRef: MessageRef, dbConnection: DatabaseConnection): PageNavigationState? {
             val (kindRaw, pageTop, pageBottom) = base.toBytes()
                 .zip(code.toBytes()) { a, b -> b - a }
                 .drop(1)
@@ -81,8 +78,8 @@ data class PageNavigationState(
             val page = pageTop + pageBottom
 
             return if (kind != NavigationKind.BOARD && page in kind.fetchRange(dbConnection))
-                Some(PageNavigationState(messageRef, kind, page, Clock.System.now() + config.navigatorExpireAfter.milliseconds))
-            else None
+                PageNavigationState(messageRef, kind, page, Clock.System.now() + config.navigatorExpireAfter.milliseconds)
+            else null
         }
 
     }

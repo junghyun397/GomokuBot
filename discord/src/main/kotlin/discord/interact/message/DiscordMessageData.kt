@@ -1,7 +1,5 @@
 package discord.interact.message
 
-import arrow.core.None
-import arrow.core.Option
 import dev.minn.jda.ktx.messages.MessageCreate
 import dev.minn.jda.ktx.messages.MessageEdit
 import net.dv8tion.jda.api.components.MessageTopLevelComponent
@@ -17,7 +15,7 @@ data class DiscordMessageData(
     val files: List<AttachedFile> = emptyList(),
     val components: List<MessageTopLevelComponent> = emptyList(),
     val tts: Boolean = false,
-    val original: Option<Message> = None
+    val original: Message? = null
 ) {
 
     constructor(content: String = "", embed: MessageEmbed): this(content, embeds = listOf(embed))

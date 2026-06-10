@@ -1,8 +1,5 @@
 package core.session.entities
 
-import arrow.core.None
-import arrow.core.Option
-import arrow.core.Some
 import core.assets.User
 import core.session.Rule
 import renju.GameState
@@ -10,7 +7,7 @@ import renju.notation.GameResult
 
 sealed interface RenjuSession : GameSession {
 
-    fun next(state: GameState, gameResult: Option<GameResult>, messageBufferKey: MessageBufferKey): RenjuSession
+    fun next(state: GameState, gameResult: GameResult?, messageBufferKey: MessageBufferKey): RenjuSession
 
 }
 
@@ -21,7 +18,7 @@ data class EngineGameSession(
     override val blackPlayer: User,
     override val whitePlayer: User,
     override val state: GameState,
-    override val gameResult: Option<GameResult> = None,
+    override val gameResult: GameResult? = null,
     override val messageBufferKey: MessageBufferKey,
     override val recording: Boolean,
     override val ruleKind: Rule,
@@ -32,7 +29,7 @@ data class EngineGameSession(
 
     override val opponent: User get() = User.GomokuBot
 
-    override fun next(state: GameState, gameResult: Option<GameResult>, messageBufferKey: MessageBufferKey) =
+    override fun next(state: GameState, gameResult: GameResult?, messageBufferKey: MessageBufferKey) =
         this.copy(
             state = state,
             gameResult = gameResult,
@@ -40,7 +37,7 @@ data class EngineGameSession(
             messageBufferKey = messageBufferKey
         )
 
-    override fun updateResult(gameResult: GameResult) = this.copy(gameResult = Some(gameResult))
+    override fun updateResult(gameResult: GameResult) = this.copy(gameResult = gameResult)
 
 }
 
@@ -49,14 +46,14 @@ data class PvpGameSession(
     override val blackPlayer: User,
     override val whitePlayer: User,
     override val state: GameState,
-    override val gameResult: Option<GameResult> = None,
+    override val gameResult: GameResult? = null,
     override val messageBufferKey: MessageBufferKey,
     override val recording: Boolean,
     override val ruleKind: Rule,
     override val expireService: ExpireService
 ) : RenjuSession {
 
-    override fun next(state: GameState, gameResult: Option<GameResult>, messageBufferKey: MessageBufferKey) =
+    override fun next(state: GameState, gameResult: GameResult?, messageBufferKey: MessageBufferKey) =
         this.copy(
             state = state,
             gameResult = gameResult,
@@ -64,6 +61,6 @@ data class PvpGameSession(
             messageBufferKey = messageBufferKey
         )
 
-    override fun updateResult(gameResult: GameResult) = this.copy(gameResult = Some(gameResult))
+    override fun updateResult(gameResult: GameResult) = this.copy(gameResult = gameResult)
 
 }

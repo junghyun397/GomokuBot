@@ -1,6 +1,5 @@
 package discord.interact.message
 
-import arrow.core.Option
 import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import core.assets.*
@@ -111,7 +110,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                 append(", ")
 
                 when {
-                    session.gameResult.isSome() -> append(container.boardFinished())
+                    session.gameResult != null -> append(container.boardFinished())
                     session is OpeningSession -> append(container.boardInOpening())
                     else -> append(container.boardInProgress())
                 }
@@ -169,13 +168,11 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
     private fun MutableList<MessageEmbed>.buildGuideEmbed(session: GameSession, container: LanguageContainer) {
         val text = when {
-            (session is RenjuSession || session is MoveStageOpeningSession) && session.gameResult.isNone() ->
+            (session is RenjuSession || session is MoveStageOpeningSession) && session.gameResult == null ->
                 container.boardCommandGuide()
             session is SwapStageOpeningSession -> session.offerCount
-                .fold(
-                    ifSome = { count -> container.boardStatefulSwapGuide(count) },
-                    ifEmpty = { container.boardSwapGuide() }
-                )
+                ?.let { count -> container.boardStatefulSwapGuide(count) }
+                ?: container.boardSwapGuide()
             session is BranchingStageOpeningSession -> container.boardBranchGuide()
             session is DeclareStageOpeningSession -> container.boardDeclareGuide()
             session is SelectStageOpeningSession -> container.boardSelectGuide()
@@ -199,11 +196,9 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
     }
 
     override fun buildBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession): DiscordMessageBuilder {
-        val barColor = session.gameResult
-            .fold(ifSome = { COLOR_RED_HEX }, ifEmpty = { COLOR_GREEN_HEX })
+        val barColor = if (session.gameResult != null) COLOR_RED_HEX else COLOR_GREEN_HEX
 
-        val modRenderType = session.gameResult
-            .fold(ifSome = { HistoryRenderType.SEQUENCE }, ifEmpty = { renderType })
+        val modRenderType = if (session.gameResult != null) HistoryRenderType.SEQUENCE else renderType
 
         val offers = when (session) {
             is NegotiateStageOpeningSession -> session.moveCandidates
@@ -227,10 +222,9 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
                         buildBoardAuthor(container, session)
                         description = textBoard
 
-                        session.gameResult.fold(
-                            ifSome = { buildResultFields(container, session, it) },
-                            ifEmpty = { buildStatusFields(container, session) },
-                        )
+                        session.gameResult
+                            ?.let { buildResultFields(container, session, it) }
+                            ?: buildStatusFields(container, session)
                     })
 
                     buildGuideEmbed(session, container)
@@ -245,10 +239,9 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
                         buildBoardAuthor(container, session)
 
-                        session.gameResult.fold(
-                            ifSome = { buildResultFields(container, session, it) },
-                            ifEmpty = { buildStatusFields(container, session) },
-                        )
+                        session.gameResult
+                            ?.let { buildResultFields(container, session, it) }
+                            ?: buildStatusFields(container, session)
 
                         image = "attachment://$fName"
                     })
@@ -262,7 +255,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
     }
 
     override fun buildReplayBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession, totalMoves: Int): DiscordMessageBuilder {
-        val gameResult = session.gameResult.getOrNull()!!
+        val gameResult = session.gameResult!!
 
         return renderer.renderBoard(session.state, renderType, null, null).fold(
             ifLeft = { textBoard ->
@@ -299,7 +292,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
         )
     }
 
-    override fun buildSessionArchive(publisher: DiscordMessagePublisher, session: GameSession, result: Option<GameResult>): DiscordMessageBuilder {
+    override fun buildSessionArchive(publisher: DiscordMessagePublisher, session: GameSession, result: GameResult?): DiscordMessageBuilder {
         val imageStream = ImageBoardRenderer.renderInputStream(session.state, HistoryRenderType.SEQUENCE, null, null, true)
 
         val fName = ImageBoardRenderer.newFileName()
@@ -309,10 +302,9 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
 
             buildBoardAuthor(Language.ENG.container, session)
 
-            result.fold(
-                ifSome = { buildResultFields(Language.ENG.container, session, it) },
-                ifEmpty = { buildStatusFields(Language.ENG.container, session) },
-            )
+            result
+                ?.let { buildResultFields(Language.ENG.container, session, it) }
+                ?: buildStatusFields(Language.ENG.container, session)
 
             image = "attachment://${fName}"
         }
@@ -367,12 +359,12 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
     override fun attachNavigators(flow: Flow<String>, message: DiscordMessageData, checkTerminated: suspend () -> Boolean): Effect<Nothing, Unit> =
         effect {
             message.original
-                .filter {
+                ?.takeIf {
                     !it.isEphemeral
                             && ChannelManager.lookupPermission(it.guildChannel, Permission.MESSAGE_ADD_REACTION)
                             && ChannelManager.lookupPermission(it.guildChannel, Permission.MESSAGE_HISTORY)
                 }
-                .onSome { original ->
+                ?.let { original ->
                     try {
                         coroutineScope {
                             flow
@@ -449,7 +441,7 @@ object DiscordMessagingService : MessagingServiceImpl<DiscordMessageData, Discor
             selectMenuOptions.add(
                 SelectOption.of(
                     "#${idx + 1}: ${player.withColor(playerColor)} vs ${opponent.withColor(opponentColor)}, $resultString",
-                    "$REPLAY-${record.gameRecordId.getOrNull()!!.id}-1-${player.id.validationKey}"
+                    "$REPLAY-${record.gameRecordId!!.id}-1-${player.id.validationKey}"
                 )
             )
         }

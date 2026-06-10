@@ -2,10 +2,6 @@
 
 package discord.route
 
-import arrow.core.None
-import arrow.core.Option
-import arrow.core.Some
-import arrow.core.toOption
 import core.interact.commands.ResponseFlag
 import core.interact.message.AdaptivePublisherSet
 import core.interact.reports.ErrorReport
@@ -19,27 +15,22 @@ import discord.interact.parse.parsers.*
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import kotlin.time.Clock
 
-private fun matchAction(prefix: Char?): Option<EmbeddableCommand> =
+private fun matchAction(prefix: Char?): EmbeddableCommand? =
     when (prefix) {
-        DiscordMessagingService.IdConvention.SET -> Some(SetCommandParser)
-        DiscordMessagingService.IdConvention.ACCEPT -> Some(AcceptCommandParser)
-        DiscordMessagingService.IdConvention.REJECT -> Some(RejectCommandParser)
-        DiscordMessagingService.IdConvention.APPLY_SETTING -> Some(ApplySettingCommandParser)
-        DiscordMessagingService.IdConvention.OPENING -> Some(OpeningCommandParser)
-        DiscordMessagingService.IdConvention.REPLAY_LIST -> Some(ReplayListCommandParser)
-        else -> None
+        DiscordMessagingService.IdConvention.SET -> SetCommandParser
+        DiscordMessagingService.IdConvention.ACCEPT -> AcceptCommandParser
+        DiscordMessagingService.IdConvention.REJECT -> RejectCommandParser
+        DiscordMessagingService.IdConvention.APPLY_SETTING -> ApplySettingCommandParser
+        DiscordMessagingService.IdConvention.OPENING -> OpeningCommandParser
+        DiscordMessagingService.IdConvention.REPLAY_LIST -> ReplayListCommandParser
+        else -> null
     }
 
 suspend fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Report? {
-    val parsable = context.event.componentId
-        .toOption()
-        .flatMap { rawId ->
-            matchAction(rawId.split("-").first().getOrNull(0))
-        }
-        .getOrNull()
+    val parsable = matchAction(context.event.componentId.split("-").first().getOrNull(0))
         ?: return null
 
-    val command = parsable.parseComponent(context).getOrNull()
+    val command = parsable.parseComponent(context)
         ?: return null
 
     val responseFlag = command.responseFlag

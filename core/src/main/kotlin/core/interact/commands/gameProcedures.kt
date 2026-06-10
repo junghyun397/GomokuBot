@@ -1,7 +1,6 @@
 package core.interact.commands
 
 import core.session.MessageManager
-import arrow.core.Option
 import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import core.BotContext
@@ -19,15 +18,14 @@ import core.session.entities.*
 import utils.lang.replaceIf
 
 fun <A, B> buildAppendGameMessageProcedure(
-    maybeMessage: Option<MessageAdaptor<A, B>>,
+    maybeMessage: MessageAdaptor<A, B>?,
     bot: BotContext,
     session: GameSession
-): Effect<Nothing, Unit> = maybeMessage.fold(
-    ifSome = { message ->
-        effect { MessageManager.appendMessage(bot.sessions, session.messageBufferKey, message.messageRef) }
-    },
-    ifEmpty = { effect { } }
-)
+): Effect<Nothing, Unit> = effect {
+    if (maybeMessage != null) {
+        MessageManager.appendMessage(bot.sessions, session.messageBufferKey, maybeMessage.messageRef)
+    }
+}
 
 fun <A, B> buildNextMoveProcedure(
     bot: BotContext,
@@ -57,7 +55,7 @@ fun <A, B> buildBoardProcedure(
 
     return effect {
         val maybeMessage = service.buildBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, session)
-            .replaceIf(session.board.winner().isNone()) { io -> io.addComponents(
+            .replaceIf(session.board.winner() == null) { io -> io.addComponents(
                 when (session) {
                     is SwapStageOpeningSession -> service.buildSwapButtons(config.language.container)
                     is BranchingStageOpeningSession -> service.buildBranchingButtons(config.language.container)
@@ -67,19 +65,16 @@ fun <A, B> buildBoardProcedure(
             ) }
             .retrieve()()
 
-        maybeMessage.fold(
-            ifSome = { message ->
-                MessageManager.addNavigation(bot.sessions, message.messageRef, BoardNavigationState(focusInfo.focus.idx, focusInfo, session.expireDate))
-                MessageManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.messageRef)
-                service.attachFocusNavigators(message.messageData) {
-                    runCatching {
-                        val currentSession = SessionManager.retrieveGameSession(bot.sessions, session.id).snapshot()
-                        currentSession.history.moves != session.history.moves
-                    }.getOrElse { true }
-                }()
-            },
-            ifEmpty = { }
-        )
+        if (maybeMessage != null) {
+            MessageManager.addNavigation(bot.sessions, maybeMessage.messageRef, BoardNavigationState(focusInfo.focus.idx, focusInfo, session.expireDate))
+            MessageManager.appendMessageHead(bot.sessions, session.messageBufferKey, maybeMessage.messageRef)
+            service.attachFocusNavigators(maybeMessage.messageData) {
+                runCatching {
+                    val currentSession = SessionManager.retrieveGameSession(bot.sessions, session.id).snapshot()
+                    currentSession.history.moves != session.history.moves
+                }.getOrElse { true }
+            }()
+        }
     }
 }
 
@@ -110,10 +105,8 @@ fun <A, B> buildFinishProcedure(
 
     val originalOrder = buildSwapProcedure(bot, config, session)()
 
-    maybeMessage
-        .filter { thenSession.gameResult.isSome() && config.swapType == SwapType.EDIT }
-        .fold(
-            ifSome = { message -> originalOrder + Order.RemoveNavigators(message.messageRef, reduceComponents = true) },
-            ifEmpty = { originalOrder }
-        )
+    if (maybeMessage != null && thenSession.gameResult != null && config.swapType == SwapType.EDIT)
+        originalOrder + Order.RemoveNavigators(maybeMessage.messageRef, reduceComponents = true)
+    else
+        originalOrder
 }

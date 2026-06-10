@@ -39,7 +39,7 @@ abstract class OpeningMoveCommand<T : OpeningSession>(
         val thenSession = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { currentSession ->
             val openingSession = this.selectSession(currentSession) ?: throw IllegalStateException()
             if (openingSession.player.humanId != user.id) throw IllegalStateException()
-            if (GameManager.validateMove(openingSession, this.move).isSome()) throw IllegalStateException()
+            if (GameManager.validateMove(openingSession, this.move) != null) throw IllegalStateException()
 
             session = openingSession
             this.executeSelf(openingSession)

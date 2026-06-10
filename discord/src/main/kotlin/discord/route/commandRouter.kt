@@ -2,7 +2,8 @@
 
 package discord.route
 
-import arrow.core.*
+import arrow.core.Either
+import arrow.core.flatMap
 import arrow.core.raise.effect
 import core.assets.DUMMY_MESSAGE_REF
 import core.database.repositories.AnnounceRepository
@@ -68,10 +69,10 @@ private fun <T : Event> buildUpdateProfileNode(context: UserInteractionContext<T
     val user = jdaUser.extractProfile(uid = context.user.id, announceId = context.user.announceId)
     val channel = context.jdaChannel.extractProfile(uid = context.channel.id)
 
-    val maybeThenUser = if (user != context.user) Some(user) else None
-    val maybeThenChannel = if (channel != context.channel) Some(channel) else None
+    val maybeThenUser = if (user != context.user) user else null
+    val maybeThenChannel = if (channel != context.channel) channel else null
 
-    return command.replaceIf(maybeThenUser is Some<*> || maybeThenChannel is Some<*>) {
+    return command.replaceIf(maybeThenUser != null || maybeThenChannel != null) {
         UpdateProfileCommand(command, maybeThenUser, maybeThenChannel)
     }
 }
@@ -90,24 +91,24 @@ private suspend fun <T : Event> buildUpdateCommandsNode(context: UserInteraction
     return UpdateCommandsCommand(command, deprecates.map { it.name }, adds.map { it.getLocalizedName(Language.ENG.container) })
 }
 
-private fun matchCommand(command: String, container: LanguageContainer): Option<ParsableCommand> =
+private fun matchCommand(command: String, container: LanguageContainer): ParsableCommand? =
     when (command.lowercase()) {
-        "help" -> Some(HelpCommandParser)
-        container.helpCommand() -> Some(HelpCommandParser)
-        container.settingsCommand() -> Some(SettingsCommandParser)
-        container.startCommand() -> Some(StartCommandParser)
-        "s" -> Some(SetCommandParser)
-        container.resignCommand() -> Some(ResignCommandParser)
-        container.languageCommand() -> Some(LangCommandParser)
-        container.styleCommand() -> Some(StyleCommandParser)
-        container.rankCommand() -> Some(RankCommandParser)
-        container.ratingCommand() -> Some(RatingCommandParser)
-        container.replayCommand() -> Some(ReplayListCommandParser)
-        else -> None
+        "help" -> HelpCommandParser
+        container.helpCommand() -> HelpCommandParser
+        container.settingsCommand() -> SettingsCommandParser
+        container.startCommand() -> StartCommandParser
+        "s" -> SetCommandParser
+        container.resignCommand() -> ResignCommandParser
+        container.languageCommand() -> LangCommandParser
+        container.styleCommand() -> StyleCommandParser
+        container.rankCommand() -> RankCommandParser
+        container.ratingCommand() -> RatingCommandParser
+        container.replayCommand() -> ReplayListCommandParser
+        else -> null
     }
 
 suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEvent>): Report? {
-    val parsable = matchCommand(context.event.name, context.config.language.container).getOrNull()
+    val parsable = matchCommand(context.event.name, context.config.language.container)
         ?: return null
 
     val parsed: Either<DiscordParseFailure, Command> = buildPermissionNode(
@@ -117,21 +118,16 @@ suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInter
         context.event.user
     )
         .flatMap { parsable.parseSlash(context) }
-        .fold(
-            ifLeft = { Either.Left(it) },
-            ifRight = { command ->
-                Either.Right(
-                    buildAnnounceNode(
-                        context,
-                        buildUpdateProfileNode(
-                            context,
-                            context.event.user,
-                            buildUpdateCommandsNode(context, command)
-                        )
-                    )
+        .map { command ->
+            buildAnnounceNode(
+                context,
+                buildUpdateProfileNode(
+                    context,
+                    context.event.user,
+                    buildUpdateCommandsNode(context, command)
                 )
-            }
-        )
+            )
+        }
 
     parsed.fold(
         ifLeft = { },
@@ -210,7 +206,7 @@ suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEve
         }
     }
 
-    val parsable = matchCommand(command = payload.first(), container = context.config.language.container).getOrNull()
+    val parsable = matchCommand(command = payload.first(), container = context.config.language.container)
         ?: return null
 
     val parsed: Either<DiscordParseFailure, Command> = buildPermissionNode(
@@ -220,21 +216,16 @@ suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEve
         context.event.author
     )
         .flatMap { parsable.parseText(context, payload) }
-        .fold(
-            ifLeft = { Either.Left(it) },
-            ifRight = { command ->
-                Either.Right(
-                    buildUpdateCommandsNode(
-                        context,
-                        buildUpdateProfileNode(
-                            context,
-                            context.event.author,
-                            buildAnnounceNode(context, command)
-                        )
-                    )
+        .map { command ->
+            buildUpdateCommandsNode(
+                context,
+                buildUpdateProfileNode(
+                    context,
+                    context.event.author,
+                    buildAnnounceNode(context, command)
                 )
-            }
-        )
+            )
+        }
 
     ChannelManager.permissionGrantedRun(context.event.channel.asGuildMessageChannel(), Permission.MESSAGE_ADD_REACTION) {
         parsed.fold(

@@ -1,9 +1,6 @@
 package discord.route
 
 import core.session.MessageManager
-import arrow.core.Option
-import arrow.core.Some
-import arrow.core.toOption
 import core.BotContext
 import core.assets.COLOR_NORMAL_HEX
 import core.assets.MessageRef
@@ -29,21 +26,16 @@ import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import kotlin.time.Clock
 
-private fun recoverNavigationState(bot: BotContext, message: Message, messageRef: MessageRef): Option<NavigationState> =
+private fun recoverNavigationState(bot: BotContext, message: Message, messageRef: MessageRef): NavigationState? =
     message.embeds.firstOrNull()
-        .toOption()
-        .flatMap { PageNavigationState.decodeFromColor(COLOR_NORMAL_HEX, it.colorRaw, bot.config, messageRef, bot.dbConnection) }
-        .onSome { MessageManager.addNavigation(bot.sessions, messageRef, it) }
+        ?.let { PageNavigationState.decodeFromColor(COLOR_NORMAL_HEX, it.colorRaw, bot.config, messageRef, bot.dbConnection) }
+        ?.also { MessageManager.addNavigation(bot.sessions, messageRef, it) }
 
 suspend fun reactionRouter(context: UserInteractionContext<GenericMessageReactionEvent>): Report? {
     val messageRef = context.event.extractMessageRef()
 
-    val state = MessageManager.getNavigationState(context.bot.sessions, messageRef).toOption()
-        .fold(
-            ifEmpty = { recoverNavigationState(context.bot, context.event.retrieveMessage().await(), messageRef) },
-            ifSome = { Some(it) }
-        )
-        .getOrNull()
+    val state = MessageManager.getNavigationState(context.bot.sessions, messageRef)
+        ?: recoverNavigationState(context.bot, context.event.retrieveMessage().await(), messageRef)
         ?: return null
 
     val parsable = when (state) {
@@ -51,7 +43,7 @@ suspend fun reactionRouter(context: UserInteractionContext<GenericMessageReactio
         is PageNavigationState -> NavigationCommandParser
     }
 
-    val command = parsable.parseReaction(context, state).getOrNull()
+    val command = parsable.parseReaction(context, state)
         ?: return null
 
     if (context.event is MessageReactionAddEvent) {

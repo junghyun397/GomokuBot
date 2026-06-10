@@ -1,8 +1,5 @@
 package core.session
 
-import arrow.core.None
-import arrow.core.Option
-import arrow.core.Some
 import core.BotContext
 import core.assets.Channel
 import core.assets.User
@@ -118,33 +115,26 @@ object GameManager {
         )
     }
 
-    fun validateMove(session: GameSession, move: Pos): Option<MoveError> =
+    fun validateMove(session: GameSession, move: Pos): MoveError? =
         session.board.validateMove(move)
-            .fold(
-                ifEmpty = {
-                    if (session is OpeningSession && !session.validateMove(move))
-                        Some(MoveError.Forbidden)
-                    else
-                        None
-                },
-                ifSome = { Some(it) }
-            )
+            ?: if (session is OpeningSession && !session.validateMove(move)) MoveError.Forbidden
+            else null
 
     fun makeMove(session: RenjuSession, pos: Pos): RenjuSession {
         val thenState = session.state.play(pos)
+        val result = thenState.board.winner()
 
-        return thenState.board.winner().fold(
-            { session.next(thenState, None, MessageBufferKey.issue()) },
-            { result ->
-                val gameResult = when (result) {
-                    is GameResult.FiveInRow ->
-                        GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, result.winner(), session.player, session.nextPlayer)
-                    else -> GameResult.Full
-                }
-
-                session.next(thenState, Some(gameResult), session.messageBufferKey)
+        return if (result == null)
+            session.next(thenState, null, MessageBufferKey.issue())
+        else {
+            val gameResult = when (result) {
+                is GameResult.FiveInRow ->
+                    GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, result.winner(), session.player, session.nextPlayer)
+                else -> GameResult.Full
             }
-        )
+
+            session.next(thenState, gameResult, session.messageBufferKey)
+        }
     }
 
     suspend fun makeAiMove(server: MintakaServer, session: EngineGameSession, beforeHash: HashKey, playerMove: Pos): EngineGameSession {
@@ -159,26 +149,24 @@ object GameManager {
         // TODO: PoC
 
         val thenState = session.state.play(aiMove)
+        val result = thenState.board.winner()
 
-        return thenState.board.winner().fold(
-            {
-                session.copy(
-                    state = thenState,
-                )
-            },
-            { result ->
-                val gameResult = when (result) {
-                    is GameResult.FiveInRow ->
-                        GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, result.winner(), User.GomokuBot, session.humanPlayer)
-                    else -> GameResult.Full
-                }
-
-                session.copy(
-                    state = thenState,
-                    gameResult = Some(gameResult),
-                )
+        return if (result == null)
+            session.copy(
+                state = thenState,
+            )
+        else {
+            val gameResult = when (result) {
+                is GameResult.FiveInRow ->
+                    GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, result.winner(), User.GomokuBot, session.humanPlayer)
+                else -> GameResult.Full
             }
-        )
+
+            session.copy(
+                state = thenState,
+                gameResult = gameResult,
+            )
+        }
     }
 
     fun resignSession(session: GameSession, cause: GameResult.Cause, user: User): Pair<RenjuSession, GameResult.Win> =
@@ -192,7 +180,7 @@ object GameManager {
 
                 val result = GameResult.Win(cause, winColor, User.GomokuBot, session.humanPlayer)
 
-                tuple(session.copy(gameResult = Some(result)), result)
+                tuple(session.copy(gameResult = result), result)
             }
             is OpeningSession, is PvpGameSession -> {
                 val userId = user.humanId ?: throw IllegalStateException()
@@ -220,7 +208,7 @@ object GameManager {
     suspend fun finishSession(bot: BotContext, channel: Channel, session: GameSession, result: GameResult) {
         SessionManager.deleteGameSession(bot.sessions, session.id)
 
-        session.extractGameRecord(channel.id).onSome { record ->
+        session.extractGameRecord(channel.id)?.let { record ->
             GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
         }
     }

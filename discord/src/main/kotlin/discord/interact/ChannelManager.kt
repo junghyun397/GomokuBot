@@ -1,9 +1,5 @@
 package discord.interact
 
-import arrow.core.None
-import arrow.core.Option
-import arrow.core.Some
-import arrow.core.getOrElse
 import arrow.core.raise.get
 import core.assets.ChannelUid
 import core.assets.MessageRef
@@ -15,7 +11,7 @@ import core.session.entities.PvpGameSession
 import core.session.entities.RenjuSession
 import dev.minn.jda.ktx.coroutines.await
 import discord.assets.JDAChannel
-import discord.assets.awaitOption
+import discord.assets.awaitNullable
 import discord.assets.getChannelMessageSubChannelById
 import discord.interact.message.DiscordMessageData
 import discord.interact.message.DiscordMessagePublisher
@@ -48,13 +44,14 @@ object ChannelManager {
         user.jda
             .getGuildById(config.officialServerId.idLong)!!
             .retrieveMemberById(user.idLong)
-            .awaitOption()
-            .map { member -> member.roles.any { it.idLong == config.testerRoleId } }
-            .getOrElse { false }
+            .awaitNullable()
+            ?.roles
+            ?.any { it.idLong == config.testerRoleId }
+            ?: false
 
-    inline fun <T> permissionGrantedRun(channel: GuildMessageChannel, permission: Permission, block: () -> T): Option<T> =
-        if (this.lookupPermission(channel, permission)) Some(block())
-        else None
+    inline fun <T> permissionGrantedRun(channel: GuildMessageChannel, permission: Permission, block: () -> T): T? =
+        if (this.lookupPermission(channel, permission)) block()
+        else null
 
     inline fun <T> permissionDependedRun(channel: GuildMessageChannel, permission: Permission, onGranted: () -> T, onMissed: () -> T): T =
         if (this.lookupPermission(channel, permission)) onGranted()
@@ -120,7 +117,7 @@ object ChannelManager {
             }
         }
 
-        val modResult = modSession.gameResult.map { result ->
+        val modResult = modSession.gameResult?.let { result ->
             result.replaceIf(archivePolicy == ArchivePolicy.BY_ANONYMOUS) {
                 when (result) {
                     is GameResult.Win -> result.copy(
@@ -143,8 +140,7 @@ object ChannelManager {
         jda.getGuildById(messageRef.channelId.idLong)
             ?.getTextChannelById(messageRef.subChannelId.idLong)
             ?.retrieveMessageById(messageRef.id.idLong)
-            ?.awaitOption()
-            ?.getOrNull()
+            ?.awaitNullable()
 
     fun bulkDelete(jdaChannel: JDAChannel, messageRefs: List<MessageRef>) {
         if (messageRefs.isEmpty()) return

@@ -1,108 +1,80 @@
 package core.database.repositories
 
-import arrow.core.None
-import arrow.core.Option
-import arrow.core.Some
 import core.assets.Channel
 import core.assets.ChannelId
 import core.assets.ChannelUid
 import core.database.DatabaseConnection
-import kotlinx.coroutines.reactive.awaitSingle
-import java.util.*
+import core.database.jooq.tables.records.ChannelProfileRecord
+import core.database.jooq.tables.references.CHANNEL_PROFILE
+import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
+import reactor.core.publisher.Mono
 
 object ChannelProfileRepository {
 
     suspend fun retrieveOrInsertChannel(connection: DatabaseConnection, platform: Short, givenId: ChannelId, produce: () -> Channel): Channel =
-        when (val maybeChannel = this.retrieveChannel(connection, platform, givenId)) {
-            is Some -> maybeChannel.value
-            None -> produce()
+        this.retrieveChannel(connection, platform, givenId)
+            ?: produce()
                 .also { this.upsertChannel(connection, it) }
-        }
 
-    suspend fun retrieveChannel(connection: DatabaseConnection, channelUid: ChannelUid): Channel =
-        connection.localCaches.channelProfileUidCache
-            .getIfPresent(channelUid)
-            ?: this.fetchChannel(connection, channelUid)
-                .also { channel ->
-                    connection.localCaches.channelProfileGivenIdCache.put(channel.givenId, channel)
-                    connection.localCaches.channelProfileUidCache.put(channel.id, channel)
-                }
-
-    suspend fun retrieveChannel(connection: DatabaseConnection, platform: Short, givenId: ChannelId): Option<Channel> {
+    suspend fun retrieveChannel(connection: DatabaseConnection, platform: Short, givenId: ChannelId): Channel? {
         connection.localCaches.channelProfileGivenIdCache
             .getIfPresent(givenId)
-            ?.let { return Some(it) }
+            ?.let { return it }
 
         val maybeChannel = this.fetchChannel(connection, platform, givenId)
 
-        if (maybeChannel is Some) {
-            connection.localCaches.channelProfileGivenIdCache.put(maybeChannel.value.givenId, maybeChannel.value)
-            connection.localCaches.channelProfileUidCache.put(maybeChannel.value.id, maybeChannel.value)
+        if (maybeChannel != null) {
+            connection.localCaches.channelProfileGivenIdCache.put(maybeChannel.givenId, maybeChannel)
+            connection.localCaches.channelProfileUidCache.put(maybeChannel.id, maybeChannel)
         }
 
         return maybeChannel
     }
 
     private suspend fun fetchChannel(connection: DatabaseConnection, channelUid: ChannelUid): Channel =
-        connection.liftConnection()
-            .flatMapMany { dbc -> dbc
-                .createStatement("SELECT * FROM channel_profile WHERE channel_id = $1")
-                .bind("$1", channelUid.uuid)
-                .execute()
-            }
-            .flatMap { result -> result
-                .map { row, _ ->
-                    Channel(
-                        id = ChannelUid(row["channel_id"] as UUID),
-                        platform = row["platform"] as Short,
-                        givenId = ChannelId(row["given_id"] as Long),
-                        name = row["name"] as String
-                    )
-                }
-            }
+        Mono.from(
+            connection.jooq
+                .selectFrom(CHANNEL_PROFILE)
+                .where(CHANNEL_PROFILE.CHANNEL_ID.eq(channelUid.uuid))
+        )
+            .map { this.extractChannel(it) }
             .awaitSingle()
 
-    private suspend fun fetchChannel(connection: DatabaseConnection, platform: Short, givenId: ChannelId): Option<Channel> =
-        connection.liftConnection()
-            .flatMapMany { dbc -> dbc
-                .createStatement("SELECT * FROM channel_profile WHERE platform = $1 AND given_id = $2")
-                .bind("$1", platform)
-                .bind("$2", givenId.idLong)
-                .execute()
-            }
-            .flatMap<Option<Channel>> { result -> result
-                .map { row, _ ->
-                    Some(Channel(
-                        id = ChannelUid(row["channel_id"] as UUID),
-                        platform = platform,
-                        givenId = givenId,
-                        name = row["name"] as String
-                    ))
-                }
-            }
-            .defaultIfEmpty(None)
-            .awaitSingle()
+    private suspend fun fetchChannel(connection: DatabaseConnection, platform: Short, givenId: ChannelId): Channel? =
+        Mono.from(
+            connection.jooq
+                .selectFrom(CHANNEL_PROFILE)
+                .where(CHANNEL_PROFILE.PLATFORM.eq(platform))
+                .and(CHANNEL_PROFILE.GIVEN_ID.eq(givenId.idLong))
+        )
+            .map { this.extractChannel(it) }
+            .awaitSingleOrNull()
 
     suspend fun upsertChannel(connection: DatabaseConnection, channel: Channel) {
         connection.localCaches.channelProfileGivenIdCache.put(channel.givenId, channel)
         connection.localCaches.channelProfileUidCache.put(channel.id, channel)
 
-        connection.liftConnection()
-            .flatMapMany { dbc -> dbc
-                .createStatement(
-                    """
-                        INSERT INTO channel_profile (channel_id, platform, given_id, name) VALUES ($1, $2, $3, $4)
-                            ON CONFLICT (channel_id) DO UPDATE SET name = $4
-                    """.trimIndent()
-                )
-                .bind("$1", channel.id.uuid)
-                .bind("$2", channel.platform)
-                .bind("$3", channel.givenId.idLong)
-                .bind("$4", channel.name)
-                .execute()
-            }
-            .flatMap { it.rowsUpdated }
+        Mono.from(
+            connection.jooq
+                .insertInto(CHANNEL_PROFILE)
+                .set(CHANNEL_PROFILE.CHANNEL_ID, channel.id.uuid)
+                .set(CHANNEL_PROFILE.PLATFORM, channel.platform)
+                .set(CHANNEL_PROFILE.GIVEN_ID, channel.givenId.idLong)
+                .set(CHANNEL_PROFILE.NAME, channel.name)
+                .onConflict(CHANNEL_PROFILE.CHANNEL_ID)
+                .doUpdate()
+                .set(CHANNEL_PROFILE.NAME, channel.name)
+        )
             .awaitSingle()
     }
+
+    private fun extractChannel(record: ChannelProfileRecord): Channel =
+        Channel(
+            id = ChannelUid(record.channelId!!),
+            platform = record.platform!!,
+            givenId = ChannelId(record.givenId!!),
+            name = record.name!!
+        )
 
 }

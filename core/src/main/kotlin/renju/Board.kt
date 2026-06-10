@@ -1,8 +1,5 @@
 package renju
 
-import arrow.core.None
-import arrow.core.Option
-import arrow.core.Some
 import renju.native.RustyRenjuC
 import renju.native.RustyRenjuCApi
 import renju.native.readNativeUtf8String
@@ -85,27 +82,27 @@ class Board private constructor (
         return fromNativePointer(pointer)
     }
 
-    fun validateMove(pos: Pos): Option<MoveError> {
+    fun validateMove(pos: Pos): MoveError? {
         if (!this.isPosEmpty(pos)) {
-            return Some(MoveError.Exist)
+            return MoveError.Exist
         }
 
         if (!this.isLegalMove(pos)) {
-            return Some(MoveError.Forbidden)
+            return MoveError.Forbidden
         }
 
-        return None
+        return null
     }
 
-    fun winner(): Option<GameResult> {
+    fun winner(): GameResult? {
         if (this.describe.winner.isSome) {
             val winnerColor = Color.from(this.describe.winner.color)
 
-            return Some(GameResult.FiveInRow(winnerColor))
+            return GameResult.FiveInRow(winnerColor)
         }
 
-        return if (this.stones >= Pos.BOARD_SIZE) Some(GameResult.Full)
-        else None
+        return if (this.stones >= Pos.BOARD_SIZE) GameResult.Full
+        else null
     }
 
     internal fun nativeHandle(): MemorySegment = this.nativePointer

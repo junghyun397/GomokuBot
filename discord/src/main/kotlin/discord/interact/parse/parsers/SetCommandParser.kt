@@ -1,7 +1,8 @@
 package discord.interact.parse.parsers
 
 import core.session.MessageManager
-import arrow.core.*
+import arrow.core.Either
+import arrow.core.flatMap
 import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import core.assets.MessageRef
@@ -55,11 +56,15 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
             ?.takeIf { it in 1 .. Pos.BOARD_WIDTH }
             ?.let { it - 1 }
 
-    private fun buildAppendMessageProcedure(maybeMessage: Option<MessageAdaptor<DiscordMessageData, DiscordComponents>>, context: UserInteractionContext<*>, session: GameSession): Effect<Nothing, List<Order>> =
-        maybeMessage.fold(
-            ifSome = { effect { MessageManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.messageRef); emptyList() } },
-            ifEmpty = { effect { emptyOrders } }
-        )
+    private fun buildAppendMessageProcedure(maybeMessage: MessageAdaptor<DiscordMessageData, DiscordComponents>?, context: UserInteractionContext<*>, session: GameSession): Effect<Nothing, List<Order>> =
+        effect {
+            if (maybeMessage != null) {
+                MessageManager.appendMessage(context.bot.sessions, session.messageBufferKey, maybeMessage.messageRef)
+                emptyList()
+            } else {
+                emptyOrders
+            }
+        }
 
     private fun buildOrderFailure(context: UserInteractionContext<*>, session: GameSession, player: User): DiscordParseFailure =
         this.asParseFailure("try move but now $player's turn", context.channel, context.user) { messagingService, publisher, container ->
@@ -128,29 +133,27 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
                 else -> null
             }
 
-            GameManager.validateMove(session, pos)
-                .flatMap { invalidKind ->
-                    when (invalidKind) {
-                        MoveError.Exist -> Some(this.buildExistFailure(context, session, pos))
-                        MoveError.Forbidden -> when(session.board.playerColor) {
-                            Color.Black -> Some(this.buildForbiddenMoveFailure(context, session, pos, session.board.forbiddenKind(pos)))
-                            else -> None
-                        }
-                    }
+            val failure = when (GameManager.validateMove(session, pos)) {
+                MoveError.Exist -> this.buildExistFailure(context, session, pos)
+                MoveError.Forbidden -> when (session.board.playerColor) {
+                    Color.Black -> this.buildForbiddenMoveFailure(context, session, pos, session.board.forbiddenKind(pos))
+                    else -> null
                 }
-                .fold(
-                    ifSome = { Either.Left(it) },
-                    ifEmpty = {
-                        val responseFlag = when (context.config.swapType) {
-                            SwapType.EDIT -> ResponseFlag.DeferWindowed
-                            else -> ResponseFlag.Defer
-                        }
+                null -> null
+            }
 
-                        this.branchCommandBySession(sessionId, session, pos, ref, responseFlag)
-                            ?.let { Either.Right(it) }
-                            ?: Either.Left(this.buildSilentFailure(context))
-                    }
-                )
+            if (failure != null) {
+                Either.Left(failure)
+            } else {
+                val responseFlag = when (context.config.swapType) {
+                    SwapType.EDIT -> ResponseFlag.DeferWindowed
+                    else -> ResponseFlag.Defer
+                }
+
+                this.branchCommandBySession(sessionId, session, pos, ref, responseFlag)
+                    ?.let { Either.Right(it) }
+                    ?: Either.Left(this.buildSilentFailure(context))
+            }
         }
 
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<DiscordParseFailure, Command> {
@@ -171,32 +174,29 @@ object SetCommandParser : SessionSideParser<DiscordMessageData, DiscordComponent
         return this.parseRawCommand(context, context.user, rawRow, rawColumn)
     }
 
-    override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
+    override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Command? {
         val (column, row) = context.event.componentId
             .drop(2)
             .let { tuple(this.matchColumn(it.take(1)), this.matchRow(it.drop(1))) }
 
-        if (row == null || column == null) return None
+        if (row == null || column == null) return null
 
         val pos = Pos(row, column)
 
         val userId = context.user.id
 
         val sessionId = SessionManager.findGameSessionId(context.bot.sessions, context.channel.id, userId)
-            ?: return None
+            ?: return null
         val session = SessionManager.retrieveGameSession(context.bot.sessions, sessionId).snapshot()
 
         if (session.player.humanId != userId)
-            return None
+            return null
 
-        return GameManager.validateMove(session, pos)
-            .fold(
-                ifSome = { None },
-                ifEmpty = {
-                    this.branchCommandBySession(sessionId, session, pos, null, ResponseFlag.Defer(context.config.swapType == SwapType.EDIT))
-                        .toOption()
-                }
-            )
+        if (GameManager.validateMove(session, pos) != null) {
+            return null
+        }
+
+        return this.branchCommandBySession(sessionId, session, pos, null, ResponseFlag.Defer(context.config.swapType == SwapType.EDIT))
     }
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

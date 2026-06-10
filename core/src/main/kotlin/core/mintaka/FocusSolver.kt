@@ -11,7 +11,7 @@ object FocusSolver {
     data class FocusInfo(val focus: Pos, val highlights: List<Pos>)
 
     private fun isLegalEmptyMove(state: GameState, pos: Pos): Boolean =
-        state.board.validateMove(pos).isNone()
+        state.board.validateMove(pos) == null
 
     private fun collectFiveHighlights(state: GameState): List<Pos> {
         val fiveMask = RustyRenjuCApi.constants.fiveMask

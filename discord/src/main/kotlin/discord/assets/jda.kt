@@ -1,8 +1,5 @@
 package discord.assets
 
-import arrow.core.None
-import arrow.core.Option
-import arrow.core.Some
 import core.assets.*
 import core.interact.ExecutionContext
 import dev.minn.jda.ktx.coroutines.await
@@ -62,7 +59,7 @@ fun net.dv8tion.jda.api.entities.Message.extractMessageData(): DiscordMessageDat
         this.attachments,
         this.components,
         this.isTTS,
-        Some(this)
+        this
     )
 
 fun net.dv8tion.jda.api.entities.Guild.getChannelMessageSubChannelById(idLong: Long): GuildMessageChannel? =
@@ -70,9 +67,9 @@ fun net.dv8tion.jda.api.entities.Guild.getChannelMessageSubChannelById(idLong: L
         ?: let { this.getThreadChannelById(idLong) }
         ?: let { this.getVoiceChannelById(idLong) }
 
-suspend fun <T> RestAction<T>.awaitOption(): Option<T> = this
+suspend fun <T> RestAction<T>.awaitNullable(): T? = this
     .mapToResult()
-    .map { if (it.isSuccess) Some(it.get()) else None }
+    .map { if (it.isSuccess) it.get() else null }
     .await()
 
 fun <T : Event> T.abbreviation(): String =

@@ -36,8 +36,7 @@ class SettingsCommand : Command {
         val io = effect {
             service.buildSettings(publishers.plain, config, 0)
                 .retrieve()()
-                .fold(
-                    ifSome = { settingsMessage ->
+                ?.let { settingsMessage ->
                         MessageManager.addNavigation(
                             bot.sessions,
                             settingsMessage.messageRef,
@@ -50,9 +49,7 @@ class SettingsCommand : Command {
                         )
 
                         service.attachBinaryNavigators(settingsMessage.messageData)()
-                    },
-                    ifEmpty = { }
-                )
+                    }
 
             emptyOrders
         }

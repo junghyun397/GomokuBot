@@ -1,6 +1,5 @@
 package core.session.entities
 
-import arrow.core.Option
 import core.assets.User
 import core.assets.humanId
 import core.session.Rule
@@ -30,7 +29,7 @@ sealed interface GameSession : Expirable {
 
     val history: History get() = this.state.history
 
-    val gameResult: Option<GameResult>
+    val gameResult: GameResult?
 
     val messageBufferKey: MessageBufferKey
 

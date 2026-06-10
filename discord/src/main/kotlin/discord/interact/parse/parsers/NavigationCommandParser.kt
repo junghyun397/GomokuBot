@@ -1,6 +1,5 @@
 package discord.interact.parse.parsers
 
-import arrow.core.toOption
 import core.interact.commands.NavigationCommand
 import core.session.entities.NavigationState
 import core.session.entities.PageNavigationState
@@ -20,15 +19,14 @@ object NavigationCommandParser : NavigableCommand {
             else -> null
         }
 
-    override suspend fun parseReaction(context: UserInteractionContext<GenericMessageReactionEvent>, state: NavigationState) =
-        state
-            .takeIf { it is PageNavigationState }
-            .toOption()
-            .flatMap {
-                this.matchIsForward(context.event.reaction.emoji.asUnicode())
-                    .toOption()
-                    .map { NavigationCommand(state as PageNavigationState, it) }
-            }
+    override suspend fun parseReaction(context: UserInteractionContext<GenericMessageReactionEvent>, state: NavigationState): NavigationCommand? {
+        val pageState = state as? PageNavigationState
+            ?: return null
+        val isForward = this.matchIsForward(context.event.reaction.emoji.asUnicode())
+            ?: return null
+
+        return NavigationCommand(pageState, isForward)
+    }
 
 
 }

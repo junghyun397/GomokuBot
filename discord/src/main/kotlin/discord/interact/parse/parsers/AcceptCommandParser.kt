@@ -1,8 +1,5 @@
 package discord.interact.parse.parsers
 
-import arrow.core.None
-import arrow.core.Option
-import arrow.core.Some
 import core.interact.commands.AcceptCommand
 import core.interact.commands.Command
 import core.session.SessionManager
@@ -13,14 +10,14 @@ import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteract
 @Suppress("DuplicatedCode")
 object AcceptCommandParser : EmbeddableCommand {
 
-    override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Option<Command> {
+    override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Command? {
         val sessionId = SessionManager.findRequestSessionId(context.bot.sessions, context.channel.id, context.user.id)
-            ?: return None
+            ?: return null
 
         val requestSession = SessionManager.retrieveRequestSession(context.bot.sessions, sessionId).snapshot()
         val accepted = requestSession.opponent.id == context.user.id
 
-        return if (accepted) Some(AcceptCommand(sessionId)) else None
+        return if (accepted) AcceptCommand(sessionId) else null
     }
 
 }

@@ -44,8 +44,7 @@ class ViewAnnounceCommand(val language: Language) : Command {
                 language.container,
                 announcements[language] ?: announcements[Language.ENG]!!
             ).retrieve()()
-                .fold(
-                    ifSome = { announceMessage ->
+                ?.let { announceMessage ->
                         MessageManager.addNavigation(
                             bot.sessions,
                             announceMessage.messageRef,
@@ -58,9 +57,7 @@ class ViewAnnounceCommand(val language: Language) : Command {
                         )
 
                         service.attachBinaryNavigators(announceMessage.messageData)()
-                    },
-                    ifEmpty = { }
-                )
+                    }
 
             emptyList<Order>()
         }
