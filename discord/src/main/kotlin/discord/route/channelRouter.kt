@@ -28,7 +28,6 @@ private fun matchLocale(locale: DiscordLocale): Language =
     when (locale) {
         DiscordLocale.KOREAN -> Language.KOR
         DiscordLocale.JAPANESE -> Language.JPN
-        DiscordLocale.VIETNAMESE -> Language.VNM
         else -> Language.ENG
     }
 

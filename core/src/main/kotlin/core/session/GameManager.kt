@@ -7,8 +7,6 @@ import core.assets.humanId
 import core.database.entities.extractGameRecord
 import core.database.repositories.GameRecordRepository
 import core.mintaka.EngineLevel
-import core.interact.message.graphics.*
-import core.session.entities.MintakaIdleSession
 import core.mintaka.MintakaProvider
 import core.mintaka.MintakaServer
 import core.session.entities.*
@@ -16,81 +14,45 @@ import renju.Board
 import renju.GameState
 import renju.History
 import renju.MoveError
-import renju.notation.Color
-import renju.notation.GameResult
-import renju.notation.HashKey
-import renju.notation.Pos
+import renju.notation.*
 import utils.lang.tuple
-import utils.structs.Identifiable
 import kotlin.random.Random
-
-enum class BoardStyle(override val id: Short, val renderer: BoardRenderer, val sample: BoardRendererSample) : Identifiable {
-    IMAGE(0, ImageBoardRenderer, ImageBoardRenderer),
-    TEXT(1, TextBoardRenderer(), TextBoardRenderer),
-    DOTTED_TEXT(2, DottedTextBoardRenderer(), DottedTextBoardRenderer),
-}
-
-enum class FocusType(override val id: Short) : Identifiable {
-    INTELLIGENCE(0), CENTER(1)
-}
-
-enum class HintType(override val id: Short) : Identifiable {
-    OFF(0), FIVE(1)
-}
-
-enum class SwapType(override val id: Short) : Identifiable {
-    RELAY(0), ARCHIVE(1), EDIT(2)
-}
-
-enum class ArchivePolicy(override val id: Short) : Identifiable {
-    WITH_PROFILE(0), BY_ANONYMOUS(1), PRIVACY(2)
-}
-
-enum class Rule(override val id: Short, val isOpening: Boolean) : Identifiable {
-    RENJU(0, false), TARAGUCHI_10(1, true), SOOSYRV_8(2, true)
-}
 
 object GameManager {
 
-    fun generatePvpSession(bot: BotContext, owner: User.Human, opponent: User.Human, rule: Rule): GameSession {
-        val ownerStartsBlack = Random(System.nanoTime()).nextBoolean()
-        val blackPlayer = if (ownerStartsBlack) owner else opponent
-        val whitePlayer = if (ownerStartsBlack) opponent else owner
+    fun generatePvpSession(bot: BotContext, requester: User.Human, opponent: User.Human, rule: Rule): GameSession {
+        val requesterStartsBlack = Random(System.nanoTime()).nextBoolean()
+        val blackPlayer = if (requesterStartsBlack) requester else opponent
+        val whitePlayer = if (requesterStartsBlack) opponent else requester
+        val user = ColorContainer(blackPlayer, whitePlayer)
         val sessionId = SessionId.issue()
+        fun newContext(state: GameState) = GameSessionContext(
+            id = sessionId,
+            user = user,
+            state = state,
+            messageBufferKey = MessageBufferKey.issue(),
+            expireService = ExpireService(bot.config.gameExpireAfter),
+        )
 
         return when (rule) {
             Rule.RENJU -> PvpGameSession(
-                id = sessionId,
-                blackPlayer = blackPlayer,
-                whitePlayer = whitePlayer,
-                state = GameState(Board.newBoard(), History.empty()),
-                messageBufferKey = MessageBufferKey.issue(),
+                context = newContext(GameState(Board.newBoard(), History.empty())),
                 recording = true,
                 ruleKind = rule,
-                expireService = ExpireService(bot.config.gameExpireAfter),
             )
             Rule.TARAGUCHI_10 -> TaraguchiSwapStageSession(
-                id = sessionId,
-                blackPlayer = blackPlayer,
-                whitePlayer = whitePlayer,
-                state = GameState(Board.newBoard(), History.empty()).play(Pos.CENTER),
-                messageBufferKey = MessageBufferKey.issue(),
-                expireService = ExpireService(bot.config.gameExpireAfter),
+                context = newContext(GameState(Board.newBoard(), History.empty()).play(Pos.CENTER)),
                 isBranched = false
             )
             Rule.SOOSYRV_8 -> SoosyrvMoveStageSession(
-                id = sessionId,
-                blackPlayer = blackPlayer,
-                whitePlayer = whitePlayer,
-                state = GameState(Board.newBoard(), History.empty()).play(Pos.CENTER),
-                messageBufferKey = MessageBufferKey.issue(),
-                expireService = ExpireService(bot.config.gameExpireAfter),
+                context = newContext(GameState(Board.newBoard(), History.empty()).play(Pos.CENTER)),
                 isBranched = false
             )
+            else -> TODO()
         }
     }
 
-    suspend fun generateEngineSession(bot: BotContext, owner: User.Human, engineLevel: EngineLevel): GameSession {
+    suspend fun generateEngineSession(bot: BotContext, humanPlayer: User.Human, engineLevel: EngineLevel): GameSession {
         val humanHasBlack = Random(System.nanoTime()).nextBoolean()
 
         val state = if (humanHasBlack)
@@ -102,21 +64,22 @@ object GameManager {
         val sessionHandle = MintakaProvider.createSession(bot.mintakaServer, engineLevel, state)
 
         return EngineGameSession(
-            id = SessionId.issue(),
+            context = GameSessionContext(
+                id = SessionId.issue(),
+                user = ColorContainer(if (humanHasBlack) humanPlayer else User.GomokuBot, if (humanHasBlack) User.GomokuBot else humanPlayer),
+                state = state,
+                messageBufferKey = MessageBufferKey.issue(),
+                expireService = ExpireService(bot.config.gameExpireAfter),
+            ),
             mintakaSession = sessionHandle.session.await(),
-            humanPlayer = owner,
-            blackPlayer = if (humanHasBlack) owner else User.GomokuBot,
-            whitePlayer = if (humanHasBlack) User.GomokuBot else owner,
-            state = state,
-            messageBufferKey = MessageBufferKey.issue(),
+            humanPlayer = humanPlayer,
             recording = true,
             ruleKind = Rule.RENJU,
-            expireService = ExpireService(bot.config.gameExpireAfter),
         )
     }
 
     fun validateMove(session: GameSession, move: Pos): MoveError? =
-        session.board.validateMove(move)
+        session.state.board.validateMove(move)
             ?: if (session is OpeningSession && !session.validateMove(move)) MoveError.Forbidden
             else null
 
@@ -129,7 +92,7 @@ object GameManager {
         else {
             val gameResult = when (result) {
                 is GameResult.FiveInRow ->
-                    GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, result.winner(), session.player, session.nextPlayer)
+                    GameResult.Win(GameResult.Cause.FIVE_IN_A_ROW, result.winner(), session.player, session.opponent)
                 else -> GameResult.Full
             }
 
@@ -153,7 +116,7 @@ object GameManager {
 
         return if (result == null)
             session.copy(
-                state = thenState,
+                context = session.context.copy(state = thenState),
             )
         else {
             val gameResult = when (result) {
@@ -163,7 +126,7 @@ object GameManager {
             }
 
             session.copy(
-                state = thenState,
+                context = session.context.copy(state = thenState),
                 gameResult = gameResult,
             )
         }
@@ -173,10 +136,10 @@ object GameManager {
         when (session) {
             is EngineGameSession -> {
                 val winColor =
-                    if (session.history.moves == 0)
-                        if (session.blackPlayer == session.humanPlayer) Color.White
+                    if (session.state.history.moves == 0)
+                        if (session.user.black == session.humanPlayer) Color.White
                         else Color.Black
-                    else session.board.opponentColor
+                    else !session.state.board.playerColor
 
                 val result = GameResult.Win(cause, winColor, User.GomokuBot, session.humanPlayer)
 
@@ -186,17 +149,17 @@ object GameManager {
                 val userId = user.humanId ?: throw IllegalStateException()
 
                 val loser = when (userId) {
-                    session.blackPlayer.humanId -> session.blackPlayer
-                    session.whitePlayer.humanId -> session.whitePlayer
+                    session.user.black.humanId -> session.user.black
+                    session.user.white.humanId -> session.user.white
                     else -> throw IllegalStateException()
                 }
 
                 val winner =
-                    if (loser == session.blackPlayer) session.whitePlayer
-                    else session.blackPlayer
+                    if (loser == session.user.black) session.user.white
+                    else session.user.black
 
                 val winColor =
-                    if (winner == session.blackPlayer) Color.Black
+                    if (winner == session.user.black) Color.Black
                     else Color.White
 
                 val result = GameResult.Win(cause, winColor, winner, loser)
@@ -205,7 +168,7 @@ object GameManager {
             }
         }
 
-    suspend fun finishSession(bot: BotContext, channel: Channel, session: GameSession, result: GameResult) {
+    suspend fun finishSession(bot: BotContext, channel: Channel, session: GameSession) {
         SessionManager.deleteGameSession(bot.sessions, session.id)
 
         session.extractGameRecord(channel.id)?.let { record ->

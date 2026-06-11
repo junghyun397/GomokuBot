@@ -5,7 +5,7 @@ import core.session.entities.MintakaIdleSession
 import core.session.entities.WaitingState
 import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.engine.okhttp.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.sse.*
 import io.ktor.client.request.*
@@ -105,7 +105,7 @@ object MintakaProvider {
     }
 
     suspend fun playSession(server: MintakaServer, session: MintakaIdleSession, hashKey: HashKey, pos: Pos): HashKey {
-        val result = this.commandSession(server, session.sid, session.token, CommandSchema.Play(CommandSchemaPlayInner(
+        val result = this.commandSession(server, session.sid, session.token, Command.Play(CommandPlayInner(
             hash=hashKey.toString(),
             pos=pos.toString(),
         )))
@@ -114,7 +114,7 @@ object MintakaProvider {
     }
 
     suspend fun undoSession(server: MintakaServer, session: MintakaIdleSession, hashKey: HashKey): HashKey {
-        val result = this.commandSession(server, session.sid, session.token, CommandSchema.Undo(CommandSchemaUndoInner(
+        val result = this.commandSession(server, session.sid, session.token, Command.Undo(CommandUndoInner(
             hash=hashKey.toString(),
         )))
 
@@ -122,9 +122,9 @@ object MintakaProvider {
     }
 
     suspend fun syncSession(server: MintakaServer, session: MintakaIdleSession, state: GameState): HashKey {
-        val result = this.commandSession(server, session.sid, session.token, CommandSchema.Sync(
-            CompactGameState(
-                board = state.board.toBoardData(),
+        val result = this.commandSession(server, session.sid, session.token, Command.Sync(
+            GameStateData(
+                board_data = state.board.toBoardData(),
                 history = state.history.sequence.map { it.toStringOrNone() },
             )
         ))
@@ -146,8 +146,8 @@ object MintakaProvider {
 
     data class LaunchSessionHandle(
         val waiting: StateFlow<WaitingState?>,
-        val begins: Deferred<ResponseSchema.Begins>,
-        val status: StateFlow<ResponseSchema.Status?>,
+        val begins: Deferred<Response.Begins>,
+        val status: StateFlow<Response.Status?>,
         val bestmove: Deferred<BestMove>,
         val abort: () -> Unit,
     )
@@ -158,8 +158,8 @@ object MintakaProvider {
         hashKey: HashKey,
     ): LaunchSessionHandle {
         val waiting = MutableStateFlow<WaitingState?>(null)
-        val begins = CompletableDeferred<ResponseSchema.Begins>()
-        val status = MutableStateFlow<ResponseSchema.Status?>(null)
+        val begins = CompletableDeferred<Response.Begins>()
+        val status = MutableStateFlow<Response.Status?>(null)
         val bestmove = CompletableDeferred<BestMove>()
 
         scope.launch {
@@ -184,11 +184,11 @@ object MintakaProvider {
                         incoming.first { event ->
                             when (event.event) {
                                 "Response" -> {
-                                    when (val response = jsonCodec.decodeFromString<ResponseSchema>(
+                                    when (val response = jsonCodec.decodeFromString<Response>(
                                         event.data ?: error("Mintaka Response event has no data")
                                     )) {
-                                        is ResponseSchema.Begins -> begins.complete(response)
-                                        is ResponseSchema.Status -> status.value = response
+                                        is Response.Begins -> begins.complete(response)
+                                        is Response.Status -> status.value = response
                                     }
 
                                     false
@@ -256,6 +256,7 @@ object MintakaProvider {
 
     private fun Board.toBoardData(): BoardData {
         return BoardData(
+            rule_kind = "Renju",
             hash_key = this.hashKey.toString(),
             player_color = this.playerColor.toString(),
             bitfield = listOf(

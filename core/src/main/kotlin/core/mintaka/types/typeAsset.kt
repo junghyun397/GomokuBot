@@ -1,7 +1,17 @@
 package core.mintaka.types
 
-typealias PosSchema = String
+import kotlinx.serialization.Serializable
 
-typealias ColorSchema = String
+typealias Pos = String
+
+typealias Color = String
 
 typealias LongInt = Long
+
+typealias RuleKind = String
+
+@Serializable
+data class Duration(
+    val secs: Long,
+    val nanos: Long
+)

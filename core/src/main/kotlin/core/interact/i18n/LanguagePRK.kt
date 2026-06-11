@@ -1,6 +1,7 @@
 package core.interact.i18n
 
 import core.assets.UNICODE_RIGHT
+import renju.notation.ColorContainer
 
 open class LanguagePRK : LanguageKOR() {
 
@@ -46,8 +47,8 @@ open class LanguagePRK : LanguageKOR() {
     override fun commandUsageStyle() =
         "이 봉사기에서 쓰이는 오목판 모양을 바꾸오. Ex) ``/스타일`` ``A``"
 
-    override fun commandUsageStartPVE() = "전자계산기과 함께 새 놀음을 시작하오."
-    override fun commandUsageStartPVP() =
+    override fun commandUsageStartEngine() = "전자계산기과 함께 새 놀음을 시작하오."
+    override fun commandUsageStartPvp() =
         "동지에게 새 놀음을 제안하오. Ex) ``/시작`` ``@인민``"
     override fun commandUsageResign() = "지속 중인 놀음을 포기하오."
 
@@ -210,13 +211,11 @@ open class LanguagePRK : LanguageKOR() {
         "$opponent 동지에게는 아직 대답하지 않은 다른 놀음 요청 하나가 남아있소. $opponent 동지를 기다리시오."
 
     override fun setCommandDescription() = "원하는 자리표에 돌을 놓소."
-    override fun setCommandOptionColumn() = "x"
-    override fun setCommandOptionColumnDescription() = "미제말"
-    override fun setCommandOptionRow() = "y"
-    override fun setCommandOptionRowDescription() = "숫자"
+    override fun setCommandOptionPosition() = "position"
+    override fun setCommandOptionPositionDescription() = "a1부터 o15까지의 자리표"
 
     override fun setErrorIllegalArgument() =
-        "잘못된 시킴말 입구형식이오. ``/s`` ``미제말`` ``숫자`` 꼴로 입구형식을 지키시오."
+        "잘못된 시킴말 입구형식이오. ``/s`` ``자리표`` 꼴로 입구형식을 지키시오."
 
     override fun setErrorExist(move: String) =
         "${move}에는 이미 돌이 놓여있소. 다른 곳에 놓으시오."
@@ -228,55 +227,55 @@ open class LanguagePRK : LanguageKOR() {
     override fun resignCommandDescription() = "지속중인 놀음을 포기하오."
 
     override fun requestEmbedTitle() = "오목 한 판 괜찮겠습니까?"
-    override fun requestEmbedDescription(owner: String, opponent: String) =
-        "$owner 동지가 $opponent 동지에게 놀음 요청을 보냈소. 아래 단추을 눌러 대답하시오."
+    override fun requestEmbedDescription(requester: String, opponent: String) =
+        "$requester 동지가 $opponent 동지에게 놀음 요청을 보냈소. 아래 단추을 눌러 대답하시오."
     override fun requestEmbedButtonAccept() = "평양"
     override fun requestEmbedButtonReject() = "아오지"
 
-    override fun requestRejected(owner: String, opponent: String) =
-        "$opponent 동지가 $owner 동지의 대결 요청을 숙청했소."
+    override fun requestRejected(requester: String, opponent: String) =
+        "$opponent 동지가 $requester 동지의 대결 요청을 숙청했소."
 
-    override fun requestExpired(owner: String, opponent: String) =
-        "$owner 동지가 $opponent 동지에게 보낸 놀음 요청은 숙청되었소. 아직도 $opponent 동지와 대결하고 싶다면, 새 놀음 요청을 보내시오."
+    override fun requestExpired(requester: String, opponent: String) =
+        "$requester 동지가 $opponent 동지에게 보낸 놀음 요청은 숙청되었소. 아직도 $opponent 동지와 대결하고 싶다면, 새 놀음 요청을 보내시오."
 
     override fun requestExpiredNewRequest() = "다시 제안하기"
 
-    override fun beginPVP(blackPlayer: String, whitePlayer: String) =
-        "$blackPlayer 동지와 $whitePlayer 동지의 놀음이 시작되었소. $blackPlayer 동지가 흑이요. $blackPlayer 동지가 첫 번째 수를 놓으시오."
+    override fun beginPvp(players: ColorContainer<String>) =
+        "${players.black} 동지와 ${players.white} 동지의 놀음이 시작되었소. ${players.black} 동지가 흑이요. ${players.black} 동지가 첫 번째 수를 놓으시오."
 
-    override fun beginPVEAiBlack(player: String) =
+    override fun beginEngineAiBlack(player: String) =
         "$player 동지와 전자계산기의 놀음이 시작되었소. $player 동지는 백이요. 전자계산기는 ``h8``에 두었소. 두 번째 수를 놓으시오."
 
-    override fun beginPVEAiWhite(player: String) =
+    override fun beginEngineAiWhite(player: String) =
         "$player 동지와 전자계산기의 놀음이 시작되었소. $player 동지가 흑이요. 첫 번째 수를 놓으시오."
 
-    override fun processNextPVE(lastMove: String) =
+    override fun processNextEngine(lastMove: String) =
         "다음 수를 놓으시오. 전자계산기는 ${lastMove}에 놓았소."
 
-    override fun processNextPVP(priorPlayer: String, lastMove: String) =
-        "다음 수를 놓으시오. $priorPlayer 동지는 ${lastMove}에 놓았소."
+    override fun processNextPvp(lastPlayer: String, lastMove: String) =
+        "다음 수를 놓으시오. $lastPlayer 동지는 ${lastMove}에 놓았소."
 
     override fun processErrorOrder(player: String) =
         "이번은 $player 동지의 차례요. $player 동지가 다음 수를 놓을 때까지 기다리시오."
 
-    override fun endPVPWin(winner: String, loser: String, lastMove: String) =
+    override fun endPvpWin(winner: String, loser: String, lastMove: String) =
         "$winner 동지는 ${lastMove}에 돌을 놓음으로써 $loser 동지를 죽탕쳤소."
-    override fun endPVPResign(winner: String, loser: String) =
+    override fun endPvpResign(winner: String, loser: String) =
         "$loser 동지가 백기을 선언 함으로써 $winner 동지가 $loser 동지를 죽탕쳤소."
-    override fun endPVPTie(owner: String, opponent: String) =
-        "이제 더 이상 돌을 놓을 공간이 없으므로, $opponent 동지와 $opponent 동지의 놀음은 무승부로 끝났소."
-    override fun endPVPTimeOut(winner: String, loser: String) =
+    override fun endPvpTie(players: ColorContainer<String>) =
+        "이제 더 이상 돌을 놓을 공간이 없으므로, ${players.black} 동지와 ${players.white} 동지의 놀음은 무승부로 끝났소."
+    override fun endPvpTimeOut(winner: String, loser: String) =
         "$loser 동지는 오랜 시간 동안 다음 수를 두지 않았기 때문에 $winner 동지는 $loser 동지를 견뎠소."
 
-    override fun endPVEWin(player: String, lastPos: String) =
+    override fun endEngineWin(player: String, lastPos: String) =
         "$player 동지는 $lastPos 에 돌을 놓음으로써 전자계산기을 견뎠소."
-    override fun endPVELose(player: String, lastPos: String) =
+    override fun endEngineLose(player: String, lastPos: String) =
         "전자계산기가 $lastPos 에 돌을 놓음으로써 전자계산기가 $player 동지를 죽탕쳤소."
-    override fun endPVEResign(player: String) =
+    override fun endEngineResign(player: String) =
         "$player 동지는 전자계산기 상대로 백기을 선언 함으로써 전자계산기에 죽탕당했소."
-    override fun endPVETie(player: String) =
+    override fun endEngineTie(player: String) =
         "이제 더 이상 돌을 놓을 공간이 없으므로, $player 동지와 전자계산기의 놀음은 무승부로 끝났소."
-    override fun endPVETimeOut(player: String) =
+    override fun endEngineTimeOut(player: String) =
         "$player 동지는 오랜 시간 동안 다음 수를 두지 않았기 때문에 전자계산기에 죽탕당했소."
 
     override fun boardInProgress() = "진행 중"
@@ -290,7 +289,7 @@ open class LanguagePRK : LanguageKOR() {
     override fun boardWinDescription(winner: String) = "$winner 승리"
     override fun boardTieDescription() = "무승부"
 
-    override fun boardCommandGuide() = ":mag: 단추를 누르거나 ``/s`` ``미제말`` ``숫자`` 시킴말을 똑바로 맞춰 원하는 자리표에 놓으시오."
+    override fun boardCommandGuide() = ":mag: 단추를 누르거나 ``/s`` ``자리표`` 시킴말을 똑바로 맞춰 원하는 자리표에 놓으시오."
 
     override fun announceWrittenOn(date: String) = "$date 에 쓰여짐"
 

@@ -5,12 +5,13 @@ import core.assets.*
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.mintaka.FocusSolver
-import core.session.Rule
 import core.session.entities.GameSession
 import core.session.entities.OpeningSession
+import core.session.entities.Rule
 import core.session.entities.SelectStageOpeningSession
 import kotlinx.coroutines.flow.flowOf
 import renju.notation.Color
+import renju.notation.ColorContainer
 import renju.notation.ForbiddenKind
 import renju.notation.Pos
 import utils.assets.MarkdownAnchorMapping
@@ -42,17 +43,17 @@ abstract class MessagingServiceImpl : MessagingService {
         "${this.name}${this@MessagingServiceImpl.unicodeStone(color)}"
 
     protected fun GameSession.blackPlayerWithColor() =
-        this.blackPlayer.withColor(Color.Black)
+        this.user.black.withColor(Color.Black)
 
     protected fun GameSession.whitePlayerWithColor() =
-        this.whitePlayer.withColor(Color.White)
+        this.user.white.withColor(Color.White)
 
     override fun generateFocusedField(session: GameSession, focusInfo: FocusSolver.FocusInfo): FocusedFields {
         val half = this.focusWidth / 2
-        val lastMove = session.history.lastAction
+        val lastMove = session.state.history.lastAction
 
         fun focusedButtonFlag(pos: Pos): ButtonFlag =
-            when (val stone = session.board.stoneKind(pos)) {
+            when (session.state.board.stoneKind(pos)) {
                 Color.Black ->
                     if (pos == lastMove) ButtonFlag.BLACK_RECENT
                     else ButtonFlag.BLACK
@@ -60,9 +61,9 @@ abstract class MessagingServiceImpl : MessagingService {
                     if (pos == lastMove) ButtonFlag.WHITE_RECENT
                     else ButtonFlag.WHITE
                 null -> when {
-                    session.board.playerColor == Color.Black && session.board.forbiddenKind(pos) != null ->
+                    session.state.board.playerColor == Color.Black && session.state.board.forbiddenKind(pos) != null ->
                         ButtonFlag.FORBIDDEN
-                    pos in focusInfo.highlights ->
+                    focusInfo.highlights?.contains(pos) ?: false ->
                         ButtonFlag.HIGHLIGHTED
                     session is OpeningSession && !session.validateMove(pos) ->
                         ButtonFlag.DISABLED
@@ -109,53 +110,53 @@ abstract class MessagingServiceImpl : MessagingService {
 
     // GAME
 
-    override fun buildBeginsPVP(publisher: MessagePublisher, container: LanguageContainer, blackPlayer: User, whitePlayer: User) =
-        publisher sends container.beginPVP(blackPlayer.asMentionFormat(), whitePlayer.asMentionFormat())
+    override fun buildBeginsPvp(publisher: MessagePublisher, container: LanguageContainer, players: ColorContainer<User>) =
+        publisher sends container.beginPvp(players.map { it.asMentionFormat() })
 
-    override fun buildBeginsPVE(publisher: MessagePublisher, container: LanguageContainer, owner: User, humanHasBlack: Boolean) =
+    override fun buildBeginsEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, humanHasBlack: Boolean) =
         publisher sends when {
-            humanHasBlack -> container.beginPVEAiWhite(owner.asMentionFormat())
-            else -> container.beginPVEAiBlack(owner.asMentionFormat())
+            humanHasBlack -> container.beginEngineAiWhite(humanPlayer.asMentionFormat())
+            else -> container.beginEngineAiBlack(humanPlayer.asMentionFormat())
         }
 
-    override fun buildBeginsOpening(publisher: MessagePublisher, container: LanguageContainer, blackPlayer: User, whitePlayer: User, rule: Rule) =
-        publisher sends container.beginOpening(blackPlayer.asMentionFormat(), whitePlayer.asMentionFormat())
+    override fun buildBeginsOpening(publisher: MessagePublisher, container: LanguageContainer, players: ColorContainer<User>, rule: Rule) =
+        publisher sends container.beginOpening(players.map { it.asMentionFormat() })
 
-    override fun buildNextMovePVP(publisher: MessagePublisher, container: LanguageContainer, previousPlayer: User, nextPlayer: User, lastMove: Pos) =
-        publisher sends container.processNextPVP(nextPlayer.asMentionFormat(), lastMove.toString().asHighlightFormat())
+    override fun buildNextMovePvp(publisher: MessagePublisher, container: LanguageContainer, lastPlayer: User, lastMove: Pos) =
+        publisher sends container.processNextPvp(lastPlayer.asMentionFormat(), lastMove.toString().asHighlightFormat())
 
     override fun buildNextMoveOpening(publisher: MessagePublisher, container: LanguageContainer, lastMove: Pos): MessageBuilder =
         publisher sends container.processNextOpening(lastMove.toString().asHighlightFormat())
 
-    override fun buildWinPVP(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User, lastMove: Pos) =
-        publisher sends container.endPVPWin(winner.asMentionFormat(), loser.asMentionFormat(), lastMove.toString().asHighlightFormat())
+    override fun buildWinPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User, lastMove: Pos) =
+        publisher sends container.endPvpWin(winner.asMentionFormat(), loser.asMentionFormat(), lastMove.toString().asHighlightFormat())
 
-    override fun buildTiePVP(publisher: MessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
-        publisher sends container.endPVPTie(owner.asMentionFormat(), opponent.asMentionFormat())
+    override fun buildTiePvp(publisher: MessagePublisher, container: LanguageContainer, players: ColorContainer<User>) =
+        publisher sends container.endPvpTie(players.map { it.asMentionFormat() })
 
-    override fun buildSurrenderedPVP(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User) =
-        publisher sends container.endPVPResign(winner.asMentionFormat(), loser.asMentionFormat())
+    override fun buildSurrenderedPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User) =
+        publisher sends container.endPvpResign(winner.asMentionFormat(), loser.asMentionFormat())
 
-    override fun buildTimeoutPVP(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User) =
-        publisher sends container.endPVPTimeOut(winner.asMentionFormat(), loser.asMentionFormat())
+    override fun buildTimeoutPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User) =
+        publisher sends container.endPvpTimeOut(winner.asMentionFormat(), loser.asMentionFormat())
 
-    override fun buildNextMovePVE(publisher: MessagePublisher, container: LanguageContainer, owner: User, lastMove: Pos) =
-        publisher sends container.processNextPVE(lastMove.toString().asHighlightFormat())
+    override fun buildNextMoveEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, lastMove: Pos) =
+        publisher sends container.processNextEngine(lastMove.toString().asHighlightFormat())
 
-    override fun buildWinPVE(publisher: MessagePublisher, container: LanguageContainer, owner: User, lastMove: Pos) =
-        publisher sends container.endPVEWin(owner.asMentionFormat(), lastMove.toString().asHighlightFormat())
+    override fun buildWinEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, lastMove: Pos) =
+        publisher sends container.endEngineWin(humanPlayer.asMentionFormat(), lastMove.toString().asHighlightFormat())
 
-    override fun buildLosePVE(publisher: MessagePublisher, container: LanguageContainer, owner: User, lastMove: Pos) =
-        publisher sends container.endPVELose(owner.asMentionFormat(), lastMove.toString().asHighlightFormat())
+    override fun buildLoseEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, lastMove: Pos) =
+        publisher sends container.endEngineLose(humanPlayer.asMentionFormat(), lastMove.toString().asHighlightFormat())
 
-    override fun buildTiePVE(publisher: MessagePublisher, container: LanguageContainer, owner: User) =
-        publisher sends container.endPVETie(owner.asMentionFormat())
+    override fun buildTieEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User) =
+        publisher sends container.endEngineTie(humanPlayer.asMentionFormat())
 
-    override fun buildSurrenderedPVE(publisher: MessagePublisher, container: LanguageContainer, owner: User) =
-        publisher sends container.endPVEResign(owner.asMentionFormat())
+    override fun buildSurrenderedEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User) =
+        publisher sends container.endEngineResign(humanPlayer.asMentionFormat())
 
-    override fun buildTimeoutPVE(publisher: MessagePublisher, container: LanguageContainer, player: User) =
-        publisher sends container.endPVETimeOut(player.asMentionFormat())
+    override fun buildTimeoutEngine(publisher: MessagePublisher, container: LanguageContainer, player: User) =
+        publisher sends container.endEngineTimeOut(player.asMentionFormat())
 
     // CONFIG
 
@@ -208,11 +209,11 @@ abstract class MessagingServiceImpl : MessagingService {
 
     // REQUEST
 
-    override fun buildRequestRejected(publisher: MessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
-        publisher sends container.requestRejected(owner.asMentionFormat(), opponent.asMentionFormat())
+    override fun buildRequestRejected(publisher: MessagePublisher, container: LanguageContainer, requester: User, opponent: User) =
+        publisher sends container.requestRejected(requester.asMentionFormat(), opponent.asMentionFormat())
 
-    override fun buildRequestExpired(publisher: MessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
-        publisher sends container.requestExpired(owner.asMentionFormat(), opponent.asMentionFormat())
+    override fun buildRequestExpired(publisher: MessagePublisher, container: LanguageContainer, requester: User, opponent: User) =
+        publisher sends container.requestExpired(requester.asMentionFormat(), opponent.asMentionFormat())
 
     // UTILS
 

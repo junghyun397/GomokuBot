@@ -9,10 +9,10 @@ import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.SessionManager
-import core.session.SwapType
 import core.session.entities.ChannelConfig
 import core.session.entities.SessionId
 import core.session.entities.SwapStageOpeningSession
+import core.session.entities.SwapType
 import utils.lang.tuple
 
 class OpeningSwapCommand(
@@ -48,7 +48,7 @@ class OpeningSwapCommand(
             else -> publishers.plain
         }
 
-        val io = buildNextMoveProcedure(bot, channel, config, service, boardPublisher, session ?: throw IllegalStateException(), thenSession)
+        val io = buildNextMoveProcedure(bot, config, service, boardPublisher, session ?: throw IllegalStateException(), thenSession)
 
         tuple(io, this.writeCommandReport("make swap ${this.doSwap}", channel, user))
     }

@@ -12,11 +12,12 @@ import core.interact.i18n.LanguageContainer
 import core.interact.message.graphics.BoardRenderer
 import core.interact.message.graphics.HistoryRenderType
 import core.mintaka.FocusSolver
-import core.session.Rule
 import core.session.entities.ChannelConfig
 import core.session.entities.DeclareStageOpeningSession
 import core.session.entities.GameSession
+import core.session.entities.Rule
 import kotlinx.coroutines.flow.Flow
+import renju.notation.ColorContainer
 import renju.notation.ForbiddenKind
 import renju.notation.GameResult
 import renju.notation.Pos
@@ -109,35 +110,35 @@ interface MessagingService {
 
     // GAME
 
-    fun buildBeginsPVP(publisher: MessagePublisher, container: LanguageContainer, blackPlayer: User, whitePlayer: User): MessageBuilder
+    fun buildBeginsPvp(publisher: MessagePublisher, container: LanguageContainer, players: ColorContainer<User>): MessageBuilder
 
-    fun buildBeginsPVE(publisher: MessagePublisher, container: LanguageContainer, owner: User, humanHasBlack: Boolean): MessageBuilder
+    fun buildBeginsEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, humanHasBlack: Boolean): MessageBuilder
 
-    fun buildBeginsOpening(publisher: MessagePublisher, container: LanguageContainer, blackPlayer: User, whitePlayer: User, rule: Rule): MessageBuilder
+    fun buildBeginsOpening(publisher: MessagePublisher, container: LanguageContainer, players: ColorContainer<User>, rule: Rule): MessageBuilder
 
-    fun buildNextMovePVP(publisher: MessagePublisher, container: LanguageContainer, previousPlayer: User, nextPlayer: User, lastMove: Pos): MessageBuilder
+    fun buildNextMovePvp(publisher: MessagePublisher, container: LanguageContainer, lastPlayer: User, lastMove: Pos): MessageBuilder
 
     fun buildNextMoveOpening(publisher: MessagePublisher, container: LanguageContainer, lastMove: Pos): MessageBuilder
 
-    fun buildWinPVP(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User, lastMove: Pos): MessageBuilder
+    fun buildWinPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User, lastMove: Pos): MessageBuilder
 
-    fun buildTiePVP(publisher: MessagePublisher, container: LanguageContainer, owner: User, opponent: User): MessageBuilder
+    fun buildTiePvp(publisher: MessagePublisher, container: LanguageContainer, players: ColorContainer<User>): MessageBuilder
 
-    fun buildSurrenderedPVP(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User): MessageBuilder
+    fun buildSurrenderedPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User): MessageBuilder
 
-    fun buildTimeoutPVP(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User): MessageBuilder
+    fun buildTimeoutPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User): MessageBuilder
 
-    fun buildNextMovePVE(publisher: MessagePublisher, container: LanguageContainer, owner: User, lastMove: Pos): MessageBuilder
+    fun buildNextMoveEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, lastMove: Pos): MessageBuilder
 
-    fun buildWinPVE(publisher: MessagePublisher, container: LanguageContainer, owner: User, lastMove: Pos): MessageBuilder
+    fun buildWinEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, lastMove: Pos): MessageBuilder
 
-    fun buildLosePVE(publisher: MessagePublisher, container: LanguageContainer, owner: User, lastMove: Pos): MessageBuilder
+    fun buildLoseEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, lastMove: Pos): MessageBuilder
 
-    fun buildTiePVE(publisher: MessagePublisher, container: LanguageContainer, owner: User): MessageBuilder
+    fun buildTieEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User): MessageBuilder
 
-    fun buildSurrenderedPVE(publisher: MessagePublisher, container: LanguageContainer, owner: User): MessageBuilder
+    fun buildSurrenderedEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User): MessageBuilder
 
-    fun buildTimeoutPVE(publisher: MessagePublisher, container: LanguageContainer, player: User): MessageBuilder
+    fun buildTimeoutEngine(publisher: MessagePublisher, container: LanguageContainer, player: User): MessageBuilder
 
     // REPLAY
 
@@ -215,13 +216,13 @@ interface MessagingService {
 
     // REQUEST
 
-    fun buildRequest(publisher: MessagePublisher, container: LanguageContainer, owner: User.Human, opponent: User.Human, rule: Rule): MessageBuilder
+    fun buildRequest(publisher: MessagePublisher, container: LanguageContainer, requester: User.Human, opponent: User.Human, rule: Rule): MessageBuilder
 
-    fun buildRejectedRequest(publisher: MessagePublisher, container: LanguageContainer, owner: User, opponent: User): MessageBuilder
+    fun buildRejectedRequest(publisher: MessagePublisher, container: LanguageContainer, requester: User, opponent: User): MessageBuilder
 
-    fun buildRequestRejected(publisher: MessagePublisher, container: LanguageContainer, owner: User, opponent: User): MessageBuilder
+    fun buildRequestRejected(publisher: MessagePublisher, container: LanguageContainer, requester: User, opponent: User): MessageBuilder
 
-    fun buildRequestExpired(publisher: MessagePublisher, container: LanguageContainer, owner: User, opponent: User): MessageBuilder
+    fun buildRequestExpired(publisher: MessagePublisher, container: LanguageContainer, requester: User, opponent: User): MessageBuilder
 
     // UTILS
 

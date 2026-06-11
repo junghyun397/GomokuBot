@@ -1,6 +1,7 @@
 package core.database.repositories
 
 import core.assets.ChannelUid
+import core.assets.User
 import core.assets.UserUid
 import core.database.DatabaseConnection
 import core.database.entities.GameRecord
@@ -8,12 +9,13 @@ import core.database.entities.GameRecordId
 import core.database.jooq.tables.records.GameRecordRecord
 import core.database.jooq.tables.references.GAME_RECORD
 import core.mintaka.EngineLevel
-import core.session.Rule
+import core.session.entities.Rule
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import renju.notation.Color
+import renju.notation.ColorContainer
 import renju.notation.GameResult
 import renju.notation.Pos
 import utils.lang.toUtcInstant
@@ -31,8 +33,8 @@ object GameRecordRepository {
                 .set(GAME_RECORD.CAUSE, record.gameResult.cause.id)
                 .set(GAME_RECORD.WIN_COLOR, record.gameResult.winColorId)
                 .set(GAME_RECORD.CHANNEL_ID, record.channelId.uuid)
-                .set(GAME_RECORD.BLACK_ID, record.blackId?.uuid)
-                .set(GAME_RECORD.WHITE_ID, record.whiteId?.uuid)
+                .set(GAME_RECORD.BLACK_ID, record.userUid.black?.uuid)
+                .set(GAME_RECORD.WHITE_ID, record.userUid.white?.uuid)
                 .set(GAME_RECORD.ENGINE_LEVEL, record.engineLevel?.id)
                 .set(GAME_RECORD.RULE, record.rule.id)
         )
@@ -50,8 +52,7 @@ object GameRecordRepository {
             .map { this.extractGameRecordData(it) }
             .collectList()
             .awaitSingle()
-            .map { this.buildGameRecord(connection, it) }
-            .toMutableList()
+            .let { this.buildGameRecords(connection, it) }
 
     suspend fun retrieveGameRecordsByUserUid(connection: DatabaseConnection, userUid: UserUid, limit: Int): MutableList<GameRecord> =
         Flux.from(
@@ -64,8 +65,7 @@ object GameRecordRepository {
             .map { this.extractGameRecordData(it) }
             .collectList()
             .awaitSingle()
-            .map { this.buildGameRecord(connection, it) }
-            .toMutableList()
+            .let { this.buildGameRecords(connection, it) }
 
     suspend fun retrieveLastGameRecordByUserUid(connection: DatabaseConnection, userUid: UserUid): GameRecord? =
         Mono.from(
@@ -103,9 +103,31 @@ object GameRecordRepository {
             record.createDate!!
         )
 
+    private suspend fun buildGameRecords(connection: DatabaseConnection, gameRecordRows: List<GameRecordRow>): MutableList<GameRecord> {
+        val users = UserProfileRepository.retrieveUsers(connection, this.extractUserUids(gameRecordRows))
+
+        return gameRecordRows
+            .map { this.buildGameRecord(it, users) }
+            .toMutableList()
+    }
+
     private suspend fun buildGameRecord(connection: DatabaseConnection, gameRecordRow: GameRecordRow): GameRecord {
-        val blackUser = gameRecordRow.blackId?.let { UserProfileRepository.retrieveUser(connection, UserUid(it)) }
-        val whiteUser = gameRecordRow.whiteId?.let { UserProfileRepository.retrieveUser(connection, UserUid(it)) }
+        val users = UserProfileRepository.retrieveUsers(connection, this.extractUserUids(listOf(gameRecordRow)))
+
+        return this.buildGameRecord(gameRecordRow, users)
+    }
+
+    private fun extractUserUids(gameRecordRows: List<GameRecordRow>): Set<UserUid> =
+        gameRecordRows
+            .flatMap { listOfNotNull(it.blackId, it.whiteId) }
+            .map { UserUid(it) }
+            .toSet()
+
+    private fun buildGameRecord(gameRecordRow: GameRecordRow, users: Map<UserUid, User.Human>): GameRecord {
+        val recordUsers = ColorContainer(
+            black = gameRecordRow.blackId?.let { users.getValue(UserUid(it)) },
+            white = gameRecordRow.whiteId?.let { users.getValue(UserUid(it)) }
+        )
 
         return GameRecord(
             gameRecordId = GameRecordId(gameRecordRow.recordId),
@@ -113,12 +135,10 @@ object GameRecordRepository {
             gameResult = GameResult.build(
                 gameResult = GameResult.fromFlag(gameRecordRow.winColor ?: Color.emptyFlag()),
                 cause = GameResult.Cause.entries.find(gameRecordRow.cause),
-                blackUser = blackUser,
-                whiteUser = whiteUser
+                users = recordUsers
             )!!,
             channelId = ChannelUid(gameRecordRow.channelId),
-            blackId = blackUser?.id,
-            whiteId = whiteUser?.id,
+            userUid = recordUsers.map { it?.id },
             engineLevel = gameRecordRow.engineLevel?.let { EngineLevel.entries.find(it) },
             rule = Rule.entries.find(gameRecordRow.rule),
             date = gameRecordRow.data.toUtcInstant(),

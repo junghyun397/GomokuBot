@@ -6,7 +6,7 @@ enum class Color(val naiveFlag: Byte) {
     Black(RustyRenjuCApi.constants.colorBlack),
     White(RustyRenjuCApi.constants.colorWhite);
 
-    fun reversed(): Color =
+    operator fun not(): Color =
         when (this) {
             Black -> White
             White -> Black

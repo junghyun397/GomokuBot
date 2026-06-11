@@ -11,11 +11,7 @@ import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.GameManager
 import core.session.SessionManager
-import core.session.SwapType
-import core.session.entities.ChannelConfig
-import core.session.entities.GameSession
-import core.session.entities.OpeningSession
-import core.session.entities.SessionId
+import core.session.entities.*
 import renju.notation.Pos
 import utils.lang.tuple
 
@@ -69,8 +65,7 @@ abstract class OpeningMoveCommand<T : OpeningSession>(
 
         val io = effect {
             guideIO()
-            buildNextMoveProcedure(bot,
-                channel, config, service, boardPublisher, session ?: throw IllegalStateException(), thenSession)()
+            buildNextMoveProcedure(bot, config, service, boardPublisher, session ?: throw IllegalStateException(), thenSession)()
         }
 
         tuple(io, this.writeCommandReport(this.writeLog(), channel, user))

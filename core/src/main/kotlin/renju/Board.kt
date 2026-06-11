@@ -25,12 +25,7 @@ class Board private constructor (
         loadPatterns(this.nativePointer)
     }
 
-    val isNextColorBlack: Boolean
-        get() = this.playerColor == Color.Black
-
     val playerColor: Color get() = Color.from(this.describe.player_color)
-
-    val opponentColor: Color get() = this.playerColor.reversed()
 
     val stones: Int get() = this.describe.field.count { it.isStone }
 
@@ -104,6 +99,12 @@ class Board private constructor (
         return if (this.stones >= Pos.BOARD_SIZE) GameResult.Full
         else null
     }
+
+    fun winningSequence(): List<Pos>? =
+        this.describe.winner
+            .takeIf { it.isSome }
+            ?.sequence
+            ?.map { raw -> Pos.fromIdx(raw.toInt() and 0xff) }
 
     internal fun nativeHandle(): MemorySegment = this.nativePointer
 

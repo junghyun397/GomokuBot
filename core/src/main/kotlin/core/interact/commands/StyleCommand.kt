@@ -9,8 +9,8 @@ import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
-import core.session.BoardStyle
 import core.session.SessionManager
+import core.session.entities.BoardStyle
 import core.session.entities.ChannelConfig
 import utils.lang.tuple
 

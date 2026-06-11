@@ -9,10 +9,10 @@ import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.SessionManager
-import core.session.SwapType
 import core.session.entities.ChannelConfig
 import core.session.entities.DeclareStageOpeningSession
 import core.session.entities.SessionId
+import core.session.entities.SwapType
 import utils.lang.tuple
 
 class OpeningDeclareCommand(
@@ -47,7 +47,7 @@ class OpeningDeclareCommand(
             else -> publishers.plain
         }
 
-        val io = buildNextMoveProcedure(bot, channel, config, service, boardPublisher, session ?: throw IllegalStateException(), thenSession)
+        val io = buildNextMoveProcedure(bot, config, service, boardPublisher, session ?: throw IllegalStateException(), thenSession)
 
         tuple(io, this.writeCommandReport("declare 5th moves ${this.maxOfferCount}", channel, user))
     }

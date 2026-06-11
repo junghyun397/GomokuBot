@@ -12,12 +12,8 @@ import core.interact.reports.writeCommandReport
 import core.mintaka.EngineLevel
 import core.session.GameManager
 import core.session.MessageManager
-import core.session.Rule
 import core.session.SessionManager
-import core.session.entities.ChannelConfig
-import core.session.entities.MessageBufferKey
-import core.session.entities.RequestSession
-import core.session.entities.SessionId
+import core.session.entities.*
 import utils.lang.tuple
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
@@ -44,9 +40,9 @@ class StartCommand(val opponent: User, val rule: Rule) : Command {
                 SessionManager.createGameSession(bot.sessions, channel, gameSession.participantIds, gameSession)
 
                 val io = effect {
-                    service.buildBeginsPVE(publishers.plain, config.language.container, user, gameSession.blackPlayer == user)
+                    service.buildBeginsEngine(publishers.plain, config.language.container, user, gameSession.user.black == user)
                         .launch()()
-                    buildBoardProcedure(bot, channel, config, service, publishers.plain, gameSession)()
+                    buildBoardProcedure(bot, config, service, publishers.plain, gameSession)()
                     emptyOrders
                 }
 
@@ -54,11 +50,12 @@ class StartCommand(val opponent: User, val rule: Rule) : Command {
             }
             is User.Human -> {
                 val requestSession = RequestSession(
-                    SessionId.issue(),
-                    user, opponent,
-                    MessageBufferKey.issue(),
-                    this.rule,
-                    Clock.System.now() + bot.config.requestExpireAfter.milliseconds,
+                    id = SessionId.issue(),
+                    requester = user,
+                    opponent = opponent,
+                    messageBufferKey = MessageBufferKey.issue(),
+                    rule = this.rule,
+                    expireDate = Clock.System.now() + bot.config.requestExpireAfter.milliseconds,
                 )
 
                 SessionManager.createRequestSession(bot.sessions, channel, setOf(user.id, opponent.id), requestSession)

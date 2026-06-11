@@ -8,6 +8,7 @@ import core.database.jooq.tables.records.UserProfileRecord
 import core.database.jooq.tables.references.USER_PROFILE
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 object UserProfileRepository {
@@ -22,10 +23,37 @@ object UserProfileRepository {
         connection.localCaches.userProfileUidCache
             .getIfPresent(userUid)
             ?: this.fetchUser(connection, userUid)
-                .also { user ->
-                    connection.localCaches.userProfileUidCache.put(user.id, user)
-                    connection.localCaches.userProfileGivenIdCache.put(user.givenId, user)
-                }
+                .also { this.cacheUser(connection, it) }
+
+    suspend fun retrieveUsers(connection: DatabaseConnection, userUids: Collection<UserUid>): Map<UserUid, User.Human> {
+        val users = mutableMapOf<UserUid, User.Human>()
+
+        val missingUserUids = userUids
+            .asSequence()
+            .map { it to connection.localCaches.userProfileUidCache.getIfPresent(it) }
+            .onEach { (uid, record) -> if (record != null) users[uid] = record }
+            .filter { (_, record) -> record == null }
+            .map { (uid, _) -> uid }
+            .toCollection(mutableSetOf())
+
+        if (missingUserUids.isEmpty())
+            return users
+
+        Flux.from(
+            connection.jooq
+                .selectFrom(USER_PROFILE)
+                .where(USER_PROFILE.USER_ID.`in`(missingUserUids.map { it.uuid }))
+        )
+            .map { this.extractUser(it) }
+            .collectList()
+            .awaitSingle()
+            .forEach { user ->
+                this.cacheUser(connection, user)
+                users[user.id] = user
+            }
+
+        return users
+    }
 
     suspend fun retrieveUser(connection: DatabaseConnection, platform: Short, givenId: UserId): User.Human? {
         connection.localCaches.userProfileGivenIdCache
@@ -34,10 +62,8 @@ object UserProfileRepository {
 
         val maybeUser = this.fetchUser(connection, platform, givenId)
 
-        if (maybeUser != null) {
-            connection.localCaches.userProfileUidCache.put(maybeUser.id, maybeUser)
-            connection.localCaches.userProfileGivenIdCache.put(maybeUser.givenId, maybeUser)
-        }
+        if (maybeUser != null)
+            this.cacheUser(connection, maybeUser)
 
         return maybeUser
     }
@@ -62,8 +88,7 @@ object UserProfileRepository {
             .awaitSingleOrNull()
 
     suspend fun upsertUser(connection: DatabaseConnection, user: User.Human) {
-        connection.localCaches.userProfileGivenIdCache.put(user.givenId, user)
-        connection.localCaches.userProfileUidCache.put(user.id, user)
+        this.cacheUser(connection, user)
 
         Mono.from(
             connection.jooq
@@ -84,6 +109,11 @@ object UserProfileRepository {
                 .set(USER_PROFILE.PROFILE_URL, user.profileURL)
         )
             .awaitSingle()
+    }
+
+    private fun cacheUser(connection: DatabaseConnection, user: User.Human) {
+        connection.localCaches.userProfileGivenIdCache.put(user.givenId, user)
+        connection.localCaches.userProfileUidCache.put(user.id, user)
     }
 
     private fun extractUser(record: UserProfileRecord): User.Human =

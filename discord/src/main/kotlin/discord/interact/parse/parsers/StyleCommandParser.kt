@@ -8,7 +8,7 @@ import core.interact.i18n.LanguageContainer
 import core.interact.parse.CommandParser
 import core.interact.parse.ParseFailure
 import core.interact.parse.asParseFailure
-import core.session.BoardStyle
+import core.session.entities.BoardStyle
 import dev.minn.jda.ktx.interactions.commands.choice
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash

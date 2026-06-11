@@ -5,9 +5,7 @@ import core.assets.ChannelUid
 import core.assets.MessageRef
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
-import core.session.ArchivePolicy
-import core.session.entities.EngineGameSession
-import core.session.entities.PvpGameSession
+import core.session.entities.ArchivePolicy
 import core.session.entities.RenjuSession
 import dev.minn.jda.ktx.coroutines.await
 import discord.assets.JDAChannel
@@ -20,12 +18,10 @@ import discord.interact.parse.engBuildableCommands
 import discord.interact.parse.parsers.HelpCommandParser
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
-import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.requests.RestAction
-import renju.notation.GameResult
 import utils.lang.memoize
 import utils.lang.replaceIf
 import utils.lang.tuple
@@ -36,15 +32,6 @@ object ChannelManager {
 
     fun lookupPermission(channel: GuildMessageChannel, permission: Permission) =
         channel.guild.selfMember.hasPermission(channel, permission)
-
-    suspend fun hasDebugPermission(config: DiscordConfig, user: User): Boolean =
-        user.jda
-            .getGuildById(config.officialServerId.idLong)!!
-            .retrieveMemberById(user.idLong)
-            .awaitNullable()
-            ?.roles
-            ?.any { it.idLong == config.testerRoleId }
-            ?: false
 
     inline fun <T> permissionGrantedRun(channel: GuildMessageChannel, permission: Permission, block: () -> T): T? =
         if (this.lookupPermission(channel, permission)) block()
@@ -91,44 +78,16 @@ object ChannelManager {
         }.queue()
     }
 
-    private fun core.assets.User.switchToAnonymousUser() =
-        when (this) {
-            core.assets.User.GomokuBot -> core.assets.User.GomokuBot
-            is core.assets.User.Human, core.assets.User.Anonymous -> core.assets.User.Anonymous
-        }
-
     suspend fun archiveSession(archiveSubChannel: MessageChannel, session: RenjuSession, archivePolicy: ArchivePolicy) {
-        if (session.history.moves < 20 || archivePolicy == ArchivePolicy.PRIVACY) return
+        if (session.state.history.moves < 20 || archivePolicy == ArchivePolicy.PRIVACY) return
 
         val modSession = session.replaceIf(archivePolicy == ArchivePolicy.BY_ANONYMOUS) {
-            when (session) {
-                is EngineGameSession -> session.copy(
-                    humanPlayer = core.assets.User.Anonymous,
-                    blackPlayer = if (session.blackPlayer == session.humanPlayer) core.assets.User.Anonymous else session.blackPlayer,
-                    whitePlayer = if (session.whitePlayer == session.humanPlayer) core.assets.User.Anonymous else session.whitePlayer,
-                )
-                is PvpGameSession -> session.copy(
-                    blackPlayer = core.assets.User.Anonymous,
-                    whitePlayer = core.assets.User.Anonymous,
-                )
-            }
-        }
-
-        val modResult = modSession.gameResult?.let { result ->
-            result.replaceIf(archivePolicy == ArchivePolicy.BY_ANONYMOUS) {
-                when (result) {
-                    is GameResult.Win -> result.copy(
-                        winner = result.winner.switchToAnonymousUser(),
-                        loser = result.loser.switchToAnonymousUser()
-                    )
-                    else -> result
-                }
-            }
+            session.anonymous()
         }
 
         val publisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(archiveSubChannel.sendMessage(msg.asDiscordMessageData().buildCreate())) }
 
-        DiscordMessagingService.buildSessionArchive(publisher, modSession, modResult)
+        DiscordMessagingService.buildSessionArchive(publisher, modSession, modSession.gameResult)
             .launch()
             .get()
     }

@@ -1,16 +1,16 @@
 package discord.interact.parse.parsers
 
-import core.session.MessageManager
 import core.assets.humanId
 import core.interact.commands.Command
 import core.interact.commands.OpeningBranchingCommand
 import core.interact.commands.OpeningDeclareCommand
 import core.interact.commands.OpeningSwapCommand
+import core.session.MessageManager
 import core.session.SessionManager
-import core.session.SwapType
 import core.session.entities.BranchingStageOpeningSession
 import core.session.entities.DeclareStageOpeningSession
 import core.session.entities.SwapStageOpeningSession
+import core.session.entities.SwapType
 import discord.interact.UserInteractionContext
 import discord.interact.parse.EmbeddableCommand
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent

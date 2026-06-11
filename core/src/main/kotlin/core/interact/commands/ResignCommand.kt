@@ -12,7 +12,6 @@ import core.interact.reports.writeCommandReport
 import core.session.GameManager
 import core.session.MessageManager
 import core.session.SessionManager
-import core.session.SwapType
 import core.session.entities.*
 import renju.notation.GameResult
 
@@ -44,7 +43,7 @@ class ResignCommand(private val sessionId: SessionId) : Command {
         val sessionValue = session ?: throw IllegalStateException()
         val resultValue = result ?: throw IllegalStateException()
 
-        GameManager.finishSession(bot, channel, finishedSession, resultValue)
+        GameManager.finishSession(bot, channel, finishedSession)
 
         val publisher = run {
             val boardMessage = MessageManager.viewHeadMessage(bot.sessions, sessionValue.messageBufferKey)
@@ -58,9 +57,9 @@ class ResignCommand(private val sessionId: SessionId) : Command {
         val io = effect {
             when (finishedSession) {
                 is EngineGameSession ->
-                    service.buildSurrenderedPVE(publishers.plain, config.language.container, finishedSession.humanPlayer)
+                    service.buildSurrenderedEngine(publishers.plain, config.language.container, finishedSession.humanPlayer)
                 is PvpGameSession, is OpeningSession ->
-                    service.buildSurrenderedPVP(publishers.plain, config.language.container, resultValue.winner, resultValue.loser)
+                    service.buildSurrenderedPvp(publishers.plain, config.language.container, resultValue.winner, resultValue.loser)
             }.launch()()
 
             val finishOrders = buildFinishProcedure(bot, service, publisher, config, sessionValue, finishedSession)()

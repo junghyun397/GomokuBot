@@ -6,8 +6,7 @@ import core.database.jooq.tables.records.ChannelConfigRecord
 import core.database.jooq.tables.references.CHANNEL_CONFIG
 import core.interact.i18n.Language
 import core.interact.message.graphics.HistoryRenderType
-import core.session.*
-import core.session.entities.ChannelConfig
+import core.session.entities.*
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import reactor.core.publisher.Mono

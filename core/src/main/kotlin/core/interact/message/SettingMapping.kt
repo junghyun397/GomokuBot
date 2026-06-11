@@ -3,8 +3,7 @@ package core.interact.message
 import core.assets.*
 import core.interact.i18n.LanguageContainer
 import core.interact.message.graphics.HistoryRenderType
-import core.session.*
-import core.session.entities.ChannelConfig
+import core.session.entities.*
 import utils.assets.toEnumString
 import utils.lang.tuple
 import utils.structs.Identifiable

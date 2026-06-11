@@ -34,7 +34,7 @@ class BoardCommand(
         val session = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).snapshot()
 
         val io = effect {
-            buildBoardProcedure(bot, channel, config, service, publishers.plain, session)()
+            buildBoardProcedure(bot, config, service, publishers.plain, session)()
             emptyOrders
         }
 

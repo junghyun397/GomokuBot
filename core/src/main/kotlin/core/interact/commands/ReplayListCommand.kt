@@ -39,8 +39,8 @@ class ReplayListCommand(val edit: Boolean) : Command {
 
             val gameResults = gameRecords.map { record ->
                 val opponent =
-                    if (record.blackId == user.id) record.whiteId.retrieveUserOrGomokuBot(bot.dbConnection)
-                    else record.blackId.retrieveUserOrGomokuBot(bot.dbConnection)
+                    if (record.userUid.white == user.id) record.userUid.black.retrieveUserOrGomokuBot(bot.dbConnection)
+                    else record.userUid.black.retrieveUserOrGomokuBot(bot.dbConnection)
 
                 tuple(opponent, record)
             }

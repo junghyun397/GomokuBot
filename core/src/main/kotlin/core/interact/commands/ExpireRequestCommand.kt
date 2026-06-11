@@ -36,12 +36,12 @@ class ExpireRequestCommand(
                 if (message != null && this@ExpireRequestCommand.messageAvailable) {
                     val editPublisher = publisher.edit(message)
 
-                    service.buildRejectedRequest(editPublisher, config.language.container, session.owner, session.opponent)
+                    service.buildRejectedRequest(editPublisher, config.language.container, session.requester, session.opponent)
                         .launch()()
                 }
 
                 service
-                    .buildRequestExpired(noticePublisher, config.language.container, session.owner, session.opponent)
+                    .buildRequestExpired(noticePublisher, config.language.container, session.requester, session.opponent)
                     .launch()()
 
                 emptyOrders

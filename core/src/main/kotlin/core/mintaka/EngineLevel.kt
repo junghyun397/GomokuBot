@@ -1,12 +1,11 @@
 package core.mintaka
 
 import core.mintaka.types.Config
-import core.mintaka.types.DurationSchema
+import core.mintaka.types.Duration
 import core.mintaka.types.Timer
 import utils.structs.Identifiable
 
 val BASE_CONFIG = Config(
-    rule_kind = "Renju",
     draw_condition = 225U,
     max_nodes_in_1k = 1_000U,
     max_depth = null,
@@ -14,12 +13,11 @@ val BASE_CONFIG = Config(
     tt_size = 1024 * 1024 * 64,
     workers = 2U,
     pondering = false,
-    dynamic_time = false,
     initial_timer = Timer(
         total_remaining = null,
-        increment = DurationSchema(
+        increment = Duration(
             secs = 0,
-            nanos = 0U,
+            nanos = 0,
         ),
         turn = null
     ),

@@ -2,7 +2,7 @@ package core.interact
 
 import core.assets.MessageRef
 import core.interact.i18n.LanguageContainer
-import core.session.ArchivePolicy
+import core.session.entities.ArchivePolicy
 import core.session.entities.RenjuSession
 
 sealed interface Order {

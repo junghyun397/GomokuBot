@@ -12,11 +12,11 @@ import core.interact.parse.CommandParser
 import core.interact.parse.ParseFailure
 import core.interact.parse.asParseFailure
 import core.session.MessageManager
-import core.session.Rule
 import core.session.SessionManager
-import core.session.SwapType
 import core.session.entities.GameSession
 import core.session.entities.RequestSession
+import core.session.entities.Rule
+import core.session.entities.SwapType
 import dev.minn.jda.ktx.interactions.commands.choice
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
@@ -40,11 +40,11 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     override fun getLocalizedUsages(container: LanguageContainer) = listOf(
         BuildableCommand.Usage(
             usage = "``/${container.startCommand()}`` or ``$COMMAND_PREFIX${container.startCommand()}``",
-            description = container.commandUsageStartPVE()
+            description = container.commandUsageStartEngine()
         ),
         BuildableCommand.Usage(
             usage = "``/${container.startCommand()} @mention`` or ``$COMMAND_PREFIX${container.startCommand()} @mention``",
-            description = container.commandUsageStartPVP()
+            description = container.commandUsageStartPvp()
         ),
     )
 
@@ -69,11 +69,11 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
         return SessionManager.retrieveGameSession(context.bot.sessions, sessionId).snapshot()
     }
 
-    private fun lookupRequestSent(context: UserInteractionContext<*>, owner: User.Human): ParseFailure? =
-        this.findRequestSession(context, owner)
-            ?.takeIf { it.owner.id == owner.id }
+    private fun lookupRequestSent(context: UserInteractionContext<*>, requester: User.Human): ParseFailure? =
+        this.findRequestSession(context, requester)
+            ?.takeIf { it.requester.id == requester.id }
             ?.let { session ->
-                    this.asParseFailure("already sent request session", context.channel, owner) { messagingService, publisher, container ->
+                    this.asParseFailure("already sent request session", context.channel, requester) { messagingService, publisher, container ->
                         effect {
                             messagingService.buildRequestAlreadySent(publisher, container, session.opponent)
                                 .launch()()
@@ -82,22 +82,22 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                     }
                 }
 
-    private fun lookupRequestOwner(context: UserInteractionContext<*>, owner: User.Human): ParseFailure? =
-        this.findRequestSession(context, owner)
+    private fun lookupRequestParticipant(context: UserInteractionContext<*>, requester: User.Human): ParseFailure? =
+        this.findRequestSession(context, requester)
             ?.let { session ->
-                    this.asParseFailure("already has request session", context.channel, owner) { messagingService, publisher, container ->
+                    this.asParseFailure("already has request session", context.channel, requester) { messagingService, publisher, container ->
                         effect {
-                            messagingService.buildRequestAlready(publisher, container, session.owner)
+                            messagingService.buildRequestAlready(publisher, container, session.requester)
                                 .launch()()
                             emptyList()
                         }
                     }
                 }
 
-    private fun lookupRequestOpponent(context: UserInteractionContext<*>, owner: User.Human, opponent: User.Human): ParseFailure? =
+    private fun lookupRequestOpponent(context: UserInteractionContext<*>, requester: User.Human, opponent: User.Human): ParseFailure? =
         this.findRequestSession(context, opponent)
             ?.let {
-                    this.asParseFailure("try to send request session but $opponent already has request session", context.channel, owner) { messagingService, publisher, container ->
+                    this.asParseFailure("try to send request session but $opponent already has request session", context.channel, requester) { messagingService, publisher, container ->
                         effect {
                             messagingService.buildOpponentRequestAlready(publisher, container, opponent)
                                 .launch()()
@@ -106,7 +106,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                     }
                 }
 
-    private fun lookupSessionOwner(context: UserInteractionContext<*>, user: User.Human): ParseFailure? =
+    private fun lookupExistingGameSession(context: UserInteractionContext<*>, user: User.Human): ParseFailure? =
         this.findGameSession(context, user)
             ?.let { session ->
                     this.asParseFailure("already has game session", context.channel, user) { messagingService, publisher, container ->
@@ -118,7 +118,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
                             when (context.config.swapType) {
                                 SwapType.EDIT -> Unit
-                                else -> buildBoardProcedure(context.bot, context.channel, context.config, messagingService, publisher, session)()
+                                else -> buildBoardProcedure(context.bot, context.config, messagingService, publisher, session)()
                             }
 
                             emptyList()
@@ -126,7 +126,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                     }
                 }
 
-    private fun lookupSessionOpponent(context: UserInteractionContext<*>, user: User.Human, opponent: User.Human): ParseFailure? =
+    private fun lookupOpponentGameSession(context: UserInteractionContext<*>, user: User.Human, opponent: User.Human): ParseFailure? =
         this.findGameSession(context, opponent)
             ?.let {
                     this.asParseFailure("try to send request session but $opponent already has game session", context.channel, user) { messagingService, publisher, container ->
@@ -138,27 +138,27 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                     }
                 }
 
-    private fun parseActually(context: UserInteractionContext<*>, owner: User.Human, opponent: User.Human?, rule: Rule): Either<ParseFailure, Command> {
-        this.lookupSessionOwner(context, owner)?.let { failure ->
+    private fun parseActually(context: UserInteractionContext<*>, requester: User.Human, opponent: User.Human?, rule: Rule): Either<ParseFailure, Command> {
+        this.lookupExistingGameSession(context, requester)?.let { failure ->
             return Either.Left(failure)
         }
 
         if (opponent != null) {
-            this.lookupSessionOpponent(context, owner, opponent)?.let { failure ->
+            this.lookupOpponentGameSession(context, requester, opponent)?.let { failure ->
                 return Either.Left(failure)
             }
         }
 
-        this.lookupRequestSent(context, owner)?.let { failure ->
+        this.lookupRequestSent(context, requester)?.let { failure ->
             return Either.Left(failure)
         }
 
-        this.lookupRequestOwner(context, owner)?.let { failure ->
+        this.lookupRequestParticipant(context, requester)?.let { failure ->
             return Either.Left(failure)
         }
 
         if (opponent != null) {
-            this.lookupRequestOpponent(context, owner, opponent)?.let { failure ->
+            this.lookupRequestOpponent(context, requester, opponent)?.let { failure ->
                 return Either.Left(failure)
             }
         }
@@ -172,7 +172,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     }
 
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<ParseFailure, Command> {
-        val owner = context.user
+        val requester = context.user
         val jdaUser = context.event.getOption(context.config.language.container.startCommandOptionOpponent())?.asUser
         val opponent = if (jdaUser != null && !jdaUser.isBot)
             UserProfileRepository.retrieveOrInsertUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, jdaUser.extractId()) {
@@ -186,13 +186,13 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             context.event.getOption(context.config.language.container.startCommandOptionRule())?.asString
         )
 
-        return this.parseActually(context, owner, opponent, rule)
+        return this.parseActually(context, requester, opponent, rule)
     }
 
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<ParseFailure, Command> {
-        val owner = context.user
+        val requester = context.user
         val opponent = context.event.message.mentions.members
-            .firstOrNull { !it.user.isBot && it.idLong != owner.givenId.idLong }
+            .firstOrNull { !it.user.isBot && it.idLong != requester.givenId.idLong }
             ?.user
             ?.let {
                 UserProfileRepository.retrieveOrInsertUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, it.extractId()) {
@@ -205,7 +205,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             payload.getOrNull(2)?.lowercase()
         )
 
-        return this.parseActually(context, owner, opponent, rule)
+        return this.parseActually(context, requester, opponent, rule)
     }
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =

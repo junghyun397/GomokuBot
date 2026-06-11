@@ -37,7 +37,7 @@ class AcceptCommand(
         val requestSession = SessionManager.retrieveRequestSession(bot.sessions, this.requestSessionId).snapshot()
         if (requestSession.opponent.id != user.id) throw IllegalStateException()
 
-        val gameSession = GameManager.generatePvpSession(bot, requestSession.owner, requestSession.opponent, requestSession.rule)
+        val gameSession = GameManager.generatePvpSession(bot, requestSession.requester, requestSession.opponent, requestSession.rule)
 
         SessionManager.createGameSession(bot.sessions, channel, gameSession.participantIds, gameSession)
         SessionManager.deleteRequestSession(bot.sessions, this.requestSessionId)
@@ -48,13 +48,13 @@ class AcceptCommand(
 
         val beginIO = when (gameSession) {
             is OpeningSession ->
-                service.buildBeginsOpening(guidePublisher, config.language.container, gameSession.nextPlayer, gameSession.player, gameSession.ruleKind)
+                service.buildBeginsOpening(guidePublisher, config.language.container, gameSession.user, gameSession.ruleKind)
             else ->
-                service.buildBeginsPVP(guidePublisher, config.language.container, gameSession.player, gameSession.nextPlayer)
+                service.buildBeginsPvp(guidePublisher, config.language.container, gameSession.user)
         }
             .launch()
 
-        val boardIO = buildBoardProcedure(bot, channel, config, service, publishers.plain, gameSession)
+        val boardIO = buildBoardProcedure(bot, config, service, publishers.plain, gameSession)
 
         val io = effect {
             beginIO()
@@ -62,7 +62,7 @@ class AcceptCommand(
             emptyOrders
         }
 
-        tuple(io, this.writeCommandReport("accept ${requestSession.owner}'s request", channel, user))
+        tuple(io, this.writeCommandReport("accept ${requestSession.requester}'s request", channel, user))
     }
 
 }

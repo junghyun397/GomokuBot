@@ -4,9 +4,10 @@ import core.assets.ChannelUid
 import core.assets.UserUid
 import core.assets.humanId
 import core.mintaka.EngineLevel
-import core.session.Rule
 import core.session.entities.EngineGameSession
 import core.session.entities.GameSession
+import core.session.entities.Rule
+import renju.notation.ColorContainer
 import renju.notation.GameResult
 import renju.notation.Pos
 import kotlin.time.Clock
@@ -14,18 +15,13 @@ import kotlin.time.Instant
 
 data class GameRecord(
     val gameRecordId: GameRecordId?,
-
-    val history: List<Pos>,
-
-    val gameResult: GameResult,
-
     val channelId: ChannelUid,
-    val blackId: UserUid?,
-    val whiteId: UserUid?,
-
-    val engineLevel: EngineLevel?,
+    val userUid: ColorContainer<UserUid?>,
 
     val rule: Rule,
+    val history: List<Pos>,
+    val gameResult: GameResult,
+    val engineLevel: EngineLevel?,
 
     val date: Instant
 )
@@ -33,24 +29,19 @@ data class GameRecord(
 @JvmInline value class GameRecordId(val id: Long)
 
 fun GameSession.extractGameRecord(channelUid: ChannelUid): GameRecord? =
-    if (this.gameResult != null && this.recording && null !in this.history)
+    if (this.gameResult != null && this.recording && null !in this.state.history)
         GameRecord(
             gameRecordId = null,
-
-            history = this.history.sequence.filterNotNull(),
-
-            gameResult = this.gameResult!!,
-
             channelId = channelUid,
-            blackId = this.blackPlayer.humanId,
-            whiteId = this.whitePlayer.humanId,
+            userUid = this.user.map { it.humanId },
 
+            rule = this.ruleKind,
+            history = this.state.history.sequence.filterNotNull(),
+            gameResult = this.gameResult!!,
             engineLevel = when (this) {
                 is EngineGameSession -> EngineLevel.AMOEBA
                 else -> null
             },
-
-            rule = this.ruleKind,
 
             date = Clock.System.now()
         )

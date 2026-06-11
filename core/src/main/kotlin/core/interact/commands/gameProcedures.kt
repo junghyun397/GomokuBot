@@ -3,13 +3,13 @@ package core.interact.commands
 import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import core.BotContext
-import core.assets.Channel
 import core.interact.Order
 import core.interact.message.MessagePublisher
 import core.interact.message.MessagingService
 import core.interact.message.SentMessage
 import core.mintaka.FocusSolver
-import core.session.*
+import core.session.MessageManager
+import core.session.SessionManager
 import core.session.entities.*
 import utils.lang.replaceIf
 
@@ -25,20 +25,18 @@ fun buildAppendGameMessageProcedure(
 
 fun buildNextMoveProcedure(
     bot: BotContext,
-    channel: Channel,
     config: ChannelConfig,
     service: MessagingService,
     publisher: MessagePublisher,
     session: GameSession,
     thenSession: GameSession,
 ): Effect<Nothing, List<Order>> = effect {
-    buildBoardProcedure(bot, channel, config, service, publisher, thenSession)()
+    buildBoardProcedure(bot, config, service, publisher, thenSession)()
     buildSwapProcedure(bot, config, session)()
 }
 
 fun buildBoardProcedure(
     bot: BotContext,
-    channel: Channel,
     config: ChannelConfig,
     service: MessagingService,
     publisher: MessagePublisher,
@@ -51,7 +49,7 @@ fun buildBoardProcedure(
 
     return effect {
         val message = service.buildBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, session)
-            .replaceIf(session.board.winner() == null) { io -> io.addComponents(
+            .replaceIf(session.state.board.winner() == null) { io -> io.addComponents(
                 when (session) {
                     is SwapStageOpeningSession -> service.buildSwapButtons(config.language.container)
                     is BranchingStageOpeningSession -> service.buildBranchingButtons(config.language.container)
@@ -67,7 +65,7 @@ fun buildBoardProcedure(
             service.attachFocusNavigators(message) {
                 runCatching {
                     val currentSession = SessionManager.retrieveGameSession(bot.sessions, session.id).snapshot()
-                    currentSession.history.moves != session.history.moves
+                    currentSession.state.history.moves != session.state.history.moves
                 }.getOrElse { true }
             }()
         }

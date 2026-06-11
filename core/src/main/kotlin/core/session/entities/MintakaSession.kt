@@ -1,7 +1,7 @@
 package core.session.entities
 
 import core.mintaka.MintakaResponse
-import core.mintaka.types.ResponseSchema
+import core.mintaka.types.Response
 import renju.notation.HashKey
 import kotlin.time.Instant
 
@@ -47,12 +47,12 @@ data class MintakaLaunchingSession(
     val waitingState: WaitingState?,
 ) : MintakaSession {
 
-    fun begins(begins: ResponseSchema.Begins): MintakaStreamingSession {
+    fun begins(begins: Response.Begins): MintakaStreamingSession {
         return MintakaStreamingSession(
             sid=this.sid,
             token=this.token,
             hash=this.hash,
-            lastResponse= ResponseSchema.Begins(begins.content)
+            lastResponse= Response.Begins(begins.content)
         )
     }
 
@@ -66,13 +66,13 @@ data class MintakaStreamingSession(
     val aborted: Boolean = false,
 ) : MintakaSession {
 
-    fun status(status: ResponseSchema.Status): MintakaStreamingSession {
+    fun status(status: Response.Status): MintakaStreamingSession {
         return this.copy(
-            lastResponse=ResponseSchema.Status(status.content)
+            lastResponse= Response.Status(status.content)
         )
     }
 
-    fun bestmove(): MintakaIdleSession {
+    fun bestMove(): MintakaIdleSession {
         return MintakaIdleSession(
             sid=this.sid,
             token=this.token,

@@ -13,7 +13,6 @@ import core.interact.message.*
 import core.interact.message.graphics.BoardRenderer
 import core.interact.message.graphics.HistoryRenderType
 import core.interact.message.graphics.ImageBoardRenderer
-import core.session.*
 import core.session.entities.*
 import dev.minn.jda.ktx.interactions.components.StringSelectMenu
 import dev.minn.jda.ktx.interactions.components.option
@@ -104,7 +103,7 @@ object DiscordMessagingService : MessagingServiceImpl() {
 
     private fun InlineEmbed.buildBoardAuthor(container: LanguageContainer, session: GameSession) =
         author {
-            iconUrl = session.blackPlayer.profileURL ?: session.whitePlayer.profileURL
+            iconUrl = session.user.black.profileURL ?: session.user.white.profileURL
             name = buildString {
                 append(session.blackPlayerWithColor())
                 append(" vs ")
@@ -120,16 +119,16 @@ object DiscordMessagingService : MessagingServiceImpl() {
         }
 
     private fun InlineEmbed.buildStatusFields(container: LanguageContainer, session: GameSession) {
-        session.history.lastAction
+        session.state.history.lastAction
             ?.let { lastPos ->
                 field {
                     name = container.boardMoves()
-                    value = session.history.moves.toString().asHighlightFormat()
+                    value = session.state.history.moves.toString().asHighlightFormat()
                     inline = true
                 }
 
                 field {
-                    val colorInfo = if (session.board.isNextColorBlack) UNICODE_WHITE_CIRCLE else UNICODE_BLACK_CIRCLE
+                    val colorInfo = if (session.state.board.playerColor == Color.Black) UNICODE_WHITE_CIRCLE else UNICODE_BLACK_CIRCLE
 
                     name = container.boardLastMove()
                     value = "${colorInfo}${lastPos}".asHighlightFormat()
@@ -139,10 +138,10 @@ object DiscordMessagingService : MessagingServiceImpl() {
     }
 
     private fun InlineEmbed.buildResultFields(container: LanguageContainer, session: GameSession, gameResult: GameResult) =
-        this.buildResultFields(container, gameResult, session.history.moves.toString().asHighlightFormat())
+        this.buildResultFields(container, gameResult, session.state.history.moves.toString().asHighlightFormat())
 
     private fun InlineEmbed.buildResultFields(container: LanguageContainer, session: GameSession, gameResult: GameResult, totalMoves: Int) =
-        this.buildResultFields(container, gameResult, "${session.history.moves}/$totalMoves".asHighlightFormat())
+        this.buildResultFields(container, gameResult, "${session.state.history.moves}/$totalMoves".asHighlightFormat())
 
     private fun InlineEmbed.buildResultFields(container: LanguageContainer, gameResult: GameResult, movesFieldString: String) {
         field {
@@ -211,7 +210,7 @@ object DiscordMessagingService : MessagingServiceImpl() {
             is MoveStageOpeningSession -> (0 until Pos.BOARD_SIZE).map { Pos.fromIdx(it) }
                 .filterNot { session.inSquare(it) }
             is OfferStageOpeningSession -> (0 until Pos.BOARD_SIZE).map { Pos.fromIdx(it) }
-                .filter { session.board.stoneKind(it) == null && session.board.forbiddenKind(it) == null && it in session.symmetryMoves }
+                .filter { session.state.board.stoneKind(it) == null && session.state.board.forbiddenKind(it) == null && it in session.symmetryMoves }
             else -> null
         }
 
@@ -426,7 +425,7 @@ object DiscordMessagingService : MessagingServiceImpl() {
         val selectMenuOptions = mutableListOf<SelectOption>()
 
         records.forEachIndexed { idx, (opponent, record) ->
-            val playerWasBlack = record.blackId == player.id
+            val playerWasBlack = record.userUid.black == player.id
             val resultString = when {
                 record.gameResult.cause == GameResult.Cause.DRAW -> "$UNICODE_PENCIL${container.replayEmbedDraw()}"
                 (record.gameResult.winColorId == Color.Black.naiveFlag.toShort()) == playerWasBlack -> "$UNICODE_TROPHY${container.replayEmbedWin()}"
@@ -671,23 +670,23 @@ object DiscordMessagingService : MessagingServiceImpl() {
 
     // REQUEST
 
-    override fun buildRequest(publisher: MessagePublisher, container: LanguageContainer, owner: User.Human, opponent: User.Human, rule: Rule) =
+    override fun buildRequest(publisher: MessagePublisher, container: LanguageContainer, requester: User.Human, opponent: User.Human, rule: Rule) =
         publisher(DiscordMessageData(embed = Embed {
             color = COLOR_GREEN_HEX
             title = container.requestEmbedTitle()
-            description = container.requestEmbedDescription(owner.asMentionFormat(), opponent.asMentionFormat())
+            description = container.requestEmbedDescription(requester.asMentionFormat(), opponent.asMentionFormat())
         })).addComponents(
             listOf(ActionRow.of(
-                Button.of(ButtonStyle.DANGER, "$REJECT-${rule.id}-${owner.givenId.idLong}", container.requestEmbedButtonReject()),
-                Button.of(ButtonStyle.SUCCESS, "$ACCEPT-${rule.id}-${owner.givenId.idLong}", container.requestEmbedButtonAccept())
+                Button.of(ButtonStyle.DANGER, "$REJECT-${rule.id}-${requester.givenId.idLong}", container.requestEmbedButtonReject()),
+                Button.of(ButtonStyle.SUCCESS, "$ACCEPT-${rule.id}-${requester.givenId.idLong}", container.requestEmbedButtonAccept())
             ))
         )
 
-    override fun buildRejectedRequest(publisher: DiscordMessagePublisher, container: LanguageContainer, owner: User, opponent: User) =
+    override fun buildRejectedRequest(publisher: DiscordMessagePublisher, container: LanguageContainer, requester: User, opponent: User) =
         publisher sends Embed {
             color = COLOR_RED_HEX
             title = "~~${container.requestEmbedTitle()}~~"
-            description = "~~${container.requestEmbedDescription(owner.asMentionFormat(), opponent.asMentionFormat())}~~"
+            description = "~~${container.requestEmbedDescription(requester.asMentionFormat(), opponent.asMentionFormat())}~~"
         }
 
     // UTILS

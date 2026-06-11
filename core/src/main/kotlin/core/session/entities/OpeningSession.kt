@@ -110,8 +110,8 @@ interface OfferStageOpeningSession : NegotiateStageOpeningSession {
         }
 
     fun calculateSymmetryMoves(move: Pos): Set<Pos> {
-        val blackSymmetryMoves = this.calculateSymmetryMoves(this.history[0]!!, this.history[2]!!, move)
-        val whiteSymmetryMoves = this.calculateSymmetryMoves(this.history[1]!!, this.history[3]!!, move)
+        val blackSymmetryMoves = this.calculateSymmetryMoves(this.state.history[0]!!, this.state.history[2]!!, move)
+        val whiteSymmetryMoves = this.calculateSymmetryMoves(this.state.history[1]!!, this.state.history[3]!!, move)
 
         return blackSymmetryMoves.intersect(whiteSymmetryMoves) - move
     }
@@ -122,13 +122,8 @@ interface SelectStageOpeningSession : NegotiateStageOpeningSession {
 
     override fun validateMove(move: Pos) = move in this.moveCandidates
 
-    override val player get() =
-        if (this.board.isNextColorBlack) this.whitePlayer
-        else this.blackPlayer
-
-    override val nextPlayer get() =
-        if (this.board.isNextColorBlack) this.blackPlayer
-        else this.whitePlayer
+    override val player get() = this.user[!this.state.board.playerColor]
+    override val opponent get() = this.user[this.state.board.playerColor]
 
     fun select(move: Pos): PvpGameSession
 
@@ -136,13 +131,8 @@ interface SelectStageOpeningSession : NegotiateStageOpeningSession {
 
 fun OpeningSession.asFinishedPvpSession(result: GameResult): PvpGameSession =
     PvpGameSession(
-        id = this.id,
-        blackPlayer = this.blackPlayer,
-        whitePlayer = this.whitePlayer,
-        state = this.state,
+        context = this.context,
         gameResult = result,
-        messageBufferKey = this.messageBufferKey,
         recording = false,
         ruleKind = this.ruleKind,
-        expireService = this.expireService,
     )

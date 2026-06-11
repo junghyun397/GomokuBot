@@ -33,10 +33,10 @@ class RejectCommand(private val requestSessionId: SessionId) : Command {
 
         SessionManager.deleteRequestSession(bot.sessions, this.requestSessionId)
 
-        val editIO = service.buildRejectedRequest(publishers.edit(messageRef), config.language.container, requestSession.owner, requestSession.opponent)
+        val editIO = service.buildRejectedRequest(publishers.edit(messageRef), config.language.container, requestSession.requester, requestSession.opponent)
             .launch()
 
-        val noticeIO = service.buildRequestRejected(publishers.plain, config.language.container, requestSession.owner, requestSession.opponent)
+        val noticeIO = service.buildRequestRejected(publishers.plain, config.language.container, requestSession.requester, requestSession.opponent)
             .launch()
 
         val io = effect {
@@ -45,7 +45,7 @@ class RejectCommand(private val requestSessionId: SessionId) : Command {
             emptyOrders
         }
 
-        tuple(io, this.writeCommandReport("reject ${requestSession.owner}'s request", channel, user))
+        tuple(io, this.writeCommandReport("reject ${requestSession.requester}'s request", channel, user))
     }
 
 }

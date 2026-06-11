@@ -8,14 +8,12 @@ class SessionLockedException(
 ) : IllegalStateException("session ${sessionId.uuid} is locked")
 
 class SessionSlot<T : Expirable>(
-    session: T,
+    private var session: T,
     val channelId: ChannelUid,
     private val sessionId: SessionId,
 ) {
 
     private val mutex = Mutex()
-
-    private var session: T = session
 
     fun snapshot(): T {
         if (!this.mutex.tryLock()) throw SessionLockedException(this.sessionId)

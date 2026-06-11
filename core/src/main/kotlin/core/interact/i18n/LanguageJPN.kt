@@ -1,6 +1,7 @@
 package core.interact.i18n
 
 import core.assets.UNICODE_RIGHT
+import renju.notation.ColorContainer
 
 class LanguageJPN : LanguageENG() {
 
@@ -47,8 +48,8 @@ class LanguageJPN : LanguageENG() {
     override fun commandUsageStyle() =
         "このサーバーで使用される五目並べの盤面スタイルを変更します。例) ``/style`` ``A``"
 
-    override fun commandUsageStartPVE() = "AIとの新しいゲームを開始します。"
-    override fun commandUsageStartPVP() =
+    override fun commandUsageStartEngine() = "AIとの新しいゲームを開始します。"
+    override fun commandUsageStartPvp() =
         "メンションしたユーザーに対してゲームリクエストを送信します。例) ``/start`` ``@user``"
     override fun commandUsageResign() = "途中でゲームを降参します。"
 
@@ -218,13 +219,11 @@ class LanguageJPN : LanguageENG() {
         "$opponent がまだ返答していない別のゲームリクエストがあります。$opponent が他のゲームリクエストに返答するまでお待ちください。"
 
     override fun setCommandDescription() = "石を置く。"
-    override fun setCommandOptionColumn() = "列"
-    override fun setCommandOptionColumnDescription() = "アルファベット"
-    override fun setCommandOptionRow() = "行"
-    override fun setCommandOptionRowDescription() = "数字"
+    override fun setCommandOptionPosition() = "position"
+    override fun setCommandOptionPositionDescription() = "a1からo15までの座標"
 
     override fun setErrorIllegalArgument() =
-        "コマンド形式にエラーがあります。 ``/s`` ``アルファベット`` ``数字`` の形式で入力してください。"
+        "コマンド形式にエラーがあります。 ``/s`` ``h8`` の形式で入力してください。"
 
     override fun setErrorExist(move: String) =
         "$move にはすでに石があります。他の場所に移動してください。"
@@ -236,56 +235,56 @@ class LanguageJPN : LanguageENG() {
     override fun resignCommandDescription() = "進行中のゲームから投了します。"
 
     override fun requestEmbedTitle() = "五目並べで遊びませんか？"
-    override fun requestEmbedDescription(owner: String, opponent: String) =
-        "$owner さんが $opponent さんに対してゲームのリクエストを送りました。ボタンを押して応答してください。"
+    override fun requestEmbedDescription(requester: String, opponent: String) =
+        "$requester さんが $opponent さんに対してゲームのリクエストを送りました。ボタンを押して応答してください。"
     override fun requestEmbedButtonAccept() = "承諾"
     override fun requestEmbedButtonReject() = "拒否"
 
-    override fun requestRejected(owner: String, opponent: String) =
-        "$opponent さんが $owner さんのゲームリクエストを拒否しました。"
+    override fun requestRejected(requester: String, opponent: String) =
+        "$opponent さんが $requester さんのゲームリクエストを拒否しました。"
 
-    override fun requestExpired(owner: String, opponent: String) =
-        "$owner さんが $opponent さんに送信したゲームリクエストが期限切れになりました。もし $opponent さんとゲームを続けたい場合は、新しいリクエストを送信してください。"
+    override fun requestExpired(requester: String, opponent: String) =
+        "$requester さんが $opponent さんに送信したゲームリクエストが期限切れになりました。もし $opponent さんとゲームを続けたい場合は、新しいリクエストを送信してください。"
 
     override fun requestExpiredNewRequest() =
         "新しいリクエストを送信する"
 
-    override fun beginPVP(blackPlayer: String, whitePlayer: String) =
-        "$blackPlayer vs $whitePlayer のゲームが開始されました！$blackPlayer が先手です。最初の手を打ってください。"
+    override fun beginPvp(players: ColorContainer<String>) =
+        "${players.black} vs ${players.white} のゲームが開始されました！${players.black} が先手です。最初の手を打ってください。"
 
-    override fun beginPVEAiBlack(player: String) =
+    override fun beginEngineAiBlack(player: String) =
         "$player さんとAIの対戦が始まりました！$player さんは後手です。AIが ``h8`` に置きました。次の手を打ってください。"
 
-    override fun beginPVEAiWhite(player: String) =
+    override fun beginEngineAiWhite(player: String) =
         "$player さんとAIの対戦が始まりました！$player さんは先手です。最初の手を打ってください。"
 
-    override fun processNextPVE(lastMove: String) =
+    override fun processNextEngine(lastMove: String) =
         "次の手を打ってください。AIは $lastMove に置きました。"
 
-    override fun processNextPVP(priorPlayer: String, lastMove: String) =
-        "次の手を打ってください。$priorPlayer が $lastMove に置きました。"
+    override fun processNextPvp(lastPlayer: String, lastMove: String) =
+        "次の手を打ってください。$lastPlayer が $lastMove に置きました。"
 
     override fun processErrorOrder(player: String) =
         "$player さんの番です。$player さんが次の手を打つまでお待ちください。"
 
-    override fun endPVPWin(winner: String, loser: String, lastMove: String) =
+    override fun endPvpWin(winner: String, loser: String, lastMove: String) =
         "$loser さんが $lastMove に置いたため、$winner さんが勝ちました！"
-    override fun endPVPResign(winner: String, loser: String) =
+    override fun endPvpResign(winner: String, loser: String) =
         "$loser さんが降参したため、$winner さんが勝ちました！"
-    override fun endPVPTie(owner: String, opponent: String) =
-        "$owner さんと $opponent さんのゲームは引き分けになりました。もう打てる場所がなかったためです。"
-    override fun endPVPTimeOut(winner: String, loser: String) =
+    override fun endPvpTie(players: ColorContainer<String>) =
+        "${players.black} さんと ${players.white} さんのゲームは引き分けになりました。もう打てる場所がなかったためです。"
+    override fun endPvpTimeOut(winner: String, loser: String) =
         "$loser さんが長時間次の手を打たなかったため、$winner さんが勝ちました！"
 
-    override fun endPVEWin(player: String, lastPos: String) =
+    override fun endEngineWin(player: String, lastPos: String) =
         "AI に $lastPos に置かれなかったため、$player さんが勝ちました。"
-    override fun endPVELose(player: String, lastPos: String) =
+    override fun endEngineLose(player: String, lastPos: String) =
         "AI に $lastPos に置かれたため、$player さんが負けました。"
-    override fun endPVEResign(player: String) =
+    override fun endEngineResign(player: String) =
         "$player さんが降参したため、AI が勝ちました。"
-    override fun endPVETie(player: String) =
+    override fun endEngineTie(player: String) =
         "$player さんとAIのゲームは引き分けになりました。もう打てる場所がなかったためです。"
-    override fun endPVETimeOut(player: String) =
+    override fun endEngineTimeOut(player: String) =
         "$player さんが長時間次の手を打たなかっ"
 
     override fun boardInProgress() = "進行中"
@@ -300,7 +299,7 @@ class LanguageJPN : LanguageENG() {
     override fun boardTieDescription() = "引き分け"
 
     override fun boardCommandGuide() =
-        ":mag: ボタンを押すか、``/s`` ``列`` ``行`` のコマンドを使用して次の手を打ってください。"
+        ":mag: ボタンを押すか、``/s`` ``position`` のコマンドを使用して次の手を打ってください。"
 
     override fun announceWrittenOn(date: String) = "$date に書かれました。"
 

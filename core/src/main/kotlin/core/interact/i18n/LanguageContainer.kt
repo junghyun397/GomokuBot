@@ -1,14 +1,13 @@
 package core.interact.i18n
 
+import renju.notation.ColorContainer
 import utils.structs.Identifiable
 
 enum class Language(override val id: Short, val container: LanguageContainer) : Identifiable {
     ENG(0, LanguageENG()),
     KOR(1, LanguageKOR()),
     JPN(2, LanguageJPN()),
-    VNM(3, LanguageVNM()),
     PRK(4, LanguagePRK()),
-    SKO(5, LanguageSKO())
 }
 
 sealed interface LanguageContainer {
@@ -66,8 +65,8 @@ sealed interface LanguageContainer {
     fun commandUsageLang(langList: String): String
     fun commandUsageStyle(): String
 
-    fun commandUsageStartPVE(): String
-    fun commandUsageStartPVP(): String
+    fun commandUsageStartEngine(): String
+    fun commandUsageStartPvp(): String
     fun commandUsageResign(): String
 
     fun commandUsageBoard(): String
@@ -215,10 +214,8 @@ sealed interface LanguageContainer {
     fun startErrorOpponentRequestAlready(opponent: String): String
 
     fun setCommandDescription(): String
-    fun setCommandOptionColumn(): String
-    fun setCommandOptionColumnDescription(): String
-    fun setCommandOptionRow(): String
-    fun setCommandOptionRowDescription(): String
+    fun setCommandOptionPosition(): String
+    fun setCommandOptionPositionDescription(): String
 
     fun setErrorIllegalArgument(): String
 
@@ -233,42 +230,42 @@ sealed interface LanguageContainer {
     fun boardCommandDescription(): String
 
     fun requestEmbedTitle(): String
-    fun requestEmbedDescription(owner: String, opponent: String): String
+    fun requestEmbedDescription(requester: String, opponent: String): String
     fun requestEmbedButtonAccept(): String
     fun requestEmbedButtonReject(): String
 
-    fun requestRejected(owner: String, opponent: String): String
+    fun requestRejected(requester: String, opponent: String): String
 
-    fun requestExpired(owner: String, opponent: String): String
+    fun requestExpired(requester: String, opponent: String): String
 
     fun requestExpiredNewRequest(): String
 
-    fun beginPVP(blackPlayer: String, whitePlayer: String): String
+    fun beginPvp(players: ColorContainer<String>): String
 
-    fun beginOpening(blackPlayer: String, whitePlayer: String): String
+    fun beginOpening(players: ColorContainer<String>): String
 
-    fun beginPVEAiWhite(player: String): String
+    fun beginEngineAiWhite(player: String): String
 
-    fun beginPVEAiBlack(player: String): String
+    fun beginEngineAiBlack(player: String): String
 
-    fun processNextPVE(lastMove: String): String
+    fun processNextEngine(lastMove: String): String
 
-    fun processNextPVP(priorPlayer: String, lastMove: String): String
+    fun processNextPvp(lastPlayer: String, lastMove: String): String
 
     fun processNextOpening(lastMove: String): String
 
     fun processErrorOrder(player: String): String
 
-    fun endPVPWin(winner: String, loser: String, lastMove: String): String
-    fun endPVPResign(winner: String, loser: String): String
-    fun endPVPTie(owner: String, opponent: String): String
-    fun endPVPTimeOut(winner: String, loser: String): String
+    fun endPvpWin(winner: String, loser: String, lastMove: String): String
+    fun endPvpResign(winner: String, loser: String): String
+    fun endPvpTie(players: ColorContainer<String>): String
+    fun endPvpTimeOut(winner: String, loser: String): String
 
-    fun endPVEWin(player: String, lastPos: String): String
-    fun endPVELose(player: String, lastPos: String): String
-    fun endPVEResign(player: String): String
-    fun endPVETie(player: String): String
-    fun endPVETimeOut(player: String): String
+    fun endEngineWin(player: String, lastPos: String): String
+    fun endEngineLose(player: String, lastPos: String): String
+    fun endEngineResign(player: String): String
+    fun endEngineTie(player: String): String
+    fun endEngineTimeOut(player: String): String
 
     fun boardInProgress(): String
     fun boardInOpening(): String

@@ -1,6 +1,7 @@
 package core.interact.i18n
 
 import core.assets.UNICODE_RIGHT
+import renju.notation.ColorContainer
 
 open class LanguageKOR : LanguageENG() {
 
@@ -50,8 +51,8 @@ open class LanguageKOR : LanguageENG() {
     override fun commandUsageStyle() =
         "이 서버에서 쓰이는 오목판 모양을 바꿉니다. Ex) ``/스타일`` ``A``"
 
-    override fun commandUsageStartPVE() = "인공지능과 함께 새 게임을 시작합니다."
-    override fun commandUsageStartPVP() =
+    override fun commandUsageStartEngine() = "인공지능과 함께 새 게임을 시작합니다."
+    override fun commandUsageStartPvp() =
         "멘션 된 유저에게 새 게임을 제안합니다. Ex) ``/시작`` ``@유저``"
     override fun commandUsageResign() = "진행 중인 게임을 포기합니다."
 
@@ -219,13 +220,11 @@ open class LanguageKOR : LanguageENG() {
         "$opponent 님에게는 아직 응답하지 않은 다른 대결 요청 하나가 남아 있습니다. $opponent 님이 다른 대결 요청에 응답할 때까지 기다려 주세요."
 
     override fun setCommandDescription() = "원하는 좌표에 돌을 놓습니다."
-    override fun setCommandOptionColumn() = "x"
-    override fun setCommandOptionColumnDescription() = "알파벳"
-    override fun setCommandOptionRow() = "y"
-    override fun setCommandOptionRowDescription() = "숫자"
+    override fun setCommandOptionPosition() = "position"
+    override fun setCommandOptionPositionDescription() = "a1부터 o15까지의 좌표"
 
     override fun setErrorIllegalArgument() =
-        "잘못된 명령어 형식입니다. ``/s`` ``알파벳`` ``숫자`` 꼴로 입력해 주세요."
+        "잘못된 명령어 형식입니다. ``/s`` ``h8`` 꼴로 입력해 주세요."
 
     override fun setErrorExist(move: String) =
         "${move}에는 이미 돌이 놓여 있습니다. 다른 곳에 돌을 놓아주세요."
@@ -237,58 +236,58 @@ open class LanguageKOR : LanguageENG() {
     override fun resignCommandDescription() = "진행중인 게임을 포기합니다."
 
     override fun requestEmbedTitle() = "오목 한 판 괜찮겠습니까?"
-    override fun requestEmbedDescription(owner: String, opponent: String) =
-        "$owner 님이 $opponent 님에게 대결 요청을 보냈습니다. 아래 버튼을 눌러 대답해 주세요."
+    override fun requestEmbedDescription(requester: String, opponent: String) =
+        "$requester 님이 $opponent 님에게 대결 요청을 보냈습니다. 아래 버튼을 눌러 대답해 주세요."
     override fun requestEmbedButtonAccept() = "수락"
     override fun requestEmbedButtonReject() = "거절"
 
-    override fun requestRejected(owner: String, opponent: String) =
-        "$opponent 님이 $owner 님의 대결 요청을 거절했습니다."
+    override fun requestRejected(requester: String, opponent: String) =
+        "$opponent 님이 $requester 님의 대결 요청을 거절했습니다."
 
-    override fun requestExpired(owner: String, opponent: String) =
-        "$owner 님이 $opponent 님에게 보낸 대결 요청이 만료되었습니다. 아직도 $opponent 님과 대결하고 싶다면, 새 대결 요청을 보내주세요."
+    override fun requestExpired(requester: String, opponent: String) =
+        "$requester 님이 $opponent 님에게 보낸 대결 요청이 만료되었습니다. 아직도 $opponent 님과 대결하고 싶다면, 새 대결 요청을 보내주세요."
 
     override fun requestExpiredNewRequest() = "다시 제안하기"
 
-    override fun beginPVP(blackPlayer: String, whitePlayer: String) =
-        "$blackPlayer 님과 $whitePlayer 님의 게임이 시작되었습니다! $blackPlayer 님이 흑입니다. $blackPlayer 님이 첫 번째 수를 놓아주세요."
+    override fun beginPvp(players: ColorContainer<String>) =
+        "${players.black} 님과 ${players.white} 님의 게임이 시작되었습니다! ${players.black} 님이 흑입니다. ${players.black} 님이 첫 번째 수를 놓아주세요."
 
-    override fun beginOpening(blackPlayer: String, whitePlayer: String) =
-        "$blackPlayer 님과 $whitePlayer 님의 오프닝 게임이 시작되었습니다! $blackPlayer 님이 흑입니다. $whitePlayer 님은 흑으로 스왑할지, 그대로 플레이 할지 정해주세요."
+    override fun beginOpening(players: ColorContainer<String>) =
+        "${players.black} 님과 ${players.white} 님의 오프닝 게임이 시작되었습니다! ${players.black} 님이 흑입니다. ${players.white} 님은 흑으로 스왑할지, 그대로 플레이 할지 정해주세요."
 
-    override fun beginPVEAiBlack(player: String) =
+    override fun beginEngineAiBlack(player: String) =
         "$player 님과 인공지능의 게임이 시작되었습니다! $player 님은 백입니다. 인공지능은 ``h8``에 두었습니다. 두 번째 수를 놓아주세요."
 
-    override fun beginPVEAiWhite(player: String) =
+    override fun beginEngineAiWhite(player: String) =
         "$player 님과 인공지능의 게임이 시작되었습니다! $player 님이 흑입니다. 첫 번째 수를 놓아주세요."
 
-    override fun processNextPVE(lastMove: String) =
+    override fun processNextEngine(lastMove: String) =
         "다음 수를 놓아주세요. AI는 ${lastMove}에 놓았습니다."
 
-    override fun processNextPVP(priorPlayer: String, lastMove: String) =
-        "다음 수를 놓아주세요. $priorPlayer 님은 ${lastMove}에 놓았습니다."
+    override fun processNextPvp(lastPlayer: String, lastMove: String) =
+        "다음 수를 놓아주세요. $lastPlayer 님은 ${lastMove}에 놓았습니다."
 
     override fun processErrorOrder(player: String) =
         "지금은 $player 님의 차례입니다. $player 님이 다음 수를 놓을 때까지 기다려 주세요."
 
-    override fun endPVPWin(winner: String, loser: String, lastMove: String) =
+    override fun endPvpWin(winner: String, loser: String, lastMove: String) =
         "$winner 님이 ${lastMove}에 돌을 놓음으로써 $loser 님을 이겼습니다."
-    override fun endPVPResign(winner: String, loser: String) =
+    override fun endPvpResign(winner: String, loser: String) =
         "$loser 님이 항복을 선언 함으로써 $winner 님이 이겼습니다."
-    override fun endPVPTie(owner: String, opponent: String) =
-        "이제 더 이상 돌을 놓을 공간이 없으므로, $opponent 님과 $opponent 님의 게임은 무승부로 끝났습니다."
-    override fun endPVPTimeOut(winner: String, loser: String) =
+    override fun endPvpTie(players: ColorContainer<String>) =
+        "이제 더 이상 돌을 놓을 공간이 없으므로, ${players.black} 님과 ${players.white} 님의 게임은 무승부로 끝났습니다."
+    override fun endPvpTimeOut(winner: String, loser: String) =
         "$loser 님이 오랜 시간 동안 다음 수를 두지 않았기 때문에 $winner 님이 $loser 님을 이겼습니다."
 
-    override fun endPVEWin(player: String, lastPos: String) =
+    override fun endEngineWin(player: String, lastPos: String) =
         "$lastPos 에 돌을 놓음으로써 인공지능을 이겼습니다. 축하합니다, $player 님."
-    override fun endPVELose(player: String, lastPos: String) =
+    override fun endEngineLose(player: String, lastPos: String) =
         "$player 님, 인공지능이 $lastPos 에 돌을 놓음으로써 인공지능에 패배했습니다. 언제든지 다시 도전해 주세요."
-    override fun endPVEResign(player: String) =
+    override fun endEngineResign(player: String) =
         "$player 님, 인공지능 상대로 항복을 선언 함으로써 인공지능에 패배하셨습니다. 언제든지 다시 도전해 주세요."
-    override fun endPVETie(player: String) =
+    override fun endEngineTie(player: String) =
         "이제 더 이상 돌을 놓을 공간이 없으므로, $player 님과 인공지능의 게임은 무승부로 끝났습니다."
-    override fun endPVETimeOut(player: String) =
+    override fun endEngineTimeOut(player: String) =
         "$player 님, 오랜 시간 동안 다음 수를 두지 않았기 때문에 인공지능에 패배했습니다."
 
     override fun boardInProgress() = "진행 중"
@@ -303,15 +302,15 @@ open class LanguageKOR : LanguageENG() {
     override fun boardWinDescription(winner: String) = "$winner 승리"
     override fun boardTieDescription() = "무승부"
 
-    override fun boardCommandGuide() = ":mag: 버튼을 누르거나 ``/s`` ``알파벳`` ``숫자`` 명령어를 입력해 다음 수를 놓아주세요."
+    override fun boardCommandGuide() = ":mag: 버튼을 누르거나 ``/s`` ``좌표`` 명령어를 입력해 다음 수를 놓아주세요."
     override fun boardSwapGuide() =
         ":arrows_counterclockwise: 버튼을 눌러 흑과 백을 바꿀지 선택해주세요."
     override fun boardBranchGuide() =
         ":paperclips: 버튼을 눌러 흑과 백을 바꿀 기회를 얻을지, 5번째 수 후보 10개를 상대에게 제안할지 선택해주세요."
     override fun boardSelectGuide() =
-        ":dart: 버튼을 누르거나 ``/s`` ``알파벳`` ``숫자`` 명령어를 입력해 5번째 수를 선택해주세요."
+        ":dart: 버튼을 누르거나 ``/s`` ``좌표`` 명령어를 입력해 5번째 수를 선택해주세요."
     override fun boardOfferGuide(remainingMoves: Int) =
-        ":question: 버튼을 누르거나 ``/s`` ``알파벳`` ``숫자`` 명령어를 입력해 5번째 수 후보 ${remainingMoves}개를 정해주세요."
+        ":question: 버튼을 누르거나 ``/s`` ``position`` 명령어를 입력해 5번째 수 후보 ${remainingMoves}개를 정해주세요."
 
     override fun replayEmbedWin() = "승"
     override fun replayEmbedLose() = "패"

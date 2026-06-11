@@ -18,7 +18,6 @@ import core.interact.parse.asParseFailure
 import core.session.GameManager
 import core.session.MessageManager
 import core.session.SessionManager
-import core.session.SwapType
 import core.session.entities.*
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
@@ -34,7 +33,6 @@ import renju.MoveError
 import renju.notation.Color
 import renju.notation.ForbiddenKind
 import renju.notation.Pos
-import utils.lang.tuple
 
 object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableCommand, BuildableCommand {
 
@@ -44,15 +42,22 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
 
     override fun getLocalizedUsages(container: LanguageContainer): List<BuildableCommand.Usage> = emptyList()
 
-    private fun matchColumn(option: String): Int? =
-        option.firstOrNull()
-            ?.takeIf { it.code in 97 .. 97 + Pos.BOARD_WIDTH }
-            ?.let { it.code - 97 }
+    private const val MAX_AUTO_COMPLETE_CHOICES = 15
 
-    private fun matchRow(option: String): Int? =
-        option.toIntOrNull()
-            ?.takeIf { it in 1 .. Pos.BOARD_WIDTH }
-            ?.let { it - 1 }
+    private val positionChoices: List<String> =
+        (0 until Pos.BOARD_WIDTH).flatMap { col ->
+            (0 until Pos.BOARD_WIDTH).map { row ->
+                Pos(row, col).toString()
+            }
+        }
+
+    fun autoCompletePositions(query: String): List<String> {
+        val normalized = query.trim().lowercase()
+
+        return this.positionChoices
+            .filter { it.startsWith(normalized) }
+            .take(this.MAX_AUTO_COMPLETE_CHOICES)
+    }
 
     private fun buildAppendMessageProcedure(message: SentMessage?, context: UserInteractionContext<*>, session: GameSession): Effect<Nothing, List<Order>> =
         effect {
@@ -110,21 +115,13 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
             else -> null
         }
 
-    private suspend fun parseRawCommand(context: UserInteractionContext<*>, user: User.Human, rawRow: String?, rawColumn: String?): Either<ParseFailure, Command> =
+    private fun parseRawCommand(context: UserInteractionContext<*>, user: User.Human, rawPosition: String?): Either<ParseFailure, Command> =
         this.retrieveSession(context.bot, context.channel, user).flatMap { (sessionId, session) ->
             if (session.player.humanId != user.id)
                 return@flatMap Either.Left(this.buildOrderFailure(context, session, session.player))
 
-            if (rawRow == null || rawColumn == null)
-                return@flatMap Either.Left(buildMissMatchFailure(context, session))
-
-            val row = this.matchRow(rawRow)
-            val column = this.matchColumn(rawColumn.lowercase())
-
-            if (row == null || column == null)
-                return@flatMap Either.Left(buildMissMatchFailure(context, session))
-
-            val pos = Pos(row, column)
+            val pos = Pos.fromCartesian(rawPosition)
+                ?: return@flatMap Either.Left(this.buildMissMatchFailure(context, session))
 
             val ref = when (context.config.swapType) {
                 SwapType.EDIT -> MessageManager.viewHeadMessage(context.bot.sessions, session.messageBufferKey)
@@ -133,8 +130,8 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
 
             val failure = when (GameManager.validateMove(session, pos)) {
                 MoveError.Exist -> this.buildExistFailure(context, session, pos)
-                MoveError.Forbidden -> when (session.board.playerColor) {
-                    Color.Black -> this.buildForbiddenMoveFailure(context, session, pos, session.board.forbiddenKind(pos))
+                MoveError.Forbidden -> when (session.state.board.playerColor) {
+                    Color.Black -> this.buildForbiddenMoveFailure(context, session, pos, session.state.board.forbiddenKind(pos))
                     else -> null
                 }
                 null -> null
@@ -155,31 +152,24 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
         }
 
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<ParseFailure, Command> {
-        val rawColumn = context.event.getOption(context.config.language.container.setCommandOptionColumn())?.asString
-        val rawRow = context.event.getOption(context.config.language.container.setCommandOptionRow())?.asString
+        val rawPosition = context.event.getOption(context.config.language.container.setCommandOptionPosition())?.asString
 
-        return this.parseRawCommand(context, context.user, rawRow, rawColumn)
+        return this.parseRawCommand(context, context.user, rawPosition)
     }
 
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<ParseFailure, Command> {
-        val (rawColumn, rawRow) = payload
+        val rawPosition = payload
             .drop(1)
-            .take(2)
-            .takeIf { it.size == 2 }
-            ?.let { tuple(it.component1(), it.component2()) }
-            ?: tuple(null, null)
+            .singleOrNull()
 
-        return this.parseRawCommand(context, context.user, rawRow, rawColumn)
+        return this.parseRawCommand(context, context.user, rawPosition)
     }
 
     override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Command? {
-        val (column, row) = context.event.componentId
+        val pos = context.event.componentId
             .drop(2)
-            .let { tuple(this.matchColumn(it.take(1)), this.matchRow(it.drop(1))) }
-
-        if (row == null || column == null) return null
-
-        val pos = Pos(row, column)
+            .let { Pos.fromCartesian(it) }
+            ?: return null
 
         val userId = context.user.id
 
@@ -202,8 +192,7 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
             "s",
             container.setCommandDescription(),
         ) {
-            option<String>(container.setCommandOptionColumn(), container.setCommandOptionColumnDescription(), true)
-            option<Int>(container.setCommandOptionRow(), container.setCommandOptionRowDescription(), true)
+            option<String>(container.setCommandOptionPosition(), container.setCommandOptionPositionDescription(), true, true)
         }
 
 }

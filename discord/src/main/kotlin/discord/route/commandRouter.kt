@@ -26,6 +26,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.events.Event
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import utils.lang.replaceIf
@@ -103,6 +104,13 @@ private fun matchCommand(command: String, container: LanguageContainer): Parsabl
         container.replayCommand() -> ReplayListCommandParser
         else -> null
     }
+
+fun commandAutoCompleteRouter(event: CommandAutoCompleteInteractionEvent) {
+    if (event.name != SetCommandParser.name)
+        return
+
+    event.replyChoiceStrings(*SetCommandParser.autoCompletePositions(event.focusedOption.value).toTypedArray()).queue()
+}
 
 suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEvent>): Report? {
     val parsable = matchCommand(context.event.name, context.config.language.container)

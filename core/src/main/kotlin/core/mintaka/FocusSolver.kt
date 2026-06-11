@@ -8,26 +8,14 @@ import kotlin.math.min
 
 object FocusSolver {
 
-    data class FocusInfo(val focus: Pos, val highlights: List<Pos>)
+    data class FocusInfo(val focus: Pos, val highlights: List<Pos>?)
 
     private fun isLegalEmptyMove(state: GameState, pos: Pos): Boolean =
         state.board.validateMove(pos) == null
 
-    private fun collectFiveHighlights(state: GameState): List<Pos> {
-        val fiveMask = RustyRenjuCApi.constants.fiveMask
-        val nextColor = state.board.playerColor
-
-        return (0 until Pos.BOARD_SIZE)
-            .asSequence()
-            .filter { idx -> isLegalEmptyMove(state, Pos.fromIdx(idx)) }
-            .filter { idx -> (state.board.pattern(Pos.fromIdx(idx), nextColor) and fiveMask) != 0 }
-            .map { idx -> Pos.fromIdx(idx) }
-            .toList()
-    }
-
     private fun evaluateBoard(state: GameState): MutableList<MutableList<Int>> {
         val nextColor = state.board.playerColor
-        val opponentColor = nextColor.reversed()
+        val opponentColor = !state.board.playerColor
         val masks = RustyRenjuCApi.constants
 
         fun Int.count(mask: Int): Int = (this and mask).countOneBits()
@@ -58,7 +46,7 @@ object FocusSolver {
         return (0 until Pos.BOARD_SIZE)
             .map(Pos::fromIdx)
             .map { pos ->
-                if (!isLegalEmptyMove(state, pos)) {
+                if (!this.isLegalEmptyMove(state, pos)) {
                     0
                 } else {
                     val self = state.board.pattern(pos, nextColor)
@@ -83,8 +71,8 @@ object FocusSolver {
             val kernelHalf = normalizedKernelWidth / 2
             val kernelQuarter = normalizedKernelWidth / 4
 
-            val evaluated = evaluateBoard(state)
-            val highlights = if (buildHighlights) collectFiveHighlights(state) else emptyList()
+            val evaluated = this.evaluateBoard(state)
+            val highlights = if (buildHighlights) state.board.winningSequence() else null
 
             evaluated[lastPos.row][lastPos.col] += FocusWeights.LAST_MOVE
 

@@ -1,6 +1,7 @@
 package core.interact.i18n
 
 import core.assets.UNICODE_RIGHT
+import renju.notation.ColorContainer
 
 open class LanguageENG : LanguageContainer {
 
@@ -63,8 +64,8 @@ open class LanguageENG : LanguageContainer {
     override fun commandUsageStyle() =
         "Change the Gomoku Board style used by this server. Ex) ``/style`` ``A``"
 
-    override fun commandUsageStartPVE() = "Start a new game with AI."
-    override fun commandUsageStartPVP() =
+    override fun commandUsageStartEngine() = "Start a new game with AI."
+    override fun commandUsageStartPvp() =
         "Send a game request to the mentioned user. Ex) ``/start`` ``@user``"
     override fun commandUsageResign() = "Resign from a game in progress."
 
@@ -253,13 +254,11 @@ open class LanguageENG : LanguageContainer {
         "There is one other game request that $opponent has not yet responded to. Please wait until $opponent responds to another game request."
 
     override fun setCommandDescription() = "Make a move."
-    override fun setCommandOptionColumn() = "column"
-    override fun setCommandOptionColumnDescription() = "alphabet"
-    override fun setCommandOptionRow() = "row"
-    override fun setCommandOptionRowDescription() = "number"
+    override fun setCommandOptionPosition() = "position"
+    override fun setCommandOptionPositionDescription() = "coordinate from a1 to o15"
 
     override fun setErrorIllegalArgument() =
-        "There is an error in the command format. Please enter in ``/s`` ``alphabet`` ``number`` format."
+        "There is an error in the command format. Please enter in ``/s`` ``position`` format."
 
     override fun setErrorExist(move: String) =
         "There is already a stone in $move. Please move to another place."
@@ -276,39 +275,39 @@ open class LanguageENG : LanguageContainer {
     override fun boardCommandDescription() = "Opens the game currently in progress as a new message."
 
     override fun requestEmbedTitle() = "How about a game of Gomoku?"
-    override fun requestEmbedDescription(owner: String, opponent: String) =
-        "$owner sent a game request to $opponent. Please respond by pressing the button."
+    override fun requestEmbedDescription(requester: String, opponent: String) =
+        "$requester sent a game request to $opponent. Please respond by pressing the button."
     override fun requestEmbedButtonAccept() = "Accept"
     override fun requestEmbedButtonReject() = "Reject"
 
-    override fun requestRejected(owner: String, opponent: String) =
-        "$opponent rejected $owner's game request."
+    override fun requestRejected(requester: String, opponent: String) =
+        "$opponent rejected $requester's game request."
 
-    override fun requestExpired(owner: String, opponent: String) =
-        "Game request that $owner sent to $opponent has expired. If anyone still wants to game with $opponent, please send a new request."
+    override fun requestExpired(requester: String, opponent: String) =
+        "Game request that $requester sent to $opponent has expired. If anyone still wants to game with $opponent, please send a new request."
 
     override fun requestExpiredNewRequest() =
         "re-Request"
 
     // chunk
 
-    override fun beginPVP(blackPlayer: String, whitePlayer: String) =
-        "The game of $blackPlayer vs $whitePlayer has started! $blackPlayer is Black. Please make the first move."
+    override fun beginPvp(players: ColorContainer<String>) =
+        "The game of ${players.black} vs ${players.white} has started! ${players.black} is Black. Please make the first move."
 
-    override fun beginOpening(blackPlayer: String, whitePlayer: String) =
-        "The opening renju game of $blackPlayer vs $whitePlayer has started! $blackPlayer is black. $whitePlayer needs to decide whether to swap to black or play as is."
+    override fun beginOpening(players: ColorContainer<String>) =
+        "The opening renju game of ${players.black} vs ${players.white} has started! ${players.black} is black. ${players.white} needs to decide whether to swap to black or play as is."
 
-    override fun beginPVEAiBlack(player: String) =
+    override fun beginEngineAiBlack(player: String) =
         "The game of $player vs AI has started! $player is White. AI made a move at ``h8``. Please make the next move."
 
-    override fun beginPVEAiWhite(player: String) =
+    override fun beginEngineAiWhite(player: String) =
         "The game of $player vs AI has started! $player is Black. Please make the first move."
 
-    override fun processNextPVE(lastMove: String) =
+    override fun processNextEngine(lastMove: String) =
         "Please make the next move. AI made a move at $lastMove."
 
-    override fun processNextPVP(priorPlayer: String, lastMove: String) =
-        "Please make the next move. $priorPlayer have placed at $lastMove."
+    override fun processNextPvp(lastPlayer: String, lastMove: String) =
+        "Please make the next move. $lastPlayer have placed at $lastMove."
 
     override fun processNextOpening(lastMove: String) =
         "Placed the stone at $lastMove. Please follow the next opening procedure."
@@ -316,24 +315,24 @@ open class LanguageENG : LanguageContainer {
     override fun processErrorOrder(player: String) =
         "Now it's $player's turn. Please wait until $player makes the next move."
 
-    override fun endPVPWin(winner: String, loser: String, lastMove: String) =
+    override fun endPvpWin(winner: String, loser: String, lastMove: String) =
         "$winner wins by $loser placed at $lastMove."
-    override fun endPVPResign(winner: String, loser: String) =
+    override fun endPvpResign(winner: String, loser: String) =
         "$winner wins by $loser resignation."
-    override fun endPVPTie(owner: String, opponent: String) =
-        "$owner vs $opponent ended in a draw because there were no more points to make a move."
-    override fun endPVPTimeOut(winner: String, loser: String) =
+    override fun endPvpTie(players: ColorContainer<String>) =
+        "${players.black} vs ${players.white} ended in a draw because there were no more points to make a move."
+    override fun endPvpTimeOut(winner: String, loser: String) =
         "$winner wins by $loser because $loser didn't make the next move for a long time."
 
-    override fun endPVEWin(player: String, lastPos: String) =
+    override fun endEngineWin(player: String, lastPos: String) =
         "$player, You won to AI by placed at $lastPos."
-    override fun endPVELose(player: String, lastPos: String) =
+    override fun endEngineLose(player: String, lastPos: String) =
         "$player, You lose to AI by AI placed at $lastPos."
-    override fun endPVEResign(player: String) =
+    override fun endEngineResign(player: String) =
         "$player, You lose to AI by resignation."
-    override fun endPVETie(player: String) =
+    override fun endEngineTie(player: String) =
         "$player vs AI ended in a draw because there were no more points to make a move."
-    override fun endPVETimeOut(player: String) =
+    override fun endEngineTimeOut(player: String) =
         "$player, You lost to AI because you didn't make the next move for a long time."
 
     // chunk
@@ -351,7 +350,7 @@ open class LanguageENG : LanguageContainer {
     override fun boardTieDescription() = "Tie"
 
     override fun boardCommandGuide() =
-        ":mag: Press the button or use ``/s`` ``column`` ``row`` command to make the next move."
+        ":mag: Press the button or use ``/s`` ``position`` command to make the next move."
     override fun boardSwapGuide() =
         ":arrows_counterclockwise: Press the button to select whether to switch between black and white."
     override fun boardStatefulSwapGuide(offerCount: Int) =
@@ -361,9 +360,9 @@ open class LanguageENG : LanguageContainer {
     override fun boardDeclareGuide() =
         ":paperclips: Use the Select menu to choose how many 5th move candidates to pick."
     override fun boardSelectGuide() =
-        ":dart: Press the button or use ``/s`` ``column`` ``row`` command to select 5th move."
+        ":dart: Press the button or use ``/s`` ``position`` command to select 5th move."
     override fun boardOfferGuide(remainingMoves: Int) =
-        ":question: Press the button or use ``/s`` ``column`` ``row`` command to pick ``$remainingMoves`` candidates for the 5th move."
+        ":question: Press the button or use ``/s`` ``position`` command to pick ``$remainingMoves`` candidates for the 5th move."
 
     override fun replayEmbedWin() = "Win"
     override fun replayEmbedLose() = "Lose"

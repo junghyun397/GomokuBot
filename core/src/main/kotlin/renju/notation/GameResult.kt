@@ -57,25 +57,26 @@ sealed interface GameResult {
 
     companion object {
 
-        @JvmStatic
         fun fromFlag(flag: Byte): GameResult =
             when (Color.from(flag)) {
                 Color.Black -> FiveInRow(Color.Black)
                 Color.White -> FiveInRow(Color.White)
-                null -> Full
             }
 
-        fun build(gameResult: GameResult, cause: Cause, blackUser: User?, whiteUser: User?): GameResult? =
-            when (cause) {
+        fun build(gameResult: GameResult, cause: Cause, users: ColorContainer<User?>): GameResult? {
+            val nonNullUsers = users.map { it ?: User.GomokuBot }
+
+            return when (cause) {
                 Cause.FIVE_IN_A_ROW, Cause.RESIGN, Cause.TIMEOUT -> when (gameResult.winnerColor) {
                     Color.Black ->
-                        Win(cause, Color.Black, blackUser ?: User.GomokuBot, whiteUser ?: User.GomokuBot)
+                        Win(cause, Color.Black, nonNullUsers.black, nonNullUsers.white)
                     Color.White ->
-                        Win(cause, Color.White, whiteUser ?: User.GomokuBot, blackUser ?: User.GomokuBot)
+                        Win(cause, Color.White, nonNullUsers.white, nonNullUsers.black)
                     else -> null
                 }
                 Cause.DRAW -> Full
             }
+        }
 
     }
 

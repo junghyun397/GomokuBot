@@ -10,7 +10,6 @@ import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.GameManager
 import core.session.MessageManager
-import core.session.SwapType
 import core.session.entities.*
 import renju.notation.GameResult
 import utils.lang.replaceIf
@@ -33,7 +32,7 @@ class ExpireGameCommand(
         val session = this.session
         val (finishedSession, result) = GameManager.resignSession(session, GameResult.Cause.TIMEOUT, session.player)
 
-        GameManager.finishSession(bot, channel, finishedSession, result)
+        GameManager.finishSession(bot, channel, finishedSession)
 
         val io = if (this.channelAvailable) {
             effect {
@@ -46,9 +45,9 @@ class ExpireGameCommand(
 
                 when (session) {
                     is PvpGameSession, is OpeningSession -> service
-                        .buildTimeoutPVP(noticePublisher, config.language.container, session.nextPlayer, session.player)
+                        .buildTimeoutPvp(noticePublisher, config.language.container, session.opponent, session.player)
                     is EngineGameSession -> service
-                        .buildTimeoutPVE(noticePublisher, config.language.container, session.humanPlayer)
+                        .buildTimeoutEngine(noticePublisher, config.language.container, session.humanPlayer)
                 }.launch()()
 
                 val finishOrders = buildFinishProcedure(

@@ -1,6 +1,5 @@
 package discord
 
-import core.session.MessageManager
 import core.BotConfig
 import core.BotContext
 import core.assets.ChannelId
@@ -12,7 +11,7 @@ import core.interact.reports.ErrorReport
 import core.interact.reports.Report
 import core.mintaka.MintakaProvider
 import core.mintaka.MintakaServer
-import core.session.SessionManager
+import core.session.MessageManager
 import core.session.SessionPool
 import dev.minn.jda.ktx.coroutines.await
 import dev.minn.jda.ktx.events.CoroutineEventManager
@@ -26,11 +25,7 @@ import discord.interact.InternalInteractionContext
 import discord.interact.UserInteractionContext
 import discord.route.*
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.JDA
@@ -43,6 +38,7 @@ import net.dv8tion.jda.api.entities.channel.ChannelType
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent
@@ -156,6 +152,13 @@ object GomokuBot {
 
         jda.listener<ShutdownEvent> {
             logger.info("jda shutdown.")
+        }
+
+        jda.listener<CommandAutoCompleteInteractionEvent> {
+            if (!it.isFromGuild || it.user.isBot)
+                return@listener
+
+            commandAutoCompleteRouter(it)
         }
 
         val commandFlow: Flow<Report> = merge(
