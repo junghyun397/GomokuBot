@@ -10,13 +10,13 @@ open class LanguagePRK : LanguageKOR() {
     override fun languageName() = "\uD83C\uDDF0\uD83C\uDDF5 조선말"
     override fun languageSuggestion() = "``/lang`` ``PRK`` 시킴말을 써 주시오."
 
-    override fun aiLevelAmoeba() = "미제놈"
-    override fun aiLevelApe() = "쪽바리"
-    override fun aiLevelBeginner() = "로동자"
+    override fun engineLevelAmoeba() = "미제놈"
+    override fun engineLevelApe() = "쪽바리"
+    override fun engineLevelBeginner() = "로동자"
     override fun aiLevelIntermediate() = "로동당원"
-    override fun aiLevelAdvanced() = "중앙당원"
-    override fun aiLevelExpert() = "혁명가"
-    override fun aiLevelGuru() = "령도자"
+    override fun engineLevelAdvanced() = "중앙당원"
+    override fun engineLevelExpert() = "혁명가"
+    override fun engineLevelGuru() = "령도자"
 
     override fun helpCommand() = "도움말"
     override fun helpCommandDescription() = "도움말을 알아보오."
@@ -243,10 +243,10 @@ open class LanguagePRK : LanguageKOR() {
     override fun beginPvp(players: ColorContainer<String>) =
         "${players.black} 동지와 ${players.white} 동지의 놀음이 시작되었소. ${players.black} 동지가 흑이요. ${players.black} 동지가 첫 번째 수를 놓으시오."
 
-    override fun beginEngineAiBlack(player: String) =
+    override fun beginEngineBlack(player: String) =
         "$player 동지와 전자계산기의 놀음이 시작되었소. $player 동지는 백이요. 전자계산기는 ``h8``에 두었소. 두 번째 수를 놓으시오."
 
-    override fun beginEngineAiWhite(player: String) =
+    override fun beginEngineWhite(player: String) =
         "$player 동지와 전자계산기의 놀음이 시작되었소. $player 동지가 흑이요. 첫 번째 수를 놓으시오."
 
     override fun processNextEngine(lastMove: String) =

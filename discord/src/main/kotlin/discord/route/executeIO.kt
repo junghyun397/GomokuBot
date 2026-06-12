@@ -5,11 +5,9 @@ import arrow.core.raise.get
 import core.assets.MessageRef
 import core.interact.Order
 import discord.assets.JDAChannel
-import discord.assets.extractMessageData
 import discord.interact.ChannelManager
-import discord.interact.ChannelManager.clearComponents
-import discord.interact.ChannelManager.retainFirstEmbed
 import discord.interact.DiscordConfig
+import net.dv8tion.jda.api.components.MessageTopLevelComponent
 
 suspend fun executeIO(discordConfig: DiscordConfig, io: Effect<Nothing, List<Order>>, jdaChannel: JDAChannel, source: MessageRef? = null) {
     io.get().forEach { order ->
@@ -22,11 +20,9 @@ suspend fun executeIO(discordConfig: DiscordConfig, io: Effect<Nothing, List<Ord
                     ChannelManager.clearReaction(originalMessage)
 
                     if (order.reduceComponents) {
-                        val messageData = originalMessage.extractMessageData()
-                            .retainFirstEmbed()
-                            .clearComponents()
-
-                        originalMessage.editMessage(messageData.buildEdit()).queue()
+                        originalMessage
+                            .editMessageComponents(emptyList<MessageTopLevelComponent>())
+                            .queue()
                     }
                 }
             is Order.ArchiveSession -> ChannelManager.archiveSession(

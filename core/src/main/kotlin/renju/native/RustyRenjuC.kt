@@ -19,7 +19,7 @@ internal class RustyRenjuC internal constructor(
         forbiddenDoubleThree = this.symbols.byte("forbidden_kind_double_three"),
         forbiddenDoubleFour = this.symbols.byte("forbidden_kind_double_four"),
         forbiddenOverline = this.symbols.byte("forbidden_kind_overline"),
-        posNone = this.symbols.byte("pos_none"),
+        posNone = this.symbols.int("pos_none"),
         exportItemEmpty = this.symbols.byte("board_export_item_empty"),
         exportItemStone = this.symbols.byte("board_export_item_stone"),
         exportItemForbidden = this.symbols.byte("board_export_item_forbidden"),
@@ -36,8 +36,8 @@ internal class RustyRenjuC internal constructor(
     private val boardFromHistory = this.symbols.function("board_from_history", ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE, ValueLayout.ADDRESS, ValueLayout.JAVA_LONG)
     private val boardFromString = this.symbols.function("board_from_string", ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE, ValueLayout.ADDRESS)
     private val boardToString = this.symbols.function("board_to_string", ValueLayout.ADDRESS, ValueLayout.ADDRESS)
-    private val boardSet = this.symbols.function("board_set", ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE)
-    private val boardUnset = this.symbols.function("board_unset", ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE)
+    private val boardSet = this.symbols.function("board_set", ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_INT)
+    private val boardUnset = this.symbols.function("board_unset", ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_INT)
     private val boardFree = this.symbols.voidFunction("board_free", ValueLayout.ADDRESS)
     private val boardDescribe = this.symbols.function("board_describe", ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
     private val boardPattens = this.symbols.function("board_pattens", ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
@@ -45,7 +45,7 @@ internal class RustyRenjuC internal constructor(
     fun rusty_renju_empty_board(ruleKind: Byte = this.constants.ruleRenju): MemorySegment? =
         (this.emptyBoard.invokeWithArguments(ruleKind) as MemorySegment).nullIfNull()
 
-    fun rusty_renju_board_from_history(actions: ByteArray?, len: Long, ruleKind: Byte = this.constants.ruleRenju): MemorySegment? {
+    fun rusty_renju_board_from_history(actions: IntArray?, len: Long, ruleKind: Byte = this.constants.ruleRenju): MemorySegment? {
         return Arena.ofConfined().use { arena ->
             (this.boardFromHistory.invokeWithArguments(ruleKind, actions.toNativeSegmentOrNull(arena), len) as MemorySegment)
                 .nullIfNull()
@@ -62,10 +62,10 @@ internal class RustyRenjuC internal constructor(
     fun rusty_renju_board_to_string(board: MemorySegment?): MemorySegment? =
         (this.boardToString.invokeWithArguments(board.orNullAddress()) as MemorySegment).nullIfNull()
 
-    fun rusty_renju_board_set(board: MemorySegment?, pos: Byte): MemorySegment? =
+    fun rusty_renju_board_set(board: MemorySegment?, pos: Int): MemorySegment? =
         (this.boardSet.invokeWithArguments(board.orNullAddress(), pos) as MemorySegment).nullIfNull()
 
-    fun rusty_renju_board_unset(board: MemorySegment?, pos: Byte): MemorySegment? =
+    fun rusty_renju_board_unset(board: MemorySegment?, pos: Int): MemorySegment? =
         (this.boardUnset.invokeWithArguments(board.orNullAddress(), pos) as MemorySegment).nullIfNull()
 
     fun rusty_renju_board_free(board: MemorySegment?) {
@@ -105,7 +105,7 @@ internal class RustyRenjuC internal constructor(
         val forbiddenDoubleThree: Byte,
         val forbiddenDoubleFour: Byte,
         val forbiddenOverline: Byte,
-        val posNone: Byte,
+        val posNone: Int,
         val exportItemEmpty: Byte,
         val exportItemStone: Byte,
         val exportItemForbidden: Byte,
@@ -118,9 +118,9 @@ internal class RustyRenjuC internal constructor(
         val emptyHash: Long,
     )
 
-    data class BoardExportItem(val kind: Byte, val stone: Byte, val forbidden_kind: Byte)
+    data class BoardExportItem(val kind: Byte, val content: Byte)
 
-    data class BoardWinner(val isSome: Boolean, val color: Byte, val sequence: ByteArray)
+    data class BoardWinner(val isSome: Boolean, val color: Byte, val sequence: IntArray)
 
     class BoardDescribe(pointer: MemorySegment) {
 
@@ -137,25 +137,20 @@ internal class RustyRenjuC internal constructor(
             field = Array(Pos.BOARD_SIZE) { idx ->
                 val itemOffset = BOARD_DESCRIBE_FIELD_OFFSET + idx.toLong() * BOARD_EXPORT_ITEM_SIZE
                 val kind = describeSegment.get(ValueLayout.JAVA_BYTE, itemOffset + BOARD_EXPORT_ITEM_KIND_OFFSET)
-                val stone = describeSegment.get(ValueLayout.JAVA_BYTE, itemOffset + BOARD_EXPORT_ITEM_STONE_OFFSET)
-                val forbiddenKind = describeSegment.get(
-                    ValueLayout.JAVA_BYTE,
-                    itemOffset + BOARD_EXPORT_ITEM_FORBIDDEN_KIND_OFFSET,
-                )
+                val content = describeSegment.get(ValueLayout.JAVA_BYTE, itemOffset + BOARD_EXPORT_ITEM_CONTENT_OFFSET)
 
                 BoardExportItem(
                     kind = kind,
-                    stone = stone,
-                    forbidden_kind = forbiddenKind,
+                    content = content,
                 )
             }
             winner = BoardWinner(
                 isSome = describeSegment.get(ValueLayout.JAVA_BYTE, BOARD_DESCRIBE_WINNER_OFFSET + BOARD_WINNER_IS_SOME_OFFSET) != 0.toByte(),
                 color = describeSegment.get(ValueLayout.JAVA_BYTE, BOARD_DESCRIBE_WINNER_OFFSET + BOARD_WINNER_COLOR_OFFSET),
-                sequence = ByteArray(BOARD_WINNER_SEQUENCE_SIZE) { idx ->
+                sequence = IntArray(BOARD_WINNER_SEQUENCE_SIZE) { idx ->
                     describeSegment.get(
-                        ValueLayout.JAVA_BYTE,
-                        BOARD_DESCRIBE_WINNER_OFFSET + BOARD_WINNER_SEQUENCE_OFFSET + idx.toLong() * ValueLayout.JAVA_BYTE.byteSize(),
+                        ValueLayout.JAVA_INT,
+                        BOARD_DESCRIBE_WINNER_OFFSET + BOARD_WINNER_SEQUENCE_OFFSET + idx.toLong() * ValueLayout.JAVA_INT.byteSize(),
                     )
                 },
             )
@@ -194,18 +189,27 @@ internal class RustyRenjuC internal constructor(
 
         private val BOARD_EXPORT_ITEM_LAYOUT = MemoryLayout.structLayout(
             ValueLayout.JAVA_BYTE.withName("kind"),
-            ValueLayout.JAVA_BYTE.withName("stone"),
-            ValueLayout.JAVA_BYTE.withName("forbidden_kind"),
+            ValueLayout.JAVA_BYTE.withName("content"),
         )
+        private val BOARD_WINNER_SEQUENCE_PADDING_SIZE = this.align(
+            ValueLayout.JAVA_BYTE.byteSize() + ValueLayout.JAVA_BYTE.byteSize(),
+            ValueLayout.JAVA_INT.byteAlignment(),
+        ) - ValueLayout.JAVA_BYTE.byteSize() - ValueLayout.JAVA_BYTE.byteSize()
         private val BOARD_WINNER_LAYOUT = MemoryLayout.structLayout(
             ValueLayout.JAVA_BYTE.withName("is_some"),
             ValueLayout.JAVA_BYTE.withName("color"),
-            MemoryLayout.sequenceLayout(BOARD_WINNER_SEQUENCE_SIZE.toLong(), ValueLayout.JAVA_BYTE).withName("sequence"),
+            MemoryLayout.paddingLayout(BOARD_WINNER_SEQUENCE_PADDING_SIZE),
+            MemoryLayout.sequenceLayout(BOARD_WINNER_SEQUENCE_SIZE.toLong(), ValueLayout.JAVA_INT).withName("sequence"),
         )
+        private val BOARD_DESCRIBE_WINNER_PADDING_SIZE = this.align(
+            ValueLayout.JAVA_LONG.byteSize() + ValueLayout.JAVA_BYTE.byteSize() + Pos.BOARD_SIZE * this.BOARD_EXPORT_ITEM_LAYOUT.byteSize(),
+            this.BOARD_WINNER_LAYOUT.byteAlignment(),
+        ) - ValueLayout.JAVA_LONG.byteSize() - ValueLayout.JAVA_BYTE.byteSize() - Pos.BOARD_SIZE * this.BOARD_EXPORT_ITEM_LAYOUT.byteSize()
         private val BOARD_DESCRIBE_LAYOUT = MemoryLayout.structLayout(
             ValueLayout.JAVA_LONG.withName("hash_key"),
             ValueLayout.JAVA_BYTE.withName("player_color"),
             MemoryLayout.sequenceLayout(Pos.BOARD_SIZE.toLong(), BOARD_EXPORT_ITEM_LAYOUT).withName("field"),
+            MemoryLayout.paddingLayout(BOARD_DESCRIBE_WINNER_PADDING_SIZE),
             BOARD_WINNER_LAYOUT.withName("winner"),
         )
         private val BOARD_PATTERNS_LAYOUT = MemoryLayout.structLayout(
@@ -218,8 +222,7 @@ internal class RustyRenjuC internal constructor(
 
         private val BOARD_EXPORT_ITEM_SIZE = BOARD_EXPORT_ITEM_LAYOUT.byteSize()
         private val BOARD_EXPORT_ITEM_KIND_OFFSET = BOARD_EXPORT_ITEM_LAYOUT.byteOffset(groupElement("kind"))
-        private val BOARD_EXPORT_ITEM_STONE_OFFSET = BOARD_EXPORT_ITEM_LAYOUT.byteOffset(groupElement("stone"))
-        private val BOARD_EXPORT_ITEM_FORBIDDEN_KIND_OFFSET = BOARD_EXPORT_ITEM_LAYOUT.byteOffset(groupElement("forbidden_kind"))
+        private val BOARD_EXPORT_ITEM_CONTENT_OFFSET = BOARD_EXPORT_ITEM_LAYOUT.byteOffset(groupElement("content"))
         private val BOARD_WINNER_IS_SOME_OFFSET = BOARD_WINNER_LAYOUT.byteOffset(groupElement("is_some"))
         private val BOARD_WINNER_COLOR_OFFSET = BOARD_WINNER_LAYOUT.byteOffset(groupElement("color"))
         private val BOARD_WINNER_SEQUENCE_OFFSET = BOARD_WINNER_LAYOUT.byteOffset(groupElement("sequence"))

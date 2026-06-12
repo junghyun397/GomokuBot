@@ -33,6 +33,9 @@ internal class NativeSymbols(
 internal fun ByteArray?.toNativeSegmentOrNull(arena: Arena): MemorySegment =
     this?.takeUnless(ByteArray::isEmpty)?.let { arena.allocateFrom(ValueLayout.JAVA_BYTE, *it) } ?: MemorySegment.NULL
 
+internal fun IntArray?.toNativeSegmentOrNull(arena: Arena): MemorySegment =
+    this?.takeUnless(IntArray::isEmpty)?.let { arena.allocateFrom(ValueLayout.JAVA_INT, *it) } ?: MemorySegment.NULL
+
 internal fun MemorySegment?.orNullAddress(): MemorySegment = this ?: MemorySegment.NULL
 
 internal fun MemorySegment.nullIfNull(): MemorySegment? = if (this == MemorySegment.NULL) null else this

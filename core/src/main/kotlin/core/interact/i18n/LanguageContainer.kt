@@ -17,13 +17,13 @@ sealed interface LanguageContainer {
     fun languageName(): String
     fun languageSuggestion(): String
 
-    fun aiLevelAmoeba(): String
-    fun aiLevelApe(): String
-    fun aiLevelBeginner(): String
+    fun engineLevelAmoeba(): String
+    fun engineLevelApe(): String
+    fun engineLevelBeginner(): String
     fun aiLevelIntermediate(): String
-    fun aiLevelAdvanced(): String
-    fun aiLevelExpert(): String
-    fun aiLevelGuru(): String
+    fun engineLevelAdvanced(): String
+    fun engineLevelExpert(): String
+    fun engineLevelGuru(): String
 
     fun ruleSelectRenju(): String
     fun ruleSelectTaraguchi10(): String
@@ -244,9 +244,9 @@ sealed interface LanguageContainer {
 
     fun beginOpening(players: ColorContainer<String>): String
 
-    fun beginEngineAiWhite(player: String): String
+    fun beginEngineWhite(player: String): String
 
-    fun beginEngineAiBlack(player: String): String
+    fun beginEngineBlack(player: String): String
 
     fun processNextEngine(lastMove: String): String
 

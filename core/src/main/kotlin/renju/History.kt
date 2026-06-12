@@ -29,12 +29,12 @@ import renju.notation.toStringOrNone
     operator fun contains(action: Pos?): Boolean =
         action in this.sequence
 
-    fun toMaybePosBuffer(): ByteArray? =
+    fun toMaybePosBuffer(): IntArray? =
         if (this.sequence.isEmpty()) {
             null
         } else {
-            ByteArray(this.sequence.size) { index ->
-                this.sequence[index]?.idx?.toByte() ?: RustyRenjuCApi.constants.posNone
+            IntArray(this.sequence.size) { index ->
+                this.sequence[index]?.idx ?: RustyRenjuCApi.constants.posNone
             }
         }
 

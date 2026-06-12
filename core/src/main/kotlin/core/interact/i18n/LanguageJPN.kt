@@ -10,13 +10,13 @@ class LanguageJPN : LanguageENG() {
     override fun languageName() = "\uD83C\uDDEF\uD83C\uDDF5 日本語"
     override fun languageSuggestion() = "「/lang JPN」と入力して、日本語を使用してください。"
 
-    override fun aiLevelAmoeba() = "アメーバ"
-    override fun aiLevelApe() = "サル"
-    override fun aiLevelBeginner() = "初心者"
+    override fun engineLevelAmoeba() = "アメーバ"
+    override fun engineLevelApe() = "サル"
+    override fun engineLevelBeginner() = "初心者"
     override fun aiLevelIntermediate() = "中級者"
-    override fun aiLevelAdvanced() = "上級者"
-    override fun aiLevelExpert() = "エキスパート"
-    override fun aiLevelGuru() = "グル"
+    override fun engineLevelAdvanced() = "上級者"
+    override fun engineLevelExpert() = "エキスパート"
+    override fun engineLevelGuru() = "グル"
 
     override fun helpCommand() = "help"
     override fun helpCommandDescription() = "ヘルプを表示します。"
@@ -252,10 +252,10 @@ class LanguageJPN : LanguageENG() {
     override fun beginPvp(players: ColorContainer<String>) =
         "${players.black} vs ${players.white} のゲームが開始されました！${players.black} が先手です。最初の手を打ってください。"
 
-    override fun beginEngineAiBlack(player: String) =
+    override fun beginEngineBlack(player: String) =
         "$player さんとAIの対戦が始まりました！$player さんは後手です。AIが ``h8`` に置きました。次の手を打ってください。"
 
-    override fun beginEngineAiWhite(player: String) =
+    override fun beginEngineWhite(player: String) =
         "$player さんとAIの対戦が始まりました！$player さんは先手です。最初の手を打ってください。"
 
     override fun processNextEngine(lastMove: String) =

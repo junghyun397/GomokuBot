@@ -50,17 +50,17 @@ class Board private constructor (
     fun stoneKind(pos: Pos): Color? =
         this.describe.field[pos.idx]
             .takeIf { it.isStone }
-            ?.let { Color.from(it.stone) }
+            ?.let { Color.from(it.content) }
 
     fun forbiddenKind(pos: Pos): ForbiddenKind? =
         this.describe.field[pos.idx]
             .takeIf { it.isForbidden }
-            ?.let { ForbiddenKind.from(it.forbidden_kind) }
+            ?.let { ForbiddenKind.from(it.content) }
 
     fun set(pos: Pos?): Board {
         val pointer = RustyRenjuCApi.lib.rusty_renju_board_set(
             this.nativePointer,
-            pos?.idx?.toByte() ?: RustyRenjuCApi.constants.posNone,
+            pos?.idx ?: RustyRenjuCApi.constants.posNone,
         )
             ?: return this
 
@@ -70,7 +70,7 @@ class Board private constructor (
     fun unset(pos: Pos?): Board {
         val pointer = RustyRenjuCApi.lib.rusty_renju_board_unset(
             this.nativePointer,
-            pos?.idx?.toByte() ?: RustyRenjuCApi.constants.posNone,
+            pos?.idx ?: RustyRenjuCApi.constants.posNone,
         )
             ?: return this
 
@@ -104,7 +104,7 @@ class Board private constructor (
         this.describe.winner
             .takeIf { it.isSome }
             ?.sequence
-            ?.map { raw -> Pos.fromIdx(raw.toInt() and 0xff) }
+            ?.map { raw -> Pos.fromIdx(raw) }
 
     internal fun nativeHandle(): MemorySegment = this.nativePointer
 

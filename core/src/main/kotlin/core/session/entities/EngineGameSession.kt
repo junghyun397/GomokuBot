@@ -22,10 +22,6 @@ data class EngineGameSession(
             gameResult = gameResult,
         )
 
-    fun update(mintakaSession: MintakaSession) = this.copy(mintakaSession = mintakaSession)
-
-    override fun updateResult(gameResult: GameResult) = this.copy(gameResult = gameResult)
-
     override fun anonymous(): EngineGameSession =
         this.copy(
             context = this.context.copy(user = this.user.map { it.anonymous() }),

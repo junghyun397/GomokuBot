@@ -46,7 +46,7 @@ class StartCommand(val opponent: User, val rule: Rule) : Command {
                     emptyOrders
                 }
 
-                tuple(io, this.writeCommandReport("start game session with AI", channel, user))
+                tuple(io, this.writeCommandReport("start game session with Engine", channel, user))
             }
             is User.Human -> {
                 val requestSession = RequestSession(

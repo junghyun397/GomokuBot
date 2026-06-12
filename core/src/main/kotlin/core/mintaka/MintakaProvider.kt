@@ -152,7 +152,7 @@ object MintakaProvider {
         val abort: () -> Unit,
     )
 
-    suspend fun launchSession(
+    fun launchSession(
         server: MintakaServer,
         session: MintakaIdleSession,
         hashKey: HashKey,

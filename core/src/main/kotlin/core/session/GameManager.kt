@@ -48,7 +48,7 @@ object GameManager {
                 context = newContext(GameState(Board.newBoard(), History.empty()).play(Pos.CENTER)),
                 isBranched = false
             )
-            else -> TODO()
+            else -> throw NotImplementedError()
         }
     }
 
@@ -100,7 +100,7 @@ object GameManager {
         }
     }
 
-    suspend fun makeAiMove(server: MintakaServer, session: EngineGameSession, beforeHash: HashKey, playerMove: Pos): EngineGameSession {
+    suspend fun makeEngineMove(server: MintakaServer, session: EngineGameSession, beforeHash: HashKey, playerMove: Pos): EngineGameSession {
         // TODO: PoC
         MintakaProvider.playSession(server, session.mintakaSession as MintakaIdleSession, beforeHash, playerMove)
 
@@ -146,25 +146,17 @@ object GameManager {
                 tuple(session.copy(gameResult = result), result)
             }
             is OpeningSession, is PvpGameSession -> {
-                val userId = user.humanId ?: throw IllegalStateException()
+                val winColor = !session.user.map { it.humanId }.color(user.humanId)!!
 
-                val loser = when (userId) {
-                    session.user.black.humanId -> session.user.black
-                    session.user.white.humanId -> session.user.white
-                    else -> throw IllegalStateException()
+                val result = GameResult.Win(cause, winColor, session.user[winColor], session.user[!winColor])
+
+                val session = when (session) {
+                    is PvpGameSession -> session.copy(gameResult = result)
+                    is OpeningSession -> session.asFinishedPvpSession(result)
+                    else -> throw IllegalStateException("unreachable")
                 }
 
-                val winner =
-                    if (loser == session.user.black) session.user.white
-                    else session.user.black
-
-                val winColor =
-                    if (winner == session.user.black) Color.Black
-                    else Color.White
-
-                val result = GameResult.Win(cause, winColor, winner, loser)
-
-                tuple(session.updateResult(result), result)
+                tuple(session, result)
             }
         }
 

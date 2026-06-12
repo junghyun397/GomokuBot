@@ -11,7 +11,7 @@ COPY native/mintaka .
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/app/target \
-    RUSTFLAGS="-C target-feature=-crt-static" cargo +nightly-2025-11-15 build --locked --release \
+    RUSTFLAGS="-C target-feature=-crt-static" cargo build --locked --release \
         -p rusty_renju_c \
         -p rusty_renju_image \
     && cp /app/target/release/librusty_renju_c.so /tmp/librusty_renju_c.so \
@@ -31,12 +31,10 @@ FROM eclipse-temurin:25-jre-alpine AS runtime
 
 WORKDIR /app
 
-RUN apk add --no-cache fontconfig libgcc \
-    && mkdir -p /usr/share/fonts
+RUN apk add --no-cache libgcc
 
 COPY --from=jvm-builder /tmp/gomokubot-discord.jar gomokubot-discord.jar
 COPY --from=native-builder /tmp/librusty_renju_c.so native/mintaka/target/release/librusty_renju_c.so
 COPY --from=native-builder /tmp/librusty_renju_image.so native/mintaka/target/release/librusty_renju_image.so
-COPY core/fonts/CharterRegular.otf /usr/share/fonts/font.otf
 
 ENTRYPOINT ["java", "--enable-native-access=ALL-UNNAMED", "-Xms2G", "-Xmx4G", "-jar", "/app/gomokubot-discord.jar"]

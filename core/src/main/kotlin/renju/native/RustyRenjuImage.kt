@@ -41,11 +41,11 @@ internal class RustyRenjuImage internal constructor(
         option: Byte,
         enableForbidden: Boolean,
         board: MemorySegment?,
-        actions: ByteArray?,
+        actions: IntArray?,
         actionsLen: Long,
-        offers: ByteArray?,
+        offers: IntArray?,
         offersLen: Long,
-        blinds: ByteArray?,
+        blinds: IntArray?,
         blindsLen: Long,
     ): ByteBuffer {
         return Arena.ofConfined().use { arena ->

@@ -10,13 +10,13 @@ open class LanguageKOR : LanguageENG() {
     override fun languageName() = "\uD83C\uDDF0\uD83C\uDDF7 한국어"
     override fun languageSuggestion() = "``/lang`` ``KOR`` 명령어를 사용해주세요."
 
-    override fun aiLevelAmoeba() = "아메바"
-    override fun aiLevelApe() = "유인원"
-    override fun aiLevelBeginner() = "초심자"
+    override fun engineLevelAmoeba() = "아메바"
+    override fun engineLevelApe() = "유인원"
+    override fun engineLevelBeginner() = "초심자"
     override fun aiLevelIntermediate() = "중급자"
-    override fun aiLevelAdvanced() = "숙련자"
-    override fun aiLevelExpert() = "전문가"
-    override fun aiLevelGuru() = "현자"
+    override fun engineLevelAdvanced() = "숙련자"
+    override fun engineLevelExpert() = "전문가"
+    override fun engineLevelGuru() = "현자"
 
     override fun helpCommand() = "도움말"
     override fun helpCommandDescription() = "도움말을 알아봅니다."
@@ -255,10 +255,10 @@ open class LanguageKOR : LanguageENG() {
     override fun beginOpening(players: ColorContainer<String>) =
         "${players.black} 님과 ${players.white} 님의 오프닝 게임이 시작되었습니다! ${players.black} 님이 흑입니다. ${players.white} 님은 흑으로 스왑할지, 그대로 플레이 할지 정해주세요."
 
-    override fun beginEngineAiBlack(player: String) =
+    override fun beginEngineBlack(player: String) =
         "$player 님과 인공지능의 게임이 시작되었습니다! $player 님은 백입니다. 인공지능은 ``h8``에 두었습니다. 두 번째 수를 놓아주세요."
 
-    override fun beginEngineAiWhite(player: String) =
+    override fun beginEngineWhite(player: String) =
         "$player 님과 인공지능의 게임이 시작되었습니다! $player 님이 흑입니다. 첫 번째 수를 놓아주세요."
 
     override fun processNextEngine(lastMove: String) =

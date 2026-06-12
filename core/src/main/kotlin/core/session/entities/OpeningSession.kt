@@ -12,8 +12,6 @@ sealed interface OpeningSession : GameSession {
 
     fun validateMove(move: Pos): Boolean = true
 
-    override fun updateResult(gameResult: GameResult) = this.asFinishedPvpSession(gameResult)
-
 }
 
 sealed interface PlayStageOpeningSession : OpeningSession {

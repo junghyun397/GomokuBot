@@ -10,13 +10,13 @@ open class LanguageENG : LanguageContainer {
     override fun languageName() = "\uD83C\uDDEC\uD83C\uDDE7 English"
     override fun languageSuggestion() = "Please use the ``/lang`` ``ENG`` command."
 
-    override fun aiLevelAmoeba() = "Amoeba"
-    override fun aiLevelApe() = "Ape"
-    override fun aiLevelBeginner() = "Beginner"
+    override fun engineLevelAmoeba() = "Amoeba"
+    override fun engineLevelApe() = "Ape"
+    override fun engineLevelBeginner() = "Beginner"
     override fun aiLevelIntermediate() = "Intermediate"
-    override fun aiLevelAdvanced() = "Advanced"
-    override fun aiLevelExpert() = "Expert"
-    override fun aiLevelGuru() = "Guru"
+    override fun engineLevelAdvanced() = "Advanced"
+    override fun engineLevelExpert() = "Expert"
+    override fun engineLevelGuru() = "Guru"
 
     override fun swapSelectYes() = "Yes"
     override fun swapSelectNo() = "No"
@@ -64,7 +64,7 @@ open class LanguageENG : LanguageContainer {
     override fun commandUsageStyle() =
         "Change the Gomoku Board style used by this server. Ex) ``/style`` ``A``"
 
-    override fun commandUsageStartEngine() = "Start a new game with AI."
+    override fun commandUsageStartEngine() = "Start a new game with GomokuBot."
     override fun commandUsageStartPvp() =
         "Send a game request to the mentioned user. Ex) ``/start`` ``@user``"
     override fun commandUsageResign() = "Resign from a game in progress."
@@ -297,14 +297,14 @@ open class LanguageENG : LanguageContainer {
     override fun beginOpening(players: ColorContainer<String>) =
         "The opening renju game of ${players.black} vs ${players.white} has started! ${players.black} is black. ${players.white} needs to decide whether to swap to black or play as is."
 
-    override fun beginEngineAiBlack(player: String) =
-        "The game of $player vs AI has started! $player is White. AI made a move at ``h8``. Please make the next move."
+    override fun beginEngineBlack(player: String) =
+        "The game of $player vs GomokuBot has started! $player is White. GomokuBot made a move at ``h8``. Please make the next move."
 
-    override fun beginEngineAiWhite(player: String) =
-        "The game of $player vs AI has started! $player is Black. Please make the first move."
+    override fun beginEngineWhite(player: String) =
+        "The game of $player vs GomokuBot has started! $player is Black. Please make the first move."
 
     override fun processNextEngine(lastMove: String) =
-        "Please make the next move. AI made a move at $lastMove."
+        "Please make the next move. GomokuBot made a move at $lastMove."
 
     override fun processNextPvp(lastPlayer: String, lastMove: String) =
         "Please make the next move. $lastPlayer have placed at $lastMove."
@@ -325,15 +325,15 @@ open class LanguageENG : LanguageContainer {
         "$winner wins by $loser because $loser didn't make the next move for a long time."
 
     override fun endEngineWin(player: String, lastPos: String) =
-        "$player, You won to AI by placed at $lastPos."
+        "$player, You won to GomokuBot by placed at $lastPos."
     override fun endEngineLose(player: String, lastPos: String) =
-        "$player, You lose to AI by AI placed at $lastPos."
+        "$player, You lose to GomokuBot by GomokuBot placed at $lastPos."
     override fun endEngineResign(player: String) =
-        "$player, You lose to AI by resignation."
+        "$player, You lose to GomokuBot by resignation."
     override fun endEngineTie(player: String) =
-        "$player vs AI ended in a draw because there were no more points to make a move."
+        "$player vs GomokuBot ended in a draw because there were no more points to make a move."
     override fun endEngineTimeOut(player: String) =
-        "$player, You lost to AI because you didn't make the next move for a long time."
+        "$player, You lost to GomokuBot because you didn't make the next move for a long time."
 
     // chunk
 

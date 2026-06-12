@@ -115,8 +115,8 @@ abstract class MessagingServiceImpl : MessagingService {
 
     override fun buildBeginsEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, humanHasBlack: Boolean) =
         publisher sends when {
-            humanHasBlack -> container.beginEngineAiWhite(humanPlayer.asMentionFormat())
-            else -> container.beginEngineAiBlack(humanPlayer.asMentionFormat())
+            humanHasBlack -> container.beginEngineWhite(humanPlayer.asMentionFormat())
+            else -> container.beginEngineBlack(humanPlayer.asMentionFormat())
         }
 
     override fun buildBeginsOpening(publisher: MessagePublisher, container: LanguageContainer, players: ColorContainer<User>, rule: Rule) =

@@ -1,6 +1,5 @@
 # GomokuBot
 [![Gradle build](https://github.com/junghyun397/GomokuBot/actions/workflows/build.yml/badge.svg)](https://github.com/junghyun397/GomokuBot/actions/workflows/build.yml)
-[![Deploy to production](https://github.com/junghyun397/GomokuBot/actions/workflows/deploy.yml/badge.svg)](https://github.com/junghyun397/GomokuBot/actions/workflows/deploy.yml)
 
 Now play Gomoku in your chat room. GomokuBot can do it. ― GomokuBot is an AI Chatbot designed to collect data for reinforcement learning. GomokuBot can be services with any platform and can handle many requests reliably based on reactive streams. 
 
@@ -9,7 +8,7 @@ Now play Gomoku in your chat room. GomokuBot can do it. ― GomokuBot is an AI C
 ## Features
 
 * **Renju Rule Support.** With the [rusty-renju](https://github.com/junghyun397/mintaka) renju engine, GomokuBot always correctly applies [Renju rules](https://www.renju.net/rules/).
-* **Multilingual Support.** Currently, six languages are supported: English, 한국어, 조선말, 日本語, 國漢文混用體, and Tiếng Việt. Thanks to the [community translators](https://github.com/junghyun397/GomokuBot/blob/master/documents/community-translations.md). 
+* **Multilingual Support.** Currently, six languages are supported: English, 한국어, 조선말, 日本語, Thanks to the [community translators](https://github.com/junghyun397/GomokuBot/blob/master/documents/community-translations.md). 
 * **Fully Customizable.** Various elements such as board style, focus type, and hint type can be set.
 * **Intuitive Input.** Within chatbot's environment, the [ResRenju](https://github.com/junghyun397/ResRenju) renju engine helps intuitive input.
 * **Multiplatform Support.** Business logic and parser logic are completely separate. Just write a command parser to make GomokuBot service on various platforms.
@@ -39,7 +38,7 @@ WIP
 ### docker-compose
 
 ```shell
-docker compose up
+docker compose up --build
 ```
 
 ### Build

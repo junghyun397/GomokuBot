@@ -1,22 +1,14 @@
 package core.interact.message.graphics
 
 import arrow.core.Either
-import com.sksamuel.scrimage.AwtImage
-import com.sksamuel.scrimage.nio.StreamingGifWriter
-import renju.Board
 import renju.GameState
-import renju.History
 import renju.native.RustyRenjuImage
 import renju.native.RustyRenjuImageApi
 import renju.notation.Pos
-import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.lang.foreign.MemorySegment
 import java.lang.foreign.ValueLayout
-import java.time.Duration
-import javax.imageio.ImageIO
 
 object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
 
@@ -45,15 +37,15 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
             HistoryRenderType.SEQUENCE -> RustyRenjuImageApi.constants.rendererSequence
         }
 
-    private fun asPosBuffer(posSet: Set<Pos>?): ByteArray? {
+    private fun asPosBuffer(posSet: Set<Pos>?): IntArray? {
         if (posSet.isNullOrEmpty()) {
             return null
         }
 
         return posSet
             .sortedBy { it.idx }
-            .map { it.idx.toByte() }
-            .toByteArray()
+            .map { it.idx }
+            .toIntArray()
     }
 
     private fun renderBytes(
@@ -113,34 +105,5 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
         ByteArrayInputStream(
             renderBytes(state, historyRenderType, offers, blinds, enableForbiddenPoints)
         )
-
-    fun renderHistoryAnimation(history: List<Pos>): InputStream {
-        val outputStream = ByteArrayOutputStream()
-
-        val gifBuilder = StreamingGifWriter(Duration.ofSeconds(1), false, false)
-
-        gifBuilder.prepareStream(outputStream, BufferedImage.TYPE_INT_ARGB).apply {
-            var state = GameState(Board.newBoard(), History.empty())
-
-            history.forEachIndexed { index, pos ->
-                state = state.play(pos)
-
-                val frame = renderBytes(
-                    state = state,
-                    historyRenderType = HistoryRenderType.SEQUENCE,
-                    offers = null,
-                    blinds = null,
-                    enableForbiddenPoints = true,
-                )
-
-                val image = ImageIO.read(ByteArrayInputStream(frame))
-                writeFrame(AwtImage(image).toImmutableImage())
-            }
-
-            close()
-        }
-
-        return ByteArrayInputStream(outputStream.toByteArray())
-    }
 
 }

@@ -50,8 +50,6 @@ sealed interface GameSession : Expirable {
     val messageBufferKey get() = this.context.messageBufferKey
     val participantIds get() = setOfNotNull(this.user.black.humanId, this.user.white.humanId)
 
-    fun updateResult(gameResult: GameResult): RenjuSession
-
 }
 
 sealed interface RenjuSession : GameSession {

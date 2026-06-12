@@ -19,8 +19,6 @@ data class PvpGameSession(
             gameResult = gameResult,
         )
 
-    override fun updateResult(gameResult: GameResult) = this.copy(gameResult = gameResult)
-
     override fun anonymous(): PvpGameSession =
         this.copy(
             context = this.context.copy(user = this.user.map { it.anonymous() }),
