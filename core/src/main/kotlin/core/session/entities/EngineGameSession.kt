@@ -1,32 +1,34 @@
 package core.session.entities
 
+import arrow.core.Either
 import core.assets.User
-import renju.GameState
+import core.engine.EngineLevel
+import core.engine.MintakaServer
+import core.engine.MintakaSession
+import renju.notation.Color
 import renju.notation.GameResult
 
 data class EngineGameSession(
-    override val context: GameSessionContext,
-    val mintakaSession: MintakaSession,
-    val humanPlayer: User,
-    override val gameResult: GameResult? = null,
+    val context: GameSessionContext<User>,
+    val mintakaServer: MintakaServer,
+    val engineState: Either<GameResult, MintakaSession>,
+    val userColor: Color,
+    val humanPlayer: User.Human,
+    val engineLevel: EngineLevel,
     override val recording: Boolean,
-    override val ruleKind: Rule,
-) : RenjuSession {
+) : PlayGameSession {
 
-    override fun next(state: GameState, gameResult: GameResult?, messageBufferKey: MessageBufferKey) =
-        this.copy(
-            context = this.context.next(
-                state = state,
-                messageBufferKey = messageBufferKey,
-            ),
-            gameResult = gameResult,
-        )
+    val mintakaSession: MintakaSession? get() = this.engineState.getOrNull()
+    override val gameResult get() = this.engineState.leftOrNull()
 
-    override fun anonymous(): EngineGameSession =
-        this.copy(
-            context = this.context.copy(user = this.user.map { it.anonymous() }),
-            humanPlayer = this.humanPlayer.anonymous(),
-            gameResult = this.gameResult.anonymous(),
-        )
+    override val id = this.context.id
+    override val expireService = this.context.expireService
+
+    override val state = this.context.state
+    override val users = this.context.users
+
+    override val messageBufferKey = this.context.messageBufferKey
+
+    override val ruleKind = this.context.ruleKind
 
 }

@@ -7,10 +7,10 @@ import core.assets.SubChannelId
 import core.database.DatabaseManager
 import core.database.LocalCaches
 import core.database.repositories.AnnounceRepository
+import core.engine.EngineProvider
+import core.engine.MintakaServer
 import core.interact.reports.ErrorReport
 import core.interact.reports.Report
-import core.mintaka.MintakaProvider
-import core.mintaka.MintakaServer
 import core.session.MessageManager
 import core.session.SessionPool
 import dev.minn.jda.ktx.coroutines.await
@@ -48,7 +48,8 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent
 import net.dv8tion.jda.api.events.session.ReadyEvent
 import net.dv8tion.jda.api.events.session.ShutdownEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
-import utils.log.getLogger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import kotlin.system.exitProcess
 
 fun postgresqlUrlFromEnv(): String = System.getenv("GOMOKUBOT_DB_URL")
@@ -100,8 +101,6 @@ private fun <E> Flow<E>.route(transform: suspend (E) -> Report?): Flow<Report> =
 object GomokuBot {
 
     fun launch() {
-        val botConfig = BotConfig()
-
         val postgresqlUrl = postgresqlUrlFromEnv()
         val mintakaServer = mintakaServerFromEnv()
         val discordConfig = discordConfigFromEnv()
@@ -118,7 +117,7 @@ object GomokuBot {
         logger.info("postgresql database connected.")
 
         runBlocking {
-            val result = MintakaProvider.validateServer(mintakaServer)
+            val result = EngineProvider.validateServer(mintakaServer)
 
             if (!result) {
                 logger.error("mintaka server is not available.")
@@ -130,7 +129,7 @@ object GomokuBot {
 
         val sessionPool = SessionPool(dbConnection = dbConnection)
 
-        val botContext = BotContext(botConfig, dbConnection, mintakaServer, sessionPool)
+        val botContext = BotContext(dbConnection, mintakaServer, sessionPool)
 
         val eventManager = CoroutineEventManager()
 
@@ -244,13 +243,13 @@ object GomokuBot {
             scheduleGameExpiration(botContext, discordConfig, jda),
             scheduleRequestExpiration(botContext, discordConfig, jda),
 
-            routine(botConfig.navigatorExpireChecks) {
+            routine(BotConfig.navigatorExpireChecks) {
                 val expires = MessageManager.cleanExpiredNavigators(sessionPool)
 
                 "cleaned $expires expired navigators"
             },
 
-            routine(botConfig.announceUpdateChecks) {
+            routine(BotConfig.announceUpdateChecks) {
                 val announces = AnnounceRepository.fetchAnnounces(dbConnection)
                 val updated = announces.size - dbConnection.localCaches.announceCache.size
 
@@ -271,7 +270,7 @@ object GomokuBot {
 
 }
 
-val logger = getLogger<GomokuBot>()
+val logger: Logger = LoggerFactory.getLogger(GomokuBot::class.java.simpleName)
 
 fun main() {
     logger.info(ASCII_SPLASH)

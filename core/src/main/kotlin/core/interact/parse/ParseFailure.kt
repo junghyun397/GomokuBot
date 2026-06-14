@@ -9,7 +9,7 @@ import core.interact.message.MessagePublisher
 import core.interact.message.MessagingService
 import core.interact.reports.CommandReport
 import core.session.entities.ChannelConfig
-import utils.lang.tuple
+import utils.tuple
 
 class ParseFailure(
     val name: String,

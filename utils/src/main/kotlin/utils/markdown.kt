@@ -1,7 +1,6 @@
-package utils.assets
+package utils
 
 import arrow.core.Either
-import utils.lang.tuple
 
 typealias SimplifiedMarkdownBlock = Either<String, String>
 typealias SimplifiedMarkdownDocument = List<Pair<String, List<Pair<String?, List<SimplifiedMarkdownBlock>>>>>

@@ -3,7 +3,7 @@ package core.interact.message.graphics
 import arrow.core.Either
 import renju.GameState
 import renju.notation.Pos
-import utils.structs.Identifiable
+import utils.Identifiable
 import java.io.InputStream
 
 enum class HistoryRenderType(override val id: Short) : Identifiable {

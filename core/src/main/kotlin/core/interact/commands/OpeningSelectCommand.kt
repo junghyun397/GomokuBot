@@ -9,9 +9,9 @@ import renju.notation.Pos
 class OpeningSelectCommand(
     sessionId: SessionId,
     move: Pos,
-    deployAt: MessageRef?,
-    responseFlag: ResponseFlag
-) : OpeningMoveCommand<SelectStageOpeningSession>(sessionId, move, deployAt, responseFlag) {
+    responseFlag: ResponseFlag,
+    messageRef: MessageRef?,
+) : OpeningMoveCommand<SelectStageOpeningSession>(sessionId, move, responseFlag, messageRef) {
 
     override val name = "opening-select"
 

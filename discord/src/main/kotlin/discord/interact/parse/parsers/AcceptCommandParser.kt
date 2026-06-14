@@ -15,7 +15,7 @@ object AcceptCommandParser : EmbeddableCommand {
             ?: return null
 
         val requestSession = SessionManager.retrieveRequestSession(context.bot.sessions, sessionId).snapshot()
-        val accepted = requestSession.opponent.id == context.user.id
+        val accepted = requestSession.recipient.id == context.user.id
 
         return if (accepted) AcceptCommand(sessionId) else null
     }

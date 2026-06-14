@@ -1,12 +1,4 @@
-package utils.lang
-
-import utils.structs.Quadruple
-
-inline fun <T> T.replaceIf(condition: Boolean, produce: (T) -> T): T =
-    if (condition)
-        produce(this)
-    else
-        this
+package utils
 
 fun <A, B> tuple(a: A, b: B): Pair<A, B> =
     Pair(a, b)

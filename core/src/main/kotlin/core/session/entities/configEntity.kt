@@ -1,7 +1,7 @@
 package core.session.entities
 
 import core.interact.message.graphics.*
-import utils.structs.Identifiable
+import utils.Identifiable
 
 enum class BoardStyle(override val id: Short, val renderer: BoardRenderer, val sample: BoardRendererSample) : Identifiable {
     IMAGE(0, ImageBoardRenderer, ImageBoardRenderer),

@@ -11,7 +11,7 @@ import core.session.entities.BoardNavigationState
 import core.session.entities.NavigationState
 import core.session.entities.PageNavigationState
 import dev.minn.jda.ktx.coroutines.await
-import discord.assets.extractMessageRef
+import discord.assets.messageRef
 import discord.interact.ChannelManager
 import discord.interact.UserInteractionContext
 import discord.interact.message.*
@@ -25,11 +25,11 @@ import kotlin.time.Clock
 
 private fun recoverNavigationState(bot: BotContext, message: Message, messageRef: MessageRef): NavigationState? =
     message.embeds.firstOrNull()
-        ?.let { PageNavigationState.decodeFromColor(COLOR_NORMAL_HEX, it.colorRaw, bot.config, messageRef, bot.dbConnection) }
+        ?.let { PageNavigationState.decodeFromColor(COLOR_NORMAL_HEX, it.colorRaw, messageRef, bot.dbConnection) }
         ?.also { MessageManager.addNavigation(bot.sessions, messageRef, it) }
 
 suspend fun reactionRouter(context: UserInteractionContext<GenericMessageReactionEvent>): Report? {
-    val messageRef = context.event.extractMessageRef()
+    val messageRef = context.event.messageRef()
 
     val state = MessageManager.getNavigationState(context.bot.sessions, messageRef)
         ?: recoverNavigationState(context.bot, context.event.retrieveMessage().await(), messageRef)
@@ -55,7 +55,6 @@ suspend fun reactionRouter(context: UserInteractionContext<GenericMessageReactio
         channel = context.channel,
         user = context.user,
         service = DiscordMessagingService,
-        messageRef = messageRef,
         publishers = AdaptivePublisherSet(
             plain = { msg -> MessageCreateAdaptor(context.event.channel.sendMessage(msg.asDiscordMessageData().buildCreate())) },
             windowed = { msg -> MessageCreateAdaptor(context.event.channel.sendMessage(msg.asDiscordMessageData().buildCreate())) },

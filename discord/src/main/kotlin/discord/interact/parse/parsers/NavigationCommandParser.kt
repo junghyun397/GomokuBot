@@ -5,6 +5,7 @@ import core.session.entities.NavigationState
 import core.session.entities.PageNavigationState
 import discord.assets.EMOJI_LEFT
 import discord.assets.EMOJI_RIGHT
+import discord.assets.messageRef
 import discord.interact.UserInteractionContext
 import discord.interact.parse.NavigableCommand
 import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji
@@ -25,7 +26,7 @@ object NavigationCommandParser : NavigableCommand {
         val isForward = this.matchIsForward(context.event.reaction.emoji.asUnicode())
             ?: return null
 
-        return NavigationCommand(pageState, isForward)
+        return NavigationCommand(pageState, isForward, context.event.messageRef())
     }
 
 

@@ -1,5 +1,6 @@
 package discord
 
+import core.BotConfig
 import core.BotContext
 import core.interact.commands.ExpireGameCommand
 import core.interact.commands.ExpireRequestCommand
@@ -22,9 +23,9 @@ import discord.route.executeIO
 import kotlinx.coroutines.flow.Flow
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
-import utils.lang.schedule
-import java.time.Duration
+import utils.schedule
 import kotlin.time.Clock
+import kotlin.time.Duration
 
 private suspend fun executeCommand(
     taskContext: TaskContext,
@@ -58,7 +59,7 @@ private suspend fun executeCommand(
     }
 
 fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flow<Report> =
-    schedule(bot.config.gameExpireChecks, {
+    schedule(BotConfig.gameExpireChecks, {
         SessionManager.cleanExpiredGameSession(bot.sessions).forEach { (_, channel, _, session) ->
             val config = SessionManager.retrieveChannelConfig(bot.sessions, channel)
             val context = TaskContext(bot, channel, config, Clock.System.now(), "SCH")
@@ -80,7 +81,7 @@ fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: J
     })
 
 fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flow<Report> =
-    schedule(bot.config.requestExpireChecks, {
+    schedule(BotConfig.requestExpireChecks, {
         SessionManager.cleanExpiredRequestSessions(bot.sessions).forEach { (_, channel, _, session) ->
             val config = SessionManager.retrieveChannelConfig(bot.sessions, channel)
             val context = TaskContext(bot, channel, config, Clock.System.now(), "SCH")

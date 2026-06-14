@@ -15,7 +15,7 @@ import dev.minn.jda.ktx.interactions.commands.slash
 import dev.minn.jda.ktx.interactions.commands.subcommand
 import discord.assets.COMMAND_PREFIX
 import discord.assets.DISCORD_PLATFORM_ID
-import discord.assets.extractId
+import discord.assets.userId
 import discord.interact.UserInteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.ParsableCommand
@@ -46,7 +46,7 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
     private suspend fun parseUserRank(context: UserInteractionContext<*>, maybeTarget: net.dv8tion.jda.api.entities.User?): Either<ParseFailure, Command> {
         val user = maybeTarget
-            ?.let { UserProfileRepository.retrieveUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, it.extractId()) }
+            ?.let { UserProfileRepository.retrieveUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, it.userId()) }
 
         return user
             ?.let { Either.Right(RankCommand(RankScope.User(it))) }

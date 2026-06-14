@@ -10,7 +10,7 @@ import core.interact.reports.writeCommandReport
 import core.session.MessageManager
 import core.session.entities.ChannelConfig
 import core.session.entities.RequestSession
-import utils.lang.tuple
+import utils.tuple
 
 class ExpireRequestCommand(
     private val session: RequestSession,
@@ -36,12 +36,12 @@ class ExpireRequestCommand(
                 if (message != null && this@ExpireRequestCommand.messageAvailable) {
                     val editPublisher = publisher.edit(message)
 
-                    service.buildRejectedRequest(editPublisher, config.language.container, session.requester, session.opponent)
+                    service.buildRejectedRequest(editPublisher, config.language.container, session.requester, session.recipient)
                         .launch()()
                 }
 
                 service
-                    .buildRequestExpired(noticePublisher, config.language.container, session.requester, session.opponent)
+                    .buildRequestExpired(noticePublisher, config.language.container, session.requester, session.recipient)
                     .launch()()
 
                 emptyOrders

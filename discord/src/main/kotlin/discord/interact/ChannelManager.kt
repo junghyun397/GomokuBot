@@ -3,15 +3,21 @@ package discord.interact
 import arrow.core.raise.get
 import core.assets.ChannelUid
 import core.assets.MessageRef
+import core.assets.User
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.session.entities.ArchivePolicy
-import core.session.entities.RenjuSession
+import core.session.entities.EngineGameSession
+import core.session.entities.GameSession
+import core.session.entities.PvpGameSession
 import dev.minn.jda.ktx.coroutines.await
 import discord.assets.JDAChannel
 import discord.assets.awaitNullable
 import discord.assets.getChannelMessageSubChannelById
-import discord.interact.message.*
+import discord.interact.message.DiscordMessagePublisher
+import discord.interact.message.DiscordMessagingService
+import discord.interact.message.MessageCreateAdaptor
+import discord.interact.message.asDiscordMessageData
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.buildableCommands
 import discord.interact.parse.engBuildableCommands
@@ -22,9 +28,12 @@ import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.requests.RestAction
-import utils.lang.memoize
-import utils.lang.replaceIf
-import utils.lang.tuple
+import renju.notation.ColorContainer
+import renju.notation.setColor
+import utils.memoize
+import utils.replaceIf
+import utils.tuple
+import utils.unreachable
 
 object ChannelManager {
 
@@ -78,16 +87,28 @@ object ChannelManager {
         }.queue()
     }
 
-    suspend fun archiveSession(archiveSubChannel: MessageChannel, session: RenjuSession, archivePolicy: ArchivePolicy) {
+    suspend fun archiveSession(archiveSubChannel: MessageChannel, session: GameSession, archivePolicy: ArchivePolicy) {
         if (session.state.history.moves < 20 || archivePolicy == ArchivePolicy.PRIVACY) return
 
-        val modSession = session.replaceIf(archivePolicy == ArchivePolicy.BY_ANONYMOUS) {
-            session.anonymous()
-        }
+        val session = if (archivePolicy == ArchivePolicy.BY_ANONYMOUS) {
+            when (session) {
+                is PvpGameSession -> session.copy(
+                    context = session.context.copy(
+                        users = ColorContainer(User.ANONYMOUS, User.ANONYMOUS)
+                    )
+                )
+                is EngineGameSession -> session.copy(
+                    context = session.context.copy(
+                        users = session.context.users.setColor(session.userColor, User.ANONYMOUS)
+                    )
+                )
+                else -> unreachable()
+            }
+        } else session
 
         val publisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(archiveSubChannel.sendMessage(msg.asDiscordMessageData().buildCreate())) }
 
-        DiscordMessagingService.buildSessionArchive(publisher, modSession, modSession.gameResult)
+        DiscordMessagingService.buildSessionArchive(publisher, session, session.gameResult)
             .launch()
             .get()
     }
@@ -149,14 +170,5 @@ object ChannelManager {
             onGranted = { message.clearReactions() }
         )?.queue()
     }
-
-    fun DiscordMessageData.retainFirstEmbed(): DiscordMessageData =
-        this.copy(embeds = this.embeds.firstOrNull()?.let { listOf(it) } ?: emptyList())
-
-    fun DiscordMessageData.clearFiles(): DiscordMessageData =
-        this.copy(files = emptyList())
-
-    fun DiscordMessageData.clearComponents(): DiscordMessageData =
-        this.copy(components = emptyList())
 
 }

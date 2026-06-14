@@ -2,7 +2,7 @@ package core.interact.commands
 
 import arrow.core.raise.Effect
 import arrow.core.raise.effect
-import arrow.core.raise.ioZip
+import core.BotConfig
 import core.BotContext
 import core.interact.message.MessagePublisher
 import core.interact.message.MessagingService
@@ -10,8 +10,8 @@ import core.session.MessageManager
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
+import utils.ioZip
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.milliseconds
 
 fun buildHelpProcedure(
     bot: BotContext,
@@ -31,7 +31,7 @@ fun buildHelpProcedure(
                             helpMessage.ref,
                             NavigationKind.ABOUT,
                             page,
-                            Clock.System.now() + bot.config.navigatorExpireAfter.milliseconds
+                            Clock.System.now() + BotConfig.navigatorExpireAfter
                         )
                     )
 
@@ -55,33 +55,31 @@ fun buildCombinedHelpProcedure(
             val (maybeHelp, maybeSettings) = zipped()
 
             if (maybeHelp != null && maybeSettings != null) {
-                val helpMessage = maybeHelp
-                val settingsMessage = maybeSettings
 
-                            MessageManager.addNavigation(
-                                bot.sessions,
-                                helpMessage.ref,
-                                PageNavigationState(
-                                    helpMessage.ref,
-                                    NavigationKind.ABOUT,
-                                    page = 0,
-                                    Clock.System.now() + bot.config.navigatorExpireAfter.milliseconds
-                                )
-                            )
+                MessageManager.addNavigation(
+                    bot.sessions,
+                    maybeHelp.ref,
+                    PageNavigationState(
+                        maybeHelp.ref,
+                        NavigationKind.ABOUT,
+                        page = 0,
+                        Clock.System.now() + BotConfig.navigatorExpireAfter
+                    )
+                )
 
-                            MessageManager.addNavigation(
-                                bot.sessions,
-                                settingsMessage.ref,
-                                PageNavigationState(
-                                    settingsMessage.ref,
-                                    NavigationKind.SETTINGS,
-                                    settingsPage,
-                                    Clock.System.now() + bot.config.navigatorExpireAfter.milliseconds
-                                )
-                            )
+                MessageManager.addNavigation(
+                    bot.sessions,
+                    maybeSettings.ref,
+                    PageNavigationState(
+                        maybeSettings.ref,
+                        NavigationKind.SETTINGS,
+                        settingsPage,
+                        Clock.System.now() + BotConfig.navigatorExpireAfter
+                    )
+                )
 
-                            service.attachBinaryNavigators(helpMessage)()
-                            service.attachBinaryNavigators(settingsMessage)()
+                service.attachBinaryNavigators(maybeHelp)()
+                service.attachBinaryNavigators(maybeSettings)()
             }
         }
     }

@@ -4,21 +4,17 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
-import core.assets.humanId
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.SessionManager
-import core.session.entities.ChannelConfig
-import core.session.entities.SessionId
-import core.session.entities.SwapStageOpeningSession
-import core.session.entities.SwapType
-import utils.lang.tuple
+import core.session.entities.*
+import utils.tuple
 
 class OpeningSwapCommand(
     private val sessionId: SessionId,
     private val doSwap: Boolean,
-    private val deployAt: MessageRef?
+    private val messageRef: MessageRef
 ) : Command {
 
     override val name = "opening-swap"
@@ -31,24 +27,24 @@ class OpeningSwapCommand(
         channel: Channel,
         user: User.Human,
         service: MessagingService,
-        messageRef: MessageRef,
         publishers: PublisherSet,
     ) = runCatching {
-        var session: SwapStageOpeningSession? = null
-        val thenSession = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { currentSession ->
-            val swapSession = currentSession as? SwapStageOpeningSession ?: throw IllegalStateException()
-            if (swapSession.player.humanId != user.id) throw IllegalStateException()
+        var messageBufferKey: MessageBufferKey? = null
 
-            session = swapSession
+        val session = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { session ->
+            val swapSession = session as? SwapStageOpeningSession ?: throw IllegalStateException()
+            if (swapSession.player.id != user.id) throw IllegalStateException()
+
+            messageBufferKey = session.messageBufferKey
             swapSession.swap(this.doSwap)
         }
 
         val boardPublisher = when (config.swapType) {
-            SwapType.EDIT -> publishers.edit(this.deployAt ?: messageRef)
+            SwapType.EDIT -> publishers.edit(this.messageRef)
             else -> publishers.plain
         }
 
-        val io = buildNextMoveProcedure(bot, config, service, boardPublisher, session ?: throw IllegalStateException(), thenSession)
+        val io = buildNextMoveProcedure(bot, config, service, boardPublisher, session, messageBufferKey!!)
 
         tuple(io, this.writeCommandReport("make swap ${this.doSwap}", channel, user))
     }

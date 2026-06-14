@@ -22,8 +22,8 @@ import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.assets.COMMAND_PREFIX
 import discord.assets.DISCORD_PLATFORM_ID
-import discord.assets.extractId
-import discord.assets.extractProfile
+import discord.assets.profile
+import discord.assets.userId
 import discord.interact.UserInteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.ParsableCommand
@@ -75,7 +75,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             ?.let { session ->
                     this.asParseFailure("already sent request session", context.channel, requester) { messagingService, publisher, container ->
                         effect {
-                            messagingService.buildRequestAlreadySent(publisher, container, session.opponent)
+                            messagingService.buildRequestAlreadySent(publisher, container, session.recipient)
                                 .launch()()
                             emptyList()
                         }
@@ -165,7 +165,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
         return Either.Right(
             StartCommand(
-                opponent = opponent ?: User.GomokuBot,
+                recipient = opponent ?: User.GomokuBot,
                 rule = rule
             )
         )
@@ -175,8 +175,8 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
         val requester = context.user
         val jdaUser = context.event.getOption(context.config.language.container.startCommandOptionOpponent())?.asUser
         val opponent = if (jdaUser != null && !jdaUser.isBot)
-            UserProfileRepository.retrieveOrInsertUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, jdaUser.extractId()) {
-                jdaUser.extractProfile()
+            UserProfileRepository.retrieveOrInsertUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, jdaUser.userId()) {
+                jdaUser.profile()
             }
         else
             null
@@ -195,8 +195,8 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             .firstOrNull { !it.user.isBot && it.idLong != requester.givenId.idLong }
             ?.user
             ?.let {
-                UserProfileRepository.retrieveOrInsertUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, it.extractId()) {
-                    it.extractProfile()
+                UserProfileRepository.retrieveOrInsertUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, it.userId()) {
+                    it.profile()
                 }
             }
 

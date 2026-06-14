@@ -1,9 +1,9 @@
 package core.interact.commands
 
 import arrow.core.raise.effect
+import core.BotConfig
 import core.BotContext
 import core.assets.Channel
-import core.assets.MessageRef
 import core.assets.User
 import core.database.repositories.AnnounceRepository
 import core.database.repositories.UserProfileRepository
@@ -16,9 +16,8 @@ import core.session.MessageManager
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
-import utils.lang.tuple
+import utils.tuple
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.milliseconds
 
 class AnnounceCommand(command: Command) : UnionCommand(command) {
 
@@ -30,7 +29,6 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
         channel: Channel,
         user: User.Human,
         service: MessagingService,
-        messageRef: MessageRef,
         publishers: PublisherSet
     ) = runCatching {
         val thenUser = user.copy(announceId = AnnounceRepository.getLatestAnnounceId(bot.dbConnection))
@@ -53,7 +51,7 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
                                         announceMessage.ref,
                                         NavigationKind.ANNOUNCE,
                                         index + 1,
-                                        Clock.System.now() + bot.config.navigatorExpireAfter.milliseconds
+                                        Clock.System.now() + BotConfig.navigatorExpireAfter
                                     )
                                 )
 

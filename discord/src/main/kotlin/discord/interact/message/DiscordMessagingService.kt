@@ -48,8 +48,8 @@ import net.dv8tion.jda.api.requests.restaction.MessageCreateAction
 import renju.notation.Color
 import renju.notation.GameResult
 import renju.notation.Pos
-import utils.lang.memoize
-import utils.lang.tuple
+import utils.memoize
+import utils.tuple
 import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.milliseconds
@@ -85,10 +85,10 @@ object DiscordMessagingService : MessagingServiceImpl() {
         this(DiscordMessageData(embeds = embeds))
 
     override fun User.asMentionFormat() =
-        when (this) {
-            is User.Human -> "<@${this.givenId.idLong}>"
-            User.Anonymous, User.GomokuBot -> this.name
-        }
+        if ((this is User.Human && this.isAnonymous) || this is User.GomokuBot)
+            this.name
+        else
+            "<@${(this as User.Human).givenId.idLong}>"
 
     override fun String.asHighlightFormat() = "``$this``"
 
@@ -103,7 +103,7 @@ object DiscordMessagingService : MessagingServiceImpl() {
 
     private fun InlineEmbed.buildBoardAuthor(container: LanguageContainer, session: GameSession) =
         author {
-            iconUrl = session.user.black.profileURL ?: session.user.white.profileURL
+            iconUrl = session.users.black.profileURL ?: session.users.white.profileURL
             name = buildString {
                 append(session.blackPlayerWithColor())
                 append(" vs ")
@@ -128,7 +128,7 @@ object DiscordMessagingService : MessagingServiceImpl() {
                 }
 
                 field {
-                    val colorInfo = if (session.state.board.playerColor == Color.Black) UNICODE_WHITE_CIRCLE else UNICODE_BLACK_CIRCLE
+                    val colorInfo = if (session.state.board.playerColor == Color.BLACK) UNICODE_WHITE_CIRCLE else UNICODE_BLACK_CIRCLE
 
                     name = container.boardLastMove()
                     value = "${colorInfo}${lastPos}".asHighlightFormat()
@@ -155,11 +155,8 @@ object DiscordMessagingService : MessagingServiceImpl() {
             value = when (gameResult) {
                 is GameResult.Win -> {
                     container.boardWinDescription(
-                        "${gameResult.winner.name}${unicodeStone(gameResult.winColor)}".asHighlightFormat()
+                        "${gameResult.winner.name}${unicodeStone(gameResult.winner)}".asHighlightFormat()
                     )
-                }
-                is GameResult.FiveInRow -> {
-                    container.boardWinDescription(unicodeStone(gameResult.winner()).asHighlightFormat())
                 }
                 is GameResult.Full -> { container.boardTieDescription().asHighlightFormat() }
             }
@@ -169,7 +166,8 @@ object DiscordMessagingService : MessagingServiceImpl() {
 
     private fun MutableList<MessageEmbed>.buildGuideEmbed(session: GameSession, container: LanguageContainer) {
         val text = when {
-            (session is RenjuSession || session is MoveStageOpeningSession) && session.gameResult == null ->
+            (session is PvpGameSession || session is EngineGameSession || session is MoveStageOpeningSession)
+                    && session.gameResult == null ->
                 container.boardCommandGuide()
             session is SwapStageOpeningSession -> session.offerCount
                 ?.let { count -> container.boardStatefulSwapGuide(count) }
@@ -208,7 +206,7 @@ object DiscordMessagingService : MessagingServiceImpl() {
 
         val blinds = when (session) {
             is MoveStageOpeningSession -> (0 until Pos.BOARD_SIZE).map { Pos.fromIdx(it) }
-                .filterNot { session.inSquare(it) }
+                .filterNot { session.isLegalMove(it) }
             is OfferStageOpeningSession -> (0 until Pos.BOARD_SIZE).map { Pos.fromIdx(it) }
                 .filter { session.state.board.stoneKind(it) == null && session.state.board.forbiddenKind(it) == null && it in session.symmetryMoves }
             else -> null
@@ -425,25 +423,23 @@ object DiscordMessagingService : MessagingServiceImpl() {
         val selectMenuOptions = mutableListOf<SelectOption>()
 
         records.forEachIndexed { idx, (opponent, record) ->
-            val playerWasBlack = record.userUid.black == player.id
-            val resultString = when {
-                record.gameResult.cause == GameResult.Cause.DRAW -> "$UNICODE_PENCIL${container.replayEmbedDraw()}"
-                (record.gameResult.winColorId == Color.Black.naiveFlag.toShort()) == playerWasBlack -> "$UNICODE_TROPHY${container.replayEmbedWin()}"
+            val userColor = record.userUid.color(player.id)!!
+
+            val resultString = when (record.gameResult.winner) {
+                null -> "$UNICODE_PENCIL${container.replayEmbedDraw()}"
+                userColor -> "$UNICODE_TROPHY${container.replayEmbedWin()}"
                 else -> "$UNICODE_WHITE_FLAG${container.replayEmbedLose()}"
             }
 
-            val playerColor = if (playerWasBlack) Color.Black else Color.White
-            val opponentColor = if (playerWasBlack) Color.White else Color.Black
-
             embedBuilder.field {
-                name = "#${idx + 1}: ``${player.withColor(playerColor)}`` vs ``${opponent.withColor(opponentColor)}``, $resultString"
+                name = "#${idx + 1}: ``${player.withColor(userColor)}`` vs ``${opponent.withColor(!userColor)}``, $resultString"
                 value = "$UNICODE_ALARM_CLOCK${record.date}, ${record.rule}, ${container.replayEmbedMatchInfo(record.history.size)}"
                 inline = false
             }
 
             selectMenuOptions.add(
                 SelectOption.of(
-                    "#${idx + 1}: ${player.withColor(playerColor)} vs ${opponent.withColor(opponentColor)}, $resultString",
+                    "#${idx + 1}: ${player.withColor(userColor)} vs ${opponent.withColor(!userColor)}, $resultString",
                     "$REPLAY-${record.gameRecordId!!.id}-1-${player.id.validationKey}"
                 )
             )
@@ -455,7 +451,7 @@ object DiscordMessagingService : MessagingServiceImpl() {
 
     // HELP
 
-    private val buildAboutEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
+    private val aboutEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
             color = PageNavigationState.encodeToColor(COLOR_NORMAL_HEX, NavigationKind.ABOUT, 0)
             title = container.helpAboutEmbedTitle()
@@ -490,7 +486,7 @@ object DiscordMessagingService : MessagingServiceImpl() {
         }
     }
 
-    private val buildCommandGuideEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
+    private val commandGuideEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
             color = PageNavigationState.encodeToColor(COLOR_NORMAL_HEX, NavigationKind.ABOUT, 0)
             title = container.commandUsageEmbedTitle()
@@ -507,7 +503,7 @@ object DiscordMessagingService : MessagingServiceImpl() {
         }
     }
 
-    private val buildExploreAboutRenjuEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
+    private val exploreAboutRenjuEmbed: (LanguageContainer) -> MessageEmbed = memoize { container ->
         Embed {
             color = PageNavigationState.encodeToColor(COLOR_NORMAL_HEX, NavigationKind.ABOUT, 0)
             description = container.exploreAboutRenju()
@@ -540,9 +536,9 @@ object DiscordMessagingService : MessagingServiceImpl() {
     private fun buildHelpMessage(publisher: DiscordMessagePublisher, container: LanguageContainer, page: Int) =
         when (page) {
             0 -> publisher sends listOf(
-                this.buildAboutEmbed(container),
-                this.buildCommandGuideEmbed(container),
-                this.buildExploreAboutRenjuEmbed(container)
+                this.aboutEmbed(container),
+                this.commandGuideEmbed(container),
+                this.exploreAboutRenjuEmbed(container)
             )
             else -> publisher sends this.buildAboutRenjuEmbed(tuple(page - 1, container))
         }
@@ -657,7 +653,7 @@ object DiscordMessagingService : MessagingServiceImpl() {
                         label = optionElement.label(container),
                         value = optionElement.stringId,
                         emoji = Emoji.fromUnicode(optionElement.emoji),
-                        default = settingElement.extract(config) == classTag
+                        default = settingElement.mapEnum(config) == classTag
                     )
                 }
             }

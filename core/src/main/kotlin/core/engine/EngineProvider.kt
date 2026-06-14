@@ -1,8 +1,6 @@
-package core.mintaka
+package core.engine
 
-import core.mintaka.types.*
-import core.session.entities.MintakaIdleSession
-import core.session.entities.WaitingState
+import core.engine.types.*
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.okhttp.*
@@ -13,9 +11,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.Json
 import renju.Board
 import renju.GameState
@@ -25,16 +21,12 @@ import renju.notation.Pos
 import renju.notation.toStringOrNone
 import java.util.*
 
-typealias MintakaCommand = Command
-typealias MintakaCommandResult = CommandResult
-typealias MintakaResponse = Response
-
 data class MintakaServer(
     val url: String,
     val password: String,
 )
 
-object MintakaProvider {
+object EngineProvider {
 
     private const val SESSION_TOKEN_HEADER_NAME = "mintaka-session-token"
     private const val SESSION_TOKEN_QUERY_NAME = "token"
@@ -56,7 +48,7 @@ object MintakaProvider {
             }
         }
         install(ContentNegotiation) {
-            json(this@MintakaProvider.jsonCodec)
+            json(this@EngineProvider.jsonCodec)
         }
         install(SSE)
     }
@@ -104,24 +96,24 @@ object MintakaProvider {
         return CreateSessionHandle(waiting, session)
     }
 
-    suspend fun playSession(server: MintakaServer, session: MintakaIdleSession, hashKey: HashKey, pos: Pos): HashKey {
+    suspend fun playSession(server: MintakaServer, session: MintakaIdleSession, hashKey: HashKey, pos: Pos): MintakaIdleSession {
         val result = this.commandSession(server, session.sid, session.token, Command.Play(CommandPlayInner(
             hash=hashKey.toString(),
             pos=pos.toString(),
         )))
 
-        return HashKey.from(result.hash_key)!!
+        return session.command(HashKey.from(result.hash_key)!!)
     }
 
-    suspend fun undoSession(server: MintakaServer, session: MintakaIdleSession, hashKey: HashKey): HashKey {
+    suspend fun undoSession(server: MintakaServer, session: MintakaIdleSession, hashKey: HashKey): MintakaIdleSession {
         val result = this.commandSession(server, session.sid, session.token, Command.Undo(CommandUndoInner(
             hash=hashKey.toString(),
         )))
 
-        return HashKey.from(result.hash_key)!!
+        return session.command(HashKey.from(result.hash_key)!!)
     }
 
-    suspend fun syncSession(server: MintakaServer, session: MintakaIdleSession, state: GameState): HashKey {
+    suspend fun syncSession(server: MintakaServer, session: MintakaIdleSession, state: GameState): MintakaIdleSession {
         val result = this.commandSession(server, session.sid, session.token, Command.Sync(
             GameStateData(
                 board_data = state.board.toBoardData(),
@@ -129,10 +121,10 @@ object MintakaProvider {
             )
         ))
 
-        return HashKey.from(result.hash_key)!!
+        return session.command(HashKey.from(result.hash_key)!!)
     }
 
-    private suspend fun commandSession(server: MintakaServer, sid: String, token: String, command: MintakaCommand): MintakaCommandResult {
+    private suspend fun commandSession(server: MintakaServer, sid: String, token: String, command: Command): CommandResult {
         val response = client.post("${server.url}/sessions/$sid/commands") {
             contentType(ContentType.Application.Json)
             header(SESSION_TOKEN_HEADER_NAME, token)
@@ -141,14 +133,14 @@ object MintakaProvider {
 
         ensureSuccess(response)
 
-        return response.body<MintakaCommandResult>()
+        return response.body<CommandResult>()
     }
 
     data class LaunchSessionHandle(
-        val waiting: StateFlow<WaitingState?>,
-        val begins: Deferred<Response.Begins>,
-        val status: StateFlow<Response.Status?>,
-        val bestmove: Deferred<BestMove>,
+        val waiting: Flow<WaitingState?>,
+        val begins: Deferred<Unit>,
+        val status: Flow<Status>,
+        val bestMove: Deferred<BestMove>,
         val abort: () -> Unit,
     )
 
@@ -156,11 +148,12 @@ object MintakaProvider {
         server: MintakaServer,
         session: MintakaIdleSession,
         hashKey: HashKey,
+        streaming: Boolean,
     ): LaunchSessionHandle {
-        val waiting = MutableStateFlow<WaitingState?>(null)
-        val begins = CompletableDeferred<Response.Begins>()
-        val status = MutableStateFlow<Response.Status?>(null)
-        val bestmove = CompletableDeferred<BestMove>()
+        val waiting = MutableSharedFlow<WaitingState?>()
+        val begins = CompletableDeferred<Unit>()
+        val status = MutableSharedFlow<Status>()
+        val bestMove = CompletableDeferred<BestMove>()
 
         scope.launch {
             try {
@@ -187,16 +180,16 @@ object MintakaProvider {
                                     when (val response = jsonCodec.decodeFromString<Response>(
                                         event.data ?: error("Mintaka Response event has no data")
                                     )) {
-                                        is Response.Begins -> begins.complete(response)
-                                        is Response.Status -> status.value = response
+                                        is Response.Begins -> begins.complete(Unit)
+                                        is Response.Status -> status.emit(response.asStatus())
                                     }
 
                                     false
                                 }
                                 "BestMove" -> {
-                                    bestmove.complete( jsonCodec.decodeFromString<BestMove>(
+                                    bestMove.complete( jsonCodec.decodeFromString<core.engine.types.BestMove>(
                                         event.data ?: error("Mintaka BestMove event has no data")
-                                    ))
+                                    ).asBestMove())
 
                                     true
                                 }
@@ -209,7 +202,7 @@ object MintakaProvider {
                 } }
             } catch (cause: Throwable) {
                 begins.completeExceptionally(cause)
-                bestmove.completeExceptionally(cause)
+                bestMove.completeExceptionally(cause)
             }
         }
 
@@ -217,7 +210,7 @@ object MintakaProvider {
             waiting = waiting,
             begins = begins,
             status = status,
-            bestmove = bestmove,
+            bestMove = bestMove,
             abort = {
                 scope.launch {
                     runCatching {
@@ -232,11 +225,11 @@ object MintakaProvider {
         )
     }
 
-    suspend fun deleteSession(server: MintakaServer, sid: String, token: HashKey) {
+    suspend fun deleteSession(server: MintakaServer, session: MintakaSession) {
         coroutineScope { launch {
             runCatching {
-                val response = client.delete("${server.url}/sessions/$sid") {
-                    header(SESSION_TOKEN_HEADER_NAME, token)
+                val response = client.delete("${server.url}/sessions/${session.sid}") {
+                    header(SESSION_TOKEN_HEADER_NAME, session.token)
                 }
 
                 ensureSuccess(response)
@@ -260,8 +253,8 @@ object MintakaProvider {
             hash_key = this.hashKey.toString(),
             player_color = this.playerColor.toString(),
             bitfield = listOf(
-                toBitfield(Color.Black),
-                toBitfield(Color.White),
+                toBitfield(Color.BLACK),
+                toBitfield(Color.WHITE),
             )
         )
     }

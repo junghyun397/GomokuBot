@@ -6,6 +6,7 @@ import core.interact.i18n.LanguageContainer
 import core.interact.parse.CommandParser
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.assets.COMMAND_PREFIX
+import discord.assets.messageRef
 import discord.interact.UserInteractionContext
 import discord.interact.parse.BuildableCommand
 import discord.interact.parse.EmbeddableCommand
@@ -29,10 +30,10 @@ object ReplayListCommandParser : CommandParser, ParsableCommand, BuildableComman
     )
 
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>) =
-        Either.Right(ReplayListCommand(false))
+        Either.Right(ReplayListCommand(null))
 
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>) =
-        Either.Right(ReplayListCommand(false))
+        Either.Right(ReplayListCommand(null))
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.apply {
@@ -44,7 +45,7 @@ object ReplayListCommandParser : CommandParser, ParsableCommand, BuildableComman
 
     override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>) = runCatching {
         if (context.event.componentId.split("-")[1] == context.user.id.validationKey)
-            ReplayListCommand(edit = true)
+            ReplayListCommand(context.event.message.messageRef())
         else
             null
     }

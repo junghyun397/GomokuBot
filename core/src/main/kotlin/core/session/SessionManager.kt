@@ -4,20 +4,14 @@ import core.assets.Channel
 import core.assets.ChannelUid
 import core.assets.UserUid
 import core.database.repositories.ChannelConfigRepository
-import core.session.entities.ChannelConfig
-import core.session.entities.Expirable
-import core.session.entities.GameSession
-import core.session.entities.RequestSession
-import core.session.entities.SessionId
-import core.session.entities.SessionLockedException
-import core.session.entities.SessionSlot
-import utils.lang.tuple
-import utils.structs.Quadruple
+import core.session.entities.*
+import utils.Quadruple
+import utils.tuple
 import kotlin.time.Clock
 
 class SessionAlreadyExistsException(
     channelId: ChannelUid,
-    userId: UserUid,
+    userId: UserUid?,
 ) : IllegalStateException("session already exists for $userId in $channelId")
 
 class GameSessionNotFoundException(
@@ -32,11 +26,12 @@ object SessionManager {
 
     suspend fun retrieveChannelConfig(pool: SessionPool, channel: Channel): ChannelConfig =
         pool.channelConfigs.getOrElse(channel.id) {
-            ChannelConfigRepository.fetchChannelConfig(pool.dbConnection, channel.id)
+            val config = ChannelConfigRepository.fetchChannelConfig(pool.dbConnection, channel.id)
                 ?: ChannelConfig()
-                .also {
-                    pool.channelConfigs[channel.id] = it
-                }
+
+            pool.channelConfigs[channel.id] = config
+
+            config
         }
 
     suspend fun updateChannelConfig(pool: SessionPool, channel: Channel, channelConfig: ChannelConfig) {
@@ -44,7 +39,7 @@ object SessionManager {
         ChannelConfigRepository.upsertChannelConfig(pool.dbConnection, channel.id, channelConfig)
     }
 
-    private fun <T : Expirable> createSession(
+    private fun <T : Expirable> insertSession(
         pool: SessionPool,
         channel: Channel,
         sessionId: SessionId,
@@ -54,30 +49,32 @@ object SessionManager {
         indexes: MutableMap<SessionUserKey, SessionId>,
     ) {
         synchronized(pool) {
-            val duplicatedUser = participants.firstOrNull {
-                indexes.containsKey(SessionUserKey(channel.id, it))
+            val sessionUserKeys = participants.map { tuple(it, SessionUserKey(channel.id, it)) }
+
+            sessionUserKeys.forEach { (userId, key) ->
+                if (indexes.containsKey(key))
+                    throw SessionAlreadyExistsException(channel.id, userId)
             }
 
-            if (duplicatedUser != null) throw SessionAlreadyExistsException(channel.id, duplicatedUser)
-            if (sessions.containsKey(sessionId)) throw IllegalStateException("session id duplicated")
+            if (sessions.containsKey(sessionId))
+                throw IllegalStateException("session id duplicated")
 
             pool.channels[channel.id] = channel
             sessions[sessionId] = SessionSlot(session, channel.id, sessionId)
-            participants.forEach { indexes[SessionUserKey(channel.id, it)] = sessionId }
+            sessionUserKeys.forEach { (_, key) -> indexes[key] = sessionId }
         }
     }
 
-    fun createGameSession(
+    fun insertGameSession(
         pool: SessionPool,
         channel: Channel,
-        participants: Set<UserUid>,
         session: GameSession,
     ) {
-        this.createSession(
+        this.insertSession(
             pool = pool,
             channel = channel,
             sessionId = session.id,
-            participants = participants,
+            participants = setOfNotNull(session.users.black.id, session.users.white.id),
             session = session,
             sessions = pool.gameSessions,
             indexes = pool.gameSessionIndex,
@@ -90,7 +87,7 @@ object SessionManager {
         participants: Set<UserUid>,
         session: RequestSession,
     ) {
-        this.createSession(
+        this.insertSession(
             pool = pool,
             channel = channel,
             sessionId = session.id,
@@ -103,9 +100,9 @@ object SessionManager {
 
     private fun <T : Expirable> deleteSession(
         pool: SessionPool,
-        sessionId: SessionId,
         sessions: MutableMap<SessionId, SessionSlot<T>>,
         indexes: MutableMap<SessionUserKey, SessionId>,
+        sessionId: SessionId,
     ): T? =
         synchronized(pool) {
             val slot = sessions[sessionId]
@@ -125,17 +122,17 @@ object SessionManager {
     fun deleteGameSession(pool: SessionPool, sessionId: SessionId): GameSession? =
         this.deleteSession(
             pool = pool,
-            sessionId = sessionId,
             sessions = pool.gameSessions,
             indexes = pool.gameSessionIndex,
+            sessionId = sessionId,
         )
 
     fun deleteRequestSession(pool: SessionPool, sessionId: SessionId): RequestSession? =
         this.deleteSession(
             pool = pool,
-            sessionId = sessionId,
             sessions = pool.requestSessions,
             indexes = pool.requestSessionIndex,
+            sessionId = sessionId,
         )
 
     fun findGameSessionId(pool: SessionPool, channelUid: ChannelUid, userUid: UserUid): SessionId? =

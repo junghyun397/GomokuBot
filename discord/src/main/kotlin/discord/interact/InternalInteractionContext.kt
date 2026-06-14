@@ -23,8 +23,8 @@ data class InternalInteractionContext<out E : Event> (
     companion object {
 
         suspend fun <E: Event> fromJDAEvent(bot: BotContext, discordConfig: DiscordConfig, event: E, jdaChannel: JDAChannel): InternalInteractionContext<E> {
-            val channel = ChannelProfileRepository.retrieveOrInsertChannel(bot.dbConnection, DISCORD_PLATFORM_ID, jdaChannel.extractId()) {
-                jdaChannel.extractProfile()
+            val channel = ChannelProfileRepository.retrieveOrInsertChannel(bot.dbConnection, DISCORD_PLATFORM_ID, jdaChannel.channelId()) {
+                jdaChannel.profile()
             }
 
             return InternalInteractionContext(

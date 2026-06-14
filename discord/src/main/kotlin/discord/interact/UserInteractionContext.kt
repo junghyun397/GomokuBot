@@ -26,12 +26,12 @@ data class UserInteractionContext<out E : Event>(
     companion object {
 
         suspend fun <E: Event> fromJDAEvent(bot: BotContext, discordConfig: DiscordConfig, event: E, jdaUser: JDAUser, jdaChannel: JDAChannel): UserInteractionContext<E> {
-            val user = UserProfileRepository.retrieveOrInsertUser(bot.dbConnection, DISCORD_PLATFORM_ID, jdaUser.extractId()) {
-                jdaUser.extractProfile()
+            val user = UserProfileRepository.retrieveOrInsertUser(bot.dbConnection, DISCORD_PLATFORM_ID, jdaUser.userId()) {
+                jdaUser.profile()
             }
 
-            val channel = ChannelProfileRepository.retrieveOrInsertChannel(bot.dbConnection, DISCORD_PLATFORM_ID, jdaChannel.extractId()) {
-                jdaChannel.extractProfile()
+            val channel = ChannelProfileRepository.retrieveOrInsertChannel(bot.dbConnection, DISCORD_PLATFORM_ID, jdaChannel.channelId()) {
+                jdaChannel.profile()
             }
 
             return UserInteractionContext(

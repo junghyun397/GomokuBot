@@ -2,9 +2,9 @@ package core.interact.message
 
 import arrow.core.raise.Effect
 import core.assets.*
+import core.engine.FocusSolver
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
-import core.mintaka.FocusSolver
 import core.session.entities.GameSession
 import core.session.entities.OpeningSession
 import core.session.entities.Rule
@@ -14,10 +14,10 @@ import renju.notation.Color
 import renju.notation.ColorContainer
 import renju.notation.ForbiddenKind
 import renju.notation.Pos
-import utils.assets.MarkdownAnchorMapping
-import utils.assets.SimplifiedMarkdownDocument
-import utils.assets.parseSimplifiedMarkdownDocument
-import utils.lang.tuple
+import utils.MarkdownAnchorMapping
+import utils.SimplifiedMarkdownDocument
+import utils.parseSimplifiedMarkdownDocument
+import utils.tuple
 
 abstract class MessagingServiceImpl : MessagingService {
 
@@ -37,16 +37,16 @@ abstract class MessagingServiceImpl : MessagingService {
         this@MessagingServiceImpl.sendString(message, this)
 
     protected fun unicodeStone(color: Color) =
-        if (color == Color.Black) UNICODE_BLACK_CIRCLE else UNICODE_WHITE_CIRCLE
+        if (color == Color.BLACK) UNICODE_BLACK_CIRCLE else UNICODE_WHITE_CIRCLE
 
     protected fun User.withColor(color: Color) =
         "${this.name}${this@MessagingServiceImpl.unicodeStone(color)}"
 
     protected fun GameSession.blackPlayerWithColor() =
-        this.user.black.withColor(Color.Black)
+        this.users.black.withColor(Color.BLACK)
 
     protected fun GameSession.whitePlayerWithColor() =
-        this.user.white.withColor(Color.White)
+        this.users.white.withColor(Color.WHITE)
 
     override fun generateFocusedField(session: GameSession, focusInfo: FocusSolver.FocusInfo): FocusedFields {
         val half = this.focusWidth / 2
@@ -54,18 +54,18 @@ abstract class MessagingServiceImpl : MessagingService {
 
         fun focusedButtonFlag(pos: Pos): ButtonFlag =
             when (session.state.board.stoneKind(pos)) {
-                Color.Black ->
+                Color.BLACK ->
                     if (pos == lastMove) ButtonFlag.BLACK_RECENT
                     else ButtonFlag.BLACK
-                Color.White ->
+                Color.WHITE ->
                     if (pos == lastMove) ButtonFlag.WHITE_RECENT
                     else ButtonFlag.WHITE
                 null -> when {
-                    session.state.board.playerColor == Color.Black && session.state.board.forbiddenKind(pos) != null ->
+                    session.state.board.playerColor == Color.BLACK && session.state.board.forbiddenKind(pos) != null ->
                         ButtonFlag.FORBIDDEN
                     focusInfo.highlights?.contains(pos) ?: false ->
                         ButtonFlag.HIGHLIGHTED
-                    session is OpeningSession && !session.validateMove(pos) ->
+                    session is OpeningSession && !session.isLegalMove(pos) ->
                         ButtonFlag.DISABLED
                     session is SelectStageOpeningSession ->
                         ButtonFlag.HIGHLIGHTED
@@ -134,7 +134,7 @@ abstract class MessagingServiceImpl : MessagingService {
     override fun buildTiePvp(publisher: MessagePublisher, container: LanguageContainer, players: ColorContainer<User>) =
         publisher sends container.endPvpTie(players.map { it.asMentionFormat() })
 
-    override fun buildSurrenderedPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User) =
+    override fun buildResignedPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User) =
         publisher sends container.endPvpResign(winner.asMentionFormat(), loser.asMentionFormat())
 
     override fun buildTimeoutPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User) =
@@ -143,16 +143,16 @@ abstract class MessagingServiceImpl : MessagingService {
     override fun buildNextMoveEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, lastMove: Pos) =
         publisher sends container.processNextEngine(lastMove.toString().asHighlightFormat())
 
-    override fun buildWinEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, lastMove: Pos) =
+    override fun buildEngineLose(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, lastMove: Pos) =
         publisher sends container.endEngineWin(humanPlayer.asMentionFormat(), lastMove.toString().asHighlightFormat())
 
-    override fun buildLoseEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, lastMove: Pos) =
+    override fun buildEngineWin(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, lastMove: Pos) =
         publisher sends container.endEngineLose(humanPlayer.asMentionFormat(), lastMove.toString().asHighlightFormat())
 
-    override fun buildTieEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User) =
+    override fun buildEngineTie(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User) =
         publisher sends container.endEngineTie(humanPlayer.asMentionFormat())
 
-    override fun buildSurrenderedEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User) =
+    override fun buildResignedEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User) =
         publisher sends container.endEngineResign(humanPlayer.asMentionFormat())
 
     override fun buildTimeoutEngine(publisher: MessagePublisher, container: LanguageContainer, player: User) =

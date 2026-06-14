@@ -3,17 +3,20 @@ package core.interact.commands
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
+import core.database.entities.extractGameRecord
+import core.database.repositories.GameRecordRepository
 import core.interact.Order
 import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
-import core.session.GameManager
+import core.session.EngineGameManager
 import core.session.MessageManager
+import core.session.PvpGameManager
+import core.session.SessionManager
 import core.session.entities.*
-import renju.notation.GameResult
-import utils.lang.replaceIf
-import utils.lang.tuple
+import utils.replaceIf
+import utils.tuple
 
 class ExpireGameCommand(
     private val session: GameSession,
@@ -29,10 +32,19 @@ class ExpireGameCommand(
         service: MessagingService,
         publisher: PublisherSet,
     ) = runCatching {
-        val session = this.session
-        val (finishedSession, result) = GameManager.resignSession(session, GameResult.Cause.TIMEOUT, session.player)
+        val session = when (this.session) {
+            is PvpGameSession -> PvpGameManager.resign(this.session, null)
+            is EngineGameSession -> EngineGameManager.resign(this.session, EngineGameManager.ResignCause.TIMEOUT)
+            is OpeningSession -> PvpGameManager.resign(this.session, null)
+        }
 
-        GameManager.finishSession(bot, channel, finishedSession)
+        SessionManager.deleteGameSession(bot.sessions, this.session.id)
+
+        val result = session.gameResult!!
+
+        session.extractGameRecord(channel.id)?.let { record ->
+            GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
+        }
 
         val io = if (this.channelAvailable) {
             effect {
@@ -42,6 +54,8 @@ class ExpireGameCommand(
 
                 val boardPublisher = noticePublisher
                     .replaceIf(config.swapType == SwapType.EDIT && message != null) { publisher.edit(message!!) }
+
+                val messageBufferKey = session.messageBufferKey
 
                 when (session) {
                     is PvpGameSession, is OpeningSession -> service
@@ -56,10 +70,10 @@ class ExpireGameCommand(
                     boardPublisher,
                     config,
                     session,
-                    finishedSession
+                    messageBufferKey
                 )()
 
-                finishOrders + Order.ArchiveSession(finishedSession, config.archivePolicy)
+                finishOrders + Order.ArchiveSession(session, config.archivePolicy)
             }
         } else effect { emptyOrders }
 

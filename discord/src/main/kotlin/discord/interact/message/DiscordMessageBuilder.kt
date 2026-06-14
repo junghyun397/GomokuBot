@@ -13,7 +13,7 @@ import net.dv8tion.jda.api.requests.FluentRestAction
 import net.dv8tion.jda.api.utils.FileUpload
 import net.dv8tion.jda.api.utils.messages.MessageCreateRequest
 import net.dv8tion.jda.api.utils.messages.MessageEditRequest
-import utils.lang.replaceIf
+import utils.replaceIf
 import java.io.InputStream
 import kotlin.coroutines.resume
 

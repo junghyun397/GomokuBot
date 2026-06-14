@@ -1,16 +1,19 @@
 package core
 
-import java.time.Duration
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
-data class BotConfig(
-    val gameExpireAfter: Long = Duration.ofHours(6).toMillis(),
-    val gameExpireChecks: Duration = Duration.ofMinutes(10),
+object BotConfig {
+    val gameExpireAfter: Duration = 1.hours
+    val gameExpireChecks: Duration = 5.minutes
 
-    val requestExpireAfter: Long = Duration.ofMinutes(30).toMillis(),
-    val requestExpireChecks: Duration = Duration.ofMinutes(1),
+    val requestExpireAfter: Duration = 3.hours
+    val requestExpireChecks: Duration = 5.minutes
 
-    val navigatorExpireAfter: Long = Duration.ofDays(1).toMillis(),
-    val navigatorExpireChecks: Duration = Duration.ofMinutes(1),
+    val navigatorExpireAfter: Duration = 1.days
+    val navigatorExpireChecks: Duration = 1.days
 
-    val announceUpdateChecks: Duration = Duration.ofMinutes(20),
-)
+    val announceUpdateChecks: Duration = 1.hours
+}

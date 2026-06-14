@@ -25,7 +25,7 @@ class Board private constructor (
         loadPatterns(this.nativePointer)
     }
 
-    val playerColor: Color get() = Color.from(this.describe.player_color)
+    val playerColor: Color get() = Color.from(this.describe.player_color)!!
 
     val stones: Int get() = this.describe.field.count { it.isStone }
 
@@ -33,8 +33,8 @@ class Board private constructor (
 
     fun pattern(pos: Pos, color: Color): Int {
         return when (color) {
-            Color.Black -> patterns.blackPatterns[pos.idx]
-            Color.White -> patterns.whitePatterns[pos.idx]
+            Color.BLACK -> patterns.blackPatterns[pos.idx]
+            Color.WHITE -> patterns.whitePatterns[pos.idx]
         }
     }
 
@@ -44,7 +44,7 @@ class Board private constructor (
     fun isLegalMove(pos: Pos): Boolean {
         val item = this.describe.field[pos.idx]
 
-        return !item.isStone && (playerColor != Color.Black || !item.isForbidden)
+        return !item.isStone && (playerColor != Color.BLACK || !item.isForbidden)
     }
 
     fun stoneKind(pos: Pos): Color? =
@@ -91,9 +91,10 @@ class Board private constructor (
 
     fun winner(): GameResult? {
         if (this.describe.winner.isSome) {
-            val winnerColor = Color.from(this.describe.winner.color)
-
-            return GameResult.FiveInRow(winnerColor)
+            return GameResult.Win(
+                GameResult.WinCause.FIVE_IN_A_ROW,
+                Color.from(this.describe.winner.color)!!
+            )
         }
 
         return if (this.stones >= Pos.BOARD_SIZE) GameResult.Full
@@ -125,8 +126,16 @@ class Board private constructor (
 
         private val cleaner: Cleaner = Cleaner.create()
 
-        fun newBoard(): Board {
+        fun emptyBoard(): Board {
             return fromNativePointer(RustyRenjuCApi.lib.rusty_renju_empty_board()
+                ?: throw IllegalStateException())
+        }
+
+        fun fromHistory(history: History): Board {
+            return fromNativePointer(RustyRenjuCApi.lib.rusty_renju_board_from_history(
+                history.sequence.map { it?.idx ?: RustyRenjuCApi.constants.posNone }.toIntArray(),
+                history.sequence.size.toLong()
+            )
                 ?: throw IllegalStateException())
         }
 

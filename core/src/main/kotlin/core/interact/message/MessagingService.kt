@@ -1,17 +1,16 @@
 package core.interact.message
 
 import arrow.core.raise.Effect
-import core.assets.DUMMY_MESSAGE_REF
 import core.assets.MessageRef
 import core.assets.User
 import core.database.entities.Announce
 import core.database.entities.GameRecord
 import core.database.entities.GameRecordId
 import core.database.entities.UserStats
+import core.engine.FocusSolver
 import core.interact.i18n.LanguageContainer
 import core.interact.message.graphics.BoardRenderer
 import core.interact.message.graphics.HistoryRenderType
-import core.mintaka.FocusSolver
 import core.session.entities.ChannelConfig
 import core.session.entities.DeclareStageOpeningSession
 import core.session.entities.GameSession
@@ -50,7 +49,7 @@ data class AdaptivePublisherSet(
     override val component: ComponentPublisher = { throw IllegalAccessError() },
     private val editSelf: MessagePublisher = { throw IllegalAccessError() },
     private val editGlobal: MessageEditPublisher = { throw IllegalAccessError() },
-    private val selfRef: MessageRef = DUMMY_MESSAGE_REF,
+    private val selfRef: MessageRef? = null,
 ) : PublisherSet {
 
     override val edit: MessageEditPublisher get() = { ref ->
@@ -124,19 +123,19 @@ interface MessagingService {
 
     fun buildTiePvp(publisher: MessagePublisher, container: LanguageContainer, players: ColorContainer<User>): MessageBuilder
 
-    fun buildSurrenderedPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User): MessageBuilder
+    fun buildResignedPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User): MessageBuilder
 
     fun buildTimeoutPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User): MessageBuilder
 
     fun buildNextMoveEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, lastMove: Pos): MessageBuilder
 
-    fun buildWinEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, lastMove: Pos): MessageBuilder
+    fun buildEngineLose(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, lastMove: Pos): MessageBuilder
 
-    fun buildLoseEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, lastMove: Pos): MessageBuilder
+    fun buildEngineWin(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User, lastMove: Pos): MessageBuilder
 
-    fun buildTieEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User): MessageBuilder
+    fun buildEngineTie(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User): MessageBuilder
 
-    fun buildSurrenderedEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User): MessageBuilder
+    fun buildResignedEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User): MessageBuilder
 
     fun buildTimeoutEngine(publisher: MessagePublisher, container: LanguageContainer, player: User): MessageBuilder
 

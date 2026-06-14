@@ -2,30 +2,42 @@ package renju.notation
 
 import renju.native.RustyRenjuCApi
 
-enum class Color(val naiveFlag: Byte) {
-    Black(RustyRenjuCApi.constants.colorBlack),
-    White(RustyRenjuCApi.constants.colorWhite);
+enum class Color {
+    BLACK,
+    WHITE;
 
     operator fun not(): Color =
         when (this) {
-            Black -> White
-            White -> Black
+            BLACK -> WHITE
+            WHITE -> BLACK
         }
 
     override fun toString(): String =
         when (this) {
-            Black -> "Black"
-            White -> "White"
+            BLACK -> "Black"
+            WHITE -> "White"
         }
 
     companion object {
 
-        fun from(raw: Byte): Color =
-            if (raw == RustyRenjuCApi.constants.colorWhite) White
-            else Black
+        fun from(raw: Byte?): Color? =
+            when (raw) {
+                RustyRenjuCApi.constants.colorBlack -> BLACK
+                RustyRenjuCApi.constants.colorWhite -> WHITE
+                else -> null
+            }
 
-        fun emptyFlag(): Byte = RustyRenjuCApi.constants.colorNone
+        fun random(): Color =
+            if (Math.random() < 0.5) BLACK
+            else WHITE
 
     }
 
 }
+
+fun Color?.toByte() =
+    when (this) {
+        Color.BLACK -> RustyRenjuCApi.constants.colorBlack
+        Color.WHITE -> RustyRenjuCApi.constants.colorWhite
+        else -> RustyRenjuCApi.constants.colorNone
+    }.toShort()

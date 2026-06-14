@@ -13,7 +13,7 @@ import core.interact.reports.Report
 import core.session.SessionManager
 import core.session.entities.ChannelConfig
 import discord.assets.DISCORD_PLATFORM_ID
-import discord.assets.extractId
+import discord.assets.channelId
 import discord.interact.InternalInteractionContext
 import discord.interact.message.DiscordMessagingService
 import discord.interact.message.MessageCreateAdaptor
@@ -32,11 +32,11 @@ private fun matchLocale(locale: DiscordLocale): Language =
     }
 
 suspend fun channelJoinRouter(context: InternalInteractionContext<GuildJoinEvent>): Report {
-    val channel = ChannelProfileRepository.retrieveOrInsertChannel(context.bot.dbConnection, DISCORD_PLATFORM_ID, context.event.guild.extractId()) {
+    val channel = ChannelProfileRepository.retrieveOrInsertChannel(context.bot.dbConnection, DISCORD_PLATFORM_ID, context.event.guild.channelId()) {
         Channel(
             id = ChannelUid(UUID.randomUUID()),
             platform = DISCORD_PLATFORM_ID,
-            givenId = context.event.guild.extractId(),
+            givenId = context.event.guild.channelId(),
             name = context.event.guild.name,
         )
     }
@@ -72,7 +72,7 @@ suspend fun channelJoinRouter(context: InternalInteractionContext<GuildJoinEvent
 
 // TODO: bad smell
 suspend fun channelLeaveRouter(context: InternalInteractionContext<GuildLeaveEvent>): Report {
-    val channel = ChannelProfileRepository.retrieveChannel(context.bot.dbConnection, DISCORD_PLATFORM_ID, context.event.guild.extractId())
+    val channel = ChannelProfileRepository.retrieveChannel(context.bot.dbConnection, DISCORD_PLATFORM_ID, context.event.guild.channelId())
 
     return (channel?.let {
         ChannelLeaveCommand.execute(

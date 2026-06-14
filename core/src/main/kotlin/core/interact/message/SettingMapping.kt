@@ -4,9 +4,9 @@ import core.assets.*
 import core.interact.i18n.LanguageContainer
 import core.interact.message.graphics.HistoryRenderType
 import core.session.entities.*
-import utils.assets.toEnumString
-import utils.lang.tuple
-import utils.structs.Identifiable
+import utils.Identifiable
+import utils.toEnumString
+import utils.tuple
 import kotlin.reflect.KClass
 
 data class SettingElement(
@@ -14,7 +14,7 @@ data class SettingElement(
     val stringId: String,
     val label: (LanguageContainer) -> String,
     val description: (LanguageContainer) -> String,
-    val extract: (ChannelConfig) -> Identifiable,
+    val mapEnum: (ChannelConfig) -> Identifiable,
     val find: (String) -> Identifiable?,
     val mutate: (ChannelConfig, Identifiable) -> ChannelConfig
 )
@@ -46,7 +46,7 @@ object SettingMapping {
                 stringId = BoardStyle::class.simpleName!!,
                 label = LanguageContainer::style,
                 description = LanguageContainer::styleEmbedDescription,
-                extract = { it.boardStyle },
+                mapEnum = { it.boardStyle },
                 find = { name -> runCatching { BoardStyle.valueOf(name) }.getOrNull() }
             ) { config, value -> config.copy(boardStyle = value as BoardStyle) },
             second = mapOf(
@@ -76,7 +76,7 @@ object SettingMapping {
                 stringId = FocusType::class.simpleName!!,
                 label = LanguageContainer::focus,
                 description = LanguageContainer::focusEmbedDescription,
-                extract = { it.focusType },
+                mapEnum = { it.focusType },
                 find = { name -> runCatching { FocusType.valueOf(name) }.getOrNull() }
             ) { config, value -> config.copy(focusType = value as FocusType) },
             second = mapOf(
@@ -100,7 +100,7 @@ object SettingMapping {
                 stringId = HintType::class.simpleName!!,
                 label = LanguageContainer::hint,
                 description = LanguageContainer::hintEmbedDescription,
-                extract = { it.hintType },
+                mapEnum = { it.hintType },
                 find = { name -> runCatching { HintType.valueOf(name) }.getOrNull() }
             ) { config, value -> config.copy(hintType = value as HintType) },
             second = mapOf(
@@ -124,7 +124,7 @@ object SettingMapping {
                 stringId = HistoryRenderType::class.simpleName!!,
                 label = LanguageContainer::mark,
                 description = LanguageContainer::markEmbedDescription,
-                extract = { it.markType },
+                mapEnum = { it.markType },
                 find = { name -> runCatching { HistoryRenderType.valueOf(name) }.getOrNull() }
             ) { config, value -> config.copy(markType = value as HistoryRenderType) },
             second = mapOf(
@@ -154,7 +154,7 @@ object SettingMapping {
                 stringId = SwapType::class.simpleName!!,
                 label = LanguageContainer::swap,
                 description = LanguageContainer::swapEmbedDescription,
-                extract = { it.swapType },
+                mapEnum = { it.swapType },
                 find = { name -> runCatching { SwapType.valueOf(name) }.getOrNull() }
             ) { config, value -> config.copy(swapType = value as SwapType) },
             second = mapOf(
@@ -184,7 +184,7 @@ object SettingMapping {
                 stringId = ArchivePolicy::class.simpleName!!,
                 label = LanguageContainer::archive,
                 description = LanguageContainer::archiveEmbedDescription,
-                extract = { it.archivePolicy },
+                mapEnum = { it.archivePolicy },
                 find = { name -> runCatching { ArchivePolicy.valueOf(name) }.getOrNull() }
             ) { config, value -> config.copy(archivePolicy = value as ArchivePolicy) },
             second = mapOf(

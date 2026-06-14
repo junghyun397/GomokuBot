@@ -18,7 +18,7 @@ import discord.interact.parse.ParsableCommand
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
-import utils.lang.replaceIf
+import utils.replaceIf
 
 object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 

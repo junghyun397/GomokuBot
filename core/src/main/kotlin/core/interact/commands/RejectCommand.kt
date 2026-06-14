@@ -12,9 +12,12 @@ import core.interact.reports.writeCommandReport
 import core.session.SessionManager
 import core.session.entities.ChannelConfig
 import core.session.entities.SessionId
-import utils.lang.tuple
+import utils.tuple
 
-class RejectCommand(private val requestSessionId: SessionId) : Command {
+class RejectCommand(
+    private val requestSessionId: SessionId,
+    private val messageRef: MessageRef,
+) : Command {
 
     override val name = "reject"
 
@@ -26,17 +29,16 @@ class RejectCommand(private val requestSessionId: SessionId) : Command {
         channel: Channel,
         user: User.Human,
         service: MessagingService,
-        messageRef: MessageRef,
         publishers: PublisherSet,
     ) = runCatching {
         val requestSession = SessionManager.retrieveRequestSession(bot.sessions, this.requestSessionId).snapshot()
 
         SessionManager.deleteRequestSession(bot.sessions, this.requestSessionId)
 
-        val editIO = service.buildRejectedRequest(publishers.edit(messageRef), config.language.container, requestSession.requester, requestSession.opponent)
+        val editIO = service.buildRejectedRequest(publishers.edit(this.messageRef), config.language.container, requestSession.requester, requestSession.recipient)
             .launch()
 
-        val noticeIO = service.buildRequestRejected(publishers.plain, config.language.container, requestSession.requester, requestSession.opponent)
+        val noticeIO = service.buildRequestRejected(publishers.plain, config.language.container, requestSession.requester, requestSession.recipient)
             .launch()
 
         val io = effect {

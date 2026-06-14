@@ -9,7 +9,7 @@ import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.SessionManager
 import core.session.entities.ChannelConfig
-import utils.lang.tuple
+import utils.tuple
 
 class ChannelJoinCommand(private val localeComment: String) : InternalCommand {
 

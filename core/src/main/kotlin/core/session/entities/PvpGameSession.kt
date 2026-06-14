@@ -1,28 +1,24 @@
 package core.session.entities
 
-import renju.GameState
+import core.assets.User
 import renju.notation.GameResult
 
 data class PvpGameSession(
-    override val context: GameSessionContext,
+    val context: GameSessionContext<User.Human>,
     override val gameResult: GameResult? = null,
     override val recording: Boolean,
-    override val ruleKind: Rule,
-) : RenjuSession {
+) : UserSession, PlayGameSession {
 
-    override fun next(state: GameState, gameResult: GameResult?, messageBufferKey: MessageBufferKey) =
-        this.copy(
-            context = this.context.next(
-                state = state,
-                messageBufferKey = messageBufferKey,
-            ),
-            gameResult = gameResult,
-        )
+    override val id = this.context.id
+    override val expireService = this.context.expireService
 
-    override fun anonymous(): PvpGameSession =
-        this.copy(
-            context = this.context.copy(user = this.user.map { it.anonymous() }),
-            gameResult = this.gameResult.anonymous(),
-        )
+    override val state = this.context.state
+    override val users = this.context.users
+    override val player = this.context.users[this.state.board.playerColor]
+    override val opponent = this.context.users[!this.state.board.playerColor]
+
+    override val messageBufferKey = this.context.messageBufferKey
+
+    override val ruleKind = this.context.ruleKind
 
 }

@@ -7,7 +7,7 @@ import core.interact.message.AdaptivePublisherSet
 import core.interact.reports.ErrorReport
 import core.interact.reports.Report
 import discord.assets.editMessageByMessageRef
-import discord.assets.extractMessageRef
+import discord.assets.messageRef
 import discord.interact.UserInteractionContext
 import discord.interact.message.*
 import discord.interact.parse.EmbeddableCommand
@@ -42,7 +42,7 @@ suspend fun buttonInteractionRouter(context: UserInteractionContext<GenericCompo
         }
     }
 
-    val messageRef = context.event.message.extractMessageRef()
+    val messageRef = context.event.message.messageRef()
 
     return command.execute(
         bot = context.bot,
@@ -50,7 +50,6 @@ suspend fun buttonInteractionRouter(context: UserInteractionContext<GenericCompo
         channel = context.channel,
         user = context.user,
         service = DiscordMessagingService,
-        messageRef = messageRef,
         publishers = when (command.responseFlag) {
             is ResponseFlag.Defer -> AdaptivePublisherSet(
                 plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate())) },

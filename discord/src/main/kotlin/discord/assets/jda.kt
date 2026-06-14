@@ -1,13 +1,10 @@
 package discord.assets
 
 import core.assets.*
-import core.interact.ExecutionContext
 import dev.minn.jda.ktx.coroutines.await
-import discord.interact.InteractionContext
 import discord.interact.message.DiscordMessageBuilder
 import discord.interact.message.DiscordMessageData
 import discord.interact.message.MessageEditAdaptor
-import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
@@ -29,30 +26,30 @@ typealias JDAUser = net.dv8tion.jda.api.entities.User
 
 typealias JDAChannel = net.dv8tion.jda.api.entities.Guild
 
-fun net.dv8tion.jda.api.entities.Message.extractMessageRef(): MessageRef =
-    MessageRef(this.extractId(), this.guild.extractId(), this.channel.extractId())
+fun net.dv8tion.jda.api.entities.Message.messageRef(): MessageRef =
+    MessageRef(this.messageId(), this.guild.channelId(), this.channel.subChannelId())
 
-fun GenericMessageReactionEvent.extractMessageRef(): MessageRef =
-    MessageRef(MessageId(this.messageIdLong), this.guild.extractId(), this.channel.extractId())
+fun GenericMessageReactionEvent.messageRef(): MessageRef =
+    MessageRef(MessageId(this.messageIdLong), this.guild.channelId(), this.channel.subChannelId())
 
-fun net.dv8tion.jda.api.entities.Guild.extractId(): ChannelId = ChannelId(this.idLong)
+fun net.dv8tion.jda.api.entities.Guild.channelId(): ChannelId = ChannelId(this.idLong)
 
-fun net.dv8tion.jda.api.entities.User.extractId(): UserId = UserId(this.idLong)
+fun net.dv8tion.jda.api.entities.User.userId(): UserId = UserId(this.idLong)
 
-fun net.dv8tion.jda.api.entities.Message.extractId(): MessageId = MessageId(this.idLong)
+fun net.dv8tion.jda.api.entities.Message.messageId(): MessageId = MessageId(this.idLong)
 
-fun net.dv8tion.jda.api.entities.channel.Channel.extractId(): SubChannelId = SubChannelId(this.idLong)
+fun net.dv8tion.jda.api.entities.channel.Channel.subChannelId(): SubChannelId = SubChannelId(this.idLong)
 
-fun net.dv8tion.jda.api.entities.Guild.extractProfile(uid: ChannelUid = ChannelUid(UUID.randomUUID())): Channel =
-    Channel(uid, DISCORD_PLATFORM_ID, this.extractId(), this.name)
+fun net.dv8tion.jda.api.entities.Guild.profile(uid: ChannelUid = ChannelUid(UUID.randomUUID())): Channel =
+    Channel(uid, DISCORD_PLATFORM_ID, this.channelId(), this.name)
 
-fun net.dv8tion.jda.api.entities.User.extractProfile(uid: UserUid = UserUid(UUID.randomUUID()), announceId: Int? = null): User.Human =
-    User.Human(this.effectiveName, this.avatarUrl, uid, DISCORD_PLATFORM_ID, this.extractId(), this.name, announceId)
+fun net.dv8tion.jda.api.entities.User.profile(uid: UserUid = UserUid(UUID.randomUUID()), announceId: Int? = null): User.Human =
+    User.Human(this.effectiveName, this.avatarUrl, uid, DISCORD_PLATFORM_ID, this.userId(), this.name, announceId)
 
 fun net.dv8tion.jda.api.entities.Guild.editMessageByMessageRef(ref: MessageRef, newContent: MessageEditData): DiscordMessageBuilder =
     MessageEditAdaptor(this.getChannelMessageSubChannelById(ref.subChannelId.idLong)!!.editMessageById(ref.id.idLong, newContent))
 
-fun net.dv8tion.jda.api.entities.Message.extractMessageData(): DiscordMessageData =
+fun net.dv8tion.jda.api.entities.Message.messageData(): DiscordMessageData =
     DiscordMessageData(
         this.contentRaw,
         this.embeds,
@@ -83,10 +80,4 @@ fun <T : Event> T.abbreviation(): String =
         GuildJoinEvent::class -> "GJE"
         GuildLeaveEvent::class -> "GLE"
         else -> "UNK"
-    }
-
-fun ExecutionContext.retrieveJDAChannel(jda: JDA): JDAChannel =
-    when (this) {
-        is InteractionContext<*> -> this.jdaChannel
-        else -> jda.getGuildById(this.channel.givenId.idLong)!!
     }

@@ -10,7 +10,7 @@ import core.session.entities.*
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import reactor.core.publisher.Mono
-import utils.structs.find
+import utils.find
 
 object ChannelConfigRepository {
 

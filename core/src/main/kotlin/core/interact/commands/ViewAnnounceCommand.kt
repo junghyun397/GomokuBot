@@ -1,9 +1,9 @@
 package core.interact.commands
 
 import arrow.core.raise.effect
+import core.BotConfig
 import core.BotContext
 import core.assets.Channel
-import core.assets.MessageRef
 import core.assets.User
 import core.database.repositories.AnnounceRepository
 import core.interact.Order
@@ -15,9 +15,8 @@ import core.session.MessageManager
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
-import utils.lang.tuple
+import utils.tuple
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.milliseconds
 
 class ViewAnnounceCommand(val language: Language) : Command {
 
@@ -31,7 +30,6 @@ class ViewAnnounceCommand(val language: Language) : Command {
         channel: Channel,
         user: User.Human,
         service: MessagingService,
-        messageRef: MessageRef,
         publishers: PublisherSet,
     ) = runCatching {
         val latestAnnounceId = AnnounceRepository.getLatestAnnounceId(bot.dbConnection)!!
@@ -51,7 +49,7 @@ class ViewAnnounceCommand(val language: Language) : Command {
                                 announceMessage.ref,
                                 NavigationKind.ANNOUNCE,
                                 latestAnnounceId,
-                                Clock.System.now() + bot.config.navigatorExpireAfter.milliseconds
+                                Clock.System.now() + BotConfig.navigatorExpireAfter
                             )
                         )
 

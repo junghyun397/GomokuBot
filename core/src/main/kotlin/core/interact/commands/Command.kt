@@ -3,7 +3,6 @@ package core.interact.commands
 import arrow.core.raise.Effect
 import core.BotContext
 import core.assets.Channel
-import core.assets.MessageRef
 import core.assets.User
 import core.interact.Order
 import core.interact.message.MessagingService
@@ -23,7 +22,6 @@ sealed interface Command {
         channel: Channel,
         user: User.Human,
         service: MessagingService,
-        messageRef: MessageRef,
         publishers: PublisherSet,
     ): CommandResult
 

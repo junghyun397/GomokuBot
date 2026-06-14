@@ -9,9 +9,9 @@ import renju.notation.Pos
 class OpeningSetCommand(
     sessionId: SessionId,
     move: Pos,
-    deployAt: MessageRef?,
-    responseFlag: ResponseFlag
-) : OpeningMoveCommand<MoveStageOpeningSession>(sessionId, move, deployAt, responseFlag) {
+    responseFlag: ResponseFlag,
+    messageRef: MessageRef?,
+) : OpeningMoveCommand<MoveStageOpeningSession>(sessionId, move, responseFlag, messageRef) {
 
     override val name = "opening-set"
 

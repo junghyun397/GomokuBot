@@ -1,16 +1,23 @@
 package core.session.entities
 
-import renju.notation.GameResult
+import core.assets.User
 import renju.notation.Pos
 import kotlin.math.pow
 
 sealed interface OpeningSession : GameSession {
 
     override val gameResult get() = null
-
     override val recording get() = false
 
-    fun validateMove(move: Pos): Boolean = true
+    val context: GameSessionContext<User.Human>
+
+    override val id get() = this.context.id
+    override val expireService get() = this.context.expireService
+
+    override val users get() = this.context.users
+
+    override val state get() = this.context.state
+    override val messageBufferKey get() = this.context.messageBufferKey
 
 }
 
@@ -29,6 +36,8 @@ interface SwapStageOpeningSession : PlayStageOpeningSession {
 }
 
 interface MoveStageOpeningSession : PlayStageOpeningSession {
+
+    override fun isLegalMove(move: Pos) = super.isLegalMove(move) && this.inSquare(move)
 
     fun inSquare(move: Pos): Boolean
 
@@ -62,7 +71,7 @@ interface OfferStageOpeningSession : NegotiateStageOpeningSession {
 
     val symmetryMoves: Set<Pos>
 
-    override fun validateMove(move: Pos) = move !in this.moveCandidates && move !in this.symmetryMoves
+    override fun isLegalMove(move: Pos) = move !in this.moveCandidates && move !in this.symmetryMoves
 
     fun add(move: Pos): NegotiateStageOpeningSession
 
@@ -118,19 +127,11 @@ interface OfferStageOpeningSession : NegotiateStageOpeningSession {
 
 interface SelectStageOpeningSession : NegotiateStageOpeningSession {
 
-    override fun validateMove(move: Pos) = move in this.moveCandidates
+    override fun isLegalMove(move: Pos) = move in this.moveCandidates
 
-    override val player get() = this.user[!this.state.board.playerColor]
-    override val opponent get() = this.user[this.state.board.playerColor]
+    override val player get() = this.users[!this.state.board.playerColor]
+    override val opponent get() = this.users[this.state.board.playerColor]
 
     fun select(move: Pos): PvpGameSession
 
 }
-
-fun OpeningSession.asFinishedPvpSession(result: GameResult): PvpGameSession =
-    PvpGameSession(
-        context = this.context,
-        gameResult = result,
-        recording = false,
-        ruleKind = this.ruleKind,
-    )

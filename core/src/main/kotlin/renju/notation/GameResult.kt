@@ -1,80 +1,47 @@
 package renju.notation
 
-import core.assets.User
-import utils.structs.Identifiable
+import utils.Identifiable
 
-sealed interface GameResult {
-
-    val cause: Cause
+sealed interface GameResult : Identifiable {
 
     val message: String
 
-    val winnerColor: Color?
+    val winner: Color?
 
-    val winColorId: Short?
-
-    fun flag(): Byte = winnerColor?.naiveFlag ?: Color.emptyFlag()
-
-    enum class Cause(override val id: Short) : Identifiable {
-        FIVE_IN_A_ROW(0), RESIGN(1), TIMEOUT(2), DRAW(3)
+    enum class WinCause(override val id: Short) : Identifiable {
+        FIVE_IN_A_ROW(1), RESIGN(2), TIMEOUT(3)
     }
 
-    data class FiveInRow(private val winColor: Color) : GameResult {
+    data class Win(val cause: WinCause, override val winner: Color) : GameResult {
 
-        override val cause = Cause.FIVE_IN_A_ROW
+        override val message get() = "$winner win by $cause"
 
-        override val message get() = "five in row by $winnerColor"
-
-        override val winnerColor: Color = winColor
-
-        override val winColorId = winnerColor.naiveFlag.toShort()
-
-        fun winner(): Color = winnerColor
-
-    }
-
-    data class Win(override val cause: Cause, val winColor: Color, val winner: User, val loser: User) : GameResult {
-
-        override val message get() = "$winner wins over $loser by $cause"
-
-        override val winnerColor: Color = winColor
-
-        override val winColorId = this.winColor.naiveFlag.toShort()
+        override val id = this.cause.id
 
     }
 
     data object Full : GameResult {
 
-        override val cause = Cause.DRAW
-
         override val message get() = "tie caused by full"
 
-        override val winnerColor: Color? = null
+        override val winner = null
 
-        override val winColorId = null
+        override val id: Short = 0
 
     }
 
     companion object {
 
-        fun fromFlag(flag: Byte): GameResult =
-            when (Color.from(flag)) {
-                Color.Black -> FiveInRow(Color.Black)
-                Color.White -> FiveInRow(Color.White)
+        fun fromId(id: Short, winner: Color?): GameResult? = when (winner) {
+            null -> when (id) {
+                Full.id -> Full
+                else -> null
             }
-
-        fun build(gameResult: GameResult, cause: Cause, users: ColorContainer<User?>): GameResult? {
-            val nonNullUsers = users.map { it ?: User.GomokuBot }
-
-            return when (cause) {
-                Cause.FIVE_IN_A_ROW, Cause.RESIGN, Cause.TIMEOUT -> when (gameResult.winnerColor) {
-                    Color.Black ->
-                        Win(cause, Color.Black, nonNullUsers.black, nonNullUsers.white)
-                    Color.White ->
-                        Win(cause, Color.White, nonNullUsers.white, nonNullUsers.black)
-                    else -> null
-                }
-                Cause.DRAW -> Full
+            else -> when (id) {
+                WinCause.FIVE_IN_A_ROW.id -> Win(WinCause.FIVE_IN_A_ROW, winner)
+                WinCause.RESIGN.id -> Win(WinCause.RESIGN, winner)
+                WinCause.TIMEOUT.id -> Win(WinCause.TIMEOUT, winner)
+                else -> null
             }
         }
 

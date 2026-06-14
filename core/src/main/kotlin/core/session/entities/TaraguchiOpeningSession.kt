@@ -1,5 +1,6 @@
 package core.session.entities
 
+import core.assets.User
 import renju.notation.Pos
 
 sealed interface TaraguchiOpeningSession : OpeningSession {
@@ -9,25 +10,24 @@ sealed interface TaraguchiOpeningSession : OpeningSession {
 }
 
 data class TaraguchiSwapStageSession(
-    override val context: GameSessionContext,
+    override val context: GameSessionContext<User.Human>,
     override val isBranched: Boolean
 ) : TaraguchiOpeningSession, SwapStageOpeningSession {
 
     override val offerCount = null
 
     override fun swap(doSwap: Boolean): GameSession {
-        val user = if (doSwap) this.user.swap() else this.user
+        val user = if (doSwap) this.users.swap() else this.users
 
         return if (this.isBranched && this.state.history.moves == 5)
             PvpGameSession(
-                context = this.context.next(user = user),
+                context = this.context.next(users = user),
                 gameResult = this.gameResult,
                 recording = true,
-                ruleKind = Rule.TARAGUCHI_10,
             )
         else
             TaraguchiMoveStageSession(
-                context = this.context.next(user = user),
+                context = this.context.next(users = user),
                 isBranched = this.isBranched
             )
     }
@@ -35,11 +35,11 @@ data class TaraguchiSwapStageSession(
 }
 
 data class TaraguchiMoveStageSession(
-    override val context: GameSessionContext,
+    override val context: GameSessionContext<User.Human>,
     override val isBranched: Boolean
 ) : TaraguchiOpeningSession, MoveStageOpeningSession {
 
-    override fun validateMove(move: Pos) = this.inSquare(move)
+    override fun isLegalMove(move: Pos) = this.inSquare(move)
 
     override fun inSquare(move: Pos): Boolean =
         6 - this.state.history.moves < move.row && move.row < 8 + this.state.history.moves &&
@@ -59,7 +59,7 @@ data class TaraguchiMoveStageSession(
 }
 
 data class TaraguchiBranchingSession(
-    override val context: GameSessionContext
+    override val context: GameSessionContext<User.Human>
 ) : TaraguchiOpeningSession, BranchingStageOpeningSession {
 
     override fun branch(makeOffer: Boolean): TaraguchiOpeningSession =
@@ -78,7 +78,7 @@ data class TaraguchiBranchingSession(
 }
 
 data class TaraguchiOfferStageSession(
-    override val context: GameSessionContext,
+    override val context: GameSessionContext<User.Human>,
     override val moveCandidates: Set<Pos>,
     override val symmetryMoves: Set<Pos>
 ) : TaraguchiOpeningSession, OfferStageOpeningSession {
@@ -101,7 +101,7 @@ data class TaraguchiOfferStageSession(
 }
 
 data class TaraguchiSelectStageSession(
-    override val context: GameSessionContext,
+    override val context: GameSessionContext<User.Human>,
     override val moveCandidates: Set<Pos>,
 ) : TaraguchiOpeningSession, SelectStageOpeningSession {
 
@@ -110,7 +110,6 @@ data class TaraguchiSelectStageSession(
             context = this.context.next(state = this.state.play(move)),
             gameResult = this.gameResult,
             recording = true,
-            ruleKind = Rule.TARAGUCHI_10,
         )
 
 }

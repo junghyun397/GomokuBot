@@ -1,14 +1,17 @@
 package core.assets
 
+import java.util.*
+
 sealed interface User {
     val name: String
 
+    val id: UserUid?
     val profileURL: String?
 
     data class Human(
         override val name: String,
         override val profileURL: String?,
-        val id: UserUid,
+        override val id: UserUid,
         val platform: Short,
         val givenId: UserId,
         val uniqueName: String,
@@ -17,24 +20,30 @@ sealed interface User {
 
         override fun toString() = "[${this.uniqueName}](${this.id.uuid})"
 
-    }
+        val isAnonymous get() = this == ANONYMOUS
 
-    data object Anonymous : User {
-        override val name = "Anonymous"
-
-        override val profileURL = null
     }
 
     data object GomokuBot : User {
+
         override val name = "GomokuBot"
 
+        override val id = null
         override val profileURL = null
+
+    }
+
+    companion object {
+
+        val ANONYMOUS = Human(
+            name = "Anonymous",
+            id = UserUid(UUID.fromString("00000000-0000-0000-0000-000000000000")),
+            platform = 0,
+            givenId = UserId(0),
+            uniqueName = "Anonymous",
+            announceId = null,
+            profileURL = null
+        )
     }
 
 }
-
-val User.humanId: UserUid?
-    get() = when (this) {
-        is User.Human -> this.id
-        User.Anonymous, User.GomokuBot -> null
-    }

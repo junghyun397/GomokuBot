@@ -4,21 +4,17 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
-import core.assets.humanId
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.SessionManager
-import core.session.entities.BranchingStageOpeningSession
-import core.session.entities.ChannelConfig
-import core.session.entities.SessionId
-import core.session.entities.SwapType
-import utils.lang.tuple
+import core.session.entities.*
+import utils.tuple
 
 class OpeningBranchingCommand(
     private val sessionId: SessionId,
     private val takeBranch: Boolean,
-    private val deployAt: MessageRef?
+    private val messageRef: MessageRef,
 ) : Command {
 
     override val name = "opening-branching"
@@ -31,23 +27,24 @@ class OpeningBranchingCommand(
         channel: Channel,
         user: User.Human,
         service: MessagingService,
-        messageRef: MessageRef,
         publishers: PublisherSet,
     ) = runCatching {
-        var session: BranchingStageOpeningSession? = null
-        val thenSession = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { currentSession ->
-            val branchingSession = currentSession as? BranchingStageOpeningSession ?: throw IllegalStateException()
-            if (branchingSession.player.humanId != user.id) throw IllegalStateException()
+        var messageBufferKey: MessageBufferKey? = null
 
-            session = branchingSession
+        val session = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { session ->
+            val branchingSession = session as? BranchingStageOpeningSession ?: throw IllegalStateException()
+            if (branchingSession.player.id != user.id) throw IllegalStateException()
+
+            messageBufferKey = session.messageBufferKey
             branchingSession.branch(this.takeBranch)
         }
+
         val boardPublisher = when (config.swapType) {
-            SwapType.EDIT -> publishers.edit(this.deployAt ?: messageRef)
+            SwapType.EDIT -> publishers.edit(this.messageRef)
             else -> publishers.plain
         }
 
-        val io = buildNextMoveProcedure(bot, config, service, boardPublisher, session ?: throw IllegalStateException(), thenSession)
+        val io = buildNextMoveProcedure(bot, config, service, boardPublisher, session, messageBufferKey!!)
 
         tuple(io, this.writeCommandReport("has chosen ${this.takeBranch}", channel, user))
     }

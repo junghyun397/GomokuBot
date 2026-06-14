@@ -10,7 +10,7 @@ import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.ChannelConfig
-import utils.lang.tuple
+import utils.tuple
 
 object ChannelLeaveCommand : InternalCommand {
 

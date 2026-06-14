@@ -9,9 +9,8 @@ package renju.notation
 
         fun from(source: String): HashKey? =
             runCatching {
-                val hex = source
+                val hex = source.lowercase()
                     .removePrefix("0x")
-                    .removePrefix("0X")
 
                 HashKey(java.lang.Long.parseUnsignedLong(hex, 16))
             }.getOrNull()

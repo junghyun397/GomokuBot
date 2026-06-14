@@ -15,7 +15,7 @@ import core.session.entities.BoardNavigationState
 import core.session.entities.ChannelConfig
 import core.session.entities.SessionId
 import renju.notation.Pos
-import utils.lang.tuple
+import utils.tuple
 
 enum class Direction {
     LEFT, DOWN, UP, RIGHT, CENTER
@@ -25,6 +25,7 @@ class FocusCommand(
     private val navigationState: BoardNavigationState,
     private val sessionId: SessionId,
     private val direction: Direction,
+    private val messageRef: MessageRef,
 ) : Command {
 
     override val name = "focus"
@@ -37,7 +38,6 @@ class FocusCommand(
         channel: Channel,
         user: User.Human,
         service: MessagingService,
-        messageRef: MessageRef,
         publishers: PublisherSet
     ) = runCatching {
         val session = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).snapshot()
@@ -58,11 +58,10 @@ class FocusCommand(
 
         val newFocusInfo = this.navigationState.focusInfo.copy(focus = newFocus)
 
-        when(newFocus.idx) {
-            this.navigationState.page -> tuple(effect { emptyOrders }, this.writeCommandReport("focus bounded",
-                channel, user))
+        when (newFocus.idx) {
+            this.navigationState.page -> tuple(effect { emptyOrders }, this.writeCommandReport("focus bounded", channel, user))
             else -> {
-                MessageManager.addNavigation(bot.sessions, messageRef, this.navigationState.copy(page = newFocus.idx))
+                MessageManager.addNavigation(bot.sessions, this.messageRef, this.navigationState.copy(page = newFocus.idx))
 
                 val action = effect {
                     service.dispatchFocusButtons(publishers.component, service.generateFocusedField(session, newFocusInfo))

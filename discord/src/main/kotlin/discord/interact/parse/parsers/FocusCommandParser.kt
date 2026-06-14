@@ -34,7 +34,7 @@ object FocusCommandParser : CommandParser, NavigableCommand {
         val direction = this.matchDirection(context.event.reaction.emoji.asUnicode())
             ?: return null
 
-        return FocusCommand(boardState, sessionId, direction)
+        return FocusCommand(boardState, sessionId, direction, context.event.messageRef())
     }
 
 }

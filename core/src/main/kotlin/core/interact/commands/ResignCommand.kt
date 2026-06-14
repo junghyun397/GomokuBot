@@ -3,19 +3,23 @@ package core.interact.commands
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
-import core.assets.MessageRef
 import core.assets.User
+import core.database.entities.extractGameRecord
+import core.database.repositories.GameRecordRepository
 import core.interact.Order
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
-import core.session.GameManager
+import core.session.EngineGameManager
 import core.session.MessageManager
+import core.session.PvpGameManager
 import core.session.SessionManager
 import core.session.entities.*
-import renju.notation.GameResult
+import utils.tuple
 
-class ResignCommand(private val sessionId: SessionId) : Command {
+class ResignCommand(
+    private val sessionId: SessionId,
+) : Command {
 
     override val name = "resign"
 
@@ -27,26 +31,28 @@ class ResignCommand(private val sessionId: SessionId) : Command {
         channel: Channel,
         user: User.Human,
         service: MessagingService,
-        messageRef: MessageRef,
         publishers: PublisherSet,
     ) = runCatching {
-        var session: GameSession? = null
-        var result: GameResult.Win? = null
+        val (session, messageBufferKey) = run {
+            val staleSession = SessionManager.deleteGameSession(bot.sessions, this.sessionId)!!
 
-        val finishedSession = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { currentSession ->
-            session = currentSession
-            val (finishedSession, finishedResult) = GameManager.resignSession(currentSession, GameResult.Cause.RESIGN, user)
-            result = finishedResult
-            finishedSession
-        } as RenjuSession
+            val finishedSession = when (staleSession) {
+                is PvpGameSession -> PvpGameManager.resign(staleSession, user)
+                is OpeningSession -> PvpGameManager.resign(staleSession, user)
+                is EngineGameSession -> EngineGameManager.resign(staleSession, EngineGameManager.ResignCause.RESIGN)
+            }
 
-        val sessionValue = session ?: throw IllegalStateException()
-        val resultValue = result ?: throw IllegalStateException()
+            tuple(finishedSession, staleSession.messageBufferKey)
+        }
 
-        GameManager.finishSession(bot, channel, finishedSession)
+        val result = session.gameResult!!
+
+        session.extractGameRecord(channel.id)?.let { record ->
+            GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
+        }
 
         val publisher = run {
-            val boardMessage = MessageManager.viewHeadMessage(bot.sessions, sessionValue.messageBufferKey)
+            val boardMessage = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
             if (config.swapType == SwapType.EDIT && boardMessage != null)
                 publishers.edit(boardMessage)
@@ -55,19 +61,23 @@ class ResignCommand(private val sessionId: SessionId) : Command {
         }
 
         val io = effect {
-            when (finishedSession) {
+            when (session) {
                 is EngineGameSession ->
-                    service.buildSurrenderedEngine(publishers.plain, config.language.container, finishedSession.humanPlayer)
-                is PvpGameSession, is OpeningSession ->
-                    service.buildSurrenderedPvp(publishers.plain, config.language.container, resultValue.winner, resultValue.loser)
+                    service.buildResignedEngine(publishers.plain, config.language.container, session.humanPlayer)
+                is PvpGameSession, is OpeningSession -> {
+                    service.buildResignedPvp(
+                        publishers.plain, config.language.container,
+                        session.users[result.winner!!], session.users[!result.winner!!]
+                    )
+                }
             }.launch()()
 
-            val finishOrders = buildFinishProcedure(bot, service, publisher, config, sessionValue, finishedSession)()
+            val finishOrders = buildFinishProcedure(bot, service, publisher, config, session, messageBufferKey)()
 
-            finishOrders + Order.ArchiveSession(finishedSession, config.archivePolicy)
+            finishOrders + Order.ArchiveSession(session, config.archivePolicy)
         }
 
-        io to this.writeCommandReport("surrendered, terminate session by $resultValue", channel, user)
+        io to this.writeCommandReport("surrendered, terminate session by $result", channel, user)
     }
 
 }

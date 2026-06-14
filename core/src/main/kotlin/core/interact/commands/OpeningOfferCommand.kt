@@ -9,9 +9,9 @@ import renju.notation.Pos
 class OpeningOfferCommand(
     sessionId: SessionId,
     move: Pos,
-    deployAt: MessageRef?,
-    responseFlag: ResponseFlag
-) : OpeningMoveCommand<OfferStageOpeningSession>(sessionId, move, deployAt, responseFlag) {
+    responseFlag: ResponseFlag,
+    messageRef: MessageRef?,
+) : OpeningMoveCommand<OfferStageOpeningSession>(sessionId, move, responseFlag, messageRef) {
 
     override val name = "opening-offer"
 

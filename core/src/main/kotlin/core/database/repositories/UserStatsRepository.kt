@@ -14,8 +14,9 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import renju.notation.Color
 import renju.notation.GameResult
-import utils.lang.toUtcInstant
-import utils.lang.tuple
+import utils.toUtcInstant
+import utils.tuple
+import utils.unreachable
 import kotlin.time.Clock
 
 object UserStatsRepository {
@@ -54,12 +55,12 @@ object UserStatsRepository {
                 val maybeBlackId = record.blackId
                 val maybeWhiteId = record.whiteId
 
-                val recordResult = GameResult.fromFlag(record.winColor?.toByte() ?: Color.emptyFlag())
+                val recordResult = GameResult.fromId(record.cause!!, Color.from(record.winColor?.toByte()))!!
 
                 when {
-                    maybeBlackId != null -> tuple(UserUid(maybeBlackId), Color.Black, recordResult)
-                    maybeWhiteId != null -> tuple(UserUid(maybeWhiteId), Color.White, recordResult)
-                    else -> throw IllegalStateException()
+                    maybeBlackId != null -> tuple(UserUid(maybeBlackId), Color.BLACK, recordResult)
+                    maybeWhiteId != null -> tuple(UserUid(maybeWhiteId), Color.WHITE, recordResult)
+                    else -> unreachable()
                 }
             }
             .collectList()
@@ -81,12 +82,12 @@ object UserStatsRepository {
                 val blackId = UserUid(record.blackId!!)
                 val whiteId = UserUid(record.whiteId!!)
 
-                val recordResult = GameResult.fromFlag(record.winColor!!.toByte())
+                val recordResult = GameResult.fromId(record.cause!!, Color.from(record.winColor?.toByte()))!!
 
                 when {
-                    blackId != userUid -> tuple(blackId, Color.Black, recordResult)
-                    whiteId != userUid -> tuple(whiteId, Color.White, recordResult)
-                    else -> throw IllegalStateException()
+                    blackId != userUid -> tuple(blackId, Color.BLACK, recordResult)
+                    whiteId != userUid -> tuple(whiteId, Color.WHITE, recordResult)
+                    else -> unreachable()
                 }
             }
             .collectList()
@@ -122,14 +123,14 @@ object UserStatsRepository {
         records
             .groupBy { (id, _, _) -> id }
             .map { (id, tuples) ->
-                val blackTotal = tuples.count { (_, color, _) -> color == Color.Black }
+                val blackTotal = tuples.count { (_, color, _) -> color == Color.BLACK }
                 val whiteTotal = tuples.size - blackTotal
 
-                val blackWins = tuples.count { (_, color, result) -> color == Color.Black && result.flag() == Color.Black.naiveFlag }
-                val whiteWins = tuples.count { (_, color, result) -> color == Color.White && result.flag() == Color.White.naiveFlag }
+                val blackWins = tuples.count { (_, color, result) -> color == Color.BLACK && result.winner == Color.BLACK }
+                val whiteWins = tuples.count { (_, color, result) -> color == Color.WHITE && result.winner == Color.WHITE }
 
-                val blackLosses = tuples.count { (_, color, result) -> color == Color.Black && result.flag() == Color.White.naiveFlag }
-                val whiteLosses = tuples.count { (_, color, result) -> color == Color.White && result.flag() == Color.Black.naiveFlag }
+                val blackLosses = tuples.count { (_, color, result) -> color == Color.BLACK && result.winner == Color.WHITE }
+                val whiteLosses = tuples.count { (_, color, result) -> color == Color.WHITE && result.winner == Color.BLACK }
 
                 UserStats(
                     userId = id,

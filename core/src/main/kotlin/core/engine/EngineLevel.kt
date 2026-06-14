@@ -1,16 +1,16 @@
-package core.mintaka
+package core.engine
 
-import core.mintaka.types.Config
-import core.mintaka.types.Duration
-import core.mintaka.types.Timer
-import utils.structs.Identifiable
+import core.engine.types.Config
+import core.engine.types.Duration
+import core.engine.types.Timer
+import utils.Identifiable
 
 val BASE_CONFIG = Config(
-    draw_condition = 225U,
-    max_nodes_in_1k = 1_000U,
+    draw_condition = null,
+    max_nodes_in_1k = null,
     max_depth = null,
-    max_vcf_depth = 8,
-    tt_size = 1024 * 1024 * 64,
+    max_vcf_depth = null,
+    tt_size = 1024 * 1024 * 32,
     workers = 2U,
     pondering = false,
     initial_timer = Timer(
@@ -24,48 +24,61 @@ val BASE_CONFIG = Config(
     spawn_depth_specialist = false,
 )
 
-enum class EngineLevel(override val id: Short, val config: Config) : Identifiable {
+enum class EngineLevel(override val id: Short, val config: Config, val streaming: Boolean) : Identifiable {
     AMOEBA(
         id = 0,
-        config = BASE_CONFIG,
+        config = BASE_CONFIG.copy(
+            tt_size = 1024 * 1024 * 32,
+            max_nodes_in_1k = 2_000U,
+            max_vcf_depth = 10,
+        ),
+        streaming = false,
     ),
     APE(
         id = 1,
         config = BASE_CONFIG.copy(
+            tt_size = 1024 * 1024 * 32,
             max_nodes_in_1k = 4_000U,
             max_vcf_depth = 12,
         ),
+        streaming = false,
     ),
     BEGINNER(
         id = 2,
         config = BASE_CONFIG.copy(
+            tt_size = 1024 * 1024 * 128,
             max_nodes_in_1k = 8_000U,
             max_vcf_depth = 16,
-            tt_size = 1024 * 1024 * 128,
         ),
+        streaming = true,
     ),
     MODERATE(
         id = 3,
         config = BASE_CONFIG.copy(
+            tt_size = 1024 * 1024 * 128,
             max_nodes_in_1k = 16_000U,
             max_vcf_depth = 16,
-            tt_size = 1024 * 1024 * 128,
         ),
+        streaming = true,
     ),
     EXPERT(
         id = 4,
         config = BASE_CONFIG.copy(
+            workers = 4U,
+            tt_size = 1024 * 1024 * 256,
             max_nodes_in_1k = 32_000U,
             max_vcf_depth = 24,
-            tt_size = 1024 * 1024 * 256,
         ),
+        streaming = true,
     ),
     GURU(
         id = 5,
         config = BASE_CONFIG.copy(
+            workers = 4U,
+            tt_size = 1024 * 1024 * 512,
             max_nodes_in_1k = 128_000U,
             max_vcf_depth = 24,
-            tt_size = 1024 * 1024 * 256,
         ),
+        streaming = true,
     )
 }

@@ -15,8 +15,6 @@ data class Channel(
 
 data class MessageRef(val id: MessageId, val channelId: ChannelId, val subChannelId: SubChannelId)
 
-val DUMMY_MESSAGE_REF = MessageRef(MessageId(-1), ChannelId(-1), SubChannelId(-1))
-
 @JvmInline value class ChannelUid(val uuid: UUID)
 
 @JvmInline value class UserUid(val uuid: UUID) {

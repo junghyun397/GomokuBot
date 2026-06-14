@@ -1,8 +1,8 @@
-package utils.lang
+package utils
 
 import java.util.concurrent.ConcurrentHashMap
 
-fun <I, O> memoize(f: (I) -> O): (I) -> O {
+fun <I: Any, O: Any> memoize(f: (I) -> O): (I) -> O {
     val cache = ConcurrentHashMap<I, O>()
     return { key ->
         cache[key]

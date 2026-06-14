@@ -5,21 +5,20 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
-import core.assets.humanId
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
-import core.session.GameManager
+import core.session.MessageManager
 import core.session.SessionManager
 import core.session.entities.*
 import renju.notation.Pos
-import utils.lang.tuple
+import utils.tuple
 
 abstract class OpeningMoveCommand<T : OpeningSession>(
     private val sessionId: SessionId,
     protected val move: Pos,
-    private val deployAt: MessageRef?,
-    override val responseFlag: ResponseFlag
+    override val responseFlag: ResponseFlag,
+    private val messageRef: MessageRef?,
 ) : Command {
 
     override suspend fun execute(
@@ -28,26 +27,26 @@ abstract class OpeningMoveCommand<T : OpeningSession>(
         channel: Channel,
         user: User.Human,
         service: MessagingService,
-        messageRef: MessageRef,
         publishers: PublisherSet
     ) = runCatching {
-        var session: T? = null
-        val thenSession = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { currentSession ->
-            val openingSession = this.selectSession(currentSession) ?: throw IllegalStateException()
-            if (openingSession.player.humanId != user.id) throw IllegalStateException()
-            if (GameManager.validateMove(openingSession, this.move) != null) throw IllegalStateException()
+        var messageBufferKey: MessageBufferKey? = null
 
-            session = openingSession
+        val session = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { session ->
+            val openingSession = this.selectSession(session) ?: throw IllegalStateException()
+            if (openingSession.player.id != user.id) throw IllegalStateException()
+            if (!openingSession.isLegalMove(this.move)) throw IllegalStateException()
+
+            messageBufferKey = session.messageBufferKey
             this.executeSelf(openingSession)
         }
 
         val boardPublisher = when (config.swapType) {
-            SwapType.EDIT -> publishers.edit(this.deployAt ?: messageRef)
+            SwapType.EDIT -> publishers.edit(this.messageRef ?: MessageManager.viewHeadMessage(bot.sessions, messageBufferKey!!)!!)
             else -> publishers.plain
         }
 
         val guideIO = when {
-            config.swapType == SwapType.EDIT && this.deployAt == null -> effect { Unit }
+            config.swapType == SwapType.EDIT && this.messageRef == null -> effect { Unit }
             else -> {
                 val guidePublisher = when (config.swapType) {
                     SwapType.EDIT -> publishers.windowed
@@ -58,14 +57,14 @@ abstract class OpeningMoveCommand<T : OpeningSession>(
                     val maybeGuideMessage = service.buildNextMoveOpening(guidePublisher, config.language.container, this@OpeningMoveCommand.move)
                         .retrieve()()
 
-                    buildAppendGameMessageProcedure(maybeGuideMessage, bot, thenSession)()
+                    buildAppendGameMessageProcedure(maybeGuideMessage, bot, session)()
                 }
             }
         }
 
         val io = effect {
             guideIO()
-            buildNextMoveProcedure(bot, config, service, boardPublisher, session ?: throw IllegalStateException(), thenSession)()
+            buildNextMoveProcedure(bot, config, service, boardPublisher, session, messageBufferKey!!)()
         }
 
         tuple(io, this.writeCommandReport(this.writeLog(), channel, user))

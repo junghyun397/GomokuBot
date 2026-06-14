@@ -1,13 +1,6 @@
 package core.assets
 
-import core.database.DatabaseConnection
-import core.database.repositories.UserProfileRepository
 import renju.notation.ForbiddenKind
-
-suspend fun UserUid?.retrieveUserOrGomokuBot(connection: DatabaseConnection): User =
-    this?.let {
-        UserProfileRepository.retrieveUser(connection, it)
-    } ?: User.GomokuBot
 
 fun forbiddenKindToText(kind: ForbiddenKind?) =
     when (kind) {

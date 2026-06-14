@@ -6,7 +6,6 @@ import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import core.assets.MessageRef
 import core.assets.User
-import core.assets.humanId
 import core.interact.Order
 import core.interact.commands.*
 import core.interact.emptyOrders
@@ -15,7 +14,6 @@ import core.interact.message.SentMessage
 import core.interact.parse.ParseFailure
 import core.interact.parse.SessionSideParser
 import core.interact.parse.asParseFailure
-import core.session.GameManager
 import core.session.MessageManager
 import core.session.SessionManager
 import core.session.entities.*
@@ -41,23 +39,6 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
     override fun getLocalizedName(container: LanguageContainer) = "s"
 
     override fun getLocalizedUsages(container: LanguageContainer): List<BuildableCommand.Usage> = emptyList()
-
-    private const val MAX_AUTO_COMPLETE_CHOICES = 15
-
-    private val positionChoices: List<String> =
-        (0 until Pos.BOARD_WIDTH).flatMap { col ->
-            (0 until Pos.BOARD_WIDTH).map { row ->
-                Pos(row, col).toString()
-            }
-        }
-
-    fun autoCompletePositions(query: String): List<String> {
-        val normalized = query.trim().lowercase()
-
-        return this.positionChoices
-            .filter { it.startsWith(normalized) }
-            .take(this.MAX_AUTO_COMPLETE_CHOICES)
-    }
 
     private fun buildAppendMessageProcedure(message: SentMessage?, context: UserInteractionContext<*>, session: GameSession): Effect<Nothing, List<Order>> =
         effect {
@@ -108,19 +89,19 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
 
     private fun branchCommandBySession(sessionId: SessionId, session: GameSession, pos: Pos, ref: MessageRef?, responseFlag: ResponseFlag): Command? =
         when (session) {
-            is RenjuSession -> PlayCommand(sessionId, pos, ref, responseFlag)
-            is MoveStageOpeningSession -> OpeningSetCommand(sessionId, pos, ref, responseFlag)
-            is OfferStageOpeningSession -> OpeningOfferCommand(sessionId, pos, ref, responseFlag)
-            is SelectStageOpeningSession -> OpeningSelectCommand(sessionId, pos, ref, responseFlag)
+            is PlayGameSession -> PlayCommand(sessionId, pos, responseFlag, ref)
+            is MoveStageOpeningSession -> OpeningSetCommand(sessionId, pos, responseFlag, ref)
+            is OfferStageOpeningSession -> OpeningOfferCommand(sessionId, pos, responseFlag, ref)
+            is SelectStageOpeningSession -> OpeningSelectCommand(sessionId, pos, responseFlag, ref)
             else -> null
         }
 
     private fun parseRawCommand(context: UserInteractionContext<*>, user: User.Human, rawPosition: String?): Either<ParseFailure, Command> =
         this.retrieveSession(context.bot, context.channel, user).flatMap { (sessionId, session) ->
-            if (session.player.humanId != user.id)
+            if (session.player.id != user.id)
                 return@flatMap Either.Left(this.buildOrderFailure(context, session, session.player))
 
-            val pos = Pos.fromCartesian(rawPosition)
+            val pos = rawPosition?.let { Pos.fromCartesian(it) }
                 ?: return@flatMap Either.Left(this.buildMissMatchFailure(context, session))
 
             val ref = when (context.config.swapType) {
@@ -128,10 +109,10 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
                 else -> null
             }
 
-            val failure = when (GameManager.validateMove(session, pos)) {
+            val failure = when (session.state.board.validateMove(pos)) {
                 MoveError.Exist -> this.buildExistFailure(context, session, pos)
                 MoveError.Forbidden -> when (session.state.board.playerColor) {
-                    Color.Black -> this.buildForbiddenMoveFailure(context, session, pos, session.state.board.forbiddenKind(pos))
+                    Color.BLACK -> this.buildForbiddenMoveFailure(context, session, pos, session.state.board.forbiddenKind(pos))
                     else -> null
                 }
                 null -> null
@@ -177,10 +158,10 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
             ?: return null
         val session = SessionManager.retrieveGameSession(context.bot.sessions, sessionId).snapshot()
 
-        if (session.player.humanId != userId)
+        if (session.player.id != userId)
             return null
 
-        if (GameManager.validateMove(session, pos) != null) {
+        if (!session.isLegalMove(pos)) {
             return null
         }
 
@@ -192,7 +173,10 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
             "s",
             container.setCommandDescription(),
         ) {
-            option<String>(container.setCommandOptionPosition(), container.setCommandOptionPositionDescription(), true, true)
+            option<String>(container.setCommandOptionPosition(), container.setCommandOptionPositionDescription(),
+                required = true,
+                autocomplete = false
+            )
         }
 
 }

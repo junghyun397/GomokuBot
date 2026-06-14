@@ -1,4 +1,4 @@
-package utils.structs
+package utils
 
 import java.io.Serializable
 

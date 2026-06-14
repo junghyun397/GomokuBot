@@ -1,4 +1,4 @@
-package core.mintaka
+package core.engine
 
 import renju.GameState
 import renju.native.RustyRenjuCApi
@@ -63,28 +63,28 @@ object FocusSolver {
     }
 
     // Prefix Sum Algorithm, O(N)
-    fun resolveFocus(state: GameState, kernelWidth: Int, buildHighlights: Boolean): FocusInfo =
+    fun resolveFocus(state: GameState, windowWidth: Int, buildHighlights: Boolean): FocusInfo =
         state.history.lastAction?.let { lastPos ->
             val boardWidth = Pos.BOARD_WIDTH
             val boardMaxIdx = Pos.BOARD_BOUND
-            val normalizedKernelWidth = kernelWidth.coerceIn(1, boardWidth)
-            val kernelHalf = normalizedKernelWidth / 2
-            val kernelQuarter = normalizedKernelWidth / 4
+            val clampedWindowWidth = windowWidth.coerceIn(1, boardWidth)
+            val windowHalf = clampedWindowWidth / 2
+            val windowQuarter = clampedWindowWidth / 4
 
             val evaluated = this.evaluateBoard(state)
             val highlights = if (buildHighlights) state.board.winningSequence() else null
 
             evaluated[lastPos.row][lastPos.col] += FocusWeights.LAST_MOVE
 
-            for (row in max(0, lastPos.row - kernelHalf)..min(boardMaxIdx, lastPos.row + kernelHalf)) {
-                for (col in max(0, lastPos.col - kernelHalf)..min(boardMaxIdx, lastPos.col + kernelHalf)) {
+            for (row in max(0, lastPos.row - windowHalf)..min(boardMaxIdx, lastPos.row + windowHalf)) {
+                for (col in max(0, lastPos.col - windowHalf)..min(boardMaxIdx, lastPos.col + windowHalf)) {
                     evaluated[row][col] += FocusWeights.CENTER_EXTRA
                 }
             }
 
             if (state.history.moves < 5) {
-                for (row in max(0, lastPos.row - kernelQuarter)..min(boardMaxIdx, lastPos.row + kernelQuarter)) {
-                    for (col in max(0, lastPos.col - kernelQuarter)..min(boardMaxIdx, lastPos.col + kernelQuarter)) {
+                for (row in max(0, lastPos.row - windowQuarter)..min(boardMaxIdx, lastPos.row + windowQuarter)) {
+                    for (col in max(0, lastPos.col - windowQuarter)..min(boardMaxIdx, lastPos.col + windowQuarter)) {
                         evaluated[row][col] += FocusWeights.CENTER_EXTRA
                     }
                 }
@@ -101,7 +101,7 @@ object FocusSolver {
                 }
             }
 
-            val step = boardWidth - normalizedKernelWidth
+            val step = boardWidth - clampedWindowWidth
 
             var maxScore = Int.MIN_VALUE
             var maxRow = lastPos.row.coerceIn(0, step)
@@ -109,9 +109,9 @@ object FocusSolver {
 
             for (row in 0..step) {
                 for (col in 0..step) {
-                    val collected = prefix[row + normalizedKernelWidth][col + normalizedKernelWidth] -
-                            prefix[row][col + normalizedKernelWidth] -
-                            prefix[row + normalizedKernelWidth][col] +
+                    val collected = prefix[row + clampedWindowWidth][col + clampedWindowWidth] -
+                            prefix[row][col + clampedWindowWidth] -
+                            prefix[row + clampedWindowWidth][col] +
                             prefix[row][col]
 
                     if (collected > maxScore) {
@@ -122,11 +122,10 @@ object FocusSolver {
                 }
             }
 
-            val minCenter = kernelHalf
-            val maxCenter = boardMaxIdx - kernelHalf
+            val maxCenter = boardMaxIdx - windowHalf
             val focus = Pos(
-                (maxRow + kernelHalf).coerceIn(minCenter, maxCenter),
-                (maxCol + kernelHalf).coerceIn(minCenter, maxCenter),
+                (maxRow + windowHalf).coerceIn(windowHalf, maxCenter),
+                (maxCol + windowHalf).coerceIn(windowHalf, maxCenter),
             )
 
             FocusInfo(focus, highlights)
@@ -156,8 +155,8 @@ object FocusSolver {
         const val OPEN_THREE: Int = 3
 
         const val BLOCK_THREE: Int = 10
-        const val OPEN_FOUR: Int = 150
-        const val FIVE: Int = 400
+        const val OPEN_FOUR: Int = 1000
+        const val FIVE: Int = 1000
 
         const val BLOCK_FOUR_EXTRA: Int = 8
         const val TREAT_BLOCK_THREE_FORK: Int = BLOCK_THREE

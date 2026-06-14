@@ -1,7 +1,7 @@
 package core.session
 
-import core.session.entities.MintakaIdleSession
-import core.session.entities.MintakaLaunchingSession
+import core.engine.MintakaIdleSession
+import core.engine.MintakaLaunchingSession
 
 object MintakaSessionManager {
 

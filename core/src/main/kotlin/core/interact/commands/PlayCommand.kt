@@ -5,23 +5,25 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
-import core.assets.humanId
 import core.interact.Order
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
-import core.session.GameManager
+import core.session.EngineGameManager
+import core.session.MessageManager
+import core.session.PvpGameManager
 import core.session.SessionManager
 import core.session.entities.*
 import renju.notation.GameResult
 import renju.notation.Pos
-import utils.lang.tuple
+import utils.tuple
+import utils.unreachable
 
 class PlayCommand(
     private val sessionId: SessionId,
     private val pos: Pos,
-    private val deployAt: MessageRef?,
     override val responseFlag: ResponseFlag,
+    private val messageRef: MessageRef?,
 ) : Command {
 
     override val name = "set"
@@ -32,138 +34,118 @@ class PlayCommand(
         channel: Channel,
         user: User.Human,
         service: MessagingService,
-        messageRef: MessageRef,
         publishers: PublisherSet,
     ) = runCatching {
+        var messageBufferKey: MessageBufferKey? = null
+
+        val session = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { session ->
+            messageBufferKey = session.messageBufferKey
+
+            when (session) {
+                is PvpGameSession -> PvpGameManager.play(session, this.pos)
+                is EngineGameSession -> EngineGameManager.play(session, this.pos)
+                else -> unreachable()
+            }
+        }
+
         val boardPublisher = when (config.swapType) {
-            SwapType.EDIT -> publishers.edit(this.deployAt ?: messageRef)
+            SwapType.EDIT -> publishers.edit(this.messageRef ?: MessageManager.viewHeadMessage(bot.sessions, messageBufferKey!!)!!)
             else -> publishers.plain
         }
 
-        var session: RenjuSession? = null
-        var aiMoved = false
-        val finalSession = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { currentSession ->
-            val renjuSession = currentSession as? RenjuSession ?: throw IllegalStateException()
-            if (renjuSession.player.humanId != user.id) throw IllegalStateException()
-            if (renjuSession.state.board.validateMove(this.pos) != null) throw IllegalStateException()
+        when (val result = session.gameResult) {
+            is GameResult -> {
+                SessionManager.deleteGameSession(bot.sessions, this.sessionId)
 
-            session = renjuSession
-            val beforeHash = renjuSession.state.board.hashKey
-            when (val thenSession = GameManager.makeMove(renjuSession, this.pos)) {
-                is EngineGameSession ->
-                    if (thenSession.gameResult == null) {
-                        aiMoved = true
-                        GameManager.makeEngineMove(bot.mintakaServer, thenSession, beforeHash, this.pos)
-                    } else {
-                        thenSession
-                    }
-                is PvpGameSession -> thenSession
-            }
-        } as RenjuSession
+                val lastMove = session.state.history.lastAction!!
 
-        val result = finalSession.gameResult
-
-        if (result == null) {
-            val guideIO = when {
-                config.swapType == SwapType.EDIT && this.deployAt == null -> effect { Unit }
-                else -> {
-                    val guidePublisher = when (config.swapType) {
-                        SwapType.EDIT -> publishers.windowed
-                        else -> publishers.plain
-                    }
-
-                    effect {
-                        val maybeGuideMessage = when (finalSession) {
-                            is PvpGameSession ->
-                                service.buildNextMovePvp(
-                                    guidePublisher,
-                                    config.language.container,
-                                    finalSession.opponent,
-                                    this@PlayCommand.pos
-                                )
-                            is EngineGameSession ->
-                                service.buildNextMoveEngine(
-                                    guidePublisher,
-                                    config.language.container,
-                                    finalSession.player,
-                                    finalSession.state.history.lastAction ?: this@PlayCommand.pos
-                                )
-                        }.retrieve()()
-
-                        buildAppendGameMessageProcedure(maybeGuideMessage, bot, finalSession)()
-                    }
-                }
-            }
-
-            val io = effect {
-                guideIO()
-                buildNextMoveProcedure(
-                    bot,
-                    config,
-                    service,
-                    boardPublisher,
-                    session ?: throw IllegalStateException(),
-                    finalSession
-                )()
-            }
-
-            tuple(io, this.writeCommandReport("make move ${this.pos}", channel, user))
-        } else {
-            GameManager.finishSession(bot, channel, finalSession)
-
-            val io = effect {
-                when (finalSession) {
-                    is PvpGameSession -> when (result) {
-                        is GameResult.Win ->
-                            service.buildWinPvp(
-                                publishers.plain,
-                                config.language.container,
-                                finalSession.opponent,
-                                finalSession.player,
-                                this@PlayCommand.pos
-                            )
-                        is GameResult.FiveInRow ->
-                            service.buildWinPvp(
-                                publishers.plain,
-                                config.language.container,
-                                finalSession.opponent,
-                                finalSession.player,
-                                this@PlayCommand.pos
-                            )
-                        is GameResult.Full ->
-                            service.buildTiePvp(publishers.plain, config.language.container, finalSession.user)
-                    }
-                    is EngineGameSession -> when (result) {
-                        is GameResult.Win ->
-                            if (aiMoved)
-                                service.buildLoseEngine(
+                val io = effect {
+                    when (session) {
+                        is PvpGameSession -> when (result) {
+                            is GameResult.Win ->
+                                service.buildWinPvp(
                                     publishers.plain,
                                     config.language.container,
-                                    finalSession.humanPlayer,
-                                    finalSession.state.history.lastAction ?: this@PlayCommand.pos
+                                    session.opponent,
+                                    session.player,
+                                    lastMove
                                 )
-                            else
-                                service.buildWinEngine(publishers.plain, config.language.container, finalSession.humanPlayer, this@PlayCommand.pos)
-                        is GameResult.FiveInRow ->
-                            service.buildWinEngine(publishers.plain, config.language.container, finalSession.humanPlayer, this@PlayCommand.pos)
-                        is GameResult.Full ->
-                            service.buildTieEngine(publishers.plain, config.language.container, finalSession.humanPlayer)
-                    }
-                }.launch()()
+                            is GameResult.Full ->
+                                service.buildTiePvp(publishers.plain, config.language.container, session.users)
+                        }
+                        is EngineGameSession -> when (result) {
+                            is GameResult.Win -> when (result.winner) {
+                                session.userColor ->
+                                    service.buildEngineLose(publishers.plain, config.language.container, session.humanPlayer, lastMove)
+                                else -> service.buildEngineWin(publishers.plain, config.language.container, session.humanPlayer, lastMove)
+                            }
+                            is GameResult.Full ->
+                                service.buildEngineTie(publishers.plain, config.language.container, session.humanPlayer)
+                        }
+                        else -> unreachable()
+                    }.launch()()
 
-                val finishOrders = buildFinishProcedure(
-                    bot,
-                    service,
-                    boardPublisher,
-                    config,
-                    session ?: throw IllegalStateException(),
-                    finalSession
-                )()
+                    val orders = buildFinishProcedure(
+                        bot,
+                        service,
+                        boardPublisher,
+                        config,
+                        session,
+                        messageBufferKey!!
+                    )()
 
-                finishOrders + Order.ArchiveSession(finalSession, config.archivePolicy)
+                    orders + Order.ArchiveSession(session, config.archivePolicy)
+                }
+
+                tuple(io, this.writeCommandReport("make move ${this.pos}, terminate session by $result", channel, user))
             }
+            null -> {
+                val guideIO = when {
+                    config.swapType == SwapType.EDIT && this.messageRef == null -> effect { Unit }
+                    else -> {
+                        val guidePublisher = when (config.swapType) {
+                            SwapType.EDIT -> publishers.windowed
+                            else -> publishers.plain
+                        }
 
-            tuple(io, this.writeCommandReport("make move ${this.pos}, terminate session by $result", channel, user))
+                        effect {
+                            val maybeGuideMessage = when (session) {
+                                is PvpGameSession ->
+                                    service.buildNextMovePvp(
+                                        guidePublisher,
+                                        config.language.container,
+                                        session.opponent,
+                                        this@PlayCommand.pos
+                                    )
+                                is EngineGameSession ->
+                                    service.buildNextMoveEngine(
+                                        guidePublisher,
+                                        config.language.container,
+                                        session.player,
+                                        session.state.history.lastAction ?: this@PlayCommand.pos
+                                    )
+                                else -> unreachable()
+                            }.retrieve()()
+
+                            buildAppendGameMessageProcedure(maybeGuideMessage, bot, session)()
+                        }
+                    }
+                }
+
+                val io = effect {
+                    guideIO()
+                    buildNextMoveProcedure(
+                        bot,
+                        config,
+                        service,
+                        boardPublisher,
+                        session,
+                        messageBufferKey!!
+                    )()
+                }
+
+                tuple(io, this.writeCommandReport("make move ${this.pos}", channel, user))
+            }
         }
     }
 

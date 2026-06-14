@@ -5,7 +5,6 @@ package discord.route
 import arrow.core.Either
 import arrow.core.flatMap
 import arrow.core.raise.effect
-import core.assets.DUMMY_MESSAGE_REF
 import core.database.repositories.AnnounceRepository
 import core.interact.commands.*
 import core.interact.i18n.Language
@@ -29,7 +28,7 @@ import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
-import utils.lang.replaceIf
+import utils.replaceIf
 import java.util.concurrent.TimeUnit
 import kotlin.time.Clock
 
@@ -64,8 +63,8 @@ private fun <T : Event> buildAnnounceNode(context: UserInteractionContext<T>, co
     }
 
 private fun <T : Event> buildUpdateProfileNode(context: UserInteractionContext<T>, jdaUser: User, command: Command): Command {
-    val user = jdaUser.extractProfile(uid = context.user.id, announceId = context.user.announceId)
-    val channel = context.jdaChannel.extractProfile(uid = context.channel.id)
+    val user = jdaUser.profile(uid = context.user.id, announceId = context.user.announceId)
+    val channel = context.jdaChannel.profile(uid = context.channel.id)
 
     val maybeThenUser = if (user != context.user) user else null
     val maybeThenChannel = if (channel != context.channel) channel else null
@@ -102,6 +101,7 @@ private fun matchCommand(command: String, container: LanguageContainer): Parsabl
         container.rankCommand() -> RankCommandParser
         container.ratingCommand() -> RatingCommandParser
         container.replayCommand() -> ReplayListCommandParser
+        container.boardCommand() -> BoardCommandParser
         else -> null
     }
 
@@ -109,7 +109,7 @@ fun commandAutoCompleteRouter(event: CommandAutoCompleteInteractionEvent) {
     if (event.name != SetCommandParser.name)
         return
 
-    event.replyChoiceStrings(*SetCommandParser.autoCompletePositions(event.focusedOption.value).toTypedArray()).queue()
+    // TODO
 }
 
 suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEvent>): Report? {
@@ -152,7 +152,6 @@ suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInter
                 channel = context.channel,
                 user = context.user,
                 service = DiscordMessagingService,
-                messageRef = DUMMY_MESSAGE_REF,
                 publishers = when (command.responseFlag) {
                     is ResponseFlag.Defer -> AdaptivePublisherSet(
                         plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate())) },
@@ -247,7 +246,6 @@ suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEve
                 channel = context.channel,
                 user = context.user,
                 service = DiscordMessagingService,
-                messageRef = context.event.message.extractMessageRef(),
                 publishers = MonoPublisherSet(
                     publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.asDiscordMessageData().buildCreate())) },
                     editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.asDiscordMessageData().buildEdit()) } },

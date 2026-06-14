@@ -39,8 +39,8 @@ package renju.notation
             if (isValidIdx(idx)) Pos(idx)
             else throw IllegalArgumentException()
 
-        fun fromCartesian(source: String?): Pos? {
-            val normalized = source?.trim()?.lowercase() ?: return null
+        fun fromCartesian(source: String): Pos? {
+            val normalized = source.trim().lowercase()
 
             if (normalized.length !in 2..3) {
                 return null

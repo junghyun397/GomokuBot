@@ -1,28 +1,29 @@
 package core.session.entities
 
 import core.assets.User
-import core.assets.humanId
 import renju.GameState
 import renju.notation.ColorContainer
 import renju.notation.GameResult
+import renju.notation.Pos
 import kotlin.time.Instant
 
-data class GameSessionContext(
+data class GameSessionContext<T: User>(
     val id: SessionId,
-    val user: ColorContainer<User>,
+    val users: ColorContainer<T>,
     val state: GameState,
     val messageBufferKey: MessageBufferKey,
     val expireService: ExpireService,
+    val ruleKind: Rule,
 ) {
 
     fun next(
-        user: ColorContainer<User> = this.user,
         state: GameState = this.state,
+        users: ColorContainer<T> = this.users,
         messageBufferKey: MessageBufferKey = MessageBufferKey.issue(),
         expireService: ExpireService = this.expireService.next(),
-    ): GameSessionContext =
+    ): GameSessionContext<T> =
         this.copy(
-            user = user,
+            users = users,
             state = state,
             messageBufferKey = messageBufferKey,
             expireService = expireService,
@@ -32,45 +33,32 @@ data class GameSessionContext(
 
 sealed interface GameSession : Expirable {
 
-    val context: GameSessionContext
-
-    val id get() = this.context.id
-    val expireService get() = this.context.expireService
+    val id: SessionId
+    val expireService: ExpireService
     override val expireDate: Instant get() = this.expireService.expireAt
     val recording: Boolean
 
-    val ruleKind: Rule
-    val state get() = this.context.state
+    val state: GameState
     val gameResult: GameResult?
 
-    val user get() = this.context.user
-    val player get() = this.user[this.state.board.playerColor]
-    val opponent get() = this.user[!this.state.board.playerColor]
+    val users: ColorContainer<User>
+    val player get() = this.users[this.state.board.playerColor]
+    val opponent get() = this.users[!this.state.board.playerColor]
 
-    val messageBufferKey get() = this.context.messageBufferKey
-    val participantIds get() = setOfNotNull(this.user.black.humanId, this.user.white.humanId)
+    val messageBufferKey: MessageBufferKey
 
-}
+    val ruleKind: Rule
 
-sealed interface RenjuSession : GameSession {
-
-    fun next(state: GameState, gameResult: GameResult?, messageBufferKey: MessageBufferKey): RenjuSession
-
-    fun anonymous(): RenjuSession
+    fun isLegalMove(move: Pos): Boolean = this.state.board.isLegalMove(move)
 
 }
 
-internal fun User.anonymous(): User =
-    when (this) {
-        User.GomokuBot -> User.GomokuBot
-        is User.Human, User.Anonymous -> User.Anonymous
-    }
+sealed interface PlayGameSession : GameSession
 
-internal fun GameResult?.anonymous(): GameResult? =
-    when (this) {
-        is GameResult.Win -> this.copy(
-            winner = this.winner.anonymous(),
-            loser = this.loser.anonymous(),
-        )
-        else -> this
-    }
+sealed interface UserSession : GameSession {
+
+    override val users: ColorContainer<User.Human>
+    override val player: User.Human
+    override val opponent: User.Human
+
+}

@@ -4,16 +4,15 @@ import arrow.core.Either
 import core.BotConfig
 import core.assets.*
 import core.database.DatabaseConnection
-import core.mintaka.FocusSolver
+import core.engine.FocusSolver
 import core.interact.i18n.Language
 import core.interact.message.MessagingServiceImpl
 import core.interact.message.SettingMapping
 import renju.notation.Pos
-import utils.assets.toBytes
-import utils.structs.Identifiable
-import utils.structs.find
+import utils.Identifiable
+import utils.find
+import utils.toBytes
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 
 enum class NavigationKind(override val id: Short, val range: Either<(DatabaseConnection) -> IntRange, IntRange>, val navigators: Set<String>) : Identifiable {
@@ -69,7 +68,7 @@ data class PageNavigationState(
             return ((baseBytes[0] + kind.id) shl 16) or ((baseBytes[1] + headByte) shl 8) or (baseBytes[2] + tailByte)
         }
 
-        fun decodeFromColor(base: Int, code: Int, config: BotConfig, messageRef: MessageRef, dbConnection: DatabaseConnection): PageNavigationState? {
+        fun decodeFromColor(base: Int, code: Int, messageRef: MessageRef, dbConnection: DatabaseConnection): PageNavigationState? {
             val (kindRaw, pageTop, pageBottom) = base.toBytes()
                 .zip(code.toBytes()) { a, b -> b - a }
                 .drop(1)
@@ -78,7 +77,7 @@ data class PageNavigationState(
             val page = pageTop + pageBottom
 
             return if (kind != NavigationKind.BOARD && page in kind.fetchRange(dbConnection))
-                PageNavigationState(messageRef, kind, page, Clock.System.now() + config.navigatorExpireAfter.milliseconds)
+                PageNavigationState(messageRef, kind, page, Clock.System.now() + BotConfig.navigatorExpireAfter)
             else null
         }
 

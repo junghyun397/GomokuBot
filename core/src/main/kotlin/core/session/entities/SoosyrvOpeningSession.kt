@@ -1,5 +1,6 @@
 package core.session.entities
 
+import core.assets.User
 import renju.notation.Pos
 
 sealed interface SoosyrvOpeningSession : OpeningSession {
@@ -9,11 +10,9 @@ sealed interface SoosyrvOpeningSession : OpeningSession {
 }
 
 data class SoosyrvMoveStageSession(
-    override val context: GameSessionContext,
+    override val context: GameSessionContext<User.Human>,
     override val isBranched: Boolean
 ) : SoosyrvOpeningSession, MoveStageOpeningSession {
-
-    override fun validateMove(move: Pos) = this.inSquare(move)
 
     override fun inSquare(move: Pos): Boolean =
         this.isBranched ||
@@ -22,12 +21,12 @@ data class SoosyrvMoveStageSession(
 
     override val player get() =
         if (this.state.history.moves < 2)
-            this.user.black
+            this.users.black
         else super<MoveStageOpeningSession>.player
 
     override val opponent get() =
         if (this.state.history.moves < 2)
-            this.user.white
+            this.users.white
         else super<MoveStageOpeningSession>.opponent
 
     override fun next(move: Pos): SoosyrvOpeningSession =
@@ -48,23 +47,23 @@ data class SoosyrvMoveStageSession(
 }
 
 data class SoosyrvSwapStageSession(
-    override val context: GameSessionContext,
+    override val context: GameSessionContext<User.Human>,
     override val offerCount: Int?
 ) : SoosyrvOpeningSession, SwapStageOpeningSession {
 
     override val isBranched = true
 
     override fun swap(doSwap: Boolean): SoosyrvOpeningSession {
-        val user = if (doSwap) this.user.swap() else this.user
+        val users = if (doSwap) this.users.swap() else this.users
 
         return if (this.offerCount == null)
             SoosyrvMoveStageSession(
-                context = this.context.next(user = user),
+                context = this.context.next(users = users),
                 isBranched = true
             )
         else
             SoosyrvOfferStageOpeningSession(
-                context = this.context.next(user = user),
+                context = this.context.next(users = users),
                 moveCandidates = emptySet(),
                 symmetryMoves = emptySet(),
                 offerCount = this.offerCount
@@ -74,7 +73,7 @@ data class SoosyrvSwapStageSession(
 }
 
 data class SoosyrvDeclareStageOpeningSession(
-    override val context: GameSessionContext,
+    override val context: GameSessionContext<User.Human>,
 ) : SoosyrvOpeningSession, DeclareStageOpeningSession {
 
     override val player get() = super<DeclareStageOpeningSession>.opponent
@@ -92,7 +91,7 @@ data class SoosyrvDeclareStageOpeningSession(
 }
 
 data class SoosyrvOfferStageOpeningSession(
-    override val context: GameSessionContext,
+    override val context: GameSessionContext<User.Human>,
     override val moveCandidates: Set<Pos>,
     override val symmetryMoves: Set<Pos>,
     val offerCount: Int
@@ -116,7 +115,7 @@ data class SoosyrvOfferStageOpeningSession(
 }
 
 data class SoosyrvSelectStageOpeningSession(
-    override val context: GameSessionContext,
+    override val context: GameSessionContext<User.Human>,
     override val moveCandidates: Set<Pos>,
 ) : SoosyrvOpeningSession, SelectStageOpeningSession {
 
@@ -125,7 +124,6 @@ data class SoosyrvSelectStageOpeningSession(
             context = this.context.next(state = this.state.play(move)),
             gameResult = this.gameResult,
             recording = true,
-            ruleKind = Rule.SOOSYRV_8,
         )
 
 }

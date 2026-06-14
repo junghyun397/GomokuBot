@@ -1,17 +1,17 @@
 package core.session.entities
 
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration
 import kotlin.time.Instant
 
 data class ExpireService(
-    val offset: Long,
+    val offset: Duration,
     val expireAt: Instant,
     val createDate: Instant
 ) {
 
-    constructor(offset: Long) : this(offset, Clock.System.now() + offset.milliseconds, Clock.System.now())
+    constructor(offset: Duration) : this(offset, Clock.System.now() + offset, Clock.System.now())
 
-    fun next(): ExpireService = this.copy(expireAt = Clock.System.now() + this.offset.milliseconds)
+    fun next(): ExpireService = this.copy(expireAt = Clock.System.now() + this.offset)
 
 }

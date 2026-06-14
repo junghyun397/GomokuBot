@@ -3,15 +3,15 @@ package core.interact.commands
 import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import core.BotContext
+import core.engine.FocusSolver
 import core.interact.Order
 import core.interact.message.MessagePublisher
 import core.interact.message.MessagingService
 import core.interact.message.SentMessage
-import core.mintaka.FocusSolver
 import core.session.MessageManager
 import core.session.SessionManager
 import core.session.entities.*
-import utils.lang.replaceIf
+import utils.replaceIf
 
 fun buildAppendGameMessageProcedure(
     message: SentMessage?,
@@ -29,10 +29,10 @@ fun buildNextMoveProcedure(
     service: MessagingService,
     publisher: MessagePublisher,
     session: GameSession,
-    thenSession: GameSession,
+    cleanupMessages: MessageBufferKey,
 ): Effect<Nothing, List<Order>> = effect {
-    buildBoardProcedure(bot, config, service, publisher, thenSession)()
-    buildSwapProcedure(bot, config, session)()
+    buildBoardProcedure(bot, config, service, publisher, session)()
+    buildSwapProcedure(bot, config, cleanupMessages)()
 }
 
 fun buildBoardProcedure(
@@ -75,11 +75,11 @@ fun buildBoardProcedure(
 private fun buildSwapProcedure(
     bot: BotContext,
     config: ChannelConfig,
-    session: GameSession
+    cleanupMessages: MessageBufferKey,
 ): Effect<Nothing, List<Order>> = effect { when (config.swapType) {
-    SwapType.RELAY -> listOf(Order.BulkDelete(MessageManager.checkoutMessages(bot.sessions, session.messageBufferKey).orEmpty()))
+    SwapType.RELAY -> listOf(Order.BulkDelete(MessageManager.checkoutMessages(bot.sessions, cleanupMessages).orEmpty()))
     SwapType.ARCHIVE -> {
-        MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
+        MessageManager.viewHeadMessage(bot.sessions, cleanupMessages)
             ?.let { listOf(Order.RemoveNavigators(it, reduceComponents = true)) }
             ?: emptyList()
     }
@@ -92,14 +92,14 @@ fun buildFinishProcedure(
     publisher: MessagePublisher,
     config: ChannelConfig,
     session: GameSession,
-    thenSession: GameSession
+    cleanupMessages: MessageBufferKey,
 ): Effect<Nothing, List<Order>> = effect {
-    val message = service.buildBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, thenSession)
+    val message = service.buildBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, session)
         .retrieve()()
 
-    val originalOrder = buildSwapProcedure(bot, config, session)()
+    val originalOrder = buildSwapProcedure(bot, config, cleanupMessages)()
 
-    if (message != null && thenSession.gameResult != null && config.swapType == SwapType.EDIT)
+    if (message != null && session.gameResult != null && config.swapType == SwapType.EDIT)
         originalOrder + Order.RemoveNavigators(message.ref, reduceComponents = true)
     else
         originalOrder

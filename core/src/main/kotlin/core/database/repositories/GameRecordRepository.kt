@@ -8,18 +8,15 @@ import core.database.entities.GameRecord
 import core.database.entities.GameRecordId
 import core.database.jooq.tables.records.GameRecordRecord
 import core.database.jooq.tables.references.GAME_RECORD
-import core.mintaka.EngineLevel
+import core.engine.EngineLevel
 import core.session.entities.Rule
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import renju.notation.Color
-import renju.notation.ColorContainer
-import renju.notation.GameResult
-import renju.notation.Pos
-import utils.lang.toUtcInstant
-import utils.structs.find
+import renju.notation.*
+import utils.find
+import utils.toUtcInstant
 import java.time.LocalDateTime
 import java.util.*
 
@@ -30,8 +27,8 @@ object GameRecordRepository {
             connection.jooq
                 .insertInto(GAME_RECORD)
                 .set(GAME_RECORD.HISTORY, record.history.map { it.idx as Int? }.toTypedArray())
-                .set(GAME_RECORD.CAUSE, record.gameResult.cause.id)
-                .set(GAME_RECORD.WIN_COLOR, record.gameResult.winColorId)
+                .set(GAME_RECORD.CAUSE, record.gameResult.id)
+                .set(GAME_RECORD.WIN_COLOR, record.gameResult.winner.toByte())
                 .set(GAME_RECORD.CHANNEL_ID, record.channelId.uuid)
                 .set(GAME_RECORD.BLACK_ID, record.userUid.black?.uuid)
                 .set(GAME_RECORD.WHITE_ID, record.userUid.white?.uuid)
@@ -132,11 +129,7 @@ object GameRecordRepository {
         return GameRecord(
             gameRecordId = GameRecordId(gameRecordRow.recordId),
             history = gameRecordRow.history.map { Pos.fromIdx(it) },
-            gameResult = GameResult.build(
-                gameResult = GameResult.fromFlag(gameRecordRow.winColor ?: Color.emptyFlag()),
-                cause = GameResult.Cause.entries.find(gameRecordRow.cause),
-                users = recordUsers
-            )!!,
+            gameResult = GameResult.fromId(gameRecordRow.cause, Color.from(gameRecordRow.winColor))!!,
             channelId = ChannelUid(gameRecordRow.channelId),
             userUid = recordUsers.map { it?.id },
             engineLevel = gameRecordRow.engineLevel?.let { EngineLevel.entries.find(it) },

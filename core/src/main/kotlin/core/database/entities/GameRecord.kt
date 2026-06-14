@@ -2,8 +2,7 @@ package core.database.entities
 
 import core.assets.ChannelUid
 import core.assets.UserUid
-import core.assets.humanId
-import core.mintaka.EngineLevel
+import core.engine.EngineLevel
 import core.session.entities.EngineGameSession
 import core.session.entities.GameSession
 import core.session.entities.Rule
@@ -33,13 +32,13 @@ fun GameSession.extractGameRecord(channelUid: ChannelUid): GameRecord? =
         GameRecord(
             gameRecordId = null,
             channelId = channelUid,
-            userUid = this.user.map { it.humanId },
+            userUid = this.users.map { it.id },
 
             rule = this.ruleKind,
             history = this.state.history.sequence.filterNotNull(),
             gameResult = this.gameResult!!,
             engineLevel = when (this) {
-                is EngineGameSession -> EngineLevel.AMOEBA
+                is EngineGameSession -> this.engineLevel
                 else -> null
             },
 

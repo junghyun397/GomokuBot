@@ -1,7 +1,7 @@
 package core.interact.i18n
 
 import renju.notation.ColorContainer
-import utils.structs.Identifiable
+import utils.Identifiable
 
 enum class Language(override val id: Short, val container: LanguageContainer) : Identifiable {
     ENG(0, LanguageENG()),

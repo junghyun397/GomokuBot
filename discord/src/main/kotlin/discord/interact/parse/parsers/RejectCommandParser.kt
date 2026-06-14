@@ -3,6 +3,7 @@ package discord.interact.parse.parsers
 import core.interact.commands.Command
 import core.interact.commands.RejectCommand
 import core.session.SessionManager
+import discord.assets.messageRef
 import discord.interact.UserInteractionContext
 import discord.interact.parse.EmbeddableCommand
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
@@ -15,9 +16,9 @@ object RejectCommandParser : EmbeddableCommand {
             ?: return null
 
         val requestSession = SessionManager.retrieveRequestSession(context.bot.sessions, sessionId).snapshot()
-        val accepted = requestSession.opponent.id == context.user.id
+        val accepted = requestSession.recipient.id == context.user.id
 
-        return if (accepted) RejectCommand(sessionId) else null
+        return if (accepted) RejectCommand(sessionId, context.event.message.messageRef()) else null
     }
 
 }
