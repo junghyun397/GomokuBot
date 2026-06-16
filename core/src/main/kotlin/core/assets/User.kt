@@ -8,6 +8,8 @@ sealed interface User {
     val id: UserUid?
     val profileURL: String?
 
+    fun anonymous(): User
+
     data class Human(
         override val name: String,
         override val profileURL: String?,
@@ -20,6 +22,8 @@ sealed interface User {
 
         override fun toString() = "[${this.uniqueName}](${this.id.uuid})"
 
+        override fun anonymous() = ANONYMOUS
+
         val isAnonymous get() = this == ANONYMOUS
 
     }
@@ -30,6 +34,8 @@ sealed interface User {
 
         override val id = null
         override val profileURL = null
+
+        override fun anonymous() = this
 
     }
 

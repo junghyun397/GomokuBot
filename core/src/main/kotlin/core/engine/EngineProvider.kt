@@ -78,7 +78,7 @@ object EngineProvider {
                 setBody(CreateSessionRequest(
                     api_password = server.password.ifBlank { null },
                     config = engineLevel.config,
-                    state = GameStateData(state.board.toBoardData(), state.history.toStringList()),
+                    state = GameStateData(state.board.toBoardData(), state.history.map { it.toStringOrNone() }),
                 ))
             }
 

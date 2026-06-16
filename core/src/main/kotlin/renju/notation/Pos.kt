@@ -1,5 +1,7 @@
 package renju.notation
 
+import renju.native.RustyRenjuCApi
+
 @JvmInline value class Pos(private val value: Int) {
 
     constructor(row: Int, col: Int) : this(rowColToIdx(row, col))
@@ -39,6 +41,13 @@ package renju.notation
             if (isValidIdx(idx)) Pos(idx)
             else throw IllegalArgumentException()
 
+        fun fromIdxOrNone(idx: Int): Pos? =
+            when (idx) {
+                RustyRenjuCApi.constants.posNone -> null
+                in 0 until BOARD_SIZE -> Pos(idx)
+                else -> throw IllegalArgumentException()
+            }
+
         fun fromCartesian(source: String): Pos? {
             val normalized = source.trim().lowercase()
 
@@ -56,6 +65,8 @@ package renju.notation
     }
 
 }
+
+fun Pos?.toIdxOrNone(): Int = this?.idx ?: RustyRenjuCApi.constants.posNone
 
 fun Pos?.toStringOrNone(): String {
     return this?.toString() ?: "none"

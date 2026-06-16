@@ -4,24 +4,18 @@ import renju.notation.Pos
 
 data class GameState(val board: Board, val history: History) {
 
-    fun play(pos: Pos): GameState =
+    fun play(pos: Pos?): GameState =
         this.copy(
             board = this.board.set(pos),
             history = this.history.play(pos),
         )
 
-    fun pass(): GameState =
-        this.copy(
-            board = this.board.set(null),
-            history = this.history.pass(),
-        )
-
     fun undo(): GameState =
-        if (this.history.isEmpty) {
+        if (this.history.isEmpty()) {
             this
         } else {
             this.copy(
-                board = this.board.unset(this.history.lastAction),
+                board = this.board.unset(this.history.last()),
                 history = this.history.undo(),
             )
         }

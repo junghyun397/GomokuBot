@@ -18,7 +18,6 @@ import core.session.entities.Rule
 import kotlinx.coroutines.flow.Flow
 import renju.notation.ColorContainer
 import renju.notation.ForbiddenKind
-import renju.notation.GameResult
 import renju.notation.Pos
 
 interface MessagePayload
@@ -87,11 +86,9 @@ interface MessagingService {
 
     fun buildFocusedButtons(focusedFields: FocusedFields): MessageComponents
 
-    fun buildBoard(publisher: MessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession): MessageBuilder
+    fun buildBoard(publisher: MessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, draw: BoardDraw, session: GameSession?): MessageBuilder
 
-    fun buildReplayBoard(publisher: MessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession, totalMoves: Int): MessageBuilder
-
-    fun buildSessionArchive(publisher: MessagePublisher, session: GameSession, result: GameResult?): MessageBuilder
+    fun buildSessionArchive(publisher: MessagePublisher, draw: BoardDraw): MessageBuilder
 
     fun dispatchFocusButtons(publisher: ComponentPublisher, focusedFields: FocusedFields): MessageBuilder
 
@@ -123,7 +120,7 @@ interface MessagingService {
 
     fun buildTiePvp(publisher: MessagePublisher, container: LanguageContainer, players: ColorContainer<User>): MessageBuilder
 
-    fun buildResignedPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User): MessageBuilder
+    fun buildResignsPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User): MessageBuilder
 
     fun buildTimeoutPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User): MessageBuilder
 
@@ -135,7 +132,7 @@ interface MessagingService {
 
     fun buildEngineTie(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User): MessageBuilder
 
-    fun buildResignedEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User): MessageBuilder
+    fun buildResignsEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User): MessageBuilder
 
     fun buildTimeoutEngine(publisher: MessagePublisher, container: LanguageContainer, player: User): MessageBuilder
 
@@ -145,7 +142,9 @@ interface MessagingService {
 
     fun buildBackToListButton(): MessageComponents
 
-    fun buildReplayList(publisher: MessagePublisher, container: LanguageContainer, player: User.Human, records: List<Pair<User, GameRecord>>): MessageBuilder
+    fun buildReplayList(publisher: MessagePublisher, container: LanguageContainer, player: User.Human, records: List<GameRecord>): MessageBuilder
+
+    fun buildReplay(publisher: MessagePublisher, container: LanguageContainer, gameRecord: GameRecord): MessageBuilder
 
     // HELP
 

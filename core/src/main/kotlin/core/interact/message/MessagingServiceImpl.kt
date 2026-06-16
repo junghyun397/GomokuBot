@@ -36,21 +36,18 @@ abstract class MessagingServiceImpl : MessagingService {
     protected infix fun MessagePublisher.sends(message: String) =
         this@MessagingServiceImpl.sendString(message, this)
 
-    protected fun unicodeStone(color: Color) =
-        if (color == Color.BLACK) UNICODE_BLACK_CIRCLE else UNICODE_WHITE_CIRCLE
-
     protected fun User.withColor(color: Color) =
-        "${this.name}${this@MessagingServiceImpl.unicodeStone(color)}"
+        "${this.name}${UNICODE_STONE[color]}"
 
-    protected fun GameSession.blackPlayerWithColor() =
+    protected fun BoardDraw.blackPlayerWithColor() =
         this.users.black.withColor(Color.BLACK)
 
-    protected fun GameSession.whitePlayerWithColor() =
+    protected fun BoardDraw.whitePlayerWithColor() =
         this.users.white.withColor(Color.WHITE)
 
     override fun generateFocusedField(session: GameSession, focusInfo: FocusSolver.FocusInfo): FocusedFields {
         val half = this.focusWidth / 2
-        val lastMove = session.state.history.lastAction
+        val lastMove = session.state.history.lastOrNull()
 
         fun focusedButtonFlag(pos: Pos): ButtonFlag =
             when (session.state.board.stoneKind(pos)) {
@@ -70,7 +67,7 @@ abstract class MessagingServiceImpl : MessagingService {
                     session is SelectStageOpeningSession ->
                         ButtonFlag.HIGHLIGHTED
                     else ->
-                        ButtonFlag.FREE
+                        ButtonFlag.EMPTY
                 }
             }
 
@@ -134,7 +131,7 @@ abstract class MessagingServiceImpl : MessagingService {
     override fun buildTiePvp(publisher: MessagePublisher, container: LanguageContainer, players: ColorContainer<User>) =
         publisher sends container.endPvpTie(players.map { it.asMentionFormat() })
 
-    override fun buildResignedPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User) =
+    override fun buildResignsPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User) =
         publisher sends container.endPvpResign(winner.asMentionFormat(), loser.asMentionFormat())
 
     override fun buildTimeoutPvp(publisher: MessagePublisher, container: LanguageContainer, winner: User, loser: User) =
@@ -152,7 +149,7 @@ abstract class MessagingServiceImpl : MessagingService {
     override fun buildEngineTie(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User) =
         publisher sends container.endEngineTie(humanPlayer.asMentionFormat())
 
-    override fun buildResignedEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User) =
+    override fun buildResignsEngine(publisher: MessagePublisher, container: LanguageContainer, humanPlayer: User) =
         publisher sends container.endEngineResign(humanPlayer.asMentionFormat())
 
     override fun buildTimeoutEngine(publisher: MessagePublisher, container: LanguageContainer, player: User) =

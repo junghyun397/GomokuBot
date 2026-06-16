@@ -23,31 +23,31 @@ object OpeningCommandParser : EmbeddableCommand {
 
         if (session.player.id != context.user.id) return null
 
-        val id = when (context.event) {
+        val (_, option) = when (context.event) {
             is StringSelectInteractionEvent -> context.event.interaction.selectedOptions.first().value
             else -> context.event.componentId
-        }
+        }.split("-")
 
-        return when (id[2]) {
+        return when (option.first()) {
             's' -> {
                 if (session !is SwapStageOpeningSession) return null
 
-                val doSwap = id[3] == 'y'
+                val doSwap = option[1] == 'y'
 
                 OpeningSwapCommand(sessionId, doSwap, context.event.message.messageRef())
             }
             'b' -> {
                 if (session !is BranchingStageOpeningSession) return null
 
-                val takeBranch = id[3] == 'y'
+                val takeBranch = option[1] == 'y'
 
                 OpeningBranchingCommand(sessionId, takeBranch, context.event.message.messageRef())
             }
             'd' -> {
                 if (session !is DeclareStageOpeningSession) return null
 
-                id
-                    .drop(3)
+                option
+                    .drop(1)
                     .toIntOrNull()
                     ?.let { OpeningDeclareCommand(sessionId, it, context.event.message.messageRef()) }
             }

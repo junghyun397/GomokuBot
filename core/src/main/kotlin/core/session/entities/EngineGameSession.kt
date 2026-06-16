@@ -2,6 +2,7 @@ package core.session.entities
 
 import arrow.core.Either
 import core.assets.User
+import core.engine.EloRating
 import core.engine.EngineLevel
 import core.engine.MintakaServer
 import core.engine.MintakaSession
@@ -15,6 +16,7 @@ data class EngineGameSession(
     val userColor: Color,
     val humanPlayer: User.Human,
     val engineLevel: EngineLevel,
+    val userRating: EloRating,
     override val recording: Boolean,
 ) : PlayGameSession {
 
@@ -29,6 +31,6 @@ data class EngineGameSession(
 
     override val messageBufferKey = this.context.messageBufferKey
 
-    override val ruleKind = this.context.ruleKind
+    override val rule = this.context.ruleKind
 
 }

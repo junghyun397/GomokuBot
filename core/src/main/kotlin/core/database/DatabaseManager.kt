@@ -18,8 +18,4 @@ object DatabaseManager {
         connection.localCaches.announceCache = AnnounceRepository.fetchAnnounces(connection)
     }
 
-    internal fun smallIntToByte(smallInt: Any?): Byte = (smallInt as Short).toByte()
-
-    internal fun smallIntToMaybeByte(smallInt: Any?): Byte? = (smallInt as? Short)?.toByte()
-
 }

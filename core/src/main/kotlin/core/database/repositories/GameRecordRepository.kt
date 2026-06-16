@@ -14,11 +14,10 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import renju.History
 import renju.notation.*
 import utils.find
 import utils.toUtcInstant
-import java.time.LocalDateTime
-import java.util.*
 
 object GameRecordRepository {
 
@@ -26,19 +25,19 @@ object GameRecordRepository {
         Mono.from(
             connection.jooq
                 .insertInto(GAME_RECORD)
-                .set(GAME_RECORD.HISTORY, record.history.map { it.idx as Int? }.toTypedArray())
+                .set(GAME_RECORD.HISTORY, record.history.sequence.map { it.toIdxOrNone().toShort() }.toTypedArray())
                 .set(GAME_RECORD.CAUSE, record.gameResult.id)
                 .set(GAME_RECORD.WIN_COLOR, record.gameResult.winner.toByte())
                 .set(GAME_RECORD.CHANNEL_ID, record.channelId.uuid)
-                .set(GAME_RECORD.BLACK_ID, record.userUid.black?.uuid)
-                .set(GAME_RECORD.WHITE_ID, record.userUid.white?.uuid)
+                .set(GAME_RECORD.BLACK_ID, record.users.black.id?.uuid)
+                .set(GAME_RECORD.WHITE_ID, record.users.white.id?.uuid)
                 .set(GAME_RECORD.ENGINE_LEVEL, record.engineLevel?.id)
                 .set(GAME_RECORD.RULE, record.rule.id)
         )
             .awaitSingle()
     }
 
-    suspend fun retrieveGameRecordsByChannelUid(connection: DatabaseConnection, channelUid: ChannelUid, limit: Int): MutableList<GameRecord> =
+    suspend fun retrieveGameRecords(connection: DatabaseConnection, channelUid: ChannelUid, limit: Int): MutableList<GameRecord> =
         Flux.from(
             connection.jooq
                 .selectFrom(GAME_RECORD)
@@ -46,12 +45,11 @@ object GameRecordRepository {
                 .orderBy(GAME_RECORD.CREATE_DATE.desc())
                 .limit(limit)
         )
-            .map { this.extractGameRecordData(it) }
             .collectList()
             .awaitSingle()
             .let { this.buildGameRecords(connection, it) }
 
-    suspend fun retrieveGameRecordsByUserUid(connection: DatabaseConnection, userUid: UserUid, limit: Int): MutableList<GameRecord> =
+    suspend fun retrieveGameRecords(connection: DatabaseConnection, userUid: UserUid, limit: Int): MutableList<GameRecord> =
         Flux.from(
             connection.jooq
                 .selectFrom(GAME_RECORD)
@@ -59,96 +57,52 @@ object GameRecordRepository {
                 .orderBy(GAME_RECORD.CREATE_DATE.desc())
                 .limit(limit)
         )
-            .map { this.extractGameRecordData(it) }
             .collectList()
             .awaitSingle()
             .let { this.buildGameRecords(connection, it) }
 
-    suspend fun retrieveLastGameRecordByUserUid(connection: DatabaseConnection, userUid: UserUid): GameRecord? =
-        Mono.from(
-            connection.jooq
-                .selectFrom(GAME_RECORD)
-                .where(GAME_RECORD.WHITE_ID.eq(userUid.uuid).or(GAME_RECORD.BLACK_ID.eq(userUid.uuid)))
-                .orderBy(GAME_RECORD.CREATE_DATE.desc())
-                .limit(1)
-        )
-            .map { this.extractGameRecordData(it) }
-            .awaitSingleOrNull()
-            ?.let { this.buildGameRecord(connection, it) }
-
-    suspend fun retrieveGameRecordByRecordId(connection: DatabaseConnection, recordId: GameRecordId): GameRecord? =
+    suspend fun retrieveGameRecord(connection: DatabaseConnection, recordId: GameRecordId): GameRecord? =
         Mono.from(
             connection.jooq
                 .selectFrom(GAME_RECORD)
                 .where(GAME_RECORD.RECORD_ID.eq(recordId.id.toInt()))
         )
-            .map { this.extractGameRecordData(it) }
             .awaitSingleOrNull()
             ?.let { this.buildGameRecord(connection, it) }
 
-    private fun extractGameRecordData(record: GameRecordRecord): GameRecordRow =
-        GameRecordRow(
-            record.recordId!!.toLong(),
-            record.blackId,
-            record.whiteId,
-            record.history!!.map { it!! }.toIntArray(),
-            record.winColor?.toByte(),
-            record.cause!!,
-            record.channelId!!,
-            record.engineLevel,
-            record.rule!!,
-            record.createDate!!
-        )
+    private suspend fun buildGameRecords(connection: DatabaseConnection, records: List<GameRecordRecord>): MutableList<GameRecord> {
+        val users = UserProfileRepository.retrieveUsers(connection, this.extractUserUids(records))
 
-    private suspend fun buildGameRecords(connection: DatabaseConnection, gameRecordRows: List<GameRecordRow>): MutableList<GameRecord> {
-        val users = UserProfileRepository.retrieveUsers(connection, this.extractUserUids(gameRecordRows))
-
-        return gameRecordRows
+        return records
             .map { this.buildGameRecord(it, users) }
             .toMutableList()
     }
 
-    private suspend fun buildGameRecord(connection: DatabaseConnection, gameRecordRow: GameRecordRow): GameRecord {
-        val users = UserProfileRepository.retrieveUsers(connection, this.extractUserUids(listOf(gameRecordRow)))
+    private suspend fun buildGameRecord(connection: DatabaseConnection, record: GameRecordRecord): GameRecord {
+        val users = UserProfileRepository.retrieveUsers(connection, this.extractUserUids(listOf(record)))
 
-        return this.buildGameRecord(gameRecordRow, users)
+        return this.buildGameRecord(record, users)
     }
 
-    private fun extractUserUids(gameRecordRows: List<GameRecordRow>): Set<UserUid> =
-        gameRecordRows
+    private fun extractUserUids(records: List<GameRecordRecord>): Set<UserUid> =
+        records
             .flatMap { listOfNotNull(it.blackId, it.whiteId) }
             .map { UserUid(it) }
             .toSet()
 
-    private fun buildGameRecord(gameRecordRow: GameRecordRow, users: Map<UserUid, User.Human>): GameRecord {
-        val recordUsers = ColorContainer(
-            black = gameRecordRow.blackId?.let { users.getValue(UserUid(it)) },
-            white = gameRecordRow.whiteId?.let { users.getValue(UserUid(it)) }
+    private fun buildGameRecord(record: GameRecordRecord, users: Map<UserUid, User.Human>) =
+        GameRecord(
+            gameRecordId = GameRecordId(record.recordId!!.toLong()),
+            history = History(record.history!!.map { Pos.fromIdxOrNone(it!!.toInt()) }),
+            gameResult = GameResult.fromId(record.cause!!, Color.from(record.winColor?.toByte()))!!,
+            channelId = ChannelUid(record.channelId!!),
+            users = ColorContainer(
+                black = record.blackId?.let { users.getValue(UserUid(it)) } ?: User.GomokuBot,
+                white = record.whiteId?.let { users.getValue(UserUid(it)) } ?: User.GomokuBot
+            ),
+            engineLevel = record.engineLevel?.let { EngineLevel.entries.find(it) },
+            rule = Rule.entries.find(record.rule!!),
+            date = record.createDate!!.toUtcInstant(),
         )
-
-        return GameRecord(
-            gameRecordId = GameRecordId(gameRecordRow.recordId),
-            history = gameRecordRow.history.map { Pos.fromIdx(it) },
-            gameResult = GameResult.fromId(gameRecordRow.cause, Color.from(gameRecordRow.winColor))!!,
-            channelId = ChannelUid(gameRecordRow.channelId),
-            userUid = recordUsers.map { it?.id },
-            engineLevel = gameRecordRow.engineLevel?.let { EngineLevel.entries.find(it) },
-            rule = Rule.entries.find(gameRecordRow.rule),
-            date = gameRecordRow.data.toUtcInstant(),
-        )
-    }
-
-    internal class GameRecordRow(
-        val recordId: Long,
-        val blackId: UUID?,
-        val whiteId: UUID?,
-        val history: IntArray,
-        val winColor: Byte?,
-        val cause: Short,
-        val channelId: UUID,
-        val engineLevel: Short?,
-        val rule: Short,
-        val data: LocalDateTime
-    )
 
 }

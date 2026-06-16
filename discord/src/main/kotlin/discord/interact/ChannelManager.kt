@@ -3,17 +3,15 @@ package discord.interact
 import arrow.core.raise.get
 import core.assets.ChannelUid
 import core.assets.MessageRef
-import core.assets.User
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
+import core.interact.message.SessionBoardDraw
 import core.session.entities.ArchivePolicy
-import core.session.entities.EngineGameSession
 import core.session.entities.GameSession
-import core.session.entities.PvpGameSession
 import dev.minn.jda.ktx.coroutines.await
 import discord.assets.JDAChannel
 import discord.assets.awaitNullable
-import discord.assets.getChannelMessageSubChannelById
+import discord.assets.subChannelById
 import discord.interact.message.DiscordMessagePublisher
 import discord.interact.message.DiscordMessagingService
 import discord.interact.message.MessageCreateAdaptor
@@ -28,12 +26,9 @@ import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.requests.RestAction
-import renju.notation.ColorContainer
-import renju.notation.setColor
 import utils.memoize
 import utils.replaceIf
 import utils.tuple
-import utils.unreachable
 
 object ChannelManager {
 
@@ -88,27 +83,14 @@ object ChannelManager {
     }
 
     suspend fun archiveSession(archiveSubChannel: MessageChannel, session: GameSession, archivePolicy: ArchivePolicy) {
-        if (session.state.history.moves < 20 || archivePolicy == ArchivePolicy.PRIVACY) return
-
-        val session = if (archivePolicy == ArchivePolicy.BY_ANONYMOUS) {
-            when (session) {
-                is PvpGameSession -> session.copy(
-                    context = session.context.copy(
-                        users = ColorContainer(User.ANONYMOUS, User.ANONYMOUS)
-                    )
-                )
-                is EngineGameSession -> session.copy(
-                    context = session.context.copy(
-                        users = session.context.users.setColor(session.userColor, User.ANONYMOUS)
-                    )
-                )
-                else -> unreachable()
-            }
-        } else session
+        if (session.state.history.size < 20 || archivePolicy == ArchivePolicy.PRIVACY) return
 
         val publisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(archiveSubChannel.sendMessage(msg.asDiscordMessageData().buildCreate())) }
 
-        DiscordMessagingService.buildSessionArchive(publisher, session, session.gameResult)
+        DiscordMessagingService.buildSessionArchive(publisher, SessionBoardDraw(
+            session,
+            anonymous = archivePolicy == ArchivePolicy.BY_ANONYMOUS
+        ))
             .launch()
             .get()
     }
@@ -125,7 +107,7 @@ object ChannelManager {
         messageRefs
             .groupBy { it.subChannelId }
             .flatMap { (subChannelId, messageRefs) ->
-                when (val channel = jdaChannel.getChannelMessageSubChannelById(subChannelId.idLong)) {
+                when (val channel = jdaChannel.subChannelById(subChannelId.idLong)) {
                     null -> emptyList<RestAction<*>>()
                     else -> {
                         this.permissionDependedRun(

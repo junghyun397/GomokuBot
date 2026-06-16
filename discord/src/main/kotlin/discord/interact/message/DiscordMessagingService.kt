@@ -14,6 +14,7 @@ import core.interact.message.graphics.BoardRenderer
 import core.interact.message.graphics.HistoryRenderType
 import core.interact.message.graphics.ImageBoardRenderer
 import core.session.entities.*
+import dev.minn.jda.ktx.coroutines.await
 import dev.minn.jda.ktx.interactions.components.StringSelectMenu
 import dev.minn.jda.ktx.interactions.components.option
 import dev.minn.jda.ktx.messages.Embed
@@ -32,9 +33,7 @@ import discord.interact.parse.buildableCommands
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.components.actionrow.ActionRow
 import net.dv8tion.jda.api.components.actionrow.ActionRowChildComponent
@@ -45,6 +44,8 @@ import net.dv8tion.jda.api.components.selections.SelectOption
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction
+import renju.Board
+import renju.GameState
 import renju.notation.Color
 import renju.notation.GameResult
 import renju.notation.Pos
@@ -52,7 +53,6 @@ import utils.memoize
 import utils.tuple
 import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
-import kotlin.time.Duration.Companion.milliseconds
 
 object DiscordMessagingService : MessagingServiceImpl() {
 
@@ -101,52 +101,44 @@ object DiscordMessagingService : MessagingServiceImpl() {
 
     // BOARD
 
-    private fun InlineEmbed.buildBoardAuthor(container: LanguageContainer, session: GameSession) =
+    private fun InlineEmbed.buildBoardAuthor(container: LanguageContainer, draw: BoardDraw) =
         author {
-            iconUrl = session.users.black.profileURL ?: session.users.white.profileURL
+            iconUrl = draw.users.black.profileURL ?: draw.users.white.profileURL
             name = buildString {
-                append(session.blackPlayerWithColor())
+                append(draw.blackPlayerWithColor())
                 append(" vs ")
-                append(session.whitePlayerWithColor())
+                append(draw.whitePlayerWithColor())
                 append(", ")
 
                 when {
-                    session.gameResult != null -> append(container.boardFinished())
-                    session is OpeningSession -> append(container.boardInOpening())
+                    draw.result != null -> append(container.boardFinished())
+//                    session is OpeningSession -> append(container.boardInOpening())
                     else -> append(container.boardInProgress())
                 }
             }
         }
 
-    private fun InlineEmbed.buildStatusFields(container: LanguageContainer, session: GameSession) {
-        session.state.history.lastAction
+    private fun InlineEmbed.buildStatusFields(container: LanguageContainer, draw: BoardDraw) {
+        draw.state.history.lastOrNull()
             ?.let { lastPos ->
                 field {
                     name = container.boardMoves()
-                    value = session.state.history.moves.toString().asHighlightFormat()
+                    value = draw.state.history.size.toString().asHighlightFormat()
                     inline = true
                 }
 
                 field {
-                    val colorInfo = if (session.state.board.playerColor == Color.BLACK) UNICODE_WHITE_CIRCLE else UNICODE_BLACK_CIRCLE
-
                     name = container.boardLastMove()
-                    value = "${colorInfo}${lastPos}".asHighlightFormat()
+                    value = "${EMOJI_STONE[!draw.state.board.playerColor]}${lastPos}".asHighlightFormat()
                     inline = true
                 }
             }
     }
 
-    private fun InlineEmbed.buildResultFields(container: LanguageContainer, session: GameSession, gameResult: GameResult) =
-        this.buildResultFields(container, gameResult, session.state.history.moves.toString().asHighlightFormat())
-
-    private fun InlineEmbed.buildResultFields(container: LanguageContainer, session: GameSession, gameResult: GameResult, totalMoves: Int) =
-        this.buildResultFields(container, gameResult, "${session.state.history.moves}/$totalMoves".asHighlightFormat())
-
-    private fun InlineEmbed.buildResultFields(container: LanguageContainer, gameResult: GameResult, movesFieldString: String) {
+    private fun InlineEmbed.buildResultFields(container: LanguageContainer, draw: BoardDraw, gameResult: GameResult) {
         field {
             name = container.boardMoves()
-            value = movesFieldString
+            value = draw.state.history.size.toString().asHighlightFormat()
             inline = true
         }
 
@@ -155,7 +147,7 @@ object DiscordMessagingService : MessagingServiceImpl() {
             value = when (gameResult) {
                 is GameResult.Win -> {
                     container.boardWinDescription(
-                        "${gameResult.winner.name}${unicodeStone(gameResult.winner)}".asHighlightFormat()
+                        "${gameResult.winner.name}${UNICODE_STONE[gameResult.winner]}".asHighlightFormat()
                     )
                 }
                 is GameResult.Full -> { container.boardTieDescription().asHighlightFormat() }
@@ -164,7 +156,7 @@ object DiscordMessagingService : MessagingServiceImpl() {
         }
     }
 
-    private fun MutableList<MessageEmbed>.buildGuideEmbed(session: GameSession, container: LanguageContainer) {
+    private fun buildGuideEmbed(session: GameSession, container: LanguageContainer): MessageEmbed? {
         val text = when {
             (session is PvpGameSession || session is EngineGameSession || session is MoveStageOpeningSession)
                     && session.gameResult == null ->
@@ -176,10 +168,10 @@ object DiscordMessagingService : MessagingServiceImpl() {
             session is DeclareStageOpeningSession -> container.boardDeclareGuide()
             session is SelectStageOpeningSession -> container.boardSelectGuide()
             session is OfferStageOpeningSession -> container.boardOfferGuide(session.remainingMoves)
-            else -> return
+            else -> return null
         }
 
-        val embed = Embed {
+        return Embed {
             color = COLOR_GREEN_HEX
             description = text
 
@@ -190,14 +182,16 @@ object DiscordMessagingService : MessagingServiceImpl() {
                 }
             }
         }
-
-        add(embed)
     }
 
-    override fun buildBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession): DiscordMessageBuilder {
-        val barColor = if (session.gameResult != null) COLOR_RED_HEX else COLOR_GREEN_HEX
+    override fun buildBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, draw: BoardDraw, session: GameSession?): DiscordMessageBuilder {
+        val barColor =
+            if (draw.result != null) COLOR_RED_HEX
+            else COLOR_GREEN_HEX
 
-        val modRenderType = if (session.gameResult != null) HistoryRenderType.SEQUENCE else renderType
+        val modRenderType =
+            if (draw.result != null) HistoryRenderType.SEQUENCE
+            else renderType
 
         val offers = when (session) {
             is NegotiateStageOpeningSession -> session.moveCandidates
@@ -208,25 +202,31 @@ object DiscordMessagingService : MessagingServiceImpl() {
             is MoveStageOpeningSession -> (0 until Pos.BOARD_SIZE).map { Pos.fromIdx(it) }
                 .filterNot { session.isLegalMove(it) }
             is OfferStageOpeningSession -> (0 until Pos.BOARD_SIZE).map { Pos.fromIdx(it) }
-                .filter { session.state.board.stoneKind(it) == null && session.state.board.forbiddenKind(it) == null && it in session.symmetryMoves }
+                .filter {
+                    session.state.board.stoneKind(it) == null
+                            && session.state.board.forbiddenKind(it) == null
+                            && it in session.symmetryMoves
+                }
             else -> null
         }
 
-        return renderer.renderBoard(session.state, modRenderType, offers, blinds?.toSet()).fold(
+        return renderer.renderBoard(draw.state, modRenderType, offers, blinds?.toSet()).fold(
             ifLeft = { textBoard ->
                 publisher sends buildList {
                     add(Embed {
                         color = barColor
 
-                        buildBoardAuthor(container, session)
+                        buildBoardAuthor(container, draw)
                         description = textBoard
 
-                        session.gameResult
-                            ?.let { buildResultFields(container, session, it) }
-                            ?: buildStatusFields(container, session)
+                        draw.result
+                            ?.let { buildResultFields(container, draw, it) }
+                            ?: buildStatusFields(container, draw)
                     })
 
-                    buildGuideEmbed(session, container)
+                    session
+                        ?.let { buildGuideEmbed(it, container) }
+                        ?.let { add(it) }
                 }
             },
             ifRight = { imageStream ->
@@ -236,16 +236,17 @@ object DiscordMessagingService : MessagingServiceImpl() {
                     add(Embed {
                         color = barColor
 
-                        buildBoardAuthor(container, session)
+                        buildBoardAuthor(container, draw)
 
-                        session.gameResult
-                            ?.let { buildResultFields(container, session, it) }
-                            ?: buildStatusFields(container, session)
+                        draw.result
+                            ?.let { buildResultFields(container, draw, it) }
+                            ?: buildStatusFields(container, draw)
 
                         image = "attachment://$fName"
                     })
 
-                    buildGuideEmbed(session, container)
+                    if (session != null)
+                        buildGuideEmbed(session, container)
                 }
 
                 messageBuilder.addFile(imageStream, fName)
@@ -253,57 +254,48 @@ object DiscordMessagingService : MessagingServiceImpl() {
         )
     }
 
-    override fun buildReplayBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, session: GameSession, totalMoves: Int): DiscordMessageBuilder {
-        val gameResult = session.gameResult!!
-
-        return renderer.renderBoard(session.state, renderType, null, null).fold(
-            ifLeft = { textBoard ->
-                publisher sends buildList {
+    fun buildReplayBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, draw: BoardDraw): DiscordMessageBuilder =
+        publisher sends buildList {
+            renderer.renderBoard(draw.state, renderType, null, null).fold(
+                ifLeft = { textBoard ->
                     add(Embed {
                         color = COLOR_NORMAL_HEX
 
-                        buildBoardAuthor(container, session)
-                        buildResultFields(container, session, gameResult, totalMoves)
+                        buildBoardAuthor(container, draw)
                         description = textBoard
                     })
+                },
+                ifRight = { imageStream ->
+                    val fName = ImageBoardRenderer.newFileName()
 
-                    buildGuideEmbed(session, container)
+                    val messageBuilder = publisher sends buildList {
+                        Embed {
+                            color = COLOR_NORMAL_HEX
+
+                            buildBoardAuthor(container, draw)
+
+                            image = "attachment://$fName"
+                        }
+                    }
+
+                    messageBuilder.addFile(imageStream, fName)
                 }
-            },
-            ifRight = { imageStream ->
-                val fName = ImageBoardRenderer.newFileName()
+            )
+        }
 
-                val messageBuilder = publisher sends buildList {
-                    add(Embed {
-                        color = COLOR_NORMAL_HEX
-
-                        buildBoardAuthor(container, session)
-                        buildResultFields(container, session, gameResult, totalMoves)
-
-                        image = "attachment://$fName"
-                    })
-
-                    buildGuideEmbed(session, container)
-                }
-
-                messageBuilder.addFile(imageStream, fName)
-            }
-        )
-    }
-
-    override fun buildSessionArchive(publisher: DiscordMessagePublisher, session: GameSession, result: GameResult?): DiscordMessageBuilder {
-        val imageStream = ImageBoardRenderer.renderInputStream(session.state, HistoryRenderType.SEQUENCE, null, null, true)
+    override fun buildSessionArchive(publisher: DiscordMessagePublisher, draw: BoardDraw): DiscordMessageBuilder {
+        val imageStream = ImageBoardRenderer.renderInputStream(draw.state, HistoryRenderType.SEQUENCE, null, null, true)
 
         val fName = ImageBoardRenderer.newFileName()
 
         val messageBuilder = publisher sends Embed {
             color = COLOR_NORMAL_HEX
 
-            buildBoardAuthor(Language.ENG.container, session)
+            buildBoardAuthor(Language.ENG.container, draw)
 
-            result
-                ?.let { buildResultFields(Language.ENG.container, session, it) }
-                ?: buildStatusFields(Language.ENG.container, session)
+            draw.result
+                ?.let { buildResultFields(Language.ENG.container, draw, it) }
+                ?: buildStatusFields(Language.ENG.container, draw)
 
             image = "attachment://${fName}"
         }
@@ -314,12 +306,12 @@ object DiscordMessagingService : MessagingServiceImpl() {
     override fun buildFocusedButtons(focusedFields: FocusedFields) =
         focusedFields.map { col -> ActionRow.of(
             col.map { (id, flag) -> when (flag) {
-                ButtonFlag.FREE -> Button.of(ButtonStyle.SECONDARY, "${SET}-${id}", id)
+                ButtonFlag.EMPTY -> Button.of(ButtonStyle.SECONDARY, "${SET}-${id}", id)
                 ButtonFlag.HIGHLIGHTED -> Button.of(ButtonStyle.PRIMARY, "${SET}-${id}", id)
-                ButtonFlag.BLACK -> Button.of(ButtonStyle.SECONDARY, "${SET}-${id}", "", EMOJI_BLACK_CIRCLE).asDisabled()
-                ButtonFlag.WHITE -> Button.of(ButtonStyle.SECONDARY, "${SET}-${id}", "", EMOJI_WHITE_CIRCLE).asDisabled()
-                ButtonFlag.BLACK_RECENT -> Button.of(ButtonStyle.SUCCESS, "${SET}-${id}", "", EMOJI_BLACK_CIRCLE).asDisabled()
-                ButtonFlag.WHITE_RECENT -> Button.of(ButtonStyle.SUCCESS, "${SET}-${id}", "", EMOJI_WHITE_CIRCLE).asDisabled()
+                ButtonFlag.BLACK -> Button.of(ButtonStyle.SECONDARY, "${SET}-${id}", "", EMOJI_STONE[Color.BLACK]).asDisabled()
+                ButtonFlag.WHITE -> Button.of(ButtonStyle.SECONDARY, "${SET}-${id}", "", EMOJI_STONE[Color.WHITE]).asDisabled()
+                ButtonFlag.BLACK_RECENT -> Button.of(ButtonStyle.SUCCESS, "${SET}-${id}", "", EMOJI_STONE[Color.BLACK]).asDisabled()
+                ButtonFlag.WHITE_RECENT -> Button.of(ButtonStyle.SUCCESS, "${SET}-${id}", "", EMOJI_STONE[Color.WHITE]).asDisabled()
                 ButtonFlag.FORBIDDEN -> Button.of(ButtonStyle.DANGER, "${SET}-${id}", "", EMOJI_DARK_X).asDisabled()
                 ButtonFlag.DISABLED -> Button.of(ButtonStyle.SECONDARY, "${SET}-${id}", id).asDisabled()
             } }
@@ -369,13 +361,14 @@ object DiscordMessagingService : MessagingServiceImpl() {
                     try {
                         coroutineScope {
                            flow
-                                .map { original.addReaction(Emoji.fromUnicode(it)).mapToResult() }
-                                .collect { action ->
+                                .collect { navigator ->
                                     when {
                                         checkTerminated() -> cancel()
                                         else -> {
-                                            action.queue()
-                                            delay(500.milliseconds) // TODO: sync on rate limit
+                                            original
+                                                .addReaction(Emoji.fromUnicode(navigator))
+                                                .mapToResult()
+                                                .await() // sync to JDA rate limiter
                                         }
                                     }
                                 }
@@ -415,31 +408,32 @@ object DiscordMessagingService : MessagingServiceImpl() {
     override fun buildBackToListButton() =
         Button.of(ButtonStyle.SECONDARY, "$REPLAY_LIST", EMOJI_RETURN).liftToButtons()
 
-    override fun buildReplayList(publisher: MessagePublisher, container: LanguageContainer, player: User.Human, records: List<Pair<User, GameRecord>>): MessageBuilder {
+    override fun buildReplayList(publisher: MessagePublisher, container: LanguageContainer, player: User.Human, records: List<GameRecord>): MessageBuilder {
         val embedBuilder = EmbedBuilder(
             color = COLOR_NORMAL_HEX
         )
 
         val selectMenuOptions = mutableListOf<SelectOption>()
 
-        records.forEachIndexed { idx, (opponent, record) ->
-            val userColor = record.userUid.color(player.id)!!
+        records.forEachIndexed { idx, record ->
+            val userColor = record.users.map { it.id }.color(player.id)!!
+            val opponent = record.users[!userColor]
 
-            val resultString = when (record.gameResult.winner) {
+            val result = when (record.gameResult.winner) {
                 null -> "$UNICODE_PENCIL${container.replayEmbedDraw()}"
                 userColor -> "$UNICODE_TROPHY${container.replayEmbedWin()}"
                 else -> "$UNICODE_WHITE_FLAG${container.replayEmbedLose()}"
             }
 
             embedBuilder.field {
-                name = "#${idx + 1}: ``${player.withColor(userColor)}`` vs ``${opponent.withColor(!userColor)}``, $resultString"
-                value = "$UNICODE_ALARM_CLOCK${record.date}, ${record.rule}, ${container.replayEmbedMatchInfo(record.history.size)}"
+                name = "#${idx + 1}: ``${player.withColor(userColor)}`` vs ``${opponent.withColor(!userColor)}``, ``$result``"
+                value = "``${record.date}``, ``${record.rule}``, ``${container.replayEmbedMatchInfo(record.history.size)}``"
                 inline = false
             }
 
             selectMenuOptions.add(
                 SelectOption.of(
-                    "#${idx + 1}: ${player.withColor(userColor)} vs ${opponent.withColor(!userColor)}, $resultString",
+                    "#${idx + 1}: ${player.withColor(userColor)} vs ${opponent.withColor(!userColor)}, $result",
                     "$REPLAY-${record.gameRecordId!!.id}-1-${player.id.validationKey}"
                 )
             )
@@ -447,6 +441,27 @@ object DiscordMessagingService : MessagingServiceImpl() {
 
         return (publisher sends embedBuilder.build())
             .addComponents(StringSelectMenu(REPLAY.toString(), options = selectMenuOptions).liftToButtons())
+    }
+
+    override fun buildReplay(publisher: MessagePublisher, container: LanguageContainer, gameRecord: GameRecord): MessageBuilder {
+        val draw = GameRecordBoardDraw(gameRecord)
+
+        val state = GameState(board = Board.fromHistory(gameRecord.history), gameRecord.history)
+
+        val imageStream = ImageBoardRenderer.renderInputStream(state, HistoryRenderType.SEQUENCE, null, null, true)
+
+        val fName = ImageBoardRenderer.newFileName()
+
+        val messageBuilder = publisher sends Embed {
+            color = COLOR_NORMAL_HEX
+
+            buildBoardAuthor(Language.ENG.container, draw)
+            buildResultFields(Language.ENG.container, draw, draw.result)
+
+            image = "attachment://${fName}"
+        }
+
+        return messageBuilder.addFile(imageStream, fName)
     }
 
     // HELP
@@ -591,8 +606,8 @@ object DiscordMessagingService : MessagingServiceImpl() {
                     name = "#${index + 1} ${profile.name}"
                     value = """
                             **$UNICODE_TROPHY$win: ``${stats.totalWins}``, $UNICODE_WHITE_FLAG️$lose: ``${stats.totalLosses}``, $UNICODE_PENCIL️$draw: ``${stats.totalDraws}``**
-                            ``$UNICODE_BLACK_CIRCLE``$win: ``${stats.blackWins}``, ``$UNICODE_BLACK_CIRCLE``$lose: ``${stats.blackLosses}``,``$UNICODE_BLACK_CIRCLE``$draw: ``${stats.blackDraws}``
-                            ``$UNICODE_WHITE_CIRCLE``$win: ``${stats.whiteWins}``, ``$UNICODE_WHITE_CIRCLE``$lose: ``${stats.whiteLosses}``,``$UNICODE_WHITE_CIRCLE``$draw: ``${stats.whiteDraws}``
+                            ``${UNICODE_STONE[Color.BLACK]}``$win: ``${stats.blackWins}``, ``${UNICODE_STONE[Color.BLACK]}``$lose: ``${stats.blackLosses}``,``${UNICODE_STONE[Color.BLACK]}``$draw: ``${stats.blackDraws}``
+                            ``${UNICODE_STONE[Color.WHITE]}``$win: ``${stats.whiteWins}``, ``${UNICODE_STONE[Color.WHITE]}``$lose: ``${stats.whiteLosses}``,``${UNICODE_STONE[Color.WHITE]}``$draw: ``${stats.whiteDraws}``
                             """.trimIndent()
                     inline = false
                 }

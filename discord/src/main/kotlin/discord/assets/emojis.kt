@@ -11,8 +11,7 @@ val NAVIGATION_EMOJIS: List<Emoji> = NavigationKind.navigators.map { Emoji.fromU
 val EMOJI_CHECK = Emoji.fromUnicode(UNICODE_CHECK) // ☑
 val EMOJI_CROSS = Emoji.fromUnicode(UNICODE_CROSS) // ❌
 
-val EMOJI_BLACK_CIRCLE = Emoji.fromUnicode(UNICODE_BLACK_CIRCLE) // ⚪
-val EMOJI_WHITE_CIRCLE = Emoji.fromUnicode(UNICODE_WHITE_CIRCLE) // ⚫
+val EMOJI_STONE = UNICODE_STONE.map { Emoji.fromUnicode(it) }
 
 val EMOJI_CONSTRUCTION = Emoji.fromUnicode(UNICODE_CONSTRUCTION) // 🚧
 val EMOJI_DARK_X = Emoji.fromUnicode(UNICODE_DARK_X) // ✖

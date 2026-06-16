@@ -20,17 +20,21 @@ class ChannelJoinCommand(private val localeComment: String) : InternalCommand {
         config: ChannelConfig,
         channel: Channel,
         service: MessagingService,
-        publisher: PublisherSet,
+        publisher: PublisherSet?,
     ) = runCatching {
         SessionManager.updateChannelConfig(bot.sessions, channel, config)
 
-        val helpProcedure = buildCombinedHelpProcedure(
-            bot = bot,
-            config = config,
-            publisher = publisher.plain,
-            service = service,
-            settingsPage = 0
-        )
+        val helpProcedure =
+            if (publisher == null)
+                effect { }
+            else
+                buildCombinedHelpProcedure(
+                    bot = bot,
+                    config = config,
+                    publisher = publisher.plain,
+                    service = service,
+                    settingsPage = 0
+                )
 
         val io = effect {
             helpProcedure()

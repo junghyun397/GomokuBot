@@ -28,5 +28,17 @@ enum class ArchivePolicy(override val id: Short) : Identifiable {
 enum class Rule(override val id: Short) : Identifiable {
     RENJU(0), RANDOM_4(1), TARAGUCHI_10(2), SOOSYRV_8(3),
     GOMOKU(10), SWAP2(11),
-    FREESTYLE(20),
+    FREESTYLE(20);
+
+    override fun toString(): String {
+        return when (this) {
+            RENJU -> "Renju"
+            RANDOM_4 -> "Random-Renju"
+            TARAGUCHI_10 -> "Taraguchi-10"
+            SOOSYRV_8 -> "Soosyrv-8"
+            GOMOKU -> "Gomoku"
+            SWAP2 -> "Swap2"
+            FREESTYLE -> "Freestyle"
+        }
+    }
 }

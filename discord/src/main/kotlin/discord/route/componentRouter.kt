@@ -23,6 +23,7 @@ private fun matchAction(prefix: Char?): EmbeddableCommand? =
         DiscordMessagingService.IdConvention.APPLY_SETTING -> ApplySettingCommandParser
         DiscordMessagingService.IdConvention.OPENING -> OpeningCommandParser
         DiscordMessagingService.IdConvention.REPLAY_LIST -> ReplayListCommandParser
+        DiscordMessagingService.IdConvention.REPLAY -> ReplayCommandParser
         else -> null
     }
 

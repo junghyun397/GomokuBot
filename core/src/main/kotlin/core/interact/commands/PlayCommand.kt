@@ -9,10 +9,7 @@ import core.interact.Order
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
-import core.session.EngineGameManager
-import core.session.MessageManager
-import core.session.PvpGameManager
-import core.session.SessionManager
+import core.session.*
 import core.session.entities.*
 import renju.notation.GameResult
 import renju.notation.Pos
@@ -57,7 +54,9 @@ class PlayCommand(
             is GameResult -> {
                 SessionManager.deleteGameSession(bot.sessions, this.sessionId)
 
-                val lastMove = session.state.history.lastAction!!
+                StatsManager.uploadGameRecord(bot.dbConnection, channel.id, session)
+
+                val lastMove = session.state.history.last()!!
 
                 val io = effect {
                     when (session) {
@@ -122,7 +121,7 @@ class PlayCommand(
                                         guidePublisher,
                                         config.language.container,
                                         session.player,
-                                        session.state.history.lastAction ?: this@PlayCommand.pos
+                                        session.state.history.lastOrNull() ?: this@PlayCommand.pos
                                     )
                                 else -> unreachable()
                             }.retrieve()()

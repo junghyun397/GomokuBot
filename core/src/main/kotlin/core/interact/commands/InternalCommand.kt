@@ -15,7 +15,7 @@ interface InternalCommand {
         config: ChannelConfig,
         channel: Channel,
         service: MessagingService,
-        publisher: PublisherSet
+        publisher: PublisherSet?
     ): CommandResult
 
 }

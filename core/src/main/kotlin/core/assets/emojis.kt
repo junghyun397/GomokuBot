@@ -1,10 +1,14 @@
 package core.assets
 
+import renju.notation.ColorContainer
+
 const val UNICODE_CHECK = "\u2611\uFE0F" // ☑
 const val UNICODE_CROSS = "\u274C" // ❌
 
-const val UNICODE_BLACK_CIRCLE = "\u26AB" // ⚪
-const val UNICODE_WHITE_CIRCLE = "\u26AA" // ⚫
+val UNICODE_STONE = ColorContainer(
+    black = "\u26AB", // ⚫
+    white = "\u26AA", // ⚪
+)
 
 const val UNICODE_CONSTRUCTION = "\uD83D\uDEA7" // 🚧
 const val UNICODE_DARK_X = "\u2716" // ✖

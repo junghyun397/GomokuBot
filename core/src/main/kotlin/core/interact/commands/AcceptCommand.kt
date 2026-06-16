@@ -46,7 +46,7 @@ class AcceptCommand(
 
         val beginIO = when (session) {
             is OpeningSession ->
-                service.buildBeginsOpening(guidePublisher, config.language.container, session.users, session.ruleKind)
+                service.buildBeginsOpening(guidePublisher, config.language.container, session.users, session.rule)
             else ->
                 service.buildBeginsPvp(guidePublisher, config.language.container, session.users)
         }

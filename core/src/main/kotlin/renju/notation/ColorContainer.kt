@@ -15,6 +15,13 @@ data class ColorContainer<out T>(val black: T, val white: T) {
             else -> null
         }
 
+    fun opposite(key: Any?): T? =
+        when (key) {
+            this.black -> this.white
+            this.white -> this.black
+            else -> null
+        }
+
     inline fun<R> map(transform: (T) -> R): ColorContainer<R> =
         ColorContainer(transform(this.black), transform(this.white))
 

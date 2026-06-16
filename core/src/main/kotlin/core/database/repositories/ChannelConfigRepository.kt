@@ -14,6 +14,19 @@ import utils.find
 
 object ChannelConfigRepository {
 
+    suspend fun retrieveChannelConfig(connection: DatabaseConnection, channelUid: ChannelUid): ChannelConfig {
+        connection.localCaches.channelConfigCache
+            .getIfPresent(channelUid)
+            ?.let { return it }
+
+        val config = this.fetchChannelConfig(connection, channelUid)
+            ?: ChannelConfig()
+
+        connection.localCaches.channelConfigCache.put(channelUid, config)
+
+        return config
+    }
+
     suspend fun fetchChannelConfig(connection: DatabaseConnection, channelUid: ChannelUid): ChannelConfig? =
         Mono.from(
             connection.jooq
@@ -24,6 +37,8 @@ object ChannelConfigRepository {
             .awaitSingleOrNull()
 
     suspend fun upsertChannelConfig(connection: DatabaseConnection, channelUid: ChannelUid, channelConfig: ChannelConfig) {
+        connection.localCaches.channelConfigCache.put(channelUid, channelConfig)
+
         Mono.from(
             connection.jooq
                 .insertInto(CHANNEL_CONFIG)

@@ -2,32 +2,15 @@ package renju
 
 import renju.native.RustyRenjuCApi
 import renju.notation.Pos
-import renju.notation.toStringOrNone
 
-@JvmInline value class History(val sequence: List<Pos?>) {
+@Suppress("JavaDefaultMethodsNotOverriddenByDelegation")
+@JvmInline value class History(val sequence: List<Pos?>) : List<Pos?> by sequence {
 
-    val moves: Int get() = this.sequence.size
-
-    val started: Boolean get() = this.sequence.isNotEmpty()
-
-    val lastAction: Pos? get() = this.sequence.lastOrNull()
-
-    val isEmpty: Boolean get() = this.sequence.isEmpty()
-
-    fun play(pos: Pos): History =
+    fun play(pos: Pos?): History =
         History(this.sequence + pos)
-
-    fun pass(): History =
-        History(this.sequence + null)
 
     fun undo(): History =
         History(this.sequence.dropLast(1))
-
-    operator fun get(index: Int): Pos? =
-        this.sequence[index]
-
-    operator fun contains(action: Pos?): Boolean =
-        action in this.sequence
 
     fun toMaybePosBuffer(): IntArray? =
         if (this.sequence.isEmpty()) {
@@ -37,9 +20,6 @@ import renju.notation.toStringOrNone
                 this.sequence[index]?.idx ?: RustyRenjuCApi.constants.posNone
             }
         }
-
-    fun toStringList(): List<String> =
-        this.sequence.map { it.toStringOrNone() }
 
     companion object {
 

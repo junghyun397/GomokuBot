@@ -64,7 +64,7 @@ object FocusSolver {
 
     // Prefix Sum Algorithm, O(N)
     fun resolveFocus(state: GameState, windowWidth: Int, buildHighlights: Boolean): FocusInfo =
-        state.history.lastAction?.let { lastPos ->
+        state.history.lastOrNull()?.let { lastPos ->
             val boardWidth = Pos.BOARD_WIDTH
             val boardMaxIdx = Pos.BOARD_BOUND
             val clampedWindowWidth = windowWidth.coerceIn(1, boardWidth)
@@ -82,7 +82,7 @@ object FocusSolver {
                 }
             }
 
-            if (state.history.moves < 5) {
+            if (state.history.size < 5) {
                 for (row in max(0, lastPos.row - windowQuarter)..min(boardMaxIdx, lastPos.row + windowQuarter)) {
                     for (col in max(0, lastPos.col - windowQuarter)..min(boardMaxIdx, lastPos.col + windowQuarter)) {
                         evaluated[row][col] += FocusWeights.CENTER_EXTRA
@@ -132,7 +132,7 @@ object FocusSolver {
         } ?: FocusInfo(Pos.CENTER, listOf(Pos.CENTER))
 
     fun resolveCenter(state: GameState, range: IntRange): FocusInfo {
-        val lastPos = state.history.lastAction
+        val lastPos = state.history.lastOrNull()
 
         return if (lastPos == null) {
             FocusInfo(Pos.CENTER, listOf(Pos.CENTER))

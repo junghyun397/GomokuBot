@@ -4,6 +4,7 @@ import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
 import core.assets.User
+import core.database.repositories.UserRatingRepository
 import core.engine.EngineLevel
 import core.interact.emptyOrders
 import core.interact.message.MessagingService
@@ -36,7 +37,9 @@ class StartCommand(
     ) = runCatching {
         when (this.recipient) {
             is User.GomokuBot -> {
-                val session = EngineGameManager.create(bot.mintakaServer, user, EngineLevel.AMOEBA)
+                val rating = UserRatingRepository.retrieveUserRating(bot.dbConnection, user.id)
+
+                val session = EngineGameManager.create(bot.mintakaServer, user, rating, EngineLevel.MODERATE)
 
                 SessionManager.insertGameSession(bot.sessions, channel, session)
 

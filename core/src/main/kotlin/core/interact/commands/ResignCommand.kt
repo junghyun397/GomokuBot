@@ -4,16 +4,11 @@ import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
 import core.assets.User
-import core.database.entities.extractGameRecord
-import core.database.repositories.GameRecordRepository
 import core.interact.Order
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
-import core.session.EngineGameManager
-import core.session.MessageManager
-import core.session.PvpGameManager
-import core.session.SessionManager
+import core.session.*
 import core.session.entities.*
 import utils.tuple
 
@@ -47,9 +42,9 @@ class ResignCommand(
 
         val result = session.gameResult!!
 
-        session.extractGameRecord(channel.id)?.let { record ->
-            GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
-        }
+        SessionManager.deleteGameSession(bot.sessions, this.sessionId)
+
+        StatsManager.uploadGameRecord(bot.dbConnection, channel.id, session)
 
         val publisher = run {
             val boardMessage = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
@@ -63,9 +58,9 @@ class ResignCommand(
         val io = effect {
             when (session) {
                 is EngineGameSession ->
-                    service.buildResignedEngine(publishers.plain, config.language.container, session.humanPlayer)
+                    service.buildResignsEngine(publishers.plain, config.language.container, session.humanPlayer)
                 is PvpGameSession, is OpeningSession -> {
-                    service.buildResignedPvp(
+                    service.buildResignsPvp(
                         publishers.plain, config.language.container,
                         session.users[result.winner!!], session.users[!result.winner!!]
                     )

@@ -8,6 +8,7 @@ import core.interact.Order
 import core.interact.message.MessagePublisher
 import core.interact.message.MessagingService
 import core.interact.message.SentMessage
+import core.interact.message.SessionBoardDraw
 import core.session.MessageManager
 import core.session.SessionManager
 import core.session.entities.*
@@ -48,7 +49,11 @@ fun buildBoardProcedure(
     }
 
     return effect {
-        val message = service.buildBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, session)
+        val message = service.buildBoard(
+            publisher, config.language.container, config.boardStyle.renderer, config.markType,
+            draw = SessionBoardDraw(session),
+            session = session
+        )
             .replaceIf(session.state.board.winner() == null) { io -> io.addComponents(
                 when (session) {
                     is SwapStageOpeningSession -> service.buildSwapButtons(config.language.container)
@@ -65,7 +70,7 @@ fun buildBoardProcedure(
             service.attachFocusNavigators(message) {
                 runCatching {
                     val currentSession = SessionManager.retrieveGameSession(bot.sessions, session.id).snapshot()
-                    currentSession.state.history.moves != session.state.history.moves
+                    currentSession.state.history.size != session.state.history.size
                 }.getOrElse { true }
             }()
         }
@@ -94,7 +99,11 @@ fun buildFinishProcedure(
     session: GameSession,
     cleanupMessages: MessageBufferKey,
 ): Effect<Nothing, List<Order>> = effect {
-    val message = service.buildBoard(publisher, config.language.container, config.boardStyle.renderer, config.markType, session)
+    val message = service.buildBoard(
+        publisher, config.language.container, config.boardStyle.renderer, config.markType,
+        draw = SessionBoardDraw(session),
+        session = session
+    )
         .retrieve()()
 
     val originalOrder = buildSwapProcedure(bot, config, cleanupMessages)()

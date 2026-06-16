@@ -66,7 +66,7 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
             enableForbiddenPoints,
             state.board.nativeHandle(),
             actions,
-            state.history.moves.toLong(),
+            state.history.size.toLong(),
             offerBuffer,
             offerBuffer?.size?.toLong() ?: 0L,
             blindBuffer,

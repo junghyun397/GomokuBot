@@ -120,6 +120,7 @@ internal class RustyRenjuC internal constructor(
 
     data class BoardExportItem(val kind: Byte, val content: Byte)
 
+    @Suppress("ArrayInDataClass")
     data class BoardWinner(val isSome: Boolean, val color: Byte, val sequence: IntArray)
 
     class BoardDescribe(pointer: MemorySegment) {

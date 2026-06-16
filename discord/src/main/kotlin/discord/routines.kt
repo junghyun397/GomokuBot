@@ -12,7 +12,7 @@ import core.interact.reports.RoutineReport
 import core.session.MessageManager
 import core.session.SessionManager
 import discord.assets.JDAChannel
-import discord.assets.getChannelMessageSubChannelById
+import discord.assets.subChannelById
 import discord.interact.DiscordConfig
 import discord.interact.TaskContext
 import discord.interact.message.DiscordMessagingService
@@ -32,21 +32,23 @@ private suspend fun executeCommand(
     botContext: BotContext,
     discordConfig: DiscordConfig,
     command: InternalCommand,
-    channel: MessageChannel,
-    jdaChannel: JDAChannel,
+    jdaChannel: JDAChannel?,
+    channel: MessageChannel?,
 ): Report =
     command.execute(
         bot = botContext,
         config = taskContext.config,
         channel = taskContext.channel,
         service = DiscordMessagingService,
-        publisher = MonoPublisherSet(
+        publisher = channel?.let { MonoPublisherSet(
             publisher = { msg -> MessageCreateAdaptor(channel.sendMessage(msg.asDiscordMessageData().buildCreate())) },
             editGlobal = { ref -> { msg -> MessageEditAdaptor(channel.editMessageById(ref.id.idLong, msg.asDiscordMessageData().buildEdit())) } }
-        )
+        ) }
     ).fold(
         onSuccess = { (io, report) ->
-            executeIO(discordConfig, io, jdaChannel)
+            if (jdaChannel != null)
+                executeIO(discordConfig, io, jdaChannel)
+
             report
         },
         onFailure = { throwable ->
@@ -67,14 +69,11 @@ fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: J
             val message = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
             val channel = jda.getGuildById(channel.givenId.idLong)
-            val subChannel = message?.let { channel?.getChannelMessageSubChannelById(it.subChannelId.idLong) }
+            val subChannel = message?.let { channel?.subChannelById(it.subChannelId.idLong) }
 
-            val command = ExpireGameCommand(
-                session = session,
-                channelAvailable = channel != null && subChannel != null
-            )
+            val command = ExpireGameCommand(session)
 
-            val result = executeCommand(context, bot, discordConfig, command, subChannel!!, channel!!)
+            val result = executeCommand(context, bot, discordConfig, command, channel, subChannel)
 
             emit(result)
         }
@@ -89,15 +88,14 @@ fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, jda
             val message = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
             val channel = jda.getGuildById(channel.givenId.idLong)
-            val subChannel = message?.let { channel?.getChannelMessageSubChannelById(it.subChannelId.idLong) }
+            val subChannel = message?.let { channel?.subChannelById(it.subChannelId.idLong) }
 
             val command = ExpireRequestCommand(
                 session = session,
-                channelAvailable = channel != null && subChannel != null,
                 messageAvailable = message != null
             )
 
-            val result = executeCommand(context, bot, discordConfig, command, subChannel!!, channel!!)
+            val result = executeCommand(context, bot, discordConfig, command, channel, subChannel)
 
             emit(result)
         }

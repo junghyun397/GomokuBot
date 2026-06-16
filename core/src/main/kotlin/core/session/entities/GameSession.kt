@@ -47,7 +47,7 @@ sealed interface GameSession : Expirable {
 
     val messageBufferKey: MessageBufferKey
 
-    val ruleKind: Rule
+    val rule: Rule
 
     fun isLegalMove(move: Pos): Boolean = this.state.board.isLegalMove(move)
 

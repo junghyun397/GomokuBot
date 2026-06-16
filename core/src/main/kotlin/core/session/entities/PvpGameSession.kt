@@ -19,6 +19,6 @@ data class PvpGameSession(
 
     override val messageBufferKey = this.context.messageBufferKey
 
-    override val ruleKind = this.context.ruleKind
+    override val rule = this.context.ruleKind
 
 }

@@ -14,7 +14,6 @@ import utils.tuple
 
 class ExpireRequestCommand(
     private val session: RequestSession,
-    private val channelAvailable: Boolean,
     private val messageAvailable: Boolean,
 ) : InternalCommand {
 
@@ -25,10 +24,10 @@ class ExpireRequestCommand(
         config: ChannelConfig,
         channel: Channel,
         service: MessagingService,
-        publisher: PublisherSet,
+        publisher: PublisherSet?,
     ) = runCatching {
         val session = this.session
-        val io = if (this.channelAvailable) {
+        val io = if (publisher != null) {
             effect {
                 val message = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
                 val noticePublisher = publisher.plain

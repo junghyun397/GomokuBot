@@ -5,7 +5,7 @@ import renju.notation.Pos
 
 sealed interface TaraguchiOpeningSession : OpeningSession {
 
-    override val ruleKind get() = Rule.TARAGUCHI_10
+    override val rule get() = Rule.TARAGUCHI_10
 
 }
 
@@ -19,7 +19,7 @@ data class TaraguchiSwapStageSession(
     override fun swap(doSwap: Boolean): GameSession {
         val user = if (doSwap) this.users.swap() else this.users
 
-        return if (this.isBranched && this.state.history.moves == 5)
+        return if (this.isBranched && this.state.history.size == 5)
             PvpGameSession(
                 context = this.context.next(users = user),
                 gameResult = this.gameResult,
@@ -42,11 +42,11 @@ data class TaraguchiMoveStageSession(
     override fun isLegalMove(move: Pos) = this.inSquare(move)
 
     override fun inSquare(move: Pos): Boolean =
-        6 - this.state.history.moves < move.row && move.row < 8 + this.state.history.moves &&
-                6 - this.state.history.moves < move.col && move.col < 8 + this.state.history.moves
+        6 - this.state.history.size < move.row && move.row < 8 + this.state.history.size &&
+                6 - this.state.history.size < move.col && move.col < 8 + this.state.history.size
 
     override fun next(move: Pos): TaraguchiOpeningSession =
-        if (this.state.history.moves == 3)
+        if (this.state.history.size == 3)
             TaraguchiBranchingSession(
                 context = this.context.next(state = this.state.play(move))
             )

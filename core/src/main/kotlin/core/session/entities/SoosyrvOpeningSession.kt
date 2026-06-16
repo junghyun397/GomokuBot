@@ -5,7 +5,7 @@ import renju.notation.Pos
 
 sealed interface SoosyrvOpeningSession : OpeningSession {
 
-    override val ruleKind get() = Rule.SOOSYRV_8
+    override val rule get() = Rule.SOOSYRV_8
 
 }
 
@@ -16,16 +16,16 @@ data class SoosyrvMoveStageSession(
 
     override fun inSquare(move: Pos): Boolean =
         this.isBranched ||
-                6 - this.state.history.moves < move.row && move.row < 8 + this.state.history.moves &&
-                6 - this.state.history.moves < move.col && move.col < 8 + this.state.history.moves
+                6 - this.state.history.size < move.row && move.row < 8 + this.state.history.size &&
+                6 - this.state.history.size < move.col && move.col < 8 + this.state.history.size
 
     override val player get() =
-        if (this.state.history.moves < 2)
+        if (this.state.history.size < 2)
             this.users.black
         else super<MoveStageOpeningSession>.player
 
     override val opponent get() =
-        if (this.state.history.moves < 2)
+        if (this.state.history.size < 2)
             this.users.white
         else super<MoveStageOpeningSession>.opponent
 
@@ -34,7 +34,7 @@ data class SoosyrvMoveStageSession(
             SoosyrvDeclareStageOpeningSession(
                 context = this.context.next(state = this.state.play(move)),
             )
-        else if (this.state.history.moves < 2)
+        else if (this.state.history.size < 2)
             this.copy(
                 context = this.context.next(state = this.state.play(move)),
             )

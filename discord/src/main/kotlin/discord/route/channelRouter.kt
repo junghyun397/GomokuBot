@@ -51,10 +51,12 @@ suspend fun channelJoinRouter(context: InternalInteractionContext<GuildJoinEvent
         config = config,
         channel = channel,
         service = DiscordMessagingService,
-        publisher = MonoPublisherSet(
-            publisher = { msg -> MessageCreateAdaptor(context.event.guild.systemChannel!!.sendMessage(msg.asDiscordMessageData().buildCreate()))},
-            editGlobal = { throw IllegalStateException() }
-        )
+        publisher = context.event.guild.systemChannel?.let { systemChannel ->
+            MonoPublisherSet(
+                publisher = { msg -> MessageCreateAdaptor(systemChannel.sendMessage(msg.asDiscordMessageData().buildCreate()))},
+                editGlobal = { throw IllegalStateException() }
+            )
+        }
     ).fold(
         onSuccess = { (io, report) ->
             executeIO(context.discordConfig, io, context.jdaChannel)
@@ -70,7 +72,6 @@ suspend fun channelJoinRouter(context: InternalInteractionContext<GuildJoinEvent
     }
 }
 
-// TODO: bad smell
 suspend fun channelLeaveRouter(context: InternalInteractionContext<GuildLeaveEvent>): Report {
     val channel = ChannelProfileRepository.retrieveChannel(context.bot.dbConnection, DISCORD_PLATFORM_ID, context.event.guild.channelId())
 

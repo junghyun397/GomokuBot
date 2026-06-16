@@ -2,10 +2,7 @@ package core.session
 
 import arrow.core.Either
 import core.assets.User
-import core.engine.EngineLevel
-import core.engine.EngineProvider
-import core.engine.MintakaIdleSession
-import core.engine.MintakaServer
+import core.engine.*
 import core.session.entities.*
 import renju.Board
 import renju.GameState
@@ -15,7 +12,7 @@ import kotlin.time.Duration.Companion.hours
 
 object EngineGameManager {
 
-    suspend fun create(mintakaServer: MintakaServer, user: User.Human, level: EngineLevel): EngineGameSession {
+    suspend fun create(mintakaServer: MintakaServer, user: User.Human, userRating: EloRating, level: EngineLevel): EngineGameSession {
         val userColor = Color.random()
 
         val users = ColorContainer(User.GomokuBot, User.GomokuBot)
@@ -49,6 +46,7 @@ object EngineGameManager {
             engineState = engineState,
             engineLevel = level,
             humanPlayer = user,
+            userRating = userRating,
             recording = true,
         )
 

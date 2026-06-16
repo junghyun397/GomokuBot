@@ -3,24 +3,18 @@ package core.interact.commands
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
-import core.database.entities.extractGameRecord
-import core.database.repositories.GameRecordRepository
 import core.interact.Order
 import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
-import core.session.EngineGameManager
-import core.session.MessageManager
-import core.session.PvpGameManager
-import core.session.SessionManager
+import core.session.*
 import core.session.entities.*
 import utils.replaceIf
 import utils.tuple
 
 class ExpireGameCommand(
     private val session: GameSession,
-    private val channelAvailable: Boolean,
 ) : InternalCommand {
 
     override val name = "expire-game"
@@ -30,7 +24,7 @@ class ExpireGameCommand(
         config: ChannelConfig,
         channel: Channel,
         service: MessagingService,
-        publisher: PublisherSet,
+        publisher: PublisherSet?,
     ) = runCatching {
         val session = when (this.session) {
             is PvpGameSession -> PvpGameManager.resign(this.session, null)
@@ -40,13 +34,9 @@ class ExpireGameCommand(
 
         SessionManager.deleteGameSession(bot.sessions, this.session.id)
 
-        val result = session.gameResult!!
+        StatsManager.uploadGameRecord(bot.dbConnection, channel.id, session)
 
-        session.extractGameRecord(channel.id)?.let { record ->
-            GameRecordRepository.uploadGameRecord(bot.dbConnection, record)
-        }
-
-        val io = if (this.channelAvailable) {
+        val io = if (publisher != null) {
             effect {
                 val message = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
@@ -77,7 +67,7 @@ class ExpireGameCommand(
             }
         } else effect { emptyOrders }
 
-        val report = this.writeCommandReport("expired, terminate session by $result", channel)
+        val report = this.writeCommandReport("expired, terminate session by ${session.gameResult!!}", channel)
 
         tuple(io, report)
     }

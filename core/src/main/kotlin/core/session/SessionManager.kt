@@ -25,17 +25,9 @@ class RequestSessionNotFoundException(
 object SessionManager {
 
     suspend fun retrieveChannelConfig(pool: SessionPool, channel: Channel): ChannelConfig =
-        pool.channelConfigs.getOrElse(channel.id) {
-            val config = ChannelConfigRepository.fetchChannelConfig(pool.dbConnection, channel.id)
-                ?: ChannelConfig()
-
-            pool.channelConfigs[channel.id] = config
-
-            config
-        }
+        ChannelConfigRepository.retrieveChannelConfig(pool.dbConnection, channel.id)
 
     suspend fun updateChannelConfig(pool: SessionPool, channel: Channel, channelConfig: ChannelConfig) {
-        pool.channelConfigs[channel.id] = channelConfig
         ChannelConfigRepository.upsertChannelConfig(pool.dbConnection, channel.id, channelConfig)
     }
 

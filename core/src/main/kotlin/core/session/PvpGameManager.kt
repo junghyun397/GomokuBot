@@ -90,8 +90,8 @@ object PvpGameManager {
         return session.copy(gameResult = result)
     }
 
-    fun<T: OpeningSession> resign(session: T, user: User.Human?): PvpGameSession {
-        val winColor = session.users.color(user ?: session.opponent)!!
+    fun resign(session: OpeningSession, user: User.Human?): PvpGameSession {
+        val winColor = !session.users.color(user ?: session.player)!!
 
         val cause =
             if (user == null) GameResult.WinCause.TIMEOUT

@@ -21,7 +21,7 @@ object ChannelLeaveCommand : InternalCommand {
         config: ChannelConfig,
         channel: Channel,
         service: MessagingService,
-        publisher: PublisherSet,
+        publisher: PublisherSet?,
     ) = runCatching {
         val io: Effect<Nothing, List<Order>> = effect { emptyOrders }
         tuple(io, this.writeCommandReport("goodbye", channel))

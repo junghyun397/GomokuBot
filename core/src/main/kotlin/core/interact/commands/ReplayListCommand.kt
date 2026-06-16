@@ -6,7 +6,6 @@ import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
 import core.database.repositories.GameRecordRepository
-import core.database.repositories.UserProfileRepository
 import core.interact.emptyOrders
 import core.interact.message.MessagingService
 import core.interact.message.PublisherSet
@@ -32,23 +31,20 @@ class ReplayListCommand(
         service: MessagingService,
         publishers: PublisherSet,
     ) = runCatching {
-        val gameRecords = GameRecordRepository.retrieveGameRecordsByUserUid(bot.dbConnection, user.id, 10)
+        val gameRecords = GameRecordRepository.retrieveGameRecords(bot.dbConnection, user.id, 10)
+
+        if (gameRecords.isEmpty())
+            return@runCatching tuple(
+                effect { emptyOrders },
+                this.writeCommandReport("no records", channel, user)
+            )
 
         val publisher =
             if (this.messageRef != null) publishers.edit(this.messageRef)
             else publishers.plain
 
-        val gameResults = gameRecords.map { record ->
-            val opponent = UserProfileRepository.retrieveUser(
-                bot.dbConnection,
-                record.userUid[!record.userUid.color(user.id)!!]!!
-            )
-
-            tuple(opponent, record)
-        }
-
         val io = effect {
-            service.buildReplayList(publisher, config.language.container, user, gameResults)
+            service.buildReplayList(publisher, config.language.container, user, gameRecords)
                 .launch()()
 
             emptyOrders

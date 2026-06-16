@@ -47,7 +47,7 @@ fun net.dv8tion.jda.api.entities.User.profile(uid: UserUid = UserUid(UUID.random
     User.Human(this.effectiveName, this.avatarUrl, uid, DISCORD_PLATFORM_ID, this.userId(), this.name, announceId)
 
 fun net.dv8tion.jda.api.entities.Guild.editMessageByMessageRef(ref: MessageRef, newContent: MessageEditData): DiscordMessageBuilder =
-    MessageEditAdaptor(this.getChannelMessageSubChannelById(ref.subChannelId.idLong)!!.editMessageById(ref.id.idLong, newContent))
+    MessageEditAdaptor(this.subChannelById(ref.subChannelId.idLong)!!.editMessageById(ref.id.idLong, newContent))
 
 fun net.dv8tion.jda.api.entities.Message.messageData(): DiscordMessageData =
     DiscordMessageData(
@@ -59,7 +59,7 @@ fun net.dv8tion.jda.api.entities.Message.messageData(): DiscordMessageData =
         this
     )
 
-fun net.dv8tion.jda.api.entities.Guild.getChannelMessageSubChannelById(idLong: Long): GuildMessageChannel? =
+fun net.dv8tion.jda.api.entities.Guild.subChannelById(idLong: Long): GuildMessageChannel? =
     this.getTextChannelById(idLong)
         ?: let { this.getThreadChannelById(idLong) }
         ?: let { this.getVoiceChannelById(idLong) }
