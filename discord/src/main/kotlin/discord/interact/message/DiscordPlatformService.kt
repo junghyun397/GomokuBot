@@ -22,19 +22,21 @@ import dev.minn.jda.ktx.messages.EmbedBuilder
 import dev.minn.jda.ktx.messages.InlineEmbed
 import discord.assets.*
 import discord.interact.ChannelManager
-import discord.interact.message.DiscordMessagingService.IdConvention.ACCEPT
-import discord.interact.message.DiscordMessagingService.IdConvention.NO_FEATURE
-import discord.interact.message.DiscordMessagingService.IdConvention.OPENING
-import discord.interact.message.DiscordMessagingService.IdConvention.REJECT
-import discord.interact.message.DiscordMessagingService.IdConvention.REPLAY
-import discord.interact.message.DiscordMessagingService.IdConvention.REPLAY_LIST
-import discord.interact.message.DiscordMessagingService.IdConvention.SET
+import discord.interact.DiscordConfig
+import discord.interact.message.DiscordPlatformService.IdConvention.ACCEPT
+import discord.interact.message.DiscordPlatformService.IdConvention.NO_FEATURE
+import discord.interact.message.DiscordPlatformService.IdConvention.OPENING
+import discord.interact.message.DiscordPlatformService.IdConvention.REJECT
+import discord.interact.message.DiscordPlatformService.IdConvention.REPLAY
+import discord.interact.message.DiscordPlatformService.IdConvention.REPLAY_LIST
+import discord.interact.message.DiscordPlatformService.IdConvention.SET
 import discord.interact.parse.buildableCommands
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.components.MessageTopLevelComponent
 import net.dv8tion.jda.api.components.actionrow.ActionRow
 import net.dv8tion.jda.api.components.actionrow.ActionRowChildComponent
 import net.dv8tion.jda.api.components.buttons.Button
@@ -54,7 +56,10 @@ import utils.tuple
 import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
 
-object DiscordMessagingService : MessagingServiceImpl() {
+class DiscordPlatformService(
+    private val discordConfig: DiscordConfig? = null,
+    private val jdaChannel: JDAChannel? = null,
+) : PlatformServiceImpl() {
 
     object IdConvention {
 
@@ -73,10 +78,42 @@ object DiscordMessagingService : MessagingServiceImpl() {
     override val focusWidth = 5
     override val focusRange = 2..(Pos.BOARD_BOUND - 2)
 
+    private fun requireJdaChannel(): JDAChannel =
+        this.jdaChannel ?: error("JDA channel is required for this platform action.")
+
+    private fun requireDiscordConfig(): DiscordConfig =
+        this.discordConfig ?: error("Discord config is required for this platform action.")
+
     // INTERFACE
 
-    override fun sendString(text: String, publisher: DiscordMessagePublisher) =
-        publisher(DiscordMessageData(text))
+    override suspend fun upsertCommands(container: LanguageContainer) {
+        ChannelManager.upsertCommands(this.requireJdaChannel(), container)
+    }
+
+    override suspend fun bulkDelete(messageRefs: List<MessageRef>) {
+        ChannelManager.bulkDelete(this.requireJdaChannel(), messageRefs)
+    }
+
+    override suspend fun removeNavigators(messageRef: MessageRef, reduceComponents: Boolean) {
+        ChannelManager.retrieveJDAMessage(this.requireJdaChannel().jda, messageRef)
+            ?.let { originalMessage ->
+                ChannelManager.clearReaction(originalMessage)
+
+                if (reduceComponents) {
+                    originalMessage
+                        .editMessageComponents(emptyList<MessageTopLevelComponent>())
+                        .queue()
+                }
+            }
+    }
+
+    override suspend fun archiveSession(session: GameSession, policy: ArchivePolicy) {
+        ChannelManager.archiveSession(
+            this.requireJdaChannel().jda.getTextChannelById(this.requireDiscordConfig().archiveSubChannelId.idLong)!!,
+            session,
+            policy
+        )
+    }
 
     private infix fun DiscordMessagePublisher.sends(embed: MessageEmbed) =
         this(DiscordMessageData(embed = embed))
@@ -84,15 +121,15 @@ object DiscordMessagingService : MessagingServiceImpl() {
     private infix fun DiscordMessagePublisher.sends(embeds: List<MessageEmbed>) =
         this(DiscordMessageData(embeds = embeds))
 
-    override fun User.asMentionFormat() =
-        if ((this is User.Human && this.isAnonymous) || this is User.GomokuBot)
-            this.name
+    override fun formatUser(user: User) =
+        if ((user is User.Human && user.isAnonymous) || user is User.GomokuBot)
+            user.name
         else
-            "<@${(this as User.Human).givenId.idLong}>"
+            "<@${(user as User.Human).givenId.idLong}>"
 
-    override fun String.asHighlightFormat() = "``$this``"
+    override fun formatHighlight(text: String) = "``$text``"
 
-    override fun String.asBoldFormat() = "**$this**"
+    override fun formatBold(text: String) = "**$text**"
 
     // FORMAT
 
@@ -103,11 +140,11 @@ object DiscordMessagingService : MessagingServiceImpl() {
 
     private fun InlineEmbed.buildBoardAuthor(container: LanguageContainer, draw: BoardDraw) =
         author {
-            iconUrl = draw.users.black.profileURL ?: draw.users.white.profileURL
+            iconUrl = draw.recipients.player.first.profileURL
             name = buildString {
-                append(draw.blackPlayerWithColor())
+                append(draw.playerWithColor())
                 append(" vs ")
-                append(draw.whitePlayerWithColor())
+                append(draw.opponentWithColor())
                 append(", ")
 
                 when {
@@ -129,7 +166,7 @@ object DiscordMessagingService : MessagingServiceImpl() {
 
                 field {
                     name = container.boardLastMove()
-                    value = "${EMOJI_STONE[!draw.state.board.playerColor]}${lastPos}".asHighlightFormat()
+                    value = "}${UNICODE_STONE[!draw.state.board.playerColor]}${lastPos}".asHighlightFormat()
                     inline = true
                 }
             }
@@ -146,8 +183,13 @@ object DiscordMessagingService : MessagingServiceImpl() {
             name = container.boardResult()
             value = when (gameResult) {
                 is GameResult.Win -> {
+                    val winner = if (draw.recipients.player.second == gameResult.winner)
+                        draw.recipients.player.first
+                    else
+                        draw.recipients.opponent.first
+
                     container.boardWinDescription(
-                        "${gameResult.winner.name}${UNICODE_STONE[gameResult.winner]}".asHighlightFormat()
+                        "${winner.name}${UNICODE_STONE[gameResult.winner]}".asHighlightFormat()
                     )
                 }
                 is GameResult.Full -> { container.boardTieDescription().asHighlightFormat() }
@@ -303,8 +345,8 @@ object DiscordMessagingService : MessagingServiceImpl() {
         return messageBuilder.addFile(imageStream, fName)
     }
 
-    override fun buildFocusedButtons(focusedFields: FocusedFields) =
-        focusedFields.map { col -> ActionRow.of(
+    override fun buildFocusedButtons(inputField: InputField) =
+        inputField.map { col -> ActionRow.of(
             col.map { (id, flag) -> when (flag) {
                 ButtonFlag.EMPTY -> Button.of(ButtonStyle.SECONDARY, "${SET}-${id}", id)
                 ButtonFlag.HIGHLIGHTED -> Button.of(ButtonStyle.PRIMARY, "${SET}-${id}", id)
@@ -317,8 +359,8 @@ object DiscordMessagingService : MessagingServiceImpl() {
             } }
         ) }.reversed() // cartesian coordinate system
 
-    override fun dispatchFocusButtons(publisher: DiscordComponentPublisher, focusedFields: FocusedFields): DiscordMessageBuilder =
-        publisher(this.buildFocusedButtons(focusedFields))
+    override fun upsertInputBoard(publisher: DiscordComponentPublisher, inputField: InputField): DiscordMessageBuilder =
+        publisher(this.buildFocusedButtons(inputField))
 
     override fun buildSwapButtons(container: LanguageContainer): MessageComponents =
         listOf(

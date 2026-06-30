@@ -4,7 +4,7 @@ import core.assets.User
 import renju.notation.Pos
 import kotlin.math.pow
 
-sealed interface OpeningSession : GameSession {
+sealed interface OpeningSession : UserSession {
 
     override val gameResult get() = null
     override val recording get() = false

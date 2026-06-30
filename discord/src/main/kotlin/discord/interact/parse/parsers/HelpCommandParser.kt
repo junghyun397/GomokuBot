@@ -6,7 +6,7 @@ import core.interact.commands.HelpCommand
 import core.interact.commands.ViewAnnounceCommand
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
-import core.interact.message.MessagingServiceImpl
+import core.interact.message.PlatformServiceImpl
 import core.interact.parse.CommandParser
 import dev.minn.jda.ktx.interactions.commands.choice
 import dev.minn.jda.ktx.interactions.commands.option
@@ -39,8 +39,8 @@ object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             else ->
                 if (shortcut == container.helpCommandOptionAnnouncements() || shortcut == Language.ENG.container.helpCommandOptionAnnouncements())
                     null
-                else MessagingServiceImpl.aboutRenjuDocument[container]!!.second[shortcut]
-                    ?: MessagingServiceImpl.aboutRenjuDocument[Language.ENG.container]!!.second[shortcut]
+                else PlatformServiceImpl.aboutRenjuDocument[container]!!.second[shortcut]
+                    ?: PlatformServiceImpl.aboutRenjuDocument[Language.ENG.container]!!.second[shortcut]
                     ?: 0
         }
 
@@ -91,7 +91,7 @@ object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             container.helpCommandDescription()
         ) {
             option<String>(container.helpCommandOptionShortcut(), container.helpCommandOptionShortcutDescription()) {
-                MessagingServiceImpl.aboutRenjuDocument[container]!!.second.forEach { (anchor, _) ->
+                PlatformServiceImpl.aboutRenjuDocument[container]!!.second.forEach { (anchor, _) ->
                     choice(anchor, anchor)
                 }
 

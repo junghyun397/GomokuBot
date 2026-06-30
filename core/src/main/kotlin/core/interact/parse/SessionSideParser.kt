@@ -5,6 +5,7 @@ import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
 import core.assets.User
+import core.interact.message.PlatformMessage
 import core.session.SessionManager
 import core.session.entities.GameSession
 import core.session.entities.SessionId
@@ -15,9 +16,8 @@ abstract class SessionSideParser : CommandParser {
         SessionManager.findGameSessionId(context.sessions, channel.id, user.id)?.let { Either.Right(it) }
             ?: Either.Left(ParseFailure(this.name, "$user session not found", channel, user) { messagingService, publisher, container ->
                 effect {
-                    messagingService.buildSessionNotFound(publisher, container)
+                    messagingService.buildMessage(publisher, PlatformMessage(container.sessionNotFound()))
                         .launch()()
-                    emptyList()
                 }
             })
 

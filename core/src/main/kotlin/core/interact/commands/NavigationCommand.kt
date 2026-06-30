@@ -6,9 +6,8 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
-import core.interact.emptyOrders
 import core.interact.i18n.Language
-import core.interact.message.MessagingService
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.MessageManager
@@ -33,7 +32,7 @@ class NavigationCommand(
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet
     ) = runCatching {
         val range = this.navigationState.kind.fetchRange(bot.dbConnection)
@@ -49,7 +48,7 @@ class NavigationCommand(
         )
 
         if (this.navigationState.page == newState.page)
-            return@runCatching tuple(effect { emptyOrders }, this.writeCommandReport("navigate ${navigationState.kind} bounded",
+            return@runCatching tuple(effect { }, this.writeCommandReport("navigate ${navigationState.kind} bounded",
                 channel, user))
 
         MessageManager.addNavigation(bot.sessions, this.messageRef, newState)
@@ -72,7 +71,7 @@ class NavigationCommand(
                 NavigationKind.BOARD -> throw Exception()
             }.launch()()
 
-            emptyOrders
+            Unit
         }
 
         tuple(io, this.writeCommandReport("navigate ${newState.kind} as ${newState.page}", channel, user))

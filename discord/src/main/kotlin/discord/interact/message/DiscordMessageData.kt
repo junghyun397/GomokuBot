@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.utils.AttachedFile
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import net.dv8tion.jda.api.utils.messages.MessageEditData
+import core.interact.message.PlatformMessage as CoreMessage
 
 data class DiscordMessageData(
     val content: String = "",
@@ -28,4 +29,8 @@ data class DiscordMessageData(
 }
 
 fun MessagePayload.asDiscordMessageData(): DiscordMessageData =
-    this as DiscordMessageData
+    when (this) {
+        is CoreMessage -> DiscordMessageData(this.content)
+        is DiscordMessageData -> this
+        else -> error("Unsupported Discord message payload: ${this.javaClass.name}")
+    }

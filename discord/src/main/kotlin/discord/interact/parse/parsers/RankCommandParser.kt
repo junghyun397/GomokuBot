@@ -7,6 +7,7 @@ import core.interact.commands.Command
 import core.interact.commands.RankCommand
 import core.interact.commands.RankScope
 import core.interact.i18n.LanguageContainer
+import core.interact.message.PlatformMessage
 import core.interact.parse.CommandParser
 import core.interact.parse.ParseFailure
 import core.interact.parse.asParseFailure
@@ -52,9 +53,8 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             ?.let { Either.Right(RankCommand(RankScope.User(it))) }
             ?: Either.Left(this.asParseFailure("target user not found", context.channel, context.user) { messagingService, publisher, container ->
                     effect {
-                        messagingService.buildUserNotFound(publisher, container)
+                        messagingService.buildMessage(publisher, PlatformMessage(container.rankErrorNotFound()))
                             .launch()()
-                        emptyList()
                     }
                 })
     }

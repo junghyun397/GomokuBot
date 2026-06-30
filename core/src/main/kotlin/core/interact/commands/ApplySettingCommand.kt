@@ -4,9 +4,9 @@ import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
 import core.assets.User
-import core.interact.emptyOrders
 import core.interact.i18n.Language
-import core.interact.message.MessagingService
+import core.interact.message.PlatformMessage
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.message.SettingMapping
 import core.interact.reports.writeCommandReport
@@ -29,22 +29,25 @@ class ApplySettingCommand(
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet
     ) = runCatching {
-        SessionManager.updateChannelConfig(bot.sessions, channel, newConfig)
+        SessionManager.updateChannelConfig(bot.sessions, channel, this.newConfig)
 
         val (localKind, localChoice) = SettingMapping.buildKindNamePair(config.language.container, this.diff)
 
         val io = effect {
-            service.buildSettingApplied(publishers.windowed, config.language.container, localKind, localChoice)
+            service.buildMessage(
+                publishers.windowed,
+                PlatformMessage(config.language.container.settingApplied(service.formatHighlight(localKind), service.formatHighlight(localChoice)))
+            )
                 .launch()()
-            emptyOrders
+            Unit
         }
 
         val (kind, choice) = SettingMapping.buildKindNamePair(Language.ENG.container, this.diff)
 
-        tuple(io, this.writeCommandReport("update $kind as [$choice](${diff.id})", channel, user))
+        tuple(io, this.writeCommandReport("update $kind as [$choice](${this.diff.id})", channel, user))
     }
 
 }

@@ -128,7 +128,9 @@ data class Config (
 data class CreateSessionRequest (
 	val api_password: String? = null,
 	val config: Config? = null,
-	val state: GameState
+	val state: GameState,
+	val time_to_hibernate: Duration? = null,
+	val time_to_live: Duration? = null
 )
 
 @Serializable

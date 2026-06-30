@@ -5,8 +5,8 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
-import core.interact.emptyOrders
-import core.interact.message.MessagingService
+import core.interact.message.PlatformMessage
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.SessionManager
@@ -28,7 +28,7 @@ class RejectCommand(
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet,
     ) = runCatching {
         val requestSession = SessionManager.retrieveRequestSession(bot.sessions, this.requestSessionId).snapshot()
@@ -38,13 +38,18 @@ class RejectCommand(
         val editIO = service.buildRejectedRequest(publishers.edit(this.messageRef), config.language.container, requestSession.requester, requestSession.recipient)
             .launch()
 
-        val noticeIO = service.buildRequestRejected(publishers.plain, config.language.container, requestSession.requester, requestSession.recipient)
+        val noticeIO = service.buildMessage(
+            publishers.plain,
+            PlatformMessage(config.language.container.requestRejected(
+                service.formatUser(requestSession.requester),
+                service.formatUser(requestSession.recipient)
+            ))
+        )
             .launch()
 
         val io = effect {
             editIO()
             noticeIO()
-            emptyOrders
         }
 
         tuple(io, this.writeCommandReport("reject ${requestSession.requester}'s request", channel, user))

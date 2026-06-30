@@ -4,8 +4,8 @@ import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
 import core.assets.User
-import core.interact.emptyOrders
-import core.interact.message.MessagingService
+import core.interact.message.PlatformMessage
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.MessageManager
@@ -29,7 +29,7 @@ class AcceptCommand(
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet,
     ) = runCatching {
         val requestSession = SessionManager.retrieveRequestSession(bot.sessions, this.requestSessionId).snapshot()
@@ -46,9 +46,15 @@ class AcceptCommand(
 
         val beginIO = when (session) {
             is OpeningSession ->
-                service.buildBeginsOpening(guidePublisher, config.language.container, session.users, session.rule)
+                service.buildMessage(
+                    guidePublisher,
+                    PlatformMessage(config.language.container.beginOpening(session.users.map { service.formatUser(it) }))
+                )
             else ->
-                service.buildBeginsPvp(guidePublisher, config.language.container, session.users)
+                service.buildMessage(
+                    guidePublisher,
+                    PlatformMessage(config.language.container.beginPvp(session.users.map { service.formatUser(it) }))
+                )
         }
             .launch()
 
@@ -57,7 +63,7 @@ class AcceptCommand(
         val io = effect {
             beginIO()
             boardIO()
-            emptyOrders
+            Unit
         }
 
         tuple(io, this.writeCommandReport("accept ${requestSession.requester}'s request", channel, user))

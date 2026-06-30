@@ -3,7 +3,7 @@ services:
     container_name: gomokubot-postgres
     image: postgres:14.11-bullseye
     volumes:
-      - ./db:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
       - ./schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
     environment:
       POSTGRES_USER: "gomokubot"
@@ -17,6 +17,28 @@ services:
       start_period: 1s
     restart: always
 
+  mintaka:
+    container_name: gomokubot-mintaka
+    build:
+      context: ./native/mintaka
+      dockerfile: Dockerfile
+    image: mintaka-server:latest
+    volumes:
+      - mintaka-sessions:/var/lib/mintaka/sessions
+    environment:
+      WEBUI: false
+      ADDRESS: "0.0.0.0:8085"
+      CORES: ${MINTAKA_CORES:-8}
+      MEMORY_LIMIT_MIB: ${MINTAKA_MEMORY_LIMIT_MIB:-8192}
+      API_PASSWORD: ${MINTAKA_API_PASSWORD:-verycomplexedpassword}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${MINTAKA_PORT:-8085}/status"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+      start_period: 1s
+    restart: always
+
   discord:
     container_name: gomokubot-discord
     build:
@@ -24,13 +46,14 @@ services:
       dockerfile: discord/Dockerfile
     image: gomokubot-discord:latest
     volumes:
-      - ./discord-logs:/app/logs
+      - discord-logs:/app/logs
     environment:
       GOMOKUBOT_DB_URL: "r2dbc:postgresql://gomokubot:${POSTGRES_PASSWORD:-verycomplexedpassword}@gomokubot-postgres/gomokubot"
-      GOMOKUBOT_MINTAKA_URL: "http://mintaka:8085"
+      GOMOKUBOT_MINTAKA_URL: "${MINTAKA_URL:-http://mintaka:8085}"
 
       GOMOKUBOT_MINTAKA_API_PASSWORD: ${MINTAKA_API_PASSWORD:-verycomplexedpassword}
 
+      GOMOKUBOT_DISCORD_SHARDS: ${GOMOKUBOT_DISCORD_SHARDS:-1}
       GOMOKUBOT_DISCORD_TOKEN: ${GOMOKUBOT_DISCORD_TOKEN}
       GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID: ${GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID}
       GOMOKUBOT_DISCORD_ARCHIVE_CHANNEL_ID: ${GOMOKUBOT_DISCORD_ARCHIVE_CHANNEL_ID}
@@ -40,27 +63,4 @@ services:
         condition: service_healthy
       mintaka:
         condition: service_healthy
-    restart: always
-
-  mintaka:
-    container_name: gomokubot-mintaka
-    build:
-      context: ./native/mintaka
-      dockerfile: Dockerfile
-    image: mintaka-server:latest
-    volumes:
-      - ./mintaka-sessions:/var/lib/mintaka/sessions
-    environment:
-      WEBUI: false
-      ADDRESS: "0.0.0.0:8085"
-      CORES: ${MINTAKA_CORES:-8}
-      MEMORY_LIMIT_MIB: ${MINTAKA_MEMORY_LIMIT_MIB:-8192}
-      API_PASSWORD: ${MINTAKA_API_PASSWORD:-verycomplexedpassword}
-      SESSION_TOKEN_SECRET: ${MINTAKA_TOKEN_SECRET:-verycomplexedtokensecret}
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${MINTAKA_PORT:-8085}/status"]
-      interval: 1s
-      timeout: 3s
-      retries: 30
-      start_period: 1s
     restart: always

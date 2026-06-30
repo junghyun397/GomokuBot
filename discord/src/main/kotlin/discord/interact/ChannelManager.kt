@@ -13,7 +13,7 @@ import discord.assets.JDAChannel
 import discord.assets.awaitNullable
 import discord.assets.subChannelById
 import discord.interact.message.DiscordMessagePublisher
-import discord.interact.message.DiscordMessagingService
+import discord.interact.message.DiscordPlatformService
 import discord.interact.message.MessageCreateAdaptor
 import discord.interact.message.asDiscordMessageData
 import discord.interact.parse.BuildableCommand
@@ -26,6 +26,7 @@ import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.requests.RestAction
+import net.dv8tion.jda.api.sharding.ShardManager
 import utils.memoize
 import utils.replaceIf
 import utils.tuple
@@ -45,7 +46,10 @@ object ChannelManager {
         if (this.lookupPermission(channel, permission)) onGranted()
         else onMissed()
 
-    fun initGlobalCommand(jda: JDA) {
+    fun initGlobalCommand(shardManager: ShardManager) {
+        val jda = shardManager.getShardById(0)
+            ?: error("Shard 0 is required to upload global commands.")
+
         HelpCommandParser.buildHelpCommandData(jda.updateCommands(), Language.ENG.container).queue()
     }
 
@@ -87,7 +91,7 @@ object ChannelManager {
 
         val publisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(archiveSubChannel.sendMessage(msg.asDiscordMessageData().buildCreate())) }
 
-        DiscordMessagingService.buildSessionArchive(publisher, SessionBoardDraw(
+        DiscordPlatformService().buildSessionArchive(publisher, SessionBoardDraw(
             session,
             anonymous = archivePolicy == ArchivePolicy.BY_ANONYMOUS
         ))

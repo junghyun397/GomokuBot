@@ -4,9 +4,7 @@ import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
-import core.interact.Order
-import core.interact.emptyOrders
-import core.interact.message.MessagingService
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.ChannelConfig
@@ -20,10 +18,10 @@ object ChannelLeaveCommand : InternalCommand {
         bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
-        service: MessagingService,
+        service: PlatformService,
         publisher: PublisherSet?,
     ) = runCatching {
-        val io: Effect<Nothing, List<Order>> = effect { emptyOrders }
+        val io: Effect<Nothing, Unit> = effect { }
         tuple(io, this.writeCommandReport("goodbye", channel))
     }
 

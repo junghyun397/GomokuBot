@@ -7,9 +7,7 @@ import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
 import core.database.entities.GameRecord
-import core.interact.Order
-import core.interact.emptyOrders
-import core.interact.message.MessagingService
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.ChannelConfig
@@ -29,14 +27,12 @@ class ReplayCommand(
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet,
     ) = runCatching {
-        val io: Effect<Nothing, List<Order>> = effect {
+        val io: Effect<Nothing, Unit> = effect {
             service.buildReplay(publishers.edit(messageRef), config.language.container, this@ReplayCommand.record)
                 .launch()()
-
-            emptyOrders
         }
 
         tuple(io, this.writeCommandReport("view record", channel, user))

@@ -4,8 +4,7 @@ import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
 import core.assets.User
-import core.interact.emptyOrders
-import core.interact.message.MessagingService
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.ChannelConfig
@@ -25,7 +24,7 @@ class HelpCommand(
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet,
     ) = runCatching {
         val io = effect {
@@ -33,7 +32,7 @@ class HelpCommand(
                 true -> buildCombinedHelpProcedure(bot, config, publishers.plain, service, page)
                 else -> buildHelpProcedure(bot, config, publishers.plain, service, page)
             }()
-            emptyOrders
+            Unit
         }
 
         tuple(io, this.writeCommandReport("sent", channel, user))

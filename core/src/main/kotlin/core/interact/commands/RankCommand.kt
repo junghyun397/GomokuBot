@@ -6,8 +6,7 @@ import core.assets.Channel
 import core.assets.User
 import core.database.repositories.UserProfileRepository
 import core.database.repositories.UserStatsRepository
-import core.interact.emptyOrders
-import core.interact.message.MessagingService
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.ChannelConfig
@@ -34,7 +33,7 @@ class RankCommand(private val scope: RankScope) : Command {
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet,
     ) = runCatching {
         val rankings = when (this.scope) {
@@ -54,7 +53,6 @@ class RankCommand(private val scope: RankScope) : Command {
         val io = effect {
             service.buildRankings(publishers.plain, config.language.container, rankings)
                 .launch()()
-            emptyOrders
         }
 
         tuple(io, this.writeCommandReport("$scope scope", channel, user))

@@ -7,6 +7,7 @@ import kotlin.time.Duration.Companion.minutes
 
 object BotConfig {
     val gameExpireAfter: Duration = 1.hours
+    val gameSuspendAfter: Duration = 5.minutes
     val gameExpireChecks: Duration = 5.minutes
 
     val requestExpireAfter: Duration = 3.hours

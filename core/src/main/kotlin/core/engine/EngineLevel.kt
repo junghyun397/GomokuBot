@@ -1,8 +1,8 @@
 package core.engine
 
 import core.engine.types.Config
-import core.engine.types.Duration
 import core.engine.types.Timer
+import core.engine.types.duration
 import utils.Identifiable
 
 val BASE_CONFIG = Config(
@@ -15,22 +15,24 @@ val BASE_CONFIG = Config(
     pondering = false,
     initial_timer = Timer(
         total_remaining = null,
-        increment = Duration(
-            secs = 0,
-            nanos = 0,
-        ),
+        increment = duration(secs = 0),
         turn = null
     ),
     spawn_depth_specialist = false,
 )
 
-enum class EngineLevel(override val id: Short, val config: Config, val rating: EloRating, val streaming: Boolean) : Identifiable {
+enum class EngineLevel(
+    override val id: Short,
+    val config: Config,
+    val rating: EloRating,
+    val streaming: Boolean
+) : Identifiable {
     AMOEBA(
         id = 0,
         config = BASE_CONFIG.copy(
             workers = 2U,
             tt_size = 1024 * 1024 * 8,
-            max_nodes_in_1k = 800U,
+            max_nodes_in_1k = 600U,
             max_vcf_depth = 6,
         ),
         rating = EloRating(600.0F),

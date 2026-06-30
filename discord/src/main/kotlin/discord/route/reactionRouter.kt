@@ -1,5 +1,6 @@
 package discord.route
 
+import arrow.core.raise.get
 import core.BotContext
 import core.assets.COLOR_NORMAL_HEX
 import core.assets.MessageRef
@@ -54,7 +55,7 @@ suspend fun reactionRouter(context: UserInteractionContext<GenericMessageReactio
         config = context.config,
         channel = context.channel,
         user = context.user,
-        service = DiscordMessagingService,
+        service = DiscordPlatformService(context.discordConfig, context.jdaChannel),
         publishers = AdaptivePublisherSet(
             plain = { msg -> MessageCreateAdaptor(context.event.channel.sendMessage(msg.asDiscordMessageData().buildCreate())) },
             windowed = { msg -> MessageCreateAdaptor(context.event.channel.sendMessage(msg.asDiscordMessageData().buildCreate())) },
@@ -64,7 +65,7 @@ suspend fun reactionRouter(context: UserInteractionContext<GenericMessageReactio
         ),
     ).fold(
         onSuccess = { (io, report) ->
-            executeIO(context.discordConfig, io, context.jdaChannel, messageRef)
+            io.get()
             report
         },
         onFailure = { throwable ->

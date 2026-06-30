@@ -5,8 +5,8 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
-import core.interact.Order
-import core.interact.message.MessagingService
+import core.interact.message.PlatformMessage
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.*
@@ -30,7 +30,7 @@ class PlayCommand(
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet,
     ) = runCatching {
         var messageBufferKey: MessageBufferKey? = null
@@ -62,29 +62,49 @@ class PlayCommand(
                     when (session) {
                         is PvpGameSession -> when (result) {
                             is GameResult.Win ->
-                                service.buildWinPvp(
+                                service.buildMessage(
                                     publishers.plain,
-                                    config.language.container,
-                                    session.opponent,
-                                    session.player,
-                                    lastMove
+                                    PlatformMessage(config.language.container.endPvpWin(
+                                        service.formatUser(session.opponent),
+                                        service.formatUser(session.player),
+                                        service.formatHighlight(lastMove.toString())
+                                    ))
                                 )
                             is GameResult.Full ->
-                                service.buildTiePvp(publishers.plain, config.language.container, session.users)
+                                service.buildMessage(
+                                    publishers.plain,
+                                    PlatformMessage(config.language.container.endPvpTie(session.users.map { service.formatUser(it) }))
+                                )
                         }
                         is EngineGameSession -> when (result) {
                             is GameResult.Win -> when (result.winner) {
                                 session.userColor ->
-                                    service.buildEngineLose(publishers.plain, config.language.container, session.humanPlayer, lastMove)
-                                else -> service.buildEngineWin(publishers.plain, config.language.container, session.humanPlayer, lastMove)
+                                    service.buildMessage(
+                                        publishers.plain,
+                                        PlatformMessage(config.language.container.endEngineWin(
+                                            service.formatUser(session.humanPlayer),
+                                            service.formatHighlight(lastMove.toString())
+                                        ))
+                                    )
+                                else ->
+                                    service.buildMessage(
+                                        publishers.plain,
+                                        PlatformMessage(config.language.container.endEngineLose(
+                                            service.formatUser(session.humanPlayer),
+                                            service.formatHighlight(lastMove.toString())
+                                        ))
+                                    )
                             }
                             is GameResult.Full ->
-                                service.buildEngineTie(publishers.plain, config.language.container, session.humanPlayer)
+                                service.buildMessage(
+                                    publishers.plain,
+                                    PlatformMessage(config.language.container.endEngineTie(service.formatUser(session.humanPlayer)))
+                                )
                         }
                         else -> unreachable()
                     }.launch()()
 
-                    val orders = buildFinishProcedure(
+                    buildFinishProcedure(
                         bot,
                         service,
                         boardPublisher,
@@ -93,14 +113,14 @@ class PlayCommand(
                         messageBufferKey!!
                     )()
 
-                    orders + Order.ArchiveSession(session, config.archivePolicy)
+                    service.archiveSession(session, config.archivePolicy)
                 }
 
                 tuple(io, this.writeCommandReport("make move ${this.pos}, terminate session by $result", channel, user))
             }
             null -> {
                 val guideIO = when {
-                    config.swapType == SwapType.EDIT && this.messageRef == null -> effect { Unit }
+                    config.swapType == SwapType.EDIT && this.messageRef == null -> effect { }
                     else -> {
                         val guidePublisher = when (config.swapType) {
                             SwapType.EDIT -> publishers.windowed
@@ -110,18 +130,21 @@ class PlayCommand(
                         effect {
                             val maybeGuideMessage = when (session) {
                                 is PvpGameSession ->
-                                    service.buildNextMovePvp(
+                                    service.buildMessage(
                                         guidePublisher,
-                                        config.language.container,
-                                        session.opponent,
-                                        this@PlayCommand.pos
+                                        PlatformMessage(config.language.container.processNextPvp(
+                                            service.formatUser(session.opponent),
+                                            service.formatHighlight(this@PlayCommand.pos.toString())
+                                        ))
                                     )
                                 is EngineGameSession ->
-                                    service.buildNextMoveEngine(
+                                    service.buildMessage(
                                         guidePublisher,
-                                        config.language.container,
-                                        session.player,
-                                        session.state.history.lastOrNull() ?: this@PlayCommand.pos
+                                        PlatformMessage(config.language.container.processNextEngine(
+                                            service.formatHighlight(
+                                                (session.state.history.lastOrNull() ?: this@PlayCommand.pos).toString()
+                                            )
+                                        ))
                                     )
                                 else -> unreachable()
                             }.retrieve()()

@@ -5,7 +5,7 @@ import arrow.core.raise.effect
 import core.BotConfig
 import core.BotContext
 import core.interact.message.MessagePublisher
-import core.interact.message.MessagingService
+import core.interact.message.PlatformService
 import core.session.MessageManager
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
@@ -17,7 +17,7 @@ fun buildHelpProcedure(
     bot: BotContext,
     config: ChannelConfig,
     publisher: MessagePublisher,
-    service: MessagingService,
+    service: PlatformService,
     page: Int
 ): Effect<Nothing, Unit> = service.buildHelp(publisher, config.language.container, page)
     .retrieve()
@@ -44,7 +44,7 @@ fun buildCombinedHelpProcedure(
     bot: BotContext,
     config: ChannelConfig,
     publisher: MessagePublisher,
-    service: MessagingService,
+    service: PlatformService,
     settingsPage: Int
 ): Effect<Nothing, Unit> = ioZip(
     service.buildHelp(publisher, config.language.container, 0).retrieve(),

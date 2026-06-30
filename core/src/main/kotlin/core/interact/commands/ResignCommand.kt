@@ -4,8 +4,8 @@ import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
 import core.assets.User
-import core.interact.Order
-import core.interact.message.MessagingService
+import core.interact.message.PlatformMessage
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.*
@@ -25,7 +25,7 @@ class ResignCommand(
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet,
     ) = runCatching {
         val (session, messageBufferKey) = run {
@@ -58,18 +58,24 @@ class ResignCommand(
         val io = effect {
             when (session) {
                 is EngineGameSession ->
-                    service.buildResignsEngine(publishers.plain, config.language.container, session.humanPlayer)
+                    service.buildMessage(
+                        publishers.plain,
+                        PlatformMessage(config.language.container.endEngineResign(service.formatUser(session.humanPlayer)))
+                    )
                 is PvpGameSession, is OpeningSession -> {
-                    service.buildResignsPvp(
-                        publishers.plain, config.language.container,
-                        session.users[result.winner!!], session.users[!result.winner!!]
+                    service.buildMessage(
+                        publishers.plain,
+                        PlatformMessage(config.language.container.endPvpResign(
+                            service.formatUser(session.users[result.winner!!]),
+                            service.formatUser(session.users[!result.winner!!])
+                        ))
                     )
                 }
             }.launch()()
 
-            val finishOrders = buildFinishProcedure(bot, service, publisher, config, session, messageBufferKey)()
+            buildFinishProcedure(bot, service, publisher, config, session, messageBufferKey)()
 
-            finishOrders + Order.ArchiveSession(session, config.archivePolicy)
+            service.archiveSession(session, config.archivePolicy)
         }
 
         io to this.writeCommandReport("surrendered, terminate session by $result", channel, user)

@@ -5,7 +5,8 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
-import core.interact.message.MessagingService
+import core.interact.message.PlatformMessage
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.MessageManager
@@ -26,7 +27,7 @@ abstract class OpeningMoveCommand<T : OpeningSession>(
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet
     ) = runCatching {
         var messageBufferKey: MessageBufferKey? = null
@@ -46,7 +47,7 @@ abstract class OpeningMoveCommand<T : OpeningSession>(
         }
 
         val guideIO = when {
-            config.swapType == SwapType.EDIT && this.messageRef == null -> effect { Unit }
+            config.swapType == SwapType.EDIT && this.messageRef == null -> effect { }
             else -> {
                 val guidePublisher = when (config.swapType) {
                     SwapType.EDIT -> publishers.windowed
@@ -54,7 +55,12 @@ abstract class OpeningMoveCommand<T : OpeningSession>(
                 }
 
                 effect {
-                    val maybeGuideMessage = service.buildNextMoveOpening(guidePublisher, config.language.container, this@OpeningMoveCommand.move)
+                    val maybeGuideMessage = service.buildMessage(
+                        guidePublisher,
+                        PlatformMessage(config.language.container.processNextOpening(
+                            service.formatHighlight(this@OpeningMoveCommand.move.toString())
+                        ))
+                    )
                         .retrieve()()
 
                     buildAppendGameMessageProcedure(maybeGuideMessage, bot, session)()

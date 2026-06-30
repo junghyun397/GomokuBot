@@ -8,6 +8,7 @@ import core.interact.commands.Command
 import core.interact.commands.LangCommand
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
+import core.interact.message.PlatformMessage
 import core.interact.parse.CommandParser
 import core.interact.parse.ParseFailure
 import core.interact.parse.asParseFailure
@@ -48,9 +49,11 @@ object LangCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     private fun composeMissMatchFailure(channel: Channel, user: User.Human): Either<ParseFailure, Command> =
         Either.Left(this.asParseFailure("option mismatch", channel, user) { messagingService, publisher, _ ->
             effect {
-                messagingService.buildLanguageNotFound(publisher).launch()()
+                messagingService.buildMessage(
+                    publisher,
+                    PlatformMessage("There is an error in the Language Code. Please select from the list below.")
+                ).launch()()
                 messagingService.buildLanguageGuide(publisher).launch()()
-                emptyList()
             }
         })
 

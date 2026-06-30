@@ -7,9 +7,7 @@ import core.assets.Channel
 import core.assets.User
 import core.database.repositories.ChannelProfileRepository
 import core.database.repositories.UserProfileRepository
-import core.interact.Order
-import core.interact.emptyOrders
-import core.interact.message.MessagingService
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.ChannelConfig
@@ -28,7 +26,7 @@ class UpdateProfileCommand(
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet
     ) = runCatching {
         this.newUser?.let {
@@ -41,13 +39,11 @@ class UpdateProfileCommand(
             ChannelProfileRepository.upsertChannel(bot.dbConnection, it)
         }
 
-        val thenChannel = this.newChannel ?: channel
-
-        val io: Effect<Nothing, List<Order>> = effect { emptyOrders }
-
         val report = this.writeCommandReport("succeed", channel, user)
 
-        tuple(io, report, thenChannel, thenUser)
+        val io: Effect<Nothing, Unit> = effect { }
+
+        tuple(io, report, this.newChannel ?: channel, thenUser)
     }
 
 }

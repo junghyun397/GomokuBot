@@ -7,9 +7,8 @@ import core.assets.Channel
 import core.assets.User
 import core.database.repositories.AnnounceRepository
 import core.database.repositories.UserProfileRepository
-import core.interact.Order
 import core.interact.i18n.Language
-import core.interact.message.MessagingService
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.MessageManager
@@ -28,7 +27,7 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet
     ) = runCatching {
         val thenUser = user.copy(announceId = AnnounceRepository.getLatestAnnounceId(bot.dbConnection))
@@ -38,28 +37,29 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
         val io = effect {
             AnnounceRepository.getAnnouncesSince(bot.dbConnection, user.announceId ?: 0)
                 .forEachIndexed { index, announces ->
-                    service.buildAnnounce(
+                    val message = service.buildAnnounce(
                         publishers.plain,
                         config.language.container,
                         announces[config.language] ?: announces[Language.ENG]!!
                     ).retrieve()()
-                        ?.let { announceMessage ->
-                                MessageManager.addNavigation(
-                                    bot.sessions,
-                                    announceMessage.ref,
-                                    PageNavigationState(
-                                        announceMessage.ref,
-                                        NavigationKind.ANNOUNCE,
-                                        index + 1,
-                                        Clock.System.now() + BotConfig.navigatorExpireAfter
-                                    )
-                                )
 
-                                service.attachBinaryNavigators(announceMessage)()
-                            }
+                    if (message != null) {
+                        MessageManager.addNavigation(
+                            bot.sessions,
+                            message.ref,
+                            PageNavigationState(
+                                message.ref,
+                                NavigationKind.ANNOUNCE,
+                                index + 1,
+                                Clock.System.now() + BotConfig.navigatorExpireAfter
+                            )
+                        )
+
+                        service.attachBinaryNavigators(message)()
+                    }
                 }
 
-            listOf(Order.UpsertCommands(config.language.container))
+            service.upsertCommands(config.language.container)
         }
 
         val report = this.writeCommandReport("sent", channel, thenUser)

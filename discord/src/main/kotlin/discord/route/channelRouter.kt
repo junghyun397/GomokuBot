@@ -1,5 +1,6 @@
 package discord.route
 
+import arrow.core.raise.get
 import core.assets.Channel
 import core.assets.ChannelUid
 import core.database.repositories.ChannelConfigRepository
@@ -15,7 +16,7 @@ import core.session.entities.ChannelConfig
 import discord.assets.DISCORD_PLATFORM_ID
 import discord.assets.channelId
 import discord.interact.InternalInteractionContext
-import discord.interact.message.DiscordMessagingService
+import discord.interact.message.DiscordPlatformService
 import discord.interact.message.MessageCreateAdaptor
 import discord.interact.message.asDiscordMessageData
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
@@ -50,7 +51,7 @@ suspend fun channelJoinRouter(context: InternalInteractionContext<GuildJoinEvent
         bot = context.bot,
         config = config,
         channel = channel,
-        service = DiscordMessagingService,
+        service = DiscordPlatformService(context.discordConfig, context.jdaChannel),
         publisher = context.event.guild.systemChannel?.let { systemChannel ->
             MonoPublisherSet(
                 publisher = { msg -> MessageCreateAdaptor(systemChannel.sendMessage(msg.asDiscordMessageData().buildCreate()))},
@@ -59,7 +60,7 @@ suspend fun channelJoinRouter(context: InternalInteractionContext<GuildJoinEvent
         }
     ).fold(
         onSuccess = { (io, report) ->
-            executeIO(context.discordConfig, io, context.jdaChannel)
+            io.get()
             report
         },
         onFailure = { throwable ->
@@ -80,7 +81,7 @@ suspend fun channelLeaveRouter(context: InternalInteractionContext<GuildLeaveEve
             bot = context.bot,
             config = SessionManager.retrieveChannelConfig(context.bot.sessions, it),
             channel = it,
-            service = DiscordMessagingService,
+            service = DiscordPlatformService(context.discordConfig, context.jdaChannel),
             publisher = MonoPublisherSet(
                 publisher = { throw IllegalStateException() },
                 editGlobal = { throw IllegalStateException() }

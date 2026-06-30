@@ -39,6 +39,7 @@ object PvpGameManager {
         fun newContext(history: History) =
             GameSessionContext(
                 id = sessionId,
+                requester = requester,
                 users = users,
                 state = GameState(Board.fromHistory(history), history),
                 messageBufferKey = MessageBufferKey.issue(),

@@ -2,6 +2,7 @@
 
 package discord.route
 
+import arrow.core.raise.get
 import core.interact.commands.ResponseFlag
 import core.interact.message.AdaptivePublisherSet
 import core.interact.reports.ErrorReport
@@ -17,13 +18,13 @@ import kotlin.time.Clock
 
 private fun matchAction(prefix: Char?): EmbeddableCommand? =
     when (prefix) {
-        DiscordMessagingService.IdConvention.SET -> SetCommandParser
-        DiscordMessagingService.IdConvention.ACCEPT -> AcceptCommandParser
-        DiscordMessagingService.IdConvention.REJECT -> RejectCommandParser
-        DiscordMessagingService.IdConvention.APPLY_SETTING -> ApplySettingCommandParser
-        DiscordMessagingService.IdConvention.OPENING -> OpeningCommandParser
-        DiscordMessagingService.IdConvention.REPLAY_LIST -> ReplayListCommandParser
-        DiscordMessagingService.IdConvention.REPLAY -> ReplayCommandParser
+        DiscordPlatformService.IdConvention.SET -> SetCommandParser
+        DiscordPlatformService.IdConvention.ACCEPT -> AcceptCommandParser
+        DiscordPlatformService.IdConvention.REJECT -> RejectCommandParser
+        DiscordPlatformService.IdConvention.APPLY_SETTING -> ApplySettingCommandParser
+        DiscordPlatformService.IdConvention.OPENING -> OpeningCommandParser
+        DiscordPlatformService.IdConvention.REPLAY_LIST -> ReplayListCommandParser
+        DiscordPlatformService.IdConvention.REPLAY -> ReplayCommandParser
         else -> null
     }
 
@@ -44,13 +45,14 @@ suspend fun buttonInteractionRouter(context: UserInteractionContext<GenericCompo
     }
 
     val messageRef = context.event.message.messageRef()
+    val platform = DiscordPlatformService(context.discordConfig, context.jdaChannel)
 
     return command.execute(
         bot = context.bot,
         config = context.config,
         channel = context.channel,
         user = context.user,
-        service = DiscordMessagingService,
+        service = platform,
         publishers = when (command.responseFlag) {
             is ResponseFlag.Defer -> AdaptivePublisherSet(
                 plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate())) },
@@ -80,7 +82,7 @@ suspend fun buttonInteractionRouter(context: UserInteractionContext<GenericCompo
         }
     ).fold(
         onSuccess = { (io, report) ->
-            executeIO(context.discordConfig, io, context.jdaChannel, messageRef)
+            io.get()
             report
         },
         onFailure = { throwable ->

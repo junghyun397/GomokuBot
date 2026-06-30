@@ -4,10 +4,12 @@ import arrow.core.Either
 import arrow.core.raise.effect
 import core.assets.User
 import core.database.repositories.UserProfileRepository
+import core.engine.EngineLevel
 import core.interact.commands.Command
 import core.interact.commands.StartCommand
 import core.interact.commands.buildBoardProcedure
 import core.interact.i18n.LanguageContainer
+import core.interact.message.PlatformMessage
 import core.interact.parse.CommandParser
 import core.interact.parse.ParseFailure
 import core.interact.parse.asParseFailure
@@ -75,9 +77,11 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             ?.let { session ->
                     this.asParseFailure("already sent request session", context.channel, requester) { messagingService, publisher, container ->
                         effect {
-                            messagingService.buildRequestAlreadySent(publisher, container, session.recipient)
+                            messagingService.buildMessage(
+                                publisher,
+                                PlatformMessage(container.startErrorRequestAlreadySent(messagingService.formatUser(session.recipient)))
+                            )
                                 .launch()()
-                            emptyList()
                         }
                     }
                 }
@@ -87,9 +91,11 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             ?.let { session ->
                     this.asParseFailure("already has request session", context.channel, requester) { messagingService, publisher, container ->
                         effect {
-                            messagingService.buildRequestAlready(publisher, container, session.requester)
+                            messagingService.buildMessage(
+                                publisher,
+                                PlatformMessage(container.startErrorRequestAlready(messagingService.formatUser(session.requester)))
+                            )
                                 .launch()()
-                            emptyList()
                         }
                     }
                 }
@@ -99,9 +105,11 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             ?.let {
                     this.asParseFailure("try to send request session but $opponent already has request session", context.channel, requester) { messagingService, publisher, container ->
                         effect {
-                            messagingService.buildOpponentRequestAlready(publisher, container, opponent)
+                            messagingService.buildMessage(
+                                publisher,
+                                PlatformMessage(container.startErrorOpponentRequestAlready(messagingService.formatUser(opponent)))
+                            )
                                 .launch()()
-                            emptyList()
                         }
                     }
                 }
@@ -111,7 +119,10 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             ?.let { session ->
                     this.asParseFailure("already has game session", context.channel, user) { messagingService, publisher, container ->
                         effect {
-                            val message = messagingService.buildSessionAlready(publisher, container)
+                            val message = messagingService.buildMessage(
+                                publisher,
+                                PlatformMessage(container.startErrorSessionAlready())
+                            )
                                 .retrieve()()
 
                             message?.let { MessageManager.appendMessage(context.bot.sessions, session.messageBufferKey, it.ref) }
@@ -120,8 +131,6 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                                 SwapType.EDIT -> Unit
                                 else -> buildBoardProcedure(context.bot, context.config, messagingService, publisher, session)()
                             }
-
-                            emptyList()
                         }
                     }
                 }
@@ -131,9 +140,11 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             ?.let {
                     this.asParseFailure("try to send request session but $opponent already has game session", context.channel, user) { messagingService, publisher, container ->
                         effect {
-                            messagingService.buildOpponentSessionAlready(publisher, container, opponent)
+                            messagingService.buildMessage(
+                                publisher,
+                                PlatformMessage(container.startErrorOpponentSessionAlready(messagingService.formatUser(opponent)))
+                            )
                                 .launch()()
-                            emptyList()
                         }
                     }
                 }
@@ -165,7 +176,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
         return Either.Right(
             StartCommand(
-                recipient = opponent ?: User.GomokuBot,
+                recipient = opponent?.let { Either.Left(it) } ?: Either.Right(EngineLevel.AMOEBA),
                 rule = rule
             )
         )

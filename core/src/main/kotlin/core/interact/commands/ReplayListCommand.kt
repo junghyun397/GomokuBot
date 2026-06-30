@@ -6,8 +6,7 @@ import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
 import core.database.repositories.GameRecordRepository
-import core.interact.emptyOrders
-import core.interact.message.MessagingService
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.ChannelConfig
@@ -28,14 +27,14 @@ class ReplayListCommand(
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet,
     ) = runCatching {
         val gameRecords = GameRecordRepository.retrieveGameRecords(bot.dbConnection, user.id, 10)
 
         if (gameRecords.isEmpty())
             return@runCatching tuple(
-                effect { emptyOrders },
+                effect { },
                 this.writeCommandReport("no records", channel, user)
             )
 
@@ -46,8 +45,6 @@ class ReplayListCommand(
         val io = effect {
             service.buildReplayList(publisher, config.language.container, user, gameRecords)
                 .launch()()
-
-            emptyOrders
         }
 
         tuple(io, this.writeCommandReport("total ${gameRecords.size} records", channel, user))

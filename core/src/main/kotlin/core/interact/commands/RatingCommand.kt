@@ -5,9 +5,7 @@ import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
 import core.assets.User
-import core.interact.Order
-import core.interact.emptyOrders
-import core.interact.message.MessagingService
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.entities.ChannelConfig
@@ -24,10 +22,10 @@ class RatingCommand() : Command {
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet,
     ) = runCatching {
-        val io: Effect<Nothing, List<Order>> = effect { emptyOrders }
+        val io: Effect<Nothing, Unit> = effect { }
 
         tuple(io, this.writeCommandReport("sent", channel, user))
     }

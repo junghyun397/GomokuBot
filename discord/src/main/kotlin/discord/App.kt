@@ -15,6 +15,7 @@ import core.session.MessageManager
 import core.session.SessionPool
 import dev.minn.jda.ktx.coroutines.await
 import dev.minn.jda.ktx.events.CoroutineEventManager
+import dev.minn.jda.ktx.events.getDefaultScope
 import dev.minn.jda.ktx.events.listener
 import discord.assets.ASCII_SPLASH
 import discord.assets.COMMAND_PREFIX
@@ -28,8 +29,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Activity
@@ -48,6 +47,8 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent
 import net.dv8tion.jda.api.events.session.ReadyEvent
 import net.dv8tion.jda.api.events.session.ShutdownEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
+import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
+import net.dv8tion.jda.api.sharding.ShardManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import kotlin.system.exitProcess
@@ -60,6 +61,7 @@ fun mintakaServerFromEnv(): MintakaServer = MintakaServer(
 )
 
 fun discordConfigFromEnv(): DiscordConfig = DiscordConfig(
+    shards = System.getenv("GOMOKUBOT_DISCORD_SHARDS").toInt(),
     token = System.getenv("GOMOKUBOT_DISCORD_TOKEN"),
     officialServerId = ChannelId(System.getenv("GOMOKUBOT_DISCORD_OFFICIAL_SERVER_ID").toLong()),
     archiveSubChannelId = SubChannelId(System.getenv("GOMOKUBOT_DISCORD_ARCHIVE_CHANNEL_ID").toLong()),
@@ -73,7 +75,7 @@ fun leaveLog(report: Report) {
     }
 }
 
-private inline fun <reified E : GenericEvent> JDA.eventFlow(): Flow<E> =
+private inline fun <reified E : GenericEvent> ShardManager.eventFlow(): Flow<E> =
     callbackFlow {
         val events = this@callbackFlow
         val listener = this@eventFlow.listener<E> { event ->
@@ -131,11 +133,11 @@ object GomokuBot {
 
         val botContext = BotContext(dbConnection, mintakaServer, sessionPool)
 
-        val eventManager = CoroutineEventManager()
+        val eventScope = getDefaultScope()
 
-        val jda = JDABuilder.createLight(discordConfig.token)
-            .useSharding(0, 1)
-            .setEventManager(eventManager)
+        val shardManager = DefaultShardManagerBuilder.createLight(discordConfig.token)
+            .setShardsTotal(discordConfig.shards)
+            .setEventManagerProvider { _ -> CoroutineEventManager() }
             .setActivity(Activity.customStatus("/help or ${COMMAND_PREFIX}help or @GomokuBot"))
             .setStatus(OnlineStatus.ONLINE)
             .setEnabledIntents(
@@ -145,15 +147,15 @@ object GomokuBot {
             )
             .build()
 
-        jda.listener<ReadyEvent> {
-            logger.info("jda ready, complete loading.")
+        shardManager.listener<ReadyEvent> {
+            logger.info("jda shard ${it.jda.shardInfo.shardString} ready.")
         }
 
-        jda.listener<ShutdownEvent> {
-            logger.info("jda shutdown.")
+        shardManager.listener<ShutdownEvent> {
+            logger.info("jda shard ${it.jda.shardInfo.shardString} shutdown.")
         }
 
-        jda.listener<CommandAutoCompleteInteractionEvent> {
+        shardManager.listener<CommandAutoCompleteInteractionEvent> {
             if (!it.isFromGuild || it.user.isBot)
                 return@listener
 
@@ -161,13 +163,13 @@ object GomokuBot {
         }
 
         val commandFlow: Flow<Report> = merge(
-            jda.eventFlow<SlashCommandInteractionEvent>()
+            shardManager.eventFlow<SlashCommandInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
                 .route {
                     slashCommandRouter(UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!))
                 },
 
-            jda.eventFlow<MessageReceivedEvent>()
+            shardManager.eventFlow<MessageReceivedEvent>()
                 .filter {
                     it.isFromGuild
                             && !it.author.isBot
@@ -182,23 +184,23 @@ object GomokuBot {
                     textCommandRouter(UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.author, it.guild))
                 },
 
-            jda.eventFlow<ButtonInteractionEvent>()
+            shardManager.eventFlow<ButtonInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
                 .route {
                     buttonInteractionRouter(UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!))
                 },
 
-            jda.eventFlow<StringSelectInteractionEvent>()
+            shardManager.eventFlow<StringSelectInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
                 .route {
                     buttonInteractionRouter(UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!))
                 },
 
-            jda.eventFlow<MessageReactionAddEvent>()
+            shardManager.eventFlow<MessageReactionAddEvent>()
                 .filter {
                     it.isFromGuild
-                            && it.userIdLong != jda.selfUser.idLong
-                            && it.messageAuthorIdLong == jda.selfUser.idLong
+                            && it.userIdLong != it.jda.selfUser.idLong
+                            && it.messageAuthorIdLong == it.jda.selfUser.idLong
                             && it.channel.type == ChannelType.TEXT
                             && NAVIGATION_EMOJIS.contains(it.emoji)
                             && !(it.user?.isBot ?: false)
@@ -207,10 +209,10 @@ object GomokuBot {
                     reactionRouter(UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user!!, it.guild))
                 },
 
-            jda.eventFlow<MessageReactionRemoveEvent>()
+            shardManager.eventFlow<MessageReactionRemoveEvent>()
                 .filter {
                     it.isFromGuild
-                            && it.userIdLong != jda.selfUser.idLong
+                            && it.userIdLong != it.jda.selfUser.idLong
                             && !(it.user?.isBot ?: false)
                             && it.channel.type == ChannelType.TEXT
                             && NAVIGATION_EMOJIS.contains(it.emoji)
@@ -230,18 +232,18 @@ object GomokuBot {
                     }
                 },
 
-            jda.eventFlow<GuildJoinEvent>()
+            shardManager.eventFlow<GuildJoinEvent>()
                 .route { event ->
                     channelJoinRouter(InternalInteractionContext.fromJDAEvent(botContext, discordConfig, event, event.guild))
                 },
 
-            jda.eventFlow<GuildLeaveEvent>()
+            shardManager.eventFlow<GuildLeaveEvent>()
                 .route { event ->
                     channelLeaveRouter(InternalInteractionContext.fromJDAEvent(botContext, discordConfig, event, event.guild))
                 },
 
-            scheduleGameExpiration(botContext, discordConfig, jda),
-            scheduleRequestExpiration(botContext, discordConfig, jda),
+            scheduleGameExpiration(botContext, discordConfig, shardManager),
+            scheduleRequestExpiration(botContext, discordConfig, shardManager),
 
             routine(BotConfig.navigatorExpireChecks) {
                 val expires = MessageManager.cleanExpiredNavigators(sessionPool)
@@ -257,13 +259,13 @@ object GomokuBot {
             }
         )
 
-        eventManager.launch {
+        eventScope.launch {
             commandFlow.collect { report -> leaveLog(report) }
         }
 
         logger.info("coroutine event manager ready.")
 
-        ChannelManager.initGlobalCommand(jda)
+        ChannelManager.initGlobalCommand(shardManager)
 
         logger.info("discord global command uploaded.")
     }

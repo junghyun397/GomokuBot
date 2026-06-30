@@ -5,8 +5,7 @@ import core.BotConfig
 import core.BotContext
 import core.assets.Channel
 import core.assets.User
-import core.interact.emptyOrders
-import core.interact.message.MessagingService
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.MessageManager
@@ -27,28 +26,27 @@ class SettingsCommand : Command {
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet,
     ) = runCatching {
         val io = effect {
-            service.buildSettings(publishers.plain, config, 0)
+            val message = service.buildSettings(publishers.plain, config, 0)
                 .retrieve()()
-                ?.let { settingsMessage ->
-                        MessageManager.addNavigation(
-                            bot.sessions,
-                            settingsMessage.ref,
-                            PageNavigationState(
-                                settingsMessage.ref,
-                                NavigationKind.SETTINGS,
-                                0,
-                                Clock.System.now() + BotConfig.navigatorExpireAfter
-                            )
-                        )
 
-                        service.attachBinaryNavigators(settingsMessage)()
-                    }
+            if (message != null) {
+                MessageManager.addNavigation(
+                    bot.sessions,
+                    message.ref,
+                    PageNavigationState(
+                        message.ref,
+                        NavigationKind.SETTINGS,
+                        0,
+                        Clock.System.now() + BotConfig.navigatorExpireAfter
+                    )
+                )
 
-            emptyOrders
+                service.attachBinaryNavigators(message)()
+            }
         }
 
         tuple(io, this.writeCommandReport("sent", channel, user))

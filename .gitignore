@@ -10,3 +10,4 @@ logs/
 mintaka-sessions/
 discord-logs/
 db/
+docker-compose.override.yml

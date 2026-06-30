@@ -1,7 +1,0 @@
-services:
-  database:
-    ports:
-      - "54329:5432"
-  mintaka:
-    ports:
-      - "8985:8085"

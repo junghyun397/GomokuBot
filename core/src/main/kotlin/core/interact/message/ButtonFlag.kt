@@ -4,4 +4,4 @@ enum class ButtonFlag {
     EMPTY, HIGHLIGHTED, BLACK, WHITE, BLACK_RECENT, WHITE_RECENT, FORBIDDEN, DISABLED
 }
 
-typealias FocusedFields = List<List<Pair<String, ButtonFlag>>>
+typealias InputField = List<List<Pair<String, ButtonFlag>>>

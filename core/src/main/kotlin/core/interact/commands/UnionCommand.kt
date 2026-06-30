@@ -5,8 +5,7 @@ import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
 import core.assets.User
-import core.interact.Order
-import core.interact.message.MessagingService
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.InteractionReport
 import core.session.entities.ChannelConfig
@@ -22,7 +21,7 @@ abstract class UnionCommand(private val command: Command) : Command {
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet
     ) = runCatching {
         val (unionIO, unionReport, thenChannel, thenUser) = this.executeSelf(bot, config, channel, user, service, publishers)
@@ -32,9 +31,8 @@ abstract class UnionCommand(private val command: Command) : Command {
             .getOrThrow()
 
         val io = effect {
-            val unionOrders = unionIO()
-            val originalOrders = originalIO()
-            unionOrders + originalOrders
+            unionIO()
+            originalIO()
         }
 
         tuple(io, unionReport + report)
@@ -45,8 +43,8 @@ abstract class UnionCommand(private val command: Command) : Command {
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet
-    ): Result<Quadruple<Effect<Nothing, List<Order>>, InteractionReport, Channel, User.Human>>
+    ): Result<Quadruple<Effect<Nothing, Unit>, InteractionReport, Channel, User.Human>>
 
 }

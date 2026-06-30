@@ -1,5 +1,6 @@
 package core.engine
 
+import core.BotConfig
 import core.engine.types.*
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -52,6 +53,7 @@ object EngineProvider {
         }
         install(SSE)
     }
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     suspend fun validateServer(server: MintakaServer): Boolean {
@@ -69,7 +71,7 @@ object EngineProvider {
         val session: Deferred<MintakaIdleSession>,
     )
 
-    suspend fun createSession(server: MintakaServer, engineLevel: EngineLevel, state: GameState): CreateSessionHandle {
+    suspend fun create(server: MintakaServer, engineLevel: EngineLevel, state: GameState): CreateSessionHandle {
         val waiting = MutableStateFlow<WaitingState?>(null)
 
         val session = coroutineScope { async {
@@ -79,6 +81,8 @@ object EngineProvider {
                     api_password = server.password.ifBlank { null },
                     config = engineLevel.config,
                     state = GameStateData(state.board.toBoardData(), state.history.map { it.toStringOrNone() }),
+                    time_to_hibernate = duration(secs = BotConfig.gameSuspendAfter.inWholeSeconds),
+                    time_to_live = duration(secs = BotConfig.gameExpireAfter.inWholeSeconds + 60)
                 ))
             }
 
@@ -96,8 +100,8 @@ object EngineProvider {
         return CreateSessionHandle(waiting, session)
     }
 
-    suspend fun playSession(server: MintakaServer, session: MintakaIdleSession, hashKey: HashKey, pos: Pos): MintakaIdleSession {
-        val result = this.commandSession(server, session.sid, session.token, Command.Play(CommandPlayInner(
+    suspend fun play(server: MintakaServer, session: MintakaIdleSession, hashKey: HashKey, pos: Pos): MintakaIdleSession {
+        val result = this.command(server, session.sid, session.token, Command.Play(CommandPlayInner(
             hash=hashKey.toString(),
             pos=pos.toString(),
         )))
@@ -105,26 +109,26 @@ object EngineProvider {
         return session.command(HashKey.from(result.hash_key)!!)
     }
 
-    suspend fun undoSession(server: MintakaServer, session: MintakaIdleSession, hashKey: HashKey): MintakaIdleSession {
-        val result = this.commandSession(server, session.sid, session.token, Command.Undo(CommandUndoInner(
+    suspend fun undo(server: MintakaServer, session: MintakaIdleSession, hashKey: HashKey): MintakaIdleSession {
+        val result = this.command(server, session.sid, session.token, Command.Undo(CommandUndoInner(
             hash=hashKey.toString(),
         )))
 
         return session.command(HashKey.from(result.hash_key)!!)
     }
 
-    suspend fun syncSession(server: MintakaServer, session: MintakaIdleSession, state: GameState): MintakaIdleSession {
-        val result = this.commandSession(server, session.sid, session.token, Command.Sync(
+    suspend fun sync(server: MintakaServer, session: MintakaIdleSession, state: GameState): MintakaIdleSession {
+        val result = this.command(server, session.sid, session.token, Command.Sync(
             GameStateData(
                 board_data = state.board.toBoardData(),
-                history = state.history.sequence.map { it.toStringOrNone() },
+                history = state.history.map { it.toStringOrNone() },
             )
         ))
 
         return session.command(HashKey.from(result.hash_key)!!)
     }
 
-    private suspend fun commandSession(server: MintakaServer, sid: String, token: String, command: Command): CommandResult {
+    private suspend fun command(server: MintakaServer, sid: String, token: String, command: Command): CommandResult {
         val response = client.post("${server.url}/sessions/$sid/commands") {
             contentType(ContentType.Application.Json)
             header(SESSION_TOKEN_HEADER_NAME, token)
@@ -144,11 +148,10 @@ object EngineProvider {
         val abort: () -> Unit,
     )
 
-    fun launchSession(
+    fun launch(
         server: MintakaServer,
         session: MintakaIdleSession,
         hashKey: HashKey,
-        streaming: Boolean,
     ): LaunchSessionHandle {
         val waiting = MutableSharedFlow<WaitingState?>()
         val begins = CompletableDeferred<Unit>()
@@ -225,7 +228,7 @@ object EngineProvider {
         )
     }
 
-    suspend fun deleteSession(server: MintakaServer, session: MintakaSession) {
+    suspend fun delete(server: MintakaServer, session: MintakaSession) {
         coroutineScope { launch {
             runCatching {
                 val response = client.delete("${server.url}/sessions/${session.sid}") {

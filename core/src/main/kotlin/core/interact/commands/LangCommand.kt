@@ -4,9 +4,9 @@ import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
 import core.assets.User
-import core.interact.Order
 import core.interact.i18n.Language
-import core.interact.message.MessagingService
+import core.interact.message.PlatformMessage
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.SessionManager
@@ -24,7 +24,7 @@ class LangCommand(private val language: Language) : Command {
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet,
     ) = runCatching {
         val thenConfig = config.copy(language = this.language)
@@ -32,9 +32,10 @@ class LangCommand(private val language: Language) : Command {
         SessionManager.updateChannelConfig(bot.sessions, channel, thenConfig)
 
         val io = effect {
-            service.buildLanguageUpdated(publishers.plain, language.container).launch()()
+            service.buildMessage(publishers.plain, PlatformMessage(this@LangCommand.language.container.languageUpdated()))
+                .launch()()
             buildHelpProcedure(bot, thenConfig, publishers.plain, service, 0)()
-            listOf(Order.UpsertCommands(thenConfig.language.container))
+            service.upsertCommands(thenConfig.language.container)
         }
 
         tuple(io, this.writeCommandReport("set language ${config.language.name} to ${thenConfig.language.name}",

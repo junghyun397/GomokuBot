@@ -4,6 +4,7 @@ import core.assets.ChannelId
 import core.assets.SubChannelId
 
 data class DiscordConfig(
+    val shards: Int,
     val token: String,
     val officialServerId: ChannelId,
     val archiveSubChannelId: SubChannelId,

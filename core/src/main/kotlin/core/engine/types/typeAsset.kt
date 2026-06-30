@@ -13,5 +13,7 @@ typealias RuleKind = String
 @Serializable
 data class Duration(
     val secs: Long,
-    val nanos: Long
+    val nanos: Long,
 )
+
+fun duration(secs: Long, nanos: Long = 0) = Duration(secs, nanos)

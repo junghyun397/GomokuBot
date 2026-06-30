@@ -5,8 +5,7 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
-import core.interact.emptyOrders
-import core.interact.message.MessagingService
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.MessageManager
@@ -37,7 +36,7 @@ class FocusCommand(
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet
     ) = runCatching {
         val session = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).snapshot()
@@ -59,15 +58,13 @@ class FocusCommand(
         val newFocusInfo = this.navigationState.focusInfo.copy(focus = newFocus)
 
         when (newFocus.idx) {
-            this.navigationState.page -> tuple(effect { emptyOrders }, this.writeCommandReport("focus bounded", channel, user))
+            this.navigationState.page -> tuple(effect { }, this.writeCommandReport("focus bounded", channel, user))
             else -> {
                 MessageManager.addNavigation(bot.sessions, this.messageRef, this.navigationState.copy(page = newFocus.idx))
 
                 val action = effect {
-                    service.dispatchFocusButtons(publishers.component, service.generateFocusedField(session, newFocusInfo))
+                    service.upsertInputBoard(publishers.component, service.generateFocusedField(session, newFocusInfo))
                         .launch()()
-
-                    emptyOrders
                 }
 
                 tuple(action, this.writeCommandReport("move focus ${this.direction}", channel, user))

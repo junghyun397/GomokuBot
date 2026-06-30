@@ -6,9 +6,8 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.User
 import core.database.repositories.AnnounceRepository
-import core.interact.Order
 import core.interact.i18n.Language
-import core.interact.message.MessagingService
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.MessageManager
@@ -29,34 +28,33 @@ class ViewAnnounceCommand(val language: Language) : Command {
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: MessagingService,
+        service: PlatformService,
         publishers: PublisherSet,
     ) = runCatching {
         val latestAnnounceId = AnnounceRepository.getLatestAnnounceId(bot.dbConnection)!!
         val announcements = AnnounceRepository.getLatestAnnounce(bot.dbConnection)
 
         val io = effect {
-            service.buildAnnounce(
+            val message = service.buildAnnounce(
                 publishers.plain,
                 language.container,
                 announcements[language] ?: announcements[Language.ENG]!!
             ).retrieve()()
-                ?.let { announceMessage ->
-                        MessageManager.addNavigation(
-                            bot.sessions,
-                            announceMessage.ref,
-                            PageNavigationState(
-                                announceMessage.ref,
-                                NavigationKind.ANNOUNCE,
-                                latestAnnounceId,
-                                Clock.System.now() + BotConfig.navigatorExpireAfter
-                            )
-                        )
 
-                        service.attachBinaryNavigators(announceMessage)()
-                    }
+            if (message != null) {
+                MessageManager.addNavigation(
+                    bot.sessions,
+                    message.ref,
+                    PageNavigationState(
+                        message.ref,
+                        NavigationKind.ANNOUNCE,
+                        latestAnnounceId,
+                        Clock.System.now() + BotConfig.navigatorExpireAfter
+                    )
+                )
 
-            emptyList<Order>()
+                service.attachBinaryNavigators(message)()
+            }
         }
 
         tuple(io, this.writeCommandReport("sent", channel, user))

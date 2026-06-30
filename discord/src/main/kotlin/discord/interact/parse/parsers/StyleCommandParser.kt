@@ -5,6 +5,7 @@ import arrow.core.raise.effect
 import core.interact.commands.Command
 import core.interact.commands.StyleCommand
 import core.interact.i18n.LanguageContainer
+import core.interact.message.PlatformMessage
 import core.interact.parse.CommandParser
 import core.interact.parse.ParseFailure
 import core.interact.parse.asParseFailure
@@ -39,9 +40,8 @@ object StyleCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     private fun composeMissMatchFailure(context: UserInteractionContext<*>): Either<ParseFailure, Command> =
         Either.Left(this.asParseFailure("option mismatch", context.channel, context.user) { messagingService, publisher, container ->
             effect {
-                messagingService.buildStyleNotFound(publisher, container).launch()()
+                messagingService.buildMessage(publisher, PlatformMessage(container.styleErrorNotfound())).launch()()
                 messagingService.buildStyleGuide(publisher, container).launch()()
-                emptyList()
             }
         })
 

@@ -14,7 +14,6 @@ data class EngineGameSession(
     val mintakaServer: MintakaServer,
     val engineState: Either<GameResult, MintakaSession>,
     val userColor: Color,
-    val humanPlayer: User.Human,
     val engineLevel: EngineLevel,
     val userRating: EloRating,
     override val recording: Boolean,
@@ -32,5 +31,7 @@ data class EngineGameSession(
     override val messageBufferKey = this.context.messageBufferKey
 
     override val rule = this.context.ruleKind
+
+    val humanPlayer get() = this.context.requester
 
 }

@@ -12,6 +12,10 @@ import kotlin.time.Duration.Companion.hours
 
 object EngineGameManager {
 
+    fun availableEngineLevels(rating: EloRating): List<EngineLevel> {
+        return listOf(EngineLevel.AMOEBA)
+    }
+
     suspend fun create(mintakaServer: MintakaServer, user: User.Human, userRating: EloRating, level: EngineLevel): EngineGameSession {
         val userColor = Color.random()
 
@@ -29,12 +33,13 @@ object EngineGameManager {
             }
         }
 
-        val mintakaSessionHandle = EngineProvider.createSession(mintakaServer, level, state)
-        val engineState = Either.Right(mintakaSessionHandle.session.await())
+        val sessionHandle = EngineProvider.create(mintakaServer, level, state)
+        val engineState = Either.Right(sessionHandle.session.await())
 
         val session = EngineGameSession(
             context = GameSessionContext(
                 id = SessionId.issue(),
+                requester = user,
                 users = users,
                 state = state,
                 messageBufferKey = MessageBufferKey.issue(),
@@ -45,7 +50,6 @@ object EngineGameManager {
             mintakaServer = mintakaServer,
             engineState = engineState,
             engineLevel = level,
-            humanPlayer = user,
             userRating = userRating,
             recording = true,
         )
@@ -60,11 +64,10 @@ object EngineGameManager {
             return session
         }
 
-        val handles = EngineProvider.launchSession(
+        val handles = EngineProvider.launch(
             session.mintakaServer,
             session.mintakaSession as MintakaIdleSession,
             session.state.board.hashKey,
-            false,
         )
 
         val bestMove = handles.bestMove.await()
@@ -92,7 +95,7 @@ object EngineGameManager {
     suspend fun resign(session: EngineGameSession, cause: ResignCause): EngineGameSession {
         val result = GameResult.Win(cause.cause, !session.state.board.playerColor)
 
-        EngineProvider.deleteSession(session.mintakaServer, session.mintakaSession!!)
+        EngineProvider.delete(session.mintakaServer, session.mintakaSession!!)
 
         val session = session.copy(
             engineState = Either.Left(result)
@@ -107,7 +110,7 @@ object EngineGameManager {
         val result = state.board.winner()
 
         if (result != null) {
-            EngineProvider.deleteSession(session.mintakaServer, session.mintakaSession!!)
+            EngineProvider.delete(session.mintakaServer, session.mintakaSession!!)
 
             return session.copy(
                 context = session.context.next(state),
@@ -115,7 +118,7 @@ object EngineGameManager {
             )
         }
 
-        val mintakaSession = EngineProvider.playSession(
+        val mintakaSession = EngineProvider.play(
             session.mintakaServer,
             session.mintakaSession as MintakaIdleSession,
             positionHash,

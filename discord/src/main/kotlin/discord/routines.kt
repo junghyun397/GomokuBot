@@ -1,5 +1,6 @@
 package discord
 
+import arrow.core.raise.get
 import core.BotConfig
 import core.BotContext
 import core.interact.commands.ExpireGameCommand
@@ -15,14 +16,13 @@ import discord.assets.JDAChannel
 import discord.assets.subChannelById
 import discord.interact.DiscordConfig
 import discord.interact.TaskContext
-import discord.interact.message.DiscordMessagingService
+import discord.interact.message.DiscordPlatformService
 import discord.interact.message.MessageCreateAdaptor
 import discord.interact.message.MessageEditAdaptor
 import discord.interact.message.asDiscordMessageData
-import discord.route.executeIO
 import kotlinx.coroutines.flow.Flow
-import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
+import net.dv8tion.jda.api.sharding.ShardManager
 import utils.schedule
 import kotlin.time.Clock
 import kotlin.time.Duration
@@ -39,16 +39,14 @@ private suspend fun executeCommand(
         bot = botContext,
         config = taskContext.config,
         channel = taskContext.channel,
-        service = DiscordMessagingService,
+        service = DiscordPlatformService(discordConfig, jdaChannel),
         publisher = channel?.let { MonoPublisherSet(
             publisher = { msg -> MessageCreateAdaptor(channel.sendMessage(msg.asDiscordMessageData().buildCreate())) },
             editGlobal = { ref -> { msg -> MessageEditAdaptor(channel.editMessageById(ref.id.idLong, msg.asDiscordMessageData().buildEdit())) } }
         ) }
     ).fold(
         onSuccess = { (io, report) ->
-            if (jdaChannel != null)
-                executeIO(discordConfig, io, jdaChannel)
-
+            io.get()
             report
         },
         onFailure = { throwable ->
@@ -60,7 +58,7 @@ private suspend fun executeCommand(
         apiTime = Clock.System.now()
     }
 
-fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flow<Report> =
+fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, shardManager: ShardManager): Flow<Report> =
     schedule(BotConfig.gameExpireChecks, {
         SessionManager.cleanExpiredGameSession(bot.sessions).forEach { (_, channel, _, session) ->
             val config = SessionManager.retrieveChannelConfig(bot.sessions, channel)
@@ -68,7 +66,7 @@ fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: J
 
             val message = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
-            val channel = jda.getGuildById(channel.givenId.idLong)
+            val channel = shardManager.getGuildById(channel.givenId.idLong)
             val subChannel = message?.let { channel?.subChannelById(it.subChannelId.idLong) }
 
             val command = ExpireGameCommand(session)
@@ -79,7 +77,7 @@ fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: J
         }
     })
 
-fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, jda: JDA): Flow<Report> =
+fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, shardManager: ShardManager): Flow<Report> =
     schedule(BotConfig.requestExpireChecks, {
         SessionManager.cleanExpiredRequestSessions(bot.sessions).forEach { (_, channel, _, session) ->
             val config = SessionManager.retrieveChannelConfig(bot.sessions, channel)
@@ -87,7 +85,7 @@ fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, jda
 
             val message = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
 
-            val channel = jda.getGuildById(channel.givenId.idLong)
+            val channel = shardManager.getGuildById(channel.givenId.idLong)
             val subChannel = message?.let { channel?.subChannelById(it.subChannelId.idLong) }
 
             val command = ExpireRequestCommand(

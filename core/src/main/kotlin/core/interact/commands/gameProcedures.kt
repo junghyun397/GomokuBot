@@ -4,9 +4,8 @@ import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import core.BotContext
 import core.engine.FocusSolver
-import core.interact.Order
 import core.interact.message.MessagePublisher
-import core.interact.message.MessagingService
+import core.interact.message.PlatformService
 import core.interact.message.SentMessage
 import core.interact.message.SessionBoardDraw
 import core.session.MessageManager
@@ -27,19 +26,19 @@ fun buildAppendGameMessageProcedure(
 fun buildNextMoveProcedure(
     bot: BotContext,
     config: ChannelConfig,
-    service: MessagingService,
+    service: PlatformService,
     publisher: MessagePublisher,
     session: GameSession,
     cleanupMessages: MessageBufferKey,
-): Effect<Nothing, List<Order>> = effect {
+): Effect<Nothing, Unit> = effect {
     buildBoardProcedure(bot, config, service, publisher, session)()
-    buildSwapProcedure(bot, config, cleanupMessages)()
+    buildSwapProcedure(bot, service, config, cleanupMessages)()
 }
 
 fun buildBoardProcedure(
     bot: BotContext,
     config: ChannelConfig,
-    service: MessagingService,
+    service: PlatformService,
     publisher: MessagePublisher,
     session: GameSession,
 ): Effect<Nothing, Unit> {
@@ -79,26 +78,26 @@ fun buildBoardProcedure(
 
 private fun buildSwapProcedure(
     bot: BotContext,
+    service: PlatformService,
     config: ChannelConfig,
     cleanupMessages: MessageBufferKey,
-): Effect<Nothing, List<Order>> = effect { when (config.swapType) {
-    SwapType.RELAY -> listOf(Order.BulkDelete(MessageManager.checkoutMessages(bot.sessions, cleanupMessages).orEmpty()))
+): Effect<Nothing, Unit> = effect { when (config.swapType) {
+    SwapType.RELAY -> service.bulkDelete(MessageManager.checkoutMessages(bot.sessions, cleanupMessages).orEmpty())
     SwapType.ARCHIVE -> {
         MessageManager.viewHeadMessage(bot.sessions, cleanupMessages)
-            ?.let { listOf(Order.RemoveNavigators(it, reduceComponents = true)) }
-            ?: emptyList()
+            ?.let { service.removeNavigators(it, reduceComponents = true) }
     }
-    SwapType.EDIT -> emptyList()
+    SwapType.EDIT -> Unit
 } }
 
 fun buildFinishProcedure(
     bot: BotContext,
-    service: MessagingService,
+    service: PlatformService,
     publisher: MessagePublisher,
     config: ChannelConfig,
     session: GameSession,
     cleanupMessages: MessageBufferKey,
-): Effect<Nothing, List<Order>> = effect {
+): Effect<Nothing, Unit> = effect {
     val message = service.buildBoard(
         publisher, config.language.container, config.boardStyle.renderer, config.markType,
         draw = SessionBoardDraw(session),
@@ -106,10 +105,8 @@ fun buildFinishProcedure(
     )
         .retrieve()()
 
-    val originalOrder = buildSwapProcedure(bot, config, cleanupMessages)()
+    buildSwapProcedure(bot, service, config, cleanupMessages)()
 
     if (message != null && session.gameResult != null && config.swapType == SwapType.EDIT)
-        originalOrder + Order.RemoveNavigators(message.ref, reduceComponents = true)
-    else
-        originalOrder
+        service.removeNavigators(message.ref, reduceComponents = true)
 }

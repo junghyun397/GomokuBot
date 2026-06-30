@@ -3,8 +3,8 @@ package core.interact.commands
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
-import core.interact.emptyOrders
-import core.interact.message.MessagingService
+import core.interact.message.PlatformMessage
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.MessageManager
@@ -23,7 +23,7 @@ class ExpireRequestCommand(
         bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
-        service: MessagingService,
+        service: PlatformService,
         publisher: PublisherSet?,
     ) = runCatching {
         val session = this.session
@@ -39,13 +39,18 @@ class ExpireRequestCommand(
                         .launch()()
                 }
 
-                service
-                    .buildRequestExpired(noticePublisher, config.language.container, session.requester, session.recipient)
+                service.buildMessage(
+                    noticePublisher,
+                    PlatformMessage(config.language.container.requestExpired(
+                        service.formatUser(session.requester),
+                        service.formatUser(session.recipient)
+                    ))
+                )
                     .launch()()
 
-                emptyOrders
+                Unit
             }
-        } else effect { emptyOrders }
+        } else effect { }
 
         tuple(io, this.writeCommandReport("expired, $session rejected", channel))
     }

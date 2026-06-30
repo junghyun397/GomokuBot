@@ -5,6 +5,7 @@ package discord.route
 import arrow.core.Either
 import arrow.core.flatMap
 import arrow.core.raise.effect
+import arrow.core.raise.get
 import core.database.repositories.AnnounceRepository
 import core.interact.commands.*
 import core.interact.i18n.Language
@@ -40,7 +41,7 @@ private fun buildPermissionNode(context: UserInteractionContext<*>, parsableComm
                 effect {
                     jdaUser.openPrivateChannel()
                         .flatMap { privateSubChannel ->
-                            DiscordMessagingService.sendPermissionNotGrantedEmbed(
+                            DiscordPlatformService().sendPermissionNotGrantedEmbed(
                                 publisher = { msg -> privateSubChannel.sendMessage(msg.asDiscordMessageData().buildCreate()) },
                                 container = container,
                                 channelName = channel.name
@@ -49,8 +50,6 @@ private fun buildPermissionNode(context: UserInteractionContext<*>, parsableComm
                         .delay(1, TimeUnit.MINUTES)
                         .flatMap(Message::delete)
                         .queue()
-
-                    emptyList()
                 }
             }
         ) },
@@ -115,6 +114,7 @@ fun commandAutoCompleteRouter(event: CommandAutoCompleteInteractionEvent) {
 suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEvent>): Report? {
     val parsable = matchCommand(context.event.name, context.config.language.container)
         ?: return null
+    val platform = DiscordPlatformService(context.discordConfig, context.jdaChannel)
 
     val parsed: Either<ParseFailure, Command> = buildPermissionNode(
         context,
@@ -151,7 +151,7 @@ suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInter
                 config = context.config,
                 channel = context.channel,
                 user = context.user,
-                service = DiscordMessagingService,
+                service = platform,
                 publishers = when (command.responseFlag) {
                     is ResponseFlag.Defer -> AdaptivePublisherSet(
                         plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate())) },
@@ -172,7 +172,7 @@ suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInter
         ifLeft = { parseFailure ->
             parseFailure.notice(
                 config = context.config,
-                service = DiscordMessagingService,
+                service = platform,
                 publisher = TransMessagePublisher(
                     head = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.asDiscordMessageData().buildCreate()).setEphemeral(true)) },
                     tail = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate()).setEphemeral(true)) }
@@ -181,7 +181,7 @@ suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInter
         }
     ).fold(
         onSuccess = { (io, report) ->
-            executeIO(context.discordConfig, io, context.jdaChannel)
+            io.get()
             report
         },
         onFailure = { throwable ->
@@ -195,6 +195,7 @@ suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInter
 }
 
 suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Report? {
+    val platform = DiscordPlatformService(context.discordConfig, context.jdaChannel)
     val messageRaw = context.event.message.contentRaw
 
     val payload = when {
@@ -245,7 +246,7 @@ suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEve
                 config = context.config,
                 channel = context.channel,
                 user = context.user,
-                service = DiscordMessagingService,
+                service = platform,
                 publishers = MonoPublisherSet(
                     publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.asDiscordMessageData().buildCreate())) },
                     editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.asDiscordMessageData().buildEdit()) } },
@@ -255,13 +256,13 @@ suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEve
         ifLeft = { parseFailure ->
             parseFailure.notice(
                 config = context.config,
-                service = DiscordMessagingService,
+                service = platform,
                 publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.asDiscordMessageData().buildCreate())) },
             )
         }
     ).fold(
         onSuccess = { (io, report) ->
-            executeIO(context.discordConfig, io, context.jdaChannel)
+            io.get()
             report
         },
         onFailure = { throwable ->

@@ -6,7 +6,7 @@ import core.assets.*
 import core.database.DatabaseConnection
 import core.engine.FocusSolver
 import core.interact.i18n.Language
-import core.interact.message.MessagingServiceImpl
+import core.interact.message.PlatformServiceImpl
 import core.interact.message.SettingMapping
 import renju.notation.Pos
 import utils.Identifiable
@@ -21,7 +21,7 @@ enum class NavigationKind(override val id: Short, val range: Either<(DatabaseCon
     // 0: language setting
     SETTINGS(1, Either.Right(0 .. SettingMapping.map.size), setOf(UNICODE_LEFT, UNICODE_RIGHT)),
     // 0: about gomokubot
-    ABOUT(2, Either.Right(0 .. MessagingServiceImpl.aboutRenjuDocument[Language.ENG.container]!!.first.size), setOf(UNICODE_LEFT, UNICODE_RIGHT)),
+    ABOUT(2, Either.Right(0 .. PlatformServiceImpl.aboutRenjuDocument[Language.ENG.container]!!.first.size), setOf(UNICODE_LEFT, UNICODE_RIGHT)),
     ANNOUNCE(3, Either.Left { connection -> 1 .. connection.localCaches.announceCache.size }, setOf(UNICODE_LEFT, UNICODE_RIGHT));
 
     fun fetchRange(dbConnection: DatabaseConnection): IntRange =

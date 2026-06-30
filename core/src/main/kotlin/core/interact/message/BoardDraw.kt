@@ -5,12 +5,18 @@ import core.database.entities.GameRecord
 import core.session.entities.GameSession
 import renju.Board
 import renju.GameState
-import renju.notation.ColorContainer
+import renju.notation.Color
 import renju.notation.GameResult
+import utils.tuple
 
 sealed interface BoardDraw {
 
-    val users: ColorContainer<User>
+    data class Recipients(
+        val player: Pair<User, Color>,
+        val opponent: Pair<User, Color>
+    )
+
+    val recipients: Recipients
 
     val result: GameResult?
 
@@ -23,9 +29,10 @@ data class SessionBoardDraw<T : GameSession>(
     private val anonymous: Boolean = false,
 ) : BoardDraw {
 
-    override val users =
-        if (this.anonymous) this.session.users.map { it.anonymous() }
-        else this.session.users
+    override val recipients = BoardDraw.Recipients(
+        player = tuple(this.session.player, this.session.state.board.playerColor),
+        opponent = tuple(this.session.opponent, !this.session.state.board.playerColor),
+    )
 
     override val result = this.session.gameResult
 
@@ -43,7 +50,10 @@ data class GameRecordBoardDraw(
         state = GameState(Board.fromHistory(gameRecord.history), gameRecord.history),
     )
 
-    override val users = this.gameRecord.users
+    override val recipients = BoardDraw.Recipients(
+        player = tuple(this.gameRecord.users.black, Color.BLACK),
+        opponent = tuple(this.gameRecord.users.white, Color.WHITE),
+    )
 
     override val result = this.gameRecord.gameResult
 

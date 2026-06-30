@@ -3,8 +3,7 @@ package core.interact.commands
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
-import core.interact.Order
-import core.interact.message.MessagingService
+import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeCommandReport
 import core.session.SessionManager
@@ -19,29 +18,25 @@ class ChannelJoinCommand(private val localeComment: String) : InternalCommand {
         bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
-        service: MessagingService,
+        service: PlatformService,
         publisher: PublisherSet?,
     ) = runCatching {
         SessionManager.updateChannelConfig(bot.sessions, channel, config)
 
-        val helpProcedure =
-            if (publisher == null)
-                effect { }
-            else
+        val io = effect {
+            if (publisher != null)
                 buildCombinedHelpProcedure(
                     bot = bot,
                     config = config,
                     publisher = publisher.plain,
                     service = service,
                     settingsPage = 0
-                )
+                )()
 
-        val io = effect {
-            helpProcedure()
-            listOf(Order.UpsertCommands(config.language.container))
+            service.upsertCommands(config.language.container)
         }
 
-        tuple(io, this.writeCommandReport(localeComment, channel))
+        tuple(io, this.writeCommandReport(this.localeComment, channel))
     }
 
 }

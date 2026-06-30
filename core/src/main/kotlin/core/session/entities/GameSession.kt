@@ -9,6 +9,7 @@ import kotlin.time.Instant
 
 data class GameSessionContext<T: User>(
     val id: SessionId,
+    val requester: User.Human,
     val users: ColorContainer<T>,
     val state: GameState,
     val messageBufferKey: MessageBufferKey,
@@ -58,7 +59,5 @@ sealed interface PlayGameSession : GameSession
 sealed interface UserSession : GameSession {
 
     override val users: ColorContainer<User.Human>
-    override val player: User.Human
-    override val opponent: User.Human
 
 }
