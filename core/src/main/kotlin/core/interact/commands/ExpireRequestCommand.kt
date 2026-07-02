@@ -6,11 +6,11 @@ import core.assets.Channel
 import core.interact.message.PlatformMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.MessageManager
 import core.session.entities.ChannelConfig
 import core.session.entities.RequestSession
-import utils.tuple
+import kotlin.time.Instant
 
 class ExpireRequestCommand(
     private val session: RequestSession,
@@ -25,6 +25,7 @@ class ExpireRequestCommand(
         channel: Channel,
         service: PlatformService,
         publisher: PublisherSet?,
+        emittedTime: Instant,
     ) = runCatching {
         val session = this.session
         val io = if (publisher != null) {
@@ -52,7 +53,7 @@ class ExpireRequestCommand(
             }
         } else effect { }
 
-        tuple(io, this.writeCommandReport("expired, $session rejected", channel))
+        CommandResult(io, this.writeActionLog(emittedTime, "$session rejected", channel))
     }
 
 }

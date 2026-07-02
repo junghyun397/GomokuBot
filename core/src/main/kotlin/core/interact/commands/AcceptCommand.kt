@@ -7,14 +7,14 @@ import core.assets.User
 import core.interact.message.PlatformMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.MessageManager
 import core.session.PvpGameManager
 import core.session.SessionManager
 import core.session.entities.ChannelConfig
 import core.session.entities.OpeningSession
 import core.session.entities.SessionId
-import utils.tuple
+import kotlin.time.Instant
 
 class AcceptCommand(
     private val requestSessionId: SessionId,
@@ -31,6 +31,7 @@ class AcceptCommand(
         user: User.Human,
         service: PlatformService,
         publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         val requestSession = SessionManager.retrieveRequestSession(bot.sessions, this.requestSessionId).snapshot()
         if (requestSession.recipient.id != user.id) throw IllegalStateException()
@@ -63,10 +64,9 @@ class AcceptCommand(
         val io = effect {
             beginIO()
             boardIO()
-            Unit
         }
 
-        tuple(io, this.writeCommandReport("accept ${requestSession.requester}'s request", channel, user))
+        CommandResult(io, this.writeActionLog(emittedTime, "accept ${requestSession.requester}", channel, user))
     }
 
 }

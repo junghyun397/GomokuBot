@@ -6,11 +6,11 @@ import core.assets.Channel
 import core.interact.message.PlatformMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.*
 import core.session.entities.*
 import utils.replaceIf
-import utils.tuple
+import kotlin.time.Instant
 
 class ExpireGameCommand(
     private val session: GameSession,
@@ -24,6 +24,7 @@ class ExpireGameCommand(
         channel: Channel,
         service: PlatformService,
         publisher: PublisherSet?,
+        emittedTime: Instant,
     ) = runCatching {
         val session = when (this.session) {
             is PvpGameSession -> PvpGameManager.resign(this.session, null)
@@ -73,9 +74,9 @@ class ExpireGameCommand(
             }
         } else effect { }
 
-        val report = this.writeCommandReport("expired, terminate session by ${session.gameResult!!}", channel)
+        val report = this.writeActionLog(emittedTime, "expired, ${session.gameResult!!}", channel)
 
-        tuple(io, report)
+        CommandResult(io, report)
     }
 
 }

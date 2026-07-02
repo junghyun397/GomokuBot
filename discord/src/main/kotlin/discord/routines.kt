@@ -1,15 +1,12 @@
 package discord
 
-import arrow.core.raise.get
 import core.BotConfig
 import core.BotContext
 import core.interact.commands.ExpireGameCommand
 import core.interact.commands.ExpireRequestCommand
 import core.interact.commands.InternalCommand
 import core.interact.message.MonoPublisherSet
-import core.interact.reports.ErrorReport
-import core.interact.reports.Report
-import core.interact.reports.RoutineReport
+import core.interact.reports.RoutineActionLog
 import core.session.MessageManager
 import core.session.SessionManager
 import discord.assets.JDAChannel
@@ -34,8 +31,8 @@ private suspend fun executeCommand(
     command: InternalCommand,
     jdaChannel: JDAChannel?,
     channel: MessageChannel?,
-): Report =
-    command.execute(
+): List<ActionLogRecord> {
+    val result = command.execute(
         bot = botContext,
         config = taskContext.config,
         channel = taskContext.channel,
@@ -43,22 +40,14 @@ private suspend fun executeCommand(
         publisher = channel?.let { MonoPublisherSet(
             publisher = { msg -> MessageCreateAdaptor(channel.sendMessage(msg.asDiscordMessageData().buildCreate())) },
             editGlobal = { ref -> { msg -> MessageEditAdaptor(channel.editMessageById(ref.id.idLong, msg.asDiscordMessageData().buildEdit())) } }
-        ) }
-    ).fold(
-        onSuccess = { (io, report) ->
-            io.get()
-            report
-        },
-        onFailure = { throwable ->
-            ErrorReport(throwable, taskContext.channel)
-        }
-    ).apply {
-        interactionSource = taskContext.source
-        emittedTime = taskContext.emittedTime
-        apiTime = Clock.System.now()
-    }
+        ) },
+        emittedTime = taskContext.emittedTime,
+    )
 
-fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, shardManager: ShardManager): Flow<Report> =
+    return executeAndRecord(taskContext, result)
+}
+
+fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, shardManager: ShardManager): Flow<ActionLogRecord> =
     schedule(BotConfig.gameExpireChecks, {
         SessionManager.cleanExpiredGameSession(bot.sessions).forEach { (_, channel, _, session) ->
             val config = SessionManager.retrieveChannelConfig(bot.sessions, channel)
@@ -71,13 +60,13 @@ fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, shardM
 
             val command = ExpireGameCommand(session)
 
-            val result = executeCommand(context, bot, discordConfig, command, channel, subChannel)
+            val results = executeCommand(context, bot, discordConfig, command, channel, subChannel)
 
-            emit(result)
+            results.forEach { result -> emit(result) }
         }
     })
 
-fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, shardManager: ShardManager): Flow<Report> =
+fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, shardManager: ShardManager): Flow<ActionLogRecord> =
     schedule(BotConfig.requestExpireChecks, {
         SessionManager.cleanExpiredRequestSessions(bot.sessions).forEach { (_, channel, _, session) ->
             val config = SessionManager.retrieveChannelConfig(bot.sessions, channel)
@@ -93,17 +82,17 @@ fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, sha
                 messageAvailable = message != null
             )
 
-            val result = executeCommand(context, bot, discordConfig, command, channel, subChannel)
+            val results = executeCommand(context, bot, discordConfig, command, channel, subChannel)
 
-            emit(result)
+            results.forEach { result -> emit(result) }
         }
     })
 
-inline fun routine(interval: Duration, crossinline job: suspend () -> String): Flow<RoutineReport> =
+inline fun routine(interval: Duration, crossinline job: suspend () -> String): Flow<ActionLogRecord> =
     schedule(interval, {
-        val time = Clock.System.now()
-
+        val startedTime = Clock.System.now()
         val comment = job()
+        val executionTime = Clock.System.now() - startedTime
 
-        RoutineReport(comment, time, Clock.System.now(), Clock.System.now(),"SCH")
+        emit(ActionLogRecord("SCH", Duration.ZERO, RoutineActionLog(comment, executionTime)))
     })

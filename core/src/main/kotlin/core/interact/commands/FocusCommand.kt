@@ -7,14 +7,14 @@ import core.assets.MessageRef
 import core.assets.User
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.MessageManager
 import core.session.SessionManager
 import core.session.entities.BoardNavigationState
 import core.session.entities.ChannelConfig
 import core.session.entities.SessionId
 import renju.notation.Pos
-import utils.tuple
+import kotlin.time.Instant
 
 enum class Direction {
     LEFT, DOWN, UP, RIGHT, CENTER
@@ -37,7 +37,8 @@ class FocusCommand(
         channel: Channel,
         user: User.Human,
         service: PlatformService,
-        publishers: PublisherSet
+        publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         val session = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).snapshot()
         val newFocus = run {
@@ -58,7 +59,7 @@ class FocusCommand(
         val newFocusInfo = this.navigationState.focusInfo.copy(focus = newFocus)
 
         when (newFocus.idx) {
-            this.navigationState.page -> tuple(effect { }, this.writeCommandReport("focus bounded", channel, user))
+            this.navigationState.page -> CommandResult(effect { }, this.writeActionLog(emittedTime, "focus bounded", channel, user))
             else -> {
                 MessageManager.addNavigation(bot.sessions, this.messageRef, this.navigationState.copy(page = newFocus.idx))
 
@@ -67,7 +68,7 @@ class FocusCommand(
                         .launch()()
                 }
 
-                tuple(action, this.writeCommandReport("move focus ${this.direction}", channel, user))
+                CommandResult(action, this.writeActionLog(emittedTime, "move focus ${this.direction}", channel, user))
             }
         }
     }

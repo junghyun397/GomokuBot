@@ -9,9 +9,9 @@ import core.assets.User
 import core.database.entities.GameRecord
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.entities.ChannelConfig
-import utils.tuple
+import kotlin.time.Instant
 
 class ReplayCommand(
     private val record: GameRecord,
@@ -29,13 +29,14 @@ class ReplayCommand(
         user: User.Human,
         service: PlatformService,
         publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         val io: Effect<Nothing, Unit> = effect {
             service.buildReplay(publishers.edit(messageRef), config.language.container, this@ReplayCommand.record)
                 .launch()()
         }
 
-        tuple(io, this.writeCommandReport("view record", channel, user))
+        CommandResult(io, this.writeActionLog(emittedTime, "view record", channel, user))
     }
 
 }

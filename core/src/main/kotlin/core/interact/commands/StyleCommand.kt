@@ -7,11 +7,11 @@ import core.assets.User
 import core.interact.message.PlatformMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.SessionManager
 import core.session.entities.BoardStyle
 import core.session.entities.ChannelConfig
-import utils.tuple
+import kotlin.time.Instant
 
 class StyleCommand(private val style: BoardStyle) : Command {
 
@@ -26,6 +26,7 @@ class StyleCommand(private val style: BoardStyle) : Command {
         user: User.Human,
         service: PlatformService,
         publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         SessionManager.updateChannelConfig(bot.sessions, channel, config.copy(boardStyle = this.style))
 
@@ -37,7 +38,7 @@ class StyleCommand(private val style: BoardStyle) : Command {
                 .launch()()
         }
 
-        tuple(io, this.writeCommandReport("set style ${config.boardStyle.name} to ${this.style.name}", channel, user))
+        CommandResult(io, this.writeActionLog(emittedTime, "${config.boardStyle.name} to ${this.style.name}", channel, user))
     }
 
 }

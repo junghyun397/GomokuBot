@@ -6,10 +6,10 @@ import core.assets.MessageRef
 import core.assets.User
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.SessionManager
 import core.session.entities.*
-import utils.tuple
+import kotlin.time.Instant
 
 class OpeningSwapCommand(
     private val sessionId: SessionId,
@@ -28,6 +28,7 @@ class OpeningSwapCommand(
         user: User.Human,
         service: PlatformService,
         publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         var messageBufferKey: MessageBufferKey? = null
 
@@ -46,7 +47,7 @@ class OpeningSwapCommand(
 
         val io = buildNextMoveProcedure(bot, config, service, boardPublisher, session, messageBufferKey!!)
 
-        tuple(io, this.writeCommandReport("make swap ${this.doSwap}", channel, user))
+        CommandResult(io, this.writeActionLog(emittedTime, "make swap ${this.doSwap}", channel, user))
     }
 
 }

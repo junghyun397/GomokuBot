@@ -8,12 +8,12 @@ import core.assets.User
 import core.interact.message.PlatformMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.MessageManager
 import core.session.SessionManager
 import core.session.entities.*
 import renju.notation.Pos
-import utils.tuple
+import kotlin.time.Instant
 
 abstract class OpeningMoveCommand<T : OpeningSession>(
     private val sessionId: SessionId,
@@ -28,7 +28,8 @@ abstract class OpeningMoveCommand<T : OpeningSession>(
         channel: Channel,
         user: User.Human,
         service: PlatformService,
-        publishers: PublisherSet
+        publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         var messageBufferKey: MessageBufferKey? = null
 
@@ -73,7 +74,7 @@ abstract class OpeningMoveCommand<T : OpeningSession>(
             buildNextMoveProcedure(bot, config, service, boardPublisher, session, messageBufferKey!!)()
         }
 
-        tuple(io, this.writeCommandReport(this.writeLog(), channel, user))
+        CommandResult(io, this.writeActionLog(emittedTime, this.writeLog(), channel, user))
     }
 
     protected abstract fun selectSession(session: GameSession): T?

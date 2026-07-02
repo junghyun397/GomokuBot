@@ -6,9 +6,9 @@ import core.BotContext
 import core.assets.Channel
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.entities.ChannelConfig
-import utils.tuple
+import kotlin.time.Instant
 
 object ChannelLeaveCommand : InternalCommand {
 
@@ -20,9 +20,10 @@ object ChannelLeaveCommand : InternalCommand {
         channel: Channel,
         service: PlatformService,
         publisher: PublisherSet?,
+        emittedTime: Instant,
     ) = runCatching {
         val io: Effect<Nothing, Unit> = effect { }
-        tuple(io, this.writeCommandReport("goodbye", channel))
+        CommandResult(io, this.writeActionLog(emittedTime, "goodbye", channel))
     }
 
 }

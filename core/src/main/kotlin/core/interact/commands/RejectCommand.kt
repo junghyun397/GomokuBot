@@ -8,11 +8,11 @@ import core.assets.User
 import core.interact.message.PlatformMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.SessionManager
 import core.session.entities.ChannelConfig
 import core.session.entities.SessionId
-import utils.tuple
+import kotlin.time.Instant
 
 class RejectCommand(
     private val requestSessionId: SessionId,
@@ -30,6 +30,7 @@ class RejectCommand(
         user: User.Human,
         service: PlatformService,
         publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         val requestSession = SessionManager.retrieveRequestSession(bot.sessions, this.requestSessionId).snapshot()
 
@@ -52,7 +53,7 @@ class RejectCommand(
             noticeIO()
         }
 
-        tuple(io, this.writeCommandReport("reject ${requestSession.requester}'s request", channel, user))
+        CommandResult(io, this.writeActionLog(emittedTime, "reject ${requestSession.requester}", channel, user))
     }
 
 }

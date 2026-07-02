@@ -2,33 +2,31 @@
 
 package discord.route
 
-import arrow.core.raise.get
 import core.interact.commands.ResponseFlag
 import core.interact.message.AdaptivePublisherSet
-import core.interact.reports.ErrorReport
-import core.interact.reports.Report
+import discord.ActionLogRecord
 import discord.assets.editMessageByMessageRef
 import discord.assets.messageRef
+import discord.executeAndRecord
 import discord.interact.UserInteractionContext
 import discord.interact.message.*
 import discord.interact.parse.EmbeddableCommand
 import discord.interact.parse.parsers.*
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
-import kotlin.time.Clock
 
 private fun matchAction(prefix: Char?): EmbeddableCommand? =
     when (prefix) {
-        DiscordPlatformService.IdConvention.SET -> SetCommandParser
-        DiscordPlatformService.IdConvention.ACCEPT -> AcceptCommandParser
-        DiscordPlatformService.IdConvention.REJECT -> RejectCommandParser
-        DiscordPlatformService.IdConvention.APPLY_SETTING -> ApplySettingCommandParser
-        DiscordPlatformService.IdConvention.OPENING -> OpeningCommandParser
-        DiscordPlatformService.IdConvention.REPLAY_LIST -> ReplayListCommandParser
-        DiscordPlatformService.IdConvention.REPLAY -> ReplayCommandParser
+        DiscordPlatformService.CompomentIds.SET -> SetCommandParser
+        DiscordPlatformService.CompomentIds.ACCEPT -> AcceptCommandParser
+        DiscordPlatformService.CompomentIds.REJECT -> RejectCommandParser
+        DiscordPlatformService.CompomentIds.APPLY_SETTING -> ApplySettingCommandParser
+        DiscordPlatformService.CompomentIds.OPENING -> OpeningCommandParser
+        DiscordPlatformService.CompomentIds.REPLAY_LIST -> ReplayListCommandParser
+        DiscordPlatformService.CompomentIds.REPLAY -> ReplayCommandParser
         else -> null
     }
 
-suspend fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Report? {
+suspend fun buttonInteractionRouter(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): List<ActionLogRecord>? {
     val parsable = matchAction(context.event.componentId.split("-").first().getOrNull(0))
         ?: return null
 
@@ -47,7 +45,7 @@ suspend fun buttonInteractionRouter(context: UserInteractionContext<GenericCompo
     val messageRef = context.event.message.messageRef()
     val platform = DiscordPlatformService(context.discordConfig, context.jdaChannel)
 
-    return command.execute(
+    val result = command.execute(
         bot = context.bot,
         config = context.config,
         channel = context.channel,
@@ -79,18 +77,9 @@ suspend fun buttonInteractionRouter(context: UserInteractionContext<GenericCompo
                     selfRef = messageRef
                 )
             )
-        }
-    ).fold(
-        onSuccess = { (io, report) ->
-            io.get()
-            report
         },
-        onFailure = { throwable ->
-            ErrorReport(throwable, context.channel)
-        }
-    ).apply {
-        interactionSource = context.source
-        emittedTime = context.emittedTime
-        apiTime = Clock.System.now()
-    }
+        emittedTime = context.emittedTime,
+    )
+
+    return executeAndRecord(context, result)
 }

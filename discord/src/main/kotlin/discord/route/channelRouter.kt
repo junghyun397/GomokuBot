@@ -1,6 +1,5 @@
 package discord.route
 
-import arrow.core.raise.get
 import core.assets.Channel
 import core.assets.ChannelUid
 import core.database.repositories.ChannelConfigRepository
@@ -9,12 +8,13 @@ import core.interact.commands.ChannelJoinCommand
 import core.interact.commands.ChannelLeaveCommand
 import core.interact.i18n.Language
 import core.interact.message.MonoPublisherSet
-import core.interact.reports.ErrorReport
-import core.interact.reports.Report
 import core.session.SessionManager
 import core.session.entities.ChannelConfig
+import discord.ActionLogRecord
+import discord.asActionLogRecord
 import discord.assets.DISCORD_PLATFORM_ID
 import discord.assets.channelId
+import discord.executeAndRecord
 import discord.interact.InternalInteractionContext
 import discord.interact.message.DiscordPlatformService
 import discord.interact.message.MessageCreateAdaptor
@@ -23,7 +23,6 @@ import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import java.util.*
-import kotlin.time.Clock
 
 private fun matchLocale(locale: DiscordLocale): Language =
     when (locale) {
@@ -32,7 +31,7 @@ private fun matchLocale(locale: DiscordLocale): Language =
         else -> Language.ENG
     }
 
-suspend fun channelJoinRouter(context: InternalInteractionContext<GuildJoinEvent>): Report {
+suspend fun channelJoinRouter(context: InternalInteractionContext<GuildJoinEvent>): List<ActionLogRecord> {
     val channel = ChannelProfileRepository.retrieveOrInsertChannel(context.bot.dbConnection, DISCORD_PLATFORM_ID, context.event.guild.channelId()) {
         Channel(
             id = ChannelUid(UUID.randomUUID()),
@@ -47,7 +46,7 @@ suspend fun channelJoinRouter(context: InternalInteractionContext<GuildJoinEvent
 
     val command = ChannelJoinCommand(context.event.guild.locale.languageName)
 
-    return command.execute(
+    val result = command.execute(
         bot = context.bot,
         config = config,
         channel = channel,
@@ -57,42 +56,30 @@ suspend fun channelJoinRouter(context: InternalInteractionContext<GuildJoinEvent
                 publisher = { msg -> MessageCreateAdaptor(systemChannel.sendMessage(msg.asDiscordMessageData().buildCreate()))},
                 editGlobal = { throw IllegalStateException() }
             )
-        }
-    ).fold(
-        onSuccess = { (io, report) ->
-            io.get()
-            report
         },
-        onFailure = { throwable ->
-            ErrorReport(throwable, context.channel)
-        }
-    ).apply {
-        interactionSource = context.source
-        emittedTime = context.emittedTime
-        apiTime = Clock.System.now()
-    }
+        emittedTime = context.emittedTime,
+    )
+
+    return executeAndRecord(context, result)
 }
 
-suspend fun channelLeaveRouter(context: InternalInteractionContext<GuildLeaveEvent>): Report {
+suspend fun channelLeaveRouter(context: InternalInteractionContext<GuildLeaveEvent>): List<ActionLogRecord> {
     val channel = ChannelProfileRepository.retrieveChannel(context.bot.dbConnection, DISCORD_PLATFORM_ID, context.event.guild.channelId())
 
-    return (channel?.let {
-        ChannelLeaveCommand.execute(
+    return if (channel != null) {
+        val result = ChannelLeaveCommand.execute(
             bot = context.bot,
-            config = SessionManager.retrieveChannelConfig(context.bot.sessions, it),
-            channel = it,
+            config = SessionManager.retrieveChannelConfig(context.bot.sessions, channel),
+            channel = channel,
             service = DiscordPlatformService(context.discordConfig, context.jdaChannel),
             publisher = MonoPublisherSet(
                 publisher = { throw IllegalStateException() },
                 editGlobal = { throw IllegalStateException() }
-            )
-        ).fold(
-            onSuccess = { (_, report) -> report },
-            onFailure = { ErrorReport(IllegalStateException(), context.channel) }
+            ),
+            emittedTime = context.emittedTime,
         )
-    } ?: ErrorReport(IllegalStateException(), context.channel)).apply {
-        interactionSource = context.source
-        emittedTime = context.emittedTime
-        apiTime = Clock.System.now()
-    }
+
+        executeAndRecord(context, result)
+    } else
+        IllegalStateException().asActionLogRecord(context)
 }

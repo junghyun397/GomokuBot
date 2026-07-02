@@ -8,9 +8,10 @@ import core.database.repositories.UserProfileRepository
 import core.database.repositories.UserStatsRepository
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.entities.ChannelConfig
 import utils.tuple
+import kotlin.time.Instant
 
 sealed interface RankScope {
 
@@ -35,6 +36,7 @@ class RankCommand(private val scope: RankScope) : Command {
         user: User.Human,
         service: PlatformService,
         publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         val rankings = when (this.scope) {
             is RankScope.Global -> UserStatsRepository.fetchRankings(bot.dbConnection)
@@ -55,7 +57,7 @@ class RankCommand(private val scope: RankScope) : Command {
                 .launch()()
         }
 
-        tuple(io, this.writeCommandReport("$scope scope", channel, user))
+        CommandResult(io, this.writeActionLog(emittedTime, "$scope scope", channel, user))
     }
 
 }

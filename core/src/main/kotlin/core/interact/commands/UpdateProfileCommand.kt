@@ -9,9 +9,10 @@ import core.database.repositories.ChannelProfileRepository
 import core.database.repositories.UserProfileRepository
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.entities.ChannelConfig
 import utils.tuple
+import kotlin.time.Instant
 
 class UpdateProfileCommand(
     command: Command,
@@ -27,7 +28,8 @@ class UpdateProfileCommand(
         channel: Channel,
         user: User.Human,
         service: PlatformService,
-        publishers: PublisherSet
+        publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         this.newUser?.let {
             UserProfileRepository.upsertUser(bot.dbConnection, it)
@@ -39,7 +41,7 @@ class UpdateProfileCommand(
             ChannelProfileRepository.upsertChannel(bot.dbConnection, it)
         }
 
-        val report = this.writeCommandReport("succeed", channel, user)
+        val report = this.writeActionLog(emittedTime, "$user", channel, user)
 
         val io: Effect<Nothing, Unit> = effect { }
 

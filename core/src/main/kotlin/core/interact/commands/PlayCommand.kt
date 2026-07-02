@@ -8,13 +8,13 @@ import core.assets.User
 import core.interact.message.PlatformMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.*
 import core.session.entities.*
 import renju.notation.GameResult
 import renju.notation.Pos
-import utils.tuple
 import utils.unreachable
+import kotlin.time.Instant
 
 class PlayCommand(
     private val sessionId: SessionId,
@@ -32,6 +32,7 @@ class PlayCommand(
         user: User.Human,
         service: PlatformService,
         publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         var messageBufferKey: MessageBufferKey? = null
 
@@ -116,7 +117,7 @@ class PlayCommand(
                     service.archiveSession(session, config.archivePolicy)
                 }
 
-                tuple(io, this.writeCommandReport("make move ${this.pos}, terminate session by $result", channel, user))
+                CommandResult(io, this.writeActionLog(emittedTime, "make move ${this.pos}, finished $result", channel, user))
             }
             null -> {
                 val guideIO = when {
@@ -166,7 +167,7 @@ class PlayCommand(
                     )()
                 }
 
-                tuple(io, this.writeCommandReport("make move ${this.pos}", channel, user))
+                CommandResult(io, this.writeActionLog(emittedTime, "make move ${this.pos}", channel, user))
             }
         }
     }

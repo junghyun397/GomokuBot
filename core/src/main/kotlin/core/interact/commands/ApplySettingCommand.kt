@@ -9,11 +9,11 @@ import core.interact.message.PlatformMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.message.SettingMapping
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.SessionManager
 import core.session.entities.ChannelConfig
 import utils.Identifiable
-import utils.tuple
+import kotlin.time.Instant
 
 class ApplySettingCommand(
     private val newConfig: ChannelConfig,
@@ -30,7 +30,8 @@ class ApplySettingCommand(
         channel: Channel,
         user: User.Human,
         service: PlatformService,
-        publishers: PublisherSet
+        publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         SessionManager.updateChannelConfig(bot.sessions, channel, this.newConfig)
 
@@ -42,12 +43,11 @@ class ApplySettingCommand(
                 PlatformMessage(config.language.container.settingApplied(service.formatHighlight(localKind), service.formatHighlight(localChoice)))
             )
                 .launch()()
-            Unit
         }
 
         val (kind, choice) = SettingMapping.buildKindNamePair(Language.ENG.container, this.diff)
 
-        tuple(io, this.writeCommandReport("update $kind as [$choice](${this.diff.id})", channel, user))
+        CommandResult(io, this.writeActionLog(emittedTime, "$kind as [$choice](${this.diff.id})", channel, user))
     }
 
 }

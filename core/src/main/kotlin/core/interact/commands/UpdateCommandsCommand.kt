@@ -7,9 +7,10 @@ import core.assets.Channel
 import core.assets.User
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.entities.ChannelConfig
 import utils.tuple
+import kotlin.time.Instant
 
 class UpdateCommandsCommand(
     command: Command,
@@ -25,11 +26,12 @@ class UpdateCommandsCommand(
         channel: Channel,
         user: User.Human,
         service: PlatformService,
-        publishers: PublisherSet
+        publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         val io: Effect<Nothing, Unit> = effect { service.upsertCommands(config.language.container) }
 
-        val report = this.writeCommandReport("deprecates = ${this.deprecates}, adds = ${this.adds}", channel, user)
+        val report = this.writeActionLog(emittedTime, "deprecates = ${this.deprecates}, adds = ${this.adds}", channel, user)
 
         tuple(io, report, channel, user)
     }

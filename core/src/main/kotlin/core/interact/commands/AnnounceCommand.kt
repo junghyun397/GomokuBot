@@ -10,13 +10,14 @@ import core.database.repositories.UserProfileRepository
 import core.interact.i18n.Language
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.MessageManager
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
 import utils.tuple
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 class AnnounceCommand(command: Command) : UnionCommand(command) {
 
@@ -28,7 +29,8 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
         channel: Channel,
         user: User.Human,
         service: PlatformService,
-        publishers: PublisherSet
+        publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         val thenUser = user.copy(announceId = AnnounceRepository.getLatestAnnounceId(bot.dbConnection))
 
@@ -62,7 +64,7 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
             service.upsertCommands(config.language.container)
         }
 
-        val report = this.writeCommandReport("sent", channel, thenUser)
+        val report = this.writeActionLog(emittedTime, "sent", channel, thenUser)
 
         tuple(io, report, channel, user)
     }

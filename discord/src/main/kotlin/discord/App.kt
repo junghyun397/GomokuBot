@@ -9,8 +9,6 @@ import core.database.LocalCaches
 import core.database.repositories.AnnounceRepository
 import core.engine.EngineProvider
 import core.engine.MintakaServer
-import core.interact.reports.ErrorReport
-import core.interact.reports.Report
 import core.session.MessageManager
 import core.session.SessionPool
 import dev.minn.jda.ktx.coroutines.await
@@ -68,10 +66,10 @@ fun discordConfigFromEnv(): DiscordConfig = DiscordConfig(
     testerRoleId = System.getenv("GOMOKUBOT_DISCORD_TESTER_ROLE_ID").toLong()
 )
 
-fun leaveLog(report: Report) {
-    when (report) {
-        is ErrorReport -> logger.error(report.buildLog())
-        else -> logger.info(report.buildLog())
+fun leaveLog(record: ActionLogRecord) {
+    when (val error = record.error) {
+        null -> logger.info(record.buildLog())
+        else -> logger.error(record.buildLog(), error)
     }
 }
 
@@ -85,14 +83,14 @@ private inline fun <reified E : GenericEvent> ShardManager.eventFlow(): Flow<E> 
         awaitClose { listener.cancel() }
     }
 
-private fun <E> Flow<E>.route(transform: suspend (E) -> Report?): Flow<Report> =
+private fun <E> Flow<E>.route(transform: suspend (E) -> List<ActionLogRecord>?): Flow<ActionLogRecord> =
     channelFlow {
         collect { event ->
             launch {
                 runCatching {
                     transform(event)
-                }.onSuccess { report ->
-                    report?.let { send(it) }
+                }.onSuccess { reports ->
+                    reports?.forEach { report -> send(report) }
                 }.onFailure { error ->
                     logger.error(error.stackTraceToString())
                 }
@@ -162,7 +160,7 @@ object GomokuBot {
             commandAutoCompleteRouter(it)
         }
 
-        val commandFlow: Flow<Report> = merge(
+        val commandFlow: Flow<ActionLogRecord> = merge(
             shardManager.eventFlow<SlashCommandInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
                 .route {

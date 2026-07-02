@@ -23,13 +23,13 @@ import dev.minn.jda.ktx.messages.InlineEmbed
 import discord.assets.*
 import discord.interact.ChannelManager
 import discord.interact.DiscordConfig
-import discord.interact.message.DiscordPlatformService.IdConvention.ACCEPT
-import discord.interact.message.DiscordPlatformService.IdConvention.NO_FEATURE
-import discord.interact.message.DiscordPlatformService.IdConvention.OPENING
-import discord.interact.message.DiscordPlatformService.IdConvention.REJECT
-import discord.interact.message.DiscordPlatformService.IdConvention.REPLAY
-import discord.interact.message.DiscordPlatformService.IdConvention.REPLAY_LIST
-import discord.interact.message.DiscordPlatformService.IdConvention.SET
+import discord.interact.message.DiscordPlatformService.CompomentIds.ACCEPT
+import discord.interact.message.DiscordPlatformService.CompomentIds.NO_FEATURE
+import discord.interact.message.DiscordPlatformService.CompomentIds.OPENING
+import discord.interact.message.DiscordPlatformService.CompomentIds.REJECT
+import discord.interact.message.DiscordPlatformService.CompomentIds.REPLAY
+import discord.interact.message.DiscordPlatformService.CompomentIds.REPLAY_LIST
+import discord.interact.message.DiscordPlatformService.CompomentIds.SET
 import discord.interact.parse.buildableCommands
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
@@ -61,7 +61,7 @@ class DiscordPlatformService(
     private val jdaChannel: JDAChannel? = null,
 ) : PlatformServiceImpl() {
 
-    object IdConvention {
+    object CompomentIds {
 
         const val NO_FEATURE = 'n'
 
@@ -296,35 +296,6 @@ class DiscordPlatformService(
         )
     }
 
-    fun buildReplayBoard(publisher: DiscordMessagePublisher, container: LanguageContainer, renderer: BoardRenderer, renderType: HistoryRenderType, draw: BoardDraw): DiscordMessageBuilder =
-        publisher sends buildList {
-            renderer.renderBoard(draw.state, renderType, null, null).fold(
-                ifLeft = { textBoard ->
-                    add(Embed {
-                        color = COLOR_NORMAL_HEX
-
-                        buildBoardAuthor(container, draw)
-                        description = textBoard
-                    })
-                },
-                ifRight = { imageStream ->
-                    val fName = ImageBoardRenderer.newFileName()
-
-                    val messageBuilder = publisher sends buildList {
-                        Embed {
-                            color = COLOR_NORMAL_HEX
-
-                            buildBoardAuthor(container, draw)
-
-                            image = "attachment://$fName"
-                        }
-                    }
-
-                    messageBuilder.addFile(imageStream, fName)
-                }
-            )
-        }
-
     override fun buildSessionArchive(publisher: DiscordMessagePublisher, draw: BoardDraw): DiscordMessageBuilder {
         val imageStream = ImageBoardRenderer.renderInputStream(draw.state, HistoryRenderType.SEQUENCE, null, null, true)
 
@@ -357,7 +328,7 @@ class DiscordPlatformService(
                 ButtonFlag.FORBIDDEN -> Button.of(ButtonStyle.DANGER, "${SET}-${id}", "", EMOJI_DARK_X).asDisabled()
                 ButtonFlag.DISABLED -> Button.of(ButtonStyle.SECONDARY, "${SET}-${id}", id).asDisabled()
             } }
-        ) }.reversed() // cartesian coordinate system
+        ) }.reversed()
 
     override fun upsertInputBoard(publisher: DiscordComponentPublisher, inputField: InputField): DiscordMessageBuilder =
         publisher(this.buildFocusedButtons(inputField))

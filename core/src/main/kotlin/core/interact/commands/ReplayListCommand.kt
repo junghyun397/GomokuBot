@@ -8,9 +8,9 @@ import core.assets.User
 import core.database.repositories.GameRecordRepository
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.entities.ChannelConfig
-import utils.tuple
+import kotlin.time.Instant
 
 class ReplayListCommand(
     private val messageRef: MessageRef?,
@@ -29,13 +29,14 @@ class ReplayListCommand(
         user: User.Human,
         service: PlatformService,
         publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         val gameRecords = GameRecordRepository.retrieveGameRecords(bot.dbConnection, user.id, 10)
 
         if (gameRecords.isEmpty())
-            return@runCatching tuple(
+            return@runCatching CommandResult(
                 effect { },
-                this.writeCommandReport("no records", channel, user)
+                this.writeActionLog(emittedTime, "no records", channel, user)
             )
 
         val publisher =
@@ -47,7 +48,7 @@ class ReplayListCommand(
                 .launch()()
         }
 
-        tuple(io, this.writeCommandReport("total ${gameRecords.size} records", channel, user))
+        CommandResult(io, this.writeActionLog(emittedTime, "${gameRecords.size} records", channel, user))
     }
 
 }

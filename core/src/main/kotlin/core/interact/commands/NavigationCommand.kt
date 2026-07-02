@@ -9,13 +9,13 @@ import core.assets.User
 import core.interact.i18n.Language
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.MessageManager
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
-import utils.tuple
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 class NavigationCommand(
     private val navigationState: PageNavigationState,
@@ -33,7 +33,8 @@ class NavigationCommand(
         channel: Channel,
         user: User.Human,
         service: PlatformService,
-        publishers: PublisherSet
+        publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         val range = this.navigationState.kind.fetchRange(bot.dbConnection)
 
@@ -48,7 +49,7 @@ class NavigationCommand(
         )
 
         if (this.navigationState.page == newState.page)
-            return@runCatching tuple(effect { }, this.writeCommandReport("navigate ${navigationState.kind} bounded",
+            return@runCatching CommandResult(effect { }, this.writeActionLog(emittedTime, "navigate ${navigationState.kind} bounded",
                 channel, user))
 
         MessageManager.addNavigation(bot.sessions, this.messageRef, newState)
@@ -74,7 +75,7 @@ class NavigationCommand(
             Unit
         }
 
-        tuple(io, this.writeCommandReport("navigate ${newState.kind} as ${newState.page}", channel, user))
+        CommandResult(io, this.writeActionLog(emittedTime, "navigate ${newState.kind} as ${newState.page}", channel, user))
     }
 
 }

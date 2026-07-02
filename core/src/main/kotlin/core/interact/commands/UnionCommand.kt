@@ -7,10 +7,10 @@ import core.assets.Channel
 import core.assets.User
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.InteractionReport
+import core.interact.reports.ActionLog
 import core.session.entities.ChannelConfig
 import utils.Quadruple
-import utils.tuple
+import kotlin.time.Instant
 
 abstract class UnionCommand(private val command: Command) : Command {
 
@@ -22,20 +22,29 @@ abstract class UnionCommand(private val command: Command) : Command {
         channel: Channel,
         user: User.Human,
         service: PlatformService,
-        publishers: PublisherSet
+        publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
-        val (unionIO, unionReport, thenChannel, thenUser) = this.executeSelf(bot, config, channel, user, service, publishers)
+        val (unionIO, unionReport, thenChannel, thenUser) = this.executeSelf(
+            bot,
+            config,
+            channel,
+            user,
+            service,
+            publishers,
+            emittedTime
+        )
             .getOrThrow()
 
-        val (originalIO, report) = this.command.execute(bot, config, thenChannel, thenUser, service, publishers)
+        val result = this.command.execute(bot, config, thenChannel, thenUser, service, publishers, emittedTime)
             .getOrThrow()
 
         val io = effect {
             unionIO()
-            originalIO()
+            result.io()
         }
 
-        tuple(io, unionReport + report)
+        CommandResult(io, listOf(unionReport) + result.events)
     }
 
     protected abstract suspend fun executeSelf(
@@ -44,7 +53,8 @@ abstract class UnionCommand(private val command: Command) : Command {
         channel: Channel,
         user: User.Human,
         service: PlatformService,
-        publishers: PublisherSet
-    ): Result<Quadruple<Effect<Nothing, Unit>, InteractionReport, Channel, User.Human>>
+        publishers: PublisherSet,
+        emittedTime: Instant,
+    ): Result<Quadruple<Effect<Nothing, Unit>, ActionLog, Channel, User.Human>>
 
 }

@@ -6,9 +6,9 @@ import core.assets.Channel
 import core.assets.User
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.entities.ChannelConfig
-import utils.tuple
+import kotlin.time.Instant
 
 class HelpCommand(
     private val sendSettings: Boolean,
@@ -26,6 +26,7 @@ class HelpCommand(
         user: User.Human,
         service: PlatformService,
         publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         val io = effect {
             when (this@HelpCommand.sendSettings) {
@@ -35,7 +36,7 @@ class HelpCommand(
             Unit
         }
 
-        tuple(io, this.writeCommandReport("sent", channel, user))
+        CommandResult(io, this.writeActionLog(emittedTime, "sent", channel, user))
     }
 
 }

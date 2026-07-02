@@ -9,13 +9,13 @@ import core.database.repositories.AnnounceRepository
 import core.interact.i18n.Language
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.MessageManager
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
-import utils.tuple
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 class ViewAnnounceCommand(val language: Language) : Command {
 
@@ -30,6 +30,7 @@ class ViewAnnounceCommand(val language: Language) : Command {
         user: User.Human,
         service: PlatformService,
         publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         val latestAnnounceId = AnnounceRepository.getLatestAnnounceId(bot.dbConnection)!!
         val announcements = AnnounceRepository.getLatestAnnounce(bot.dbConnection)
@@ -57,7 +58,7 @@ class ViewAnnounceCommand(val language: Language) : Command {
             }
         }
 
-        tuple(io, this.writeCommandReport("sent", channel, user))
+        CommandResult(io, this.writeActionLog(emittedTime, "sent", channel, user))
     }
 
 }

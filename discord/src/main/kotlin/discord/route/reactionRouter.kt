@@ -1,18 +1,17 @@
 package discord.route
 
-import arrow.core.raise.get
 import core.BotContext
 import core.assets.COLOR_NORMAL_HEX
 import core.assets.MessageRef
 import core.interact.message.AdaptivePublisherSet
-import core.interact.reports.ErrorReport
-import core.interact.reports.Report
 import core.session.MessageManager
 import core.session.entities.BoardNavigationState
 import core.session.entities.NavigationState
 import core.session.entities.PageNavigationState
 import dev.minn.jda.ktx.coroutines.await
+import discord.ActionLogRecord
 import discord.assets.messageRef
+import discord.executeAndRecord
 import discord.interact.ChannelManager
 import discord.interact.UserInteractionContext
 import discord.interact.message.*
@@ -22,14 +21,13 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
-import kotlin.time.Clock
 
 private fun recoverNavigationState(bot: BotContext, message: Message, messageRef: MessageRef): NavigationState? =
     message.embeds.firstOrNull()
         ?.let { PageNavigationState.decodeFromColor(COLOR_NORMAL_HEX, it.colorRaw, messageRef, bot.dbConnection) }
         ?.also { MessageManager.addNavigation(bot.sessions, messageRef, it) }
 
-suspend fun reactionRouter(context: UserInteractionContext<GenericMessageReactionEvent>): Report? {
+suspend fun reactionRouter(context: UserInteractionContext<GenericMessageReactionEvent>): List<ActionLogRecord>? {
     val messageRef = context.event.messageRef()
 
     val state = MessageManager.getNavigationState(context.bot.sessions, messageRef)
@@ -50,7 +48,7 @@ suspend fun reactionRouter(context: UserInteractionContext<GenericMessageReactio
         }
     }
 
-    return command.execute(
+    val result = command.execute(
         bot = context.bot,
         config = context.config,
         channel = context.channel,
@@ -63,17 +61,8 @@ suspend fun reactionRouter(context: UserInteractionContext<GenericMessageReactio
             component = { components -> MessageEditAdaptor(context.event.channel.editMessageComponentsById(messageRef.id.idLong, components.asJdaComponents())) },
             selfRef = messageRef,
         ),
-    ).fold(
-        onSuccess = { (io, report) ->
-            io.get()
-            report
-        },
-        onFailure = { throwable ->
-            ErrorReport(throwable, context.channel)
-        }
-    ).apply {
-        interactionSource = context.source
-        emittedTime = context.emittedTime
-        apiTime = Clock.System.now()
-    }
+        emittedTime = context.emittedTime,
+    )
+
+    return executeAndRecord(context, result)
 }

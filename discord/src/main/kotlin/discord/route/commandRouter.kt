@@ -5,7 +5,6 @@ package discord.route
 import arrow.core.Either
 import arrow.core.flatMap
 import arrow.core.raise.effect
-import arrow.core.raise.get
 import core.database.repositories.AnnounceRepository
 import core.interact.commands.*
 import core.interact.i18n.Language
@@ -13,9 +12,9 @@ import core.interact.i18n.LanguageContainer
 import core.interact.message.AdaptivePublisherSet
 import core.interact.message.MonoPublisherSet
 import core.interact.parse.ParseFailure
-import core.interact.reports.ErrorReport
-import core.interact.reports.Report
+import discord.ActionLogRecord
 import discord.assets.*
+import discord.executeAndRecord
 import discord.interact.ChannelManager
 import discord.interact.UserInteractionContext
 import discord.interact.message.*
@@ -31,7 +30,6 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import utils.replaceIf
 import java.util.concurrent.TimeUnit
-import kotlin.time.Clock
 
 private fun buildPermissionNode(context: UserInteractionContext<*>, parsableCommand: ParsableCommand, channel: GuildMessageChannel, jdaUser: User): Either<ParseFailure, ParsableCommand> =
     ChannelManager.permissionDependedRun(
@@ -111,7 +109,7 @@ fun commandAutoCompleteRouter(event: CommandAutoCompleteInteractionEvent) {
     // TODO
 }
 
-suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEvent>): Report? {
+suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEvent>): List<ActionLogRecord>? {
     val parsable = matchCommand(context.event.name, context.config.language.container)
         ?: return null
     val platform = DiscordPlatformService(context.discordConfig, context.jdaChannel)
@@ -144,7 +142,7 @@ suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInter
         }
     )
 
-    return parsed.fold(
+    val result = parsed.fold(
         ifRight = { command ->
             command.execute(
                 bot = context.bot,
@@ -166,7 +164,8 @@ suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInter
                         windowed = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.asDiscordMessageData().buildCreate()).setEphemeral(true)) },
                         editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.asDiscordMessageData().buildEdit()) } }
                     )
-                }
+                },
+                emittedTime = context.emittedTime,
             )
         },
         ifLeft = { parseFailure ->
@@ -176,25 +175,16 @@ suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInter
                 publisher = TransMessagePublisher(
                     head = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.asDiscordMessageData().buildCreate()).setEphemeral(true)) },
                     tail = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate()).setEphemeral(true)) }
-                )
+                ),
+                emittedTime = context.emittedTime,
             )
         }
-    ).fold(
-        onSuccess = { (io, report) ->
-            io.get()
-            report
-        },
-        onFailure = { throwable ->
-            ErrorReport(throwable, context.channel)
-        }
-    ).apply {
-        interactionSource = context.source
-        emittedTime = context.emittedTime
-        apiTime = Clock.System.now()
-    }
+    )
+
+    return executeAndRecord(context, result)
 }
 
-suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): Report? {
+suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): List<ActionLogRecord>? {
     val platform = DiscordPlatformService(context.discordConfig, context.jdaChannel)
     val messageRaw = context.event.message.contentRaw
 
@@ -239,7 +229,7 @@ suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEve
         )
     }
 
-    return parsed.fold(
+    val result = parsed.fold(
         ifRight = { command ->
             command.execute(
                 bot = context.bot,
@@ -251,6 +241,7 @@ suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEve
                     publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.asDiscordMessageData().buildCreate())) },
                     editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.asDiscordMessageData().buildEdit()) } },
                 ),
+                emittedTime = context.emittedTime,
             )
         },
         ifLeft = { parseFailure ->
@@ -258,19 +249,10 @@ suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEve
                 config = context.config,
                 service = platform,
                 publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.asDiscordMessageData().buildCreate())) },
+                emittedTime = context.emittedTime,
             )
         }
-    ).fold(
-        onSuccess = { (io, report) ->
-            io.get()
-            report
-        },
-        onFailure = { throwable ->
-            ErrorReport(throwable, context.channel)
-        }
-    ).apply {
-        interactionSource = context.source
-        emittedTime = context.emittedTime
-        apiTime = Clock.System.now()
-    }
+    )
+
+    return executeAndRecord(context, result)
 }

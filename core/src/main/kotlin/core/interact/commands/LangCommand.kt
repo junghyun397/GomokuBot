@@ -8,10 +8,10 @@ import core.interact.i18n.Language
 import core.interact.message.PlatformMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.SessionManager
 import core.session.entities.ChannelConfig
-import utils.tuple
+import kotlin.time.Instant
 
 class LangCommand(private val language: Language) : Command {
 
@@ -26,6 +26,7 @@ class LangCommand(private val language: Language) : Command {
         user: User.Human,
         service: PlatformService,
         publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         val thenConfig = config.copy(language = this.language)
 
@@ -38,7 +39,7 @@ class LangCommand(private val language: Language) : Command {
             service.upsertCommands(thenConfig.language.container)
         }
 
-        tuple(io, this.writeCommandReport("set language ${config.language.name} to ${thenConfig.language.name}",
+        CommandResult(io, this.writeActionLog(emittedTime, "${config.language.name} to ${thenConfig.language.name}",
             channel, user))
     }
 

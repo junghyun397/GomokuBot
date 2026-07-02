@@ -7,13 +7,13 @@ import core.assets.Channel
 import core.assets.User
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.MessageManager
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
-import utils.tuple
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 class SettingsCommand : Command {
 
@@ -28,6 +28,7 @@ class SettingsCommand : Command {
         user: User.Human,
         service: PlatformService,
         publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         val io = effect {
             val message = service.buildSettings(publishers.plain, config, 0)
@@ -49,7 +50,7 @@ class SettingsCommand : Command {
             }
         }
 
-        tuple(io, this.writeCommandReport("sent", channel, user))
+        CommandResult(io, this.writeActionLog(emittedTime, "sent", channel, user))
     }
 
 }

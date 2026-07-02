@@ -6,10 +6,10 @@ import core.assets.MessageRef
 import core.assets.User
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.SessionManager
 import core.session.entities.*
-import utils.tuple
+import kotlin.time.Instant
 
 class OpeningDeclareCommand(
     private val sessionId: SessionId,
@@ -17,7 +17,7 @@ class OpeningDeclareCommand(
     private val messageRef: MessageRef
 ) : Command {
 
-    override val name = "opening-swap"
+    override val name = "opening-declare"
 
     override val responseFlag = ResponseFlag.Immediately
 
@@ -28,6 +28,7 @@ class OpeningDeclareCommand(
         user: User.Human,
         service: PlatformService,
         publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         var messageBufferKey: MessageBufferKey? = null
 
@@ -46,7 +47,7 @@ class OpeningDeclareCommand(
 
         val io = buildNextMoveProcedure(bot, config, service, boardPublisher, session, messageBufferKey!!)
 
-        tuple(io, this.writeCommandReport("declare 5th moves ${this.maxOfferCount}", channel, user))
+        CommandResult(io, this.writeActionLog(emittedTime, "declare 5th moves ${this.maxOfferCount}", channel, user))
     }
 
 }

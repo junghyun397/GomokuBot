@@ -7,10 +7,11 @@ import core.assets.User
 import core.interact.message.PlatformMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.*
 import core.session.entities.*
 import utils.tuple
+import kotlin.time.Instant
 
 class ResignCommand(
     private val sessionId: SessionId,
@@ -27,6 +28,7 @@ class ResignCommand(
         user: User.Human,
         service: PlatformService,
         publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         val (session, messageBufferKey) = run {
             val staleSession = SessionManager.deleteGameSession(bot.sessions, this.sessionId)!!
@@ -78,7 +80,7 @@ class ResignCommand(
             service.archiveSession(session, config.archivePolicy)
         }
 
-        io to this.writeCommandReport("surrendered, terminate session by $result", channel, user)
+        CommandResult(io, this.writeActionLog(emittedTime, "resigned $result", channel, user))
     }
 
 }

@@ -10,14 +10,14 @@ import core.engine.EngineLevel
 import core.interact.message.PlatformMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.EngineGameManager
 import core.session.MessageManager
 import core.session.PvpGameManager
 import core.session.SessionManager
 import core.session.entities.ChannelConfig
 import core.session.entities.Rule
-import utils.tuple
+import kotlin.time.Instant
 
 class StartCommand(
     val recipient: Either<User.Human, EngineLevel>,
@@ -35,6 +35,7 @@ class StartCommand(
         user: User.Human,
         service: PlatformService,
         publishers: PublisherSet,
+        emittedTime: Instant,
     ) = runCatching {
         this.recipient.fold(
             ifLeft = { recipient ->
@@ -54,7 +55,7 @@ class StartCommand(
                         MessageManager.appendMessage(bot.sessions, requestSession.messageBufferKey, message.ref)
                 }
 
-                tuple(io, this.writeCommandReport("make request to ${this.recipient}", channel, user))
+                CommandResult(io, this.writeActionLog(emittedTime, "request to ${this.recipient}", channel, user))
             },
             ifRight = { engineLevel ->
                 val rating = UserRatingRepository.retrieveUserRating(bot.dbConnection, user.id)
@@ -77,7 +78,7 @@ class StartCommand(
                     buildBoardProcedure(bot, config, service, publishers.plain, session)()
                 }
 
-                tuple(io, this.writeCommandReport("start game session with Engine", channel, user))
+                CommandResult(io, this.writeActionLog(emittedTime, "$engineLevel", channel, user))
             }
         )
     }

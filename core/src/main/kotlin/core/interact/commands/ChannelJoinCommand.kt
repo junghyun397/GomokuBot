@@ -5,10 +5,10 @@ import core.BotContext
 import core.assets.Channel
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.reports.writeCommandReport
+import core.interact.reports.writeActionLog
 import core.session.SessionManager
 import core.session.entities.ChannelConfig
-import utils.tuple
+import kotlin.time.Instant
 
 class ChannelJoinCommand(private val localeComment: String) : InternalCommand {
 
@@ -20,6 +20,7 @@ class ChannelJoinCommand(private val localeComment: String) : InternalCommand {
         channel: Channel,
         service: PlatformService,
         publisher: PublisherSet?,
+        emittedTime: Instant,
     ) = runCatching {
         SessionManager.updateChannelConfig(bot.sessions, channel, config)
 
@@ -36,7 +37,7 @@ class ChannelJoinCommand(private val localeComment: String) : InternalCommand {
             service.upsertCommands(config.language.container)
         }
 
-        tuple(io, this.writeCommandReport(this.localeComment, channel))
+        CommandResult(io, this.writeActionLog(emittedTime, this.localeComment, channel))
     }
 
 }
