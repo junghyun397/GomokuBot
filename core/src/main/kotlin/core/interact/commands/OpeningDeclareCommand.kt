@@ -8,7 +8,11 @@ import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeActionLog
 import core.session.SessionManager
-import core.session.entities.*
+import core.session.entities.ChannelConfig
+import core.session.entities.DeclareStageOpeningSession
+import core.session.entities.SessionId
+import core.session.entities.SwapType
+import utils.tuple
 import kotlin.time.Instant
 
 class OpeningDeclareCommand(
@@ -30,14 +34,11 @@ class OpeningDeclareCommand(
         publishers: PublisherSet,
         emittedTime: Instant,
     ) = runCatching {
-        var messageBufferKey: MessageBufferKey? = null
-
-        val session = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { session ->
+        val (session, messageBufferKey) = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { session ->
             val declareSession = session as? DeclareStageOpeningSession ?: throw IllegalStateException()
             if (declareSession.player.id != user.id) throw IllegalStateException()
 
-            messageBufferKey = session.messageBufferKey
-            declareSession.declare(this.maxOfferCount)
+            tuple(declareSession.declare(this.maxOfferCount), session.messageBufferKey)
         }
 
         val boardPublisher = when (config.swapType) {
@@ -45,7 +46,7 @@ class OpeningDeclareCommand(
             else -> publishers.plain
         }
 
-        val io = buildNextMoveProcedure(bot, config, service, boardPublisher, session, messageBufferKey!!)
+        val io = buildNextMoveProcedure(bot, config, service, boardPublisher, session, messageBufferKey)
 
         CommandResult(io, this.writeActionLog(emittedTime, "declare 5th moves ${this.maxOfferCount}", channel, user))
     }

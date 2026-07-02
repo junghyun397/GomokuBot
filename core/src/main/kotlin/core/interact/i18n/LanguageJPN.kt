@@ -8,27 +8,39 @@ class LanguageJPN : LanguageENG() {
     override fun languageCode() = "JPN"
 
     override fun languageName() = "\uD83C\uDDEF\uD83C\uDDF5 日本語"
-    override fun languageSuggestion() = "「/lang JPN」と入力して、日本語を使用してください。"
+    override fun languageSuggestion() = "``/lang`` ``JPN`` コマンドを使用してください。"
 
     override fun engineLevelAmoeba() = "アメーバ"
-    override fun engineLevelApe() = "サル"
+    override fun engineLevelApe() = "類人猿"
     override fun engineLevelBeginner() = "初心者"
     override fun aiLevelIntermediate() = "中級者"
     override fun engineLevelAdvanced() = "上級者"
-    override fun engineLevelExpert() = "エキスパート"
-    override fun engineLevelGuru() = "グル"
+    override fun engineLevelExpert() = "達人"
+    override fun engineLevelGuru() = "賢者"
 
-    override fun helpCommand() = "help"
+    override fun swapSelectYes() = "はい"
+    override fun swapSelectNo() = "いいえ"
+
+    override fun branchSelectSwap() = "スワップ"
+    override fun branchSelectOffer() = "候補提示"
+
+    override fun ruleSelectRenju() = "連珠 (デフォルト)"
+    override fun ruleSelectTaraguchi10() = "Taraguchi-10"
+    override fun ruleSelectSoosyrv8() = "Soosyrv-8"
+
+    override fun helpCommand() = "ヘルプ"
     override fun helpCommandDescription() = "ヘルプを表示します。"
+    override fun helpCommandOptionShortcut() = "ショートカット"
+    override fun helpCommandOptionShortcutDescription() = "指定したヘルプページをすぐに表示します。"
+    override fun helpCommandOptionAnnouncements() = "お知らせ"
 
-    override fun settingsCommand() = "settings"
-    override fun settingsCommandDescription() = "設定パネルを表示します。"
+    override fun settingsCommand() = "設定"
+    override fun settingsCommandDescription() = "設定画面を表示します。"
 
     override fun helpAboutEmbedTitle() = "GomokuBot / ヘルプ"
     override fun helpAboutEmbedDescription(platform: String) =
-        "今、 **$platform** で **五目並べ** をプレイできます。 **GomokuBot** ができます。" +
-                " ― GomokuBotは、 $platform で五目並べ（[連珠](https://www.renju.net/rules/)）機能を提供するAIボットです。" +
-                "収集されたデータは、強化学習モデルのトレーニングに使用されます。"
+        "**$platform** でも **五目並べ** を楽しめるようになりました。**GomokuBot** が一緒に遊びます。" +
+                " - GomokuBot は $platform で五目並べ([連珠](https://www.renju.net/rules/))を提供する、オープンソースのAI五目並べボットです。"
     override fun helpAboutEmbedDeveloper() = "開発者"
     override fun helpAboutEmbedRepository() = "Gitリポジトリ"
     override fun helpAboutEmbedVersion() = "バージョン"
@@ -38,283 +50,314 @@ class LanguageJPN : LanguageENG() {
     override fun commandUsageEmbedTitle() = "GomokuBot / コマンド"
     override fun commandUsageHelp() = "ヘルプを表示します。"
     override fun commandUsageSettings() = "設定画面を表示します。"
-    override fun commandUsageRankGlobal() = "GomokuBotの全体ランキングを1位から10位まで表示します。"
-    override fun commandUsageRankServer() = "このサーバー内でのランキングを表示します。"
-    override fun commandUsageRankUser() = "メンションしたユーザーの対戦相手のランキングを表示します。"
+    override fun commandUsageRankGlobal() = "1位から10位までのGomokuBot全体ランキングを表示します。"
+    override fun commandUsageRankServer() = "このサーバー内のランキングを表示します。"
+    override fun commandUsageRankUser() = "メンションしたユーザーとの対戦ランキングを表示します。"
+    override fun commandUsageReplay() = "最近プレイされたゲームのリプレイ一覧を表示します。"
     override fun commandUsageRating() = "``GomokuBot ELO`` レーティングを表示します。"
 
     override fun commandUsageLang(langList: String) =
-        "このサーバーで使用される言語設定を変更します。例) ``/lang`` ``JPN``"
+        "このサーバーで使用する言語設定を変更します。例) ``/lang`` ``JPN``"
     override fun commandUsageStyle() =
-        "このサーバーで使用される五目並べの盤面スタイルを変更します。例) ``/style`` ``A``"
+        "このサーバーで使用する五目並べ盤のスタイルを変更します。例) ``/スタイル`` ``A``"
 
-    override fun commandUsageStartEngine() = "AIとの新しいゲームを開始します。"
+    override fun commandUsageStartEngine() = "AIと新しいゲームを開始します。"
     override fun commandUsageStartPvp() =
-        "メンションしたユーザーに対してゲームリクエストを送信します。例) ``/start`` ``@user``"
-    override fun commandUsageResign() = "途中でゲームを降参します。"
+        "メンションしたユーザーに新しいゲームを提案します。例) ``/開始`` ``@ユーザー``"
+    override fun commandUsageResign() = "進行中のゲームを投了します。"
 
-    override fun rankCommand() = "rank"
-    override fun rankCommandDescription() = "1位から10位のランキングを取得します。"
-    override fun rankCommandSubGlobal() = "global"
-    override fun rankCommandSubGlobalDescription() = "Gomokubotの全体ランキングを取得します。"
-    override fun rankCommandSubServer() = "server"
-    override fun rankCommandSubServerDescription() = "内部サーバーランキングを取得します。"
-    override fun rankCommandSubUser() = "user"
-    override fun rankCommandSubUserDescription() = "対戦相手のランキングを取得します。"
-    override fun rankCommandOptionPlayer() = "player"
-    override fun rankCommandOptionPlayerDescription() = "対戦相手のランキングを確認するプレイヤーを指定します。"
+    override fun commandUsageBoard() = "現在進行中のゲームを新しいメッセージとして開きます。"
 
-    override fun rankErrorNotFound() = "ユーザーレコードが見つかりません。GomokuBot PvPをプレイしたユーザーを指定してください。"
+    override fun replayCommand() = "リプレイ"
+    override fun replayCommandDescription() = "最近終了したゲームを振り返ります。"
+
+    override fun rankCommand() = "ランキング"
+    override fun rankCommandDescription() = "1位から10位までのランキングを表示します。"
+    override fun rankCommandSubGlobal() = "全体"
+    override fun rankCommandSubGlobalDescription() = "GomokuBot全体ランキングを表示します。"
+    override fun rankCommandSubServer() = "サーバー"
+    override fun rankCommandSubServerDescription() = "サーバー内ランキングを表示します。"
+    override fun rankCommandSubUser() = "ユーザー"
+    override fun rankCommandSubUserDescription() = "ユーザー別の対戦ランキングを表示します。"
+    override fun rankCommandOptionPlayer() = "ユーザー"
+    override fun rankCommandOptionPlayerDescription() = "対戦ランキングを確認するユーザーを指定してください。"
+
+    override fun rankErrorNotFound() = "ユーザー記録が見つかりません。GomokuBot PvPのプレイ記録があるユーザーを指定してください。"
 
     override fun rankEmbedTitle() = "GomokuBot / ランキング"
-    override fun rankEmbedDescription() = "1位から10位までのランキング。"
-    override fun rankEmbedWin() = "勝利数"
-    override fun rankEmbedLose() = "敗北数"
-    override fun rankEmbedDraw() = "引き分け数"
+    override fun rankEmbedDescription() = "1位から10位までの勝利ランキングを確認できます。"
+    override fun rankEmbedWin() = "勝"
+    override fun rankEmbedLose() = "敗"
+    override fun rankEmbedDraw() = "分"
 
-    override fun ratingCommand() = "rating"
-    override fun ratingCommandDescription() = "レーティングを取得します。"
-    override fun ratingCommandOptionUser() = "user"
-    override fun ratingCommandOptionUserDescription() = "レーティングを確認するユーザーを指定します。"
+    override fun ratingCommand() = "レーティング"
+    override fun ratingCommandDescription() = "レーティングを表示します。"
+    override fun ratingCommandOptionUser() = "ユーザー"
+    override fun ratingCommandOptionUserDescription() = "レーティングを確認するユーザーを指定してください。"
 
-    override fun ratingEmbed() = TODO()
-    override fun ratingEmbedDescription() = TODO()
+    override fun ratingNoRecord() = "記録が見つかりません。"
 
     override fun languageCommand() = "lang"
-    override fun languageCommandDescription() = "このサーバーで使用される言語設定を変更します。"
-    override fun languageCommandOptionCode() = "language"
+    override fun languageCommandDescription() = "このサーバーで使用する言語設定を変更します。"
+    override fun languageCommandOptionCode() = "言語"
     override fun languageCommandOptionCodeDescription() = "言語コードを選択してください。"
 
-    override fun languageUpdated() = "言語設定が日本語:flag_jp:になりました。"
+    override fun languageUpdated() = "言語設定が日本語:flag_jp:に変更されました。"
 
-    override fun styleCommand() = "style"
-    override fun styleCommandDescription() = "サーバーで使用する五目並べのボードスタイルを変更します。"
-    override fun styleCommandOptionCode() = "style"
+    override fun styleCommand() = "スタイル"
+    override fun styleCommandDescription() = "このサーバーで使用する五目並べ盤のスタイルを変更します。"
+    override fun styleCommandOptionCode() = "スタイル"
     override fun styleCommandOptionCodeDescription() = "スタイルコードを選択してください。"
 
     override fun styleEmbedTitle() = "GomokuBot / スタイル"
     override fun styleEmbedDescription() =
-        "このサーバーに適用されているデフォルトの五目並べのボードスタイル(``スタイルA``)は、正しく表示されない場合があります。" +
-                "お好みの4つのスタイルから1つ選んでください。"
-    override fun styleEmbedSuggestion(styleName: String) = "このスタイルを使用するには ``/style`` $styleName を入力してください。"
+        "このサーバーに適用されているデフォルトの五目並べ盤スタイル(``スタイル A``)は、正しく表示されない場合があります。" +
+                "用意された4つのスタイルから好きなものを選んでください。"
+    override fun styleEmbedSuggestion(styleName: String) = "このスタイルを使用するには ``/スタイル`` $styleName コマンドを入力してください。"
 
     override fun styleErrorNotfound() =
-        "スタイルコードの指定にエラーがあります。 ``/style`` ``スタイルコード``の形式で入力してください。"
+        "スタイルの指定が正しくありません。``/スタイル`` ``スタイルコード`` の形式で入力してください。"
 
     override fun styleUpdated(styleName: String) =
-        "スタイル設定が ``$styleName`` に変更されました！"
+        "スタイル設定が ``${styleName}`` に変更されました。"
 
-    override fun settingApplied(kind: String, choice: String) = "$kind の設定が $choice に変更されました。"
+    override fun settingApplied(kind: String, choice: String) = "$kind 設定が $choice に変更されました。"
 
     override fun style() = "スタイル"
 
-    override fun styleSelectImage() = "イメージ"
+    override fun styleSelectImage() = "画像"
     override fun styleSelectImageDescription() =
-        "イメージとしてレンダリングします。プラットフォームサーバーの状態によっては、遅延が生じる場合があります。"
+        "五目並べ盤を画像で表示します。プラットフォームサーバーの状態によっては少し遅延する場合があります。"
 
     override fun styleSelectText() = "テキスト"
-    override fun styleSelectTextDescription() = "等幅フォントのテキストとしてレンダリングします。最も高速です。"
+    override fun styleSelectTextDescription() = "五目並べ盤をテキストで表示します。最も単純で高速です。"
 
-    override fun styleSelectDottedText() = "ドット入りテキスト"
-    override fun styleSelectDottedTextDescription() = "ブランクの代わりにドットを使ってレンダリングします。"
+    override fun styleSelectDottedText() = "ドット付きテキスト"
+    override fun styleSelectDottedTextDescription() = "テキストとほぼ同じですが、空白の代わりにドットを表示します。"
 
-    override fun focus() = "フォーカス"
+    override fun focus() = "拡大"
 
-    override fun focusEmbedTitle() = "GomokuBot / フォーカス"
+    override fun focusEmbedTitle() = "GomokuBot / 拡大"
     override fun focusEmbedDescription() =
-        "GomokuBotは直感的な入力のために小型の「ボタン盤」を使用しています。GomokuBotがどのようにボードにズームインするかを設定してください。"
+        "GomokuBotは直感的な入力を助けるために小さな「ボタン盤」を使用します。GomokuBotが盤面のどこをどのように拡大するかを設定してください。"
 
-    override fun focusSelectIntelligence() = "インテリジェンス"
+    override fun focusSelectIntelligence() = "自動"
     override fun focusSelectIntelligenceDescription() =
-        "GomokuBot推論エンジンは、最適な場所に焦点を当てます。"
+        "GomokuBotの推論エンジンが最適な位置を分析して拡大します。"
 
-    override fun focusSelectCenter() = "フォロー"
+    override fun focusSelectCenter() = "手動"
     override fun focusSelectCenterDescription() =
-        "常に最後の手に焦点を当てます。"
+        "常に最後の手を中央に表示します。"
 
     override fun hint() = "ヒント"
 
     override fun hintEmbedTitle()= "GomokuBot / ヒント"
     override fun hintEmbedDescription() =
-        "Gomokuには、負けるかどうかを決定する重要な手があります。GomokuBotが重要な手をどのように強調するかを設定してください。"
+        "五目並べには勝敗を分ける重要な場所があります。GomokuBotが重要な場所をどのように強調するかを設定してください。"
 
-    override fun hintSelectFive() = "五目"
-    override fun hintSelectFiveDescription() = "五目並べになる手をハイライト表示します。"
+    override fun hintSelectFive() = "勝利"
+    override fun hintSelectFiveDescription() = "五目を作って勝てる場所を強調します。"
 
     override fun hintSelectOff() = "オフ"
-    override fun hintSelectOffDescription() = "どの手もハイライト表示しません。"
+    override fun hintSelectOffDescription() = "どの場所も強調しません。"
 
     override fun mark() = "マーク"
 
-    override fun markEmbedTitle() = "Gomokubot / マーク"
+    override fun markEmbedTitle() = "GomokuBot / マーク"
     override fun markEmbedDescription() =
-        "多くの石の中で、相手の最後の手を覚えるのは簡単なことではありません。Gomokubotが最後の手をどのように表示するかを設定してください。"
+        "たくさんの石の中から最後に打たれた場所を覚えるのは簡単ではありません。GomokuBotが最後に打たれた石をどのように表示するかを設定してください。"
 
     override fun markSelectLast() = "最後の手"
     override fun markSelectLastDescription() =
-        "相手が最後に移動した場所に小さな点を描画します。"
+        "最後に打たれた場所に小さな点を表示します。"
 
-    override fun markSelectRecent() = "最近の手"
+    override fun markSelectRecent() = "直近の手"
     override fun markSelectRecentDescription() =
-        "相手が最後に移動した場所に小さな点を描画し、自分の最後の手には細い十字を描画します。"
+        "相手が最後に打った場所に小さな点を、自分が最後に打った場所に細い十字を表示します。"
 
-    override fun markSelectSequence() = "シーケンス"
+    override fun markSelectSequence() = "手順"
     override fun markSelectSequenceDescription() =
-        "移動された順序ですべての石にマークを付けます。"
+        "石が打たれた順番をすべて表示します。"
 
-    override fun swap() = "スワップ"
+    override fun swap() = "整理"
 
-    override fun swapEmbedTitle() = "GomokuBot / スワップ"
+    override fun swapEmbedTitle() = "GomokuBot / 整理"
     override fun swapEmbedDescription() =
-        "GomokuBotは非常にたくさんのメッセージを送信します。GomokuBotが送信するメッセージに対してどのように処理するかを設定してください。"
+        "GomokuBotはとても多くのメッセージを送信します。GomokuBotが送信したメッセージをどのように扱うかを設定してください。"
 
-    override fun swapSelectRelay() = "中継"
+    override fun swapSelectRelay() = "更新"
     override fun swapSelectRelayDescription() =
-        "プレーヤーが新しい手を打つと、以前に送信されたすべてのメッセージをクリアします。"
+        "プレイヤーが新しい手を打つたびに、以前送信したメッセージをすべて削除します。"
 
-    override fun swapSelectArchive() = "アーカイブ"
+    override fun swapSelectArchive() = "残す"
     override fun swapSelectArchiveDescription() =
-        "ナビゲーター以外のメッセージを削除しないでください。"
+        "ナビゲーターを除き、メッセージを削除しません。"
 
     override fun swapSelectEdit() = "編集"
     override fun swapSelectEditDescription() =
-        "もうメッセージを送信しないでください。最初に送信されたメッセージを編集してください。"
+        "新しいメッセージを送信せず、最初に送信したメッセージを編集します。"
 
-    override fun archive() = "アーカイブ"
+    override fun archive() = "共有"
 
-    override fun archiveEmbedTitle() = "GomokuBot / アーカイブ"
+    override fun archiveEmbedTitle() = "GomokuBot / 共有"
     override fun archiveEmbedDescription() =
-        "GomokuBot は、プレイヤーの素晴らしいゲーム結果を GomokuBot の公式チャンネルにアーカイブしています。" +
-                "もちろん、GomokuBot はプレイヤーのプライバシーに重視を置いています。ゲームの結果をどのようにアーカイブするかを設定してください。"
+        "GomokuBotはいくつかの素晴らしいゲーム結果をGomokuBot公式チャンネルに共有します。" +
+                "もちろん、GomokuBotはプレイヤーのプライバシーを非常に重視しています。ゲーム結果をどのように共有するかを設定してください。"
 
-    override fun archiveSelectByAnonymous() = "匿名で共有"
+    override fun archiveSelectByAnonymous() = "匿名"
     override fun archiveSelectByAnonymousDescription() =
-        "プレイヤーのゲーム結果を匿名で共有します。"
+        "ゲーム結果を匿名で共有します。"
 
-    override fun archiveSelectWithProfile() = "プロフィールで共有"
+    override fun archiveSelectWithProfile() = "プロフィール付き"
     override fun archiveSelectWithProfileDescription() =
-        "プレイヤーのプロフィール写真と名前でゲーム結果を共有します。"
+        "プロフィール画像と名前を添えてゲーム結果を共有します。"
 
-    override fun archiveSelectPrivacy() = "プライバシーを守る"
+    override fun archiveSelectPrivacy() = "非公開"
     override fun archiveSelectPrivacyDescription() =
-        "プレイヤーのゲーム結果を誰とも共有しません。"
+        "ゲーム結果を誰にも共有しません。"
 
     override fun sessionNotFound(): String =
-        "進行中のゲームはありません。 ``/start`` コマンドで新しいゲームを開始してください。"
+        "進行中のゲームが見つかりません。まず ``/開始`` コマンドでゲームを開始してください。"
 
-    override fun startCommand() = "start"
+    override fun startCommand() = "開始"
     override fun startCommandDescription() = "新しいゲームを開始します。"
-    override fun startCommandOptionOpponent() = "opponent"
-    override fun startCommandOptionOpponentDescription() = "ゲーム相手のユーザーを指定します。"
+    override fun startCommandOptionOpponent() = "相手"
+    override fun startCommandOptionOpponentDescription() = "一緒にゲームを開始するユーザーを指定してください。"
+    override fun startCommandOptionRule() = "ルール"
+    override fun startCommandOptionRuleDescription() = "新しく開始するゲームのルールを指定してください。"
 
     override fun startErrorSessionAlready() =
-        "すでにゲームが進行中です。現在進行中のゲームを終了してください。"
+        "すでに進行中のゲームがあります。先に現在のゲームを終了してください。"
     override fun startErrorOpponentSessionAlready(opponent: String) =
-        "$opponent はすでに別のゲームをプレイ中です。$opponent のゲームが終了するまでお待ちください。"
+        "$opponent さんはすでに別のゲームをプレイ中です。$opponent さんのゲームが終わるまでお待ちください。"
     override fun startErrorRequestAlreadySent(opponent: String) =
-        "$opponent へのゲームリクエストはまだ保留中です。$opponent の返答をお待ちください。"
+        "$opponent さんに送信した対戦リクエストがまだ残っています。$opponent さんの応答をお待ちください。"
     override fun startErrorRequestAlready(opponent: String) =
-        "$opponent からのゲームリクエストにまだ返答していません。先に $opponent のゲームリクエストに返答してください。"
+        "$opponent さんから届いた対戦リクエストにまだ応答していません。先に $opponent さんの対戦リクエストへ応答してください。"
     override fun startErrorOpponentRequestAlready(opponent: String) =
-        "$opponent がまだ返答していない別のゲームリクエストがあります。$opponent が他のゲームリクエストに返答するまでお待ちください。"
+        "$opponent さんにはまだ応答していない別の対戦リクエストが1件あります。$opponent さんが別の対戦リクエストへ応答するまでお待ちください。"
 
-    override fun setCommandDescription() = "石を置く。"
+    override fun setCommandDescription() = "指定した座標に石を置きます。"
     override fun setCommandOptionPosition() = "position"
     override fun setCommandOptionPositionDescription() = "a1からo15までの座標"
 
     override fun setErrorIllegalArgument() =
-        "コマンド形式にエラーがあります。 ``/s`` ``h8`` の形式で入力してください。"
+        "コマンド形式が正しくありません。``/s`` ``h8`` のように入力してください。"
 
     override fun setErrorExist(move: String) =
-        "$move にはすでに石があります。他の場所に移動してください。"
+        "${move}にはすでに石が置かれています。別の場所に石を置いてください。"
 
     override fun setErrorForbidden(move: String, forbiddenKind: String) =
-        "$move は $forbiddenKind 禁止された手です。他の場所に移動してください。"
+        "${move}は${forbiddenKind}禁手です。別の場所に石を置いてください。"
 
-    override fun resignCommand() = "resign"
-    override fun resignCommandDescription() = "進行中のゲームから投了します。"
+    override fun resignCommand() = "投了"
+    override fun resignCommandDescription() = "進行中のゲームを投了します。"
 
-    override fun requestEmbedTitle() = "五目並べで遊びませんか？"
+    override fun boardCommand() = "盤面"
+    override fun boardCommandDescription() = "現在進行中のゲームを新しいメッセージとして開きます。"
+
+    override fun requestEmbedTitle() = "五目並べを一局いかがですか？"
     override fun requestEmbedDescription(requester: String, opponent: String) =
-        "$requester さんが $opponent さんに対してゲームのリクエストを送りました。ボタンを押して応答してください。"
+        "$requester さんが $opponent さんに対戦リクエストを送りました。下のボタンを押して応答してください。"
     override fun requestEmbedButtonAccept() = "承諾"
     override fun requestEmbedButtonReject() = "拒否"
 
     override fun requestRejected(requester: String, opponent: String) =
-        "$opponent さんが $requester さんのゲームリクエストを拒否しました。"
+        "$opponent さんが $requester さんの対戦リクエストを拒否しました。"
 
     override fun requestExpired(requester: String, opponent: String) =
-        "$requester さんが $opponent さんに送信したゲームリクエストが期限切れになりました。もし $opponent さんとゲームを続けたい場合は、新しいリクエストを送信してください。"
+        "$requester さんが $opponent さんに送信した対戦リクエストは期限切れになりました。まだ $opponent さんと対戦したい場合は、新しい対戦リクエストを送信してください。"
 
     override fun requestExpiredNewRequest() =
-        "新しいリクエストを送信する"
+        "もう一度提案する"
 
     override fun beginPvp(players: ColorContainer<String>) =
-        "${players.black} vs ${players.white} のゲームが開始されました！${players.black} が先手です。最初の手を打ってください。"
+        "${players.black} さんと ${players.white} さんのゲームが始まりました。${players.black} さんが黒です。${players.black} さんは最初の手を打ってください。"
 
-    override fun beginEngineBlack(player: String) =
-        "$player さんとAIの対戦が始まりました！$player さんは後手です。AIが ``h8`` に置きました。次の手を打ってください。"
+    override fun beginOpening(players: ColorContainer<String>) =
+        "${players.black} さんと ${players.white} さんのオープニングゲームが始まりました。${players.black} さんが黒です。${players.white} さんは黒へスワップするか、そのままプレイするかを選んでください。"
 
-    override fun beginEngineWhite(player: String) =
-        "$player さんとAIの対戦が始まりました！$player さんは先手です。最初の手を打ってください。"
+    override fun beginEngineBlack(player: String, gomokubot: String) =
+        "$player さんと${gomokubot}のゲームが始まりました。$player さんは白です。AIは ``h8`` に打ちました。2手目を打ってください。"
+
+    override fun beginEngineWhite(player: String, gomokubot: String) =
+        "$player さんと${gomokubot}のゲームが始まりました。$player さんが黒です。最初の手を打ってください。"
 
     override fun processNextEngine(lastMove: String) =
-        "次の手を打ってください。AIは $lastMove に置きました。"
+        "次の手を打ってください。AIは ${lastMove}に打ちました。"
 
-    override fun processNextPvp(lastPlayer: String, lastMove: String) =
-        "次の手を打ってください。$lastPlayer が $lastMove に置きました。"
+    override fun processNextPvp(opponent: String, lastMove: String) =
+        "次の手を打ってください。$opponent さんは ${lastMove}に打ちました。"
+
+    override fun processNextOpening(lastMove: String) =
+        "${lastMove}に石を置きました。次のオープニング手順に進んでください。"
 
     override fun processErrorOrder(player: String) =
-        "$player さんの番です。$player さんが次の手を打つまでお待ちください。"
+        "今は $player さんの番です。$player さんが次の手を打つまでお待ちください。"
 
-    override fun endPvpWin(winner: String, loser: String, lastMove: String) =
-        "$loser さんが $lastMove に置いたため、$winner さんが勝ちました！"
-    override fun endPvpResign(winner: String, loser: String) =
-        "$loser さんが降参したため、$winner さんが勝ちました！"
-    override fun endPvpTie(players: ColorContainer<String>) =
-        "${players.black} さんと ${players.white} さんのゲームは引き分けになりました。もう打てる場所がなかったためです。"
-    override fun endPvpTimeOut(winner: String, loser: String) =
-        "$loser さんが長時間次の手を打たなかったため、$winner さんが勝ちました！"
+    override fun gameResultFiveInRow(winner: String, loser: String) =
+        "$winner さんが五目を作り、$loser さんに勝ちました。"
 
-    override fun endEngineWin(player: String, lastPos: String) =
-        "AI に $lastPos に置かれなかったため、$player さんが勝ちました。"
-    override fun endEngineLose(player: String, lastPos: String) =
-        "AI に $lastPos に置かれたため、$player さんが負けました。"
-    override fun endEngineResign(player: String) =
-        "$player さんが降参したため、AI が勝ちました。"
-    override fun endEngineTie(player: String) =
-        "$player さんとAIのゲームは引き分けになりました。もう打てる場所がなかったためです。"
-    override fun endEngineTimeOut(player: String) =
-        "$player さんが長時間次の手を打たなかっ"
+    override fun gameResultResign(winner: String, loser: String) =
+        "$loser さんが投了したため、$winner さんが勝ちました。"
+
+    override fun gameResultDraw() =
+        "もう石を置ける場所がないため、引き分けになりました。"
+
+    override fun gameResultTimeout(winner: String, loser: String) =
+        "$loser さんが制限時間内に次の手を打たなかったため、$winner さんが勝ちました。"
+
+    override fun gameResultEngineRating() = "レーティング"
+
+    override fun gameResultEngineRatingChange() = "獲得レーティング"
 
     override fun boardInProgress() = "進行中"
+    override fun boardInOpening() = "オープニング中"
     override fun boardFinished() = "終了"
 
-    override fun boardMoves() = "手数"
-    override fun boardLastMove() = "前回の手"
+    override fun boardMoves() = "進行度"
+    override fun boardLastMove() = "最後の手"
 
     override fun boardResult() = "結果"
 
-    override fun boardWinDescription(winner: String) = "$winner の勝ち"
+    override fun boardWinDescription(winner: String) = "$winner 勝利"
     override fun boardTieDescription() = "引き分け"
 
     override fun boardCommandGuide() =
-        ":mag: ボタンを押すか、``/s`` ``position`` のコマンドを使用して次の手を打ってください。"
+        ":mag: ボタンを押すか ``/s`` ``座標`` コマンドを入力して次の手を打ってください。"
+    override fun boardSwapGuide() =
+        ":arrows_counterclockwise: ボタンを押して、黒と白をスワップするか選んでください。"
+    override fun boardStatefulSwapGuide(offerCount: Int) =
+        ":arrows_counterclockwise: ボタンを押して、黒と白をスワップするか選んでください。黒が提示すべき5手目候補は ``$offerCount`` 個です。"
+    override fun boardBranchGuide() =
+        ":paperclips: ボタンを押して、黒と白をスワップする機会を得るか、5手目候補10個を相手に提示するか選んでください。"
+    override fun boardDeclareGuide() =
+        ":paperclips: セレクトメニューで5手目候補をいくつ選ぶか指定してください。"
+    override fun boardSelectGuide() =
+        ":dart: ボタンを押すか ``/s`` ``座標`` コマンドを入力して5手目を選んでください。"
+    override fun boardOfferGuide(remainingMoves: Int) =
+        ":question: ボタンを押すか ``/s`` ``position`` コマンドを入力して、5手目候補をあと${remainingMoves}個選んでください。"
 
-    override fun announceWrittenOn(date: String) = "$date に書かれました。"
+    override fun replayEmbedWin() = "勝"
+    override fun replayEmbedLose() = "敗"
+    override fun replayEmbedDraw() = "分"
+    override fun replayEmbedMatchInfo(totalMoves: Int) = "全${totalMoves}手。"
+    override fun replayEmbedUnableToReplayDescription() = "このゲームは空のゲームのため、リプレイできません。別のゲームを選択してください。"
 
-    override fun somethingWrongEmbedTitle() = "何かが間違っています"
+    override fun announceWrittenOn(date: String) = "$date に作成"
+
+    override fun somethingWrongEmbedTitle() = "問題が発生しました"
 
     override fun permissionNotGrantedEmbedDescription(channelName: String) =
-        "GomokuBotには、$channelName にメッセージを送信する権限がありません！ 役割と権限の設定を確認してください。"
+        "GomokuBotには $channelName チャンネルへメッセージを送信する権限がありません。ロールと権限設定を確認してください。"
 
     override fun permissionNotGrantedEmbedFooter() = "このメッセージは1分後に削除されます。"
 
     override fun notYetImplementedEmbedDescription() = "この機能はまだ実装されていません。"
 
     override fun notYetImplementedEmbedFooter() =
-        "サポートチャンネル(https://discord.gg/vq8pkfF)でGomokuBotの最新情報を入手してください。"
+        "サポートチャンネル(https://discord.gg/vq8pkfF)でGomokuBotの更新情報を受け取れます。"
 
-    override fun exploreAboutRenju() = "レンジュについて知らないですか？$UNICODE_RIGHT を押してレンジュについて学びましょう。"
+    override fun exploreAboutRenju() = "連珠が何かわかりませんか？$UNICODE_RIGHT を押して連珠について学びましょう。"
 
 }

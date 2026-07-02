@@ -40,15 +40,12 @@ open class LanguageENG : LanguageContainer {
     override fun helpAboutEmbedTitle() = "GomokuBot / Help"
     override fun helpAboutEmbedDescription(platform: String) =
         "Now play **Gomoku** on **$platform**. **GomokuBot** can do it." +
-                " ― GomokuBot is an AI bot that provides Gomoku([Renju](https://www.renju.net/rules/)) feature in $platform. " +
-                "The collected data are used for training reinforcement learning models."
+                " ― GomokuBot is an AI bot that provides Gomoku([Renju](https://www.renju.net/rules/)) feature in $platform."
     override fun helpAboutEmbedDeveloper() = "Developer"
     override fun helpAboutEmbedRepository() = "Git Repository"
     override fun helpAboutEmbedVersion() = "Version"
     override fun helpAboutEmbedSupport() = "Support Channel"
     override fun helpAboutEmbedInvite() = "Invite Link"
-
-    // chunk
 
     override fun commandUsageEmbedTitle() = "GomokuBot / Commands"
     override fun commandUsageHelp() = "Get help."
@@ -74,8 +71,6 @@ open class LanguageENG : LanguageContainer {
     override fun replayCommand() = "replay"
     override fun replayCommandDescription() = "Replay recently played games."
 
-    // chunk
-
     override fun rankCommand() = "rank"
     override fun rankCommandDescription() = "Get a ranking from 1st to 10th."
     override fun rankCommandSubGlobal() = "global"
@@ -100,8 +95,7 @@ open class LanguageENG : LanguageContainer {
     override fun ratingCommandOptionUser() = "user"
     override fun ratingCommandOptionUserDescription() = "Specific a user to check the rating."
 
-    override fun ratingEmbed() = TODO("Not yet implemented")
-    override fun ratingEmbedDescription() = TODO("Not yet implemented")
+    override fun ratingNoRecord() = "No record found."
 
     override fun languageCommand() = "lang"
     override fun languageCommandDescription() = "Change the language setting used by this server."
@@ -109,8 +103,6 @@ open class LanguageENG : LanguageContainer {
     override fun languageCommandOptionCodeDescription() = "Select a language code."
 
     override fun languageUpdated() = "Language setting has been changed to English:flag_gb:!"
-
-    // chunk
 
     override fun styleCommand() = "style"
     override fun styleCommandDescription() = "Change the Gomoku Board style used by this server."
@@ -143,8 +135,6 @@ open class LanguageENG : LanguageContainer {
     override fun styleSelectDottedText() = "Solid Text"
     override fun styleSelectDottedTextDescription() = "Same as Text - but with dots instead of blanks."
 
-    // chunk
-
     override fun focus() = "Focus"
 
     override fun focusEmbedTitle() = "GomokuBot / Focus"
@@ -170,8 +160,6 @@ open class LanguageENG : LanguageContainer {
 
     override fun hintSelectOff() = "Off"
     override fun hintSelectOffDescription() = "Do not highlight any moves."
-
-    // chunk
 
     override fun mark() = "Mark"
 
@@ -209,8 +197,6 @@ open class LanguageENG : LanguageContainer {
     override fun swapSelectEditDescription() =
         "Send no more messages, edit the first message sent."
 
-    // chunk
-
     override fun archive() = "Archive"
 
     override fun archiveEmbedTitle() = "GomokuBot / Archive"
@@ -229,8 +215,6 @@ open class LanguageENG : LanguageContainer {
     override fun archiveSelectPrivacy() = "Keep Privacy"
     override fun archiveSelectPrivacyDescription() =
         "Don't share player's game results with anyone."
-
-    // chunk
 
     override fun sessionNotFound(): String =
         "There is no game in progress. Start a new game with the ``/start`` command."
@@ -266,8 +250,6 @@ open class LanguageENG : LanguageContainer {
     override fun setErrorForbidden(move: String, forbiddenKind: String) =
         "$move is $forbiddenKind forbidden move. Please move to another place."
 
-    // chunk
-
     override fun resignCommand() = "resign"
     override fun resignCommandDescription() = "Resigns from a game in progress."
 
@@ -289,25 +271,23 @@ open class LanguageENG : LanguageContainer {
     override fun requestExpiredNewRequest() =
         "re-Request"
 
-    // chunk
-
     override fun beginPvp(players: ColorContainer<String>) =
         "The game of ${players.black} vs ${players.white} has started! ${players.black} is Black. Please make the first move."
 
     override fun beginOpening(players: ColorContainer<String>) =
         "The opening renju game of ${players.black} vs ${players.white} has started! ${players.black} is black. ${players.white} needs to decide whether to swap to black or play as is."
 
-    override fun beginEngineBlack(player: String) =
-        "The game of $player vs GomokuBot has started! $player is White. GomokuBot made a move at ``h8``. Please make the next move."
+    override fun beginEngineBlack(player: String, gomokubot: String) =
+        "The game of $player vs $gomokubot has started! $player is White. GomokuBot made a move at ``h8``. Please make the next move."
 
-    override fun beginEngineWhite(player: String) =
-        "The game of $player vs GomokuBot has started! $player is Black. Please make the first move."
+    override fun beginEngineWhite(player: String, gomokubot: String) =
+        "The game of $player vs $gomokubot has started! $player is Black. Please make the first move."
 
     override fun processNextEngine(lastMove: String) =
         "Please make the next move. GomokuBot made a move at $lastMove."
 
-    override fun processNextPvp(lastPlayer: String, lastMove: String) =
-        "Please make the next move. $lastPlayer have placed at $lastMove."
+    override fun processNextPvp(opponent: String, lastMove: String) =
+        "Please make the next move. $opponent have placed at $lastMove."
 
     override fun processNextOpening(lastMove: String) =
         "Placed the stone at $lastMove. Please follow the next opening procedure."
@@ -315,27 +295,21 @@ open class LanguageENG : LanguageContainer {
     override fun processErrorOrder(player: String) =
         "Now it's $player's turn. Please wait until $player makes the next move."
 
-    override fun endPvpWin(winner: String, loser: String, lastMove: String) =
-        "$winner wins by $loser placed at $lastMove."
-    override fun endPvpResign(winner: String, loser: String) =
-        "$winner wins by $loser resignation."
-    override fun endPvpTie(players: ColorContainer<String>) =
-        "${players.black} vs ${players.white} ended in a draw because there were no more points to make a move."
-    override fun endPvpTimeOut(winner: String, loser: String) =
-        "$winner wins by $loser because $loser didn't make the next move for a long time."
+    override fun gameResultFiveInRow(winner: String, loser: String) =
+        "$winner made five-in-a-row and beat $loser."
 
-    override fun endEngineWin(player: String, lastPos: String) =
-        "$player, You won to GomokuBot by placed at $lastPos."
-    override fun endEngineLose(player: String, lastPos: String) =
-        "$player, You lose to GomokuBot by GomokuBot placed at $lastPos."
-    override fun endEngineResign(player: String) =
-        "$player, You lose to GomokuBot by resignation."
-    override fun endEngineTie(player: String) =
-        "$player vs GomokuBot ended in a draw because there were no more points to make a move."
-    override fun endEngineTimeOut(player: String) =
-        "$player, You lost to GomokuBot because you didn't make the next move for a long time."
+    override fun gameResultResign(winner: String, loser: String) =
+        "$winner wins by $loser's resignation."
 
-    // chunk
+    override fun gameResultDraw() =
+        "The game ended in a draw because there were no more points to make a move."
+
+    override fun gameResultTimeout(winner: String, loser: String) =
+        "$winner wins because $loser did not make the next move in time."
+
+    override fun gameResultEngineRating() = "Rating"
+
+    override fun gameResultEngineRatingChange() = "Rating Change"
 
     override fun boardInProgress() = "In Progress"
     override fun boardInOpening() = "In Opening"

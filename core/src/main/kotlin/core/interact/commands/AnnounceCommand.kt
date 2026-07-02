@@ -60,8 +60,6 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
                         service.attachBinaryNavigators(message)()
                     }
                 }
-
-            service.upsertCommands(config.language.container)
         }
 
         val report = this.writeActionLog(emittedTime, "sent", channel, thenUser)

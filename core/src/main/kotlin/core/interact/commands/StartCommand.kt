@@ -69,9 +69,15 @@ class StartCommand(
                         publishers.plain,
                         PlatformMessage(
                             if (session.users.black == user)
-                                config.language.container.beginEngineWhite(service.formatUser(user))
+                                config.language.container.beginEngineWhite(
+                                    service.formatUser(user),
+                                    service.formatUser(User.GomokuBot)
+                                )
                             else
-                                config.language.container.beginEngineBlack(service.formatUser(user))
+                                config.language.container.beginEngineBlack(
+                                    service.formatUser(user),
+                                    service.formatUser(User.GomokuBot)
+                                )
                         )
                     )
                         .launch()()

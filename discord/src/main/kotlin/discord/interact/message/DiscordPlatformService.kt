@@ -7,6 +7,7 @@ import core.database.entities.Announce
 import core.database.entities.GameRecord
 import core.database.entities.GameRecordId
 import core.database.entities.UserStats
+import core.engine.EloRating
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.interact.message.*
@@ -46,6 +47,7 @@ import net.dv8tion.jda.api.components.selections.SelectOption
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction
+import net.dv8tion.jda.api.sharding.ShardManager
 import renju.Board
 import renju.GameState
 import renju.notation.Color
@@ -57,6 +59,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
 
 class DiscordPlatformService(
+    private val shardManager: ShardManager,
     private val discordConfig: DiscordConfig? = null,
     private val jdaChannel: JDAChannel? = null,
 ) : PlatformServiceImpl() {
@@ -94,10 +97,11 @@ class DiscordPlatformService(
         ChannelManager.bulkDelete(this.requireJdaChannel(), messageRefs)
     }
 
-    override suspend fun removeNavigators(messageRef: MessageRef, reduceComponents: Boolean) {
+    override suspend fun reduceComponents(messageRef: MessageRef, reduceReactions: Boolean, reduceComponents: Boolean) {
         ChannelManager.retrieveJDAMessage(this.requireJdaChannel().jda, messageRef)
             ?.let { originalMessage ->
-                ChannelManager.clearReaction(originalMessage)
+                if (reduceReactions)
+                    ChannelManager.clearReactions(originalMessage)
 
                 if (reduceComponents) {
                     originalMessage
@@ -109,7 +113,8 @@ class DiscordPlatformService(
 
     override suspend fun archiveSession(session: GameSession, policy: ArchivePolicy) {
         ChannelManager.archiveSession(
-            this.requireJdaChannel().jda.getTextChannelById(this.requireDiscordConfig().archiveSubChannelId.idLong)!!,
+            this.shardManager
+                .getTextChannelById(this.requireDiscordConfig().archiveSubChannelId.idLong)!!,
             session,
             policy
         )
@@ -122,10 +127,14 @@ class DiscordPlatformService(
         this(DiscordMessageData(embeds = embeds))
 
     override fun formatUser(user: User) =
-        if ((user is User.Human && user.isAnonymous) || user is User.GomokuBot)
-            user.name
-        else
-            "<@${(user as User.Human).givenId.idLong}>"
+        when (user) {
+            is User.Human ->
+                if (user.isAnonymous)
+                    user.name
+                else
+                    "<@${user.givenId.idLong}>"
+            is User.GomokuBot -> "<@${this.shardManager.shards.first().selfUser.idLong}>"
+        }
 
     override fun formatHighlight(text: String) = "``$text``"
 
@@ -138,19 +147,18 @@ class DiscordPlatformService(
 
     // BOARD
 
-    private fun InlineEmbed.buildBoardAuthor(container: LanguageContainer, draw: BoardDraw) =
+    private fun InlineEmbed.buildBoardAuthor(container: LanguageContainer, draw: GameDraw) =
         author {
-            iconUrl = draw.recipients.player.first.profileURL
+            iconUrl = draw.users[draw.leaderColor].profileURL
             name = buildString {
-                append(draw.playerWithColor())
+                append(draw.users[draw.leaderColor].withColor(draw.leaderColor))
                 append(" vs ")
-                append(draw.opponentWithColor())
+                append(draw.users[!draw.leaderColor].withColor(!draw.leaderColor))
                 append(", ")
 
-                when {
-                    draw.result != null -> append(container.boardFinished())
-//                    session is OpeningSession -> append(container.boardInOpening())
-                    else -> append(container.boardInProgress())
+                when (draw.result) {
+                    null -> append(container.boardInProgress())
+                    else -> append(container.boardFinished())
                 }
             }
         }
@@ -166,7 +174,7 @@ class DiscordPlatformService(
 
                 field {
                     name = container.boardLastMove()
-                    value = "}${UNICODE_STONE[!draw.state.board.playerColor]}${lastPos}".asHighlightFormat()
+                    value = "${UNICODE_STONE[!draw.state.board.playerColor]}${lastPos}".asHighlightFormat()
                     inline = true
                 }
             }
@@ -183,10 +191,7 @@ class DiscordPlatformService(
             name = container.boardResult()
             value = when (gameResult) {
                 is GameResult.Win -> {
-                    val winner = if (draw.recipients.player.second == gameResult.winner)
-                        draw.recipients.player.first
-                    else
-                        draw.recipients.opponent.first
+                    val winner = draw.users[gameResult.winner]
 
                     container.boardWinDescription(
                         "${winner.name}${UNICODE_STONE[gameResult.winner]}".asHighlightFormat()
@@ -391,6 +396,43 @@ class DiscordPlatformService(
                 }
         }
 
+    override fun buildGameFinished(publisher: MessagePublisher, container: LanguageContainer, draw: ResultDraw): MessageBuilder {
+        val resultDescription = when (val result = draw.result) {
+            is GameResult.Win -> {
+                val winner = this.formatUser(draw.users[result.winner])
+                val loser = this.formatUser(draw.users[!result.winner])
+
+                when (result.cause) {
+                    GameResult.WinCause.FIVE_IN_A_ROW -> container.gameResultFiveInRow(winner, loser)
+                    GameResult.WinCause.RESIGN -> container.gameResultResign(winner, loser)
+                    GameResult.WinCause.TIMEOUT -> container.gameResultTimeout(winner, loser)
+                }
+            }
+            is GameResult.Full -> container.gameResultDraw()
+        }
+
+        return publisher sends Embed {
+            color = COLOR_NORMAL_HEX
+            description = resultDescription
+
+            this.buildBoardAuthor(container, draw)
+
+            draw.eloRating?.let { (eloRating, delta) ->
+                field {
+                    name = container.gameResultEngineRating()
+                    value = eloRating.toString()
+                    inline = true
+                }
+
+                field {
+                    name = container.gameResultEngineRatingChange()
+                    value = delta.toString()
+                    inline = true
+                }
+            }
+        }
+    }
+
     // REPLAY
 
     override fun buildReplayButtons(gameRecordId: GameRecordId, validationKey: String, totalMoves: Int, currentMoves: Int): MessageComponents =
@@ -509,7 +551,7 @@ class DiscordPlatformService(
             }
 
             footer {
-                name = "$UNICODE_ZAP Powered by Kotlin, Rust, Project Reactor, R2DBC, gRPC, JDA"
+                name = "$UNICODE_ZAP Powered by Kotlin, Rust, PostgreSQL, JDA and mintaka"
             }
         }
     }
@@ -629,7 +671,21 @@ class DiscordPlatformService(
 
     // RATING
 
-    override fun buildRating(publisher: DiscordMessagePublisher, container: LanguageContainer) = TODO()
+    override fun buildRating(publisher: DiscordMessagePublisher, container: LanguageContainer, user: User, rating: EloRating, recentDelta: EloRating.Delta) = publisher sends Embed {
+        author {
+            iconUrl = user.profileURL
+            name = user.name
+        }
+
+        color = COLOR_NORMAL_HEX
+
+        title = rating.toString()
+
+        field {
+            name = "Recent Change"
+            value = recentDelta.toString()
+        }
+    }
 
     // LANG
 

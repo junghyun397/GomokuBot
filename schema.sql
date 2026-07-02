@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS channel_profile (
     platform smallint NOT NULL,
     given_id bigint NOT NULL,
     name varchar NOT NULL,
+    command_revision int NOT NULL DEFAULT 0,
     register_date timestamp without time zone DEFAULT now(),
     UNIQUE (given_id, platform)
 );
@@ -56,6 +57,11 @@ CREATE TABLE IF NOT EXISTS game_record (
     CHECK (black_id IS NOT NULL OR white_id IS NOT NULL),
     CHECK ((black_id IS NULL OR white_id IS NULL) = (engine_level IS NOT NULL))
 );
+
+CREATE INDEX recent_delta_black ON game_record (black_id, create_date DESC);
+CREATE INDEX recent_delta_white ON game_record (white_id, create_date DESC);
+
+CREATE INDEX game_record_channel ON game_record (channel_id) WHERE engine_level IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS legacy_user_stats (
     user_id UUID PRIMARY KEY REFERENCES user_profile (user_id),

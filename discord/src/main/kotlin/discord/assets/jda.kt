@@ -40,8 +40,11 @@ fun net.dv8tion.jda.api.entities.Message.messageId(): MessageId = MessageId(this
 
 fun net.dv8tion.jda.api.entities.channel.Channel.subChannelId(): SubChannelId = SubChannelId(this.idLong)
 
-fun net.dv8tion.jda.api.entities.Guild.profile(uid: ChannelUid = ChannelUid(UUID.randomUUID())): Channel =
-    Channel(uid, DISCORD_PLATFORM_ID, this.channelId(), this.name)
+fun net.dv8tion.jda.api.entities.Guild.profile(
+    uid: ChannelUid = ChannelUid(UUID.randomUUID()),
+    commandRevision: Int = 0,
+): Channel =
+    Channel(uid, DISCORD_PLATFORM_ID, this.channelId(), this.name, commandRevision)
 
 fun net.dv8tion.jda.api.entities.User.profile(uid: UserUid = UserUid(UUID.randomUUID()), announceId: Int? = null): User.Human =
     User.Human(this.effectiveName, this.avatarUrl, uid, DISCORD_PLATFORM_ID, this.userId(), this.name, announceId)

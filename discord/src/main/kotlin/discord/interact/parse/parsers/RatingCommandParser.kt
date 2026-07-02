@@ -1,13 +1,9 @@
 package discord.interact.parse.parsers
 
 import arrow.core.Either
-import arrow.core.raise.effect
-import core.interact.commands.Command
+import core.interact.commands.RatingCommand
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.CommandParser
-import core.interact.parse.ParseFailure
-import core.interact.parse.asParseFailure
-import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.assets.COMMAND_PREFIX
 import discord.interact.UserInteractionContext
@@ -30,32 +26,16 @@ object RatingCommandParser : CommandParser, ParsableCommand, BuildableCommand {
         ),
     )
 
-    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<ParseFailure, Command> =
-        Either.Left(this.asParseFailure("not yet implemented", context.channel, context.user) { messagingService, publisher, container ->
-            effect {
-                messagingService.buildSomethingWrongMessage(publisher, container, container.notYetImplementedEmbedDescription())
-                    .launch()()
-            }
-        })
+    override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>) =
+        Either.Right(RatingCommand())
 
-    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<ParseFailure, Command> =
-        Either.Left(this.asParseFailure("not yet implemented", context.channel, context.user) { messagingService, publisher, container ->
-            effect {
-                messagingService.buildSomethingWrongMessage(publisher, container, container.notYetImplementedEmbedDescription())
-                    .launch()()
-            }
-        })
+    override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>) =
+        Either.Right(RatingCommand())
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.slash(
             container.ratingCommand(),
             container.ratingCommandDescription()
-        ) {
-            option<net.dv8tion.jda.api.entities.User>(
-                container.ratingCommandOptionUser(),
-                container.ratingCommandOptionUserDescription(),
-                false
-            )
-        }
+        )
 
 }

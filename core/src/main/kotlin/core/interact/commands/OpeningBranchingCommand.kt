@@ -8,7 +8,11 @@ import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeActionLog
 import core.session.SessionManager
-import core.session.entities.*
+import core.session.entities.BranchingStageOpeningSession
+import core.session.entities.ChannelConfig
+import core.session.entities.SessionId
+import core.session.entities.SwapType
+import utils.tuple
 import kotlin.time.Instant
 
 class OpeningBranchingCommand(
@@ -30,14 +34,11 @@ class OpeningBranchingCommand(
         publishers: PublisherSet,
         emittedTime: Instant,
     ) = runCatching {
-        var messageBufferKey: MessageBufferKey? = null
-
-        val session = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { session ->
+        val (session, messageBufferKey) = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { session ->
             val branchingSession = session as? BranchingStageOpeningSession ?: throw IllegalStateException()
             if (branchingSession.player.id != user.id) throw IllegalStateException()
 
-            messageBufferKey = session.messageBufferKey
-            branchingSession.branch(this.takeBranch)
+            tuple(branchingSession.branch(this.takeBranch), session.messageBufferKey)
         }
 
         val boardPublisher = when (config.swapType) {
@@ -45,7 +46,7 @@ class OpeningBranchingCommand(
             else -> publishers.plain
         }
 
-        val io = buildNextMoveProcedure(bot, config, service, boardPublisher, session, messageBufferKey!!)
+        val io = buildNextMoveProcedure(bot, config, service, boardPublisher, session, messageBufferKey)
 
         CommandResult(io, this.writeActionLog(emittedTime, "has chosen ${this.takeBranch}", channel, user))
     }

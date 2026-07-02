@@ -8,6 +8,7 @@ import core.database.entities.GameRecord
 import core.database.entities.GameRecordId
 import core.database.jooq.tables.records.GameRecordRecord
 import core.database.jooq.tables.references.GAME_RECORD
+import core.engine.EloRating
 import core.engine.EngineLevel
 import core.session.entities.Rule
 import kotlinx.coroutines.reactor.awaitSingle
@@ -32,22 +33,11 @@ object GameRecordRepository {
                 .set(GAME_RECORD.BLACK_ID, record.users.black.id?.uuid)
                 .set(GAME_RECORD.WHITE_ID, record.users.white.id?.uuid)
                 .set(GAME_RECORD.ENGINE_LEVEL, record.engineLevel?.id)
+                .set(GAME_RECORD.RATING_DELTA, record.ratingDelta?.toDouble())
                 .set(GAME_RECORD.RULE, record.rule.id)
         )
             .awaitSingle()
     }
-
-    suspend fun retrieveGameRecords(connection: DatabaseConnection, channelUid: ChannelUid, limit: Int): MutableList<GameRecord> =
-        Flux.from(
-            connection.jooq
-                .selectFrom(GAME_RECORD)
-                .where(GAME_RECORD.CHANNEL_ID.eq(channelUid.uuid))
-                .orderBy(GAME_RECORD.CREATE_DATE.desc())
-                .limit(limit)
-        )
-            .collectList()
-            .awaitSingle()
-            .let { this.buildGameRecords(connection, it) }
 
     suspend fun retrieveGameRecords(connection: DatabaseConnection, userUid: UserUid, limit: Int): MutableList<GameRecord> =
         Flux.from(
@@ -69,6 +59,25 @@ object GameRecordRepository {
         )
             .awaitSingleOrNull()
             ?.let { this.buildGameRecord(connection, it) }
+
+    suspend fun retrieveRecentDelta(connection: DatabaseConnection, target: User.Human): EloRating.Delta =
+        Mono.from(
+            connection.jooq
+                .select(GAME_RECORD.RATING_DELTA)
+                .from(GAME_RECORD)
+                .where(
+                    GAME_RECORD.RATING_DELTA.isNotNull
+                        .and(
+                            GAME_RECORD.BLACK_ID.eq(target.id.uuid)
+                                .or(GAME_RECORD.WHITE_ID.eq(target.id.uuid))
+                        )
+                )
+                .orderBy(GAME_RECORD.CREATE_DATE.desc())
+                .limit(1)
+        )
+            .map { EloRating.Delta(it.value1()!!.toFloat()) }
+            .awaitSingleOrNull()
+            ?: EloRating.Delta(0.0f)
 
     private suspend fun buildGameRecords(connection: DatabaseConnection, records: List<GameRecordRecord>): MutableList<GameRecord> {
         val users = UserProfileRepository.retrieveUsers(connection, this.extractUserUids(records))

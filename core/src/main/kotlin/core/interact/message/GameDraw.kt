@@ -2,23 +2,26 @@ package core.interact.message
 
 import core.assets.User
 import core.database.entities.GameRecord
+import core.engine.EloRating
 import core.session.entities.GameSession
 import renju.Board
 import renju.GameState
 import renju.notation.Color
+import renju.notation.ColorContainer
 import renju.notation.GameResult
-import utils.tuple
+import utils.replaceIf
 
-sealed interface BoardDraw {
+sealed interface GameDraw {
 
-    data class Recipients(
-        val player: Pair<User, Color>,
-        val opponent: Pair<User, Color>
-    )
+    val users: ColorContainer<User>
 
-    val recipients: Recipients
+    val leaderColor: Color
 
     val result: GameResult?
+
+}
+
+sealed interface BoardDraw : GameDraw {
 
     val state: GameState
 
@@ -29,10 +32,9 @@ data class SessionBoardDraw<T : GameSession>(
     private val anonymous: Boolean = false,
 ) : BoardDraw {
 
-    override val recipients = BoardDraw.Recipients(
-        player = tuple(this.session.player, this.session.state.board.playerColor),
-        opponent = tuple(this.session.opponent, !this.session.state.board.playerColor),
-    )
+    override val users = this.session.users.replaceIf(this.anonymous) { it.map(User::anonymous) }
+
+    override val leaderColor = this.session.state.board.playerColor
 
     override val result = this.session.gameResult
 
@@ -50,11 +52,17 @@ data class GameRecordBoardDraw(
         state = GameState(Board.fromHistory(gameRecord.history), gameRecord.history),
     )
 
-    override val recipients = BoardDraw.Recipients(
-        player = tuple(this.gameRecord.users.black, Color.BLACK),
-        opponent = tuple(this.gameRecord.users.white, Color.WHITE),
-    )
+    override val leaderColor = Color.BLACK
+
+    override val users = this.gameRecord.users
 
     override val result = this.gameRecord.gameResult
 
 }
+
+data class ResultDraw(
+    override val users: ColorContainer<User>,
+    override val leaderColor: Color,
+    override val result: GameResult,
+    val eloRating: Pair<EloRating, EloRating.Delta>?,
+) : GameDraw

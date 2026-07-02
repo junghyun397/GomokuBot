@@ -164,7 +164,14 @@ object GomokuBot {
             shardManager.eventFlow<SlashCommandInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
                 .route {
-                    slashCommandRouter(UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!))
+                    slashCommandRouter(UserInteractionContext.fromJDAEvent(
+                        botContext,
+                        discordConfig,
+                        shardManager,
+                        it,
+                        it.user,
+                        it.guild!!
+                    ))
                 },
 
             shardManager.eventFlow<MessageReceivedEvent>()
@@ -179,19 +186,40 @@ object GomokuBot {
                             )
                 }
                 .route {
-                    textCommandRouter(UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.author, it.guild))
+                    textCommandRouter(UserInteractionContext.fromJDAEvent(
+                        botContext,
+                        discordConfig,
+                        shardManager,
+                        it,
+                        it.author,
+                        it.guild
+                    ))
                 },
 
             shardManager.eventFlow<ButtonInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
                 .route {
-                    buttonInteractionRouter(UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!))
+                    buttonInteractionRouter(UserInteractionContext.fromJDAEvent(
+                        botContext,
+                        discordConfig,
+                        shardManager,
+                        it,
+                        it.user,
+                        it.guild!!
+                    ))
                 },
 
             shardManager.eventFlow<StringSelectInteractionEvent>()
                 .filter { it.isFromGuild && !it.user.isBot }
                 .route {
-                    buttonInteractionRouter(UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user, it.guild!!))
+                    buttonInteractionRouter(UserInteractionContext.fromJDAEvent(
+                        botContext,
+                        discordConfig,
+                        shardManager,
+                        it,
+                        it.user,
+                        it.guild!!
+                    ))
                 },
 
             shardManager.eventFlow<MessageReactionAddEvent>()
@@ -204,7 +232,14 @@ object GomokuBot {
                             && !(it.user?.isBot ?: false)
                 }
                 .route {
-                    reactionRouter(UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, it.user!!, it.guild))
+                    reactionRouter(UserInteractionContext.fromJDAEvent(
+                        botContext,
+                        discordConfig,
+                        shardManager,
+                        it,
+                        it.user!!,
+                        it.guild
+                    ))
                 },
 
             shardManager.eventFlow<MessageReactionRemoveEvent>()
@@ -224,7 +259,14 @@ object GomokuBot {
                         .await()
 
                     if (user.isSuccess && !user.get().isBot) {
-                        reactionRouter(UserInteractionContext.fromJDAEvent(botContext, discordConfig, it, user.get(), it.guild))
+                        reactionRouter(UserInteractionContext.fromJDAEvent(
+                            botContext,
+                            discordConfig,
+                            shardManager,
+                            it,
+                            user.get(),
+                            it.guild
+                        ))
                     } else {
                         null
                     }
@@ -232,12 +274,12 @@ object GomokuBot {
 
             shardManager.eventFlow<GuildJoinEvent>()
                 .route { event ->
-                    channelJoinRouter(InternalInteractionContext.fromJDAEvent(botContext, discordConfig, event, event.guild))
+                    channelJoinRouter(InternalInteractionContext.fromJDAEvent(botContext, discordConfig, shardManager, event, event.guild))
                 },
 
             shardManager.eventFlow<GuildLeaveEvent>()
                 .route { event ->
-                    channelLeaveRouter(InternalInteractionContext.fromJDAEvent(botContext, discordConfig, event, event.guild))
+                    channelLeaveRouter(InternalInteractionContext.fromJDAEvent(botContext, discordConfig, shardManager, event, event.guild))
                 },
 
             scheduleGameExpiration(botContext, discordConfig, shardManager),

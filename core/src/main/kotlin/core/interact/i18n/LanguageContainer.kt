@@ -98,8 +98,7 @@ sealed interface LanguageContainer {
     fun ratingCommandOptionUser(): String
     fun ratingCommandOptionUserDescription(): String
 
-    fun ratingEmbed(): String
-    fun ratingEmbedDescription(): String
+    fun ratingNoRecord(): String
 
     fun languageCommand(): String
     fun languageCommandDescription(): String
@@ -244,28 +243,22 @@ sealed interface LanguageContainer {
 
     fun beginOpening(players: ColorContainer<String>): String
 
-    fun beginEngineWhite(player: String): String
-
-    fun beginEngineBlack(player: String): String
+    fun beginEngineWhite(player: String, gomokubot: String): String
+    fun beginEngineBlack(player: String, gomokubot: String): String
 
     fun processNextEngine(lastMove: String): String
-
-    fun processNextPvp(lastPlayer: String, lastMove: String): String
-
+    fun processNextPvp(opponent: String, lastMove: String): String
     fun processNextOpening(lastMove: String): String
 
     fun processErrorOrder(player: String): String
 
-    fun endPvpWin(winner: String, loser: String, lastMove: String): String
-    fun endPvpResign(winner: String, loser: String): String
-    fun endPvpTie(players: ColorContainer<String>): String
-    fun endPvpTimeOut(winner: String, loser: String): String
+    fun gameResultFiveInRow(winner: String, loser: String): String
+    fun gameResultResign(winner: String, loser: String): String
+    fun gameResultDraw(): String
+    fun gameResultTimeout(winner: String, loser: String): String
 
-    fun endEngineWin(player: String, lastPos: String): String
-    fun endEngineLose(player: String, lastPos: String): String
-    fun endEngineResign(player: String): String
-    fun endEngineTie(player: String): String
-    fun endEngineTimeOut(player: String): String
+    fun gameResultEngineRating(): String
+    fun gameResultEngineRatingChange(): String
 
     fun boardInProgress(): String
     fun boardInOpening(): String

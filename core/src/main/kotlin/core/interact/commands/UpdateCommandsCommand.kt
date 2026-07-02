@@ -5,6 +5,7 @@ import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
 import core.assets.User
+import core.database.repositories.ChannelProfileRepository
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeActionLog
@@ -14,8 +15,8 @@ import kotlin.time.Instant
 
 class UpdateCommandsCommand(
     command: Command,
-    private val deprecates: List<String>,
-    private val adds: List<String>
+    private val previousRevision: Int,
+    private val targetRevision: Int,
 ) : UnionCommand(command) {
 
     override val name = "update-commands"
@@ -29,9 +30,19 @@ class UpdateCommandsCommand(
         publishers: PublisherSet,
         emittedTime: Instant,
     ) = runCatching {
-        val io: Effect<Nothing, Unit> = effect { service.upsertCommands(config.language.container) }
+        val channel = channel.copy(commandRevision = this.targetRevision)
 
-        val report = this.writeActionLog(emittedTime, "deprecates = ${this.deprecates}, adds = ${this.adds}", channel, user)
+        val io: Effect<Nothing, Unit> = effect {
+            service.upsertCommands(config.language.container)
+            ChannelProfileRepository.upsertChannel(bot.dbConnection, channel)
+        }
+
+        val report = this.writeActionLog(
+            emittedTime,
+            "revision ${this.previousRevision} to ${this.targetRevision}",
+            channel,
+            user
+        )
 
         tuple(io, report, channel, user)
     }

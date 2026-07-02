@@ -13,6 +13,7 @@ import core.session.MessageManager
 import core.session.SessionManager
 import core.session.entities.*
 import renju.notation.Pos
+import utils.tuple
 import kotlin.time.Instant
 
 abstract class OpeningMoveCommand<T : OpeningSession>(
@@ -31,19 +32,16 @@ abstract class OpeningMoveCommand<T : OpeningSession>(
         publishers: PublisherSet,
         emittedTime: Instant,
     ) = runCatching {
-        var messageBufferKey: MessageBufferKey? = null
-
-        val session = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { session ->
+        val (session, messageBufferKey) = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { session ->
             val openingSession = this.selectSession(session) ?: throw IllegalStateException()
             if (openingSession.player.id != user.id) throw IllegalStateException()
             if (!openingSession.isLegalMove(this.move)) throw IllegalStateException()
 
-            messageBufferKey = session.messageBufferKey
-            this.executeSelf(openingSession)
+            tuple(this.executeSelf(openingSession), session.messageBufferKey)
         }
 
         val boardPublisher = when (config.swapType) {
-            SwapType.EDIT -> publishers.edit(this.messageRef ?: MessageManager.viewHeadMessage(bot.sessions, messageBufferKey!!)!!)
+            SwapType.EDIT -> publishers.edit(this.messageRef ?: MessageManager.viewHeadMessage(bot.sessions, messageBufferKey)!!)
             else -> publishers.plain
         }
 
@@ -71,7 +69,7 @@ abstract class OpeningMoveCommand<T : OpeningSession>(
 
         val io = effect {
             guideIO()
-            buildNextMoveProcedure(bot, config, service, boardPublisher, session, messageBufferKey!!)()
+            buildNextMoveProcedure(bot, config, service, boardPublisher, session, messageBufferKey)()
         }
 
         CommandResult(io, this.writeActionLog(emittedTime, this.writeLog(), channel, user))

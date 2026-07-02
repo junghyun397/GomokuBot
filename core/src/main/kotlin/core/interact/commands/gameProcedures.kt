@@ -63,10 +63,10 @@ fun buildBoardProcedure(
             ) }
             .retrieve()()
 
-        if (message != null) {
+        if (message != null && config.swapType == SwapType.EDIT) {
             MessageManager.addNavigation(bot.sessions, message.ref, BoardNavigationState(focusInfo.focus.idx, focusInfo, session.expireDate))
             MessageManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.ref)
-            service.attachFocusNavigators(message) {
+            service.attachInputFieldNavigators(message) {
                 runCatching {
                     val currentSession = SessionManager.retrieveGameSession(bot.sessions, session.id).snapshot()
                     currentSession.state.history.size != session.state.history.size
@@ -85,7 +85,7 @@ private fun buildSwapProcedure(
     SwapType.RELAY -> service.bulkDelete(MessageManager.checkoutMessages(bot.sessions, cleanupMessages).orEmpty())
     SwapType.ARCHIVE -> {
         MessageManager.viewHeadMessage(bot.sessions, cleanupMessages)
-            ?.let { service.removeNavigators(it, reduceComponents = true) }
+            ?.let { service.reduceComponents(it, reduceReactions = false, reduceComponents = true) }
     }
     SwapType.EDIT -> Unit
 } }
@@ -108,5 +108,5 @@ fun buildFinishProcedure(
     buildSwapProcedure(bot, service, config, cleanupMessages)()
 
     if (message != null && session.gameResult != null && config.swapType == SwapType.EDIT)
-        service.removeNavigators(message.ref, reduceComponents = true)
+        service.reduceComponents(message.ref, reduceReactions = true, reduceComponents = true)
 }

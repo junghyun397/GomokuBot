@@ -3,6 +3,7 @@ package core.interact.commands
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
+import core.database.repositories.ChannelProfileRepository
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeActionLog
@@ -35,6 +36,11 @@ class ChannelJoinCommand(private val localeComment: String) : InternalCommand {
                 )()
 
             service.upsertCommands(config.language.container)
+
+            ChannelProfileRepository.upsertChannel(
+                bot.dbConnection,
+                channel.copy(commandRevision = Command.COMMAND_REVISION)
+            )
         }
 
         CommandResult(io, this.writeActionLog(emittedTime, this.localeComment, channel))

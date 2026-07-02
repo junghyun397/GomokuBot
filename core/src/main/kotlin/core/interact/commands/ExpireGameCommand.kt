@@ -3,13 +3,14 @@ package core.interact.commands
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
-import core.interact.message.PlatformMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
+import core.interact.message.ResultDraw
 import core.interact.reports.writeActionLog
 import core.session.*
 import core.session.entities.*
 import utils.replaceIf
+import utils.tuple
 import kotlin.time.Instant
 
 class ExpireGameCommand(
@@ -47,19 +48,24 @@ class ExpireGameCommand(
 
                 val messageBufferKey = session.messageBufferKey
 
-                when (session) {
-                    is PvpGameSession, is OpeningSession -> service.buildMessage(
-                        noticePublisher,
-                        PlatformMessage(config.language.container.endPvpTimeOut(
-                            service.formatUser(session.opponent),
-                            service.formatUser(session.player)
-                        ))
+                val result = session.gameResult!!
+                val eloRating =
+                    if (session is EngineGameSession) {
+                        val delta = session.ratingDelta!!
+
+                        tuple(session.userRating + delta, delta)
+                    } else null
+
+                service.buildGameFinished(
+                    noticePublisher,
+                    config.language.container,
+                    ResultDraw(
+                        session.users,
+                        session.state.board.playerColor,
+                        result,
+                        eloRating,
                     )
-                    is EngineGameSession -> service.buildMessage(
-                        noticePublisher,
-                        PlatformMessage(config.language.container.endEngineTimeOut(service.formatUser(session.humanPlayer)))
-                    )
-                }.launch()()
+                ).launch()()
 
                 buildFinishProcedure(
                     bot,

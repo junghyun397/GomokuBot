@@ -7,6 +7,7 @@ import core.database.entities.Announce
 import core.database.entities.GameRecord
 import core.database.entities.GameRecordId
 import core.database.entities.UserStats
+import core.engine.EloRating
 import core.engine.FocusSolver
 import core.interact.i18n.LanguageContainer
 import core.interact.message.graphics.BoardRenderer
@@ -82,7 +83,7 @@ interface PlatformService {
 
     suspend fun bulkDelete(messageRefs: List<MessageRef>)
 
-    suspend fun removeNavigators(messageRef: MessageRef, reduceComponents: Boolean = false)
+    suspend fun reduceComponents(messageRef: MessageRef, reduceReactions: Boolean, reduceComponents: Boolean)
 
     suspend fun archiveSession(session: GameSession, policy: ArchivePolicy)
 
@@ -119,9 +120,11 @@ interface PlatformService {
 
     fun attachNavigators(flow: Flow<String>, message: SentMessage, checkTerminated: suspend () -> Boolean): Effect<Nothing, Unit>
 
-    fun attachFocusNavigators(message: SentMessage, checkTerminated: suspend () -> Boolean): Effect<Nothing, Unit>
+    fun attachInputFieldNavigators(message: SentMessage, checkTerminated: suspend () -> Boolean): Effect<Nothing, Unit>
 
     fun attachBinaryNavigators(message: SentMessage): Effect<Nothing, Unit>
+
+    fun buildGameFinished(publisher: MessagePublisher, container: LanguageContainer, draw: ResultDraw): MessageBuilder
 
     // REPLAY
 
@@ -149,7 +152,7 @@ interface PlatformService {
 
     // RATING
 
-    fun buildRating(publisher: MessagePublisher, container: LanguageContainer): MessageBuilder
+    fun buildRating(publisher: MessagePublisher, container: LanguageContainer, user: User, rating: EloRating, recentDelta: EloRating.Delta): MessageBuilder
 
     // LANG
 

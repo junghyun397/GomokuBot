@@ -43,7 +43,7 @@ suspend fun buttonInteractionRouter(context: UserInteractionContext<GenericCompo
     }
 
     val messageRef = context.event.message.messageRef()
-    val platform = DiscordPlatformService(context.discordConfig, context.jdaChannel)
+    val platform = DiscordPlatformService(context.shardManager, context.discordConfig, context.jdaChannel)
 
     val result = command.execute(
         bot = context.bot,

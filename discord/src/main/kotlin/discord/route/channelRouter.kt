@@ -50,7 +50,7 @@ suspend fun channelJoinRouter(context: InternalInteractionContext<GuildJoinEvent
         bot = context.bot,
         config = config,
         channel = channel,
-        service = DiscordPlatformService(context.discordConfig, context.jdaChannel),
+        service = DiscordPlatformService(context.shardManager, context.discordConfig, context.jdaChannel),
         publisher = context.event.guild.systemChannel?.let { systemChannel ->
             MonoPublisherSet(
                 publisher = { msg -> MessageCreateAdaptor(systemChannel.sendMessage(msg.asDiscordMessageData().buildCreate()))},
@@ -71,7 +71,7 @@ suspend fun channelLeaveRouter(context: InternalInteractionContext<GuildLeaveEve
             bot = context.bot,
             config = SessionManager.retrieveChannelConfig(context.bot.sessions, channel),
             channel = channel,
-            service = DiscordPlatformService(context.discordConfig, context.jdaChannel),
+            service = DiscordPlatformService(context.shardManager, context.discordConfig, context.jdaChannel),
             publisher = MonoPublisherSet(
                 publisher = { throw IllegalStateException() },
                 editGlobal = { throw IllegalStateException() }

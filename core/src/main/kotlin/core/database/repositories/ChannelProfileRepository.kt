@@ -62,9 +62,11 @@ object ChannelProfileRepository {
                 .set(CHANNEL_PROFILE.PLATFORM, channel.platform)
                 .set(CHANNEL_PROFILE.GIVEN_ID, channel.givenId.idLong)
                 .set(CHANNEL_PROFILE.NAME, channel.name)
+                .set(CHANNEL_PROFILE.COMMAND_REVISION, channel.commandRevision)
                 .onConflict(CHANNEL_PROFILE.CHANNEL_ID)
                 .doUpdate()
                 .set(CHANNEL_PROFILE.NAME, channel.name)
+                .set(CHANNEL_PROFILE.COMMAND_REVISION, channel.commandRevision)
         )
             .awaitSingle()
     }
@@ -74,7 +76,8 @@ object ChannelProfileRepository {
             id = ChannelUid(record.channelId!!),
             platform = record.platform!!,
             givenId = ChannelId(record.givenId!!),
-            name = record.name!!
+            name = record.name!!,
+            commandRevision = record.commandRevision ?: 0,
         )
 
 }

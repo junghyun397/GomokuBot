@@ -53,7 +53,7 @@ suspend fun reactionRouter(context: UserInteractionContext<GenericMessageReactio
         config = context.config,
         channel = context.channel,
         user = context.user,
-        service = DiscordPlatformService(context.discordConfig, context.jdaChannel),
+        service = DiscordPlatformService(context.shardManager, context.discordConfig, context.jdaChannel),
         publishers = AdaptivePublisherSet(
             plain = { msg -> MessageCreateAdaptor(context.event.channel.sendMessage(msg.asDiscordMessageData().buildCreate())) },
             windowed = { msg -> MessageCreateAdaptor(context.event.channel.sendMessage(msg.asDiscordMessageData().buildCreate())) },

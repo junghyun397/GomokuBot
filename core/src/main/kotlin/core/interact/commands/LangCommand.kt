@@ -4,6 +4,7 @@ import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
 import core.assets.User
+import core.database.repositories.ChannelProfileRepository
 import core.interact.i18n.Language
 import core.interact.message.PlatformMessage
 import core.interact.message.PlatformService
@@ -35,8 +36,15 @@ class LangCommand(private val language: Language) : Command {
         val io = effect {
             service.buildMessage(publishers.plain, PlatformMessage(this@LangCommand.language.container.languageUpdated()))
                 .launch()()
+
             buildHelpProcedure(bot, thenConfig, publishers.plain, service, 0)()
+
             service.upsertCommands(thenConfig.language.container)
+
+            ChannelProfileRepository.upsertChannel(
+                bot.dbConnection,
+                channel.copy(commandRevision = Command.COMMAND_REVISION)
+            )
         }
 
         CommandResult(io, this.writeActionLog(emittedTime, "${config.language.name} to ${thenConfig.language.name}",

@@ -25,12 +25,13 @@ class SessionSlot<T : Expirable>(
         }
     }
 
-    suspend fun mutate(block: suspend (T) -> T): T {
+    suspend fun<A> mutate(block: suspend (T) -> Pair<T, A>): Pair<T, A> {
         if (!this.mutex.tryLock()) throw SessionLockedException(this.sessionId)
 
         return try {
-            this.session = block(this.session)
-            this.session
+            val result = block(this.session)
+            this.session = result.first
+            result
         } finally {
             this.mutex.unlock()
         }

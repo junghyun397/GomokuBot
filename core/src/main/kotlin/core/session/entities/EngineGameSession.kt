@@ -12,7 +12,7 @@ import renju.notation.GameResult
 data class EngineGameSession(
     val context: GameSessionContext<User>,
     val mintakaServer: MintakaServer,
-    val engineState: Either<GameResult, MintakaSession>,
+    val engineState: Either<Pair<GameResult, EloRating.Delta>, MintakaSession>,
     val userColor: Color,
     val engineLevel: EngineLevel,
     val userRating: EloRating,
@@ -20,7 +20,9 @@ data class EngineGameSession(
 ) : PlayGameSession {
 
     val mintakaSession: MintakaSession? get() = this.engineState.getOrNull()
-    override val gameResult get() = this.engineState.leftOrNull()
+    val terminalState get() = this.engineState.leftOrNull()
+    override val gameResult get() = this.terminalState?.first
+    val ratingDelta get() = this.terminalState?.second
 
     override val id = this.context.id
     override val expireService = this.context.expireService

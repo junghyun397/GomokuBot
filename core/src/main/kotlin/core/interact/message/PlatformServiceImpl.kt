@@ -34,12 +34,6 @@ abstract class PlatformServiceImpl : PlatformService {
     protected fun User.withColor(color: Color) =
         "${this.name}${UNICODE_STONE[color]}"
 
-    protected fun BoardDraw.playerWithColor() =
-        this.recipients.player.first.withColor(this.recipients.player.second)
-
-    protected fun BoardDraw.opponentWithColor() =
-        this.recipients.opponent.first.withColor(this.recipients.opponent.second)
-
     override fun generateFocusedField(session: GameSession, focusInfo: FocusSolver.FocusInfo): InputField {
         val half = this.focusWidth / 2
         val lastMove = session.state.history.lastOrNull()
@@ -79,7 +73,7 @@ abstract class PlatformServiceImpl : PlatformService {
 
     private val focusNavigatorFlow = flowOf(UNICODE_LEFT, UNICODE_DOWN, UNICODE_UP, UNICODE_RIGHT, UNICODE_FOCUS)
 
-    override fun attachFocusNavigators(message: SentMessage, checkTerminated: suspend () -> Boolean): Effect<Nothing, Unit> =
+    override fun attachInputFieldNavigators(message: SentMessage, checkTerminated: suspend () -> Boolean): Effect<Nothing, Unit> =
         this.attachNavigators(this.focusNavigatorFlow, message, checkTerminated)
 
     private val binaryNavigatorFlow = flowOf(UNICODE_LEFT, UNICODE_RIGHT)

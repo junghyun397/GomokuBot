@@ -1,7 +1,6 @@
 package discord.interact
 
 import arrow.core.raise.get
-import core.assets.ChannelUid
 import core.assets.MessageRef
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
@@ -16,24 +15,16 @@ import discord.interact.message.DiscordMessagePublisher
 import discord.interact.message.DiscordPlatformService
 import discord.interact.message.MessageCreateAdaptor
 import discord.interact.message.asDiscordMessageData
-import discord.interact.parse.BuildableCommand
 import discord.interact.parse.buildableCommands
-import discord.interact.parse.engBuildableCommands
 import discord.interact.parse.parsers.HelpCommandParser
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
-import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.sharding.ShardManager
-import utils.memoize
-import utils.replaceIf
-import utils.tuple
 
 object ChannelManager {
-
-    val updateCommandBypassChannels = mutableSetOf<ChannelUid>()
 
     fun lookupPermission(channel: GuildMessageChannel, permission: Permission) =
         channel.guild.selfMember.hasPermission(channel, permission)
@@ -53,37 +44,10 @@ object ChannelManager {
         HelpCommandParser.buildHelpCommandData(jda.updateCommands(), Language.ENG.container).queue()
     }
 
-    private val buildableCommandIndexes: (LanguageContainer) -> Map<String, BuildableCommand> = memoize { container ->
-        buildableCommands.associateBy { it.getLocalizedName(container) }
-    }
-
-    private val engBuildableCommandIndexes: Map<String, BuildableCommand> =
-        engBuildableCommands.associateBy { it.getLocalizedName(Language.ENG.container) }
-
-    suspend fun buildCommandUpdates(guild: JDAChannel, container: LanguageContainer): Pair<List<Command>, List<BuildableCommand>> =
-        guild.retrieveCommands()
-            .map { commands ->
-                val localCommands = commands.toSet()
-
-                val serverCommands = buildableCommandIndexes(container)
-                    .replaceIf(container == Language.ENG.container) { engBuildableCommandIndexes }
-
-                val deprecates = localCommands
-                    .filterNot { command -> serverCommands.containsKey(command.name) }
-
-                val adds = serverCommands
-                    .filterKeys { name -> !localCommands.any { command -> command.name == name } }
-                    .values
-                    .toList()
-
-                tuple(deprecates, adds)
-            }
-            .await()
-
-    fun upsertCommands(jdaChannel: JDAChannel, container: LanguageContainer) {
+    suspend fun upsertCommands(jdaChannel: JDAChannel, container: LanguageContainer) {
         buildableCommands.fold(jdaChannel.updateCommands()) { action, command ->
             command.buildCommandData(action, container)
-        }.queue()
+        }.await()
     }
 
     suspend fun archiveSession(archiveSubChannel: MessageChannel, session: GameSession, archivePolicy: ArchivePolicy) {
@@ -91,7 +55,7 @@ object ChannelManager {
 
         val publisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(archiveSubChannel.sendMessage(msg.asDiscordMessageData().buildCreate())) }
 
-        DiscordPlatformService().buildSessionArchive(publisher, SessionBoardDraw(
+        DiscordPlatformService(archiveSubChannel.jda.shardManager!!).buildSessionArchive(publisher, SessionBoardDraw(
             session,
             anonymous = archivePolicy == ArchivePolicy.BY_ANONYMOUS
         ))
@@ -144,7 +108,7 @@ object ChannelManager {
         maybeSubChannel?.deleteMessageById(messageRef.id.idLong)?.queue()
     }
 
-    fun clearReaction(message: net.dv8tion.jda.api.entities.Message) {
+    fun clearReactions(message: net.dv8tion.jda.api.entities.Message) {
         this.permissionDependedRun(
             message.channel.asGuildMessageChannel(), Permission.MESSAGE_MANAGE,
             onMissed = {

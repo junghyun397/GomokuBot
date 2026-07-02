@@ -8,11 +8,12 @@ import renju.Board
 import renju.GameState
 import renju.History
 import renju.notation.*
+import utils.tuple
 import kotlin.time.Duration.Companion.hours
 
 object EngineGameManager {
 
-    fun availableEngineLevels(rating: EloRating): List<EngineLevel> {
+    fun availableEngineLevels(mintakaServer: MintakaServer, rating: EloRating): List<EngineLevel> {
         return listOf(EngineLevel.AMOEBA)
     }
 
@@ -73,11 +74,15 @@ object EngineGameManager {
         val bestMove = handles.bestMove.await()
 
         if (bestMove.move == null) {
+            val result = GameResult.Win(
+                GameResult.WinCause.RESIGN,
+                !session.state.board.playerColor
+            )
+
+            val delta = this.calculateEloDelta(result, session)
+
             return session.copy(
-                engineState = Either.Left(GameResult.Win(
-                    GameResult.WinCause.RESIGN,
-                    !session.state.board.playerColor
-                ))
+                engineState = Either.Left(tuple(result, delta))
             )
         }
 
@@ -97,8 +102,10 @@ object EngineGameManager {
 
         EngineProvider.delete(session.mintakaServer, session.mintakaSession!!)
 
+        val delta = this.calculateEloDelta(result, session)
+
         val session = session.copy(
-            engineState = Either.Left(result)
+            engineState = Either.Left(tuple(result, delta))
         )
 
         return session
@@ -112,9 +119,11 @@ object EngineGameManager {
         if (result != null) {
             EngineProvider.delete(session.mintakaServer, session.mintakaSession!!)
 
+            val delta = this.calculateEloDelta(result, session)
+
             return session.copy(
                 context = session.context.next(state),
-                engineState = Either.Left(result),
+                engineState = Either.Left(tuple(result, delta)),
             )
         }
 
@@ -133,6 +142,16 @@ object EngineGameManager {
             context = session.context.next(state),
             engineState = Either.Right(mintakaSession),
         )
+    }
+
+    private fun calculateEloDelta(result: GameResult, session: EngineGameSession): EloRating.Delta {
+        val wld = when (result.winner) {
+            session.userColor -> EloRating.MatchResult.WIN
+            null -> EloRating.MatchResult.DRAW
+            else -> EloRating.MatchResult.LOSE
+        }
+
+        return session.userRating.delta(session.engineLevel.rating, wld)
     }
 
 }

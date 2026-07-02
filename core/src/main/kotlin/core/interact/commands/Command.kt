@@ -26,6 +26,12 @@ sealed interface Command {
         emittedTime: Instant,
     ): Result<CommandResult>
 
+    companion object {
+
+        const val COMMAND_REVISION: Int = 1
+
+    }
+
 }
 
 data class CommandResult(

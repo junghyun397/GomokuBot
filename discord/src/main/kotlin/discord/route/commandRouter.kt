@@ -7,7 +7,6 @@ import arrow.core.flatMap
 import arrow.core.raise.effect
 import core.database.repositories.AnnounceRepository
 import core.interact.commands.*
-import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.interact.message.AdaptivePublisherSet
 import core.interact.message.MonoPublisherSet
@@ -39,7 +38,7 @@ private fun buildPermissionNode(context: UserInteractionContext<*>, parsableComm
                 effect {
                     jdaUser.openPrivateChannel()
                         .flatMap { privateSubChannel ->
-                            DiscordPlatformService().sendPermissionNotGrantedEmbed(
+                            DiscordPlatformService(context.shardManager).sendPermissionNotGrantedEmbed(
                                 publisher = { msg -> privateSubChannel.sendMessage(msg.asDiscordMessageData().buildCreate()) },
                                 container = container,
                                 channelName = channel.name
@@ -61,7 +60,10 @@ private fun <T : Event> buildAnnounceNode(context: UserInteractionContext<T>, co
 
 private fun <T : Event> buildUpdateProfileNode(context: UserInteractionContext<T>, jdaUser: User, command: Command): Command {
     val user = jdaUser.profile(uid = context.user.id, announceId = context.user.announceId)
-    val channel = context.jdaChannel.profile(uid = context.channel.id)
+    val channel = context.jdaChannel.profile(
+        uid = context.channel.id,
+        commandRevision = context.channel.commandRevision,
+    )
 
     val maybeThenUser = if (user != context.user) user else null
     val maybeThenChannel = if (channel != context.channel) channel else null
@@ -71,18 +73,15 @@ private fun <T : Event> buildUpdateProfileNode(context: UserInteractionContext<T
     }
 }
 
-private suspend fun <T : Event> buildUpdateCommandsNode(context: UserInteractionContext<T>, command: Command): Command {
-    if (context.channel.id in ChannelManager.updateCommandBypassChannels)
+private fun <T : Event> buildUpdateCommandsNode(context: UserInteractionContext<T>, command: Command): Command {
+    if (context.channel.commandRevision >= Command.COMMAND_REVISION)
         return command
 
-    ChannelManager.updateCommandBypassChannels += context.channel.id
-    
-    val (deprecates, adds) = ChannelManager.buildCommandUpdates(context.jdaChannel, context.config.language.container)
-    
-    if (deprecates.isEmpty() && adds.isEmpty())
-        return command
-
-    return UpdateCommandsCommand(command, deprecates.map { it.name }, adds.map { it.getLocalizedName(Language.ENG.container) })
+    return UpdateCommandsCommand(
+        command = command,
+        previousRevision = context.channel.commandRevision,
+        targetRevision = Command.COMMAND_REVISION,
+    )
 }
 
 private fun matchCommand(command: String, container: LanguageContainer): ParsableCommand? =
@@ -112,7 +111,7 @@ fun commandAutoCompleteRouter(event: CommandAutoCompleteInteractionEvent) {
 suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEvent>): List<ActionLogRecord>? {
     val parsable = matchCommand(context.event.name, context.config.language.container)
         ?: return null
-    val platform = DiscordPlatformService(context.discordConfig, context.jdaChannel)
+    val platform = DiscordPlatformService(context.shardManager, context.discordConfig, context.jdaChannel)
 
     val parsed: Either<ParseFailure, Command> = buildPermissionNode(
         context,
@@ -185,7 +184,7 @@ suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInter
 }
 
 suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): List<ActionLogRecord>? {
-    val platform = DiscordPlatformService(context.discordConfig, context.jdaChannel)
+    val platform = DiscordPlatformService(context.shardManager, context.discordConfig, context.jdaChannel)
     val messageRaw = context.event.message.contentRaw
 
     val payload = when {
@@ -212,12 +211,12 @@ suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEve
     )
         .flatMap { parsable.parseText(context, payload) }
         .map { command ->
-            buildUpdateCommandsNode(
+            buildAnnounceNode(
                 context,
                 buildUpdateProfileNode(
                     context,
                     context.event.author,
-                    buildAnnounceNode(context, command)
+                    buildUpdateCommandsNode(context, command)
                 )
             )
         }

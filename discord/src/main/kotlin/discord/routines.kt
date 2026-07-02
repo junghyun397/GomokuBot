@@ -27,6 +27,7 @@ import kotlin.time.Duration
 private suspend fun executeCommand(
     taskContext: TaskContext,
     botContext: BotContext,
+    shardManager: ShardManager,
     discordConfig: DiscordConfig,
     command: InternalCommand,
     jdaChannel: JDAChannel?,
@@ -36,7 +37,7 @@ private suspend fun executeCommand(
         bot = botContext,
         config = taskContext.config,
         channel = taskContext.channel,
-        service = DiscordPlatformService(discordConfig, jdaChannel),
+        service = DiscordPlatformService(shardManager, discordConfig, jdaChannel),
         publisher = channel?.let { MonoPublisherSet(
             publisher = { msg -> MessageCreateAdaptor(channel.sendMessage(msg.asDiscordMessageData().buildCreate())) },
             editGlobal = { ref -> { msg -> MessageEditAdaptor(channel.editMessageById(ref.id.idLong, msg.asDiscordMessageData().buildEdit())) } }
@@ -60,7 +61,7 @@ fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, shardM
 
             val command = ExpireGameCommand(session)
 
-            val results = executeCommand(context, bot, discordConfig, command, channel, subChannel)
+            val results = executeCommand(context, bot, shardManager, discordConfig, command, channel, subChannel)
 
             results.forEach { result -> emit(result) }
         }
@@ -82,7 +83,7 @@ fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, sha
                 messageAvailable = message != null
             )
 
-            val results = executeCommand(context, bot, discordConfig, command, channel, subChannel)
+            val results = executeCommand(context, bot, shardManager, discordConfig, command, channel, subChannel)
 
             results.forEach { result -> emit(result) }
         }

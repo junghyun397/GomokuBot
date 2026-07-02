@@ -8,11 +8,13 @@ import core.assets.User
 import core.interact.message.PlatformMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
+import core.interact.message.ResultDraw
 import core.interact.reports.writeActionLog
 import core.session.*
 import core.session.entities.*
 import renju.notation.GameResult
 import renju.notation.Pos
+import utils.tuple
 import utils.unreachable
 import kotlin.time.Instant
 
@@ -34,20 +36,18 @@ class PlayCommand(
         publishers: PublisherSet,
         emittedTime: Instant,
     ) = runCatching {
-        var messageBufferKey: MessageBufferKey? = null
-
-        val session = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { session ->
-            messageBufferKey = session.messageBufferKey
-
-            when (session) {
+        val (session, messageBufferKey) = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { session ->
+            val nextSession = when (session) {
                 is PvpGameSession -> PvpGameManager.play(session, this.pos)
                 is EngineGameSession -> EngineGameManager.play(session, this.pos)
                 else -> unreachable()
             }
+
+            tuple(nextSession, session.messageBufferKey)
         }
 
         val boardPublisher = when (config.swapType) {
-            SwapType.EDIT -> publishers.edit(this.messageRef ?: MessageManager.viewHeadMessage(bot.sessions, messageBufferKey!!)!!)
+            SwapType.EDIT -> publishers.edit(this.messageRef ?: MessageManager.viewHeadMessage(bot.sessions, messageBufferKey)!!)
             else -> publishers.plain
         }
 
@@ -57,53 +57,24 @@ class PlayCommand(
 
                 StatsManager.uploadGameRecord(bot.dbConnection, channel.id, session)
 
-                val lastMove = session.state.history.last()!!
-
                 val io = effect {
-                    when (session) {
-                        is PvpGameSession -> when (result) {
-                            is GameResult.Win ->
-                                service.buildMessage(
-                                    publishers.plain,
-                                    PlatformMessage(config.language.container.endPvpWin(
-                                        service.formatUser(session.opponent),
-                                        service.formatUser(session.player),
-                                        service.formatHighlight(lastMove.toString())
-                                    ))
-                                )
-                            is GameResult.Full ->
-                                service.buildMessage(
-                                    publishers.plain,
-                                    PlatformMessage(config.language.container.endPvpTie(session.users.map { service.formatUser(it) }))
-                                )
-                        }
-                        is EngineGameSession -> when (result) {
-                            is GameResult.Win -> when (result.winner) {
-                                session.userColor ->
-                                    service.buildMessage(
-                                        publishers.plain,
-                                        PlatformMessage(config.language.container.endEngineWin(
-                                            service.formatUser(session.humanPlayer),
-                                            service.formatHighlight(lastMove.toString())
-                                        ))
-                                    )
-                                else ->
-                                    service.buildMessage(
-                                        publishers.plain,
-                                        PlatformMessage(config.language.container.endEngineLose(
-                                            service.formatUser(session.humanPlayer),
-                                            service.formatHighlight(lastMove.toString())
-                                        ))
-                                    )
-                            }
-                            is GameResult.Full ->
-                                service.buildMessage(
-                                    publishers.plain,
-                                    PlatformMessage(config.language.container.endEngineTie(service.formatUser(session.humanPlayer)))
-                                )
-                        }
-                        else -> unreachable()
-                    }.launch()()
+                    val eloRating =
+                        if (session is EngineGameSession) {
+                            val delta = session.ratingDelta!!
+
+                            tuple(session.userRating + delta, delta)
+                        } else null
+
+                    service.buildGameFinished(
+                        publishers.plain,
+                        config.language.container,
+                        ResultDraw(
+                            session.users,
+                            session.state.board.playerColor,
+                            result,
+                            eloRating,
+                        )
+                    ).launch()()
 
                     buildFinishProcedure(
                         bot,
@@ -111,7 +82,7 @@ class PlayCommand(
                         boardPublisher,
                         config,
                         session,
-                        messageBufferKey!!
+                        messageBufferKey
                     )()
 
                     service.archiveSession(session, config.archivePolicy)
@@ -163,7 +134,7 @@ class PlayCommand(
                         service,
                         boardPublisher,
                         session,
-                        messageBufferKey!!
+                        messageBufferKey
                     )()
                 }
 

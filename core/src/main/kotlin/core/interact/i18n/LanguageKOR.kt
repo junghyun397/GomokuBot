@@ -18,6 +18,16 @@ open class LanguageKOR : LanguageENG() {
     override fun engineLevelExpert() = "전문가"
     override fun engineLevelGuru() = "현자"
 
+    override fun swapSelectYes() = "예"
+    override fun swapSelectNo() = "아니요"
+
+    override fun branchSelectSwap() = "스왑"
+    override fun branchSelectOffer() = "후보 제시"
+
+    override fun ruleSelectRenju() = "렌주 (기본)"
+    override fun ruleSelectTaraguchi10() = "Taraguchi-10"
+    override fun ruleSelectSoosyrv8() = "Soosyrv-8"
+
     override fun helpCommand() = "도움말"
     override fun helpCommandDescription() = "도움말을 알아봅니다."
     override fun helpCommandOptionShortcut() = "바로가기"
@@ -30,8 +40,7 @@ open class LanguageKOR : LanguageENG() {
     override fun helpAboutEmbedTitle() = "GomokuBot / 도움말"
     override fun helpAboutEmbedDescription(platform: String) =
         "이제 **$platform**에서도 **오목**을 즐겨 보세요. **GomokuBot**이 함께 하겠습니다." +
-                " ― GomokuBot은 ${platform}에서 오목([렌주](https://www.renju.net/rules/)) 기능을 제공하는 오픈소스 인공지능 오목 봇입니다. " +
-                "수집된 기보 데이터는 강화학습 인공지능 훈련에 사용됩니다."
+                " ― GomokuBot은 ${platform}에서 오목([렌주](https://www.renju.net/rules/)) 기능을 제공하는 오픈소스 인공지능 오목 봇입니다."
     override fun helpAboutEmbedDeveloper() = "개발자"
     override fun helpAboutEmbedRepository() = "Git 저장소"
     override fun helpAboutEmbedVersion() = "버전"
@@ -44,6 +53,7 @@ open class LanguageKOR : LanguageENG() {
     override fun commandUsageRankGlobal() = "1위부터 10위까지의 GomokuBot 전체 순위를 알아봅니다."
     override fun commandUsageRankServer() = "이 서버 안에서의 순위를 알아봅니다."
     override fun commandUsageRankUser() = "멘션 된 유저 상대의 순위를 알아봅니다."
+    override fun commandUsageReplay() = "최근에 플레이한 게임 다시보기 목록을 알아봅니다."
     override fun commandUsageRating() = "``GomokuBot ELO`` 레이팅을 알아봅니다."
 
     override fun commandUsageLang(langList: String) =
@@ -55,6 +65,8 @@ open class LanguageKOR : LanguageENG() {
     override fun commandUsageStartPvp() =
         "멘션 된 유저에게 새 게임을 제안합니다. Ex) ``/시작`` ``@유저``"
     override fun commandUsageResign() = "진행 중인 게임을 포기합니다."
+
+    override fun commandUsageBoard() = "현재 진행 중인 게임을 새 메시지로 표시합니다."
 
     override fun replayCommand() = "다시보기"
     override fun replayCommandDescription() = "최근에 끝낸 게임을 돌아봅니다."
@@ -83,8 +95,12 @@ open class LanguageKOR : LanguageENG() {
     override fun ratingCommandOptionUser() = "유저"
     override fun ratingCommandOptionUserDescription() = "레이팅을 알아볼 유저를 지정해 주세요."
 
-    override fun ratingEmbed() = TODO("Not yet implemented")
-    override fun ratingEmbedDescription() = TODO("Not yet implemented")
+    override fun ratingNoRecord() = "기록을 찾을 수 없습니다."
+
+    override fun languageCommand() = "lang"
+    override fun languageCommandDescription() = "이 서버에서 쓰이는 언어 설정을 바꿉니다."
+    override fun languageCommandOptionCode() = "언어"
+    override fun languageCommandOptionCodeDescription() = "언어 코드를 선택해 주세요."
 
     override fun languageUpdated() = "언어 설정이 한국어:flag_kr:로 바뀌었습니다!"
 
@@ -99,9 +115,11 @@ open class LanguageKOR : LanguageENG() {
                 " 준비된 네 가지 스타일 중 마음에 드는 스타일 하나를 선택해 주세요."
     override fun styleEmbedSuggestion(styleName: String) = "이 스타일을 사용하려면 ``/스타일`` $styleName 명령어를 입력해 주세요."
 
-    override fun styleErrorNotfound() = "스타일 지정이 잘못됐습니다. ``/스타일`` ``스타일 코드`` 형식으로 입력해 주세요."
+    override fun styleErrorNotfound() =
+        "스타일 지정이 잘못됐습니다. ``/스타일`` ``스타일 코드`` 형식으로 입력해 주세요."
 
-    override fun styleUpdated(styleName: String) = "스타일 설정이 스타일 ``${styleName}``로 바뀌었습니다."
+    override fun styleUpdated(styleName: String) =
+        "스타일 설정이 스타일 ``${styleName}``로 바뀌었습니다."
 
     override fun settingApplied(kind: String, choice: String) = "$kind 설정이 ${choice}로 바뀌었습니다."
 
@@ -235,6 +253,9 @@ open class LanguageKOR : LanguageENG() {
     override fun resignCommand() = "항복"
     override fun resignCommandDescription() = "진행중인 게임을 포기합니다."
 
+    override fun boardCommand() = "판"
+    override fun boardCommandDescription() = "현재 진행 중인 게임을 새 메시지로 표시합니다."
+
     override fun requestEmbedTitle() = "오목 한 판 괜찮겠습니까?"
     override fun requestEmbedDescription(requester: String, opponent: String) =
         "$requester 님이 $opponent 님에게 대결 요청을 보냈습니다. 아래 버튼을 눌러 대답해 주세요."
@@ -247,7 +268,8 @@ open class LanguageKOR : LanguageENG() {
     override fun requestExpired(requester: String, opponent: String) =
         "$requester 님이 $opponent 님에게 보낸 대결 요청이 만료되었습니다. 아직도 $opponent 님과 대결하고 싶다면, 새 대결 요청을 보내주세요."
 
-    override fun requestExpiredNewRequest() = "다시 제안하기"
+    override fun requestExpiredNewRequest() =
+        "다시 제안하기"
 
     override fun beginPvp(players: ColorContainer<String>) =
         "${players.black} 님과 ${players.white} 님의 게임이 시작되었습니다! ${players.black} 님이 흑입니다. ${players.black} 님이 첫 번째 수를 놓아주세요."
@@ -255,40 +277,39 @@ open class LanguageKOR : LanguageENG() {
     override fun beginOpening(players: ColorContainer<String>) =
         "${players.black} 님과 ${players.white} 님의 오프닝 게임이 시작되었습니다! ${players.black} 님이 흑입니다. ${players.white} 님은 흑으로 스왑할지, 그대로 플레이 할지 정해주세요."
 
-    override fun beginEngineBlack(player: String) =
-        "$player 님과 인공지능의 게임이 시작되었습니다! $player 님은 백입니다. 인공지능은 ``h8``에 두었습니다. 두 번째 수를 놓아주세요."
+    override fun beginEngineBlack(player: String, gomokubot: String) =
+        "$player 님과 ${gomokubot}의 게임이 시작되었습니다! $player 님은 백입니다. 인공지능은 ``h8``에 두었습니다. 두 번째 수를 놓아주세요."
 
-    override fun beginEngineWhite(player: String) =
-        "$player 님과 인공지능의 게임이 시작되었습니다! $player 님이 흑입니다. 첫 번째 수를 놓아주세요."
+    override fun beginEngineWhite(player: String, gomokubot: String) =
+        "$player 님과 ${gomokubot}의 게임이 시작되었습니다! $player 님이 흑입니다. 첫 번째 수를 놓아주세요."
 
     override fun processNextEngine(lastMove: String) =
         "다음 수를 놓아주세요. AI는 ${lastMove}에 놓았습니다."
 
-    override fun processNextPvp(lastPlayer: String, lastMove: String) =
-        "다음 수를 놓아주세요. $lastPlayer 님은 ${lastMove}에 놓았습니다."
+    override fun processNextPvp(opponent: String, lastMove: String) =
+        "다음 수를 놓아주세요. $opponent 님은 ${lastMove}에 놓았습니다."
+
+    override fun processNextOpening(lastMove: String) =
+        "${lastMove}에 돌을 놓았습니다. 다음 오프닝 절차를 따라주세요."
 
     override fun processErrorOrder(player: String) =
         "지금은 $player 님의 차례입니다. $player 님이 다음 수를 놓을 때까지 기다려 주세요."
 
-    override fun endPvpWin(winner: String, loser: String, lastMove: String) =
-        "$winner 님이 ${lastMove}에 돌을 놓음으로써 $loser 님을 이겼습니다."
-    override fun endPvpResign(winner: String, loser: String) =
-        "$loser 님이 항복을 선언 함으로써 $winner 님이 이겼습니다."
-    override fun endPvpTie(players: ColorContainer<String>) =
-        "이제 더 이상 돌을 놓을 공간이 없으므로, ${players.black} 님과 ${players.white} 님의 게임은 무승부로 끝났습니다."
-    override fun endPvpTimeOut(winner: String, loser: String) =
-        "$loser 님이 오랜 시간 동안 다음 수를 두지 않았기 때문에 $winner 님이 $loser 님을 이겼습니다."
+    override fun gameResultFiveInRow(winner: String, loser: String) =
+        "$winner 가 오목을 만들어 $loser 를 이겼습니다."
 
-    override fun endEngineWin(player: String, lastPos: String) =
-        "$lastPos 에 돌을 놓음으로써 인공지능을 이겼습니다. 축하합니다, $player 님."
-    override fun endEngineLose(player: String, lastPos: String) =
-        "$player 님, 인공지능이 $lastPos 에 돌을 놓음으로써 인공지능에 패배했습니다. 언제든지 다시 도전해 주세요."
-    override fun endEngineResign(player: String) =
-        "$player 님, 인공지능 상대로 항복을 선언 함으로써 인공지능에 패배하셨습니다. 언제든지 다시 도전해 주세요."
-    override fun endEngineTie(player: String) =
-        "이제 더 이상 돌을 놓을 공간이 없으므로, $player 님과 인공지능의 게임은 무승부로 끝났습니다."
-    override fun endEngineTimeOut(player: String) =
-        "$player 님, 오랜 시간 동안 다음 수를 두지 않았기 때문에 인공지능에 패배했습니다."
+    override fun gameResultResign(winner: String, loser: String) =
+        "$loser 가 항복을 선언해 $winner 가 이겼습니다."
+
+    override fun gameResultDraw() =
+        "더이상 돌을 둘 곳이 없어 비겼습니다."
+
+    override fun gameResultTimeout(winner: String, loser: String) =
+        "$loser 님이 제한 시간 안에 다음 수를 두지 않아 $winner 님이 이겼습니다."
+
+    override fun gameResultEngineRating() = "레이팅"
+
+    override fun gameResultEngineRatingChange() = "획득 레이팅"
 
     override fun boardInProgress() = "진행 중"
     override fun boardInOpening() = "오프닝 중"
@@ -302,11 +323,16 @@ open class LanguageKOR : LanguageENG() {
     override fun boardWinDescription(winner: String) = "$winner 승리"
     override fun boardTieDescription() = "무승부"
 
-    override fun boardCommandGuide() = ":mag: 버튼을 누르거나 ``/s`` ``좌표`` 명령어를 입력해 다음 수를 놓아주세요."
+    override fun boardCommandGuide() =
+        ":mag: 버튼을 누르거나 ``/s`` ``좌표`` 명령어를 입력해 다음 수를 놓아주세요."
     override fun boardSwapGuide() =
         ":arrows_counterclockwise: 버튼을 눌러 흑과 백을 바꿀지 선택해주세요."
+    override fun boardStatefulSwapGuide(offerCount: Int) =
+        ":arrows_counterclockwise: 버튼을 눌러 흑과 백을 바꿀지 선택해주세요. 흑이 제안해야 할 5번째 수 후보는 ``$offerCount``개입니다."
     override fun boardBranchGuide() =
         ":paperclips: 버튼을 눌러 흑과 백을 바꿀 기회를 얻을지, 5번째 수 후보 10개를 상대에게 제안할지 선택해주세요."
+    override fun boardDeclareGuide() =
+        ":paperclips: 선택 메뉴에서 5번째 수 후보를 몇 개 고를지 선택해주세요."
     override fun boardSelectGuide() =
         ":dart: 버튼을 누르거나 ``/s`` ``좌표`` 명령어를 입력해 5번째 수를 선택해주세요."
     override fun boardOfferGuide(remainingMoves: Int) =

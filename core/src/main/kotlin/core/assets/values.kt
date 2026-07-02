@@ -7,6 +7,7 @@ data class Channel(
     val platform: Short,
     val givenId: ChannelId,
     val name: String,
+    val commandRevision: Int = 0,
 ) {
 
     override fun toString() = "[$name](${id.uuid})"
