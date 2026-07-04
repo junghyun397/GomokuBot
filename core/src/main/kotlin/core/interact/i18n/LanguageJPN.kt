@@ -104,11 +104,6 @@ class LanguageJPN : LanguageENG() {
 
     override fun languageUpdated() = "言語設定が日本語:flag_jp:に変更されました。"
 
-    override fun styleCommand() = "スタイル"
-    override fun styleCommandDescription() = "このサーバーで使用する五目並べ盤のスタイルを変更します。"
-    override fun styleCommandOptionCode() = "スタイル"
-    override fun styleCommandOptionCodeDescription() = "スタイルコードを選択してください。"
-
     override fun styleEmbedTitle() = "GomokuBot / スタイル"
     override fun styleEmbedDescription() =
         "このサーバーに適用されているデフォルトの五目並べ盤スタイル(``スタイル A``)は、正しく表示されない場合があります。" +

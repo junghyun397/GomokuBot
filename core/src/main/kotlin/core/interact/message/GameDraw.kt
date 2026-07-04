@@ -4,7 +4,6 @@ import core.assets.User
 import core.database.entities.GameRecord
 import core.engine.EloRating
 import core.session.entities.GameSession
-import renju.Board
 import renju.GameState
 import renju.notation.Color
 import renju.notation.ColorContainer
@@ -21,44 +20,28 @@ sealed interface GameDraw {
 
 }
 
-sealed interface BoardDraw : GameDraw {
-
+data class BoardDraw(
+    override val users: ColorContainer<User>,
+    override val leaderColor: Color,
+    override val result: GameResult?,
     val state: GameState
+) : GameDraw
 
-}
-
-data class SessionBoardDraw<T : GameSession>(
-    val session: T,
-    private val anonymous: Boolean = false,
-) : BoardDraw {
-
-    override val users = this.session.users.replaceIf(this.anonymous) { it.map(User::anonymous) }
-
-    override val leaderColor = this.session.state.board.playerColor
-
-    override val result = this.session.gameResult
-
-    override val state = this.session.state
-
-}
-
-data class GameRecordBoardDraw(
-    val gameRecord: GameRecord,
-    override val state: GameState,
-) : BoardDraw {
-
-    constructor(gameRecord: GameRecord) : this(
-        gameRecord = gameRecord,
-        state = GameState(Board.fromHistory(gameRecord.history), gameRecord.history),
+fun GameSession.buildBoardDraw(anonymous: Boolean = false) =
+    BoardDraw(
+        users = this.users.replaceIf(anonymous) { it.map(User::anonymous) },
+        leaderColor = this.state.board.playerColor,
+        result = this.gameResult,
+        state = this.state,
     )
 
-    override val leaderColor = Color.BLACK
-
-    override val users = this.gameRecord.users
-
-    override val result = this.gameRecord.gameResult
-
-}
+fun GameRecord.buildBoardDraw(state: GameState) =
+    BoardDraw(
+        users = this.users,
+        leaderColor = Color.BLACK,
+        result = this.gameResult,
+        state = state,
+    )
 
 data class ResultDraw(
     override val users: ColorContainer<User>,

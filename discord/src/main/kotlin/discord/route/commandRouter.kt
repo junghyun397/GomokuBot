@@ -93,7 +93,6 @@ private fun matchCommand(command: String, container: LanguageContainer): Parsabl
         "s" -> SetCommandParser
         container.resignCommand() -> ResignCommandParser
         container.languageCommand() -> LangCommandParser
-        container.styleCommand() -> StyleCommandParser
         container.rankCommand() -> RankCommandParser
         container.ratingCommand() -> RatingCommandParser
         container.replayCommand() -> ReplayListCommandParser

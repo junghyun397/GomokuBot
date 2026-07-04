@@ -107,11 +107,6 @@ sealed interface LanguageContainer {
 
     fun languageUpdated(): String
 
-    fun styleCommand(): String
-    fun styleCommandDescription(): String
-    fun styleCommandOptionCode(): String
-    fun styleCommandOptionCodeDescription(): String
-
     fun styleEmbedTitle(): String
     fun styleEmbedDescription(): String
     fun styleEmbedSuggestion(styleName: String): String

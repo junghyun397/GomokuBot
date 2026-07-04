@@ -55,6 +55,7 @@ import renju.notation.GameResult
 import renju.notation.Pos
 import utils.memoize
 import utils.tuple
+import utils.unreachable
 import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
 
@@ -499,9 +500,9 @@ class DiscordPlatformService(
     }
 
     override fun buildReplay(publisher: MessagePublisher, container: LanguageContainer, gameRecord: GameRecord): MessageBuilder {
-        val draw = GameRecordBoardDraw(gameRecord)
-
         val state = GameState(board = Board.fromHistory(gameRecord.history), gameRecord.history)
+
+        val draw = gameRecord.buildBoardDraw(state)
 
         val imageStream = ImageBoardRenderer.renderInputStream(state, HistoryRenderType.SEQUENCE, null, null, true)
 
@@ -511,7 +512,7 @@ class DiscordPlatformService(
             color = COLOR_NORMAL_HEX
 
             buildBoardAuthor(Language.ENG.container, draw)
-            buildResultFields(Language.ENG.container, draw, draw.result)
+            buildResultFields(Language.ENG.container, draw, draw.result!!)
 
             image = "attachment://${fName}"
         }
@@ -634,7 +635,7 @@ class DiscordPlatformService(
                 .addComponents(this.settingMenu(SwapType::class)(config.language.container)(config).liftToButtons())
             6 -> publisher(DiscordMessageData(embed = this.settingEmbed(ArchivePolicy::class)(config.language.container)))
                 .addComponents(this.settingMenu(ArchivePolicy::class)(config.language.container)(config).liftToButtons())
-            else -> throw IllegalStateException()
+            else -> unreachable()
         }
 
     override fun buildSettings(publisher: DiscordMessagePublisher, config: ChannelConfig, page: Int) =

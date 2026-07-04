@@ -104,11 +104,6 @@ open class LanguageKOR : LanguageENG() {
 
     override fun languageUpdated() = "언어 설정이 한국어:flag_kr:로 바뀌었습니다!"
 
-    override fun styleCommand() = "스타일"
-    override fun styleCommandDescription() = "이 서버에서 쓰이는 오목판 스타일을 바꿉니다."
-    override fun styleCommandOptionCode() = "스타일"
-    override fun styleCommandOptionCodeDescription() = "스타일 코드를 지정해 주세요."
-
     override fun styleEmbedTitle() = "GomokuBot / 스타일"
     override fun styleEmbedDescription() =
         "이 서버에 적용된 기본 오목판 스타일(``스타일 A``)이 제대로 보이지 않을 수 있습니다." +
@@ -272,16 +267,16 @@ open class LanguageKOR : LanguageENG() {
         "다시 제안하기"
 
     override fun beginPvp(players: ColorContainer<String>) =
-        "${players.black} 님과 ${players.white} 님의 게임이 시작되었습니다! ${players.black} 님이 흑입니다. ${players.black} 님이 첫 번째 수를 놓아주세요."
+        "${players.black} 님과 ${players.white} 님의 게임이 시작되었습니다. ${players.black} 님이 흑입니다. ${players.black} 님이 첫 번째 수를 놓아주세요."
 
     override fun beginOpening(players: ColorContainer<String>) =
-        "${players.black} 님과 ${players.white} 님의 오프닝 게임이 시작되었습니다! ${players.black} 님이 흑입니다. ${players.white} 님은 흑으로 스왑할지, 그대로 플레이 할지 정해주세요."
+        "${players.black} 님과 ${players.white} 님의 오프닝 게임이 시작되었습니다. ${players.black} 님이 흑입니다. ${players.white} 님은 흑으로 스왑할지, 그대로 플레이 할지 정해주세요."
 
     override fun beginEngineBlack(player: String, gomokubot: String) =
-        "$player 님과 ${gomokubot}의 게임이 시작되었습니다! $player 님은 백입니다. 인공지능은 ``h8``에 두었습니다. 두 번째 수를 놓아주세요."
+        "$player 님과 ${gomokubot}의 게임이 시작되었습니다. $player 님은 백입니다. 인공지능은 ``h8``에 두었습니다. 두 번째 수를 놓아주세요."
 
     override fun beginEngineWhite(player: String, gomokubot: String) =
-        "$player 님과 ${gomokubot}의 게임이 시작되었습니다! $player 님이 흑입니다. 첫 번째 수를 놓아주세요."
+        "$player 님과 ${gomokubot}의 게임이 시작되었습니다. $player 님이 흑입니다. 첫 번째 수를 놓아주세요."
 
     override fun processNextEngine(lastMove: String) =
         "다음 수를 놓아주세요. AI는 ${lastMove}에 놓았습니다."

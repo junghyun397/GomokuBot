@@ -104,11 +104,6 @@ open class LanguagePRK : LanguageKOR() {
 
     override fun languageUpdated() = "언어 설정이 조선말:flag_kp:로 바뀌었소. 공화국에 온 걸 환영하오."
 
-    override fun styleCommand() = "생김새"
-    override fun styleCommandDescription() = "이 봉사기에서 쓰이는 오목판 생김새를 바꾸오."
-    override fun styleCommandOptionCode() = "생김새"
-    override fun styleCommandOptionCodeDescription() = "생김새 부호를 정하시오."
-
     override fun styleEmbedTitle() = "GomokuBot / 생김새"
     override fun styleEmbedDescription() =
         "이 봉사기에 적용된 기본 오목판 생김새(``스타일 A``)가 제대로 보이지 않을 수 있소." +
@@ -260,10 +255,10 @@ open class LanguagePRK : LanguageKOR() {
     override fun requestEmbedDescription(requester: String, opponent: String) =
         "$requester 동지가 $opponent 동지에게 놀음 요청을 보냈소. 아래 단추를 눌러 대답하시오."
     override fun requestEmbedButtonAccept() = "수락"
-    override fun requestEmbedButtonReject() = "거절"
+    override fun requestEmbedButtonReject() = "숙청"
 
     override fun requestRejected(requester: String, opponent: String) =
-        "$opponent 동지가 $requester 동지의 놀음 요청을 거절했소."
+        "$opponent 동지가 $requester 동지의 놀음 요청을 숙청했소."
 
     override fun requestExpired(requester: String, opponent: String) =
         "$requester 동지가 $opponent 동지에게 보낸 놀음 요청이 만료되었소. 아직도 $opponent 동지와 대결하고 싶다면 새 놀음 요청을 보내시오."
@@ -296,16 +291,16 @@ open class LanguagePRK : LanguageKOR() {
         "지금은 $player 동지의 차례요. $player 동지가 다음 수를 놓을 때까지 기다리시오."
 
     override fun gameResultFiveInRow(winner: String, loser: String) =
-        "$winner 동지가 오목을 만들어 $loser 동지를 이겼소."
+        "$winner 동지가 오목을 만들어 $loser 동지를 숙청했소."
 
     override fun gameResultResign(winner: String, loser: String) =
-        "$loser 동지가 백기를 들어 $winner 동지가 이겼소."
+        "$loser 동지가 백기를 들어 $winner 동지가 숙청됐소."
 
     override fun gameResultDraw() =
         "더는 돌을 둘 곳이 없어 놀음은 무승부로 끝났소."
 
     override fun gameResultTimeout(winner: String, loser: String) =
-        "$loser 동지가 제한 시간 안에 다음 수를 두지 않아 $winner 동지가 이겼소."
+        "$loser 동지가 제한 시간 안에 다음 수를 두지 않아 $winner 동지가 숙청됐소."
 
     override fun gameResultEngineRating() = "계급수"
 

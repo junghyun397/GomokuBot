@@ -104,11 +104,6 @@ open class LanguageENG : LanguageContainer {
 
     override fun languageUpdated() = "Language setting has been changed to English:flag_gb:!"
 
-    override fun styleCommand() = "style"
-    override fun styleCommandDescription() = "Change the Gomoku Board style used by this server."
-    override fun styleCommandOptionCode() = "style"
-    override fun styleCommandOptionCodeDescription() = "Select a style code."
-
     override fun styleEmbedTitle() = "GomokuBot / Style"
     override fun styleEmbedDescription() =
         "Default Gomoku Board style(``Style A``) applied to this server may not display correctly. " +
@@ -272,16 +267,16 @@ open class LanguageENG : LanguageContainer {
         "re-Request"
 
     override fun beginPvp(players: ColorContainer<String>) =
-        "The game of ${players.black} vs ${players.white} has started! ${players.black} is Black. Please make the first move."
+        "The game of ${players.black} vs ${players.white} has started. ${players.black} is Black. Please make the first move."
 
     override fun beginOpening(players: ColorContainer<String>) =
-        "The opening renju game of ${players.black} vs ${players.white} has started! ${players.black} is black. ${players.white} needs to decide whether to swap to black or play as is."
+        "The opening renju game of ${players.black} vs ${players.white} has started. ${players.black} is black. ${players.white} needs to decide whether to swap to black or play as is."
 
     override fun beginEngineBlack(player: String, gomokubot: String) =
-        "The game of $player vs $gomokubot has started! $player is White. GomokuBot made a move at ``h8``. Please make the next move."
+        "The game of $player vs $gomokubot has started. $player is White. GomokuBot made a move at ``h8``. Please make the next move."
 
     override fun beginEngineWhite(player: String, gomokubot: String) =
-        "The game of $player vs $gomokubot has started! $player is Black. Please make the first move."
+        "The game of $player vs $gomokubot has started. $player is Black. Please make the first move."
 
     override fun processNextEngine(lastMove: String) =
         "Please make the next move. GomokuBot made a move at $lastMove."

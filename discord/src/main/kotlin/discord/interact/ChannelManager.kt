@@ -4,7 +4,7 @@ import arrow.core.raise.get
 import core.assets.MessageRef
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
-import core.interact.message.SessionBoardDraw
+import core.interact.message.buildBoardDraw
 import core.session.entities.ArchivePolicy
 import core.session.entities.GameSession
 import dev.minn.jda.ktx.coroutines.await
@@ -55,10 +55,8 @@ object ChannelManager {
 
         val publisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(archiveSubChannel.sendMessage(msg.asDiscordMessageData().buildCreate())) }
 
-        DiscordPlatformService(archiveSubChannel.jda.shardManager!!).buildSessionArchive(publisher, SessionBoardDraw(
-            session,
-            anonymous = archivePolicy == ArchivePolicy.BY_ANONYMOUS
-        ))
+        DiscordPlatformService(archiveSubChannel.jda.shardManager!!)
+            .buildSessionArchive(publisher, session.buildBoardDraw(archivePolicy == ArchivePolicy.BY_ANONYMOUS))
             .launch()
             .get()
     }

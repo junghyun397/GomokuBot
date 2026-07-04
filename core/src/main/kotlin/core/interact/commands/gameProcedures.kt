@@ -7,7 +7,7 @@ import core.engine.FocusSolver
 import core.interact.message.MessagePublisher
 import core.interact.message.PlatformService
 import core.interact.message.SentMessage
-import core.interact.message.SessionBoardDraw
+import core.interact.message.buildBoardDraw
 import core.session.MessageManager
 import core.session.SessionManager
 import core.session.entities.*
@@ -50,8 +50,7 @@ fun buildBoardProcedure(
     return effect {
         val message = service.buildBoard(
             publisher, config.language.container, config.boardStyle.renderer, config.markType,
-            draw = SessionBoardDraw(session),
-            session = session
+            session.buildBoardDraw(), session
         )
             .replaceIf(session.state.board.winner() == null) { io -> io.addComponents(
                 when (session) {
@@ -100,8 +99,7 @@ fun buildFinishProcedure(
 ): Effect<Nothing, Unit> = effect {
     val message = service.buildBoard(
         publisher, config.language.container, config.boardStyle.renderer, config.markType,
-        draw = SessionBoardDraw(session),
-        session = session
+        session.buildBoardDraw(), session
     )
         .retrieve()()
 
