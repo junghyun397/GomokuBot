@@ -3,7 +3,7 @@ services:
     container_name: gomokubot-postgres
     image: postgres:14.11-bullseye
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - ./data/db-data:/var/lib/postgresql/data
       - ./schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
     environment:
       POSTGRES_USER: "gomokubot"
@@ -24,7 +24,7 @@ services:
       dockerfile: Dockerfile
     image: mintaka-server:latest
     volumes:
-      - mintaka-sessions:/var/lib/mintaka/sessions
+      - ./data/mintaka-sessions:/var/lib/mintaka/sessions
     environment:
       WEBUI: false
       ADDRESS: "0.0.0.0:8085"
@@ -46,7 +46,7 @@ services:
       dockerfile: discord/Dockerfile
     image: gomokubot-discord:latest
     volumes:
-      - discord-logs:/app/logs
+      - ./data/discord-logs:/app/logs
     environment:
       GOMOKUBOT_DB_URL: "r2dbc:postgresql://gomokubot:${POSTGRES_PASSWORD:-verycomplexedpassword}@gomokubot-postgres/gomokubot"
       GOMOKUBOT_MINTAKA_URL: "${MINTAKA_URL:-http://mintaka:8085}"
