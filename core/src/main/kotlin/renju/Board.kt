@@ -1,11 +1,8 @@
 package renju
 
-import renju.native.RustyRenjuC
-import renju.native.RustyRenjuCApi
-import renju.native.readNativeUtf8String
+import renju.native.RustyRenju
 import renju.notation.*
 import java.lang.foreign.MemorySegment
-import java.lang.ref.Cleaner
 
 enum class MoveError {
     Exist,
@@ -14,67 +11,48 @@ enum class MoveError {
 
 class Board private constructor (
     private val nativePointer: MemorySegment,
-    private val describe: RustyRenjuC.BoardDescribe,
 ) {
 
-    init {
-        cleaner.register(this, NativeBoardCleaner(this.nativePointer))
+    private val description = RustyRenju.describe(this.nativePointer)
+
+    private val patterns by lazy {
+        RustyRenju.patterns(this.nativePointer)
     }
 
-    private val patterns: RustyRenjuC.BoardPatterns by lazy {
-        loadPatterns(this.nativePointer)
-    }
+    val playerColor: Color get() = this.description.playerColor
 
-    val playerColor: Color get() = Color.from(this.describe.player_color)!!
+    val stones: Int get() = this.description.cells.count { it.stone != null }
 
-    val stones: Int get() = this.describe.field.count { it.isStone }
+    val hashKey: HashKey get() = this.description.hashKey
 
-    val hashKey: HashKey get() = HashKey(describe.hash_key)
-
-    fun pattern(pos: Pos, color: Color): Int {
-        return when (color) {
-            Color.BLACK -> patterns.blackPatterns[pos.idx]
-            Color.WHITE -> patterns.whitePatterns[pos.idx]
-        }
-    }
+    fun pattern(pos: Pos, color: Color): Int =
+        this.patterns[color][pos.idx]
 
     fun isPosEmpty(pos: Pos): Boolean =
-        !this.describe.field[pos.idx].isStone
+        this.stoneKind(pos) == null
 
     fun isLegalMove(pos: Pos): Boolean {
-        val item = this.describe.field[pos.idx]
+        val cell = this.description.cells[pos.idx]
 
-        return !item.isStone && (playerColor != Color.BLACK || !item.isForbidden)
+        return cell.stone == null && (this.playerColor != Color.BLACK || cell.forbidden == null)
     }
 
     fun stoneKind(pos: Pos): Color? =
-        this.describe.field[pos.idx]
-            .takeIf { it.isStone }
-            ?.let { Color.from(it.content) }
+        this.description.cells[pos.idx].stone
 
     fun forbiddenKind(pos: Pos): ForbiddenKind? =
-        this.describe.field[pos.idx]
-            .takeIf { it.isForbidden }
-            ?.let { ForbiddenKind.from(it.content) }
+        this.description.cells[pos.idx].forbidden
 
     fun set(pos: Pos?): Board {
-        val pointer = RustyRenjuCApi.lib.rusty_renju_board_set(
-            this.nativePointer,
-            pos?.idx ?: RustyRenjuCApi.constants.posNone,
-        )
-            ?: return this
+        val pointer = RustyRenju.set(this.nativePointer, pos) ?: return this
 
-        return fromNativePointer(pointer)
+        return Board(pointer)
     }
 
     fun unset(pos: Pos?): Board {
-        val pointer = RustyRenjuCApi.lib.rusty_renju_board_unset(
-            this.nativePointer,
-            pos?.idx ?: RustyRenjuCApi.constants.posNone,
-        )
-            ?: return this
+        val pointer = RustyRenju.unset(this.nativePointer, pos) ?: return this
 
-        return fromNativePointer(pointer)
+        return Board(pointer)
     }
 
     fun validateMove(pos: Pos): MoveError? {
@@ -90,11 +68,10 @@ class Board private constructor (
     }
 
     fun winner(): GameResult? {
-        if (this.describe.winner.isSome) {
-            return GameResult.Win(
-                GameResult.WinCause.FIVE_IN_A_ROW,
-                Color.from(this.describe.winner.color)!!
-            )
+        val winner = this.description.winner
+
+        if (winner != null) {
+            return GameResult.Win(GameResult.WinCause.FIVE_IN_A_ROW, winner.color)
         }
 
         return if (this.stones >= Pos.BOARD_SIZE) GameResult.Full
@@ -102,70 +79,20 @@ class Board private constructor (
     }
 
     fun winningSequence(): List<Pos>? =
-        this.describe.winner
-            .takeIf { it.isSome }
-            ?.sequence
-            ?.map { raw -> Pos.fromIdx(raw) }
+        this.description.winner?.sequence?.toList()
 
     internal fun nativeHandle(): MemorySegment = this.nativePointer
 
-    private val RustyRenjuC.BoardExportItem.isStone: Boolean
-        get() = this.kind == RustyRenjuCApi.constants.exportItemStone
-
-    private val RustyRenjuC.BoardExportItem.isForbidden: Boolean
-        get() = this.kind == RustyRenjuCApi.constants.exportItemForbidden
-
-    override fun toString(): String {
-        val stringPointer = RustyRenjuCApi.lib.rusty_renju_board_to_string(nativePointer)
-            ?: throw IllegalStateException()
-
-        return stringPointer.readNativeUtf8String(4096)
-    }
+    override fun toString(): String =
+        RustyRenju.toText(this.nativePointer)
 
     companion object {
 
-        private val cleaner: Cleaner = Cleaner.create()
+        fun emptyBoard(): Board =
+            Board(RustyRenju.emptyBoard())
 
-        fun emptyBoard(): Board {
-            return fromNativePointer(RustyRenjuCApi.lib.rusty_renju_empty_board()
-                ?: throw IllegalStateException())
-        }
-
-        fun fromHistory(history: History): Board {
-            return fromNativePointer(RustyRenjuCApi.lib.rusty_renju_board_from_history(
-                history.sequence.map { it?.idx ?: RustyRenjuCApi.constants.posNone }.toIntArray(),
-                history.sequence.size.toLong()
-            )
-                ?: throw IllegalStateException())
-        }
-
-        private fun fromNativePointer(pointer: MemorySegment): Board {
-            return try {
-                Board(
-                    nativePointer = pointer,
-                    describe = loadDescribe(pointer),
-                )
-            } catch (e: Throwable) {
-                RustyRenjuCApi.lib.rusty_renju_board_free(pointer)
-                throw e
-            }
-        }
-
-        private fun loadDescribe(pointer: MemorySegment): RustyRenjuC.BoardDescribe =
-            RustyRenjuCApi.lib.rusty_renju_board_describe(pointer)
-                ?: throw IllegalStateException()
-
-        private fun loadPatterns(pointer: MemorySegment): RustyRenjuC.BoardPatterns =
-            RustyRenjuCApi.lib.rusty_renju_board_patterns(pointer)
-                ?: throw IllegalStateException()
-
-    }
-
-    private class NativeBoardCleaner(private val pointer: MemorySegment?) : Runnable {
-
-        override fun run() {
-            RustyRenjuCApi.lib.rusty_renju_board_free(pointer)
-        }
+        fun fromHistory(history: History): Board =
+            Board(RustyRenju.fromHistory(history.toMaybePosBuffer()))
 
     }
 

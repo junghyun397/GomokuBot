@@ -1,6 +1,6 @@
 package renju.notation
 
-import renju.native.RustyRenjuCApi
+import renju.native.RustyRenju
 
 @JvmInline value class Pos(private val value: Int) {
 
@@ -43,7 +43,7 @@ import renju.native.RustyRenjuCApi
 
         fun fromIdxOrNone(idx: Int): Pos? =
             when (idx) {
-                RustyRenjuCApi.constants.posNone -> null
+                RustyRenju.posNone -> null
                 in 0 until BOARD_SIZE -> Pos(idx)
                 else -> throw IllegalArgumentException()
             }
@@ -66,7 +66,7 @@ import renju.native.RustyRenjuCApi
 
 }
 
-fun Pos?.toIdxOrNone(): Int = this?.idx ?: RustyRenjuCApi.constants.posNone
+fun Pos?.toIdxOrNone(): Int = this?.idx ?: RustyRenju.posNone
 
 fun Pos?.toStringOrNone(): String {
     return this?.toString() ?: "none"

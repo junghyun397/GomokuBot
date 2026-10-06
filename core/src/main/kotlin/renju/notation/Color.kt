@@ -1,6 +1,6 @@
 package renju.notation
 
-import renju.native.RustyRenjuCApi
+import renju.native.RustyRenju
 
 enum class Color {
     BLACK,
@@ -22,8 +22,8 @@ enum class Color {
 
         fun from(raw: Byte?): Color? =
             when (raw) {
-                RustyRenjuCApi.constants.colorBlack -> BLACK
-                RustyRenjuCApi.constants.colorWhite -> WHITE
+                RustyRenju.colorBlack -> BLACK
+                RustyRenju.colorWhite -> WHITE
                 else -> null
             }
 
@@ -37,7 +37,7 @@ enum class Color {
 
 fun Color?.toByte() =
     when (this) {
-        Color.BLACK -> RustyRenjuCApi.constants.colorBlack
-        Color.WHITE -> RustyRenjuCApi.constants.colorWhite
-        else -> RustyRenjuCApi.constants.colorNone
+        Color.BLACK -> RustyRenju.colorBlack
+        Color.WHITE -> RustyRenju.colorWhite
+        else -> RustyRenju.colorNone
     }.toShort()

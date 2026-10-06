@@ -1,19 +1,19 @@
 package renju.notation
 
-import renju.native.RustyRenjuCApi
+import renju.native.RustyRenju
 
 enum class ForbiddenKind(val value: Byte) {
-    DoubleThree(RustyRenjuCApi.constants.forbiddenDoubleThree),
-    DoubleFour(RustyRenjuCApi.constants.forbiddenDoubleFour),
-    Overline(RustyRenjuCApi.constants.forbiddenOverline);
+    DoubleThree(RustyRenju.forbiddenDoubleThree),
+    DoubleFour(RustyRenju.forbiddenDoubleFour),
+    Overline(RustyRenju.forbiddenOverline);
 
     companion object {
 
         fun from(flag: Byte): ForbiddenKind? =
             when (flag) {
-                RustyRenjuCApi.constants.forbiddenDoubleThree -> DoubleThree
-                RustyRenjuCApi.constants.forbiddenDoubleFour -> DoubleFour
-                RustyRenjuCApi.constants.forbiddenOverline -> Overline
+                RustyRenju.forbiddenDoubleThree -> DoubleThree
+                RustyRenju.forbiddenDoubleFour -> DoubleFour
+                RustyRenju.forbiddenOverline -> Overline
                 else -> null
             }
 

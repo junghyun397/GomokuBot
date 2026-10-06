@@ -2,12 +2,10 @@ package core.interact.message.graphics
 
 import arrow.core.Either
 import renju.GameState
-import renju.native.RustyRenjuImageApi
+import renju.native.RustyRenjuImage
 import renju.notation.Pos
 import java.io.ByteArrayInputStream
 import java.io.InputStream
-import java.lang.foreign.MemorySegment
-import java.lang.foreign.ValueLayout
 
 object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
 
@@ -31,9 +29,9 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
 
     private fun historyRenderOption(historyRenderType: HistoryRenderType): Byte =
         when (historyRenderType) {
-            HistoryRenderType.LAST -> RustyRenjuImageApi.constants.rendererLast
-            HistoryRenderType.RECENT -> RustyRenjuImageApi.constants.rendererPair
-            HistoryRenderType.SEQUENCE -> RustyRenjuImageApi.constants.rendererSequence
+            HistoryRenderType.LAST -> RustyRenjuImage.rendererLast
+            HistoryRenderType.RECENT -> RustyRenjuImage.rendererPair
+            HistoryRenderType.SEQUENCE -> RustyRenjuImage.rendererSequence
         }
 
     private fun asPosBuffer(posSet: Set<Pos>?): IntArray? {
@@ -53,40 +51,15 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
         offers: Set<Pos>?,
         blinds: Set<Pos>?,
         enableForbiddenPoints: Boolean,
-    ): ByteArray {
-        val actions = state.history.toMaybePosBuffer()
-        val offerBuffer = this.asPosBuffer(offers)
-        val blindBuffer = this.asPosBuffer(blinds)
-
-        val rendered = RustyRenjuImageApi.lib.rusty_renju_image_render(
-            RustyRenjuImageApi.constants.formatPng,
-            1.0f,
-            this.historyRenderOption(historyRenderType),
-            enableForbiddenPoints,
-            state.board.nativeHandle(),
-            actions,
-            state.history.size.toLong(),
-            offerBuffer,
-            offerBuffer?.size?.toLong() ?: 0L,
-            blindBuffer,
-            blindBuffer?.size?.toLong() ?: 0L,
+    ): ByteArray =
+        RustyRenjuImage.renderPng(
+            board = state.board.nativeHandle(),
+            actions = state.history.toMaybePosBuffer(),
+            option = this.historyRenderOption(historyRenderType),
+            enableForbidden = enableForbiddenPoints,
+            offers = this.asPosBuffer(offers),
+            blinds = this.asPosBuffer(blinds),
         )
-
-        val pointer = rendered.ptr
-        if (pointer == MemorySegment.NULL) {
-            throw IllegalStateException("Native renderer returned null pointer")
-        }
-
-        return try {
-            if (rendered.len <= 0 || rendered.len > Int.MAX_VALUE.toLong()) {
-                throw IllegalStateException("Native renderer returned empty payload")
-            }
-
-            pointer.reinterpret(rendered.len).toArray(ValueLayout.JAVA_BYTE)
-        } finally {
-            RustyRenjuImageApi.lib.rusty_renju_image_free_byte_buffer(rendered)
-        }
-    }
 
     fun renderInputStream(
         state: GameState,

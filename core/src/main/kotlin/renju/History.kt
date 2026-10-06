@@ -1,6 +1,6 @@
 package renju
 
-import renju.native.RustyRenjuCApi
+import renju.native.RustyRenju
 import renju.notation.Pos
 
 @Suppress("JavaDefaultMethodsNotOverriddenByDelegation")
@@ -17,7 +17,7 @@ import renju.notation.Pos
             null
         } else {
             IntArray(this.sequence.size) { index ->
-                this.sequence[index]?.idx ?: RustyRenjuCApi.constants.posNone
+                this.sequence[index]?.idx ?: RustyRenju.posNone
             }
         }
 

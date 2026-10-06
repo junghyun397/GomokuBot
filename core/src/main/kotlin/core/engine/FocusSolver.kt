@@ -1,7 +1,7 @@
 package core.engine
 
 import renju.GameState
-import renju.native.RustyRenjuCApi
+import renju.native.RustyRenju
 import renju.notation.Pos
 import kotlin.math.max
 import kotlin.math.min
@@ -16,13 +16,12 @@ object FocusSolver {
     private fun evaluateBoard(state: GameState): MutableList<MutableList<Int>> {
         val nextColor = state.board.playerColor
         val opponentColor = !state.board.playerColor
-        val masks = RustyRenjuCApi.constants
 
         fun Int.count(mask: Int): Int = (this and mask).countOneBits()
-        fun Int.openFours(): Int = count(masks.openFourMask)
-        fun Int.closeThrees(): Int = count(masks.closeThreeMask)
-        fun Int.threes(): Int = count(masks.openThreeMask) + closeThrees()
-        fun Int.fours(): Int = count(masks.closedFourMask) + openFours()
+        fun Int.openFours(): Int = count(RustyRenju.openFourMask)
+        fun Int.closeThrees(): Int = count(RustyRenju.closeThreeMask)
+        fun Int.threes(): Int = count(RustyRenju.openThreeMask) + closeThrees()
+        fun Int.fours(): Int = count(RustyRenju.closedFourMask) + openFours()
 
         fun Int.forkScore(): Int = when {
             fours() > 1 -> FocusWeights.DOUBLE_FOUR_FORK
@@ -33,9 +32,9 @@ object FocusSolver {
 
         fun Int.baseScore(): Int = forkScore() +
                 threes() * FocusWeights.OPEN_THREE +
-                count(masks.closedFourMask) * FocusWeights.CLOSED_FOUR +
-                count(masks.fiveMask) * FocusWeights.FIVE +
-                count(masks.potentialMask) * FocusWeights.POTENTIAL
+                count(RustyRenju.closedFourMask) * FocusWeights.CLOSED_FOUR +
+                count(RustyRenju.fiveMask) * FocusWeights.FIVE +
+                count(RustyRenju.potentialMask) * FocusWeights.POTENTIAL
 
         fun Int.blockScore(other: Int): Int = when {
             closeThrees() == 0 -> 0

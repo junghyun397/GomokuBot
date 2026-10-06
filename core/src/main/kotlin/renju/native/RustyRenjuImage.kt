@@ -1,115 +1,68 @@
 package renju.native
 
-import java.lang.foreign.*
+import java.lang.foreign.Arena
 import java.lang.foreign.MemoryLayout.PathElement.groupElement
+import java.lang.foreign.MemorySegment
+import java.lang.foreign.ValueLayout.*
 
-internal class RustyRenjuImage internal constructor(
-    lookup: SymbolLookup,
-) {
+internal object RustyRenjuImage {
 
-    private val symbols = NativeSymbols(lookup, "rusty_renju_image")
+    private val symbols = NativeSymbols(NativeLibraryLoader.libraryLookup("rusty_renju_image"), "rusty_renju_image")
 
-    val constants: Constants = Constants(
-        formatPng = symbols.byte("format_png"),
-        formatWebp = symbols.byte("format_webp"),
-        rendererNone = symbols.byte("renderer_none"),
-        rendererLast = symbols.byte("renderer_last"),
-        rendererPair = symbols.byte("renderer_pair"),
-        rendererSequence = symbols.byte("renderer_sequence"),
+    val rendererLast = this.symbols.byte("renderer_last")
+    val rendererPair = this.symbols.byte("renderer_pair")
+    val rendererSequence = this.symbols.byte("renderer_sequence")
+
+    private val formatPng = this.symbols.byte("format_png")
+    private val bufferLayout = nativeStruct(ADDRESS.withName("ptr"), JAVA_LONG.withName("len"))
+    private val pointerOffset = this.bufferLayout.byteOffset(groupElement("ptr"))
+    private val sizeOffset = this.bufferLayout.byteOffset(groupElement("len"))
+
+    private val renderCall = this.symbols.function(
+        "render", this.bufferLayout,
+        JAVA_BYTE, JAVA_FLOAT, JAVA_BYTE, JAVA_BOOLEAN,
+        ADDRESS,
+        ADDRESS, JAVA_LONG,
+        ADDRESS, JAVA_LONG,
+        ADDRESS, JAVA_LONG,
     )
+    private val freeBufferCall = this.symbols.voidFunction("free_byte_buffer", ADDRESS)
 
-    private val imageRender = symbols.function(
-        "render",
-        BYTE_BUFFER_LAYOUT,
-        ValueLayout.JAVA_BYTE,
-        ValueLayout.JAVA_FLOAT,
-        ValueLayout.JAVA_BYTE,
-        ValueLayout.JAVA_BOOLEAN,
-        ValueLayout.ADDRESS,
-        ValueLayout.ADDRESS,
-        ValueLayout.JAVA_LONG,
-        ValueLayout.ADDRESS,
-        ValueLayout.JAVA_LONG,
-        ValueLayout.ADDRESS,
-        ValueLayout.JAVA_LONG,
-    )
-    private val freeByteBuffer = symbols.voidFunction("free_byte_buffer", ValueLayout.ADDRESS)
-
-    fun rusty_renju_image_render(
-        imageFormat: Byte,
-        webpQuality: Float,
+    fun renderPng(
+        board: MemorySegment,
+        actions: IntArray?,
         option: Byte,
         enableForbidden: Boolean,
-        board: MemorySegment?,
-        actions: IntArray?,
-        actionsLen: Long,
         offers: IntArray?,
-        offersLen: Long,
         blinds: IntArray?,
-        blindsLen: Long,
-    ): ByteBuffer {
-        return Arena.ofConfined().use { arena ->
-            val byteBufferSegment = imageRender.invokeWithArguments(
+    ): ByteArray =
+        Arena.ofConfined().use { arena ->
+            val buffer = this.renderCall.invokeWithArguments(
                 arena,
-                imageFormat,
-                webpQuality,
+                this.formatPng,
+                1.0f,
                 option,
                 enableForbidden,
-                board.orNullAddress(),
+                board,
                 actions.toNativeSegmentOrNull(arena),
-                actionsLen,
+                actions?.size?.toLong() ?: 0L,
                 offers.toNativeSegmentOrNull(arena),
-                offersLen,
+                offers?.size?.toLong() ?: 0L,
                 blinds.toNativeSegmentOrNull(arena),
-                blindsLen,
+                blinds?.size?.toLong() ?: 0L,
             ) as MemorySegment
 
-            ByteBuffer(
-                ptr = byteBufferSegment.get(ValueLayout.ADDRESS, BYTE_BUFFER_PTR_OFFSET),
-                len = byteBufferSegment.get(ValueLayout.JAVA_LONG, BYTE_BUFFER_LEN_OFFSET),
-            )
+            try {
+                val pointer = buffer.get(ADDRESS, this.pointerOffset)
+                val size = buffer.get(JAVA_LONG, this.sizeOffset)
+
+                check(pointer != MemorySegment.NULL) { "Native renderer returned null pointer" }
+                check(size in 1L..Int.MAX_VALUE.toLong()) { "Native renderer returned invalid payload size: $size" }
+
+                pointer.reinterpret(size).toArray(JAVA_BYTE)
+            } finally {
+                this.freeBufferCall.invokeWithArguments(buffer)
+            }
         }
-    }
-
-    fun rusty_renju_image_free_byte_buffer(byteBuffer: ByteBuffer) {
-        Arena.ofConfined().use { arena ->
-            val bufferSegment = arena.allocate(BYTE_BUFFER_LAYOUT)
-            bufferSegment.set(ValueLayout.ADDRESS, BYTE_BUFFER_PTR_OFFSET, byteBuffer.ptr)
-            bufferSegment.set(ValueLayout.JAVA_LONG, BYTE_BUFFER_LEN_OFFSET, byteBuffer.len)
-
-            freeByteBuffer.invokeWithArguments(bufferSegment)
-        }
-    }
-
-    data class Constants(
-        val formatPng: Byte,
-        val formatWebp: Byte,
-        val rendererNone: Byte,
-        val rendererLast: Byte,
-        val rendererPair: Byte,
-        val rendererSequence: Byte,
-    )
-
-    data class ByteBuffer(val ptr: MemorySegment, val len: Long)
-
-    private companion object {
-
-        private val BYTE_BUFFER_LAYOUT = MemoryLayout.structLayout(
-            ValueLayout.ADDRESS.withName("ptr"),
-            ValueLayout.JAVA_LONG.withName("len"),
-        )
-
-        private val BYTE_BUFFER_PTR_OFFSET = BYTE_BUFFER_LAYOUT.byteOffset(groupElement("ptr"))
-        private val BYTE_BUFFER_LEN_OFFSET = BYTE_BUFFER_LAYOUT.byteOffset(groupElement("len"))
-
-    }
-
-}
-
-internal object RustyRenjuImageApi {
-
-    val lib: RustyRenjuImage by lazy { RustyRenjuImage(NativeLibraryLoader.libraryLookup("rusty_renju_image")) }
-
-    val constants: RustyRenjuImage.Constants get() = lib.constants
 
 }
