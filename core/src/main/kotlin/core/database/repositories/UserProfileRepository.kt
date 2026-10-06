@@ -13,19 +13,22 @@ import reactor.core.publisher.Mono
 
 object UserProfileRepository {
 
-    suspend fun retrieveOrInsertUser(connection: DatabaseConnection, platform: Short, givenId: UserId, produce: () -> User.Human): User.Human =
-        this.retrieveUser(connection, platform, givenId)
+    context(connection: DatabaseConnection)
+    suspend fun retrieveOrInsertUser(platform: Short, givenId: UserId, produce: () -> User.Human): User.Human =
+        this.retrieveUser(platform, givenId)
             ?: produce()
-                .copy(announceId = AnnounceRepository.getLatestAnnounceId(connection))
-                .also { this.upsertUser(connection, it) }
+                .copy(announceId = AnnounceRepository.getLatestAnnounceId())
+                .also { this.upsertUser(it) }
 
-    suspend fun retrieveUser(connection: DatabaseConnection, userUid: UserUid): User.Human =
+    context(connection: DatabaseConnection)
+    suspend fun retrieveUser(userUid: UserUid): User.Human =
         connection.localCaches.userProfileUidCache
             .getIfPresent(userUid)
-            ?: this.fetchUser(connection, userUid)
-                .also { this.cacheUser(connection, it) }
+            ?: this.fetchUser(userUid)
+                .also { this.cacheUser(it) }
 
-    suspend fun retrieveUsers(connection: DatabaseConnection, userUids: Collection<UserUid>): Map<UserUid, User.Human> {
+    context(connection: DatabaseConnection)
+    suspend fun retrieveUsers(userUids: Collection<UserUid>): Map<UserUid, User.Human> {
         val users = mutableMapOf<UserUid, User.Human>()
 
         val missingUserUids = userUids
@@ -48,27 +51,29 @@ object UserProfileRepository {
             .collectList()
             .awaitSingle()
             .forEach { user ->
-                this.cacheUser(connection, user)
+                this.cacheUser(user)
                 users[user.id] = user
             }
 
         return users
     }
 
-    suspend fun retrieveUser(connection: DatabaseConnection, platform: Short, givenId: UserId): User.Human? {
+    context(connection: DatabaseConnection)
+    suspend fun retrieveUser(platform: Short, givenId: UserId): User.Human? {
         connection.localCaches.userProfileGivenIdCache
             .getIfPresent(givenId)
             ?.let { return it }
 
-        val maybeUser = this.fetchUser(connection, platform, givenId)
+        val maybeUser = this.fetchUser(platform, givenId)
 
         if (maybeUser != null)
-            this.cacheUser(connection, maybeUser)
+            this.cacheUser(maybeUser)
 
         return maybeUser
     }
 
-    private suspend fun fetchUser(connection: DatabaseConnection, userUid: UserUid): User.Human =
+    context(connection: DatabaseConnection)
+    private suspend fun fetchUser(userUid: UserUid): User.Human =
         Mono.from(
             connection.jooq
                 .selectFrom(USER_PROFILE)
@@ -77,7 +82,8 @@ object UserProfileRepository {
             .map { this.extractUser(it) }
             .awaitSingle()
 
-    private suspend fun fetchUser(connection: DatabaseConnection, platform: Short, givenId: UserId): User.Human? =
+    context(connection: DatabaseConnection)
+    private suspend fun fetchUser(platform: Short, givenId: UserId): User.Human? =
         Mono.from(
             connection.jooq
                 .selectFrom(USER_PROFILE)
@@ -87,8 +93,9 @@ object UserProfileRepository {
             .map { this.extractUser(it) }
             .awaitSingleOrNull()
 
-    suspend fun upsertUser(connection: DatabaseConnection, user: User.Human) {
-        this.cacheUser(connection, user)
+    context(connection: DatabaseConnection)
+    suspend fun upsertUser(user: User.Human) {
+        this.cacheUser(user)
 
         Mono.from(
             connection.jooq
@@ -111,7 +118,8 @@ object UserProfileRepository {
             .awaitSingle()
     }
 
-    private fun cacheUser(connection: DatabaseConnection, user: User.Human) {
+    context(connection: DatabaseConnection)
+    private fun cacheUser(user: User.Human) {
         connection.localCaches.userProfileGivenIdCache.put(user.givenId, user)
         connection.localCaches.userProfileUidCache.put(user.id, user)
     }

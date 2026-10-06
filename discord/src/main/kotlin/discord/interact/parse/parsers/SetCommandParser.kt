@@ -5,6 +5,7 @@ import arrow.core.flatMap
 import arrow.core.raise.effect
 import core.assets.User
 import core.assets.forbiddenKindToText
+import core.database.DatabaseConnection
 import core.interact.commands.*
 import core.interact.i18n.LanguageContainer
 import core.interact.message.AppMessage
@@ -12,6 +13,7 @@ import core.interact.parse.ParseFailure
 import core.interact.parse.SessionSideParser
 import core.interact.parse.asParseFailure
 import core.session.SessionManager
+import core.session.SessionPool
 import core.session.entities.*
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
@@ -82,8 +84,9 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
             else -> null
         }
 
+    context(sessions: SessionPool)
     private fun parseRawCommand(context: UserInteractionContext<*>, user: User.Human, rawPosition: String?): Either<ParseFailure, Command> =
-        this.retrieveSession(context.bot, context.channel, user).flatMap { (sessionId, session) ->
+        this.retrieveSession(context.channel, user).flatMap { (sessionId, session) ->
             if (session.player.id != user.id)
                 return@flatMap Either.Left(this.buildOrderFailure(context, session.player))
 
@@ -108,12 +111,14 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
             }
         }
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<ParseFailure, Command> {
         val rawPosition = context.event.getOption(context.config.language.container.setCommandOptionPosition)?.asString
 
         return this.parseRawCommand(context, context.user, rawPosition)
     }
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<ParseFailure, Command> {
         val rawPosition = payload
             .drop(1)
@@ -122,6 +127,7 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
         return this.parseRawCommand(context, context.user, rawPosition)
     }
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Command? {
         val pos = context.event.componentId
             .drop(2)
@@ -130,9 +136,9 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
 
         val userId = context.user.id
 
-        val sessionId = SessionManager.findGameSessionId(context.bot.sessions, context.channel.id, userId)
+        val sessionId = SessionManager.findGameSessionId(context.channel.id, userId)
             ?: return null
-        val session = SessionManager.retrieveGameSession(context.bot.sessions, sessionId).snapshot()
+        val session = SessionManager.retrieveGameSession(sessionId).snapshot()
 
         if (session.player.id != userId)
             return null

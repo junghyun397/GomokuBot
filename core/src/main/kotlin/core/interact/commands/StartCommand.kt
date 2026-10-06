@@ -2,10 +2,11 @@ package core.interact.commands
 
 import arrow.core.Option
 import arrow.core.raise.effect
-import core.BotContext
 import core.assets.Channel
 import core.assets.User
+import core.database.DatabaseConnection
 import core.database.repositories.UserRatingRepository
+import core.engine.MintakaServer
 import core.interact.message.AppMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
@@ -13,6 +14,7 @@ import core.interact.reports.writeActionLog
 import core.session.EngineGameManager
 import core.session.PvpGameManager
 import core.session.SessionManager
+import core.session.SessionPool
 import core.session.entities.ChannelConfig
 import core.session.entities.Rule
 import kotlin.time.Instant
@@ -26,12 +28,11 @@ class StartCommand(
 
     override val responseFlag = ResponseFlag.Defer
 
+    context(dbConnection: DatabaseConnection, mintakaServer: MintakaServer, sessions: SessionPool, service: PlatformService)
     override suspend fun execute(
-        bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: PlatformService,
         publishers: PublisherSet,
         emittedTime: Instant,
     ) = runCatching {
@@ -39,24 +40,24 @@ class StartCommand(
             ifSome = { recipient ->
                 val requestSession = PvpGameManager.request(user, recipient, this.rule)
 
-                SessionManager.createRequestSession(bot.sessions, channel, setOf(user.id, recipient.id), requestSession)
+                SessionManager.createRequestSession(channel, setOf(user.id, recipient.id), requestSession)
 
-                val io = SessionManager.retrieveRequestSession(bot.sessions, requestSession.id).interact { runtime ->
-                    buildRequestProcedure(config, service, publishers, runtime)
+                val io = SessionManager.retrieveRequestSession(requestSession.id).interact { runtime ->
+                    buildRequestProcedure(config, publishers, runtime)
                 }
 
                 CommandResult(io, this.writeActionLog(emittedTime, "request to ${this.recipient}", channel, user))
             },
             ifEmpty = {
-                val rating = UserRatingRepository.retrieveUserRating(bot.dbConnection, user.id)
+                val rating = UserRatingRepository.retrieveUserRating(user.id)
                 val engineLevel = EngineGameManager.matchEngineLevel(rating)
 
-                val session = EngineGameManager.create(bot.mintakaServer, user, rating, engineLevel)
+                val session = EngineGameManager.create(user, rating, engineLevel)
 
-                SessionManager.insertGameSession(bot.sessions, channel, session)
+                SessionManager.insertGameSession(channel, session)
 
-                val board = SessionManager.retrieveGameSession(bot.sessions, session.id).interact { runtime ->
-                    buildBoardProcedure(config, service, publishers, runtime)
+                val board = SessionManager.retrieveGameSession(session.id).interact { runtime ->
+                    buildBoardProcedure(config, publishers, runtime)
                 }
                 val io = effect {
                     val notice = if (session.users.black == user)

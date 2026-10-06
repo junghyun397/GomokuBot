@@ -13,9 +13,9 @@ import core.session.entities.GameSession
 import core.session.entities.RequestSession
 import core.session.entities.SessionRuntime
 
+context(service: PlatformService)
 fun buildInvalidateRequestProcedure(
     config: ChannelConfig,
-    service: PlatformService,
     publishers: PublisherSet,
     runtime: SessionRuntime<RequestSession>,
 ): Effect<Nothing, Unit> {
@@ -32,9 +32,9 @@ fun buildInvalidateRequestProcedure(
     }
 }
 
+context(service: PlatformService)
 fun buildRequestProcedure(
     config: ChannelConfig,
-    service: PlatformService,
     publishers: PublisherSet,
     runtime: SessionRuntime<RequestSession>,
 ): Effect<Nothing, Unit> = effect {
@@ -54,15 +54,14 @@ fun buildRequestProcedure(
         publishers.edit(message.ref)(cancelled).retrieve()()
 }
 
+context(sessions: SessionPool, service: PlatformService)
 fun buildInvalidateUndoProcedure(
-    pool: SessionPool,
     config: ChannelConfig,
-    service: PlatformService,
     publishers: PublisherSet?,
     runtime: SessionRuntime<GameSession>,
 ): Effect<Nothing, Unit> {
-    val request = SessionManager.finishUndoRequest(pool, runtime)
+    val request = SessionManager.finishUndoRequest(runtime)
     return if (request != null && publishers != null)
-        buildInvalidateRequestProcedure(config, service, publishers, request)
+        buildInvalidateRequestProcedure(config, publishers, request)
     else effect { }
 }

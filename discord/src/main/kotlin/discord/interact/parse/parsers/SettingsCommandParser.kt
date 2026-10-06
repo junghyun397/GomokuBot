@@ -1,9 +1,11 @@
 package discord.interact.parse.parsers
 
 import arrow.core.Either
+import core.database.DatabaseConnection
 import core.interact.commands.SettingsCommand
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.CommandParser
+import core.session.SessionPool
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.assets.COMMAND_PREFIX
 import discord.interact.UserInteractionContext
@@ -26,9 +28,11 @@ object SettingsCommandParser : CommandParser, ParsableCommand, BuildableCommand 
         ),
     )
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>) =
         Either.Right(SettingsCommand())
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>) =
         Either.Right(SettingsCommand())
 

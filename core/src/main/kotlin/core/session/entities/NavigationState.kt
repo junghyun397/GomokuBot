@@ -15,18 +15,19 @@ import utils.toBytes
 import kotlin.time.Clock
 import kotlin.time.Instant
 
-enum class NavigationKind(override val id: Short, val range: Either<(DatabaseConnection) -> IntRange, IntRange>, val navigators: Set<String>) : Identifiable {
+enum class NavigationKind(override val id: Short, val range: Either<context(DatabaseConnection) () -> IntRange, IntRange>, val navigators: Set<String>) : Identifiable {
 
     BOARD(0, Either.Right(0 until Pos.BOARD_SIZE), setOf(UNICODE_LEFT, UNICODE_DOWN, UNICODE_UP, UNICODE_RIGHT, UNICODE_FOCUS)),
     // 0: language setting
     SETTINGS(1, Either.Right(0 .. SettingMapping.map.size), setOf(UNICODE_LEFT, UNICODE_RIGHT)),
     // 0: about gomokubot
     ABOUT(2, Either.Right(0 .. HelpPages.documents[Language.ENG.container]!!.first.size), setOf(UNICODE_LEFT, UNICODE_RIGHT)),
-    ANNOUNCE(3, Either.Left { connection -> 1 .. connection.localCaches.announceCache.size }, setOf(UNICODE_LEFT, UNICODE_RIGHT));
+    ANNOUNCE(3, Either.Left { 1 .. contextOf<DatabaseConnection>().localCaches.announceCache.size }, setOf(UNICODE_LEFT, UNICODE_RIGHT));
 
-    fun fetchRange(dbConnection: DatabaseConnection): IntRange =
+    context(connection: DatabaseConnection)
+    fun fetchRange(): IntRange =
         this.range.fold(
-            ifLeft = { fetcher -> fetcher(dbConnection) },
+            ifLeft = { fetcher -> fetcher() },
             ifRight = { it }
         )
 
@@ -67,7 +68,8 @@ data class PageNavigationState(
             return ((baseBytes[0] + kind.id) shl 16) or ((baseBytes[1] + headByte) shl 8) or (baseBytes[2] + tailByte)
         }
 
-        fun decodeFromColor(base: Int, code: Int, dbConnection: DatabaseConnection): PageNavigationState? {
+        context(connection: DatabaseConnection)
+        fun decodeFromColor(base: Int, code: Int): PageNavigationState? {
             val (kindRaw, pageTop, pageBottom) = base.toBytes()
                 .zip(code.toBytes()) { a, b -> b - a }
                 .drop(1)
@@ -75,7 +77,7 @@ data class PageNavigationState(
             val kind = NavigationKind.entries.find(kindRaw.toShort())
             val page = pageTop + pageBottom
 
-            return if (kind != NavigationKind.BOARD && page in kind.fetchRange(dbConnection))
+            return if (kind != NavigationKind.BOARD && page in kind.fetchRange())
                 PageNavigationState(kind, page, Clock.System.now() + BotConfig.navigatorExpireAfter)
             else null
         }

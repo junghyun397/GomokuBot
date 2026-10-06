@@ -1,6 +1,7 @@
 package discord.interact.parse.parsers
 
 import arrow.core.Either
+import core.database.DatabaseConnection
 import core.interact.commands.Command
 import core.interact.commands.HelpCommand
 import core.interact.commands.ViewAnnounceCommand
@@ -8,6 +9,7 @@ import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
 import core.interact.message.HelpPages
 import core.interact.parse.CommandParser
+import core.session.SessionPool
 import dev.minn.jda.ktx.interactions.commands.choice
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
@@ -47,6 +49,7 @@ object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     private fun checkCrossLanguageCommand(container: LanguageContainer, command: String) =
         container.helpCommand != command
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either.Right<Command> {
         val isCrossLanguageCommand = this.checkCrossLanguageCommand(context.config.language.container, context.event.name.lowercase())
 
@@ -66,6 +69,7 @@ object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
         )
     }
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either.Right<Command> {
         val isCrossLanguageCommand = this.checkCrossLanguageCommand(context.config.language.container, payload[0].lowercase())
 

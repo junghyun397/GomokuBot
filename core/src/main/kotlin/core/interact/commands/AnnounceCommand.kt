@@ -2,17 +2,19 @@ package core.interact.commands
 
 import arrow.core.raise.effect
 import core.BotConfig
-import core.BotContext
 import core.assets.Channel
 import core.assets.User
+import core.database.DatabaseConnection
 import core.database.repositories.AnnounceRepository
 import core.database.repositories.UserProfileRepository
+import core.engine.MintakaServer
 import core.interact.i18n.Language
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.message.announcementMessage
 import core.interact.reports.writeActionLog
 import core.session.NavigationManager
+import core.session.SessionPool
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
@@ -24,21 +26,20 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
 
     override val name = "announce"
 
+    context(dbConnection: DatabaseConnection, mintakaServer: MintakaServer, sessions: SessionPool, service: PlatformService)
     override suspend fun executeSelf(
-        bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: PlatformService,
         publishers: PublisherSet,
         emittedTime: Instant,
     ) = runCatching {
-        val thenUser = user.copy(announceId = AnnounceRepository.getLatestAnnounceId(bot.dbConnection))
+        val thenUser = user.copy(announceId = AnnounceRepository.getLatestAnnounceId())
 
-        UserProfileRepository.upsertUser(bot.dbConnection, thenUser)
+        UserProfileRepository.upsertUser(thenUser)
 
         val io = effect {
-            AnnounceRepository.getAnnouncesSince(bot.dbConnection, user.announceId ?: 0)
+            AnnounceRepository.getAnnouncesSince(user.announceId ?: 0)
                 .forEachIndexed { index, announces ->
                     val content = announcementMessage(
                         config.language.container,
@@ -48,7 +49,6 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
 
                     if (message != null) {
                         NavigationManager.addNavigation(
-                            bot.sessions,
                             message.ref,
                             PageNavigationState(
                                 NavigationKind.ANNOUNCE,

@@ -15,22 +15,26 @@ import java.util.*
 
 object AnnounceRepository {
 
-    fun getLatestAnnounceId(connection: DatabaseConnection): Int? =
+    context(connection: DatabaseConnection)
+    fun getLatestAnnounceId(): Int? =
         when {
             connection.localCaches.announceCache.isNotEmpty() -> connection.localCaches.announceCache.lastKey()
             else -> null
         }
 
-    fun getAnnouncesSince(connection: DatabaseConnection, announceIndex: Int): List<Map<Language, Announce>> =
+    context(connection: DatabaseConnection)
+    fun getAnnouncesSince(announceIndex: Int): List<Map<Language, Announce>> =
         connection.localCaches.announceCache
             .tailMap(announceIndex + 1)
             .values
             .toList()
 
-    fun getLatestAnnounce(connection: DatabaseConnection): Map<Language, Announce> =
-        connection.localCaches.announceCache[this.getLatestAnnounceId(connection)]!!
+    context(connection: DatabaseConnection)
+    fun getLatestAnnounce(): Map<Language, Announce> =
+        connection.localCaches.announceCache[this.getLatestAnnounceId()]!!
 
-    suspend fun fetchAnnounces(connection: DatabaseConnection): SortedMap<Int, Map<Language, Announce>> =
+    context(connection: DatabaseConnection)
+    suspend fun fetchAnnounces(): SortedMap<Int, Map<Language, Announce>> =
         Flux.from(
             connection.jooq
                 .selectFrom(ANNOUNCE)

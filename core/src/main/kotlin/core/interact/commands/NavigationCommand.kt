@@ -2,10 +2,11 @@ package core.interact.commands
 
 import arrow.core.raise.effect
 import core.BotConfig
-import core.BotContext
 import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
+import core.database.DatabaseConnection
+import core.engine.MintakaServer
 import core.interact.i18n.Language
 import core.interact.message.AppMessage
 import core.interact.message.PlatformService
@@ -13,6 +14,7 @@ import core.interact.message.PublisherSet
 import core.interact.message.announcementMessage
 import core.interact.reports.writeActionLog
 import core.session.NavigationManager
+import core.session.SessionPool
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
@@ -29,16 +31,15 @@ class NavigationCommand(
 
     override val responseFlag = ResponseFlag.Immediately
 
+    context(dbConnection: DatabaseConnection, mintakaServer: MintakaServer, sessions: SessionPool, service: PlatformService)
     override suspend fun execute(
-        bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: PlatformService,
         publishers: PublisherSet,
         emittedTime: Instant,
     ) = runCatching {
-        val range = this.navigationState.kind.fetchRange(bot.dbConnection)
+        val range = this.navigationState.kind.fetchRange()
 
         val newState = this.navigationState.copy(
             page = run {
@@ -54,7 +55,7 @@ class NavigationCommand(
             return@runCatching CommandResult(effect { }, this.writeActionLog(emittedTime, "navigate ${navigationState.kind} bounded",
                 channel, user))
 
-        NavigationManager.addNavigation(bot.sessions, this.messageRef, newState)
+        NavigationManager.addNavigation(this.messageRef, newState)
 
         val io = effect {
             when (this@NavigationCommand.navigationState.kind) {
@@ -63,7 +64,7 @@ class NavigationCommand(
                 NavigationKind.SETTINGS ->
                     publishers.edit(this@NavigationCommand.messageRef)(AppMessage.Settings(config, newState.page))
                 NavigationKind.ANNOUNCE -> {
-                    val announceMap = bot.dbConnection.localCaches.announceCache[newState.page]!!
+                    val announceMap = dbConnection.localCaches.announceCache[newState.page]!!
 
                     val content = announcementMessage(
                         config.language.container,

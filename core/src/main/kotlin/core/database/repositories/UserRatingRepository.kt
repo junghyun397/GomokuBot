@@ -11,7 +11,8 @@ import reactor.core.publisher.Mono
 
 object UserRatingRepository {
 
-    suspend fun retrieveUserRating(connection: DatabaseConnection, userUid: UserUid): EloRating {
+    context(connection: DatabaseConnection)
+    suspend fun retrieveUserRating(userUid: UserUid): EloRating {
         connection.localCaches.userRatingCache
             .getIfPresent(userUid)
             ?.let { return it }
@@ -25,13 +26,14 @@ object UserRatingRepository {
             .awaitSingleOrNull()
             ?: EloRating.STARTING_RATING
 
-        this.cacheUserRating(connection, userUid, rating)
+        this.cacheUserRating(userUid, rating)
 
         return rating
     }
 
-    suspend fun upsertUserRating(connection: DatabaseConnection, userUid: UserUid, rating: EloRating) {
-        this.cacheUserRating(connection, userUid, rating)
+    context(connection: DatabaseConnection)
+    suspend fun upsertUserRating(userUid: UserUid, rating: EloRating) {
+        this.cacheUserRating(userUid, rating)
 
         Mono.from(
             connection.jooq
@@ -48,7 +50,8 @@ object UserRatingRepository {
     private fun extractUserRating(record: UserRatingRecord): EloRating =
         EloRating(record.rating!!.toFloat())
 
-    private fun cacheUserRating(connection: DatabaseConnection, userUid: UserUid, rating: EloRating) {
+    context(connection: DatabaseConnection)
+    private fun cacheUserRating(userUid: UserUid, rating: EloRating) {
         connection.localCaches.userRatingCache.put(userUid, rating)
     }
 

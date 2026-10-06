@@ -7,7 +7,9 @@ import arrow.core.flatMap
 import arrow.core.raise.effect
 import core.assets.UNICODE_ALARM_CLOCK
 import core.assets.UNICODE_CONSTRUCTION
+import core.database.DatabaseConnection
 import core.database.repositories.AnnounceRepository
+import core.engine.MintakaServer
 import core.interact.commands.*
 import core.interact.i18n.LanguageContainer
 import core.interact.message.AdaptivePublisherSet
@@ -15,6 +17,7 @@ import core.interact.message.AppMessage
 import core.interact.message.MonoPublisherSet
 import core.interact.message.NoticeLevel
 import core.interact.parse.ParseFailure
+import core.session.SessionPool
 import discord.ActionLogRecord
 import discord.assets.*
 import discord.executeAndRecord
@@ -59,8 +62,9 @@ private fun buildPermissionNode(context: UserInteractionContext<*>, parsableComm
         onGranted = { Either.Right(parsableCommand) }
     )
 
+context(dbConnection: DatabaseConnection)
 private fun <T : Event> buildAnnounceNode(context: UserInteractionContext<T>, command: Command): Command =
-    command.replaceIf((context.user.announceId ?: -1) < (AnnounceRepository.getLatestAnnounceId(context.bot.dbConnection) ?: -1)) {
+    command.replaceIf((context.user.announceId ?: -1) < (AnnounceRepository.getLatestAnnounceId() ?: -1)) {
         AnnounceCommand(command)
     }
 
@@ -114,6 +118,7 @@ fun commandAutoCompleteRouter(event: CommandAutoCompleteInteractionEvent) {
     // TODO
 }
 
+context(dbConnection: DatabaseConnection, mintakaServer: MintakaServer, sessions: SessionPool)
 suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInteractionEvent>): List<ActionLogRecord>? {
     val parsable = matchCommand(context.event.name, context.config.language.container)
         ?: return null
@@ -149,32 +154,32 @@ suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInter
 
     val result = parsed.fold(
         ifRight = { command ->
-            command.execute(
-                bot = context.bot,
-                config = context.config,
-                channel = context.channel,
-                user = context.user,
-                service = platform,
-                publishers = when (command.responseFlag) {
-                    is ResponseFlag.Defer -> AdaptivePublisherSet(
-                        plain = discordPublisher { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
-                        windowed = discordPublisher { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
-                        editGlobal = { ref -> discordPublisher { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
-                    )
-                    else -> TransMessagePublisherSet(
-                        head = AdaptivePublisherSet(
-                            plain = discordPublisher { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate())) },
-                            windowed = discordPublisher { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate()).setEphemeral(true)) },
-                        ),
-                        tail = AdaptivePublisherSet(
+            context(platform) {
+                command.execute(
+                    config = context.config,
+                    channel = context.channel,
+                    user = context.user,
+                    publishers = when (command.responseFlag) {
+                        is ResponseFlag.Defer -> AdaptivePublisherSet(
                             plain = discordPublisher { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
-                            windowed = discordPublisher { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate()).setEphemeral(true)) },
+                            windowed = discordPublisher { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
                             editGlobal = { ref -> discordPublisher { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
-                        ),
-                    )
-                },
-                emittedTime = context.emittedTime,
-            )
+                        )
+                        else -> TransMessagePublisherSet(
+                            head = AdaptivePublisherSet(
+                                plain = discordPublisher { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate())) },
+                                windowed = discordPublisher { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate()).setEphemeral(true)) },
+                            ),
+                            tail = AdaptivePublisherSet(
+                                plain = discordPublisher { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
+                                windowed = discordPublisher { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate()).setEphemeral(true)) },
+                                editGlobal = { ref -> discordPublisher { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
+                            ),
+                        )
+                    },
+                    emittedTime = context.emittedTime,
+                )
+            }
         },
         ifLeft = { parseFailure ->
             parseFailure.notice(
@@ -192,6 +197,7 @@ suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInter
     return executeAndRecord(context, result)
 }
 
+context(dbConnection: DatabaseConnection, mintakaServer: MintakaServer, sessions: SessionPool)
 suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEvent>): List<ActionLogRecord>? {
     val platform = DiscordPlatformService(context.shardManager, context.discordConfig, context.jdaChannel)
     val messageRaw = context.event.message.contentRaw
@@ -239,18 +245,18 @@ suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEve
 
     val result = parsed.fold(
         ifRight = { command ->
-            command.execute(
-                bot = context.bot,
-                config = context.config,
-                channel = context.channel,
-                user = context.user,
-                service = platform,
-                publishers = MonoPublisherSet(
-                    publisher = discordPublisher { msg -> MessageCreateAdaptor(context.event.message.reply(msg.buildCreate())) },
-                    editGlobal = { ref -> discordPublisher { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
-                ),
-                emittedTime = context.emittedTime,
-            )
+            context(platform) {
+                command.execute(
+                    config = context.config,
+                    channel = context.channel,
+                    user = context.user,
+                    publishers = MonoPublisherSet(
+                        publisher = discordPublisher { msg -> MessageCreateAdaptor(context.event.message.reply(msg.buildCreate())) },
+                        editGlobal = { ref -> discordPublisher { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
+                    ),
+                    emittedTime = context.emittedTime,
+                )
+            }
         },
         ifLeft = { parseFailure ->
             parseFailure.notice(

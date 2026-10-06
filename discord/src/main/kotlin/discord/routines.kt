@@ -1,13 +1,14 @@
 package discord
 
 import core.BotConfig
-import core.BotContext
+import core.database.DatabaseConnection
 import core.interact.commands.ExpireGameCommand
 import core.interact.commands.ExpireRequestCommand
 import core.interact.commands.InternalCommand
 import core.interact.message.MonoPublisherSet
 import core.interact.reports.RoutineActionLog
 import core.session.SessionManager
+import core.session.SessionPool
 import discord.assets.JDAChannel
 import discord.assets.subChannelById
 import discord.interact.DiscordConfig
@@ -23,35 +24,37 @@ import utils.schedule
 import kotlin.time.Clock
 import kotlin.time.Duration
 
+context(dbConnection: DatabaseConnection, sessions: SessionPool)
 private suspend fun executeCommand(
     taskContext: TaskContext,
-    botContext: BotContext,
     shardManager: ShardManager,
     discordConfig: DiscordConfig,
     command: InternalCommand,
     jdaChannel: JDAChannel?,
     channel: MessageChannel?,
 ): List<ActionLogRecord> {
-    val result = command.execute(
-        bot = botContext,
-        config = taskContext.config,
-        channel = taskContext.channel,
-        service = DiscordPlatformService(shardManager, discordConfig, jdaChannel),
-        publisher = channel?.let { MonoPublisherSet(
-            publisher = discordPublisher { msg -> MessageCreateAdaptor(channel.sendMessage(msg.buildCreate())) },
-            editGlobal = { ref -> discordPublisher { msg -> MessageEditAdaptor(channel.editMessageById(ref.id.idLong, msg.buildEdit())) } }
-        ) },
-        emittedTime = taskContext.emittedTime,
-    )
+    val platform = DiscordPlatformService(shardManager, discordConfig, jdaChannel)
+    val result = context(platform) {
+        command.execute(
+            config = taskContext.config,
+            channel = taskContext.channel,
+            publisher = channel?.let { MonoPublisherSet(
+                publisher = discordPublisher { msg -> MessageCreateAdaptor(channel.sendMessage(msg.buildCreate())) },
+                editGlobal = { ref -> discordPublisher { msg -> MessageEditAdaptor(channel.editMessageById(ref.id.idLong, msg.buildEdit())) } }
+            ) },
+            emittedTime = taskContext.emittedTime,
+        )
+    }
 
     return executeAndRecord(taskContext, result)
 }
 
-fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, shardManager: ShardManager): Flow<ActionLogRecord> =
+context(dbConnection: DatabaseConnection, sessions: SessionPool)
+fun scheduleGameExpiration(discordConfig: DiscordConfig, shardManager: ShardManager): Flow<ActionLogRecord> =
     schedule(BotConfig.gameExpireChecks, {
-        SessionManager.cleanExpiredGameSession(bot.sessions).forEach { (_, channel, _, session) ->
-            val config = SessionManager.retrieveChannelConfig(bot.sessions, channel)
-            val context = TaskContext(bot, channel, config, Clock.System.now(), "SCH")
+        SessionManager.cleanExpiredGameSession().forEach { (_, channel, _, session) ->
+            val config = SessionManager.retrieveChannelConfig(channel)
+            val context = TaskContext(channel, config, Clock.System.now(), "SCH")
 
             val message = session.messageRef
 
@@ -60,17 +63,18 @@ fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, shardM
 
             val command = ExpireGameCommand(session)
 
-            val results = executeCommand(context, bot, shardManager, discordConfig, command, channel, subChannel)
+            val results = executeCommand(context, shardManager, discordConfig, command, channel, subChannel)
 
             results.forEach { result -> emit(result) }
         }
     })
 
-fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, shardManager: ShardManager): Flow<ActionLogRecord> =
+context(dbConnection: DatabaseConnection, sessions: SessionPool)
+fun scheduleRequestExpiration(discordConfig: DiscordConfig, shardManager: ShardManager): Flow<ActionLogRecord> =
     schedule(BotConfig.requestExpireChecks, {
-        SessionManager.cleanExpiredRequestSessions(bot.sessions).forEach { (_, channel, _, session) ->
-            val config = SessionManager.retrieveChannelConfig(bot.sessions, channel)
-            val context = TaskContext(bot, channel, config, Clock.System.now(), "SCH")
+        SessionManager.cleanExpiredRequestSessions().forEach { (_, channel, _, session) ->
+            val config = SessionManager.retrieveChannelConfig(channel)
+            val context = TaskContext(channel, config, Clock.System.now(), "SCH")
 
             val message = session.messageRef
 
@@ -79,7 +83,7 @@ fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, sha
 
             val command = ExpireRequestCommand(session)
 
-            val results = executeCommand(context, bot, shardManager, discordConfig, command, channel, subChannel)
+            val results = executeCommand(context, shardManager, discordConfig, command, channel, subChannel)
 
             results.forEach { result -> emit(result) }
         }

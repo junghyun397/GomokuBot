@@ -1,7 +1,6 @@
 package discord
 
 import core.BotConfig
-import core.BotContext
 import core.assets.ChannelId
 import core.assets.SubChannelId
 import core.database.DatabaseManager
@@ -110,7 +109,7 @@ object GomokuBot {
         val dbConnection = runBlocking {
             DatabaseManager.newConnectionFrom(postgresqlUrl, caches)
                 .also { connection ->
-                    DatabaseManager.initCaches(connection)
+                    context(connection) { DatabaseManager.initCaches() }
                 }
         }
 
@@ -127,9 +126,7 @@ object GomokuBot {
 
         logger.info("mintaka server connected.")
 
-        val sessionPool = SessionPool(dbConnection = dbConnection)
-
-        val botContext = BotContext(dbConnection, mintakaServer, sessionPool)
+        val sessionPool = SessionPool()
 
         val eventScope = getDefaultScope()
 
@@ -160,144 +157,140 @@ object GomokuBot {
             commandAutoCompleteRouter(it)
         }
 
-        val commandFlow: Flow<ActionLogRecord> = merge(
-            shardManager.eventFlow<SlashCommandInteractionEvent>()
-                .filter { it.isFromGuild && !it.user.isBot }
-                .route {
-                    slashCommandRouter(UserInteractionContext.fromJDAEvent(
-                        botContext,
-                        discordConfig,
-                        shardManager,
-                        it,
-                        it.user,
-                        it.guild!!
-                    ))
-                },
-
-            shardManager.eventFlow<MessageReceivedEvent>()
-                .filter {
-                    it.isFromGuild
-                            && !it.author.isBot
-                            && (it.message.contentRaw.startsWith(COMMAND_PREFIX) ||
-                                (!it.message.mentions.mentionsEveryone()
-                                            && it.message.mentions.membersBag.size == 1
-                                            && it.message.mentions.isMentioned(it.jda.selfUser)
-                                )
-                            )
-                }
-                .route {
-                    textCommandRouter(UserInteractionContext.fromJDAEvent(
-                        botContext,
-                        discordConfig,
-                        shardManager,
-                        it,
-                        it.author,
-                        it.guild
-                    ))
-                },
-
-            shardManager.eventFlow<ButtonInteractionEvent>()
-                .filter { it.isFromGuild && !it.user.isBot }
-                .route {
-                    buttonInteractionRouter(UserInteractionContext.fromJDAEvent(
-                        botContext,
-                        discordConfig,
-                        shardManager,
-                        it,
-                        it.user,
-                        it.guild!!
-                    ))
-                },
-
-            shardManager.eventFlow<StringSelectInteractionEvent>()
-                .filter { it.isFromGuild && !it.user.isBot }
-                .route {
-                    buttonInteractionRouter(UserInteractionContext.fromJDAEvent(
-                        botContext,
-                        discordConfig,
-                        shardManager,
-                        it,
-                        it.user,
-                        it.guild!!
-                    ))
-                },
-
-            shardManager.eventFlow<MessageReactionAddEvent>()
-                .filter {
-                    it.isFromGuild
-                            && it.userIdLong != it.jda.selfUser.idLong
-                            && it.messageAuthorIdLong == it.jda.selfUser.idLong
-                            && it.channel.type == ChannelType.TEXT
-                            && NAVIGATION_EMOJIS.contains(it.emoji)
-                            && !(it.user?.isBot ?: false)
-                }
-                .route {
-                    reactionRouter(UserInteractionContext.fromJDAEvent(
-                        botContext,
-                        discordConfig,
-                        shardManager,
-                        it,
-                        it.user!!,
-                        it.guild
-                    ))
-                },
-
-            shardManager.eventFlow<MessageReactionRemoveEvent>()
-                .filter {
-                    it.isFromGuild
-                            && it.userIdLong != it.jda.selfUser.idLong
-                            && !(it.user?.isBot ?: false)
-                            && it.channel.type == ChannelType.TEXT
-                            && NAVIGATION_EMOJIS.contains(it.emoji)
-                            && !ChannelManager.lookupPermission(it.channel.asGuildMessageChannel(), Permission.MESSAGE_MANAGE)
-                }
-                .route {
-                    val user = it.guild
-                        .retrieveMemberById(it.userId)
-                        .mapToResult()
-                        .map { maybeMember -> maybeMember.map(Member::getUser) }
-                        .await()
-
-                    if (user.isSuccess && !user.get().isBot) {
-                        reactionRouter(UserInteractionContext.fromJDAEvent(
-                            botContext,
+        val commandFlow = context(dbConnection, mintakaServer, sessionPool) {
+            merge(
+                shardManager.eventFlow<SlashCommandInteractionEvent>()
+                    .filter { it.isFromGuild && !it.user.isBot }
+                    .route {
+                        slashCommandRouter(UserInteractionContext.fromJDAEvent(
                             discordConfig,
                             shardManager,
                             it,
-                            user.get(),
+                            it.user,
+                            it.guild!!
+                        ))
+                    },
+
+                shardManager.eventFlow<MessageReceivedEvent>()
+                    .filter {
+                        it.isFromGuild
+                                && !it.author.isBot
+                                && (it.message.contentRaw.startsWith(COMMAND_PREFIX) ||
+                                    (!it.message.mentions.mentionsEveryone()
+                                                && it.message.mentions.membersBag.size == 1
+                                                && it.message.mentions.isMentioned(it.jda.selfUser)
+                                    )
+                                )
+                    }
+                    .route {
+                        textCommandRouter(UserInteractionContext.fromJDAEvent(
+                            discordConfig,
+                            shardManager,
+                            it,
+                            it.author,
                             it.guild
                         ))
-                    } else {
-                        null
+                    },
+
+                shardManager.eventFlow<ButtonInteractionEvent>()
+                    .filter { it.isFromGuild && !it.user.isBot }
+                    .route {
+                        buttonInteractionRouter(UserInteractionContext.fromJDAEvent(
+                            discordConfig,
+                            shardManager,
+                            it,
+                            it.user,
+                            it.guild!!
+                        ))
+                    },
+
+                shardManager.eventFlow<StringSelectInteractionEvent>()
+                    .filter { it.isFromGuild && !it.user.isBot }
+                    .route {
+                        buttonInteractionRouter(UserInteractionContext.fromJDAEvent(
+                            discordConfig,
+                            shardManager,
+                            it,
+                            it.user,
+                            it.guild!!
+                        ))
+                    },
+
+                shardManager.eventFlow<MessageReactionAddEvent>()
+                    .filter {
+                        it.isFromGuild
+                                && it.userIdLong != it.jda.selfUser.idLong
+                                && it.messageAuthorIdLong == it.jda.selfUser.idLong
+                                && it.channel.type == ChannelType.TEXT
+                                && NAVIGATION_EMOJIS.contains(it.emoji)
+                                && !(it.user?.isBot ?: false)
                     }
+                    .route {
+                        reactionRouter(UserInteractionContext.fromJDAEvent(
+                            discordConfig,
+                            shardManager,
+                            it,
+                            it.user!!,
+                            it.guild
+                        ))
+                    },
+
+                shardManager.eventFlow<MessageReactionRemoveEvent>()
+                    .filter {
+                        it.isFromGuild
+                                && it.userIdLong != it.jda.selfUser.idLong
+                                && !(it.user?.isBot ?: false)
+                                && it.channel.type == ChannelType.TEXT
+                                && NAVIGATION_EMOJIS.contains(it.emoji)
+                                && !ChannelManager.lookupPermission(it.channel.asGuildMessageChannel(), Permission.MESSAGE_MANAGE)
+                    }
+                    .route {
+                        val user = it.guild
+                            .retrieveMemberById(it.userId)
+                            .mapToResult()
+                            .map { maybeMember -> maybeMember.map(Member::getUser) }
+                            .await()
+
+                        if (user.isSuccess && !user.get().isBot) {
+                            reactionRouter(UserInteractionContext.fromJDAEvent(
+                                discordConfig,
+                                shardManager,
+                                it,
+                                user.get(),
+                                it.guild
+                            ))
+                        } else {
+                            null
+                        }
+                    },
+
+                shardManager.eventFlow<GuildJoinEvent>()
+                    .route { event ->
+                        channelJoinRouter(InternalInteractionContext.fromJDAEvent(discordConfig, shardManager, event, event.guild))
+                    },
+
+                shardManager.eventFlow<GuildLeaveEvent>()
+                    .route { event ->
+                        channelLeaveRouter(InternalInteractionContext.fromJDAEvent(discordConfig, shardManager, event, event.guild))
+                    },
+
+                scheduleGameExpiration(discordConfig, shardManager),
+                scheduleRequestExpiration(discordConfig, shardManager),
+
+                routine(BotConfig.navigatorExpireChecks) {
+                    val expires = NavigationManager.cleanExpiredNavigators()
+
+                    "cleaned $expires expired navigators"
                 },
 
-            shardManager.eventFlow<GuildJoinEvent>()
-                .route { event ->
-                    channelJoinRouter(InternalInteractionContext.fromJDAEvent(botContext, discordConfig, shardManager, event, event.guild))
-                },
+                routine(BotConfig.announceUpdateChecks) {
+                    val announces = AnnounceRepository.fetchAnnounces()
+                    val updated = announces.size - dbConnection.localCaches.announceCache.size
 
-            shardManager.eventFlow<GuildLeaveEvent>()
-                .route { event ->
-                    channelLeaveRouter(InternalInteractionContext.fromJDAEvent(botContext, discordConfig, shardManager, event, event.guild))
-                },
-
-            scheduleGameExpiration(botContext, discordConfig, shardManager),
-            scheduleRequestExpiration(botContext, discordConfig, shardManager),
-
-            routine(BotConfig.navigatorExpireChecks) {
-                val expires = NavigationManager.cleanExpiredNavigators(sessionPool)
-
-                "cleaned $expires expired navigators"
-            },
-
-            routine(BotConfig.announceUpdateChecks) {
-                val announces = AnnounceRepository.fetchAnnounces(dbConnection)
-                val updated = announces.size - dbConnection.localCaches.announceCache.size
-
-                "updated $updated announces"
-            }
-        )
+                    "updated $updated announces"
+                }
+            )
+        }
 
         eventScope.launch {
             commandFlow.collect { report -> leaveLog(report) }

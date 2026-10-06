@@ -14,8 +14,9 @@ object DatabaseManager {
             localCaches
         )
 
-    suspend fun initCaches(connection: DatabaseConnection) {
-        connection.localCaches.announceCache = AnnounceRepository.fetchAnnounces(connection)
+    context(connection: DatabaseConnection)
+    suspend fun initCaches() {
+        connection.localCaches.announceCache = AnnounceRepository.fetchAnnounces()
     }
 
 }

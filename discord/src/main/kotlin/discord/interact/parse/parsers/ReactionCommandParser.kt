@@ -1,10 +1,11 @@
 package discord.interact.parse.parsers
 
-import core.BotContext
 import core.assets.COLOR_NORMAL_HEX
 import core.assets.MessageRef
+import core.database.DatabaseConnection
 import core.interact.commands.Command
 import core.session.NavigationManager
+import core.session.SessionPool
 import core.session.entities.NavigationState
 import core.session.entities.PageNavigationState
 import discord.assets.awaitNullable
@@ -17,9 +18,10 @@ import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 
 object ReactionCommandParser {
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     suspend fun parseReaction(context: UserInteractionContext<GenericMessageReactionEvent>): Command? {
         val messageRef = context.event.messageRef()
-        val cachedState = NavigationManager.getNavigationState(context.bot.sessions, messageRef)
+        val cachedState = NavigationManager.getNavigationState(messageRef)
         if (cachedState != null)
             return NavigationCommandParser.parseReaction(context, cachedState)
 
@@ -29,7 +31,7 @@ object ReactionCommandParser {
         return if (this.isBoardMessage(message)) {
             FocusCommandParser.parseReaction(context)
         } else {
-            this.recoverNavigationState(context.bot, message, messageRef)
+            this.recoverNavigationState(message, messageRef)
                 ?.let { NavigationCommandParser.parseReaction(context, it) }
         }
     }
@@ -40,9 +42,10 @@ object ReactionCommandParser {
                 button.customId?.startsWith("${DiscordComponentIds.OPENING}-") == true
         }
 
-    private fun recoverNavigationState(bot: BotContext, message: Message, messageRef: MessageRef): NavigationState? =
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
+    private fun recoverNavigationState(message: Message, messageRef: MessageRef): NavigationState? =
         message.embeds.firstOrNull()
-            ?.let { PageNavigationState.decodeFromColor(COLOR_NORMAL_HEX, it.colorRaw, bot.dbConnection) }
-            ?.also { NavigationManager.addNavigation(bot.sessions, messageRef, it) }
+            ?.let { PageNavigationState.decodeFromColor(COLOR_NORMAL_HEX, it.colorRaw) }
+            ?.also { NavigationManager.addNavigation(messageRef, it) }
 
 }

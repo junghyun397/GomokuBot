@@ -4,7 +4,6 @@ import core.assets.Channel
 import core.assets.ChannelUid
 import core.assets.MessageRef
 import core.assets.UserUid
-import core.database.DatabaseConnection
 import core.session.entities.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -20,5 +19,4 @@ data class SessionPool(
     val gameSessionIndex: ConcurrentHashMap<SessionUserKey, SessionId> = ConcurrentHashMap(),
     val requestSessionIndex: ConcurrentHashMap<SessionUserKey, SessionId> = ConcurrentHashMap(),
     val navigates: ConcurrentHashMap<MessageRef, NavigationState> = ConcurrentHashMap(),
-    val dbConnection: DatabaseConnection,
 )

@@ -1,8 +1,10 @@
 package discord.interact.parse.parsers
 
+import core.database.DatabaseConnection
 import core.interact.commands.BoardCommand
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.SessionSideParser
+import core.session.SessionPool
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.assets.COMMAND_PREFIX
 import discord.interact.UserInteractionContext
@@ -25,13 +27,15 @@ object BoardCommandParser: SessionSideParser(), ParsableCommand, BuildableComman
         ),
     )
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>) =
-        this.retrieveSessionId(context.bot, context.channel, context.user).map { sessionId ->
+        this.retrieveSessionId(context.channel, context.user).map { sessionId ->
             BoardCommand(sessionId)
         }
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>) =
-        this.retrieveSessionId(context.bot, context.channel, context.user).map { sessionId ->
+        this.retrieveSessionId(context.channel, context.user).map { sessionId ->
             BoardCommand(sessionId)
         }
 

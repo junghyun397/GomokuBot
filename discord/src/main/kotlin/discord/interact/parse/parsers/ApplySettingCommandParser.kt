@@ -1,8 +1,10 @@
 package discord.interact.parse.parsers
 
+import core.database.DatabaseConnection
 import core.interact.commands.ApplySettingCommand
 import core.interact.commands.Command
 import core.interact.message.SettingMapping
+import core.session.SessionPool
 import discord.interact.UserInteractionContext
 import discord.interact.parse.EmbeddableCommand
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
@@ -10,6 +12,7 @@ import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionE
 
 object ApplySettingCommandParser : EmbeddableCommand {
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Command? {
         val (kind, choice) = when(context.event) {
             is StringSelectInteractionEvent -> context.event.interaction.selectedOptions.first().value.split("-")

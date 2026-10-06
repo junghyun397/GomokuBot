@@ -1,15 +1,17 @@
 package core.interact.commands
 
 import arrow.core.raise.effect
-import core.BotContext
 import core.assets.Channel
 import core.assets.User
+import core.database.DatabaseConnection
 import core.database.repositories.UserProfileRepository
 import core.database.repositories.UserStatsRepository
+import core.engine.MintakaServer
 import core.interact.message.AppMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeActionLog
+import core.session.SessionPool
 import core.session.entities.ChannelConfig
 import utils.tuple
 import kotlin.time.Instant
@@ -30,24 +32,23 @@ class RankCommand(private val scope: RankScope) : Command {
 
     override val responseFlag = ResponseFlag.Defer
 
+    context(dbConnection: DatabaseConnection, mintakaServer: MintakaServer, sessions: SessionPool, service: PlatformService)
     override suspend fun execute(
-        bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: PlatformService,
         publishers: PublisherSet,
         emittedTime: Instant,
     ) = runCatching {
         val rankings = when (this.scope) {
-            is RankScope.Global -> UserStatsRepository.fetchRankings(bot.dbConnection)
-                .map { tuple(UserProfileRepository.retrieveUser(bot.dbConnection, it.userId), it) }
-            is RankScope.Channel -> UserStatsRepository.fetchRankings(bot.dbConnection, scope.target.id)
-                .map { tuple(UserProfileRepository.retrieveUser(bot.dbConnection, it.userId), it) }
-            is RankScope.User -> UserStatsRepository.fetchRankings(bot.dbConnection, scope.target.id)
+            is RankScope.Global -> UserStatsRepository.fetchRankings()
+                .map { tuple(UserProfileRepository.retrieveUser(it.userId), it) }
+            is RankScope.Channel -> UserStatsRepository.fetchRankings(scope.target.id)
+                .map { tuple(UserProfileRepository.retrieveUser(it.userId), it) }
+            is RankScope.User -> UserStatsRepository.fetchRankings(scope.target.id)
                 .map { (userUid, stats) ->
                     tuple(
-                        userUid?.let { UserProfileRepository.retrieveUser(bot.dbConnection, it) } ?: User.GomokuBot,
+                        userUid?.let { UserProfileRepository.retrieveUser(it) } ?: User.GomokuBot,
                         stats
                     )
                 }

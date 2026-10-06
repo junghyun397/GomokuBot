@@ -22,7 +22,8 @@ import utils.toUtcInstant
 
 object GameRecordRepository {
 
-    suspend fun uploadGameRecord(connection: DatabaseConnection, record: GameRecord) {
+    context(connection: DatabaseConnection)
+    suspend fun uploadGameRecord(record: GameRecord) {
         Mono.from(
             connection.jooq
                 .insertInto(GAME_RECORD)
@@ -39,7 +40,8 @@ object GameRecordRepository {
             .awaitSingle()
     }
 
-    suspend fun retrieveGameRecords(connection: DatabaseConnection, userUid: UserUid, limit: Int): MutableList<GameRecord> =
+    context(connection: DatabaseConnection)
+    suspend fun retrieveGameRecords(userUid: UserUid, limit: Int): MutableList<GameRecord> =
         Flux.from(
             connection.jooq
                 .selectFrom(GAME_RECORD)
@@ -49,18 +51,20 @@ object GameRecordRepository {
         )
             .collectList()
             .awaitSingle()
-            .let { this.buildGameRecords(connection, it) }
+            .let { this.buildGameRecords(it) }
 
-    suspend fun retrieveGameRecord(connection: DatabaseConnection, recordId: GameRecordId): GameRecord? =
+    context(connection: DatabaseConnection)
+    suspend fun retrieveGameRecord(recordId: GameRecordId): GameRecord? =
         Mono.from(
             connection.jooq
                 .selectFrom(GAME_RECORD)
                 .where(GAME_RECORD.RECORD_ID.eq(recordId.id.toInt()))
         )
             .awaitSingleOrNull()
-            ?.let { this.buildGameRecord(connection, it) }
+            ?.let { this.buildGameRecord(it) }
 
-    suspend fun retrieveRecentDelta(connection: DatabaseConnection, target: User.Human): EloRating.Delta =
+    context(connection: DatabaseConnection)
+    suspend fun retrieveRecentDelta(target: User.Human): EloRating.Delta =
         Mono.from(
             connection.jooq
                 .select(GAME_RECORD.RATING_DELTA)
@@ -79,16 +83,18 @@ object GameRecordRepository {
             .awaitSingleOrNull()
             ?: EloRating.Delta(0.0f)
 
-    private suspend fun buildGameRecords(connection: DatabaseConnection, records: List<GameRecordRecord>): MutableList<GameRecord> {
-        val users = UserProfileRepository.retrieveUsers(connection, this.extractUserUids(records))
+    context(connection: DatabaseConnection)
+    private suspend fun buildGameRecords(records: List<GameRecordRecord>): MutableList<GameRecord> {
+        val users = UserProfileRepository.retrieveUsers(this.extractUserUids(records))
 
         return records
             .map { this.buildGameRecord(it, users) }
             .toMutableList()
     }
 
-    private suspend fun buildGameRecord(connection: DatabaseConnection, record: GameRecordRecord): GameRecord {
-        val users = UserProfileRepository.retrieveUsers(connection, this.extractUserUids(listOf(record)))
+    context(connection: DatabaseConnection)
+    private suspend fun buildGameRecord(record: GameRecordRecord): GameRecord {
+        val users = UserProfileRepository.retrieveUsers(this.extractUserUids(listOf(record)))
 
         return this.buildGameRecord(record, users)
     }

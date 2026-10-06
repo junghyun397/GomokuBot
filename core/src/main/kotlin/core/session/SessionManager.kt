@@ -3,6 +3,7 @@ package core.session
 import core.assets.Channel
 import core.assets.ChannelUid
 import core.assets.UserUid
+import core.database.DatabaseConnection
 import core.database.repositories.ChannelConfigRepository
 import core.session.entities.*
 import utils.Quadruple
@@ -24,15 +25,17 @@ class RequestSessionNotFoundException(
 
 object SessionManager {
 
-    suspend fun retrieveChannelConfig(pool: SessionPool, channel: Channel): ChannelConfig =
-        ChannelConfigRepository.retrieveChannelConfig(pool.dbConnection, channel.id)
+    context(connection: DatabaseConnection)
+    suspend fun retrieveChannelConfig(channel: Channel): ChannelConfig =
+        ChannelConfigRepository.retrieveChannelConfig(channel.id)
 
-    suspend fun updateChannelConfig(pool: SessionPool, channel: Channel, channelConfig: ChannelConfig) {
-        ChannelConfigRepository.upsertChannelConfig(pool.dbConnection, channel.id, channelConfig)
+    context(connection: DatabaseConnection)
+    suspend fun updateChannelConfig(channel: Channel, channelConfig: ChannelConfig) {
+        ChannelConfigRepository.upsertChannelConfig(channel.id, channelConfig)
     }
 
+    context(pool: SessionPool)
     private fun <T : Expirable> insertSession(
-        pool: SessionPool,
         channel: Channel,
         sessionId: SessionId,
         participants: Set<UserUid>,
@@ -57,13 +60,12 @@ object SessionManager {
         }
     }
 
+    context(pool: SessionPool)
     fun insertGameSession(
-        pool: SessionPool,
         channel: Channel,
         session: GameSession,
     ) {
         this.insertSession(
-            pool = pool,
             channel = channel,
             sessionId = session.id,
             participants = setOfNotNull(session.users.black.id, session.users.white.id),
@@ -73,14 +75,13 @@ object SessionManager {
         )
     }
 
+    context(pool: SessionPool)
     fun createRequestSession(
-        pool: SessionPool,
         channel: Channel,
         participants: Set<UserUid>,
         session: RequestSession,
     ) {
         this.insertSession(
-            pool = pool,
             channel = channel,
             sessionId = session.id,
             participants = participants,
@@ -90,8 +91,8 @@ object SessionManager {
         )
     }
 
+    context(pool: SessionPool)
     private fun <T : Expirable> removeSession(
-        pool: SessionPool,
         sessions: MutableMap<SessionId, SessionSlot<T>>,
         indexes: MutableMap<SessionUserKey, SessionId>,
         sessionId: SessionId,
@@ -99,62 +100,68 @@ object SessionManager {
         synchronized(pool) {
             val slot = sessions.remove(sessionId) ?: return@synchronized
             indexes.entries.removeIf { it.key.channelId == slot.channelId && it.value == sessionId }
-            this.removeChannelIfUnused(pool, slot.channelId)
+            this.removeChannelIfUnused(slot.channelId)
         }
     }
 
-    fun finishGameSession(pool: SessionPool, runtime: SessionRuntime<GameSession>) {
+    context(pool: SessionPool)
+    fun finishGameSession(runtime: SessionRuntime<GameSession>) {
         runtime.close()
-        this.removeSession(pool, pool.gameSessions, pool.gameSessionIndex, runtime.session.id)
+        this.removeSession(pool.gameSessions, pool.gameSessionIndex, runtime.session.id)
     }
 
-    fun finishRequestSession(pool: SessionPool, runtime: SessionRuntime<RequestSession>) {
+    context(pool: SessionPool)
+    fun finishRequestSession(runtime: SessionRuntime<RequestSession>) {
         runtime.close()
-        this.removeSession(pool, pool.requestSessions, pool.requestSessionIndex, runtime.session.id)
+        this.removeSession(pool.requestSessions, pool.requestSessionIndex, runtime.session.id)
     }
 
-    fun finishUndoRequest(pool: SessionPool, runtime: SessionRuntime<GameSession>): SessionRuntime<RequestSession>? {
+    context(pool: SessionPool)
+    fun finishUndoRequest(runtime: SessionRuntime<GameSession>): SessionRuntime<RequestSession>? {
         val request = runtime.undoRequest ?: return null
         runtime.undoRequest = null
-        this.finishRequestSession(pool, request)
+        this.finishRequestSession(request)
         return request
     }
 
-    fun findGameSessionId(pool: SessionPool, channelUid: ChannelUid, userUid: UserUid): SessionId? =
+    context(pool: SessionPool)
+    fun findGameSessionId(channelUid: ChannelUid, userUid: UserUid): SessionId? =
         pool.gameSessionIndex[SessionUserKey(channelUid, userUid)]
 
-    fun findRequestSessionId(pool: SessionPool, channelUid: ChannelUid, userUid: UserUid): SessionId? =
+    context(pool: SessionPool)
+    fun findRequestSessionId(channelUid: ChannelUid, userUid: UserUid): SessionId? =
         pool.requestSessionIndex[SessionUserKey(channelUid, userUid)]
 
+    context(pool: SessionPool)
     fun retrieveGameSession(
-        pool: SessionPool,
         sessionId: SessionId,
     ): SessionSlot<GameSession> =
         pool.gameSessions[sessionId]
             ?: throw GameSessionNotFoundException(sessionId)
 
+    context(pool: SessionPool)
     fun retrieveRequestSession(
-        pool: SessionPool,
         sessionId: SessionId,
     ): SessionSlot<RequestSession> =
         pool.requestSessions[sessionId]
             ?: throw RequestSessionNotFoundException(sessionId)
 
-    fun cleanExpiredRequestSessions(pool: SessionPool): Sequence<Quadruple<ChannelUid, Channel, SessionId, SessionRuntime<RequestSession>>> =
+    context(pool: SessionPool)
+    fun cleanExpiredRequestSessions(): Sequence<Quadruple<ChannelUid, Channel, SessionId, SessionRuntime<RequestSession>>> =
         this.cleanExpired(
-            pool = pool,
             sessions = pool.requestSessions,
-            finish = { runtime -> this.finishRequestSession(pool, runtime) },
+            finish = { runtime -> this.finishRequestSession(runtime) },
         )
 
-    fun cleanExpiredGameSession(pool: SessionPool): Sequence<Quadruple<ChannelUid, Channel, SessionId, SessionRuntime<GameSession>>> =
+    context(pool: SessionPool)
+    fun cleanExpiredGameSession(): Sequence<Quadruple<ChannelUid, Channel, SessionId, SessionRuntime<GameSession>>> =
         this.cleanExpired(
-            pool = pool,
             sessions = pool.gameSessions,
-            finish = { runtime -> this.finishGameSession(pool, runtime) },
+            finish = { runtime -> this.finishGameSession(runtime) },
         )
 
-    private fun removeChannelIfUnused(pool: SessionPool, channelId: ChannelUid) {
+    context(pool: SessionPool)
+    private fun removeChannelIfUnused(channelId: ChannelUid) {
         if (
             pool.requestSessions.values.none { it.channelId == channelId } &&
             pool.gameSessions.values.none { it.channelId == channelId }
@@ -163,8 +170,8 @@ object SessionManager {
         }
     }
 
+    context(pool: SessionPool)
     private fun <T : Expirable> cleanExpired(
-        pool: SessionPool,
         sessions: Map<SessionId, SessionSlot<T>>,
         finish: (SessionRuntime<T>) -> Unit,
     ): Sequence<Quadruple<ChannelUid, Channel, SessionId, SessionRuntime<T>>> {

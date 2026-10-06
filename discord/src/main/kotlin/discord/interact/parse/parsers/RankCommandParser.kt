@@ -2,6 +2,7 @@ package discord.interact.parse.parsers
 
 import arrow.core.Either
 import arrow.core.raise.effect
+import core.database.DatabaseConnection
 import core.database.repositories.UserProfileRepository
 import core.interact.commands.Command
 import core.interact.commands.RankCommand
@@ -11,6 +12,7 @@ import core.interact.message.AppMessage
 import core.interact.parse.CommandParser
 import core.interact.parse.ParseFailure
 import core.interact.parse.asParseFailure
+import core.session.SessionPool
 import dev.minn.jda.ktx.interactions.commands.option
 import dev.minn.jda.ktx.interactions.commands.slash
 import dev.minn.jda.ktx.interactions.commands.subcommand
@@ -45,9 +47,10 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
         ),
     )
 
+    context(dbConnection: DatabaseConnection)
     private suspend fun parseUserRank(context: UserInteractionContext<*>, maybeTarget: net.dv8tion.jda.api.entities.User?): Either<ParseFailure, Command> {
         val user = maybeTarget
-            ?.let { UserProfileRepository.retrieveUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, it.userId()) }
+            ?.let { UserProfileRepository.retrieveUser(DISCORD_PLATFORM_ID, it.userId()) }
 
         return user
             ?.let { Either.Right(RankCommand(RankScope.User(it))) }
@@ -59,6 +62,7 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                 })
     }
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<ParseFailure, Command> =
         when (context.event.subcommandName) {
             context.config.language.container.rankCommandSubServer ->
@@ -70,6 +74,7 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             else -> Either.Right(RankCommand(RankScope.Global))
         }
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<ParseFailure, Command> =
         when (payload.getOrNull(1)) {
             context.config.language.container.rankCommandSubServer ->

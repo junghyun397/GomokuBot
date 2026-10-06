@@ -11,7 +11,8 @@ import kotlin.time.Clock
 
 object StatsManager {
 
-    suspend fun uploadGameRecord(connection: DatabaseConnection, channelId: ChannelUid, session: GameSession) {
+    context(connection: DatabaseConnection)
+    suspend fun uploadGameRecord(channelId: ChannelUid, session: GameSession) {
         val result = session.gameResult
 
         if (result == null || !session.recording || null in session.state.history)
@@ -20,7 +21,7 @@ object StatsManager {
         val record = if (session is EngineGameSession) {
             val ratingDelta = session.ratingDelta!!
 
-            UserRatingRepository.upsertUserRating(connection, session.humanPlayer.id, session.userRating + ratingDelta)
+            UserRatingRepository.upsertUserRating(session.humanPlayer.id, session.userRating + ratingDelta)
 
             GameRecord(
                 gameRecordId = null,
@@ -47,7 +48,7 @@ object StatsManager {
             )
         }
 
-        GameRecordRepository.uploadGameRecord(connection, record)
+        GameRecordRepository.uploadGameRecord(record)
     }
 
 }

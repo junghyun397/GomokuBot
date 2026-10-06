@@ -12,17 +12,19 @@ import reactor.core.publisher.Mono
 
 object ChannelProfileRepository {
 
-    suspend fun retrieveOrInsertChannel(connection: DatabaseConnection, platform: Short, givenId: ChannelId, produce: () -> Channel): Channel =
-        this.retrieveChannel(connection, platform, givenId)
+    context(connection: DatabaseConnection)
+    suspend fun retrieveOrInsertChannel(platform: Short, givenId: ChannelId, produce: () -> Channel): Channel =
+        this.retrieveChannel(platform, givenId)
             ?: produce()
-                .also { this.upsertChannel(connection, it) }
+                .also { this.upsertChannel(it) }
 
-    suspend fun retrieveChannel(connection: DatabaseConnection, platform: Short, givenId: ChannelId): Channel? {
+    context(connection: DatabaseConnection)
+    suspend fun retrieveChannel(platform: Short, givenId: ChannelId): Channel? {
         connection.localCaches.channelProfileGivenIdCache
             .getIfPresent(givenId)
             ?.let { return it }
 
-        val maybeChannel = this.fetchChannel(connection, platform, givenId)
+        val maybeChannel = this.fetchChannel(platform, givenId)
 
         if (maybeChannel != null) {
             connection.localCaches.channelProfileGivenIdCache.put(maybeChannel.givenId, maybeChannel)
@@ -32,7 +34,8 @@ object ChannelProfileRepository {
         return maybeChannel
     }
 
-    private suspend fun fetchChannel(connection: DatabaseConnection, channelUid: ChannelUid): Channel =
+    context(connection: DatabaseConnection)
+    private suspend fun fetchChannel(channelUid: ChannelUid): Channel =
         Mono.from(
             connection.jooq
                 .selectFrom(CHANNEL_PROFILE)
@@ -41,7 +44,8 @@ object ChannelProfileRepository {
             .map { this.extractChannel(it) }
             .awaitSingle()
 
-    private suspend fun fetchChannel(connection: DatabaseConnection, platform: Short, givenId: ChannelId): Channel? =
+    context(connection: DatabaseConnection)
+    private suspend fun fetchChannel(platform: Short, givenId: ChannelId): Channel? =
         Mono.from(
             connection.jooq
                 .selectFrom(CHANNEL_PROFILE)
@@ -51,7 +55,8 @@ object ChannelProfileRepository {
             .map { this.extractChannel(it) }
             .awaitSingleOrNull()
 
-    suspend fun upsertChannel(connection: DatabaseConnection, channel: Channel) {
+    context(connection: DatabaseConnection)
+    suspend fun upsertChannel(channel: Channel) {
         connection.localCaches.channelProfileGivenIdCache.put(channel.givenId, channel)
         connection.localCaches.channelProfileUidCache.put(channel.id, channel)
 

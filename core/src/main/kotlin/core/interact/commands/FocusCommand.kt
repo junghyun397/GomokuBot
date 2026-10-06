@@ -2,14 +2,16 @@ package core.interact.commands
 
 import arrow.core.raise.Effect
 import arrow.core.raise.effect
-import core.BotContext
 import core.assets.Channel
 import core.assets.User
+import core.database.DatabaseConnection
+import core.engine.MintakaServer
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.message.buildBoardInput
 import core.interact.reports.writeActionLog
 import core.session.SessionManager
+import core.session.SessionPool
 import core.session.entities.*
 import renju.notation.Pos
 import kotlin.time.Instant
@@ -27,16 +29,15 @@ class FocusCommand(
 
     override val responseFlag = ResponseFlag.Defer
 
+    context(dbConnection: DatabaseConnection, mintakaServer: MintakaServer, sessions: SessionPool, service: PlatformService)
     override suspend fun execute(
-        bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: PlatformService,
         publishers: PublisherSet,
         emittedTime: Instant,
     ) = runCatching {
-        val io = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).interact<Effect<Nothing, Unit>> { runtime ->
+        val io = SessionManager.retrieveGameSession(this.sessionId).interact<Effect<Nothing, Unit>> { runtime ->
             val session = runtime.session
             check(session.users.black.id == user.id || session.users.white.id == user.id)
             if (session !is PlayGameSession && session !is MoveStageOpeningSession &&

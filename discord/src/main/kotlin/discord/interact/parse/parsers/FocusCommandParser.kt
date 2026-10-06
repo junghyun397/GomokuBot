@@ -4,6 +4,7 @@ import core.interact.commands.FocusCommand
 import core.interact.commands.FocusDirection
 import core.interact.parse.CommandParser
 import core.session.SessionManager
+import core.session.SessionPool
 import discord.assets.*
 import discord.interact.UserInteractionContext
 import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji
@@ -23,8 +24,9 @@ object FocusCommandParser : CommandParser {
             else -> null
         }
 
+    context(sessions: SessionPool)
     suspend fun parseReaction(context: UserInteractionContext<GenericMessageReactionEvent>): FocusCommand? {
-        val sessionId = SessionManager.findGameSessionId(context.bot.sessions, context.channel.id, context.user.id)
+        val sessionId = SessionManager.findGameSessionId(context.channel.id, context.user.id)
             ?: return null
         val direction = this.matchDirection(context.event.reaction.emoji.asUnicode())
             ?: return null

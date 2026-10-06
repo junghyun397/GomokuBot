@@ -1,9 +1,11 @@
 package discord.interact.parse.parsers
 
+import core.database.DatabaseConnection
 import core.interact.commands.ResponseFlag
 import core.interact.commands.UndoCommand
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.SessionSideParser
+import core.session.SessionPool
 import core.session.entities.PvpGameSession
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.assets.COMMAND_PREFIX
@@ -27,13 +29,15 @@ object UndoCommandParser : SessionSideParser(), ParsableCommand, BuildableComman
         ),
     )
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>) =
-        this.retrieveSession(context.bot, context.channel, context.user).map { (sessionId, session) ->
+        this.retrieveSession(context.channel, context.user).map { (sessionId, session) ->
             UndoCommand(sessionId, if (session is PvpGameSession) ResponseFlag.Defer else ResponseFlag.DeferWindowed)
         }
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>) =
-        this.retrieveSession(context.bot, context.channel, context.user).map { (sessionId, session) ->
+        this.retrieveSession(context.channel, context.user).map { (sessionId, session) ->
             UndoCommand(sessionId, if (session is PvpGameSession) ResponseFlag.Defer else ResponseFlag.DeferWindowed)
         }
 

@@ -6,14 +6,17 @@ import kotlin.time.Clock
 
 object NavigationManager {
 
-    fun addNavigation(pool: SessionPool, messageRef: MessageRef, state: NavigationState) {
+    context(pool: SessionPool)
+    fun addNavigation(messageRef: MessageRef, state: NavigationState) {
         pool.navigates[messageRef] = state
     }
 
-    fun getNavigationState(pool: SessionPool, messageRef: MessageRef): NavigationState? =
+    context(pool: SessionPool)
+    fun getNavigationState(messageRef: MessageRef): NavigationState? =
         pool.navigates[messageRef]?.takeIf { Clock.System.now() <= it.expireDate }
 
-    fun cleanExpiredNavigators(pool: SessionPool): Map<MessageRef, NavigationState> {
+    context(pool: SessionPool)
+    fun cleanExpiredNavigators(): Map<MessageRef, NavigationState> {
         val referenceTime = Clock.System.now()
 
         return pool.navigates

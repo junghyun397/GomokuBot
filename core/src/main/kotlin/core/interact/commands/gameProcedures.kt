@@ -2,16 +2,17 @@ package core.interact.commands
 
 import arrow.core.raise.Effect
 import arrow.core.raise.effect
-import core.BotContext
 import core.assets.Channel
+import core.database.DatabaseConnection
 import core.engine.FocusSolver
 import core.interact.message.*
+import core.session.SessionPool
 import core.session.StatsManager
 import core.session.entities.*
 
+context(service: PlatformService)
 private fun prepareBoardNavigation(
     config: ChannelConfig,
-    service: PlatformService,
     runtime: SessionRuntime<GameSession>,
 ): BoardNavigationState? {
     val session = runtime.session
@@ -27,14 +28,14 @@ private fun prepareBoardNavigation(
     return navigation
 }
 
+context(service: PlatformService)
 fun buildBoardProcedure(
     config: ChannelConfig,
-    service: PlatformService,
     publishers: PublisherSet,
     runtime: SessionRuntime<GameSession>,
 ): Effect<Nothing, Unit> {
     val session = runtime.session
-    val navigation = prepareBoardNavigation(config, service, runtime)
+    val navigation = prepareBoardNavigation(config, runtime)
     val view = session.buildBoardView(config, navigation?.initialFocus)
 
     return effect {
@@ -45,14 +46,14 @@ fun buildBoardProcedure(
     }
 }
 
+context(service: PlatformService)
 fun buildUpdateBoardProcedure(
     config: ChannelConfig,
-    service: PlatformService,
     publishers: PublisherSet,
     runtime: SessionRuntime<GameSession>,
 ): Effect<Nothing, Unit> {
     val session = runtime.session
-    val navigation = prepareBoardNavigation(config, service, runtime)
+    val navigation = prepareBoardNavigation(config, runtime)
     val view = session.buildBoardView(config, navigation?.initialFocus)
     val messageRef = runtime.messageRef ?: return effect { }
 
@@ -63,21 +64,20 @@ fun buildUpdateBoardProcedure(
     }
 }
 
+context(dbConnection: DatabaseConnection, sessions: SessionPool, service: PlatformService)
 fun buildFinishProcedure(
-    bot: BotContext,
-    channel: Channel,
     config: ChannelConfig,
-    service: PlatformService,
+    channel: Channel,
     publishers: PublisherSet?,
     runtime: SessionRuntime<GameSession>,
 ): Effect<Nothing, Unit> {
     val session = runtime.session
-    val invalidateUndo = buildInvalidateUndoProcedure(bot.sessions, config, service, publishers, runtime)
-    val updateBoard = publishers?.let { buildUpdateBoardProcedure(config, service, it, runtime) }
+    val invalidateUndo = buildInvalidateUndoProcedure(config, publishers, runtime)
+    val updateBoard = publishers?.let { buildUpdateBoardProcedure(config, it, runtime) }
 
     return effect {
         invalidateUndo()
-        StatsManager.uploadGameRecord(bot.dbConnection, channel.id, session)
+        StatsManager.uploadGameRecord(channel.id, session)
 
         if (publishers != null) {
             val rating = if (session is EngineGameSession) {

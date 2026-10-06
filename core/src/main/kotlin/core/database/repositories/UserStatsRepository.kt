@@ -21,7 +21,8 @@ import kotlin.time.Clock
 
 object UserStatsRepository {
 
-    suspend fun fetchUserStats(connection: DatabaseConnection, userUid: UserUid): UserStats =
+    context(connection: DatabaseConnection)
+    suspend fun fetchUserStats(userUid: UserUid): UserStats =
         Mono.from(
             connection.jooq
                 .selectFrom(USER_STATS)
@@ -31,7 +32,8 @@ object UserStatsRepository {
             .awaitSingleOrNull()
             ?: UserStats(userUid)
 
-    suspend fun fetchRankings(connection: DatabaseConnection): List<UserStats> =
+    context(connection: DatabaseConnection)
+    suspend fun fetchRankings(): List<UserStats> =
         Flux.from(
             connection.jooq
                 .selectFrom(USER_STATS)
@@ -44,7 +46,8 @@ object UserStatsRepository {
             .collectList()
             .awaitSingle()
 
-    suspend fun fetchRankings(connection: DatabaseConnection, channelUid: ChannelUid): List<UserStats> =
+    context(connection: DatabaseConnection)
+    suspend fun fetchRankings(channelUid: ChannelUid): List<UserStats> =
         Flux.from(
             connection.jooq
                 .selectFrom(GAME_RECORD)
@@ -67,7 +70,8 @@ object UserStatsRepository {
             .map { records -> this.buildUserStats(records).sortedDescending() }
             .awaitSingle()
 
-    suspend fun fetchRankings(connection: DatabaseConnection, userUid: UserUid): List<Pair<UserUid?, UserStats>> =
+    context(connection: DatabaseConnection)
+    suspend fun fetchRankings(userUid: UserUid): List<Pair<UserUid?, UserStats>> =
         Flux.from(
             connection.jooq
                 .selectFrom(GAME_RECORD)
@@ -95,7 +99,7 @@ object UserStatsRepository {
             .let { records ->
                 val userStats = this.buildUserStats(records).map { it.userId to it }
 
-                val aiStats = this.fetchUserStats(connection, userUid).reversed()
+                val aiStats = this.fetchUserStats(userUid).reversed()
 
                 val unionRanking = when (aiStats.isEmpty) {
                     true -> userStats

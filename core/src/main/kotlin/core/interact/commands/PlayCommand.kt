@@ -1,9 +1,10 @@
 package core.interact.commands
 
 import arrow.core.raise.effect
-import core.BotContext
 import core.assets.Channel
 import core.assets.User
+import core.database.DatabaseConnection
+import core.engine.MintakaServer
 import core.interact.message.AppMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
@@ -11,6 +12,7 @@ import core.interact.reports.writeActionLog
 import core.session.EngineGameManager
 import core.session.PvpGameManager
 import core.session.SessionManager
+import core.session.SessionPool
 import core.session.entities.ChannelConfig
 import core.session.entities.EngineGameSession
 import core.session.entities.PvpGameSession
@@ -27,16 +29,15 @@ class PlayCommand(
 
     override val name = "set"
 
+    context(dbConnection: DatabaseConnection, mintakaServer: MintakaServer, sessions: SessionPool, service: PlatformService)
     override suspend fun execute(
-        bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: PlatformService,
         publishers: PublisherSet,
         emittedTime: Instant,
     ) = runCatching {
-        val io = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).interact { runtime ->
+        val io = SessionManager.retrieveGameSession(this.sessionId).interact { runtime ->
             val previous = runtime.session
             check(previous.gameResult == null)
             check(previous.player.id == user.id)
@@ -49,12 +50,12 @@ class PlayCommand(
             }
             runtime.session = session
 
-            val invalidateUndo = buildInvalidateUndoProcedure(bot.sessions, config, service, publishers, runtime)
+            val invalidateUndo = buildInvalidateUndoProcedure(config, publishers, runtime)
             val updateGame = if (session.gameResult != null) {
-                SessionManager.finishGameSession(bot.sessions, runtime)
-                buildFinishProcedure(bot, channel, config, service, publishers, runtime)
+                SessionManager.finishGameSession(runtime)
+                buildFinishProcedure(config, channel, publishers, runtime)
             } else {
-                val updateBoard = buildUpdateBoardProcedure(config, service, publishers, runtime)
+                val updateBoard = buildUpdateBoardProcedure(config, publishers, runtime)
 
                 effect {
                     updateBoard()

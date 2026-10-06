@@ -1,8 +1,8 @@
 package discord.interact
 
-import core.BotContext
 import core.assets.Channel
 import core.assets.User
+import core.database.DatabaseConnection
 import core.database.repositories.ChannelProfileRepository
 import core.database.repositories.UserProfileRepository
 import core.session.SessionManager
@@ -14,7 +14,6 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 
 data class UserInteractionContext<out E : Event>(
-    override val bot: BotContext,
     override val shardManager: ShardManager,
     override val discordConfig: DiscordConfig,
     override val event: E,
@@ -27,23 +26,23 @@ data class UserInteractionContext<out E : Event>(
 
     companion object {
 
-        suspend fun <E: Event> fromJDAEvent(bot: BotContext, discordConfig: DiscordConfig, shardManager: ShardManager, event: E, jdaUser: JDAUser, jdaChannel: JDAChannel): UserInteractionContext<E> {
-            val user = UserProfileRepository.retrieveOrInsertUser(bot.dbConnection, DISCORD_PLATFORM_ID, jdaUser.userId()) {
+        context(dbConnection: DatabaseConnection)
+        suspend fun <E: Event> fromJDAEvent(discordConfig: DiscordConfig, shardManager: ShardManager, event: E, jdaUser: JDAUser, jdaChannel: JDAChannel): UserInteractionContext<E> {
+            val user = UserProfileRepository.retrieveOrInsertUser(DISCORD_PLATFORM_ID, jdaUser.userId()) {
                 jdaUser.profile()
             }
 
-            val channel = ChannelProfileRepository.retrieveOrInsertChannel(bot.dbConnection, DISCORD_PLATFORM_ID, jdaChannel.channelId()) {
+            val channel = ChannelProfileRepository.retrieveOrInsertChannel(DISCORD_PLATFORM_ID, jdaChannel.channelId()) {
                 jdaChannel.profile()
             }
 
             return UserInteractionContext(
-                bot = bot,
                 shardManager = shardManager,
                 discordConfig = discordConfig,
                 event = event,
                 user = user,
                 channel = channel,
-                config = SessionManager.retrieveChannelConfig(bot.sessions, channel),
+                config = SessionManager.retrieveChannelConfig(channel),
                 emittedTime = Clock.System.now(),
                 source = event.abbreviation()
             )

@@ -1,9 +1,11 @@
 package discord.interact.parse.parsers
 
+import core.database.DatabaseConnection
 import core.database.entities.GameRecordId
 import core.database.repositories.GameRecordRepository
 import core.interact.commands.Command
 import core.interact.commands.ReplayCommand
+import core.session.SessionPool
 import discord.assets.messageRef
 import discord.interact.UserInteractionContext
 import discord.interact.parse.EmbeddableCommand
@@ -12,6 +14,7 @@ import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionE
 
 object ReplayCommandParser : EmbeddableCommand {
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Command? {
         val (_, recordId, _, validationKey) = when (context.event) {
             is StringSelectInteractionEvent -> context.event.interaction.selectedOptions.first().value
@@ -24,7 +27,7 @@ object ReplayCommandParser : EmbeddableCommand {
 
         val record = recordId
             .toLongOrNull()
-            ?.let { GameRecordRepository.retrieveGameRecord(context.bot.dbConnection, GameRecordId(it)) }
+            ?.let { GameRecordRepository.retrieveGameRecord(GameRecordId(it)) }
             ?: return null
 
         return if (record.users.black.id == context.user.id || record.users.white.id == context.user.id)

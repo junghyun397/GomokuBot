@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.Option
 import arrow.core.raise.effect
 import core.assets.User
+import core.database.DatabaseConnection
 import core.database.repositories.UserProfileRepository
 import core.interact.commands.Command
 import core.interact.commands.StartCommand
@@ -13,6 +14,7 @@ import core.interact.parse.CommandParser
 import core.interact.parse.ParseFailure
 import core.interact.parse.asParseFailure
 import core.session.SessionManager
+import core.session.SessionPool
 import core.session.entities.GameSession
 import core.session.entities.RequestSession
 import core.session.entities.Rule
@@ -54,20 +56,23 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             else -> Rule.RENJU
         }
 
+    context(sessions: SessionPool)
     private fun findRequestSession(context: UserInteractionContext<*>, user: User.Human): RequestSession? {
-        val sessionId = SessionManager.findRequestSessionId(context.bot.sessions, context.channel.id, user.id)
+        val sessionId = SessionManager.findRequestSessionId(context.channel.id, user.id)
             ?: return null
 
-        return SessionManager.retrieveRequestSession(context.bot.sessions, sessionId).snapshot()
+        return SessionManager.retrieveRequestSession(sessionId).snapshot()
     }
 
+    context(sessions: SessionPool)
     private fun findGameSession(context: UserInteractionContext<*>, user: User.Human): GameSession? {
-        val sessionId = SessionManager.findGameSessionId(context.bot.sessions, context.channel.id, user.id)
+        val sessionId = SessionManager.findGameSessionId(context.channel.id, user.id)
             ?: return null
 
-        return SessionManager.retrieveGameSession(context.bot.sessions, sessionId).snapshot()
+        return SessionManager.retrieveGameSession(sessionId).snapshot()
     }
 
+    context(sessions: SessionPool)
     private fun lookupRequestSent(context: UserInteractionContext<*>, requester: User.Human): ParseFailure? =
         this.findRequestSession(context, requester)
             ?.takeIf { it.requester.id == requester.id }
@@ -80,6 +85,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                     }
                 }
 
+    context(sessions: SessionPool)
     private fun lookupRequestParticipant(context: UserInteractionContext<*>, requester: User.Human): ParseFailure? =
         this.findRequestSession(context, requester)
             ?.let { session ->
@@ -91,6 +97,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                     }
                 }
 
+    context(sessions: SessionPool)
     private fun lookupRequestOpponent(context: UserInteractionContext<*>, requester: User.Human, opponent: User.Human): ParseFailure? =
         this.findRequestSession(context, opponent)
             ?.let {
@@ -102,6 +109,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                     }
                 }
 
+    context(sessions: SessionPool)
     private fun lookupExistingGameSession(context: UserInteractionContext<*>, user: User.Human): ParseFailure? =
         this.findGameSession(context, user)
             ?.let {
@@ -113,6 +121,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                 }
             }
 
+    context(sessions: SessionPool)
     private fun lookupOpponentGameSession(context: UserInteractionContext<*>, user: User.Human, opponent: User.Human): ParseFailure? =
         this.findGameSession(context, opponent)
             ?.let {
@@ -124,6 +133,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                     }
                 }
 
+    context(sessions: SessionPool)
     private fun parseActually(context: UserInteractionContext<*>, requester: User.Human, opponent: User.Human?, rule: Rule): Either<ParseFailure, Command> {
         this.lookupExistingGameSession(context, requester)?.let { failure ->
             return Either.Left(failure)
@@ -157,11 +167,12 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
         )
     }
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<ParseFailure, Command> {
         val requester = context.user
         val jdaUser = context.event.getOption(context.config.language.container.startCommandOptionOpponent)?.asUser
         val opponent = if (jdaUser != null && !jdaUser.isBot)
-            UserProfileRepository.retrieveOrInsertUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, jdaUser.userId()) {
+            UserProfileRepository.retrieveOrInsertUser(DISCORD_PLATFORM_ID, jdaUser.userId()) {
                 jdaUser.profile()
             }
         else
@@ -175,13 +186,14 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
         return this.parseActually(context, requester, opponent, rule)
     }
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<ParseFailure, Command> {
         val requester = context.user
         val opponent = context.event.message.mentions.members
             .firstOrNull { !it.user.isBot && it.idLong != requester.givenId.idLong }
             ?.user
             ?.let {
-                UserProfileRepository.retrieveOrInsertUser(context.bot.dbConnection, DISCORD_PLATFORM_ID, it.userId()) {
+                UserProfileRepository.retrieveOrInsertUser(DISCORD_PLATFORM_ID, it.userId()) {
                     it.profile()
                 }
             }

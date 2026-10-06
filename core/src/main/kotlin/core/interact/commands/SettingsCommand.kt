@@ -2,14 +2,16 @@ package core.interact.commands
 
 import arrow.core.raise.effect
 import core.BotConfig
-import core.BotContext
 import core.assets.Channel
 import core.assets.User
+import core.database.DatabaseConnection
+import core.engine.MintakaServer
 import core.interact.message.AppMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeActionLog
 import core.session.NavigationManager
+import core.session.SessionPool
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
@@ -22,12 +24,11 @@ class SettingsCommand : Command {
 
     override val responseFlag = ResponseFlag.Immediately
 
+    context(dbConnection: DatabaseConnection, mintakaServer: MintakaServer, sessions: SessionPool, service: PlatformService)
     override suspend fun execute(
-        bot: BotContext,
         config: ChannelConfig,
         channel: Channel,
         user: User.Human,
-        service: PlatformService,
         publishers: PublisherSet,
         emittedTime: Instant,
     ) = runCatching {
@@ -37,7 +38,6 @@ class SettingsCommand : Command {
 
             if (message != null) {
                 NavigationManager.addNavigation(
-                    bot.sessions,
                     message.ref,
                     PageNavigationState(
                         NavigationKind.SETTINGS,

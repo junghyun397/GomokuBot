@@ -1,10 +1,12 @@
 package discord.interact.parse.parsers
 
+import core.database.DatabaseConnection
 import core.interact.commands.Command
 import core.interact.commands.OpeningBranchingCommand
 import core.interact.commands.OpeningDeclareCommand
 import core.interact.commands.OpeningSwapCommand
 import core.session.SessionManager
+import core.session.SessionPool
 import core.session.entities.BranchingStageOpeningSession
 import core.session.entities.DeclareStageOpeningSession
 import core.session.entities.SwapStageOpeningSession
@@ -15,10 +17,11 @@ import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionE
 
 object OpeningCommandParser : EmbeddableCommand {
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>): Command? {
-        val sessionId = SessionManager.findGameSessionId(context.bot.sessions, context.channel.id, context.user.id)
+        val sessionId = SessionManager.findGameSessionId(context.channel.id, context.user.id)
             ?: return null
-        val session = SessionManager.retrieveGameSession(context.bot.sessions, sessionId).snapshot()
+        val session = SessionManager.retrieveGameSession(sessionId).snapshot()
 
         if (session.player.id != context.user.id) return null
 

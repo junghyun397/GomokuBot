@@ -1,9 +1,11 @@
 package discord.interact.parse.parsers
 
 import arrow.core.Either
+import core.database.DatabaseConnection
 import core.interact.commands.ReplayListCommand
 import core.interact.i18n.LanguageContainer
 import core.interact.parse.CommandParser
+import core.session.SessionPool
 import dev.minn.jda.ktx.interactions.commands.slash
 import discord.assets.COMMAND_PREFIX
 import discord.assets.messageRef
@@ -29,9 +31,11 @@ object ReplayListCommandParser : CommandParser, ParsableCommand, BuildableComman
         ),
     )
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>) =
         Either.Right(ReplayListCommand(null))
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>) =
         Either.Right(ReplayListCommand(null))
 
@@ -43,6 +47,7 @@ object ReplayListCommandParser : CommandParser, ParsableCommand, BuildableComman
             )
         }
 
+    context(dbConnection: DatabaseConnection, sessions: SessionPool)
     override suspend fun parseComponent(context: UserInteractionContext<GenericComponentInteractionCreateEvent>) = runCatching {
         if (context.event.componentId.split("-")[1] == context.user.id.validationKey)
             ReplayListCommand(context.event.message.messageRef())

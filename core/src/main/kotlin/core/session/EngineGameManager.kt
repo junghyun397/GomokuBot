@@ -30,7 +30,8 @@ object EngineGameManager {
         return if (Random.nextDouble() < secondClosestProbability) secondClosest else closest
     }
 
-    suspend fun create(mintakaServer: MintakaServer, user: User.Human, userRating: EloRating, level: EngineLevel): EngineGameSession {
+    context(mintakaServer: MintakaServer)
+    suspend fun create(user: User.Human, userRating: EloRating, level: EngineLevel): EngineGameSession {
         val userColor = Color.random()
 
         val users = ColorContainer(User.GomokuBot, User.GomokuBot)
