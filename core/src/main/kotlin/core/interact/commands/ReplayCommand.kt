@@ -7,10 +7,14 @@ import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
 import core.database.entities.GameRecord
+import core.interact.message.AppMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
+import core.interact.message.buildBoardDraw
 import core.interact.reports.writeActionLog
 import core.session.entities.ChannelConfig
+import renju.Board
+import renju.GameState
 import kotlin.time.Instant
 
 class ReplayCommand(
@@ -32,7 +36,9 @@ class ReplayCommand(
         emittedTime: Instant,
     ) = runCatching {
         val io: Effect<Nothing, Unit> = effect {
-            service.buildReplay(publishers.edit(messageRef), config.language.container, this@ReplayCommand.record)
+            val record = this@ReplayCommand.record
+            val state = GameState(Board.fromHistory(record.history), record.history)
+            publishers.edit(this@ReplayCommand.messageRef)(AppMessage.Replay(record.buildBoardDraw(state)))
                 .launch()()
         }
 

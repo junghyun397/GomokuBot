@@ -3,108 +3,94 @@ package core.interact.commands
 import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import core.BotContext
+import core.assets.Channel
 import core.engine.FocusSolver
-import core.interact.message.MessagePublisher
-import core.interact.message.PlatformService
-import core.interact.message.SentMessage
-import core.interact.message.buildBoardDraw
-import core.session.MessageManager
-import core.session.SessionManager
+import core.interact.message.*
+import core.session.StatsManager
 import core.session.entities.*
-import utils.replaceIf
 
-fun buildAppendGameMessageProcedure(
-    message: SentMessage?,
-    bot: BotContext,
-    session: GameSession
-): Effect<Nothing, Unit> = effect {
-    if (message != null) {
-        MessageManager.appendMessage(bot.sessions, session.messageBufferKey, message.ref)
-    }
-}
-
-fun buildNextMoveProcedure(
-    bot: BotContext,
+private fun prepareBoardNavigation(
     config: ChannelConfig,
     service: PlatformService,
-    publisher: MessagePublisher,
-    session: GameSession,
-    cleanupMessages: MessageBufferKey,
-): Effect<Nothing, Unit> = effect {
-    buildBoardProcedure(bot, config, service, publisher, session)()
-    buildSwapProcedure(bot, service, config, cleanupMessages)()
+    runtime: SessionRuntime<GameSession>,
+): BoardNavigationState? {
+    val session = runtime.session
+    val navigation = if (session.gameResult == null) {
+        val focus = when (config.focusType) {
+            FocusType.INTELLIGENCE -> FocusSolver.resolveFocus(session.state, service.focusWidth, config.hintType == HintType.FIVE)
+            FocusType.CENTER -> FocusSolver.resolveCenter(session.state, service.focusRange)
+        }
+        BoardNavigationState(focus)
+    } else null
+
+    runtime.boardNavigation = navigation
+    return navigation
 }
 
 fun buildBoardProcedure(
-    bot: BotContext,
     config: ChannelConfig,
     service: PlatformService,
-    publisher: MessagePublisher,
-    session: GameSession,
+    publishers: PublisherSet,
+    runtime: SessionRuntime<GameSession>,
 ): Effect<Nothing, Unit> {
-    val focusInfo = when (config.focusType) {
-        FocusType.INTELLIGENCE -> FocusSolver.resolveFocus(session.state, service.focusWidth, config.hintType == HintType.FIVE)
-        FocusType.CENTER -> FocusSolver.resolveCenter(session.state, service.focusRange)
-    }
+    val session = runtime.session
+    val navigation = prepareBoardNavigation(config, service, runtime)
+    val view = session.buildBoardView(config, navigation?.initialFocus)
 
     return effect {
-        val message = service.buildBoard(
-            publisher, config.language.container, config.boardStyle.renderer, config.markType,
-            session.buildBoardDraw(), session
-        )
-            .replaceIf(session.state.board.winner() == null) { io -> io.addComponents(
-                when (session) {
-                    is SwapStageOpeningSession -> service.buildSwapButtons(config.language.container)
-                    is BranchingStageOpeningSession -> service.buildBranchingButtons(config.language.container)
-                    is DeclareStageOpeningSession -> service.buildDeclareButtons(config.language.container, session)
-                    else -> service.buildFocusedButtons(service.generateFocusedField(session, focusInfo))
-                }
-            ) }
-            .retrieve()()
-
-        if (message != null && config.swapType == SwapType.EDIT) {
-            MessageManager.addNavigation(bot.sessions, message.ref, BoardNavigationState(focusInfo.focus.idx, focusInfo, session.expireDate))
-            MessageManager.appendMessageHead(bot.sessions, session.messageBufferKey, message.ref)
-            service.attachInputFieldNavigators(message) {
-                runCatching {
-                    val currentSession = SessionManager.retrieveGameSession(bot.sessions, session.id).snapshot()
-                    currentSession.state.history.size != session.state.history.size
-                }.getOrElse { true }
-            }()
-        }
+        val publicationId = runtime.reserveMessagePublication()
+        val message = publishers.plain(AppMessage.Board(view)).retrieve()() ?: return@effect
+        if (runtime.recordPublishedMessage(publicationId, message.ref))
+            service.attachInputFieldNavigators(message)()
     }
 }
 
-private fun buildSwapProcedure(
-    bot: BotContext,
-    service: PlatformService,
+fun buildUpdateBoardProcedure(
     config: ChannelConfig,
-    cleanupMessages: MessageBufferKey,
-): Effect<Nothing, Unit> = effect { when (config.swapType) {
-    SwapType.RELAY -> service.bulkDelete(MessageManager.checkoutMessages(bot.sessions, cleanupMessages).orEmpty())
-    SwapType.ARCHIVE -> {
-        MessageManager.viewHeadMessage(bot.sessions, cleanupMessages)
-            ?.let { service.reduceComponents(it, reduceReactions = false, reduceComponents = true) }
+    service: PlatformService,
+    publishers: PublisherSet,
+    runtime: SessionRuntime<GameSession>,
+): Effect<Nothing, Unit> {
+    val session = runtime.session
+    val navigation = prepareBoardNavigation(config, service, runtime)
+    val view = session.buildBoardView(config, navigation?.initialFocus)
+    val messageRef = runtime.messageRef ?: return effect { }
+
+    return effect {
+        val message = publishers.edit(messageRef)(AppMessage.Board(view)).retrieve()()
+        if (message != null && session.gameResult != null)
+            service.reduceComponents(messageRef, reduceReactions = true, reduceComponents = true)
     }
-    SwapType.EDIT -> Unit
-} }
+}
 
 fun buildFinishProcedure(
     bot: BotContext,
-    service: PlatformService,
-    publisher: MessagePublisher,
+    channel: Channel,
     config: ChannelConfig,
-    session: GameSession,
-    cleanupMessages: MessageBufferKey,
-): Effect<Nothing, Unit> = effect {
-    val message = service.buildBoard(
-        publisher, config.language.container, config.boardStyle.renderer, config.markType,
-        session.buildBoardDraw(), session
-    )
-        .retrieve()()
+    service: PlatformService,
+    publishers: PublisherSet?,
+    runtime: SessionRuntime<GameSession>,
+): Effect<Nothing, Unit> {
+    val session = runtime.session
+    val invalidateUndo = buildInvalidateUndoProcedure(bot.sessions, config, service, publishers, runtime)
+    val updateBoard = publishers?.let { buildUpdateBoardProcedure(config, service, it, runtime) }
 
-    buildSwapProcedure(bot, service, config, cleanupMessages)()
+    return effect {
+        invalidateUndo()
+        StatsManager.uploadGameRecord(bot.dbConnection, channel.id, session)
 
-    if (message != null && session.gameResult != null && config.swapType == SwapType.EDIT)
-        service.reduceComponents(message.ref, reduceReactions = true, reduceComponents = true)
+        if (publishers != null) {
+            val rating = if (session is EngineGameSession) {
+                val delta = session.ratingDelta!!
+                session.userRating + delta to delta
+            } else null
+
+            val result = ResultDraw(session.users, session.state.board.playerColor, session.gameResult!!, rating)
+            publishers.plain(gameFinishedMessage(config.language.container, service, result)).launch()()
+            updateBoard!!()
+            if (session.state.history.size >= 20 && config.archivePolicy != ArchivePolicy.PRIVACY) {
+                service.archive(AppMessage.BoardArchive(session.buildBoardDraw(config.archivePolicy == ArchivePolicy.BY_ANONYMOUS)))
+            }
+        }
+    }
 }

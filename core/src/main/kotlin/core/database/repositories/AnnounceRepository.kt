@@ -49,7 +49,7 @@ object AnnounceRepository {
             .entries
             .associate { (languageCode, rawContent) ->
                 val language = Language.entries
-                    .find { it.container.languageCode() == languageCode.uppercase() }
+                    .find { it.container.languageCode == languageCode.uppercase() }
                     ?: Language.ENG
 
                 val announce = Announce(

@@ -1,36 +1,35 @@
 package discord.interact.message
 
-import core.interact.message.MessagePayload
-import dev.minn.jda.ktx.messages.MessageCreate
-import dev.minn.jda.ktx.messages.MessageEdit
 import net.dv8tion.jda.api.components.MessageTopLevelComponent
-import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageEmbed
-import net.dv8tion.jda.api.utils.AttachedFile
+import net.dv8tion.jda.api.utils.FileUpload
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
+import net.dv8tion.jda.api.utils.messages.MessageEditBuilder
 import net.dv8tion.jda.api.utils.messages.MessageEditData
-import core.interact.message.PlatformMessage as CoreMessage
 
 data class DiscordMessageData(
     val content: String = "",
     val embeds: List<MessageEmbed> = emptyList(),
-    val files: List<AttachedFile> = emptyList(),
+    val files: List<FileUpload> = emptyList(),
     val components: List<MessageTopLevelComponent> = emptyList(),
-    val tts: Boolean = false,
-    val original: Message? = null
-) : MessagePayload {
+) {
 
-    constructor(content: String = "", embed: MessageEmbed): this(content, embeds = listOf(embed))
+    constructor(embed: MessageEmbed) : this(embeds = listOf(embed))
 
-    fun buildCreate(): MessageCreateData = MessageCreate(this.content, this.embeds, components = this.components, tts = this.tts)
+    fun buildCreate(): MessageCreateData = MessageCreateBuilder()
+        .setContent(this.content)
+        .setEmbeds(this.embeds)
+        .setComponents(this.components)
+        .setFiles(this.files)
+        .build()
 
-    fun buildEdit(): MessageEditData = MessageEdit(this.content, this.embeds, components = this.components, files = this.files)
+    fun buildEdit(): MessageEditData = MessageEditBuilder()
+        .setReplace(true)
+        .setContent(this.content)
+        .setEmbeds(this.embeds)
+        .setComponents(this.components)
+        .setAttachments(this.files)
+        .build()
 
 }
-
-fun MessagePayload.asDiscordMessageData(): DiscordMessageData =
-    when (this) {
-        is CoreMessage -> DiscordMessageData(this.content)
-        is DiscordMessageData -> this
-        else -> error("Unsupported Discord message payload: ${this.javaClass.name}")
-    }

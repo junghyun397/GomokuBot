@@ -28,7 +28,7 @@ sealed interface Command {
 
     companion object {
 
-        const val COMMAND_REVISION: Int = 2
+        const val COMMAND_REVISION: Int = 10
 
     }
 

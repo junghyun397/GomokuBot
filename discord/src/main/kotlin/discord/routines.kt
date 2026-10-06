@@ -7,7 +7,6 @@ import core.interact.commands.ExpireRequestCommand
 import core.interact.commands.InternalCommand
 import core.interact.message.MonoPublisherSet
 import core.interact.reports.RoutineActionLog
-import core.session.MessageManager
 import core.session.SessionManager
 import discord.assets.JDAChannel
 import discord.assets.subChannelById
@@ -16,7 +15,7 @@ import discord.interact.TaskContext
 import discord.interact.message.DiscordPlatformService
 import discord.interact.message.MessageCreateAdaptor
 import discord.interact.message.MessageEditAdaptor
-import discord.interact.message.asDiscordMessageData
+import discord.interact.message.discordPublisher
 import kotlinx.coroutines.flow.Flow
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.sharding.ShardManager
@@ -39,8 +38,8 @@ private suspend fun executeCommand(
         channel = taskContext.channel,
         service = DiscordPlatformService(shardManager, discordConfig, jdaChannel),
         publisher = channel?.let { MonoPublisherSet(
-            publisher = { msg -> MessageCreateAdaptor(channel.sendMessage(msg.asDiscordMessageData().buildCreate())) },
-            editGlobal = { ref -> { msg -> MessageEditAdaptor(channel.editMessageById(ref.id.idLong, msg.asDiscordMessageData().buildEdit())) } }
+            publisher = discordPublisher { msg -> MessageCreateAdaptor(channel.sendMessage(msg.buildCreate())) },
+            editGlobal = { ref -> discordPublisher { msg -> MessageEditAdaptor(channel.editMessageById(ref.id.idLong, msg.buildEdit())) } }
         ) },
         emittedTime = taskContext.emittedTime,
     )
@@ -54,7 +53,7 @@ fun scheduleGameExpiration(bot: BotContext, discordConfig: DiscordConfig, shardM
             val config = SessionManager.retrieveChannelConfig(bot.sessions, channel)
             val context = TaskContext(bot, channel, config, Clock.System.now(), "SCH")
 
-            val message = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
+            val message = session.messageRef
 
             val channel = shardManager.getGuildById(channel.givenId.idLong)
             val subChannel = message?.let { channel?.subChannelById(it.subChannelId.idLong) }
@@ -73,15 +72,12 @@ fun scheduleRequestExpiration(bot: BotContext, discordConfig: DiscordConfig, sha
             val config = SessionManager.retrieveChannelConfig(bot.sessions, channel)
             val context = TaskContext(bot, channel, config, Clock.System.now(), "SCH")
 
-            val message = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
+            val message = session.messageRef
 
             val channel = shardManager.getGuildById(channel.givenId.idLong)
             val subChannel = message?.let { channel?.subChannelById(it.subChannelId.idLong) }
 
-            val command = ExpireRequestCommand(
-                session = session,
-                messageAvailable = message != null
-            )
+            val command = ExpireRequestCommand(session)
 
             val results = executeCommand(context, bot, shardManager, discordConfig, command, channel, subChannel)
 

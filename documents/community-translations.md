@@ -7,7 +7,7 @@
 - [X] LanguageContainer
 - [ ] about-renju
 
-Translated by ``kawaii-cirno``.
+Translated by `kawaii-cirno`.
 
 ## Japanese
 - [X] LanguageContainer
@@ -19,4 +19,4 @@ Translated by ChatGPT.
 - [X] LanguageContainer
 - [ ] about-renju
 
-Translated by ``Dongvan Technologies``.
+Translated by `Dongvan Technologies`.

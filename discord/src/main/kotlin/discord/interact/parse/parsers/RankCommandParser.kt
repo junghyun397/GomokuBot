@@ -7,7 +7,7 @@ import core.interact.commands.Command
 import core.interact.commands.RankCommand
 import core.interact.commands.RankScope
 import core.interact.i18n.LanguageContainer
-import core.interact.message.PlatformMessage
+import core.interact.message.AppMessage
 import core.interact.parse.CommandParser
 import core.interact.parse.ParseFailure
 import core.interact.parse.asParseFailure
@@ -28,20 +28,20 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
     override val name = "rank"
 
-    override fun getLocalizedName(container: LanguageContainer) = container.rankCommand()
+    override fun getLocalizedName(container: LanguageContainer) = container.rankCommand
 
     override fun getLocalizedUsages(container: LanguageContainer) = listOf(
         BuildableCommand.Usage(
-            usage = "``/${container.rankCommand()} ${container.rankCommandSubGlobal()}`` or ``$COMMAND_PREFIX${container.rankCommand()}``",
-            description = container.commandUsageRankGlobal()
+            usage = "`/${container.rankCommand} ${container.rankCommandSubGlobal}` or `$COMMAND_PREFIX${container.rankCommand}`",
+            description = container.commandUsageRankGlobal
         ),
         BuildableCommand.Usage(
-            usage = "``/${container.rankCommand()} ${container.rankCommandSubServer()}`` or ``$COMMAND_PREFIX${container.rankCommand()} ${container.rankCommandSubServer()}``",
-            description = container.commandUsageRankServer()
+            usage = "`/${container.rankCommand} ${container.rankCommandSubServer}` or `$COMMAND_PREFIX${container.rankCommand} ${container.rankCommandSubServer}`",
+            description = container.commandUsageRankServer
         ),
         BuildableCommand.Usage(
-            usage = "``/${container.rankCommand()} ${container.rankCommandSubUser()} @mention`` or ``$COMMAND_PREFIX${container.rankCommand()} ${container.rankCommandSubUser()} @mention``",
-            description = container.commandUsageRankUser()
+            usage = "`/${container.rankCommand} ${container.rankCommandSubUser} @mention` or `$COMMAND_PREFIX${container.rankCommand} ${container.rankCommandSubUser} @mention`",
+            description = container.commandUsageRankUser
         ),
     )
 
@@ -53,7 +53,7 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             ?.let { Either.Right(RankCommand(RankScope.User(it))) }
             ?: Either.Left(this.asParseFailure("target user not found", context.channel, context.user) { messagingService, publisher, container ->
                     effect {
-                        messagingService.buildMessage(publisher, PlatformMessage(container.rankErrorNotFound()))
+                        publisher(AppMessage.Text(container.rankErrorNotFound))
                             .launch()()
                     }
                 })
@@ -61,10 +61,10 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<ParseFailure, Command> =
         when (context.event.subcommandName) {
-            context.config.language.container.rankCommandSubServer() ->
+            context.config.language.container.rankCommandSubServer ->
                 Either.Right(RankCommand(RankScope.Channel(context.channel)))
-            context.config.language.container.rankCommandSubUser() ->
-                context.event.getOption(context.config.language.container.rankCommandOptionPlayer())
+            context.config.language.container.rankCommandSubUser ->
+                context.event.getOption(context.config.language.container.rankCommandOptionPlayer)
                     ?.asUser
                     .let { this.parseUserRank(context, it) }
             else -> Either.Right(RankCommand(RankScope.Global))
@@ -72,9 +72,9 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
     override suspend fun parseText(context: UserInteractionContext<MessageReceivedEvent>, payload: List<String>): Either<ParseFailure, Command> =
         when (payload.getOrNull(1)) {
-            context.config.language.container.rankCommandSubServer() ->
+            context.config.language.container.rankCommandSubServer ->
                 Either.Right(RankCommand(RankScope.Channel(context.channel)))
-            context.config.language.container.rankCommandSubUser() ->
+            context.config.language.container.rankCommandSubUser ->
                 context.event.message.mentions.members.firstOrNull()
                     ?.user
                     .let { this.parseUserRank(context, it) }
@@ -83,15 +83,15 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.slash(
-            container.rankCommand(),
-            container.rankCommandDescription()
+            container.rankCommand,
+            container.rankCommandDescription
         ) {
-            subcommand(container.rankCommandSubGlobal(), container.rankCommandSubGlobalDescription())
-            subcommand(container.rankCommandSubServer(), container.rankCommandSubServerDescription())
-            subcommand(container.rankCommandSubUser(), container.rankCommandSubUserDescription()) {
+            subcommand(container.rankCommandSubGlobal, container.rankCommandSubGlobalDescription)
+            subcommand(container.rankCommandSubServer, container.rankCommandSubServerDescription)
+            subcommand(container.rankCommandSubUser, container.rankCommandSubUserDescription) {
                 option<net.dv8tion.jda.api.entities.User>(
-                    container.rankCommandOptionPlayer(),
-                    container.rankCommandOptionPlayerDescription(),
+                    container.rankCommandOptionPlayer,
+                    container.rankCommandOptionPlayerDescription,
                     required = true
                 )
             }

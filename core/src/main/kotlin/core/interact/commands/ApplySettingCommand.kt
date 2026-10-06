@@ -5,7 +5,7 @@ import core.BotContext
 import core.assets.Channel
 import core.assets.User
 import core.interact.i18n.Language
-import core.interact.message.PlatformMessage
+import core.interact.message.AppMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.message.SettingMapping
@@ -38,10 +38,8 @@ class ApplySettingCommand(
         val (localKind, localChoice) = SettingMapping.buildKindNamePair(config.language.container, this.diff)
 
         val io = effect {
-            service.buildMessage(
-                publishers.windowed,
-                PlatformMessage(config.language.container.settingApplied(service.formatHighlight(localKind), service.formatHighlight(localChoice)))
-            )
+            val notice = config.language.container.settingApplied(service.formatHighlight(localKind), service.formatHighlight(localChoice))
+            publishers.windowed(AppMessage.Text(notice))
                 .launch()()
         }
 

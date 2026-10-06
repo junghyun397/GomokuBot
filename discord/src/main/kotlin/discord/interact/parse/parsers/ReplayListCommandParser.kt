@@ -20,12 +20,12 @@ object ReplayListCommandParser : CommandParser, ParsableCommand, BuildableComman
 
     override val name = "replay-list"
 
-    override fun getLocalizedName(container: LanguageContainer) = container.replayCommand()
+    override fun getLocalizedName(container: LanguageContainer) = container.replayCommand
 
     override fun getLocalizedUsages(container: LanguageContainer) = listOf(
         BuildableCommand.Usage(
-            usage = "``/${container.replayCommand()}`` or ``$COMMAND_PREFIX${container.replayCommand()}``",
-            description = container.commandUsageReplay()
+            usage = "`/${container.replayCommand}` or `$COMMAND_PREFIX${container.replayCommand}`",
+            description = container.commandUsageReplay
         ),
     )
 
@@ -38,8 +38,8 @@ object ReplayListCommandParser : CommandParser, ParsableCommand, BuildableComman
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.apply {
             slash(
-                container.replayCommand(),
-                container.replayCommandDescription()
+                container.replayCommand,
+                container.replayCommandDescription
             )
         }
 

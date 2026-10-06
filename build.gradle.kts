@@ -4,14 +4,14 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 plugins {
     application
     idea
-    kotlin("jvm") version "2.3.10"
+    kotlin("jvm") version "2.4.20"
     // id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
-    kotlin("plugin.serialization") version "2.3.10"
+    kotlin("plugin.serialization") version "2.4.20"
 }
 
 allprojects {
     group = "do1phin"
-    version = "3.0-SNAPSHOT"
+    version = "4.0-SNAPSHOT"
 
     repositories {
         mavenCentral()
@@ -21,16 +21,16 @@ allprojects {
 
     tasks.withType<KotlinJvmCompile> {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_25)
+            jvmTarget.set(JvmTarget.JVM_26)
         }
     }
 
     pluginManager.withPlugin("java") {
-        extensions.getByType(JavaPluginExtension::class.java).toolchain.languageVersion.set(JavaLanguageVersion.of(25))
+        extensions.getByType(JavaPluginExtension::class.java).toolchain.languageVersion.set(JavaLanguageVersion.of(26))
     }
 
     tasks.withType<JavaCompile>().configureEach {
-        options.release.set(25)
+        options.release.set(26)
     }
 
     tasks.withType<Test>().configureEach {
@@ -51,17 +51,17 @@ subprojects {
     dependencies {
         implementation(kotlin("stdlib"))
 
-        implementation("io.arrow-kt:arrow-core:2.0.1")
+        implementation("io.arrow-kt:arrow-core:2.2.3")
 
-        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.10.2")
-        implementation("io.projectreactor.kotlin:reactor-kotlin-extensions:1.3.0")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.11.0")
+        implementation("io.projectreactor.kotlin:reactor-kotlin-extensions:1.3.2")
 
-        implementation("com.google.guava:guava:33.5.0-jre")
+        implementation("com.google.guava:guava:33.7.2-jre")
 
-        implementation("org.slf4j:slf4j-api:2.0.17")
+        implementation("org.slf4j:slf4j-api:2.0.20")
 
         testImplementation(kotlin("test"))
     }

@@ -17,12 +17,12 @@ object SettingsCommandParser : CommandParser, ParsableCommand, BuildableCommand 
 
     override val name = "settings"
 
-    override fun getLocalizedName(container: LanguageContainer) = container.settingsCommand()
+    override fun getLocalizedName(container: LanguageContainer) = container.settingsCommand
 
     override fun getLocalizedUsages(container: LanguageContainer) = listOf(
         BuildableCommand.Usage(
-            usage = "``/${container.settingsCommand()}`` or ``$COMMAND_PREFIX${container.settingsCommand()}``",
-            description = container.commandUsageSettings()
+            usage = "`/${container.settingsCommand}` or `$COMMAND_PREFIX${container.settingsCommand}`",
+            description = container.commandUsageSettings
         ),
     )
 
@@ -35,8 +35,8 @@ object SettingsCommandParser : CommandParser, ParsableCommand, BuildableCommand 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.apply {
             slash(
-                container.settingsCommand(),
-                container.settingsCommandDescription()
+                container.settingsCommand,
+                container.settingsCommandDescription
             )
         }
 

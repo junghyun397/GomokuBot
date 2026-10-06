@@ -7,6 +7,7 @@ import core.assets.Channel
 import core.assets.User
 import core.database.repositories.GameRecordRepository
 import core.database.repositories.UserRatingRepository
+import core.interact.message.AppMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeActionLog
@@ -36,7 +37,7 @@ class RatingCommand(
         val recentDelta = GameRecordRepository.retrieveRecentDelta(bot.dbConnection, target)
 
         val io: Effect<Nothing, Unit> = effect {
-            service.buildRating(publishers.plain, config.language.container, target, rating, recentDelta)
+            publishers.plain(AppMessage.Rating(target, rating, recentDelta))
                 .launch()()
         }
 

@@ -7,10 +7,12 @@ import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
 import core.interact.i18n.Language
+import core.interact.message.AppMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
+import core.interact.message.announcementMessage
 import core.interact.reports.writeActionLog
-import core.session.MessageManager
+import core.session.NavigationManager
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
@@ -52,22 +54,22 @@ class NavigationCommand(
             return@runCatching CommandResult(effect { }, this.writeActionLog(emittedTime, "navigate ${navigationState.kind} bounded",
                 channel, user))
 
-        MessageManager.addNavigation(bot.sessions, this.messageRef, newState)
+        NavigationManager.addNavigation(bot.sessions, this.messageRef, newState)
 
         val io = effect {
             when (this@NavigationCommand.navigationState.kind) {
                 NavigationKind.ABOUT ->
-                    service.buildPaginatedHelp(publishers.edit(this@NavigationCommand.messageRef), config.language.container, newState.page)
+                    publishers.edit(this@NavigationCommand.messageRef)(AppMessage.Help(config.language.container, newState.page))
                 NavigationKind.SETTINGS ->
-                    service.buildPaginatedSettings(publishers.edit(this@NavigationCommand.messageRef), config, newState.page)
+                    publishers.edit(this@NavigationCommand.messageRef)(AppMessage.Settings(config, newState.page))
                 NavigationKind.ANNOUNCE -> {
                     val announceMap = bot.dbConnection.localCaches.announceCache[newState.page]!!
 
-                    service.buildAnnounce(
-                        publishers.edit(messageRef),
+                    val content = announcementMessage(
                         config.language.container,
-                        announceMap[config.language] ?: announceMap[Language.ENG]!!
+                        announceMap[config.language] ?: announceMap[Language.ENG]!!,
                     )
+                    publishers.edit(this@NavigationCommand.messageRef)(content)
                 }
                 NavigationKind.BOARD -> throw Exception()
             }.launch()()

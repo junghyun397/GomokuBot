@@ -2,19 +2,15 @@ package discord.interact.parse.parsers
 
 import arrow.core.Either
 import arrow.core.flatMap
-import arrow.core.raise.Effect
 import arrow.core.raise.effect
-import core.assets.MessageRef
 import core.assets.User
 import core.assets.forbiddenKindToText
 import core.interact.commands.*
 import core.interact.i18n.LanguageContainer
-import core.interact.message.PlatformMessage
-import core.interact.message.SentMessage
+import core.interact.message.AppMessage
 import core.interact.parse.ParseFailure
 import core.interact.parse.SessionSideParser
 import core.interact.parse.asParseFailure
-import core.session.MessageManager
 import core.session.SessionManager
 import core.session.entities.*
 import dev.minn.jda.ktx.interactions.commands.option
@@ -40,54 +36,35 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
 
     override fun getLocalizedUsages(container: LanguageContainer): List<BuildableCommand.Usage> = emptyList()
 
-    private fun buildAppendMessageProcedure(message: SentMessage?, context: UserInteractionContext<*>, session: GameSession): Effect<Nothing, Unit> =
-        effect {
-            if (message != null) {
-                MessageManager.appendMessage(context.bot.sessions, session.messageBufferKey, message.ref)
-            }
-        }
-
-    private fun buildOrderFailure(context: UserInteractionContext<*>, session: GameSession, player: User): ParseFailure =
+    private fun buildOrderFailure(context: UserInteractionContext<*>, player: User): ParseFailure =
         this.asParseFailure("try move but now $player's turn", context.channel, context.user) { messagingService, publisher, container ->
             effect {
-                val message = messagingService.buildMessage(
-                    publisher,
-                    PlatformMessage(container.processErrorOrder(messagingService.formatUser(player)))
-                ).retrieve()()
-                this@SetCommandParser.buildAppendMessageProcedure(message, context, session)()
+                publisher(AppMessage.Text(container.processErrorOrder(messagingService.formatUser(player)))).retrieve()()
             }
         }
 
-    private fun buildMissMatchFailure(context: UserInteractionContext<*>, session: GameSession): ParseFailure =
+    private fun buildMissMatchFailure(context: UserInteractionContext<*>): ParseFailure =
         this.asParseFailure("try move but argument mismatch", context.channel, context.user) { messagingService, publisher, container ->
             effect {
-                val message = messagingService.buildMessage(publisher, PlatformMessage(container.setErrorIllegalArgument())).retrieve()()
-                this@SetCommandParser.buildAppendMessageProcedure(message, context, session)()
+                publisher(AppMessage.Text(container.setErrorIllegalArgument)).retrieve()()
             }
         }
 
-    private fun buildExistFailure(context: UserInteractionContext<*>, session: GameSession, pos: Pos): ParseFailure =
+    private fun buildExistFailure(context: UserInteractionContext<*>, pos: Pos): ParseFailure =
         this.asParseFailure("make move but already exist", context.channel, context.user) { messagingService, publisher, container ->
             effect {
-                val message = messagingService.buildMessage(
-                    publisher,
-                    PlatformMessage(container.setErrorExist(messagingService.formatHighlight(pos.toString())))
-                ).retrieve()()
-                this@SetCommandParser.buildAppendMessageProcedure(message, context, session)()
+                publisher(AppMessage.Text(container.setErrorExist(messagingService.formatHighlight(pos.toString())))).retrieve()()
             }
         }
 
-    private fun buildForbiddenMoveFailure(context: UserInteractionContext<*>, session: GameSession, pos: Pos, forbiddenKind: ForbiddenKind?): ParseFailure =
+    private fun buildForbiddenMoveFailure(context: UserInteractionContext<*>, pos: Pos, forbiddenKind: ForbiddenKind?): ParseFailure =
         this.asParseFailure("make move but forbidden", context.channel, context.user) { messagingService, publisher, container ->
             effect {
-                val message = messagingService.buildMessage(
-                    publisher,
-                    PlatformMessage(container.setErrorForbidden(
-                        messagingService.formatHighlight(pos.toString()),
-                        messagingService.formatHighlight(forbiddenKindToText(forbiddenKind))
-                    ))
-                ).retrieve()()
-                this@SetCommandParser.buildAppendMessageProcedure(message, context, session)()
+                val notice = container.setErrorForbidden(
+                    messagingService.formatHighlight(pos.toString()),
+                    messagingService.formatHighlight(forbiddenKindToText(forbiddenKind)),
+                )
+                publisher(AppMessage.Text(notice)).retrieve()()
             }
         }
 
@@ -96,32 +73,27 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
             effect { }
         }
 
-    private fun branchCommandBySession(sessionId: SessionId, session: GameSession, pos: Pos, ref: MessageRef?, responseFlag: ResponseFlag): Command? =
+    private fun branchCommandBySession(sessionId: SessionId, session: GameSession, pos: Pos, responseFlag: ResponseFlag): Command? =
         when (session) {
-            is PlayGameSession -> PlayCommand(sessionId, pos, responseFlag, ref)
-            is MoveStageOpeningSession -> OpeningSetCommand(sessionId, pos, responseFlag, ref)
-            is OfferStageOpeningSession -> OpeningOfferCommand(sessionId, pos, responseFlag, ref)
-            is SelectStageOpeningSession -> OpeningSelectCommand(sessionId, pos, responseFlag, ref)
+            is PlayGameSession -> PlayCommand(sessionId, pos, responseFlag)
+            is MoveStageOpeningSession -> OpeningSetCommand(sessionId, pos, responseFlag)
+            is OfferStageOpeningSession -> OpeningOfferCommand(sessionId, pos, responseFlag)
+            is SelectStageOpeningSession -> OpeningSelectCommand(sessionId, pos, responseFlag)
             else -> null
         }
 
     private fun parseRawCommand(context: UserInteractionContext<*>, user: User.Human, rawPosition: String?): Either<ParseFailure, Command> =
         this.retrieveSession(context.bot, context.channel, user).flatMap { (sessionId, session) ->
             if (session.player.id != user.id)
-                return@flatMap Either.Left(this.buildOrderFailure(context, session, session.player))
+                return@flatMap Either.Left(this.buildOrderFailure(context, session.player))
 
             val pos = rawPosition?.let { Pos.fromCartesian(it) }
-                ?: return@flatMap Either.Left(this.buildMissMatchFailure(context, session))
-
-            val ref = when (context.config.swapType) {
-                SwapType.EDIT -> MessageManager.viewHeadMessage(context.bot.sessions, session.messageBufferKey)
-                else -> null
-            }
+                ?: return@flatMap Either.Left(this.buildMissMatchFailure(context))
 
             val failure = when (session.state.board.validateMove(pos)) {
-                MoveError.Exist -> this.buildExistFailure(context, session, pos)
+                MoveError.Exist -> this.buildExistFailure(context, pos)
                 MoveError.Forbidden -> when (session.state.board.playerColor) {
-                    Color.BLACK -> this.buildForbiddenMoveFailure(context, session, pos, session.state.board.forbiddenKind(pos))
+                    Color.BLACK -> this.buildForbiddenMoveFailure(context, pos, session.state.board.forbiddenKind(pos))
                     else -> null
                 }
                 null -> null
@@ -130,19 +102,14 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
             if (failure != null) {
                 Either.Left(failure)
             } else {
-                val responseFlag = when (context.config.swapType) {
-                    SwapType.EDIT -> ResponseFlag.DeferWindowed
-                    else -> ResponseFlag.Defer
-                }
-
-                this.branchCommandBySession(sessionId, session, pos, ref, responseFlag)
+                this.branchCommandBySession(sessionId, session, pos, ResponseFlag.DeferWindowed)
                     ?.let { Either.Right(it) }
                     ?: Either.Left(this.buildSilentFailure(context))
             }
         }
 
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<ParseFailure, Command> {
-        val rawPosition = context.event.getOption(context.config.language.container.setCommandOptionPosition())?.asString
+        val rawPosition = context.event.getOption(context.config.language.container.setCommandOptionPosition)?.asString
 
         return this.parseRawCommand(context, context.user, rawPosition)
     }
@@ -174,15 +141,15 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
             return null
         }
 
-        return this.branchCommandBySession(sessionId, session, pos, null, ResponseFlag.Defer(context.config.swapType == SwapType.EDIT))
+        return this.branchCommandBySession(sessionId, session, pos, ResponseFlag.DeferEdit)
     }
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.slash(
             "s",
-            container.setCommandDescription(),
+            container.setCommandDescription,
         ) {
-            option<String>(container.setCommandOptionPosition(), container.setCommandOptionPositionDescription(),
+            option<String>(container.setCommandOptionPosition, container.setCommandOptionPositionDescription,
                 required = true,
                 autocomplete = false
             )

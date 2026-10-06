@@ -48,7 +48,6 @@ object ChannelConfigRepository {
                 .set(CHANNEL_CONFIG.FOCUS_TYPE, channelConfig.focusType.id)
                 .set(CHANNEL_CONFIG.HINT_TYPE, channelConfig.hintType.id)
                 .set(CHANNEL_CONFIG.MARK_TYPE, channelConfig.markType.id)
-                .set(CHANNEL_CONFIG.SWAP_TYPE, channelConfig.swapType.id)
                 .set(CHANNEL_CONFIG.ARCHIVE_POLICY, channelConfig.archivePolicy.id)
                 .onConflict(CHANNEL_CONFIG.CHANNEL_ID)
                 .doUpdate()
@@ -57,7 +56,6 @@ object ChannelConfigRepository {
                 .set(CHANNEL_CONFIG.FOCUS_TYPE, channelConfig.focusType.id)
                 .set(CHANNEL_CONFIG.HINT_TYPE, channelConfig.hintType.id)
                 .set(CHANNEL_CONFIG.MARK_TYPE, channelConfig.markType.id)
-                .set(CHANNEL_CONFIG.SWAP_TYPE, channelConfig.swapType.id)
                 .set(CHANNEL_CONFIG.ARCHIVE_POLICY, channelConfig.archivePolicy.id)
         )
             .awaitSingle()
@@ -70,7 +68,6 @@ object ChannelConfigRepository {
             focusType = FocusType.entries.find(record.focusType!!),
             hintType = HintType.entries.find(record.hintType!!),
             markType = HistoryRenderType.entries.find(record.markType!!),
-            swapType = SwapType.entries.find(record.swapType!!),
             archivePolicy = ArchivePolicy.entries.find(record.archivePolicy!!),
         )
 

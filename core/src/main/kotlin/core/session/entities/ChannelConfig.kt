@@ -9,6 +9,5 @@ data class ChannelConfig(
     val focusType: FocusType = FocusType.INTELLIGENCE,
     val hintType: HintType = HintType.FIVE,
     val markType: HistoryRenderType = HistoryRenderType.RECENT,
-    val swapType: SwapType = SwapType.EDIT,
     val archivePolicy: ArchivePolicy = ArchivePolicy.BY_ANONYMOUS
 )

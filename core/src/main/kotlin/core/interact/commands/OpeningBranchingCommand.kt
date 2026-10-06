@@ -2,7 +2,6 @@ package core.interact.commands
 
 import core.BotContext
 import core.assets.Channel
-import core.assets.MessageRef
 import core.assets.User
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
@@ -11,19 +10,16 @@ import core.session.SessionManager
 import core.session.entities.BranchingStageOpeningSession
 import core.session.entities.ChannelConfig
 import core.session.entities.SessionId
-import core.session.entities.SwapType
-import utils.tuple
 import kotlin.time.Instant
 
 class OpeningBranchingCommand(
     private val sessionId: SessionId,
     private val takeBranch: Boolean,
-    private val messageRef: MessageRef,
 ) : Command {
 
     override val name = "opening-branching"
 
-    override val responseFlag = ResponseFlag.Immediately
+    override val responseFlag = ResponseFlag.DeferEdit
 
     override suspend fun execute(
         bot: BotContext,
@@ -34,19 +30,12 @@ class OpeningBranchingCommand(
         publishers: PublisherSet,
         emittedTime: Instant,
     ) = runCatching {
-        val (session, messageBufferKey) = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { session ->
-            val branchingSession = session as? BranchingStageOpeningSession ?: throw IllegalStateException()
-            if (branchingSession.player.id != user.id) throw IllegalStateException()
-
-            tuple(branchingSession.branch(this.takeBranch), session.messageBufferKey)
+        val io = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).interact { runtime ->
+            val session = runtime.session as? BranchingStageOpeningSession ?: throw IllegalStateException()
+            check(session.player.id == user.id)
+            runtime.session = session.branch(this.takeBranch)
+            buildUpdateBoardProcedure(config, service, publishers, runtime)
         }
-
-        val boardPublisher = when (config.swapType) {
-            SwapType.EDIT -> publishers.edit(this.messageRef)
-            else -> publishers.plain
-        }
-
-        val io = buildNextMoveProcedure(bot, config, service, boardPublisher, session, messageBufferKey)
 
         CommandResult(io, this.writeActionLog(emittedTime, "has chosen ${this.takeBranch}", channel, user))
     }

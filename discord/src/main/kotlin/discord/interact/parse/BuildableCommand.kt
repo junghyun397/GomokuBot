@@ -8,12 +8,9 @@ val buildableCommands: Set<BuildableCommand> =
     setOf(
         HelpCommandParser, SettingsCommandParser,
         LangCommandParser,
-        StartCommandParser, ResignCommandParser, SetCommandParser, BoardCommandParser,
+        StartCommandParser, ResignCommandParser, SetCommandParser, UndoCommandParser, BoardCommandParser,
         RankCommandParser, ReplayListCommandParser, RatingCommandParser
     )
-
-val engBuildableCommands: Set<BuildableCommand> =
-    buildableCommands - HelpCommandParser
 
 interface BuildableCommand {
 

@@ -16,11 +16,10 @@ import kotlin.time.Duration.Companion.hours
 object PvpGameManager {
 
     fun request(requester: User.Human, recipient: User.Human, rule: Rule): RequestSession {
-        return RequestSession(
+        return RequestSession.Match(
             id = SessionId.issue(),
             requester = requester,
             recipient = recipient,
-            messageBufferKey = MessageBufferKey.issue(),
             rule = rule,
             expireDate = Clock.System.now() + BotConfig.requestExpireAfter
         )
@@ -42,7 +41,6 @@ object PvpGameManager {
                 requester = requester,
                 users = users,
                 state = GameState(Board.fromHistory(history), history),
-                messageBufferKey = MessageBufferKey.issue(),
                 expireService = ExpireService(1.hours),
                 ruleKind = rule,
             )
@@ -75,8 +73,29 @@ object PvpGameManager {
         )
     }
 
-    fun undo(session: PvpGameSession, user: User.Human): PvpGameSession {
-        TODO()
+    fun requestUndo(session: PvpGameSession, requester: User.Human): RequestSession.Undo {
+        check(session.gameResult == null)
+        check(session.state.history.isNotEmpty())
+        val requesterColor = when (requester.id) {
+            session.users.black.id -> Color.BLACK
+            session.users.white.id -> Color.WHITE
+            else -> error("requester is not a participant")
+        }
+
+        return RequestSession.Undo(
+            id = SessionId.issue(),
+            requester = requester,
+            recipient = session.users[!requesterColor],
+            gameSessionId = session.id,
+            expireDate = session.expireDate,
+        )
+    }
+
+    fun undo(session: PvpGameSession): PvpGameSession {
+        check(session.gameResult == null)
+        check(session.state.history.isNotEmpty())
+
+        return session.copy(context = session.context.next(session.state.undo()))
     }
 
     fun resign(session: PvpGameSession, user: User.Human?): PvpGameSession {

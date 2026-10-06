@@ -8,7 +8,6 @@ import core.session.SessionManager
 import core.session.entities.BranchingStageOpeningSession
 import core.session.entities.DeclareStageOpeningSession
 import core.session.entities.SwapStageOpeningSession
-import discord.assets.messageRef
 import discord.interact.UserInteractionContext
 import discord.interact.parse.EmbeddableCommand
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
@@ -34,14 +33,14 @@ object OpeningCommandParser : EmbeddableCommand {
 
                 val doSwap = option[1] == 'y'
 
-                OpeningSwapCommand(sessionId, doSwap, context.event.message.messageRef())
+                OpeningSwapCommand(sessionId, doSwap)
             }
             'b' -> {
                 if (session !is BranchingStageOpeningSession) return null
 
                 val takeBranch = option[1] == 'y'
 
-                OpeningBranchingCommand(sessionId, takeBranch, context.event.message.messageRef())
+                OpeningBranchingCommand(sessionId, takeBranch)
             }
             'd' -> {
                 if (session !is DeclareStageOpeningSession) return null
@@ -49,7 +48,7 @@ object OpeningCommandParser : EmbeddableCommand {
                 option
                     .drop(1)
                     .toIntOrNull()
-                    ?.let { OpeningDeclareCommand(sessionId, it, context.event.message.messageRef()) }
+                    ?.let { OpeningDeclareCommand(sessionId, it) }
             }
             else -> null
         }

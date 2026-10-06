@@ -1,227 +1,212 @@
 package core.interact.i18n
 
 import core.assets.UNICODE_RIGHT
+import core.engine.EngineLevel
 import renju.notation.ColorContainer
 
 open class LanguageENG : LanguageContainer {
 
-    override fun languageCode() = "ENG"
+    override val languageCode = "ENG"
 
-    override fun languageName() = "\uD83C\uDDEC\uD83C\uDDE7 English"
-    override fun languageSuggestion() = "Please use the ``/lang`` ``ENG`` command."
+    override val languageName = "\uD83C\uDDEC\uD83C\uDDE7 English"
+    override val languageSuggestion = "Please use the `/lang` `ENG` command."
 
-    override fun engineLevelAmoeba() = "Amoeba"
-    override fun engineLevelApe() = "Ape"
-    override fun engineLevelBeginner() = "Beginner"
-    override fun aiLevelIntermediate() = "Intermediate"
-    override fun engineLevelAdvanced() = "Advanced"
-    override fun engineLevelExpert() = "Expert"
-    override fun engineLevelGuru() = "Guru"
+    override fun engineLevel(engine: EngineLevel) = when (engine) {
+        EngineLevel.AMOEBA -> "Amoeba"
+        EngineLevel.APE -> "Ape"
+        EngineLevel.BEGINNER -> "Beginner"
+        EngineLevel.MODERATE -> "Moderate"
+        EngineLevel.EXPERT -> "Expert"
+        EngineLevel.GURU -> "Guru"
+        EngineLevel.SAGE -> "Sage"
+    }
 
-    override fun swapSelectYes() = "Yes"
-    override fun swapSelectNo() = "No"
+    override val swapSelectYes = "Yes"
+    override val swapSelectNo = "No"
 
-    override fun branchSelectSwap() = "Swap"
-    override fun branchSelectOffer() = "Offer"
+    override val branchSelectSwap = "Swap"
+    override val branchSelectOffer = "Offer"
 
-    override fun ruleSelectRenju() = "Renju (Default)"
-    override fun ruleSelectTaraguchi10() = "Taraguchi-10"
-    override fun ruleSelectSoosyrv8() = "Soosyrv-8"
+    override val ruleSelectRenju = "Renju (Default)"
+    override val ruleSelectTaraguchi10 = "Taraguchi-10"
+    override val ruleSelectSoosyrv8 = "Soosyrv-8"
 
-    override fun helpCommand() = "help"
-    override fun helpCommandDescription() = "Get help."
-    override fun helpCommandOptionShortcut() = "shortcut"
-    override fun helpCommandOptionShortcutDescription() = "Quickly navigate to the specified help page."
-    override fun helpCommandOptionAnnouncements() = "announcements"
+    override val helpCommand = "help"
+    override val helpCommandDescription = "Get help."
+    override val helpCommandOptionShortcut = "shortcut"
+    override val helpCommandOptionShortcutDescription = "Quickly navigate to the specified help page."
+    override val helpCommandOptionAnnouncements = "announcements"
 
-    override fun settingsCommand() = "settings"
-    override fun settingsCommandDescription() = "Get settings panel."
+    override val settingsCommand = "settings"
+    override val settingsCommandDescription = "Get settings panel."
 
-    override fun helpAboutEmbedTitle() = "GomokuBot / Help"
+    override val helpAboutEmbedTitle = "GomokuBot / Help"
     override fun helpAboutEmbedDescription(platform: String) =
         "Now play **Gomoku** on **$platform**. **GomokuBot** can do it." +
                 " ― GomokuBot is an AI bot that provides Gomoku([Renju](https://www.renju.net/rules/)) feature in $platform."
-    override fun helpAboutEmbedDeveloper() = "Developer"
-    override fun helpAboutEmbedRepository() = "Git Repository"
-    override fun helpAboutEmbedVersion() = "Version"
-    override fun helpAboutEmbedSupport() = "Support Channel"
-    override fun helpAboutEmbedInvite() = "Invite Link"
+    override val helpAboutEmbedDeveloper = "Developer"
+    override val helpAboutEmbedRepository = "Git Repository"
+    override val helpAboutEmbedVersion = "Version"
+    override val helpAboutEmbedSupport = "Support Channel"
+    override val helpAboutEmbedInvite = "Invite Link"
 
-    override fun commandUsageEmbedTitle() = "GomokuBot / Commands"
-    override fun commandUsageHelp() = "Get help."
-    override fun commandUsageSettings() = "Get settings panel."
-    override fun commandUsageRankGlobal() = "Get the overall ranking of GomokuBot from 1st to 10th."
-    override fun commandUsageRankServer() = "Get the internal ranking of this server."
-    override fun commandUsageRankUser() = "Get a ranking of mentioned user's opponents."
-    override fun commandUsageReplay() = "Get a list of recently played game replays."
-    override fun commandUsageRating() = "Get ``GomokuBot ELO`` rating."
+    override val commandUsageEmbedTitle = "GomokuBot / Commands"
+    override val commandUsageHelp = "Get help."
+    override val commandUsageSettings = "Get settings panel."
+    override val commandUsageRankGlobal = "Get the overall ranking of GomokuBot from 1st to 10th."
+    override val commandUsageRankServer = "Get the internal ranking of this server."
+    override val commandUsageRankUser = "Get a ranking of mentioned user's opponents."
+    override val commandUsageReplay = "Get a list of recently played game replays."
+    override val commandUsageRating = "Get `GomokuBot ELO` rating."
 
-    override fun commandUsageLang(langList: String) =
-        "Change the language setting used by this server. Ex) ``/lang`` ``ENG``"
-    override fun commandUsageStyle() =
-        "Change the Gomoku Board style used by this server. Ex) ``/style`` ``A``"
+    override val commandUsageLang =
+        "Change the language setting used by this server. Ex) `/lang` `ENG`"
+    override val commandUsageStyle =
+        "Change the Gomoku Board style used by this server. Ex) `/style` `A`"
 
-    override fun commandUsageStartEngine() = "Start a new game with GomokuBot."
-    override fun commandUsageStartPvp() =
-        "Send a game request to the mentioned user. Ex) ``/start`` ``@user``"
-    override fun commandUsageResign() = "Resign from a game in progress."
+    override val commandUsageStartEngine = "Start a new game with GomokuBot."
+    override val commandUsageStartPvp =
+        "Send a game request to the mentioned user. Ex) `/start` `@user`"
+    override val commandUsageResign = "Resign from a game in progress."
 
-    override fun commandUsageBoard() = "Opens the game currently in progress as a new message."
+    override val commandUsageBoard = "Opens the game currently in progress as a new message."
 
-    override fun replayCommand() = "replay"
-    override fun replayCommandDescription() = "Replay recently played games."
+    override val replayCommand = "replay"
+    override val replayCommandDescription = "Replay recently played games."
 
-    override fun rankCommand() = "rank"
-    override fun rankCommandDescription() = "Get a ranking from 1st to 10th."
-    override fun rankCommandSubGlobal() = "global"
-    override fun rankCommandSubGlobalDescription() = "Get the Gomokubot overall ranking."
-    override fun rankCommandSubServer() = "server"
-    override fun rankCommandSubServerDescription() = "Get internal server ranking."
-    override fun rankCommandSubUser() = "user"
-    override fun rankCommandSubUserDescription() = "Get user-opponents ranking."
-    override fun rankCommandOptionPlayer() = "player"
-    override fun rankCommandOptionPlayerDescription() = "Specific a player to check the opponent ranking."
+    override val rankCommand = "rank"
+    override val rankCommandDescription = "Get a ranking from 1st to 10th."
+    override val rankCommandSubGlobal = "global"
+    override val rankCommandSubGlobalDescription = "Get the Gomokubot overall ranking."
+    override val rankCommandSubServer = "server"
+    override val rankCommandSubServerDescription = "Get internal server ranking."
+    override val rankCommandSubUser = "user"
+    override val rankCommandSubUserDescription = "Get user-opponents ranking."
+    override val rankCommandOptionPlayer = "player"
+    override val rankCommandOptionPlayerDescription = "Specific a player to check the opponent ranking."
 
-    override fun rankErrorNotFound() = "User record not found. Please specify a user who has played GomokuBot PvP."
+    override val rankErrorNotFound = "User record not found. Please specify a user who has played GomokuBot PvP."
 
-    override fun rankEmbedTitle() = "GomokuBot / Ranking"
-    override fun rankEmbedDescription() = "Ranking from 1st to 10th."
-    override fun rankEmbedWin() = "Wins"
-    override fun rankEmbedLose() = "Losses"
-    override fun rankEmbedDraw() = "Draws"
+    override val rankEmbedTitle = "GomokuBot / Ranking"
+    override val rankEmbedDescription = "Ranking from 1st to 10th."
+    override val rankEmbedWin = "Wins"
+    override val rankEmbedLose = "Losses"
+    override val rankEmbedDraw = "Draws"
 
-    override fun ratingCommand() = "rating"
-    override fun ratingCommandDescription() = "Get rating."
-    override fun ratingCommandOptionUser() = "user"
-    override fun ratingCommandOptionUserDescription() = "Specific a user to check the rating."
+    override val ratingCommand = "rating"
+    override val ratingCommandDescription = "Get rating."
+    override val ratingCommandOptionUser = "user"
+    override val ratingCommandOptionUserDescription = "Specific a user to check the rating."
 
-    override fun ratingNoRecord() = "No record found."
+    override val ratingNoRecord = "No record found."
 
-    override fun languageCommand() = "lang"
-    override fun languageCommandDescription() = "Change the language setting used by this server."
-    override fun languageCommandOptionCode() = "language"
-    override fun languageCommandOptionCodeDescription() = "Select a language code."
+    override val languageCommand = "lang"
+    override val languageCommandDescription = "Change the language setting used by this server."
+    override val languageCommandOptionCode = "language"
+    override val languageCommandOptionCodeDescription = "Select a language code."
 
-    override fun languageUpdated() = "Language setting has been changed to English:flag_gb:!"
+    override val languageUpdated = "Language setting has been changed to English:flag_gb:!"
 
-    override fun styleEmbedTitle() = "GomokuBot / Style"
-    override fun styleEmbedDescription() =
-        "Default Gomoku Board style(``Style A``) applied to this server may not display correctly. " +
+    override val styleEmbedTitle = "GomokuBot / Style"
+    override val styleEmbedDescription =
+        "Default Gomoku Board style(`Style A`) applied to this server may not display correctly. " +
                 "Choose one of the four styles you like."
-    override fun styleEmbedSuggestion(styleName: String) = "Enter ``/style`` $styleName to use this style."
+    override fun styleEmbedSuggestion(styleName: String) = "Enter `/style` $styleName to use this style."
 
-    override fun styleErrorNotfound() =
-        "There is an error in the specification style code. Please enter in ``/style`` ``style code`` format."
+    override val styleErrorNotfound =
+        "There is an error in the specification style code. Please enter in `/style` `style code` format."
 
     override fun styleUpdated(styleName: String) =
-        "Style setting has been changed to style ``$styleName``!"
+        "Style setting has been changed to style `$styleName`!"
 
     override fun settingApplied(kind: String, choice: String) = "$kind setting has been changed to $choice."
 
-    override fun style() = "Style"
+    override val style = "Style"
 
-    override fun styleSelectImage() = "Image"
-    override fun styleSelectImageDescription() =
+    override val styleSelectImage = "Image"
+    override val styleSelectImageDescription =
         "Render as an Image. Depending on the status of the platform server, there may be some delays."
 
-    override fun styleSelectText() = "Text"
-    override fun styleSelectTextDescription() = "Render as a Monospaced Text. The fastest."
+    override val styleSelectText = "Text"
+    override val styleSelectTextDescription = "Render as a Monospaced Text. The fastest."
 
-    override fun styleSelectDottedText() = "Solid Text"
-    override fun styleSelectDottedTextDescription() = "Same as Text - but with dots instead of blanks."
+    override val styleSelectDottedText = "Solid Text"
+    override val styleSelectDottedTextDescription = "Same as Text - but with dots instead of blanks."
 
-    override fun focus() = "Focus"
+    override val focus = "Focus"
 
-    override fun focusEmbedTitle() = "GomokuBot / Focus"
-    override fun focusEmbedDescription() =
+    override val focusEmbedTitle = "GomokuBot / Focus"
+    override val focusEmbedDescription =
         "GomokuBot uses a small-sized \"Button Board\" for intuitive input. Please set how the GomokuBot should zoom in on the board."
 
-    override fun focusSelectIntelligence() = "Intelligence"
-    override fun focusSelectIntelligenceDescription() =
+    override val focusSelectIntelligence = "Intelligence"
+    override val focusSelectIntelligenceDescription =
         "The GomokuBot inference engine will focus on the most optimal places."
 
-    override fun focusSelectCenter() = "Center"
-    override fun focusSelectCenterDescription() =
+    override val focusSelectCenter = "Center"
+    override val focusSelectCenterDescription =
         "Always focus on the last move."
 
-    override fun hint() = "Hint"
+    override val hint = "Hint"
 
-    override fun hintEmbedTitle()= "GomokuBot / Hint"
-    override fun hintEmbedDescription() =
+    override val hintEmbedTitle = "GomokuBot / Hint"
+    override val hintEmbedDescription =
         "Gomoku has important moves decide whether lose or not. Please set how GomokuBot emphasizes important moves."
 
-    override fun hintSelectFive() = "Five"
-    override fun hintSelectFiveDescription() = "Highlight the move to create a five-in-a-row."
+    override val hintSelectFive = "Five"
+    override val hintSelectFiveDescription = "Highlight the move to create a five-in-a-row."
 
-    override fun hintSelectOff() = "Off"
-    override fun hintSelectOffDescription() = "Do not highlight any moves."
+    override val hintSelectOff = "Off"
+    override val hintSelectOffDescription = "Do not highlight any moves."
 
-    override fun mark() = "Mark"
+    override val mark = "Mark"
 
-    override fun markEmbedTitle() = "Gomokubot / Mark"
-    override fun markEmbedDescription() =
+    override val markEmbedTitle = "Gomokubot / Mark"
+    override val markEmbedDescription =
         "It's not an easy task to memorize the last move among the many stones. Please set how Gomokubot display your last move. "
 
-    override fun markSelectLast() = "Last Move"
-    override fun markSelectLastDescription() =
+    override val markSelectLast = "Last Move"
+    override val markSelectLastDescription =
         "Draw a small dot where the opponent last moved."
 
-    override fun markSelectRecent() = "Recent Moves"
-    override fun markSelectRecentDescription() =
+    override val markSelectRecent = "Recent Moves"
+    override val markSelectRecentDescription =
         "Draw a small dot where the opponent last moved and thin cross at your last moved."
 
-    override fun markSelectSequence() = "Sequences"
-    override fun markSelectSequenceDescription() =
+    override val markSelectSequence = "Sequences"
+    override val markSelectSequenceDescription =
         "Mark all the stones in the order in which they where moved."
 
-    override fun swap() = "Swap"
+    override val archive = "Archive"
 
-    override fun swapEmbedTitle() = "GomokuBot / Swap"
-    override fun swapEmbedDescription() =
-        "GomokuBot sends very, very many messages. Please set what to do with the message sent by GomokuBot."
-
-    override fun swapSelectRelay() = "Relay"
-    override fun swapSelectRelayDescription() =
-        "When a player makes a new move, clear all previously sent messages."
-
-    override fun swapSelectArchive() = "Archive"
-    override fun swapSelectArchiveDescription() =
-        "Do not delete any messages. Except for the Navigators."
-
-    override fun swapSelectEdit() = "Edit"
-    override fun swapSelectEditDescription() =
-        "Send no more messages, edit the first message sent."
-
-    override fun archive() = "Archive"
-
-    override fun archiveEmbedTitle() = "GomokuBot / Archive"
-    override fun archiveEmbedDescription() =
+    override val archiveEmbedTitle = "GomokuBot / Archive"
+    override val archiveEmbedDescription =
         "GomokuBot archives players' awesome game results to the official channel of GomokuBot. " +
                 "Of course, GomokuBot places predominant on player privacy. Please set how you want to archive the results of the game."
 
-    override fun archiveSelectByAnonymous() = "Anonymous"
-    override fun archiveSelectByAnonymousDescription() =
+    override val archiveSelectByAnonymous = "Anonymous"
+    override val archiveSelectByAnonymousDescription =
         "Share player's game results anonymously."
 
-    override fun archiveSelectWithProfile() = "By Profile"
-    override fun archiveSelectWithProfileDescription() =
+    override val archiveSelectWithProfile = "By Profile"
+    override val archiveSelectWithProfileDescription =
         "Share player's game results with their profile picture and name."
 
-    override fun archiveSelectPrivacy() = "Keep Privacy"
-    override fun archiveSelectPrivacyDescription() =
+    override val archiveSelectPrivacy = "Keep Privacy"
+    override val archiveSelectPrivacyDescription =
         "Don't share player's game results with anyone."
 
-    override fun sessionNotFound(): String =
-        "There is no game in progress. Start a new game with the ``/start`` command."
+    override val sessionNotFound: String =
+        "There is no game in progress. Start a new game with the `/start` command."
 
-    override fun startCommand() = "start"
-    override fun startCommandDescription() = "Start a new game."
-    override fun startCommandOptionOpponent() = "opponent"
-    override fun startCommandOptionOpponentDescription() = "Specific the user to start game with."
-    override fun startCommandOptionRule() = "rule"
-    override fun startCommandOptionRuleDescription() = "Specific the rules for the new game."
+    override val startCommand = "start"
+    override val startCommandDescription = "Start a new game."
+    override val startCommandOptionOpponent = "opponent"
+    override val startCommandOptionOpponentDescription = "Specific the user to start game with."
+    override val startCommandOptionRule = "rule"
+    override val startCommandOptionRuleDescription = "Specific the rules for the new game."
 
-    override fun startErrorSessionAlready() =
+    override val startErrorSessionAlready =
         "There is already a game in progress. Please finish your game in progress first."
     override fun startErrorOpponentSessionAlready(opponent: String) =
         "$opponent is already playing another game. Please wait until $opponent's game is over."
@@ -232,12 +217,12 @@ open class LanguageENG : LanguageContainer {
     override fun startErrorOpponentRequestAlready(opponent: String) =
         "There is one other game request that $opponent has not yet responded to. Please wait until $opponent responds to another game request."
 
-    override fun setCommandDescription() = "Make a move."
-    override fun setCommandOptionPosition() = "position"
-    override fun setCommandOptionPositionDescription() = "coordinate from a1 to o15"
+    override val setCommandDescription = "Make a move."
+    override val setCommandOptionPosition = "position"
+    override val setCommandOptionPositionDescription = "coordinate from a1 to o15"
 
-    override fun setErrorIllegalArgument() =
-        "There is an error in the command format. Please enter in ``/s`` ``position`` format."
+    override val setErrorIllegalArgument =
+        "There is an error in the command format. Please enter in `/s` `position` format."
 
     override fun setErrorExist(move: String) =
         "There is already a stone in $move. Please move to another place."
@@ -245,17 +230,32 @@ open class LanguageENG : LanguageContainer {
     override fun setErrorForbidden(move: String, forbiddenKind: String) =
         "$move is $forbiddenKind forbidden move. Please move to another place."
 
-    override fun resignCommand() = "resign"
-    override fun resignCommandDescription() = "Resigns from a game in progress."
+    override val resignCommand = "resign"
+    override val resignCommandDescription = "Resigns from a game in progress."
 
-    override fun boardCommand() = "board"
-    override fun boardCommandDescription() = "Opens the game currently in progress as a new message."
+    override val undoCommand = "undo"
+    override val undoCommandDescription = "Requests an undo of the last move."
+    override val undoErrorOpening = "Undo is unavailable during openings."
+    override val undoErrorNoMoves = "There is no move to take back yet."
+    override val undoErrorLimit = "You have already used both undos in this game."
+    override fun undoCompleted(remainingUndos: Int) = "Undo used. Undos remaining: $remainingUndos."
+    override val undoPvpCompleted = "The last move has been taken back."
+    override val undoRequestEmbedTitle = "Take back one move?"
+    override fun undoRequestEmbedDescription(requester: String, opponent: String) =
+        "$requester sent an undo request to $opponent. Please respond using the buttons below. Playing the next move cancels this request."
+    override fun undoRequestRejected(requester: String, opponent: String) =
+        "$opponent rejected $requester's undo request."
+    override fun undoRequestExpired(requester: String, opponent: String) =
+        "$requester's undo request to $opponent has expired."
 
-    override fun requestEmbedTitle() = "How about a game of Gomoku?"
+    override val boardCommand = "board"
+    override val boardCommandDescription = "Opens the game currently in progress as a new message."
+
+    override val requestEmbedTitle = "How about a game of Gomoku?"
     override fun requestEmbedDescription(requester: String, opponent: String) =
         "$requester sent a game request to $opponent. Please respond by pressing the button."
-    override fun requestEmbedButtonAccept() = "Accept"
-    override fun requestEmbedButtonReject() = "Reject"
+    override val requestEmbedButtonAccept = "Accept"
+    override val requestEmbedButtonReject = "Reject"
 
     override fun requestRejected(requester: String, opponent: String) =
         "$opponent rejected $requester's game request."
@@ -263,7 +263,7 @@ open class LanguageENG : LanguageContainer {
     override fun requestExpired(requester: String, opponent: String) =
         "Game request that $requester sent to $opponent has expired. If anyone still wants to game with $opponent, please send a new request."
 
-    override fun requestExpiredNewRequest() =
+    override val requestExpiredNewRequest =
         "re-Request"
 
     override fun beginPvp(players: ColorContainer<String>) =
@@ -273,7 +273,7 @@ open class LanguageENG : LanguageContainer {
         "The opening renju game of ${players.black} vs ${players.white} has started. ${players.black} is black. ${players.white} needs to decide whether to swap to black or play as is."
 
     override fun beginEngineBlack(player: String, gomokubot: String) =
-        "The game of $player vs $gomokubot has started. $player is White. GomokuBot made a move at ``h8``. Please make the next move."
+        "The game of $player vs $gomokubot has started. $player is White. GomokuBot made a move at `h8`. Please make the next move."
 
     override fun beginEngineWhite(player: String, gomokubot: String) =
         "The game of $player vs $gomokubot has started. $player is Black. Please make the first move."
@@ -296,66 +296,66 @@ open class LanguageENG : LanguageContainer {
     override fun gameResultResign(winner: String, loser: String) =
         "$winner wins by $loser's resignation."
 
-    override fun gameResultDraw() =
+    override val gameResultDraw =
         "The game ended in a draw because there were no more points to make a move."
 
     override fun gameResultTimeout(winner: String, loser: String) =
         "$winner wins because $loser did not make the next move in time."
 
-    override fun gameResultEngineRating() = "Rating"
+    override val gameResultEngineRating = "Rating"
 
-    override fun gameResultEngineRatingChange() = "Rating Change"
+    override val gameResultEngineRatingChange = "Rating Change"
 
-    override fun boardInProgress() = "In Progress"
-    override fun boardInOpening() = "In Opening"
-    override fun boardFinished() = "Finished"
+    override val boardInProgress = "In Progress"
+    override val boardInOpening = "In Opening"
+    override val boardFinished = "Finished"
 
-    override fun boardMoves() = "Moves"
-    override fun boardLastMove() = "Last Move"
+    override val boardMoves = "Moves"
+    override val boardLastMove = "Last Move"
 
-    override fun boardResult() = "Result"
+    override val boardResult = "Result"
 
     override fun boardWinDescription(winner: String) = "$winner win"
-    override fun boardTieDescription() = "Tie"
+    override val boardTieDescription = "Tie"
 
-    override fun boardCommandGuide() =
-        ":mag: Press the button or use ``/s`` ``position`` command to make the next move."
-    override fun boardSwapGuide() =
+    override val boardCommandGuide =
+        ":mag: Press the button or use `/s` `position` command to make the next move."
+    override val boardSwapGuide =
         ":arrows_counterclockwise: Press the button to select whether to switch between black and white."
     override fun boardStatefulSwapGuide(offerCount: Int) =
-        ":arrows_counterclockwise: Press the button to select whether to switch between black and white. The number of 5th move candidates that the black player should offer is ``$offerCount``."
-    override fun boardBranchGuide() =
+        ":arrows_counterclockwise: Press the button to select whether to switch between black and white. The number of 5th move candidates that the black player should offer is `$offerCount`."
+    override val boardBranchGuide =
         ":paperclips: Press the button to choose whether you want to take the opportunity to swap black and white, or offer 10 possible 5th move candidates to opponent."
-    override fun boardDeclareGuide() =
+    override val boardDeclareGuide =
         ":paperclips: Use the Select menu to choose how many 5th move candidates to pick."
-    override fun boardSelectGuide() =
-        ":dart: Press the button or use ``/s`` ``position`` command to select 5th move."
+    override val boardSelectGuide =
+        ":dart: Press the button or use `/s` `position` command to select 5th move."
     override fun boardOfferGuide(remainingMoves: Int) =
-        ":question: Press the button or use ``/s`` ``position`` command to pick ``$remainingMoves`` candidates for the 5th move."
+        ":question: Press the button or use `/s` `position` command to pick `$remainingMoves` candidates for the 5th move."
 
-    override fun replayEmbedWin() = "Win"
-    override fun replayEmbedLose() = "Lose"
-    override fun replayEmbedDraw() = "Draw"
+    override val replayEmbedWin = "Win"
+    override val replayEmbedLose = "Lose"
+    override val replayEmbedDraw = "Draw"
     override fun replayEmbedMatchInfo(totalMoves: Int) = "total $totalMoves moves."
-    override fun replayEmbedUnableToReplayDescription() = "This is an empty match. The replay is unavailable. Please select another match."
+    override val replayEmbedUnableToReplayDescription = "This is an empty match. The replay is unavailable. Please select another match."
 
     override fun announceWrittenOn(date: String) = "Written on $date."
 
-    override fun somethingWrongEmbedTitle() = "Something Wrong"
+    override val somethingWrongEmbedTitle = "Something Wrong"
 
     override fun permissionNotGrantedEmbedDescription(channelName: String) =
         "GomokuBot dose not has permission to send messages to $channelName! Please check the role and permission settings."
 
-    override fun permissionNotGrantedEmbedFooter() = "this message will be deleted after a minute."
+    override val permissionNotGrantedEmbedFooter = "this message will be deleted after a minute."
 
-    override fun notYetImplementedEmbedDescription() = "This feature is not yet implemented."
+    override val notYetImplementedEmbedDescription = "This feature is not yet implemented."
 
-    override fun notYetImplementedEmbedFooter() =
+    override val notYetImplementedEmbedFooter =
         "Get updates on GomokuBot in the support channel(https://discord.gg/vq8pkfF)."
 
-    override fun exploreAboutRenju() = "Don't know what Renju is? Press $UNICODE_RIGHT to learn about Renju."
+    override val exploreAboutRenju = "Don't know what Renju is? Press $UNICODE_RIGHT to learn about Renju."
 
-    override fun aboutRenjuDocument() = """
+    override val aboutRenjuDocument = """
 ## What is Renju? {#about-renju}
 
 Q. What do you mean, GomokuBot and Renju?
@@ -479,13 +479,13 @@ Here's the good news (only black, unfortunately). Even if the forbidden move is 
 
 Welcome to the much fairer Gomoku! If you've followed this guide far, you know all the basic Renju rules. Now, even if forbidden moves appear, you will be able to unlock that or use other strategies to continue the game without panicking.
 
-Now start a game with your friends with the ``/start @mention`` command. Even if you don't have friends, the GomokuBot AI will always be with you. Don't forget to customize GomokuBot with the ``/setting`` command as well.
+Now start a game with your friends with the `/start @mention` command. Even if you don't have friends, the GomokuBot AI will always be with you. Don't forget to customize GomokuBot with the `/setting` command as well.
 
 In the next chapter, we'll learn how to figure out forbidden moves in very complex situations and how to attack and defend using forbidden moves. These are strategies for Renju, all possible only in Renju. It can be a little difficult for beginners.
 
 ## Like a Forbidden Move, But May Not Be a Forbidden Move. {#pseudo-forbid}
 
-Consider the following situation. Will black be able to move with ``h9``? At first glance, it seems that ``h9`` is a 3-3 forbid made by two stones arranged vertically in column h and two stones arranged horizontally in row 9, and it seems that black should not be able to move with ``i9``.
+Consider the following situation. Will black be able to move with `h9`? At first glance, it seems that `h9` is a 3-3 forbid made by two stones arranged vertically in column h and two stones arranged horizontally in row 9, and it seems that black should not be able to move with `i9`.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/pseudo-forbid-simple.png)
 
@@ -493,37 +493,37 @@ While these situations aren't common(in fact, they're really, very rare in real 
 
 ### Imagine What Happens Next.
 
-In complex situations, a good way to figure out forbidden moves is to move one step at a time. First, let's make move to ``h9``, which is the point that we want to figure out.
+In complex situations, a good way to figure out forbidden moves is to move one step at a time. First, let's make move to `h9`, which is the point that we want to figure out.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/pseudo-forbid-simple-s1.png)
 
-In this situation, column h is blocked by 4-4 forbid and cannot create straight four. Two stones in column h were not three that could make a straight four in a single move. Let's remember the definition of forbidden moves again. If three or four is not valid, then the forbidden move is also invalid. So ``h9`` that can only make one three is not 3-3 forbidden.
+In this situation, column h is blocked by 4-4 forbid and cannot create straight four. Two stones in column h were not three that could make a straight four in a single move. Let's remember the definition of forbidden moves again. If three or four is not valid, then the forbidden move is also invalid. So `h9` that can only make one three is not 3-3 forbidden.
 
 ## It Doesn't Seem Like a Forbidden Move, But It Could Be a Forbidden Move. {#complex-pseudo-forbid}
 
-The ``g10`` looks like 3-3 forbid. But since ``i8`` is also forbid, ``g10`` doesn't seem to be forbid 3-3 forbid. How can we figure out how black can move in ``g10`` in this complex situation?
+The `g10` looks like 3-3 forbid. But since `i8` is also forbid, `g10` doesn't seem to be forbid 3-3 forbid. How can we figure out how black can move in `g10` in this complex situation?
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/pseudo-forbid-complex.png)
 
 ### Imagine a Situation In the Future.
 
-A good way to figure out forbidden moves in a very complex situation is also to move them step by step. Let's make move to ``h9``, the point that we want to figure out.
+A good way to figure out forbidden moves in a very complex situation is also to move them step by step. Let's make move to `h9`, the point that we want to figure out.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/pseudo-forbid-complex-s1.png)
 
-At first glance, ``i8`` seems to be 3-3 forbid where two stones placed vertically in column i and two stones placed horizontally in row 8. So black can't make straight four diagonally, so isn't ``g10`` a forbidden point?
+At first glance, `i8` seems to be 3-3 forbid where two stones placed vertically in column i and two stones placed horizontally in row 8. So black can't make straight four diagonally, so isn't `g10` a forbidden point?
 
-That said, the three stones arranged vertically in a column f seem odd. It's too early to judge. Let's make one more move for ``i8``.
+That said, the three stones arranged vertically in a column f seem odd. It's too early to judge. Let's make one more move for `i8`.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/pseudo-forbid-complex-s2.png)
 
-After making a move on ``i8``, Black is blocked by 4-4 forbid in row 8 and cannot make a straight four. The ``i8`` after making one move in ``g10`` was not 3-3 forbid!
+After making a move on `i8`, Black is blocked by 4-4 forbid in row 8 and cannot make a straight four. The `i8` after making one move in `g10` was not 3-3 forbid!
 
-Now we can figure out that ``i8`` after moving to ``g10`` is not a forbidden point. Therefore, ``g10``, which can make two straight fours by moving black once, can figure out that 3-3 forbid is correct.
+Now we can figure out that `i8` after moving to `g10` is not a forbidden point. Therefore, `g10`, which can make two straight fours by moving black once, can figure out that 3-3 forbid is correct.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/pseudo-forbid-complex-s3.png)
 
-In the same way, we can figure out that ``i10`` is also a 3-3 forbid. (The ``i10`` is a little more complicated.) Slowly, if you think about it one by one, it's not difficult.
+In the same way, we can figure out that `i10` is also a 3-3 forbid. (The `i10` is a little more complicated.) Slowly, if you think about it one by one, it's not difficult.
 
 ## White Can Attack By Targeting Forbidden Points. {#forbid-trap}
 
@@ -541,13 +541,13 @@ In order to remove 3-3 forbid, Black must make one move and remove one three. Bu
 
 Now, if white attacks with a forbidden point, we know that black is going to have to watch white win. But you can't rely on luck or mistakes forever. Given the right circumstances, aggressive attacks can lead the black to create a forbidden point and win.
 
-Here's a situation that looks awful for White. black attacked by making a three with ``f6``. At first glance, white seems to have to block black's three. The black stones that line lower-left also look very strong. Should white be attacked and defeated by black?
+Here's a situation that looks awful for White. black attacked by making a three with `f6`. At first glance, white seems to have to block black's three. The black stones that line lower-left also look very strong. Should white be attacked and defeated by black?
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/forbid-trap-complex.png)
 
 Let's take a closer look at the situation again. White has 3 stones arranged diagonally and 3 stones arranged horizontally. Four attacks could go on twice. But it's like having a fit.
 
-What we need to note in this situation is that white can create four and make black move to ``g9``, and if the black moves to ``g9``, ``g8`` becomes 3-3 forbid.
+What we need to note in this situation is that white can create four and make black move to `g9`, and if the black moves to `g9`, `g8` becomes 3-3 forbid.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/forbid-trap-complex-s1.png)
 
@@ -559,17 +559,17 @@ Black was able to defend four, but two stones arranged horizontally in row 8 and
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/forbid-trap-complex-s3.png)
 
-*Since ``g8`` is a 3-3 forbid, black has no way to stop the subsequent diagonal four attacks of white. White wins!*
+*Since `g8` is a 3-3 forbid, black has no way to stop the subsequent diagonal four attacks of white. White wins!*
 
 The situation has completely changed! White can use 4-4 forbid and overline forbid in the same way to create and win traps. Black should read the situation well and be extra careful not to fall into the trap and ruin the game.
 
 ## Black Can Escape the Trap by Making its Non-Forbidden Move
 
-Here's a twist. Black was able to win without being trapped. ``f6`` is an excellent point for black. But as we've seen before, if black move to ``f6``, Black will be caught in white's trap and defeated. How can black move safely to ``f6``?
+Here's a twist. Black was able to win without being trapped. `f6` is an excellent point for black. But as we've seen before, if black move to `f6`, Black will be caught in white's trap and defeated. How can black move safely to `f6`?
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/counter-forbid-trap.png)
 
-Here we need to re-imagine the conditions of forbidden moves. If three or four is not valid, then forbidden moves are also invalid. The black can remove forbidden point that will be generated by moving to ``g9`` in advance.
+Here we need to re-imagine the conditions of forbidden moves. If three or four is not valid, then forbidden moves are also invalid. The black can remove forbidden point that will be generated by moving to `g9` in advance.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/counter-forbid-trap-s1.png)
 
@@ -577,7 +577,7 @@ Here we need to re-imagine the conditions of forbidden moves. If three or four i
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/counter-forbid-trap-s2.png)
 
-That's it! Now black can move freely with ``f6``. Black has made a place in advance to make a diagonal four, so three of the two horizontal and vertical threes that will be made as White's trap is no longer three.
+That's it! Now black can move freely with `f6`. Black has made a place in advance to make a diagonal four, so three of the two horizontal and vertical threes that will be made as White's trap is no longer three.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/counter-forbid-trap-s4.png)
 

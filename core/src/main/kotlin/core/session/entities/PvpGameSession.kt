@@ -17,8 +17,6 @@ data class PvpGameSession(
     override val player = this.context.users[this.state.board.playerColor]
     override val opponent = this.context.users[!this.state.board.playerColor]
 
-    override val messageBufferKey = this.context.messageBufferKey
-
     override val rule = this.context.ruleKind
 
 }

@@ -8,8 +8,6 @@ typealias Color = String
 
 typealias LongInt = Long
 
-typealias RuleKind = String
-
 @Serializable
 data class Duration(
     val secs: Long,

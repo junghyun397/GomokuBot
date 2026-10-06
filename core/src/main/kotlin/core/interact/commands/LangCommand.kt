@@ -6,7 +6,7 @@ import core.assets.Channel
 import core.assets.User
 import core.database.repositories.ChannelProfileRepository
 import core.interact.i18n.Language
-import core.interact.message.PlatformMessage
+import core.interact.message.AppMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeActionLog
@@ -34,7 +34,7 @@ class LangCommand(private val language: Language) : Command {
         SessionManager.updateChannelConfig(bot.sessions, channel, thenConfig)
 
         val io = effect {
-            service.buildMessage(publishers.plain, PlatformMessage(this@LangCommand.language.container.languageUpdated()))
+            publishers.plain(AppMessage.Text(this@LangCommand.language.container.languageUpdated))
                 .launch()()
 
             buildHelpProcedure(bot, thenConfig, publishers.plain, service, 0)()

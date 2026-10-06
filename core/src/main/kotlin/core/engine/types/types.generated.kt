@@ -4,6 +4,8 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 typealias Bitfield = String
 
+typealias RuleKind = String
+
 typealias HashKey = String
 
 typealias ColorContainer<T> = List<T>
@@ -40,13 +42,24 @@ typealias PrincipalVariation = List<MaybePos>
 
 typealias Score = Int
 
+typealias ThreatSearchKind = String
+
+typealias TimeUnit = String
+
+typealias TimeValue = String
+
+@Serializable
+data class Nodes (
+	val in_1k: UInt
+)
+
 @Serializable
 data class BestMove (
 	val position_hash: HashKey,
 	val best_move: MaybePos,
 	val score: Score,
-	val selective_depth: UInt,
-	val total_nodes_in_1k: UInt,
+	val selective_depth: Depth,
+	val total_nodes: Nodes,
 	val pv: PrincipalVariation,
 	val time_elapsed: Duration
 )
@@ -67,7 +80,7 @@ sealed class BoardExportItem {
 @Serializable
 data class BoardWinner (
 	val color: Color,
-	val moves: List<Pos>
+	val components: List<Pos>
 )
 
 @Serializable
@@ -100,23 +113,23 @@ data class CommandResult (
 @Serializable
 data class ComputingResource (
 	val workers: UInt,
-	val time_limit: Duration? = null,
-	val nodes_in_1k: UInt? = null
+	val time_unit: TimeUnit,
+	val time_limit: TimeValue? = null
 )
 
 @Serializable
 data class Timer (
-	val total_remaining: Duration? = null,
-	val increment: Duration,
-	val turn: Duration? = null
+	val time_unit: TimeUnit,
+	val total_remaining: TimeValue? = null,
+	val increment: TimeValue,
+	val turn: TimeValue? = null
 )
 
 @Serializable
 data class Config (
 	val draw_condition: UInt? = null,
-	val max_nodes_in_1k: UInt? = null,
 	val max_depth: Depth? = null,
-	val max_vcf_depth: Depth? = null,
+	val max_quiescence_depth: Depth? = null,
 	val tt_size: ByteSize,
 	val workers: UInt,
 	val pondering: Boolean,
@@ -184,13 +197,6 @@ data class CommandUndoInner (
 	val hash: HashKey
 )
 
-/// Generated type representing the anonymous struct variant `BatchSet` of the `Command` Rust enum
-@Serializable
-data class CommandBatchSetInner (
-	val player_moves: List<Pos>,
-	val opponent_moves: List<Pos>
-)
-
 @Serializable
 sealed class Command {
 	@Serializable
@@ -215,9 +221,6 @@ sealed class Command {
 	@SerialName("Undo")
 	data class Undo(val content: CommandUndoInner): Command()
 	@Serializable
-	@SerialName("BatchSet")
-	data class BatchSet(val content: CommandBatchSetInner): Command()
-	@Serializable
 	@SerialName("RebuildTT")
 	data class RebuildTT(val content: ByteSize): Command()
 }
@@ -229,7 +232,7 @@ data class ResponseStatusInner (
 	val best_move: MaybePos,
 	val score: Score,
 	val selective_depth: Depth,
-	val total_nodes_in_1k: UInt,
+	val total_nodes: Nodes,
 	val pv: PrincipalVariation,
 	val time_elapsed: Duration
 )

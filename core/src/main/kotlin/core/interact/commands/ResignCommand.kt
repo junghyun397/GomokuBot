@@ -1,16 +1,15 @@
 package core.interact.commands
 
-import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
 import core.assets.User
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.message.ResultDraw
 import core.interact.reports.writeActionLog
-import core.session.*
+import core.session.EngineGameManager
+import core.session.PvpGameManager
+import core.session.SessionManager
 import core.session.entities.*
-import utils.tuple
 import kotlin.time.Instant
 
 class ResignCommand(
@@ -19,7 +18,7 @@ class ResignCommand(
 
     override val name = "resign"
 
-    override val responseFlag = ResponseFlag.Immediately
+    override val responseFlag = ResponseFlag.Defer
 
     override suspend fun execute(
         bot: BotContext,
@@ -30,58 +29,19 @@ class ResignCommand(
         publishers: PublisherSet,
         emittedTime: Instant,
     ) = runCatching {
-        val (session, messageBufferKey) = run {
-            val staleSession = SessionManager.deleteGameSession(bot.sessions, this.sessionId)!!
-
-            val finishedSession = when (staleSession) {
-                is PvpGameSession -> PvpGameManager.resign(staleSession, user)
-                is OpeningSession -> PvpGameManager.resign(staleSession, user)
-                is EngineGameSession -> EngineGameManager.resign(staleSession, EngineGameManager.ResignCause.RESIGN)
+        val io = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).interact { runtime ->
+            val session = runtime.session
+            check(session.users.black.id == user.id || session.users.white.id == user.id)
+            runtime.session = when (session) {
+                is PvpGameSession -> PvpGameManager.resign(session, user)
+                is OpeningSession -> PvpGameManager.resign(session, user)
+                is EngineGameSession -> EngineGameManager.resign(session, EngineGameManager.ResignCause.RESIGN)
             }
-
-            tuple(finishedSession, staleSession.messageBufferKey)
+            SessionManager.finishGameSession(bot.sessions, runtime)
+            buildFinishProcedure(bot, channel, config, service, publishers, runtime)
         }
 
-        val result = session.gameResult!!
-
-        SessionManager.deleteGameSession(bot.sessions, this.sessionId)
-
-        StatsManager.uploadGameRecord(bot.dbConnection, channel.id, session)
-
-        val publisher = run {
-            val boardMessage = MessageManager.viewHeadMessage(bot.sessions, session.messageBufferKey)
-
-            if (config.swapType == SwapType.EDIT && boardMessage != null)
-                publishers.edit(boardMessage)
-            else
-                publishers.plain
-        }
-
-        val io = effect {
-            val eloRating =
-                if (session is EngineGameSession) {
-                    val delta = session.ratingDelta!!
-
-                    tuple(session.userRating + delta, delta)
-                } else null
-
-            service.buildGameFinished(
-                publishers.plain,
-                config.language.container,
-                ResultDraw(
-                    session.users,
-                    session.state.board.playerColor,
-                    result,
-                    eloRating,
-                )
-            ).launch()()
-
-            buildFinishProcedure(bot, service, publisher, config, session, messageBufferKey)()
-
-            service.archiveSession(session, config.archivePolicy)
-        }
-
-        CommandResult(io, this.writeActionLog(emittedTime, "resigned $result", channel, user))
+        CommandResult(io, this.writeActionLog(emittedTime, "resigned", channel, user))
     }
 
 }

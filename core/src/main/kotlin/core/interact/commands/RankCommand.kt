@@ -6,6 +6,7 @@ import core.assets.Channel
 import core.assets.User
 import core.database.repositories.UserProfileRepository
 import core.database.repositories.UserStatsRepository
+import core.interact.message.AppMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
 import core.interact.reports.writeActionLog
@@ -53,8 +54,7 @@ class RankCommand(private val scope: RankScope) : Command {
         }
 
         val io = effect {
-            service.buildRankings(publishers.plain, config.language.container, rankings)
-                .launch()()
+            publishers.plain(AppMessage.Rankings(config.language.container, rankings)).launch()()
         }
 
         CommandResult(io, this.writeActionLog(emittedTime, "$scope scope", channel, user))

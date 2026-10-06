@@ -1,6 +1,5 @@
 package core.interact.commands
 
-import core.assets.MessageRef
 import core.session.entities.GameSession
 import core.session.entities.SelectStageOpeningSession
 import core.session.entities.SessionId
@@ -10,8 +9,7 @@ class OpeningSelectCommand(
     sessionId: SessionId,
     move: Pos,
     responseFlag: ResponseFlag,
-    messageRef: MessageRef?,
-) : OpeningMoveCommand<SelectStageOpeningSession>(sessionId, move, responseFlag, messageRef) {
+) : OpeningMoveCommand<SelectStageOpeningSession>(sessionId, move, responseFlag) {
 
     override val name = "opening-select"
 

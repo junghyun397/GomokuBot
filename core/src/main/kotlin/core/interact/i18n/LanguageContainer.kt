@@ -1,5 +1,6 @@
 package core.interact.i18n
 
+import core.engine.EngineLevel
 import renju.notation.ColorContainer
 import utils.Identifiable
 
@@ -12,227 +13,219 @@ enum class Language(override val id: Short, val container: LanguageContainer) : 
 
 sealed interface LanguageContainer {
 
-    fun languageCode(): String
+    val languageCode: String
 
-    fun languageName(): String
-    fun languageSuggestion(): String
+    val languageName: String
+    val languageSuggestion: String
 
-    fun engineLevelAmoeba(): String
-    fun engineLevelApe(): String
-    fun engineLevelBeginner(): String
-    fun aiLevelIntermediate(): String
-    fun engineLevelAdvanced(): String
-    fun engineLevelExpert(): String
-    fun engineLevelGuru(): String
+    fun engineLevel(engine: EngineLevel): String
 
-    fun ruleSelectRenju(): String
-    fun ruleSelectTaraguchi10(): String
-    fun ruleSelectSoosyrv8(): String
+    val ruleSelectRenju: String
+    val ruleSelectTaraguchi10: String
+    val ruleSelectSoosyrv8: String
 
-    fun swapSelectYes(): String
-    fun swapSelectNo(): String
+    val swapSelectYes: String
+    val swapSelectNo: String
 
-    fun branchSelectSwap(): String
-    fun branchSelectOffer(): String
+    val branchSelectSwap: String
+    val branchSelectOffer: String
 
-    fun helpCommand(): String
-    fun helpCommandDescription(): String
-    fun helpCommandOptionShortcut(): String
-    fun helpCommandOptionShortcutDescription(): String
-    fun helpCommandOptionAnnouncements(): String
+    val helpCommand: String
+    val helpCommandDescription: String
+    val helpCommandOptionShortcut: String
+    val helpCommandOptionShortcutDescription: String
+    val helpCommandOptionAnnouncements: String
 
-    fun settingsCommand(): String
-    fun settingsCommandDescription(): String
+    val settingsCommand: String
+    val settingsCommandDescription: String
 
-    fun helpAboutEmbedTitle(): String
+    val helpAboutEmbedTitle: String
     fun helpAboutEmbedDescription(platform: String): String
-    fun helpAboutEmbedDeveloper(): String
-    fun helpAboutEmbedRepository(): String
-    fun helpAboutEmbedVersion(): String
-    fun helpAboutEmbedSupport(): String
-    fun helpAboutEmbedInvite(): String
+    val helpAboutEmbedDeveloper: String
+    val helpAboutEmbedRepository: String
+    val helpAboutEmbedVersion: String
+    val helpAboutEmbedSupport: String
+    val helpAboutEmbedInvite: String
 
-    fun commandUsageEmbedTitle(): String
+    val commandUsageEmbedTitle: String
 
-    fun commandUsageHelp(): String
-    fun commandUsageSettings(): String
-    fun commandUsageRankGlobal(): String
-    fun commandUsageRankServer(): String
-    fun commandUsageRankUser(): String
-    fun commandUsageReplay(): String
-    fun commandUsageRating(): String
+    val commandUsageHelp: String
+    val commandUsageSettings: String
+    val commandUsageRankGlobal: String
+    val commandUsageRankServer: String
+    val commandUsageRankUser: String
+    val commandUsageReplay: String
+    val commandUsageRating: String
 
-    fun commandUsageLang(langList: String): String
-    fun commandUsageStyle(): String
+    val commandUsageLang: String
+    val commandUsageStyle: String
 
-    fun commandUsageStartEngine(): String
-    fun commandUsageStartPvp(): String
-    fun commandUsageResign(): String
+    val commandUsageStartEngine: String
+    val commandUsageStartPvp: String
+    val commandUsageResign: String
 
-    fun commandUsageBoard(): String
+    val commandUsageBoard: String
 
-    fun replayCommand(): String
-    fun replayCommandDescription(): String
+    val replayCommand: String
+    val replayCommandDescription: String
 
-    fun rankCommand(): String
-    fun rankCommandDescription(): String
-    fun rankCommandSubGlobal(): String
-    fun rankCommandSubGlobalDescription(): String
-    fun rankCommandSubServer(): String
-    fun rankCommandSubServerDescription(): String
-    fun rankCommandSubUser(): String
-    fun rankCommandSubUserDescription(): String
-    fun rankCommandOptionPlayer(): String
-    fun rankCommandOptionPlayerDescription(): String
+    val rankCommand: String
+    val rankCommandDescription: String
+    val rankCommandSubGlobal: String
+    val rankCommandSubGlobalDescription: String
+    val rankCommandSubServer: String
+    val rankCommandSubServerDescription: String
+    val rankCommandSubUser: String
+    val rankCommandSubUserDescription: String
+    val rankCommandOptionPlayer: String
+    val rankCommandOptionPlayerDescription: String
 
-    fun rankErrorNotFound(): String
+    val rankErrorNotFound: String
 
-    fun rankEmbedTitle(): String
-    fun rankEmbedDescription(): String
-    fun rankEmbedWin(): String
-    fun rankEmbedLose(): String
-    fun rankEmbedDraw(): String
+    val rankEmbedTitle: String
+    val rankEmbedDescription: String
+    val rankEmbedWin: String
+    val rankEmbedLose: String
+    val rankEmbedDraw: String
 
-    fun ratingCommand(): String
-    fun ratingCommandDescription(): String
-    fun ratingCommandOptionUser(): String
-    fun ratingCommandOptionUserDescription(): String
+    val ratingCommand: String
+    val ratingCommandDescription: String
+    val ratingCommandOptionUser: String
+    val ratingCommandOptionUserDescription: String
 
-    fun ratingNoRecord(): String
+    val ratingNoRecord: String
 
-    fun languageCommand(): String
-    fun languageCommandDescription(): String
-    fun languageCommandOptionCode(): String
-    fun languageCommandOptionCodeDescription(): String
+    val languageCommand: String
+    val languageCommandDescription: String
+    val languageCommandOptionCode: String
+    val languageCommandOptionCodeDescription: String
 
-    fun languageUpdated(): String
+    val languageUpdated: String
 
-    fun styleEmbedTitle(): String
-    fun styleEmbedDescription(): String
+    val styleEmbedTitle: String
+    val styleEmbedDescription: String
     fun styleEmbedSuggestion(styleName: String): String
 
-    fun styleErrorNotfound(): String
+    val styleErrorNotfound: String
 
     fun styleUpdated(styleName: String): String
 
     fun settingApplied(kind: String, choice: String): String
 
-    fun style(): String
+    val style: String
 
-    fun styleSelectImage(): String
-    fun styleSelectImageDescription(): String
+    val styleSelectImage: String
+    val styleSelectImageDescription: String
 
-    fun styleSelectText(): String
-    fun styleSelectTextDescription(): String
+    val styleSelectText: String
+    val styleSelectTextDescription: String
 
-    fun styleSelectDottedText(): String
-    fun styleSelectDottedTextDescription(): String
+    val styleSelectDottedText: String
+    val styleSelectDottedTextDescription: String
 
-    fun focus(): String
+    val focus: String
 
-    fun focusEmbedTitle(): String
-    fun focusEmbedDescription(): String
+    val focusEmbedTitle: String
+    val focusEmbedDescription: String
 
-    fun focusSelectIntelligence(): String
-    fun focusSelectIntelligenceDescription(): String
+    val focusSelectIntelligence: String
+    val focusSelectIntelligenceDescription: String
 
-    fun focusSelectCenter(): String
-    fun focusSelectCenterDescription(): String
+    val focusSelectCenter: String
+    val focusSelectCenterDescription: String
 
-    fun hint(): String
+    val hint: String
 
-    fun hintEmbedTitle(): String
-    fun hintEmbedDescription(): String
+    val hintEmbedTitle: String
+    val hintEmbedDescription: String
 
-    fun hintSelectFive(): String
-    fun hintSelectFiveDescription(): String
+    val hintSelectFive: String
+    val hintSelectFiveDescription: String
 
-    fun hintSelectOff(): String
-    fun hintSelectOffDescription(): String
+    val hintSelectOff: String
+    val hintSelectOffDescription: String
 
-    fun mark(): String
+    val mark: String
 
-    fun markEmbedTitle(): String
-    fun markEmbedDescription(): String
+    val markEmbedTitle: String
+    val markEmbedDescription: String
 
-    fun markSelectLast(): String
-    fun markSelectLastDescription(): String
+    val markSelectLast: String
+    val markSelectLastDescription: String
 
-    fun markSelectRecent(): String
-    fun markSelectRecentDescription(): String
+    val markSelectRecent: String
+    val markSelectRecentDescription: String
 
-    fun markSelectSequence(): String
-    fun markSelectSequenceDescription(): String
+    val markSelectSequence: String
+    val markSelectSequenceDescription: String
 
-    fun swap(): String
+    val archive: String
 
-    fun swapEmbedTitle(): String
-    fun swapEmbedDescription(): String
+    val archiveEmbedTitle: String
+    val archiveEmbedDescription: String
 
-    fun swapSelectRelay(): String
-    fun swapSelectRelayDescription(): String
+    val archiveSelectByAnonymous: String
+    val archiveSelectByAnonymousDescription: String
 
-    fun swapSelectArchive(): String
-    fun swapSelectArchiveDescription(): String
+    val archiveSelectWithProfile: String
+    val archiveSelectWithProfileDescription: String
 
-    fun swapSelectEdit(): String
-    fun swapSelectEditDescription(): String
+    val archiveSelectPrivacy: String
+    val archiveSelectPrivacyDescription: String
 
-    fun archive(): String
+    val sessionNotFound: String
 
-    fun archiveEmbedTitle(): String
-    fun archiveEmbedDescription(): String
+    val startCommand: String
+    val startCommandDescription: String
+    val startCommandOptionOpponent: String
+    val startCommandOptionOpponentDescription: String
+    val startCommandOptionRule: String
+    val startCommandOptionRuleDescription: String
 
-    fun archiveSelectByAnonymous(): String
-    fun archiveSelectByAnonymousDescription(): String
-
-    fun archiveSelectWithProfile(): String
-    fun archiveSelectWithProfileDescription(): String
-
-    fun archiveSelectPrivacy(): String
-    fun archiveSelectPrivacyDescription(): String
-
-    fun sessionNotFound(): String
-
-    fun startCommand(): String
-    fun startCommandDescription(): String
-    fun startCommandOptionOpponent(): String
-    fun startCommandOptionOpponentDescription(): String
-    fun startCommandOptionRule(): String
-    fun startCommandOptionRuleDescription(): String
-
-    fun startErrorSessionAlready(): String
+    val startErrorSessionAlready: String
     fun startErrorOpponentSessionAlready(opponent: String): String
     fun startErrorRequestAlreadySent(opponent: String): String
     fun startErrorRequestAlready(opponent: String): String
     fun startErrorOpponentRequestAlready(opponent: String): String
 
-    fun setCommandDescription(): String
-    fun setCommandOptionPosition(): String
-    fun setCommandOptionPositionDescription(): String
+    val setCommandDescription: String
+    val setCommandOptionPosition: String
+    val setCommandOptionPositionDescription: String
 
-    fun setErrorIllegalArgument(): String
+    val setErrorIllegalArgument: String
 
     fun setErrorExist(move: String): String
 
     fun setErrorForbidden(move: String, forbiddenKind: String): String
 
-    fun resignCommand(): String
-    fun resignCommandDescription(): String
+    val resignCommand: String
+    val resignCommandDescription: String
 
-    fun boardCommand(): String
-    fun boardCommandDescription(): String
+    val undoCommand: String
+    val undoCommandDescription: String
+    val undoErrorOpening: String
+    val undoErrorNoMoves: String
+    val undoErrorLimit: String
+    fun undoCompleted(remainingUndos: Int): String
+    val undoPvpCompleted: String
+    val undoRequestEmbedTitle: String
+    fun undoRequestEmbedDescription(requester: String, opponent: String): String
+    fun undoRequestRejected(requester: String, opponent: String): String
+    fun undoRequestExpired(requester: String, opponent: String): String
 
-    fun requestEmbedTitle(): String
+    val boardCommand: String
+    val boardCommandDescription: String
+
+    val requestEmbedTitle: String
     fun requestEmbedDescription(requester: String, opponent: String): String
-    fun requestEmbedButtonAccept(): String
-    fun requestEmbedButtonReject(): String
+    val requestEmbedButtonAccept: String
+    val requestEmbedButtonReject: String
 
     fun requestRejected(requester: String, opponent: String): String
 
     fun requestExpired(requester: String, opponent: String): String
 
-    fun requestExpiredNewRequest(): String
+    val requestExpiredNewRequest: String
 
     fun beginPvp(players: ColorContainer<String>): String
 
@@ -249,50 +242,50 @@ sealed interface LanguageContainer {
 
     fun gameResultFiveInRow(winner: String, loser: String): String
     fun gameResultResign(winner: String, loser: String): String
-    fun gameResultDraw(): String
+    val gameResultDraw: String
     fun gameResultTimeout(winner: String, loser: String): String
 
-    fun gameResultEngineRating(): String
-    fun gameResultEngineRatingChange(): String
+    val gameResultEngineRating: String
+    val gameResultEngineRatingChange: String
 
-    fun boardInProgress(): String
-    fun boardInOpening(): String
-    fun boardFinished(): String
+    val boardInProgress: String
+    val boardInOpening: String
+    val boardFinished: String
 
-    fun boardMoves(): String
-    fun boardLastMove(): String
+    val boardMoves: String
+    val boardLastMove: String
 
-    fun boardResult(): String
+    val boardResult: String
 
     fun boardWinDescription(winner: String): String
-    fun boardTieDescription(): String
+    val boardTieDescription: String
 
-    fun boardCommandGuide(): String
-    fun boardSwapGuide(): String
+    val boardCommandGuide: String
+    val boardSwapGuide: String
     fun boardStatefulSwapGuide(offerCount: Int): String
-    fun boardBranchGuide(): String
-    fun boardDeclareGuide(): String
-    fun boardSelectGuide(): String
+    val boardBranchGuide: String
+    val boardDeclareGuide: String
+    val boardSelectGuide: String
     fun boardOfferGuide(remainingMoves: Int): String
 
-    fun replayEmbedWin(): String
-    fun replayEmbedLose(): String
-    fun replayEmbedDraw(): String
+    val replayEmbedWin: String
+    val replayEmbedLose: String
+    val replayEmbedDraw: String
     fun replayEmbedMatchInfo(totalMoves: Int): String
-    fun replayEmbedUnableToReplayDescription(): String
+    val replayEmbedUnableToReplayDescription: String
 
     fun announceWrittenOn(date: String): String
 
-    fun somethingWrongEmbedTitle(): String
+    val somethingWrongEmbedTitle: String
 
     fun permissionNotGrantedEmbedDescription(channelName: String): String
-    fun permissionNotGrantedEmbedFooter(): String
+    val permissionNotGrantedEmbedFooter: String
 
-    fun notYetImplementedEmbedDescription(): String
-    fun notYetImplementedEmbedFooter(): String
+    val notYetImplementedEmbedDescription: String
+    val notYetImplementedEmbedFooter: String
 
-    fun exploreAboutRenju(): String
+    val exploreAboutRenju: String
 
-    fun aboutRenjuDocument(): String
+    val aboutRenjuDocument: String
 
 }

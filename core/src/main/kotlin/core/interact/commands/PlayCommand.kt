@@ -3,18 +3,19 @@ package core.interact.commands
 import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
-import core.assets.MessageRef
 import core.assets.User
-import core.interact.message.PlatformMessage
+import core.interact.message.AppMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
-import core.interact.message.ResultDraw
 import core.interact.reports.writeActionLog
-import core.session.*
-import core.session.entities.*
-import renju.notation.GameResult
+import core.session.EngineGameManager
+import core.session.PvpGameManager
+import core.session.SessionManager
+import core.session.entities.ChannelConfig
+import core.session.entities.EngineGameSession
+import core.session.entities.PvpGameSession
+import core.session.entities.SessionId
 import renju.notation.Pos
-import utils.tuple
 import utils.unreachable
 import kotlin.time.Instant
 
@@ -22,7 +23,6 @@ class PlayCommand(
     private val sessionId: SessionId,
     private val pos: Pos,
     override val responseFlag: ResponseFlag,
-    private val messageRef: MessageRef?,
 ) : Command {
 
     override val name = "set"
@@ -36,111 +36,50 @@ class PlayCommand(
         publishers: PublisherSet,
         emittedTime: Instant,
     ) = runCatching {
-        val (session, messageBufferKey) = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { session ->
-            val nextSession = when (session) {
-                is PvpGameSession -> PvpGameManager.play(session, this.pos)
-                is EngineGameSession -> EngineGameManager.play(session, this.pos)
+        val io = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).interact { runtime ->
+            val previous = runtime.session
+            check(previous.gameResult == null)
+            check(previous.player.id == user.id)
+            check(previous.isLegalMove(this.pos))
+
+            val session = when (previous) {
+                is PvpGameSession -> PvpGameManager.play(previous, this.pos)
+                is EngineGameSession -> EngineGameManager.play(previous, this.pos)
                 else -> unreachable()
             }
+            runtime.session = session
 
-            tuple(nextSession, session.messageBufferKey)
-        }
+            val invalidateUndo = buildInvalidateUndoProcedure(bot.sessions, config, service, publishers, runtime)
+            val updateGame = if (session.gameResult != null) {
+                SessionManager.finishGameSession(bot.sessions, runtime)
+                buildFinishProcedure(bot, channel, config, service, publishers, runtime)
+            } else {
+                val updateBoard = buildUpdateBoardProcedure(config, service, publishers, runtime)
 
-        val boardPublisher = when (config.swapType) {
-            SwapType.EDIT -> publishers.edit(this.messageRef ?: MessageManager.viewHeadMessage(bot.sessions, messageBufferKey)!!)
-            else -> publishers.plain
-        }
-
-        when (val result = session.gameResult) {
-            is GameResult -> {
-                SessionManager.deleteGameSession(bot.sessions, this.sessionId)
-
-                StatsManager.uploadGameRecord(bot.dbConnection, channel.id, session)
-
-                val io = effect {
-                    val eloRating =
-                        if (session is EngineGameSession) {
-                            val delta = session.ratingDelta!!
-
-                            tuple(session.userRating + delta, delta)
-                        } else null
-
-                    service.buildGameFinished(
-                        publishers.plain,
-                        config.language.container,
-                        ResultDraw(
-                            session.users,
-                            session.state.board.playerColor,
-                            result,
-                            eloRating,
-                        )
-                    ).launch()()
-
-                    buildFinishProcedure(
-                        bot,
-                        service,
-                        boardPublisher,
-                        config,
-                        session,
-                        messageBufferKey
-                    )()
-
-                    service.archiveSession(session, config.archivePolicy)
-                }
-
-                CommandResult(io, this.writeActionLog(emittedTime, "make move ${this.pos}, finished $result", channel, user))
-            }
-            null -> {
-                val guideIO = when {
-                    config.swapType == SwapType.EDIT && this.messageRef == null -> effect { }
-                    else -> {
-                        val guidePublisher = when (config.swapType) {
-                            SwapType.EDIT -> publishers.windowed
-                            else -> publishers.plain
+                effect {
+                    updateBoard()
+                    if ((this@PlayCommand.responseFlag as? ResponseFlag.Defer)?.edit != true) {
+                        val notice = when (session) {
+                            is PvpGameSession -> config.language.container.processNextPvp(
+                                service.formatUser(session.opponent),
+                                service.formatHighlight(this@PlayCommand.pos.toString())
+                            )
+                            is EngineGameSession -> config.language.container.processNextEngine(
+                                service.formatHighlight(session.state.history.lastOrNull().toString())
+                            )
                         }
-
-                        effect {
-                            val maybeGuideMessage = when (session) {
-                                is PvpGameSession ->
-                                    service.buildMessage(
-                                        guidePublisher,
-                                        PlatformMessage(config.language.container.processNextPvp(
-                                            service.formatUser(session.opponent),
-                                            service.formatHighlight(this@PlayCommand.pos.toString())
-                                        ))
-                                    )
-                                is EngineGameSession ->
-                                    service.buildMessage(
-                                        guidePublisher,
-                                        PlatformMessage(config.language.container.processNextEngine(
-                                            service.formatHighlight(
-                                                (session.state.history.lastOrNull() ?: this@PlayCommand.pos).toString()
-                                            )
-                                        ))
-                                    )
-                                else -> unreachable()
-                            }.retrieve()()
-
-                            buildAppendGameMessageProcedure(maybeGuideMessage, bot, session)()
-                        }
+                        publishers.windowed(AppMessage.Text(notice)).launch()()
                     }
                 }
+            }
 
-                val io = effect {
-                    guideIO()
-                    buildNextMoveProcedure(
-                        bot,
-                        config,
-                        service,
-                        boardPublisher,
-                        session,
-                        messageBufferKey
-                    )()
-                }
-
-                CommandResult(io, this.writeActionLog(emittedTime, "make move ${this.pos}", channel, user))
+            effect {
+                invalidateUndo()
+                updateGame()
             }
         }
+
+        CommandResult(io, this.writeActionLog(emittedTime, "make move ${this.pos}", channel, user))
     }
 
 }

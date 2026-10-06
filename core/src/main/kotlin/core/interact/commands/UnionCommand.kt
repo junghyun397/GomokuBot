@@ -40,8 +40,8 @@ abstract class UnionCommand(private val command: Command) : Command {
             .getOrThrow()
 
         val io = effect {
-            unionIO()
-            result.io()
+            unionIO.bind()
+            result.io.bind()
         }
 
         CommandResult(io, listOf(unionReport) + result.events)

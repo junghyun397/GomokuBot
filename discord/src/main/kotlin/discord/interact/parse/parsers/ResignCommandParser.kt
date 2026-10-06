@@ -16,12 +16,12 @@ object ResignCommandParser : SessionSideParser(), ParsableCommand, BuildableComm
 
     override val name = "resign"
 
-    override fun getLocalizedName(container: LanguageContainer) = container.resignCommand()
+    override fun getLocalizedName(container: LanguageContainer) = container.resignCommand
 
     override fun getLocalizedUsages(container: LanguageContainer) = listOf(
         BuildableCommand.Usage(
-            usage = "``/${container.resignCommand()}`` or ``$COMMAND_PREFIX${container.resignCommand()}``",
-            description = container.commandUsageResign()
+            usage = "`/${container.resignCommand}` or `$COMMAND_PREFIX${container.resignCommand}`",
+            description = container.commandUsageResign
         ),
     )
 
@@ -37,8 +37,8 @@ object ResignCommandParser : SessionSideParser(), ParsableCommand, BuildableComm
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.slash(
-            container.resignCommand(),
-            container.resignCommandDescription()
+            container.resignCommand,
+            container.resignCommandDescription
         )
 
 }

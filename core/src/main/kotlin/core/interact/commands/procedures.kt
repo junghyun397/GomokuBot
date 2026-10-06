@@ -4,9 +4,10 @@ import arrow.core.raise.Effect
 import arrow.core.raise.effect
 import core.BotConfig
 import core.BotContext
+import core.interact.message.AppMessage
 import core.interact.message.MessagePublisher
 import core.interact.message.PlatformService
-import core.session.MessageManager
+import core.session.NavigationManager
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
@@ -19,16 +20,15 @@ fun buildHelpProcedure(
     publisher: MessagePublisher,
     service: PlatformService,
     page: Int
-): Effect<Nothing, Unit> = service.buildHelp(publisher, config.language.container, page)
+): Effect<Nothing, Unit> = publisher(AppMessage.Help(config.language.container, page))
     .retrieve()
     .let { io ->
         effect {
             io()?.let { helpMessage ->
-                    MessageManager.addNavigation(
+                    NavigationManager.addNavigation(
                         bot.sessions,
                         helpMessage.ref,
                         PageNavigationState(
-                            helpMessage.ref,
                             NavigationKind.ABOUT,
                             page,
                             Clock.System.now() + BotConfig.navigatorExpireAfter
@@ -47,8 +47,8 @@ fun buildCombinedHelpProcedure(
     service: PlatformService,
     settingsPage: Int
 ): Effect<Nothing, Unit> = ioZip(
-    service.buildHelp(publisher, config.language.container, 0).retrieve(),
-    service.buildSettings(publisher, config, settingsPage).retrieve(),
+    publisher(AppMessage.Help(config.language.container, 0)).retrieve(),
+    publisher(AppMessage.Settings(config, settingsPage)).retrieve(),
 )
     .let { zipped ->
         effect {
@@ -56,22 +56,20 @@ fun buildCombinedHelpProcedure(
 
             if (maybeHelp != null && maybeSettings != null) {
 
-                MessageManager.addNavigation(
+                NavigationManager.addNavigation(
                     bot.sessions,
                     maybeHelp.ref,
                     PageNavigationState(
-                        maybeHelp.ref,
                         NavigationKind.ABOUT,
                         page = 0,
                         Clock.System.now() + BotConfig.navigatorExpireAfter
                     )
                 )
 
-                MessageManager.addNavigation(
+                NavigationManager.addNavigation(
                     bot.sessions,
                     maybeSettings.ref,
                     PageNavigationState(
-                        maybeSettings.ref,
                         NavigationKind.SETTINGS,
                         settingsPage,
                         Clock.System.now() + BotConfig.navigatorExpireAfter

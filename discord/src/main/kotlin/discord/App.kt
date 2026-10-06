@@ -9,7 +9,7 @@ import core.database.LocalCaches
 import core.database.repositories.AnnounceRepository
 import core.engine.EngineProvider
 import core.engine.MintakaServer
-import core.session.MessageManager
+import core.session.NavigationManager
 import core.session.SessionPool
 import dev.minn.jda.ktx.coroutines.await
 import dev.minn.jda.ktx.events.CoroutineEventManager
@@ -286,7 +286,7 @@ object GomokuBot {
             scheduleRequestExpiration(botContext, discordConfig, shardManager),
 
             routine(BotConfig.navigatorExpireChecks) {
-                val expires = MessageManager.cleanExpiredNavigators(sessionPool)
+                val expires = NavigationManager.cleanExpiredNavigators(sessionPool)
 
                 "cleaned $expires expired navigators"
             },

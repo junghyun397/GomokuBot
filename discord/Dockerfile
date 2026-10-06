@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     && cp /app/target/release/librusty_renju_c.so /tmp/librusty_renju_c.so \
     && cp /app/target/release/librusty_renju_image.so /tmp/librusty_renju_image.so
 
-FROM eclipse-temurin:25-jdk-alpine AS jvm-builder
+FROM eclipse-temurin:26-jdk-alpine AS jvm-builder
 
 WORKDIR /app
 
@@ -27,7 +27,7 @@ RUN --mount=type=cache,target=/root/.gradle \
     ./gradlew --no-daemon :discord:shadowJar \
     && cp discord/build/libs/discord-*-all.jar /tmp/gomokubot-discord.jar
 
-FROM eclipse-temurin:25-jre-alpine AS runtime
+FROM eclipse-temurin:26-jre-alpine AS runtime
 
 WORKDIR /app
 

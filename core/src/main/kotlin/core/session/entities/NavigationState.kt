@@ -6,7 +6,7 @@ import core.assets.*
 import core.database.DatabaseConnection
 import core.engine.FocusSolver
 import core.interact.i18n.Language
-import core.interact.message.PlatformServiceImpl
+import core.interact.message.HelpPages
 import core.interact.message.SettingMapping
 import renju.notation.Pos
 import utils.Identifiable
@@ -21,7 +21,7 @@ enum class NavigationKind(override val id: Short, val range: Either<(DatabaseCon
     // 0: language setting
     SETTINGS(1, Either.Right(0 .. SettingMapping.map.size), setOf(UNICODE_LEFT, UNICODE_RIGHT)),
     // 0: about gomokubot
-    ABOUT(2, Either.Right(0 .. PlatformServiceImpl.aboutRenjuDocument[Language.ENG.container]!!.first.size), setOf(UNICODE_LEFT, UNICODE_RIGHT)),
+    ABOUT(2, Either.Right(0 .. HelpPages.documents[Language.ENG.container]!!.first.size), setOf(UNICODE_LEFT, UNICODE_RIGHT)),
     ANNOUNCE(3, Either.Left { connection -> 1 .. connection.localCaches.announceCache.size }, setOf(UNICODE_LEFT, UNICODE_RIGHT));
 
     fun fetchRange(dbConnection: DatabaseConnection): IntRange =
@@ -49,7 +49,6 @@ sealed interface NavigationState : Expirable {
 }
 
 data class PageNavigationState(
-    private val messageRef: MessageRef,
     override val kind: NavigationKind,
     override val page: Int,
     override val expireDate: Instant,
@@ -68,7 +67,7 @@ data class PageNavigationState(
             return ((baseBytes[0] + kind.id) shl 16) or ((baseBytes[1] + headByte) shl 8) or (baseBytes[2] + tailByte)
         }
 
-        fun decodeFromColor(base: Int, code: Int, messageRef: MessageRef, dbConnection: DatabaseConnection): PageNavigationState? {
+        fun decodeFromColor(base: Int, code: Int, dbConnection: DatabaseConnection): PageNavigationState? {
             val (kindRaw, pageTop, pageBottom) = base.toBytes()
                 .zip(code.toBytes()) { a, b -> b - a }
                 .drop(1)
@@ -77,7 +76,7 @@ data class PageNavigationState(
             val page = pageTop + pageBottom
 
             return if (kind != NavigationKind.BOARD && page in kind.fetchRange(dbConnection))
-                PageNavigationState(messageRef, kind, page, Clock.System.now() + BotConfig.navigatorExpireAfter)
+                PageNavigationState(kind, page, Clock.System.now() + BotConfig.navigatorExpireAfter)
             else null
         }
 
@@ -86,11 +85,6 @@ data class PageNavigationState(
 }
 
 data class BoardNavigationState(
-    override val page: Int,
-    val focusInfo: FocusSolver.FocusInfo,
-    override val expireDate: Instant,
-): NavigationState {
-
-    override val kind = NavigationKind.BOARD
-
-}
+    val initialFocus: FocusSolver.FocusInfo,
+    val focus: Pos = initialFocus.focus,
+)

@@ -88,7 +88,6 @@ data class TaraguchiOfferStageSession(
     override fun add(move: Pos): NegotiateStageOpeningSession =
         if (this.moveCandidates.size < 9)
             this.copy(
-                context = this.context.copy(messageBufferKey = MessageBufferKey.issue()),
                 moveCandidates = this.moveCandidates + move,
                 symmetryMoves = this.symmetryMoves + this.calculateSymmetryMoves(move),
             )

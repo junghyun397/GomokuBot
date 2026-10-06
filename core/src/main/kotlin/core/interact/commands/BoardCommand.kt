@@ -1,6 +1,5 @@
 package core.interact.commands
 
-import arrow.core.raise.effect
 import core.BotContext
 import core.assets.Channel
 import core.assets.User
@@ -29,10 +28,10 @@ class BoardCommand(
         publishers: PublisherSet,
         emittedTime: Instant,
     ) = runCatching {
-        val session = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).snapshot()
-
-        val io = effect {
-            buildBoardProcedure(bot, config, service, publishers.plain, session)()
+        val io = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).interact { runtime ->
+            val session = runtime.session
+            check(session.users.black.id == user.id || session.users.white.id == user.id)
+            buildBoardProcedure(config, service, publishers, runtime)
         }
 
         CommandResult(io, this.writeActionLog(emittedTime, "reopen board", channel, user))

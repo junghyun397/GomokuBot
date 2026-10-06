@@ -18,7 +18,7 @@ import discord.executeAndRecord
 import discord.interact.InternalInteractionContext
 import discord.interact.message.DiscordPlatformService
 import discord.interact.message.MessageCreateAdaptor
-import discord.interact.message.asDiscordMessageData
+import discord.interact.message.discordPublisher
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.api.interactions.DiscordLocale
@@ -53,7 +53,7 @@ suspend fun channelJoinRouter(context: InternalInteractionContext<GuildJoinEvent
         service = DiscordPlatformService(context.shardManager, context.discordConfig, context.jdaChannel),
         publisher = context.event.guild.systemChannel?.let { systemChannel ->
             MonoPublisherSet(
-                publisher = { msg -> MessageCreateAdaptor(systemChannel.sendMessage(msg.asDiscordMessageData().buildCreate()))},
+                publisher = discordPublisher { msg -> MessageCreateAdaptor(systemChannel.sendMessage(msg.buildCreate()))},
                 editGlobal = { throw IllegalStateException() }
             )
         },

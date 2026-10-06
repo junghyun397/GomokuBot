@@ -1,6 +1,5 @@
 package core.interact.commands
 
-import core.assets.MessageRef
 import core.session.entities.GameSession
 import core.session.entities.MoveStageOpeningSession
 import core.session.entities.SessionId
@@ -10,8 +9,7 @@ class OpeningSetCommand(
     sessionId: SessionId,
     move: Pos,
     responseFlag: ResponseFlag,
-    messageRef: MessageRef?,
-) : OpeningMoveCommand<MoveStageOpeningSession>(sessionId, move, responseFlag, messageRef) {
+) : OpeningMoveCommand<MoveStageOpeningSession>(sessionId, move, responseFlag) {
 
     override val name = "opening-set"
 

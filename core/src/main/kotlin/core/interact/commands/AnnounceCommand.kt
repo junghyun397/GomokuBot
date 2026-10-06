@@ -10,8 +10,9 @@ import core.database.repositories.UserProfileRepository
 import core.interact.i18n.Language
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
+import core.interact.message.announcementMessage
 import core.interact.reports.writeActionLog
-import core.session.MessageManager
+import core.session.NavigationManager
 import core.session.entities.ChannelConfig
 import core.session.entities.NavigationKind
 import core.session.entities.PageNavigationState
@@ -39,18 +40,17 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
         val io = effect {
             AnnounceRepository.getAnnouncesSince(bot.dbConnection, user.announceId ?: 0)
                 .forEachIndexed { index, announces ->
-                    val message = service.buildAnnounce(
-                        publishers.plain,
+                    val content = announcementMessage(
                         config.language.container,
-                        announces[config.language] ?: announces[Language.ENG]!!
-                    ).retrieve()()
+                        announces[config.language] ?: announces[Language.ENG]!!,
+                    )
+                    val message = publishers.plain(content).retrieve()()
 
                     if (message != null) {
-                        MessageManager.addNavigation(
+                        NavigationManager.addNavigation(
                             bot.sessions,
                             message.ref,
                             PageNavigationState(
-                                message.ref,
                                 NavigationKind.ANNOUNCE,
                                 index + 1,
                                 Clock.System.now() + BotConfig.navigatorExpireAfter

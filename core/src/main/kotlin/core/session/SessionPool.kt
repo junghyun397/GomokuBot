@@ -6,7 +6,6 @@ import core.assets.MessageRef
 import core.assets.UserUid
 import core.database.DatabaseConnection
 import core.session.entities.*
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 data class SessionUserKey(
@@ -20,7 +19,6 @@ data class SessionPool(
     val requestSessions: ConcurrentHashMap<SessionId, SessionSlot<RequestSession>> = ConcurrentHashMap(),
     val gameSessionIndex: ConcurrentHashMap<SessionUserKey, SessionId> = ConcurrentHashMap(),
     val requestSessionIndex: ConcurrentHashMap<SessionUserKey, SessionId> = ConcurrentHashMap(),
-    val navigates: MutableMap<MessageRef, NavigationState> = Collections.synchronizedMap(WeakHashMap()),
-    val messageBuffer: MutableMap<MessageBufferKey, MutableList<MessageRef>> = Collections.synchronizedMap(WeakHashMap()),
+    val navigates: ConcurrentHashMap<MessageRef, NavigationState> = ConcurrentHashMap(),
     val dbConnection: DatabaseConnection,
 )

@@ -1,25 +1,24 @@
-@file:Suppress("FunctionName")
-
 package discord.interact.message
 
-import core.interact.message.ComponentPublisher
+import core.assets.MessageRef
+import core.interact.message.DeferredMessageAction
+import core.interact.message.MessageAction
 import core.interact.message.MessagePublisher
 import core.interact.message.PublisherSet
 
 typealias DiscordMessagePublisher = MessagePublisher
 
-typealias DiscordComponentPublisher = ComponentPublisher
+fun discordPublisher(publish: (DiscordMessageData) -> MessageAction): MessagePublisher = { message ->
+    DeferredMessageAction { publish(DiscordMessageRenderer.render(message)) }
+}
 
-fun TransMessagePublisher(head: DiscordMessagePublisher, tail: DiscordMessagePublisher): DiscordMessagePublisher {
+fun TransMessagePublisher(head: MessagePublisher, tail: MessagePublisher): MessagePublisher {
     var consumeTail = false
-
-    return { msg ->
-        when (consumeTail) {
-            true -> tail(msg)
-            else -> {
-                consumeTail = true
-                head(msg)
-            }
+    return { message ->
+        DeferredMessageAction {
+            val publisher = if (consumeTail) tail else head
+            consumeTail = true
+            publisher(message)
         }
     }
 }
@@ -27,24 +26,30 @@ fun TransMessagePublisher(head: DiscordMessagePublisher, tail: DiscordMessagePub
 class TransMessagePublisherSet(
     private val head: PublisherSet,
     private val tail: PublisherSet,
+    private val selfRef: MessageRef? = null,
 ) : PublisherSet {
 
     private var consumeTail = false
 
-    private fun selectSet() = when(this.consumeTail) {
-        true -> this.tail
-        else -> {
-            this.consumeTail = true
-            this.head
-        }
+    private fun selectSet(): PublisherSet {
+        val publishers = if (this.consumeTail) this.tail else this.head
+        this.consumeTail = true
+        return publishers
     }
 
-    override val plain get() = this.selectSet().plain
+    override val plain: MessagePublisher = { message ->
+        DeferredMessageAction { this.selectSet().plain(message) }
+    }
 
-    override val windowed get() = this.selectSet().windowed
+    override val windowed: MessagePublisher = { message ->
+        DeferredMessageAction { this.selectSet().windowed(message) }
+    }
 
-    override val edit get() = this.selectSet().edit
-
-    override val component get() = this.selectSet().component
+    override val edit: (MessageRef) -> MessagePublisher = { ref -> { message ->
+        DeferredMessageAction {
+            val publishers = if (ref == this.selfRef) this.selectSet() else this.tail
+            publishers.edit(ref)(message)
+        }
+    } }
 
 }

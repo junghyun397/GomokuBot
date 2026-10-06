@@ -6,7 +6,7 @@ import core.interact.commands.HelpCommand
 import core.interact.commands.ViewAnnounceCommand
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
-import core.interact.message.PlatformServiceImpl
+import core.interact.message.HelpPages
 import core.interact.parse.CommandParser
 import dev.minn.jda.ktx.interactions.commands.choice
 import dev.minn.jda.ktx.interactions.commands.option
@@ -24,12 +24,12 @@ object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
     override val name = "help"
 
-    override fun getLocalizedName(container: LanguageContainer) = container.helpCommand()
+    override fun getLocalizedName(container: LanguageContainer) = container.helpCommand
 
     override fun getLocalizedUsages(container: LanguageContainer) = listOf(
         BuildableCommand.Usage(
-            usage = "``/${container.helpCommand()}`` or ``$COMMAND_PREFIX${container.helpCommand()}``",
-            description = container.commandUsageHelp()
+            usage = "`/${container.helpCommand}` or `$COMMAND_PREFIX${container.helpCommand}`",
+            description = container.commandUsageHelp
         )
     )
 
@@ -37,15 +37,15 @@ object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
         when (shortcut) {
             null -> 0
             else ->
-                if (shortcut == container.helpCommandOptionAnnouncements() || shortcut == Language.ENG.container.helpCommandOptionAnnouncements())
+                if (shortcut == container.helpCommandOptionAnnouncements || shortcut == Language.ENG.container.helpCommandOptionAnnouncements)
                     null
-                else PlatformServiceImpl.aboutRenjuDocument[container]!!.second[shortcut]
-                    ?: PlatformServiceImpl.aboutRenjuDocument[Language.ENG.container]!!.second[shortcut]
+                else HelpPages.documents[container]!!.second[shortcut]
+                    ?: HelpPages.documents[Language.ENG.container]!!.second[shortcut]
                     ?: 0
         }
 
     private fun checkCrossLanguageCommand(container: LanguageContainer, command: String) =
-        container.helpCommand() != command
+        container.helpCommand != command
 
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either.Right<Command> {
         val isCrossLanguageCommand = this.checkCrossLanguageCommand(context.config.language.container, context.event.name.lowercase())
@@ -55,7 +55,7 @@ object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             else context.config.language
 
         return Either.Right(
-            this.matchPage(language.container, context.event.getOption(language.container.helpCommandOptionShortcut())?.asString)
+            this.matchPage(language.container, context.event.getOption(language.container.helpCommandOptionShortcut)?.asString)
                 ?.let { page ->
                     HelpCommand(
                         sendSettings = isCrossLanguageCommand,
@@ -87,15 +87,15 @@ object HelpCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
     fun buildHelpCommandData(action: CommandListUpdateAction, container: LanguageContainer): CommandListUpdateAction =
         action.slash(
-            container.helpCommand(),
-            container.helpCommandDescription()
+            container.helpCommand,
+            container.helpCommandDescription
         ) {
-            option<String>(container.helpCommandOptionShortcut(), container.helpCommandOptionShortcutDescription()) {
-                PlatformServiceImpl.aboutRenjuDocument[container]!!.second.forEach { (anchor, _) ->
+            option<String>(container.helpCommandOptionShortcut, container.helpCommandOptionShortcutDescription) {
+                HelpPages.documents[container]!!.second.forEach { (anchor, _) ->
                     choice(anchor, anchor)
                 }
 
-                choice(container.helpCommandOptionAnnouncements(), container.helpCommandOptionAnnouncements())
+                choice(container.helpCommandOptionAnnouncements, container.helpCommandOptionAnnouncements)
             }
         }
 

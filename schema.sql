@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS channel_config (
     language smallint NOT NULL,
     board_style smallint NOT NULL,
     focus_type smallint NOT NULL,
-    swap_type smallint NOT NULL,
     archive_policy smallint NOT NULL,
     hint_type smallint NOT NULL,
     mark_type smallint NOT NULL

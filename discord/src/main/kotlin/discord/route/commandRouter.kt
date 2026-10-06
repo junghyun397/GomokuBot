@@ -5,11 +5,15 @@ package discord.route
 import arrow.core.Either
 import arrow.core.flatMap
 import arrow.core.raise.effect
+import core.assets.UNICODE_ALARM_CLOCK
+import core.assets.UNICODE_CONSTRUCTION
 import core.database.repositories.AnnounceRepository
 import core.interact.commands.*
 import core.interact.i18n.LanguageContainer
 import core.interact.message.AdaptivePublisherSet
+import core.interact.message.AppMessage
 import core.interact.message.MonoPublisherSet
+import core.interact.message.NoticeLevel
 import core.interact.parse.ParseFailure
 import discord.ActionLogRecord
 import discord.assets.*
@@ -38,11 +42,13 @@ private fun buildPermissionNode(context: UserInteractionContext<*>, parsableComm
                 effect {
                     jdaUser.openPrivateChannel()
                         .flatMap { privateSubChannel ->
-                            DiscordPlatformService(context.shardManager).sendPermissionNotGrantedEmbed(
-                                publisher = { msg -> privateSubChannel.sendMessage(msg.asDiscordMessageData().buildCreate()) },
-                                container = container,
-                                channelName = channel.name
+                            val message = AppMessage.Embed(
+                                level = NoticeLevel.ERROR,
+                                title = "$UNICODE_CONSTRUCTION ${container.somethingWrongEmbedTitle}",
+                                description = container.permissionNotGrantedEmbedDescription("`${channel.name}`") +
+                                    "\n\n$UNICODE_ALARM_CLOCK ${container.permissionNotGrantedEmbedFooter}",
                             )
+                            privateSubChannel.sendMessage(DiscordMessageRenderer.render(message).buildCreate())
                         }
                         .delay(1, TimeUnit.MINUTES)
                         .flatMap(Message::delete)
@@ -87,16 +93,17 @@ private fun <T : Event> buildUpdateCommandsNode(context: UserInteractionContext<
 private fun matchCommand(command: String, container: LanguageContainer): ParsableCommand? =
     when (command.lowercase()) {
         "help" -> HelpCommandParser
-        container.helpCommand() -> HelpCommandParser
-        container.settingsCommand() -> SettingsCommandParser
-        container.startCommand() -> StartCommandParser
+        container.helpCommand -> HelpCommandParser
+        container.settingsCommand -> SettingsCommandParser
+        container.startCommand -> StartCommandParser
         "s" -> SetCommandParser
-        container.resignCommand() -> ResignCommandParser
-        container.languageCommand() -> LangCommandParser
-        container.rankCommand() -> RankCommandParser
-        container.ratingCommand() -> RatingCommandParser
-        container.replayCommand() -> ReplayListCommandParser
-        container.boardCommand() -> BoardCommandParser
+        container.undoCommand -> UndoCommandParser
+        container.resignCommand -> ResignCommandParser
+        container.languageCommand -> LangCommandParser
+        container.rankCommand -> RankCommandParser
+        container.ratingCommand -> RatingCommandParser
+        container.replayCommand -> ReplayListCommandParser
+        container.boardCommand -> BoardCommandParser
         else -> null
     }
 
@@ -150,17 +157,20 @@ suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInter
                 service = platform,
                 publishers = when (command.responseFlag) {
                     is ResponseFlag.Defer -> AdaptivePublisherSet(
-                        plain = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate())) },
-                        windowed = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate())) },
-                        editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.asDiscordMessageData().buildEdit()) } },
+                        plain = discordPublisher { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
+                        windowed = discordPublisher { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
+                        editGlobal = { ref -> discordPublisher { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
                     )
-                    else -> AdaptivePublisherSet(
-                        plain = TransMessagePublisher(
-                            head = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.asDiscordMessageData().buildCreate())) },
-                            tail = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate())) }
+                    else -> TransMessagePublisherSet(
+                        head = AdaptivePublisherSet(
+                            plain = discordPublisher { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate())) },
+                            windowed = discordPublisher { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate()).setEphemeral(true)) },
                         ),
-                        windowed = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.asDiscordMessageData().buildCreate()).setEphemeral(true)) },
-                        editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.asDiscordMessageData().buildEdit()) } }
+                        tail = AdaptivePublisherSet(
+                            plain = discordPublisher { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate())) },
+                            windowed = discordPublisher { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate()).setEphemeral(true)) },
+                            editGlobal = { ref -> discordPublisher { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
+                        ),
                     )
                 },
                 emittedTime = context.emittedTime,
@@ -171,8 +181,8 @@ suspend fun slashCommandRouter(context: UserInteractionContext<SlashCommandInter
                 config = context.config,
                 service = platform,
                 publisher = TransMessagePublisher(
-                    head = { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.asDiscordMessageData().buildCreate()).setEphemeral(true)) },
-                    tail = { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.asDiscordMessageData().buildCreate()).setEphemeral(true)) }
+                    head = discordPublisher { msg -> WebHookMessageCreateAdaptor(context.event.reply(msg.buildCreate()).setEphemeral(true)) },
+                    tail = discordPublisher { msg -> MessageCreateAdaptor(context.event.hook.sendMessage(msg.buildCreate()).setEphemeral(true)) }
                 ),
                 emittedTime = context.emittedTime,
             )
@@ -236,8 +246,8 @@ suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEve
                 user = context.user,
                 service = platform,
                 publishers = MonoPublisherSet(
-                    publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.asDiscordMessageData().buildCreate())) },
-                    editGlobal = { ref -> { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.asDiscordMessageData().buildEdit()) } },
+                    publisher = discordPublisher { msg -> MessageCreateAdaptor(context.event.message.reply(msg.buildCreate())) },
+                    editGlobal = { ref -> discordPublisher { msg -> context.jdaChannel.editMessageByMessageRef(ref, msg.buildEdit()) } },
                 ),
                 emittedTime = context.emittedTime,
             )
@@ -246,7 +256,7 @@ suspend fun textCommandRouter(context: UserInteractionContext<MessageReceivedEve
             parseFailure.notice(
                 config = context.config,
                 service = platform,
-                publisher = { msg -> MessageCreateAdaptor(context.event.message.reply(msg.asDiscordMessageData().buildCreate())) },
+                publisher = discordPublisher { msg -> MessageCreateAdaptor(context.event.message.reply(msg.buildCreate())) },
                 emittedTime = context.emittedTime,
             )
         }

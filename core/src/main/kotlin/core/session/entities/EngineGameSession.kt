@@ -17,6 +17,7 @@ data class EngineGameSession(
     val engineLevel: EngineLevel,
     val userRating: EloRating,
     override val recording: Boolean,
+    val remainingUndos: Int = 2,
 ) : PlayGameSession {
 
     val mintakaSession: MintakaSession? get() = this.engineState.getOrNull()
@@ -29,8 +30,6 @@ data class EngineGameSession(
 
     override val state = this.context.state
     override val users = this.context.users
-
-    override val messageBufferKey = this.context.messageBufferKey
 
     override val rule = this.context.ruleKind
 

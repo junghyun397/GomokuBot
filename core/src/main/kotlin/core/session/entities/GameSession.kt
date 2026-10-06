@@ -12,7 +12,6 @@ data class GameSessionContext<T: User>(
     val requester: User.Human,
     val users: ColorContainer<T>,
     val state: GameState,
-    val messageBufferKey: MessageBufferKey,
     val expireService: ExpireService,
     val ruleKind: Rule,
 ) {
@@ -20,13 +19,11 @@ data class GameSessionContext<T: User>(
     fun next(
         state: GameState = this.state,
         users: ColorContainer<T> = this.users,
-        messageBufferKey: MessageBufferKey = MessageBufferKey.issue(),
         expireService: ExpireService = this.expireService.next(),
     ): GameSessionContext<T> =
         this.copy(
             users = users,
             state = state,
-            messageBufferKey = messageBufferKey,
             expireService = expireService,
         )
 
@@ -45,8 +42,6 @@ sealed interface GameSession : Expirable {
     val users: ColorContainer<User>
     val player get() = this.users[this.state.board.playerColor]
     val opponent get() = this.users[!this.state.board.playerColor]
-
-    val messageBufferKey: MessageBufferKey
 
     val rule: Rule
 

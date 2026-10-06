@@ -90,42 +90,35 @@ object SessionManager {
         )
     }
 
-    private fun <T : Expirable> deleteSession(
+    private fun <T : Expirable> removeSession(
         pool: SessionPool,
         sessions: MutableMap<SessionId, SessionSlot<T>>,
         indexes: MutableMap<SessionUserKey, SessionId>,
         sessionId: SessionId,
-    ): T? =
+    ) {
         synchronized(pool) {
-            val slot = sessions[sessionId]
-            val session = slot?.snapshot()
-
-            if (session != null) {
-                sessions.remove(sessionId)
-                indexes.entries.removeIf { it.key.channelId == slot.channelId && it.value == sessionId }
-                this.removeChannelIfUnused(pool, slot.channelId)
-
-                return@synchronized session
-            }
-
-            null
+            val slot = sessions.remove(sessionId) ?: return@synchronized
+            indexes.entries.removeIf { it.key.channelId == slot.channelId && it.value == sessionId }
+            this.removeChannelIfUnused(pool, slot.channelId)
         }
+    }
 
-    fun deleteGameSession(pool: SessionPool, sessionId: SessionId): GameSession? =
-        this.deleteSession(
-            pool = pool,
-            sessions = pool.gameSessions,
-            indexes = pool.gameSessionIndex,
-            sessionId = sessionId,
-        )
+    fun finishGameSession(pool: SessionPool, runtime: SessionRuntime<GameSession>) {
+        runtime.close()
+        this.removeSession(pool, pool.gameSessions, pool.gameSessionIndex, runtime.session.id)
+    }
 
-    fun deleteRequestSession(pool: SessionPool, sessionId: SessionId): RequestSession? =
-        this.deleteSession(
-            pool = pool,
-            sessions = pool.requestSessions,
-            indexes = pool.requestSessionIndex,
-            sessionId = sessionId,
-        )
+    fun finishRequestSession(pool: SessionPool, runtime: SessionRuntime<RequestSession>) {
+        runtime.close()
+        this.removeSession(pool, pool.requestSessions, pool.requestSessionIndex, runtime.session.id)
+    }
+
+    fun finishUndoRequest(pool: SessionPool, runtime: SessionRuntime<GameSession>): SessionRuntime<RequestSession>? {
+        val request = runtime.undoRequest ?: return null
+        runtime.undoRequest = null
+        this.finishRequestSession(pool, request)
+        return request
+    }
 
     fun findGameSessionId(pool: SessionPool, channelUid: ChannelUid, userUid: UserUid): SessionId? =
         pool.gameSessionIndex[SessionUserKey(channelUid, userUid)]
@@ -147,18 +140,18 @@ object SessionManager {
         pool.requestSessions[sessionId]
             ?: throw RequestSessionNotFoundException(sessionId)
 
-    fun cleanExpiredRequestSessions(pool: SessionPool): Sequence<Quadruple<ChannelUid, Channel, SessionId, RequestSession>> =
+    fun cleanExpiredRequestSessions(pool: SessionPool): Sequence<Quadruple<ChannelUid, Channel, SessionId, SessionRuntime<RequestSession>>> =
         this.cleanExpired(
             pool = pool,
             sessions = pool.requestSessions,
-            delete = { sessionId -> this.deleteRequestSession(pool, sessionId) },
+            finish = { runtime -> this.finishRequestSession(pool, runtime) },
         )
 
-    fun cleanExpiredGameSession(pool: SessionPool): Sequence<Quadruple<ChannelUid, Channel, SessionId, GameSession>> =
+    fun cleanExpiredGameSession(pool: SessionPool): Sequence<Quadruple<ChannelUid, Channel, SessionId, SessionRuntime<GameSession>>> =
         this.cleanExpired(
             pool = pool,
             sessions = pool.gameSessions,
-            delete = { sessionId -> this.deleteGameSession(pool, sessionId) },
+            finish = { runtime -> this.finishGameSession(pool, runtime) },
         )
 
     private fun removeChannelIfUnused(pool: SessionPool, channelId: ChannelUid) {
@@ -173,31 +166,16 @@ object SessionManager {
     private fun <T : Expirable> cleanExpired(
         pool: SessionPool,
         sessions: Map<SessionId, SessionSlot<T>>,
-        delete: (SessionId) -> Unit,
-    ): Sequence<Quadruple<ChannelUid, Channel, SessionId, T>> {
+        finish: (SessionRuntime<T>) -> Unit,
+    ): Sequence<Quadruple<ChannelUid, Channel, SessionId, SessionRuntime<T>>> {
         val referenceTime = Clock.System.now()
-        val expires = sessions
-            .mapNotNull { (sessionId, slot) ->
-                val channelId = slot.channelId
-                val channel = pool.channels[channelId] ?: return@mapNotNull null
-                val session = try {
-                    slot.snapshot()
-                } catch (_: SessionLockedException) {
-                    return@mapNotNull null
-                }
 
-                if (referenceTime > session.expireDate)
-                    tuple(channelId, channel, sessionId, session)
-                else null
-            }
-
-        expires.forEach { (_, _, sessionId, _) ->
-            runCatching {
-                delete(sessionId)
-            }
-        }
-
-        return expires.asSequence()
+        return sessions.mapNotNull { (sessionId, slot) ->
+            val channel = pool.channels[slot.channelId] ?: return@mapNotNull null
+            val runtime = slot.closeIfExpired(referenceTime) ?: return@mapNotNull null
+            finish(runtime)
+            tuple(slot.channelId, channel, sessionId, runtime)
+        }.asSequence()
     }
 
 }

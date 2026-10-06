@@ -33,7 +33,6 @@ class HelpCommand(
                 true -> buildCombinedHelpProcedure(bot, config, publishers.plain, service, page)
                 else -> buildHelpProcedure(bot, config, publishers.plain, service, page)
             }()
-            Unit
         }
 
         CommandResult(io, this.writeActionLog(emittedTime, "sent", channel, user))

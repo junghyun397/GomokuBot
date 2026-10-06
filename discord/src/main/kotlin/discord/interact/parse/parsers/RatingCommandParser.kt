@@ -17,12 +17,12 @@ object RatingCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
     override val name = "rating"
 
-    override fun getLocalizedName(container: LanguageContainer) = container.ratingCommand()
+    override fun getLocalizedName(container: LanguageContainer) = container.ratingCommand
 
     override fun getLocalizedUsages(container: LanguageContainer) = listOf(
         BuildableCommand.Usage(
-            usage = "``/${container.ratingCommand()}`` or ``$COMMAND_PREFIX${container.ratingCommand()}``",
-            description = container.commandUsageRating()
+            usage = "`/${container.ratingCommand}` or `$COMMAND_PREFIX${container.ratingCommand}`",
+            description = container.commandUsageRating
         ),
     )
 
@@ -34,8 +34,8 @@ object RatingCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.slash(
-            container.ratingCommand(),
-            container.ratingCommandDescription()
+            container.ratingCommand,
+            container.ratingCommandDescription
         )
 
 }

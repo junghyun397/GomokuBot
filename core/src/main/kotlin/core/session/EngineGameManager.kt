@@ -9,12 +9,25 @@ import renju.GameState
 import renju.History
 import renju.notation.*
 import utils.tuple
+import kotlin.math.abs
+import kotlin.random.Random
 import kotlin.time.Duration.Companion.hours
 
 object EngineGameManager {
 
-    fun availableEngineLevels(mintakaServer: MintakaServer, rating: EloRating): List<EngineLevel> {
-        return listOf(EngineLevel.AMOEBA)
+    fun matchEngineLevel(userRating: EloRating): EngineLevel {
+        val distances = ELO_RATINGS
+            .map { (level, rating) -> level to abs(rating - userRating.rating) }
+
+        val (closest, closestDistance) = distances.minBy { it.second }
+        val (secondClosest, secondClosestDistance) = distances
+            .filter { it.first != closest }
+            .minBy { it.second }
+
+        val secondClosestProbability = (closestDistance / (closestDistance + secondClosestDistance))
+            .coerceIn(0.2, 0.5)
+
+        return if (Random.nextDouble() < secondClosestProbability) secondClosest else closest
     }
 
     suspend fun create(mintakaServer: MintakaServer, user: User.Human, userRating: EloRating, level: EngineLevel): EngineGameSession {
@@ -43,7 +56,6 @@ object EngineGameManager {
                 requester = user,
                 users = users,
                 state = state,
-                messageBufferKey = MessageBufferKey.issue(),
                 expireService = ExpireService(1.hours),
                 ruleKind = Rule.RENJU,
             ),
@@ -89,8 +101,21 @@ object EngineGameManager {
         return this.playMoveAndSyncEngine(session, bestMove.move)
     }
 
-    fun undo(session: EngineGameSession): EngineGameSession {
-        TODO()
+    suspend fun undo(session: EngineGameSession): EngineGameSession {
+        val state = session.state.undo().undo()
+        val mintakaSession = EngineProvider.sync(
+            session.mintakaServer,
+            session.mintakaSession as MintakaIdleSession,
+            state,
+        )
+
+        check(mintakaSession.hash == state.board.hashKey) { "desync" }
+
+        return session.copy(
+            context = session.context.next(state),
+            engineState = Either.Right(mintakaSession),
+            remainingUndos = session.remainingUndos - 1,
+        )
     }
 
     enum class ResignCause(val cause: GameResult.WinCause) {

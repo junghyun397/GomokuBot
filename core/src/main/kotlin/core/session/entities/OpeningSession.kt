@@ -17,7 +17,6 @@ sealed interface OpeningSession : UserSession {
     override val users get() = this.context.users
 
     override val state get() = this.context.state
-    override val messageBufferKey get() = this.context.messageBufferKey
 
 }
 

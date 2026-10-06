@@ -6,8 +6,7 @@ import core.assets.Channel
 import core.assets.MessageRef
 import core.assets.User
 import core.database.repositories.GameRecordRepository
-import core.interact.message.PlatformService
-import core.interact.message.PublisherSet
+import core.interact.message.*
 import core.interact.reports.writeActionLog
 import core.session.entities.ChannelConfig
 import kotlin.time.Instant
@@ -44,7 +43,8 @@ class ReplayListCommand(
             else publishers.plain
 
         val io = effect {
-            service.buildReplayList(publisher, config.language.container, user, gameRecords)
+            val view = ReplayListView(config.language.container, user, gameRecords.map { it.buildReplayEntry(user) })
+            publisher(AppMessage.ReplayList(view))
                 .launch()()
         }
 

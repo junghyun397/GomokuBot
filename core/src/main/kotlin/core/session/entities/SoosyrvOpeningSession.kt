@@ -107,7 +107,6 @@ data class SoosyrvOfferStageOpeningSession(
             )
         else
             this.copy(
-                context = this.context.copy(messageBufferKey = MessageBufferKey.issue()),
                 moveCandidates = this.moveCandidates + move,
                 symmetryMoves = this.symmetryMoves + this.calculateSymmetryMoves(move),
             )

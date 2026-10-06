@@ -8,7 +8,7 @@ import core.interact.commands.Command
 import core.interact.commands.LangCommand
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
-import core.interact.message.PlatformMessage
+import core.interact.message.AppMessage
 import core.interact.parse.CommandParser
 import core.interact.parse.ParseFailure
 import core.interact.parse.asParseFailure
@@ -27,38 +27,28 @@ object LangCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
     override val name = "lang"
 
-    private val languageList =
-        buildString {
-            Language.entries.forEach { language ->
-                append(" ``${language.container.languageCode()}``")
-            }
-        }
-
-    override fun getLocalizedName(container: LanguageContainer) = container.languageCommand()
+    override fun getLocalizedName(container: LanguageContainer) = container.languageCommand
 
     override fun getLocalizedUsages(container: LanguageContainer) = listOf(
         BuildableCommand.Usage(
-            usage = "``/${container.languageCommand()}`` or ``$COMMAND_PREFIX${container.languageCommand()}``",
-            description = container.commandUsageLang(this.languageList)
+            usage = "`/${container.languageCommand}` or `$COMMAND_PREFIX${container.languageCommand}`",
+            description = container.commandUsageLang
         ),
     )
 
     private fun matchLang(option: String): Language? =
-        Language.entries.firstOrNull { it.container.languageCode() == option }
+        Language.entries.firstOrNull { it.container.languageCode == option }
 
     private fun composeMissMatchFailure(channel: Channel, user: User.Human): Either<ParseFailure, Command> =
         Either.Left(this.asParseFailure("option mismatch", channel, user) { messagingService, publisher, _ ->
             effect {
-                messagingService.buildMessage(
-                    publisher,
-                    PlatformMessage("There is an error in the Language Code. Please select from the list below.")
-                ).launch()()
-                messagingService.buildLanguageGuide(publisher).launch()()
+                publisher(AppMessage.Text("There is an error in the Language Code. Please select from the list below.")).launch()()
+                publisher(AppMessage.LanguageGuide).launch()()
             }
         })
 
     override suspend fun parseSlash(context: UserInteractionContext<SlashCommandInteractionEvent>): Either<ParseFailure, Command> {
-        val lang = context.event.getOption(context.config.language.container.languageCommandOptionCode())?.asString?.uppercase()?.let {
+        val lang = context.event.getOption(context.config.language.container.languageCommandOptionCode)?.asString?.uppercase()?.let {
             matchLang(it)
         } ?: return this.composeMissMatchFailure(context.channel, context.user)
 
@@ -77,18 +67,18 @@ object LangCommandParser : CommandParser, ParsableCommand, BuildableCommand {
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.slash(
-            container.languageCommand(),
-            container.languageCommandDescription(),
+            container.languageCommand,
+            container.languageCommandDescription,
         ) {
             option<String>(
-                container.languageCommandOptionCode(),
-                container.languageCommandOptionCodeDescription(),
+                container.languageCommandOptionCode,
+                container.languageCommandOptionCodeDescription,
                 true
             ) {
                 Language.entries.fold(this) { builder, language ->
                     builder.choice(
-                        language.container.languageCode(),
-                        language.container.languageCode()
+                        language.container.languageCode,
+                        language.container.languageCode
                     )
                 }
             }

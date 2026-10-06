@@ -4,24 +4,19 @@ import arrow.core.raise.get
 import core.assets.MessageRef
 import core.interact.i18n.Language
 import core.interact.i18n.LanguageContainer
-import core.interact.message.buildBoardDraw
-import core.session.entities.ArchivePolicy
-import core.session.entities.GameSession
+import core.interact.message.AppMessage
 import dev.minn.jda.ktx.coroutines.await
 import discord.assets.JDAChannel
 import discord.assets.awaitNullable
-import discord.assets.subChannelById
 import discord.interact.message.DiscordMessagePublisher
-import discord.interact.message.DiscordPlatformService
 import discord.interact.message.MessageCreateAdaptor
-import discord.interact.message.asDiscordMessageData
+import discord.interact.message.discordPublisher
 import discord.interact.parse.buildableCommands
 import discord.interact.parse.parsers.HelpCommandParser
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
-import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.sharding.ShardManager
 
 object ChannelManager {
@@ -50,15 +45,9 @@ object ChannelManager {
         }.await()
     }
 
-    suspend fun archiveSession(archiveSubChannel: MessageChannel, session: GameSession, archivePolicy: ArchivePolicy) {
-        if (session.state.history.size < 20 || archivePolicy == ArchivePolicy.PRIVACY) return
-
-        val publisher: DiscordMessagePublisher = { msg -> MessageCreateAdaptor(archiveSubChannel.sendMessage(msg.asDiscordMessageData().buildCreate())) }
-
-        DiscordPlatformService(archiveSubChannel.jda.shardManager!!)
-            .buildSessionArchive(publisher, session.buildBoardDraw(archivePolicy == ArchivePolicy.BY_ANONYMOUS))
-            .launch()
-            .get()
+    suspend fun archiveMessage(archiveSubChannel: MessageChannel, message: AppMessage.BoardArchive) {
+        val publisher: DiscordMessagePublisher = discordPublisher { msg -> MessageCreateAdaptor(archiveSubChannel.sendMessage(msg.buildCreate())) }
+        publisher(message).launch().get()
     }
 
     suspend fun retrieveJDAMessage(jda: JDA, messageRef: MessageRef): net.dv8tion.jda.api.entities.Message? =
@@ -66,39 +55,6 @@ object ChannelManager {
             ?.getTextChannelById(messageRef.subChannelId.idLong)
             ?.retrieveMessageById(messageRef.id.idLong)
             ?.awaitNullable()
-
-    fun bulkDelete(jdaChannel: JDAChannel, messageRefs: List<MessageRef>) {
-        if (messageRefs.isEmpty()) return
-
-        messageRefs
-            .groupBy { it.subChannelId }
-            .flatMap { (subChannelId, messageRefs) ->
-                when (val channel = jdaChannel.subChannelById(subChannelId.idLong)) {
-                    null -> emptyList<RestAction<*>>()
-                    else -> {
-                        this.permissionDependedRun(
-                            channel, Permission.MESSAGE_MANAGE,
-                            onMissed = {
-                                messageRefs
-                                    .map { channel.deleteMessageById(it.id.idLong) }
-                            },
-                            onGranted = {
-                                messageRefs
-                                    .chunked(100)
-                                    .map { messageRefs ->
-                                        when (messageRefs.size) {
-                                            1 -> channel.deleteMessageById(messageRefs.first().id.idLong)
-                                            else -> channel.deleteMessagesByIds(messageRefs.map { it.id.idLong.toString() })
-                                        }
-                                    }
-                            }
-                        )
-                    }
-                }
-            }
-            .reduce { acc, restAction -> acc.and(restAction) }
-            .queue()
-    }
 
     fun deleteSingle(jdaChannel: JDAChannel, messageRef: MessageRef) {
         val maybeSubChannel = jdaChannel.getTextChannelById(messageRef.subChannelId.idLong)

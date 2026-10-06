@@ -355,13 +355,13 @@ Here's the good news (only black, unfortunately). Even if the forbidden move is 
 
 Welcome to the much fairer Gomoku! If you've followed this guide far, you know all the basic Renju rules. Now, even if forbidden moves appear, you will be able to unlock that or use other strategies to continue the game without panicking.
 
-Now start a game with your friends with the ``/start @mention`` command. Even if you don't have friends, the GomokuBot AI will always be with you. Don't forget to customize GomokuBot with the ``/setting`` command as well.
+Now start a game with your friends with the `/start @mention` command. Even if you don't have friends, the GomokuBot AI will always be with you. Don't forget to customize GomokuBot with the `/setting` command as well.
 
 In the next chapter, we'll learn how to figure out forbidden moves in very complex situations and how to attack and defend using forbidden moves. These are strategies for Renju, all possible only in Renju. It can be a little difficult for beginners.
 
 ## Like a Forbidden Move, But May Not Be a Forbidden Move. {#pseudo-forbid}
 
-Consider the following situation. Will black be able to move with ``h9``? At first glance, it seems that ``h9`` is a 3-3 forbid made by two stones arranged vertically in column h and two stones arranged horizontally in row 9, and it seems that black should not be able to move with ``i9``.
+Consider the following situation. Will black be able to move with `h9`? At first glance, it seems that `h9` is a 3-3 forbid made by two stones arranged vertically in column h and two stones arranged horizontally in row 9, and it seems that black should not be able to move with `i9`.
 
 ```fname = pseudo-forbid-simple, forbid = false, lmove = null
    A B C D E F G H I J K L M N O
@@ -387,7 +387,7 @@ While these situations aren't common(in fact, they're really, very rare in real 
 
 ### Imagine What Happens Next.
 
-In complex situations, a good way to figure out forbidden moves is to move one step at a time. First, let's make move to ``h9``, which is the point that we want to figure out.
+In complex situations, a good way to figure out forbidden moves is to move one step at a time. First, let's make move to `h9`, which is the point that we want to figure out.
 
 ```fname = pseudo-forbid-simple-s1, forbid = true, lmove = h9
    A B C D E F G H I J K L M N O
@@ -409,11 +409,11 @@ In complex situations, a good way to figure out forbidden moves is to move one s
    A B C D E F G H I J K L M N O
 ```
 
-In this situation, column h is blocked by 4-4 forbid and cannot create straight four. Two stones in column h were not three that could make a straight four in a single move. Let's remember the definition of forbidden moves again. If three or four is not valid, then the forbidden move is also invalid. So ``h9`` that can only make one three is not 3-3 forbidden.
+In this situation, column h is blocked by 4-4 forbid and cannot create straight four. Two stones in column h were not three that could make a straight four in a single move. Let's remember the definition of forbidden moves again. If three or four is not valid, then the forbidden move is also invalid. So `h9` that can only make one three is not 3-3 forbidden.
 
 ## It Doesn't Seem Like a Forbidden Move, But It Could Be a Forbidden Move. {#complex-pseudo-forbid}
 
-The ``g10`` looks like 3-3 forbid. But since ``i8`` is also forbid, ``g10`` doesn't seem to be forbid 3-3 forbid. How can we figure out how black can move in ``g10`` in this complex situation?
+The `g10` looks like 3-3 forbid. But since `i8` is also forbid, `g10` doesn't seem to be forbid 3-3 forbid. How can we figure out how black can move in `g10` in this complex situation?
 
 ```fname = pseudo-forbid-complex, forbid = false, lmove = null
    A B C D E F G H I J K L M N O
@@ -437,7 +437,7 @@ The ``g10`` looks like 3-3 forbid. But since ``i8`` is also forbid, ``g10`` does
 
 ### Imagine a Situation In the Future.
 
-A good way to figure out forbidden moves in a very complex situation is also to move them step by step. Let's make move to ``h9``, the point that we want to figure out.
+A good way to figure out forbidden moves in a very complex situation is also to move them step by step. Let's make move to `h9`, the point that we want to figure out.
 
 ```fname = pseudo-forbid-complex-s1, forbid = false, lmove = g10
    A B C D E F G H I J K L M N O
@@ -459,9 +459,9 @@ A good way to figure out forbidden moves in a very complex situation is also to 
    A B C D E F G H I J K L M N O
 ```
 
-At first glance, ``i8`` seems to be 3-3 forbid where two stones placed vertically in column i and two stones placed horizontally in row 8. So black can't make straight four diagonally, so isn't ``g10`` a forbidden point?
+At first glance, `i8` seems to be 3-3 forbid where two stones placed vertically in column i and two stones placed horizontally in row 8. So black can't make straight four diagonally, so isn't `g10` a forbidden point?
 
-That said, the three stones arranged vertically in a column f seem odd. It's too early to judge. Let's make one more move for ``i8``.
+That said, the three stones arranged vertically in a column f seem odd. It's too early to judge. Let's make one more move for `i8`.
 
 ```fname = pseudo-forbid-complex-s2, forbid = true, lmove = i8
    A B C D E F G H I J K L M N O
@@ -483,9 +483,9 @@ That said, the three stones arranged vertically in a column f seem odd. It's too
    A B C D E F G H I J K L M N O
 ```
 
-After making a move on ``i8``, Black is blocked by 4-4 forbid in row 8 and cannot make a straight four. The ``i8`` after making one move in ``g10`` was not 3-3 forbid!
+After making a move on `i8`, Black is blocked by 4-4 forbid in row 8 and cannot make a straight four. The `i8` after making one move in `g10` was not 3-3 forbid!
 
-Now we can figure out that ``i8`` after moving to ``g10`` is not a forbidden point. Therefore, ``g10``, which can make two straight fours by moving black once, can figure out that 3-3 forbid is correct.
+Now we can figure out that `i8` after moving to `g10` is not a forbidden point. Therefore, `g10`, which can make two straight fours by moving black once, can figure out that 3-3 forbid is correct.
 
 ```fname = pseudo-forbid-complex-s3, forbid = true, lmove = null
    A B C D E F G H I J K L M N O
@@ -507,7 +507,7 @@ Now we can figure out that ``i8`` after moving to ``g10`` is not a forbidden poi
    A B C D E F G H I J K L M N O
 ```
 
-In the same way, we can figure out that ``i10`` is also a 3-3 forbid. (The ``i10`` is a little more complicated.) Slowly, if you think about it one by one, it's not difficult.
+In the same way, we can figure out that `i10` is also a 3-3 forbid. (The `i10` is a little more complicated.) Slowly, if you think about it one by one, it's not difficult.
 
 ## White Can Attack By Targeting Forbidden Points. {#forbid-trap}
 
@@ -561,7 +561,7 @@ In order to remove 3-3 forbid, Black must make one move and remove one three. Bu
 
 Now, if white attacks with a forbidden point, we know that black is going to have to watch white win. But you can't rely on luck or mistakes forever. Given the right circumstances, aggressive attacks can lead the black to create a forbidden point and win.
 
-Here's a situation that looks awful for White. black attacked by making a three with ``f6``. At first glance, white seems to have to block black's three. The black stones that line lower-left also look very strong. Should white be attacked and defeated by black?
+Here's a situation that looks awful for White. black attacked by making a three with `f6`. At first glance, white seems to have to block black's three. The black stones that line lower-left also look very strong. Should white be attacked and defeated by black?
 
 ```fname = forbid-trap-complex, forbid = true, lmove = f6
    A B C D E F G H I J K L M N O
@@ -585,7 +585,7 @@ Here's a situation that looks awful for White. black attacked by making a three 
 
 Let's take a closer look at the situation again. White has 3 stones arranged diagonally and 3 stones arranged horizontally. Four attacks could go on twice. But it's like having a fit.
 
-What we need to note in this situation is that white can create four and make black move to ``g9``, and if the black moves to ``g9``, ``g8`` becomes 3-3 forbid.
+What we need to note in this situation is that white can create four and make black move to `g9`, and if the black moves to `g9`, `g8` becomes 3-3 forbid.
 
 ```fname = forbid-trap-complex-s1, forbid = true, lmove = f9
    A B C D E F G H I J K L M N O
@@ -651,13 +651,13 @@ Black was able to defend four, but two stones arranged horizontally in row 8 and
    A B C D E F G H I J K L M N O
 ```
 
-*Since ``g8`` is a 3-3 forbid, black has no way to stop the subsequent diagonal four attacks of white. White wins!*
+*Since `g8` is a 3-3 forbid, black has no way to stop the subsequent diagonal four attacks of white. White wins!*
 
 The situation has completely changed! White can use 4-4 forbid and overline forbid in the same way to create and win traps. Black should read the situation well and be extra careful not to fall into the trap and ruin the game.
 
 ## Black Can Escape the Trap by Making its Non-Forbidden Move
 
-Here's a twist. Black was able to win without being trapped. ``f6`` is an excellent point for black. But as we've seen before, if black move to ``f6``, Black will be caught in white's trap and defeated. How can black move safely to ``f6``?
+Here's a twist. Black was able to win without being trapped. `f6` is an excellent point for black. But as we've seen before, if black move to `f6`, Black will be caught in white's trap and defeated. How can black move safely to `f6`?
 
 ```fname = counter-forbid-trap, forbid = true, lmove = null
    A B C D E F G H I J K L M N O
@@ -679,7 +679,7 @@ Here's a twist. Black was able to win without being trapped. ``f6`` is an excell
    A B C D E F G H I J K L M N O
 ```
 
-Here we need to re-imagine the conditions of forbidden moves. If three or four is not valid, then forbidden moves are also invalid. The black can remove forbidden point that will be generated by moving to ``g9`` in advance.
+Here we need to re-imagine the conditions of forbidden moves. If three or four is not valid, then forbidden moves are also invalid. The black can remove forbidden point that will be generated by moving to `g9` in advance.
 
 ```fname = counter-forbid-trap-s1, forbid = true, lmove = e5
    A B C D E F G H I J K L M N O
@@ -723,7 +723,7 @@ Here we need to re-imagine the conditions of forbidden moves. If three or four i
    A B C D E F G H I J K L M N O
 ```
 
-That's it! Now black can move freely with ``f6``. Black has made a place in advance to make a diagonal four, so three of the two horizontal and vertical threes that will be made as White's trap is no longer three.
+That's it! Now black can move freely with `f6`. Black has made a place in advance to make a diagonal four, so three of the two horizontal and vertical threes that will be made as White's trap is no longer three.
 
 ```fname = counter-forbid-trap-s4, forbid = true, lmove = g8
    A B C D E F G H I J K L M N O

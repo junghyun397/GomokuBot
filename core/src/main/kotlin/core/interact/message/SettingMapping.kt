@@ -148,39 +148,9 @@ object SettingMapping {
                 )
             )
         ),
-        SwapType::class to Pair(
-            first = SettingElement(
-                menuIndex = 5,
-                stringId = SwapType::class.simpleName!!,
-                label = LanguageContainer::swap,
-                description = LanguageContainer::swapEmbedDescription,
-                mapEnum = { it.swapType },
-                find = { name -> runCatching { SwapType.valueOf(name) }.getOrNull() }
-            ) { config, value -> config.copy(swapType = value as SwapType) },
-            second = mapOf(
-                SwapType.RELAY to OptionElement.fromIdentifiableEnum(
-                    enum = SwapType.RELAY,
-                    label = LanguageContainer::swapSelectRelay,
-                    description = LanguageContainer::swapSelectRelayDescription,
-                    emoji = UNICODE_BROOM
-                ),
-                SwapType.ARCHIVE to OptionElement.fromIdentifiableEnum(
-                    enum = SwapType.ARCHIVE,
-                    label = LanguageContainer::swapSelectArchive,
-                    description = LanguageContainer::swapSelectArchiveDescription,
-                    emoji = UNICODE_CABINET
-                ),
-                SwapType.EDIT to OptionElement.fromIdentifiableEnum(
-                    enum = SwapType.EDIT,
-                    label = LanguageContainer::swapSelectEdit,
-                    description = LanguageContainer::swapSelectEditDescription,
-                    emoji = UNICODE_RECYCLE
-                )
-            )
-        ),
         ArchivePolicy::class to Pair(
             first = SettingElement(
-                menuIndex = 6,
+                menuIndex = 5,
                 stringId = ArchivePolicy::class.simpleName!!,
                 label = LanguageContainer::archive,
                 description = LanguageContainer::archiveEmbedDescription,

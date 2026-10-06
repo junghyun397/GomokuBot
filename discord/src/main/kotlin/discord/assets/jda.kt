@@ -2,8 +2,7 @@ package discord.assets
 
 import core.assets.*
 import dev.minn.jda.ktx.coroutines.await
-import discord.interact.message.DiscordMessageBuilder
-import discord.interact.message.DiscordMessageData
+import discord.interact.message.DiscordMessageAction
 import discord.interact.message.MessageEditAdaptor
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.events.Event
@@ -49,18 +48,8 @@ fun net.dv8tion.jda.api.entities.Guild.profile(
 fun net.dv8tion.jda.api.entities.User.profile(uid: UserUid = UserUid(UUID.randomUUID()), announceId: Int? = null): User.Human =
     User.Human(this.effectiveName, this.avatarUrl, uid, DISCORD_PLATFORM_ID, this.userId(), this.name, announceId)
 
-fun net.dv8tion.jda.api.entities.Guild.editMessageByMessageRef(ref: MessageRef, newContent: MessageEditData): DiscordMessageBuilder =
+fun net.dv8tion.jda.api.entities.Guild.editMessageByMessageRef(ref: MessageRef, newContent: MessageEditData): DiscordMessageAction =
     MessageEditAdaptor(this.subChannelById(ref.subChannelId.idLong)!!.editMessageById(ref.id.idLong, newContent))
-
-fun net.dv8tion.jda.api.entities.Message.messageData(): DiscordMessageData =
-    DiscordMessageData(
-        this.contentRaw,
-        this.embeds,
-        this.attachments,
-        this.components,
-        this.isTTS,
-        this
-    )
 
 fun net.dv8tion.jda.api.entities.Guild.subChannelById(idLong: Long): GuildMessageChannel? =
     this.getTextChannelById(idLong)

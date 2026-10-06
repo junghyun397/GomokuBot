@@ -1,227 +1,212 @@
 package core.interact.i18n
 
 import core.assets.UNICODE_RIGHT
+import core.engine.EngineLevel
 import renju.notation.ColorContainer
 
 open class LanguageKOR : LanguageENG() {
 
-    override fun languageCode() = "KOR"
+    override val languageCode = "KOR"
 
-    override fun languageName() = "\uD83C\uDDF0\uD83C\uDDF7 한국어"
-    override fun languageSuggestion() = "``/lang`` ``KOR`` 명령어를 사용해주세요."
+    override val languageName = "\uD83C\uDDF0\uD83C\uDDF7 한국어"
+    override val languageSuggestion = "`/lang` `KOR` 명령어를 사용해주세요."
 
-    override fun engineLevelAmoeba() = "아메바"
-    override fun engineLevelApe() = "유인원"
-    override fun engineLevelBeginner() = "초심자"
-    override fun aiLevelIntermediate() = "중급자"
-    override fun engineLevelAdvanced() = "숙련자"
-    override fun engineLevelExpert() = "전문가"
-    override fun engineLevelGuru() = "현자"
+    override fun engineLevel(engine: EngineLevel) = when (engine) {
+        EngineLevel.AMOEBA -> "아메바"
+        EngineLevel.APE -> "유인원"
+        EngineLevel.BEGINNER -> "초급자"
+        EngineLevel.MODERATE -> "중급자"
+        EngineLevel.EXPERT -> "전문가"
+        EngineLevel.GURU -> "초인"
+        EngineLevel.SAGE -> "현자"
+    }
 
-    override fun swapSelectYes() = "예"
-    override fun swapSelectNo() = "아니요"
+    override val swapSelectYes = "예"
+    override val swapSelectNo = "아니요"
 
-    override fun branchSelectSwap() = "스왑"
-    override fun branchSelectOffer() = "후보 제시"
+    override val branchSelectSwap = "스왑"
+    override val branchSelectOffer = "후보 제시"
 
-    override fun ruleSelectRenju() = "렌주 (기본)"
-    override fun ruleSelectTaraguchi10() = "Taraguchi-10"
-    override fun ruleSelectSoosyrv8() = "Soosyrv-8"
+    override val ruleSelectRenju = "렌주 (기본)"
+    override val ruleSelectTaraguchi10 = "Taraguchi-10"
+    override val ruleSelectSoosyrv8 = "Soosyrv-8"
 
-    override fun helpCommand() = "도움말"
-    override fun helpCommandDescription() = "도움말을 알아봅니다."
-    override fun helpCommandOptionShortcut() = "바로가기"
-    override fun helpCommandOptionShortcutDescription() = "원하는 도움말 페이지를 바로 표시합니다."
-    override fun helpCommandOptionAnnouncements() = "공지"
+    override val helpCommand = "도움말"
+    override val helpCommandDescription = "도움말을 알아봅니다."
+    override val helpCommandOptionShortcut = "바로가기"
+    override val helpCommandOptionShortcutDescription = "원하는 도움말 페이지를 바로 표시합니다."
+    override val helpCommandOptionAnnouncements = "공지"
 
-    override fun settingsCommand() = "설정"
-    override fun settingsCommandDescription() = "설정 화면을 표시합니다."
+    override val settingsCommand = "설정"
+    override val settingsCommandDescription = "설정 화면을 표시합니다."
 
-    override fun helpAboutEmbedTitle() = "GomokuBot / 도움말"
+    override val helpAboutEmbedTitle = "GomokuBot / 도움말"
     override fun helpAboutEmbedDescription(platform: String) =
         "이제 **$platform**에서도 **오목**을 즐겨 보세요. **GomokuBot**이 함께 하겠습니다." +
                 " ― GomokuBot은 ${platform}에서 오목([렌주](https://www.renju.net/rules/)) 기능을 제공하는 오픈소스 인공지능 오목 봇입니다."
-    override fun helpAboutEmbedDeveloper() = "개발자"
-    override fun helpAboutEmbedRepository() = "Git 저장소"
-    override fun helpAboutEmbedVersion() = "버전"
-    override fun helpAboutEmbedSupport() = "지원 채널"
-    override fun helpAboutEmbedInvite() = "초대 링크"
+    override val helpAboutEmbedDeveloper = "개발자"
+    override val helpAboutEmbedRepository = "Git 저장소"
+    override val helpAboutEmbedVersion = "버전"
+    override val helpAboutEmbedSupport = "지원 채널"
+    override val helpAboutEmbedInvite = "초대 링크"
 
-    override fun commandUsageEmbedTitle() = "GomokuBot / 명령어"
-    override fun commandUsageHelp() = "도움말을 알아봅니다."
-    override fun commandUsageSettings() = "설정 화면을 표시합니다."
-    override fun commandUsageRankGlobal() = "1위부터 10위까지의 GomokuBot 전체 순위를 알아봅니다."
-    override fun commandUsageRankServer() = "이 서버 안에서의 순위를 알아봅니다."
-    override fun commandUsageRankUser() = "멘션 된 유저 상대의 순위를 알아봅니다."
-    override fun commandUsageReplay() = "최근에 플레이한 게임 다시보기 목록을 알아봅니다."
-    override fun commandUsageRating() = "``GomokuBot ELO`` 레이팅을 알아봅니다."
+    override val commandUsageEmbedTitle = "GomokuBot / 명령어"
+    override val commandUsageHelp = "도움말을 알아봅니다."
+    override val commandUsageSettings = "설정 화면을 표시합니다."
+    override val commandUsageRankGlobal = "1위부터 10위까지의 GomokuBot 전체 순위를 알아봅니다."
+    override val commandUsageRankServer = "이 서버 안에서의 순위를 알아봅니다."
+    override val commandUsageRankUser = "멘션 된 유저 상대의 순위를 알아봅니다."
+    override val commandUsageReplay = "최근에 플레이한 게임 다시보기 목록을 알아봅니다."
+    override val commandUsageRating = "`GomokuBot ELO` 레이팅을 알아봅니다."
 
-    override fun commandUsageLang(langList: String) =
-        "이 서버에서 쓰이는 언어 설정을 바꿉니다. Ex) ``/lang`` ``ENG``"
-    override fun commandUsageStyle() =
-        "이 서버에서 쓰이는 오목판 모양을 바꿉니다. Ex) ``/스타일`` ``A``"
+    override val commandUsageLang =
+        "이 서버에서 쓰이는 언어 설정을 바꿉니다. Ex) `/lang` `ENG`"
+    override val commandUsageStyle =
+        "이 서버에서 쓰이는 오목판 모양을 바꿉니다. Ex) `/스타일` `A`"
 
-    override fun commandUsageStartEngine() = "인공지능과 함께 새 게임을 시작합니다."
-    override fun commandUsageStartPvp() =
-        "멘션 된 유저에게 새 게임을 제안합니다. Ex) ``/시작`` ``@유저``"
-    override fun commandUsageResign() = "진행 중인 게임을 포기합니다."
+    override val commandUsageStartEngine = "인공지능과 함께 새 게임을 시작합니다."
+    override val commandUsageStartPvp =
+        "멘션 된 유저에게 새 게임을 제안합니다. Ex) `/시작` `@유저`"
+    override val commandUsageResign = "진행 중인 게임을 포기합니다."
 
-    override fun commandUsageBoard() = "현재 진행 중인 게임을 새 메시지로 표시합니다."
+    override val commandUsageBoard = "현재 진행 중인 게임을 새 메시지로 표시합니다."
 
-    override fun replayCommand() = "다시보기"
-    override fun replayCommandDescription() = "최근에 끝낸 게임을 돌아봅니다."
+    override val replayCommand = "다시보기"
+    override val replayCommandDescription = "최근에 끝낸 게임을 돌아봅니다."
 
-    override fun rankCommand() = "순위"
-    override fun rankCommandDescription() = "1위부터 10위까지의 순위를 알아봅니다."
-    override fun rankCommandSubGlobal() = "전체"
-    override fun rankCommandSubGlobalDescription() = "GomokuBot 전체 순위을 알아봅니다."
-    override fun rankCommandSubServer() = "서버"
-    override fun rankCommandSubServerDescription() = "서버 내부 순위를 알아봅니다."
-    override fun rankCommandSubUser() = "유저"
-    override fun rankCommandSubUserDescription() = "유저-상대 순위를 알아봅니다."
-    override fun rankCommandOptionPlayer() = "유저"
-    override fun rankCommandOptionPlayerDescription() = "상대 순위를 알아볼 유저를 지정해 주세요."
+    override val rankCommand = "순위"
+    override val rankCommandDescription = "1위부터 10위까지의 순위를 알아봅니다."
+    override val rankCommandSubGlobal = "전체"
+    override val rankCommandSubGlobalDescription = "GomokuBot 전체 순위을 알아봅니다."
+    override val rankCommandSubServer = "서버"
+    override val rankCommandSubServerDescription = "서버 내부 순위를 알아봅니다."
+    override val rankCommandSubUser = "유저"
+    override val rankCommandSubUserDescription = "유저-상대 순위를 알아봅니다."
+    override val rankCommandOptionPlayer = "유저"
+    override val rankCommandOptionPlayerDescription = "상대 순위를 알아볼 유저를 지정해 주세요."
 
-    override fun rankErrorNotFound() = "유저 기록을 찾을 수 없습니다. GomokuBot PvP 플레이 기록이 있는 유저를 지정해 주세요."
+    override val rankErrorNotFound = "유저 기록을 찾을 수 없습니다. GomokuBot PvP 플레이 기록이 있는 유저를 지정해 주세요."
 
-    override fun rankEmbedTitle() = "GomokuBot / 순위"
-    override fun rankEmbedDescription() = "1위부터 10위까지의 승리 순위를 확인 해보세요."
-    override fun rankEmbedWin() = "승"
-    override fun rankEmbedLose() = "패"
-    override fun rankEmbedDraw() = "무"
+    override val rankEmbedTitle = "GomokuBot / 순위"
+    override val rankEmbedDescription = "1위부터 10위까지의 승리 순위를 확인 해보세요."
+    override val rankEmbedWin = "승"
+    override val rankEmbedLose = "패"
+    override val rankEmbedDraw = "무"
 
-    override fun ratingCommand() = "레이팅"
-    override fun ratingCommandDescription() = "레이팅을 알아봅니다."
-    override fun ratingCommandOptionUser() = "유저"
-    override fun ratingCommandOptionUserDescription() = "레이팅을 알아볼 유저를 지정해 주세요."
+    override val ratingCommand = "레이팅"
+    override val ratingCommandDescription = "레이팅을 알아봅니다."
+    override val ratingCommandOptionUser = "유저"
+    override val ratingCommandOptionUserDescription = "레이팅을 알아볼 유저를 지정해 주세요."
 
-    override fun ratingNoRecord() = "기록을 찾을 수 없습니다."
+    override val ratingNoRecord = "기록을 찾을 수 없습니다."
 
-    override fun languageCommand() = "lang"
-    override fun languageCommandDescription() = "이 서버에서 쓰이는 언어 설정을 바꿉니다."
-    override fun languageCommandOptionCode() = "언어"
-    override fun languageCommandOptionCodeDescription() = "언어 코드를 선택해 주세요."
+    override val languageCommand = "lang"
+    override val languageCommandDescription = "이 서버에서 쓰이는 언어 설정을 바꿉니다."
+    override val languageCommandOptionCode = "언어"
+    override val languageCommandOptionCodeDescription = "언어 코드를 선택해 주세요."
 
-    override fun languageUpdated() = "언어 설정이 한국어:flag_kr:로 바뀌었습니다!"
+    override val languageUpdated = "언어 설정이 한국어:flag_kr:로 바뀌었습니다!"
 
-    override fun styleEmbedTitle() = "GomokuBot / 스타일"
-    override fun styleEmbedDescription() =
-        "이 서버에 적용된 기본 오목판 스타일(``스타일 A``)이 제대로 보이지 않을 수 있습니다." +
+    override val styleEmbedTitle = "GomokuBot / 스타일"
+    override val styleEmbedDescription =
+        "이 서버에 적용된 기본 오목판 스타일(`스타일 A`)이 제대로 보이지 않을 수 있습니다." +
                 " 준비된 네 가지 스타일 중 마음에 드는 스타일 하나를 선택해 주세요."
-    override fun styleEmbedSuggestion(styleName: String) = "이 스타일을 사용하려면 ``/스타일`` $styleName 명령어를 입력해 주세요."
+    override fun styleEmbedSuggestion(styleName: String) = "이 스타일을 사용하려면 `/스타일` $styleName 명령어를 입력해 주세요."
 
-    override fun styleErrorNotfound() =
-        "스타일 지정이 잘못됐습니다. ``/스타일`` ``스타일 코드`` 형식으로 입력해 주세요."
+    override val styleErrorNotfound =
+        "스타일 지정이 잘못됐습니다. `/스타일` `스타일 코드` 형식으로 입력해 주세요."
 
     override fun styleUpdated(styleName: String) =
-        "스타일 설정이 스타일 ``${styleName}``로 바뀌었습니다."
+        "스타일 설정이 스타일 `${styleName}`로 바뀌었습니다."
 
     override fun settingApplied(kind: String, choice: String) = "$kind 설정이 ${choice}로 바뀌었습니다."
 
-    override fun style() = "스타일"
+    override val style = "스타일"
 
-    override fun styleSelectImage() = "이미지"
-    override fun styleSelectImageDescription() =
+    override val styleSelectImage = "이미지"
+    override val styleSelectImageDescription =
         "오목 판을 이미지로 표시합니다. 플랫폼 서버 상태에 따라 약간의 지연이 생길 수 있습니다."
 
-    override fun styleSelectText() = "텍스트"
-    override fun styleSelectTextDescription() = "오목 판을 텍스트로 표시합니다. 가장 단순하지만 가장 빠릅니다."
+    override val styleSelectText = "텍스트"
+    override val styleSelectTextDescription = "오목 판을 텍스트로 표시합니다. 가장 단순하지만 가장 빠릅니다."
 
-    override fun styleSelectDottedText() = "점박이 텍스트"
-    override fun styleSelectDottedTextDescription() = "텍스트와 거의 같습니다. 다만 빈 자리에 공백이 아닌 점을 표시합니다."
+    override val styleSelectDottedText = "점박이 텍스트"
+    override val styleSelectDottedTextDescription = "텍스트와 거의 같습니다. 다만 빈 자리에 공백이 아닌 점을 표시합니다."
 
-    override fun focus() = "확대"
+    override val focus = "확대"
 
-    override fun focusEmbedTitle() = "GomokuBot / 확대"
-    override fun focusEmbedDescription() =
+    override val focusEmbedTitle = "GomokuBot / 확대"
+    override val focusEmbedDescription =
         "GomokuBot은 직관적인 입력을 돕기 위해 작은 크기의 \"버튼 판\"을 사용합니다. GomokuBot이 어떤 부분을 어떻게 확대할지 정해주세요."
 
-    override fun focusSelectIntelligence() = "지능적"
-    override fun focusSelectIntelligenceDescription() =
+    override val focusSelectIntelligence = "지능적"
+    override val focusSelectIntelligenceDescription =
         "GomokuBot 추론 엔진으로 가장 적절한 위치를 분석해 확대합니다."
 
-    override fun focusSelectCenter() = "수동적"
-    override fun focusSelectCenterDescription() =
+    override val focusSelectCenter = "수동적"
+    override val focusSelectCenterDescription =
         "항상 마지막 수를 가운데 둡니다."
 
-    override fun hint() = "힌트"
+    override val hint = "힌트"
 
-    override fun hintEmbedTitle()= "GomokuBot / 힌트"
-    override fun hintEmbedDescription() =
+    override val hintEmbedTitle = "GomokuBot / 힌트"
+    override val hintEmbedDescription =
         "오목에는 승패를 가르는 중요한 자리가 있습니다. GomokuBot이 중요한 자리를 어떻게 강조할지 정해주세요."
 
-    override fun hintSelectFive() = "승리"
-    override fun hintSelectFiveDescription() = "오목을 만들어 이길 수 있는 자리를 강조합니다."
+    override val hintSelectFive = "승리"
+    override val hintSelectFiveDescription = "오목을 만들어 이길 수 있는 자리를 강조합니다."
 
-    override fun hintSelectOff() = "꺼짐"
-    override fun hintSelectOffDescription() = "그 어떤 자리도 강조하지 않습니다."
+    override val hintSelectOff = "꺼짐"
+    override val hintSelectOffDescription = "그 어떤 자리도 강조하지 않습니다."
 
-    override fun mark() = "표시"
+    override val mark = "표시"
 
-    override fun markEmbedTitle() = "Gomokubot / 표시"
-    override fun markEmbedDescription() =
+    override val markEmbedTitle = "Gomokubot / 표시"
+    override val markEmbedDescription =
         "수많은 돌 사이에서 마지막으로 둔 위치를 기억하기는 쉬운 일이 아닙니다. GomokuBot이 마지막에 둔 돌을 어떻게 표시할지 정해주세요."
 
-    override fun markSelectLast() = "마지막 위치"
-    override fun markSelectLastDescription() =
+    override val markSelectLast = "마지막 위치"
+    override val markSelectLastDescription =
         "마지막에 둔 위치에 작은 점 하나를 찍습니다."
 
-    override fun markSelectRecent() = "마지막 차례"
-    override fun markSelectRecentDescription() =
+    override val markSelectRecent = "마지막 차례"
+    override val markSelectRecentDescription =
         "상대가 마지막에 둔 위치에 작은 점을, 자신이 마지막에 둔 위치에 얇은 십자를 표시합니다."
 
-    override fun markSelectSequence() = "순서"
-    override fun markSelectSequenceDescription() =
+    override val markSelectSequence = "순서"
+    override val markSelectSequenceDescription =
         "돌을 놓은 순서를 모두 표시합니다."
 
-    override fun swap() = "청소"
+    override val archive = "공유"
 
-    override fun swapEmbedTitle() = "GomokuBot / 청소"
-    override fun swapEmbedDescription() =
-        "GomokuBot은 정말 많은 양의 메시지를 보냅니다. GomokuBot이 보낸 메시지를 어떻게 처리할지 정해주세요."
-
-    override fun swapSelectRelay() = "이어가기"
-    override fun swapSelectRelayDescription() =
-        "다음 수를 놓을 때 이전에 보낸 메시지를 모두 삭제합니다."
-
-    override fun swapSelectArchive() = "놓아두기"
-    override fun swapSelectArchiveDescription() =
-        "그 어떤 메시지도 삭제하지 않습니다."
-
-    override fun swapSelectEdit() = "편집하기"
-    override fun swapSelectEditDescription() =
-        "처음 보낸 메시지를 편집합니다."
-
-    override fun archive() = "공유"
-
-    override fun archiveEmbedTitle() = "GomokuBot / 공유"
-    override fun archiveEmbedDescription() =
+    override val archiveEmbedTitle = "GomokuBot / 공유"
+    override val archiveEmbedDescription =
         "GomokuBot은 몇몇 멋진 게임 결과들을 GomokuBot 공식 채널에 공유합니다. " +
                 "물론 GomokuBot은 개인정보를 매우 중요하게 생각합니다. 게임 결과를 어떻게 공유할지 정해주세요."
 
-    override fun archiveSelectByAnonymous() = "익명"
-    override fun archiveSelectByAnonymousDescription() =
+    override val archiveSelectByAnonymous = "익명"
+    override val archiveSelectByAnonymousDescription =
         "익명으로 게임 결과를 공유합니다."
 
-    override fun archiveSelectWithProfile() = "기명"
-    override fun archiveSelectWithProfileDescription() =
+    override val archiveSelectWithProfile = "기명"
+    override val archiveSelectWithProfileDescription =
         "프로필 사진 그리고 닉네임과 함께 게임 결과를 공유합니다."
 
-    override fun archiveSelectPrivacy() = "비밀"
-    override fun archiveSelectPrivacyDescription() =
+    override val archiveSelectPrivacy = "비밀"
+    override val archiveSelectPrivacyDescription =
         "그 어디에도 게임 결과를 공유하지 않습니다."
 
-    override fun sessionNotFound(): String =
-        "진행 중인 게임을 찾을 수 없습니다. 먼저 ``/시작`` 명령어로 게임을 시작해 주세요."
+    override val sessionNotFound: String =
+        "진행 중인 게임을 찾을 수 없습니다. 먼저 `/시작` 명령어로 게임을 시작해 주세요."
 
-    override fun startCommand() = "시작"
-    override fun startCommandDescription() = "새 게임을 시작합니다."
-    override fun startCommandOptionOpponent() = "상대"
-    override fun startCommandOptionOpponentDescription() = "함께 게임을 시작할 유저를 지정해 주세요."
-    override fun startCommandOptionRule() = "규칙"
-    override fun startCommandOptionRuleDescription() = "새로 시작할 게임의 규칙을 정해주세요."
+    override val startCommand = "시작"
+    override val startCommandDescription = "새 게임을 시작합니다."
+    override val startCommandOptionOpponent = "상대"
+    override val startCommandOptionOpponentDescription = "함께 게임을 시작할 유저를 지정해 주세요."
+    override val startCommandOptionRule = "규칙"
+    override val startCommandOptionRuleDescription = "새로 시작할 게임의 규칙을 정해주세요."
 
-    override fun startErrorSessionAlready() =
+    override val startErrorSessionAlready =
         "이미 진행 중인 게임이 있습니다. 진행 중인 게임을 먼저 마무리해 주세요."
     override fun startErrorOpponentSessionAlready(opponent: String) =
         "$opponent 님은 이미 다른 게임을 진행 중 입니다. $opponent 님이 진행 중인 게임이 끝날 때까지 기다려 주세요."
@@ -232,12 +217,12 @@ open class LanguageKOR : LanguageENG() {
     override fun startErrorOpponentRequestAlready(opponent: String) =
         "$opponent 님에게는 아직 응답하지 않은 다른 대결 요청 하나가 남아 있습니다. $opponent 님이 다른 대결 요청에 응답할 때까지 기다려 주세요."
 
-    override fun setCommandDescription() = "원하는 좌표에 돌을 놓습니다."
-    override fun setCommandOptionPosition() = "position"
-    override fun setCommandOptionPositionDescription() = "a1부터 o15까지의 좌표"
+    override val setCommandDescription = "원하는 좌표에 돌을 놓습니다."
+    override val setCommandOptionPosition = "position"
+    override val setCommandOptionPositionDescription = "a1부터 o15까지의 좌표"
 
-    override fun setErrorIllegalArgument() =
-        "잘못된 명령어 형식입니다. ``/s`` ``h8`` 꼴로 입력해 주세요."
+    override val setErrorIllegalArgument =
+        "잘못된 명령어 형식입니다. `/s` `h8` 꼴로 입력해 주세요."
 
     override fun setErrorExist(move: String) =
         "${move}에는 이미 돌이 놓여 있습니다. 다른 곳에 돌을 놓아주세요."
@@ -245,17 +230,32 @@ open class LanguageKOR : LanguageENG() {
     override fun setErrorForbidden(move: String, forbiddenKind: String) =
         "${move}은(는) ${forbiddenKind}금수 입니다. 다른 곳에 돌을 놓아주세요."
 
-    override fun resignCommand() = "항복"
-    override fun resignCommandDescription() = "진행중인 게임을 포기합니다."
+    override val resignCommand = "항복"
+    override val resignCommandDescription = "진행중인 게임을 포기합니다."
 
-    override fun boardCommand() = "판"
-    override fun boardCommandDescription() = "현재 진행 중인 게임을 새 메시지로 표시합니다."
+    override val undoCommand = "무르기"
+    override val undoCommandDescription = "마지막 수에 대한 무르기를 요청합니다."
+    override val undoErrorOpening = "오프닝 진행 중에는 무르기를 사용할 수 없습니다."
+    override val undoErrorNoMoves = "아직 무를 수 있는 착수가 없습니다."
+    override val undoErrorLimit = "이 게임의 무르기 횟수 두 번을 모두 사용했습니다."
+    override fun undoCompleted(remainingUndos: Int) = "무르기를 사용했습니다. 남은 무르기 횟수: ${remainingUndos}회."
+    override val undoPvpCompleted = "마지막 한 수를 무렀습니다."
+    override val undoRequestEmbedTitle = "한 수 무르시겠습니까?"
+    override fun undoRequestEmbedDescription(requester: String, opponent: String) =
+        "$requester 님이 $opponent 님에게 무르기를 요청했습니다. 아래 버튼을 눌러 대답해 주세요. 다음 수를 두면 요청이 무효화됩니다."
+    override fun undoRequestRejected(requester: String, opponent: String) =
+        "$opponent 님이 $requester 님의 무르기 요청을 거절했습니다."
+    override fun undoRequestExpired(requester: String, opponent: String) =
+        "$requester 님이 $opponent 님에게 보낸 무르기 요청이 만료되었습니다."
 
-    override fun requestEmbedTitle() = "오목 한 판 괜찮겠습니까?"
+    override val boardCommand = "판"
+    override val boardCommandDescription = "현재 진행 중인 게임을 새 메시지로 표시합니다."
+
+    override val requestEmbedTitle = "오목 한 판 괜찮겠습니까?"
     override fun requestEmbedDescription(requester: String, opponent: String) =
         "$requester 님이 $opponent 님에게 대결 요청을 보냈습니다. 아래 버튼을 눌러 대답해 주세요."
-    override fun requestEmbedButtonAccept() = "수락"
-    override fun requestEmbedButtonReject() = "거절"
+    override val requestEmbedButtonAccept = "수락"
+    override val requestEmbedButtonReject = "거절"
 
     override fun requestRejected(requester: String, opponent: String) =
         "$opponent 님이 $requester 님의 대결 요청을 거절했습니다."
@@ -263,7 +263,7 @@ open class LanguageKOR : LanguageENG() {
     override fun requestExpired(requester: String, opponent: String) =
         "$requester 님이 $opponent 님에게 보낸 대결 요청이 만료되었습니다. 아직도 $opponent 님과 대결하고 싶다면, 새 대결 요청을 보내주세요."
 
-    override fun requestExpiredNewRequest() =
+    override val requestExpiredNewRequest =
         "다시 제안하기"
 
     override fun beginPvp(players: ColorContainer<String>) =
@@ -273,7 +273,7 @@ open class LanguageKOR : LanguageENG() {
         "${players.black} 님과 ${players.white} 님의 오프닝 게임이 시작되었습니다. ${players.black} 님이 흑입니다. ${players.white} 님은 흑으로 스왑할지, 그대로 플레이 할지 정해주세요."
 
     override fun beginEngineBlack(player: String, gomokubot: String) =
-        "$player 님과 ${gomokubot}의 게임이 시작되었습니다. $player 님은 백입니다. 인공지능은 ``h8``에 두었습니다. 두 번째 수를 놓아주세요."
+        "$player 님과 ${gomokubot}의 게임이 시작되었습니다. $player 님은 백입니다. 인공지능은 `h8`에 두었습니다. 두 번째 수를 놓아주세요."
 
     override fun beginEngineWhite(player: String, gomokubot: String) =
         "$player 님과 ${gomokubot}의 게임이 시작되었습니다. $player 님이 흑입니다. 첫 번째 수를 놓아주세요."
@@ -296,66 +296,66 @@ open class LanguageKOR : LanguageENG() {
     override fun gameResultResign(winner: String, loser: String) =
         "$loser 가 항복을 선언해 $winner 가 이겼습니다."
 
-    override fun gameResultDraw() =
+    override val gameResultDraw =
         "더이상 돌을 둘 곳이 없어 비겼습니다."
 
     override fun gameResultTimeout(winner: String, loser: String) =
         "$loser 님이 제한 시간 안에 다음 수를 두지 않아 $winner 님이 이겼습니다."
 
-    override fun gameResultEngineRating() = "레이팅"
+    override val gameResultEngineRating = "레이팅"
 
-    override fun gameResultEngineRatingChange() = "획득 레이팅"
+    override val gameResultEngineRatingChange = "획득 레이팅"
 
-    override fun boardInProgress() = "진행 중"
-    override fun boardInOpening() = "오프닝 중"
-    override fun boardFinished() = "종료"
+    override val boardInProgress = "진행 중"
+    override val boardInOpening = "오프닝 중"
+    override val boardFinished = "종료"
 
-    override fun boardMoves() = "진행도"
-    override fun boardLastMove() = "마지막 위치"
+    override val boardMoves = "진행도"
+    override val boardLastMove = "마지막 위치"
 
-    override fun boardResult() = "결과"
+    override val boardResult = "결과"
 
     override fun boardWinDescription(winner: String) = "$winner 승리"
-    override fun boardTieDescription() = "무승부"
+    override val boardTieDescription = "무승부"
 
-    override fun boardCommandGuide() =
-        ":mag: 버튼을 누르거나 ``/s`` ``좌표`` 명령어를 입력해 다음 수를 놓아주세요."
-    override fun boardSwapGuide() =
+    override val boardCommandGuide =
+        ":mag: 버튼을 누르거나 `/s` `좌표` 명령어를 입력해 다음 수를 놓아주세요."
+    override val boardSwapGuide =
         ":arrows_counterclockwise: 버튼을 눌러 흑과 백을 바꿀지 선택해주세요."
     override fun boardStatefulSwapGuide(offerCount: Int) =
-        ":arrows_counterclockwise: 버튼을 눌러 흑과 백을 바꿀지 선택해주세요. 흑이 제안해야 할 5번째 수 후보는 ``$offerCount``개입니다."
-    override fun boardBranchGuide() =
+        ":arrows_counterclockwise: 버튼을 눌러 흑과 백을 바꿀지 선택해주세요. 흑이 제안해야 할 5번째 수 후보는 `$offerCount`개입니다."
+    override val boardBranchGuide =
         ":paperclips: 버튼을 눌러 흑과 백을 바꿀 기회를 얻을지, 5번째 수 후보 10개를 상대에게 제안할지 선택해주세요."
-    override fun boardDeclareGuide() =
+    override val boardDeclareGuide =
         ":paperclips: 선택 메뉴에서 5번째 수 후보를 몇 개 고를지 선택해주세요."
-    override fun boardSelectGuide() =
-        ":dart: 버튼을 누르거나 ``/s`` ``좌표`` 명령어를 입력해 5번째 수를 선택해주세요."
+    override val boardSelectGuide =
+        ":dart: 버튼을 누르거나 `/s` `좌표` 명령어를 입력해 5번째 수를 선택해주세요."
     override fun boardOfferGuide(remainingMoves: Int) =
-        ":question: 버튼을 누르거나 ``/s`` ``position`` 명령어를 입력해 5번째 수 후보 ${remainingMoves}개를 정해주세요."
+        ":question: 버튼을 누르거나 `/s` `position` 명령어를 입력해 5번째 수 후보 ${remainingMoves}개를 정해주세요."
 
-    override fun replayEmbedWin() = "승"
-    override fun replayEmbedLose() = "패"
-    override fun replayEmbedDraw() = "무"
+    override val replayEmbedWin = "승"
+    override val replayEmbedLose = "패"
+    override val replayEmbedDraw = "무"
     override fun replayEmbedMatchInfo(totalMoves: Int) = "총 ${totalMoves}수."
-    override fun replayEmbedUnableToReplayDescription() = "이 게임은 빈 게임이기 때문에 아무것도 보여드릴 수 없습니다. 다른 게임을 선택해 주세요."
+    override val replayEmbedUnableToReplayDescription = "이 게임은 빈 게임이기 때문에 아무것도 보여드릴 수 없습니다. 다른 게임을 선택해 주세요."
 
     override fun announceWrittenOn(date: String) = "$date 에 쓰여짐"
 
-    override fun somethingWrongEmbedTitle() = "뭔가 잘못됐습니다!"
+    override val somethingWrongEmbedTitle = "뭔가 잘못됐습니다!"
 
     override fun permissionNotGrantedEmbedDescription(channelName: String) =
         "Gokomubot은 $channelName 채널에 메시지를 보낼 권한이 없습니다! 역할 및 퍼미션 설정을 확인해 주세요."
 
-    override fun permissionNotGrantedEmbedFooter() = "이 메시지는 1분 뒤 지워집니다."
+    override val permissionNotGrantedEmbedFooter = "이 메시지는 1분 뒤 지워집니다."
 
-    override fun notYetImplementedEmbedDescription() = "이 기능은 아직 완성되지 않았습니다."
+    override val notYetImplementedEmbedDescription = "이 기능은 아직 완성되지 않았습니다."
 
-    override fun notYetImplementedEmbedFooter() =
+    override val notYetImplementedEmbedFooter =
         "지원 채널(https://discord.gg/vq8pkfF)에서 Gomokubot 업데이트 소식을 받아볼 수 있습니다."
 
-    override fun exploreAboutRenju() = "렌주가 무엇인지 모르시나요? $UNICODE_RIGHT 를 눌러 렌주에 대해 알아보세요."
+    override val exploreAboutRenju = "렌주가 무엇인지 모르시나요? $UNICODE_RIGHT 를 눌러 렌주에 대해 알아보세요."
 
-    override fun aboutRenjuDocument() = """
+    override val aboutRenjuDocument = """
 ## 렌주란 무엇인가요? {#렌주에-관하여}
 
 Q. *오목봇에 렌주라니, 이게 무슨 말인가요?* 
@@ -477,13 +477,13 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
 
 더 공평한 오목의 세계에 도착하신 것을 정말 환영합니다! 여기까지 따라왔다면 기본적인 렌주 규칙들을 모두 아셨습니다. 이제는 금수가 등장하더라도, 당황하지 않은 채 금수를 풀거나 다른 전략을 사용해 게임을 이어나갈 수 있을 것입니다.
 
-이제 ``/시작 @멘션`` 명령어로 친구들과 게임을 시작해 보세요. 만약 친구가 없더라도 GomokuBot 인공지능이 언제나 함께 할 것입니다. ``/설정`` 명령어로 입맛에 맞게 GomokuBot의 행동을 바꾸는 것 역시 잊지 말아 주세요.
+이제 `/시작 @멘션` 명령어로 친구들과 게임을 시작해 보세요. 만약 친구가 없더라도 GomokuBot 인공지능이 언제나 함께 할 것입니다. `/설정` 명령어로 입맛에 맞게 GomokuBot의 행동을 바꾸는 것 역시 잊지 말아 주세요.
 
 다음 장부터는 매우 복잡한 상황에서 금수를 정확히 판단하는 방법과 금수를 이용한 공격과 방어에 대해 알아봅니다. 모두 렌주에서만 가능한, 렌주를 위한 전략들입니다. 초심자에게는 조금 어려울 수 있습니다.
 
 ## 금수 같지만, 금수가 아닐 수 있습니다. {#의사금수}
 
-아래와 같은 상황에 대해 생각해 봅시다. 흑은 과연 ``h9``에 둘 수 있을까요? 얼핏 보기에는 ``h9``는 h행에 세로로 배열된 돌 두 개와 9열에 가로로 배열된 돌 두 개에 의해 만들어지는 3-3금수로, 흑은 ``h9``에 둘 수 없어야만 할 것 같습니다.
+아래와 같은 상황에 대해 생각해 봅시다. 흑은 과연 `h9`에 둘 수 있을까요? 얼핏 보기에는 `h9`는 h행에 세로로 배열된 돌 두 개와 9열에 가로로 배열된 돌 두 개에 의해 만들어지는 3-3금수로, 흑은 `h9`에 둘 수 없어야만 할 것 같습니다.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/pseudo-forbid-simple.png)
 
@@ -491,37 +491,37 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
 
 ### 한 수 뒤를 생각해 보세요.
 
-복잡한 상황에서 금수를 판단하기 좋은 방법은 하나씩 놓아 보는 것입니다. 지금 판단하고자 하는 ``h9``에 돌 하나를 놓아 봅시다.
+복잡한 상황에서 금수를 판단하기 좋은 방법은 하나씩 놓아 보는 것입니다. 지금 판단하고자 하는 `h9`에 돌 하나를 놓아 봅시다.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/pseudo-forbid-simple-s1.png)
 
-h행에서는 4-4 금수에 막혀 열린 4를 만들 수 없습니다. h행의 돌 두 개는 한 수를 둠으로써 열린 4를 만들 수 있는 3이 이 아니었던 것입니다. 다시 기억해 봅시다. 3또는 4가 성립되지 않는다면, 금수 또한 성립되지 않습니다. 그러므로 3을 하나만 만들 수 있는 ``h9``는 3-3금수가 아닙니다.
+h행에서는 4-4 금수에 막혀 열린 4를 만들 수 없습니다. h행의 돌 두 개는 한 수를 둠으로써 열린 4를 만들 수 있는 3이 이 아니었던 것입니다. 다시 기억해 봅시다. 3또는 4가 성립되지 않는다면, 금수 또한 성립되지 않습니다. 그러므로 3을 하나만 만들 수 있는 `h9`는 3-3금수가 아닙니다.
 
 ## 금수가 아닌 것 같지만 금수일 수 있습니다. {#복잡한-의사금수}
 
-``g10``은 3-3금수같아 보입니다. 하지만 ``i8`` 또한 금수이기에, ``g10``은 3-3금수가 아닌 것 같기도 합니다. 이런 복잡한 상황에서 어떻게 흑이 ``g10``에 둘 수 있는지 판단할 수 있을까요?
+`g10`은 3-3금수같아 보입니다. 하지만 `i8` 또한 금수이기에, `g10`은 3-3금수가 아닌 것 같기도 합니다. 이런 복잡한 상황에서 어떻게 흑이 `g10`에 둘 수 있는지 판단할 수 있을까요?
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/pseudo-forbid-complex.png)
 
 ### 여러 수 뒤를 생각해 보세요.
 
-매우 복잡한 금수를 판단하기 가장 좋은 방법 역시 하나씩 놓아 보는 것입니다. 지금 판단하고자 하는 ``g10``에 돌 하나를 놓아 봅시다.
+매우 복잡한 금수를 판단하기 가장 좋은 방법 역시 하나씩 놓아 보는 것입니다. 지금 판단하고자 하는 `g10`에 돌 하나를 놓아 봅시다.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/pseudo-forbid-complex-s1.png)
 
-얼핏 보기에는 ``i8``은 i행에 세로로 놓인 돌 두 개와 8열에 가로로 놓인 돌 두 개가 합쳐지는 곳으로 3-3금수인 것 같습니다. 그렇다면 대각선으로 열린 4를 만들 수 없을테니, ``g10``은 금수가 아닐까요?
+얼핏 보기에는 `i8`은 i행에 세로로 놓인 돌 두 개와 8열에 가로로 놓인 돌 두 개가 합쳐지는 곳으로 3-3금수인 것 같습니다. 그렇다면 대각선으로 열린 4를 만들 수 없을테니, `g10`은 금수가 아닐까요?
 
-그렇다기에는 f행에 세로로 배열된 돌 3개가 꺼림칙하군요. 판단하기에는 아직 이른 것 같습니다. ``i8``에 돌 하나를 더 놓아봅시다.
+그렇다기에는 f행에 세로로 배열된 돌 3개가 꺼림칙하군요. 판단하기에는 아직 이른 것 같습니다. `i8`에 돌 하나를 더 놓아봅시다.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/pseudo-forbid-complex-s2.png)
 
-``i8``에 돌을 놓아 보니, 8열에서는 4-4금수에 막혀 열린 4를 만들 수 없었습니다. ``g10``에 돌 하나를 둔 뒤의 ``i8``은 3-3 금수가 아니었습니다!
+`i8`에 돌을 놓아 보니, 8열에서는 4-4금수에 막혀 열린 4를 만들 수 없었습니다. `g10`에 돌 하나를 둔 뒤의 `i8`은 3-3 금수가 아니었습니다!
 
-이제 ``g10``에 돌 하나를 둔 뒤의 ``i8``은 금수가 아님을 알았으므로, 한 수를 놓아 열린 4 두 개를 만들 수 있는 ``g10``은 다시 3-3금수가 맞다고 판단할 수 있습니다.
+이제 `g10`에 돌 하나를 둔 뒤의 `i8`은 금수가 아님을 알았으므로, 한 수를 놓아 열린 4 두 개를 만들 수 있는 `g10`은 다시 3-3금수가 맞다고 판단할 수 있습니다.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/pseudo-forbid-complex-s3.png)
 
-같은 방법으로 ``i10`` 역시 3-3금수임을 판단해 낼 수 있습니다.(이쪽은 조금 더 복잡합니다.) 천천히, 하나씩 판단해 본다면 어렵지 않습니다.
+같은 방법으로 `i10` 역시 3-3금수임을 판단해 낼 수 있습니다.(이쪽은 조금 더 복잡합니다.) 천천히, 하나씩 판단해 본다면 어렵지 않습니다.
 
 ## 금수를 노려 공격할 수 있습니다. {#금수유도}
 
@@ -539,13 +539,13 @@ h행에서는 4-4 금수에 막혀 열린 4를 만들 수 없습니다. h행의 
 
 이제 백이 금수를 끼고 공격한다면, 흑은 백이 이기는 것을 보고 있을 수밖에 없음을 알았습니다. 하지만 언제까지나 우연이나 실수에 기댈 수는 없는 법입니다. 적절한 상황만 주어진다면, 적극적인 공격을 통해 흑이 금수를 만들도록 유도해 승리할 수 있습니다.
 
-여기 백에게 정말 안 좋아 보이는 상황이 하나 있습니다. 흑은 ``f6``으로 3을 만들어 공격했습니다. 얼핏 보기에는 백은 흑의 3을 막아야만 하는 것처럼 보입니다. 왼쪽 아래로 탄탄히 늘어선 흑돌들도 매우 강해 보입니다. 백은 이대로 흑의 공격에 말려들어 패배해야만 할까요?
+여기 백에게 정말 안 좋아 보이는 상황이 하나 있습니다. 흑은 `f6`으로 3을 만들어 공격했습니다. 얼핏 보기에는 백은 흑의 3을 막아야만 하는 것처럼 보입니다. 왼쪽 아래로 탄탄히 늘어선 흑돌들도 매우 강해 보입니다. 백은 이대로 흑의 공격에 말려들어 패배해야만 할까요?
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/forbid-trap-complex.png)
 
 다시 상황을 자세히 살펴봅시다. 백에게는 대각선으로 배열된 돌 3개, 가로로 배열된 돌 3개가 있습니다. 4공격을 두 번 이어나갈 수 있겠군요. 하지만 이것만으로는 의미없는 발작이 될 뿐입니다. 
 
-이 상황에서 주목해야 할 것은 백은 4를 만들어 흑이 ``g9``에 두어야만 하게 만들 수 있다는 점과, 흑이 ``g9``에 둔다면 3-3금수가 생긴다는 점입니다.
+이 상황에서 주목해야 할 것은 백은 4를 만들어 흑이 `g9`에 두어야만 하게 만들 수 있다는 점과, 흑이 `g9`에 둔다면 3-3금수가 생긴다는 점입니다.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/forbid-trap-complex-s1.png)
 
@@ -557,17 +557,17 @@ h행에서는 4-4 금수에 막혀 열린 4를 만들 수 없습니다. h행의 
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/forbid-trap-complex-s3.png)
 
-*``g8``은 3-3금수이기에, 흑은 이어지는 백의 대각선 4공격을 막을 방법이 없습니다. 백의 승리입니다!*
+*`g8`은 3-3금수이기에, 흑은 이어지는 백의 대각선 4공격을 막을 방법이 없습니다. 백의 승리입니다!*
 
 백은 상황을 완전히 뒤집어 버릴 수 있었습니다! 백은 3-3 금수뿐만 아니라 4-4 금수, 6목 금수 역시 같은 방법으로 유도해 내 이길 수 있습니다. 흑은 상황을 잘 읽어, 금수 유도에 빠져 게임을 망치지 않도록 특별히 주의해야만 합니다.
 
 ## 금수가 아닌 것으로 만들어 빠져나갈 수 있습니다.
 
-여기 반전 하나가 있습니다. 흑은 금수 유도에 걸리지 않은 채 이길 수 있었습니다. ``f6``은 흑에게 정말로 좋은 자리입니다. 하지만 앞서 확인해 봤듯이, ``f6``에 둔다면 흑은 백의 금수 유도에 걸려 패배하게 될 것입니다. 흑은 어떻게 해야 안전하게 ``f6``에 둘 수 있을까요?
+여기 반전 하나가 있습니다. 흑은 금수 유도에 걸리지 않은 채 이길 수 있었습니다. `f6`은 흑에게 정말로 좋은 자리입니다. 하지만 앞서 확인해 봤듯이, `f6`에 둔다면 흑은 백의 금수 유도에 걸려 패배하게 될 것입니다. 흑은 어떻게 해야 안전하게 `f6`에 둘 수 있을까요?
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/counter-forbid-trap.png)
 
-여기서는 금수의 조건을 다시 기억해 볼 필요가 있습니다. 3 또는 4가 성립되지 않는다면, 금수 역시 성립되지 않습니다. 흑은 미리 한 수를 더 두어 ``g9``에 둠으로써 생길 금수를 풀 수 있습니다.
+여기서는 금수의 조건을 다시 기억해 볼 필요가 있습니다. 3 또는 4가 성립되지 않는다면, 금수 역시 성립되지 않습니다. 흑은 미리 한 수를 더 두어 `g9`에 둠으로써 생길 금수를 풀 수 있습니다.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/counter-forbid-trap-s1.png)
 
@@ -575,7 +575,7 @@ h행에서는 4-4 금수에 막혀 열린 4를 만들 수 없습니다. h행의 
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/counter-forbid-trap-s2.png)
 
-이게 전부입니다! 이제 흑은 부담 없이 ``f6``에 둘 수 있습니다. 대각선으로 이어지는 4를 만들 수 있는 자리를 미리 만들었으므로, 백의 금수유도로 만들어질 가로와 세로 두 개의 3 중 세로로 이어지는 3은 이제 더 이상 3이 아닙니다.
+이게 전부입니다! 이제 흑은 부담 없이 `f6`에 둘 수 있습니다. 대각선으로 이어지는 4를 만들 수 있는 자리를 미리 만들었으므로, 백의 금수유도로 만들어질 가로와 세로 두 개의 3 중 세로로 이어지는 3은 이제 더 이상 3이 아닙니다.
 
 ![](https://raw.githubusercontent.com/junghyun397/GomokuBot/master/images/counter-forbid-trap-s4.png)
 

@@ -2,7 +2,6 @@ package core.interact.commands
 
 import core.BotContext
 import core.assets.Channel
-import core.assets.MessageRef
 import core.assets.User
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
@@ -11,19 +10,16 @@ import core.session.SessionManager
 import core.session.entities.ChannelConfig
 import core.session.entities.DeclareStageOpeningSession
 import core.session.entities.SessionId
-import core.session.entities.SwapType
-import utils.tuple
 import kotlin.time.Instant
 
 class OpeningDeclareCommand(
     private val sessionId: SessionId,
     private val maxOfferCount: Int,
-    private val messageRef: MessageRef
 ) : Command {
 
     override val name = "opening-declare"
 
-    override val responseFlag = ResponseFlag.Immediately
+    override val responseFlag = ResponseFlag.DeferEdit
 
     override suspend fun execute(
         bot: BotContext,
@@ -34,19 +30,13 @@ class OpeningDeclareCommand(
         publishers: PublisherSet,
         emittedTime: Instant,
     ) = runCatching {
-        val (session, messageBufferKey) = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).mutate { session ->
-            val declareSession = session as? DeclareStageOpeningSession ?: throw IllegalStateException()
-            if (declareSession.player.id != user.id) throw IllegalStateException()
-
-            tuple(declareSession.declare(this.maxOfferCount), session.messageBufferKey)
+        val io = SessionManager.retrieveGameSession(bot.sessions, this.sessionId).interact { runtime ->
+            val session = runtime.session as? DeclareStageOpeningSession ?: throw IllegalStateException()
+            check(session.player.id == user.id)
+            check(this.maxOfferCount in 1 .. session.maxOfferCount)
+            runtime.session = session.declare(this.maxOfferCount)
+            buildUpdateBoardProcedure(config, service, publishers, runtime)
         }
-
-        val boardPublisher = when (config.swapType) {
-            SwapType.EDIT -> publishers.edit(this.messageRef)
-            else -> publishers.plain
-        }
-
-        val io = buildNextMoveProcedure(bot, config, service, boardPublisher, session, messageBufferKey)
 
         CommandResult(io, this.writeActionLog(emittedTime, "declare 5th moves ${this.maxOfferCount}", channel, user))
     }

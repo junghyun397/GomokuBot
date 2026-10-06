@@ -267,7 +267,7 @@ object EngineProvider {
 
         for (idx in 0 until Pos.BOARD_SIZE) {
             if (this.stoneKind(Pos.fromIdx(idx)) == color) {
-                val byteIndex = idx / 8
+                val byteIndex = (idx / 64) * 8 + 7 - (idx % 64) / 8
                 val bitMask = 1 shl (idx % 8)
                 bytes[byteIndex] = (bytes[byteIndex].toInt() or bitMask).toByte()
             }

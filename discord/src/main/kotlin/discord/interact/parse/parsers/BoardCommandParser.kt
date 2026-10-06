@@ -16,12 +16,12 @@ object BoardCommandParser: SessionSideParser(), ParsableCommand, BuildableComman
 
     override val name = "board"
 
-    override fun getLocalizedName(container: LanguageContainer) = container.boardCommand()
+    override fun getLocalizedName(container: LanguageContainer) = container.boardCommand
 
     override fun getLocalizedUsages(container: LanguageContainer) = listOf(
         BuildableCommand.Usage(
-            usage = "``/${container.boardCommand()}`` or ``$COMMAND_PREFIX${container.boardCommand()}``",
-            description = container.commandUsageBoard()
+            usage = "`/${container.boardCommand}` or `$COMMAND_PREFIX${container.boardCommand}`",
+            description = container.commandUsageBoard
         ),
     )
 
@@ -37,8 +37,8 @@ object BoardCommandParser: SessionSideParser(), ParsableCommand, BuildableComman
 
     override fun buildCommandData(action: CommandListUpdateAction, container: LanguageContainer) =
         action.slash(
-            container.boardCommand(),
-            container.boardCommandDescription()
+            container.boardCommand,
+            container.boardCommandDescription
         )
 
 }
