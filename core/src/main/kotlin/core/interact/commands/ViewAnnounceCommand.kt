@@ -40,7 +40,7 @@ class ViewAnnounceCommand(val language: Language) : Command {
         val io = effect {
             val language = this@ViewAnnounceCommand.language
             val content = announcementMessage(language.container, announcements[language] ?: announcements[Language.ENG]!!)
-            val message = publishers.plain(content).retrieve()()
+            val message = publishers.plain(content).retrieve().bind()
 
             if (message != null) {
                 NavigationManager.addNavigation(
@@ -52,7 +52,7 @@ class ViewAnnounceCommand(val language: Language) : Command {
                     )
                 )
 
-                service.attachBinaryNavigators(message)()
+                service.attachBinaryNavigators(message).bind()
             }
         }
 

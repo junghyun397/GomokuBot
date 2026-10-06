@@ -41,7 +41,7 @@ class ApplySettingCommand(
         val io = effect {
             val notice = config.language.container.settingApplied(service.formatHighlight(localKind), service.formatHighlight(localChoice))
             publishers.windowed(AppMessage.Text(notice))
-                .launch()()
+                .launch().bind()
         }
 
         val (kind, choice) = SettingMapping.buildKindNamePair(Language.ENG.container, this.diff)

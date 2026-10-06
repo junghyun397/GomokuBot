@@ -14,11 +14,11 @@ interface MessageAction {
 class DeferredMessageAction(private val build: () -> MessageAction) : MessageAction {
 
     override fun launch(): Effect<Nothing, Unit> = effect {
-        this@DeferredMessageAction.build().launch()()
+        this@DeferredMessageAction.build().launch().bind()
     }
 
     override fun retrieve(): Effect<Nothing, SentMessage?> = effect {
-        this@DeferredMessageAction.build().retrieve()()
+        this@DeferredMessageAction.build().retrieve().bind()
     }
 
 }

@@ -31,7 +31,7 @@ class ChannelJoinCommand(private val localeComment: String) : InternalCommand {
                     config = config,
                     publisher = publisher.plain,
                     settingsPage = 0
-                )()
+                ).bind()
 
             service.upsertCommands(config.language.container)
 

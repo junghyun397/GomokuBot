@@ -29,13 +29,13 @@ class ExpireRequestCommand(
         val session = this.runtime.session
         val io = if (publisher != null) {
             effect {
-                buildInvalidateRequestProcedure(config, publisher, this@ExpireRequestCommand.runtime)()
+                buildInvalidateRequestProcedure(config, publisher, this@ExpireRequestCommand.runtime).bind()
                 val noticePublisher = publisher.plain
                 val notice = when (session) {
                     is RequestSession.Match -> config.language.container.requestExpired(service.formatUser(session.requester), service.formatUser(session.recipient))
                     is RequestSession.Undo -> config.language.container.undoRequestExpired(service.formatUser(session.requester), service.formatUser(session.recipient))
                 }
-                noticePublisher(AppMessage.Text(notice)).launch()()
+                noticePublisher(AppMessage.Text(notice)).launch().bind()
             }
         } else effect { }
 

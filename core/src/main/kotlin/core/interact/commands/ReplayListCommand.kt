@@ -46,7 +46,7 @@ class ReplayListCommand(
         val io = effect {
             val view = ReplayListView(config.language.container, user, gameRecords.map { it.buildReplayEntry(user) })
             publisher(AppMessage.ReplayList(view))
-                .launch()()
+                .launch().bind()
         }
 
         CommandResult(io, this.writeActionLog(emittedTime, "${gameRecords.size} records", channel, user))

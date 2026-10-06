@@ -45,7 +45,7 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
                         config.language.container,
                         announces[config.language] ?: announces[Language.ENG]!!,
                     )
-                    val message = publishers.plain(content).retrieve()()
+                    val message = publishers.plain(content).retrieve().bind()
 
                     if (message != null) {
                         NavigationManager.addNavigation(
@@ -57,7 +57,7 @@ class AnnounceCommand(command: Command) : UnionCommand(command) {
                             )
                         )
 
-                        service.attachBinaryNavigators(message)()
+                        service.attachBinaryNavigators(message).bind()
                     }
                 }
         }

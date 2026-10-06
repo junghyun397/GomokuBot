@@ -9,15 +9,14 @@ import core.database.jooq.tables.references.GAME_RECORD
 import core.database.jooq.tables.references.USER_STATS
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import org.jooq.Condition
+import org.jooq.Field
+import org.jooq.Table
 import org.jooq.impl.DSL
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import renju.notation.Color
-import renju.notation.GameResult
 import utils.toUtcInstant
-import utils.tuple
-import utils.unreachable
-import kotlin.time.Clock
+import java.util.*
 
 object UserStatsRepository {
 
@@ -47,71 +46,89 @@ object UserStatsRepository {
             .awaitSingle()
 
     context(connection: DatabaseConnection)
-    suspend fun fetchRankings(channelUid: ChannelUid): List<UserStats> =
-        Flux.from(
-            connection.jooq
-                .selectFrom(GAME_RECORD)
-                .where(GAME_RECORD.CHANNEL_ID.eq(channelUid.uuid))
-                .and(GAME_RECORD.ENGINE_LEVEL.isNotNull())
-        )
-            .map { record ->
-                val maybeBlackId = record.blackId
-                val maybeWhiteId = record.whiteId
+    suspend fun fetchRankings(channelUid: ChannelUid): List<UserStats> {
+        val rankings = this.aggregateStats(
+            userId = DSL.coalesce(GAME_RECORD.BLACK_ID, GAME_RECORD.WHITE_ID),
+            isBlack = GAME_RECORD.BLACK_ID.isNotNull,
+            condition = GAME_RECORD.CHANNEL_ID.eq(channelUid.uuid).and(GAME_RECORD.ENGINE_LEVEL.isNotNull),
+        ).asTable("rankings")
 
-                val recordResult = GameResult.fromId(record.cause!!, Color.from(record.winColor?.toByte()))!!
-
-                when {
-                    maybeBlackId != null -> tuple(UserUid(maybeBlackId), Color.BLACK, recordResult)
-                    maybeWhiteId != null -> tuple(UserUid(maybeWhiteId), Color.WHITE, recordResult)
-                    else -> unreachable()
-                }
-            }
+        return Flux.from(connection.jooq.selectFrom(rankings).orderBy(this.rankingOrder(rankings)))
+            .map { this.extractUserStats(it.into(USER_STATS)) }
             .collectList()
-            .map { records -> this.buildUserStats(records).sortedDescending() }
             .awaitSingle()
+    }
 
     context(connection: DatabaseConnection)
-    suspend fun fetchRankings(userUid: UserUid): List<Pair<UserUid?, UserStats>> =
-        Flux.from(
-            connection.jooq
-                .selectFrom(GAME_RECORD)
-                .where(
-                    GAME_RECORD.BLACK_ID.eq(userUid.uuid)
-                        .and(GAME_RECORD.WHITE_ID.isNotNull())
-                        .or(GAME_RECORD.WHITE_ID.eq(userUid.uuid).and(GAME_RECORD.BLACK_ID.isNotNull()))
-                )
-                .and(GAME_RECORD.ENGINE_LEVEL.isNull())
+    suspend fun fetchRankings(userUid: UserUid): List<Pair<UserUid?, UserStats>> {
+        val isBlack = GAME_RECORD.WHITE_ID.eq(userUid.uuid)
+        val opponents = this.aggregateStats(
+            userId = DSL.`when`(isBlack, GAME_RECORD.BLACK_ID).otherwise(GAME_RECORD.WHITE_ID),
+            isBlack = isBlack,
+            condition = GAME_RECORD.BLACK_ID.eq(userUid.uuid).or(GAME_RECORD.WHITE_ID.eq(userUid.uuid))
+                .and(GAME_RECORD.ENGINE_LEVEL.isNull),
         )
-            .map { record ->
-                val blackId = UserUid(record.blackId!!)
-                val whiteId = UserUid(record.whiteId!!)
 
-                val recordResult = GameResult.fromId(record.cause!!, Color.from(record.winColor?.toByte()))!!
+        // The AI's colors and results are the reverse of the user's lifetime statistics.
+        val engine = connection.jooq
+            .select(listOf(
+                DSL.inline(null, USER_STATS.USER_ID.dataType).`as`(USER_STATS.USER_ID),
+                USER_STATS.WHITE_LOSSES.`as`(USER_STATS.BLACK_WINS),
+                USER_STATS.WHITE_WINS.`as`(USER_STATS.BLACK_LOSSES),
+                USER_STATS.WHITE_DRAWS.`as`(USER_STATS.BLACK_DRAWS),
+                USER_STATS.BLACK_LOSSES.`as`(USER_STATS.WHITE_WINS),
+                USER_STATS.BLACK_WINS.`as`(USER_STATS.WHITE_LOSSES),
+                USER_STATS.BLACK_DRAWS.`as`(USER_STATS.WHITE_DRAWS),
+                USER_STATS.LAST_UPDATE,
+            ))
+            .from(USER_STATS)
+            .where(USER_STATS.USER_ID.eq(userUid.uuid))
+            .and(
+                USER_STATS.BLACK_WINS.add(USER_STATS.BLACK_LOSSES).add(USER_STATS.BLACK_DRAWS)
+                    .add(USER_STATS.WHITE_WINS).add(USER_STATS.WHITE_LOSSES).add(USER_STATS.WHITE_DRAWS).gt(0)
+            )
 
-                when {
-                    blackId != userUid -> tuple(blackId, Color.BLACK, recordResult)
-                    whiteId != userUid -> tuple(whiteId, Color.WHITE, recordResult)
-                    else -> unreachable()
-                }
+        val rankings = opponents.unionAll(engine).asTable("rankings")
+
+        return Flux.from(connection.jooq.selectFrom(rankings).orderBy(this.rankingOrder(rankings)))
+            .map {
+                val record = it.into(USER_STATS)
+                val opponentId = record.userId?.let { id -> UserUid(id) }
+
+                opponentId to this.extractUserStats(record, opponentId ?: userUid)
             }
             .collectList()
             .awaitSingle()
-            .let { records ->
-                val userStats = this.buildUserStats(records).map { it.userId to it }
+    }
 
-                val aiStats = this.fetchUserStats(userUid).reversed()
+    context(connection: DatabaseConnection)
+    private fun aggregateStats(userId: Field<UUID?>, isBlack: Condition, condition: Condition) =
+        connection.jooq
+            .select(listOf(
+                userId.`as`(USER_STATS.USER_ID),
+                DSL.count().filterWhere(isBlack.and(GAME_RECORD.WIN_COLOR.eq(0))).`as`(USER_STATS.BLACK_WINS),
+                DSL.count().filterWhere(isBlack.and(GAME_RECORD.WIN_COLOR.eq(1))).`as`(USER_STATS.BLACK_LOSSES),
+                DSL.count().filterWhere(isBlack.and(this.drawCondition)).`as`(USER_STATS.BLACK_DRAWS),
+                DSL.count().filterWhere(isBlack.not().and(GAME_RECORD.WIN_COLOR.eq(1))).`as`(USER_STATS.WHITE_WINS),
+                DSL.count().filterWhere(isBlack.not().and(GAME_RECORD.WIN_COLOR.eq(0))).`as`(USER_STATS.WHITE_LOSSES),
+                DSL.count().filterWhere(isBlack.not().and(this.drawCondition)).`as`(USER_STATS.WHITE_DRAWS),
+                DSL.max(GAME_RECORD.CREATE_DATE).`as`(USER_STATS.LAST_UPDATE),
+            ))
+            .from(GAME_RECORD)
+            .where(condition)
+            .groupBy(DSL.field(USER_STATS.USER_ID.unqualifiedName))
 
-                val unionRanking = when (aiStats.isEmpty) {
-                    true -> userStats
-                    else -> userStats + (null to aiStats)
-                }
+    private val drawCondition = GAME_RECORD.WIN_COLOR.isDistinctFrom(0).and(GAME_RECORD.WIN_COLOR.isDistinctFrom(1))
 
-                unionRanking.sortedByDescending { it.second }
-            }
+    private fun rankingOrder(rankings: Table<*>) = listOf(
+        rankings.field(USER_STATS.BLACK_WINS)!!.add(rankings.field(USER_STATS.WHITE_WINS)!!).desc(),
+        rankings.field(USER_STATS.BLACK_LOSSES)!!.add(rankings.field(USER_STATS.WHITE_LOSSES)!!).asc(),
+        rankings.field(USER_STATS.BLACK_DRAWS)!!.add(rankings.field(USER_STATS.WHITE_DRAWS)!!).desc(),
+    )
 
-    private fun extractUserStats(record: UserStatsRecord): UserStats =
+    private fun extractUserStats(record: UserStatsRecord, userId: UserUid = UserUid(record.userId!!)): UserStats =
         UserStats(
-            userId = UserUid(record.userId!!),
+            userId = userId,
             blackWins = record.blackWins!!,
             blackLosses = record.blackLosses!!,
             blackDraws = record.blackDraws!!,
@@ -122,30 +139,5 @@ object UserStatsRepository {
 
             lastUpdate = record.lastUpdate!!.toUtcInstant()
         )
-
-    private fun buildUserStats(records: List<Triple<UserUid, Color, GameResult>>): List<UserStats> =
-        records
-            .groupBy { (id, _, _) -> id }
-            .map { (id, tuples) ->
-                val blackTotal = tuples.count { (_, color, _) -> color == Color.BLACK }
-                val whiteTotal = tuples.size - blackTotal
-
-                val blackWins = tuples.count { (_, color, result) -> color == Color.BLACK && result.winner == Color.BLACK }
-                val whiteWins = tuples.count { (_, color, result) -> color == Color.WHITE && result.winner == Color.WHITE }
-
-                val blackLosses = tuples.count { (_, color, result) -> color == Color.BLACK && result.winner == Color.WHITE }
-                val whiteLosses = tuples.count { (_, color, result) -> color == Color.WHITE && result.winner == Color.BLACK }
-
-                UserStats(
-                    userId = id,
-                    blackWins = blackWins,
-                    blackLosses = blackLosses,
-                    blackDraws = blackTotal - blackWins - blackLosses,
-                    whiteWins = whiteWins,
-                    whiteLosses = whiteLosses,
-                    whiteDraws = whiteTotal - whiteWins - whiteLosses,
-                    lastUpdate = Clock.System.now()
-                )
-            }
 
 }

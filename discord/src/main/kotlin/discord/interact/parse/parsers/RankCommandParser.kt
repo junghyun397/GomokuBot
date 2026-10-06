@@ -57,7 +57,7 @@ object RankCommandParser : CommandParser, ParsableCommand, BuildableCommand {
             ?: Either.Left(this.asParseFailure("target user not found", context.channel, context.user) { messagingService, publisher, container ->
                     effect {
                         publisher(AppMessage.Text(container.rankErrorNotFound))
-                            .launch()()
+                            .launch().bind()
                     }
                 })
     }

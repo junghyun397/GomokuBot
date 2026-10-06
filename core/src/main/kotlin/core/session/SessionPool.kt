@@ -13,10 +13,10 @@ data class SessionUserKey(
 )
 
 data class SessionPool(
-    val channels: MutableMap<ChannelUid, Channel> = ConcurrentHashMap(),
-    val gameSessions: ConcurrentHashMap<SessionId, SessionSlot<GameSession>> = ConcurrentHashMap(),
-    val requestSessions: ConcurrentHashMap<SessionId, SessionSlot<RequestSession>> = ConcurrentHashMap(),
-    val gameSessionIndex: ConcurrentHashMap<SessionUserKey, SessionId> = ConcurrentHashMap(),
-    val requestSessionIndex: ConcurrentHashMap<SessionUserKey, SessionId> = ConcurrentHashMap(),
-    val navigates: ConcurrentHashMap<MessageRef, NavigationState> = ConcurrentHashMap(),
+    internal val channels: MutableMap<ChannelUid, Channel> = ConcurrentHashMap(),
+    internal val gameSessions: ConcurrentHashMap<SessionId, SessionSlot<GameSession>> = ConcurrentHashMap(),
+    internal val requestSessions: ConcurrentHashMap<SessionId, SessionSlot<RequestSession>> = ConcurrentHashMap(),
+    internal val gameSessionIndex: ConcurrentHashMap<SessionUserKey, SessionId> = ConcurrentHashMap(),
+    internal val requestSessionIndex: ConcurrentHashMap<SessionUserKey, SessionId> = ConcurrentHashMap(),
+    internal val navigates: ConcurrentHashMap<MessageRef, NavigationState> = ConcurrentHashMap(),
 )

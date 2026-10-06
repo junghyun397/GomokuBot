@@ -33,7 +33,7 @@ class HelpCommand(
             when (this@HelpCommand.sendSettings) {
                 true -> buildCombinedHelpProcedure(config, publishers.plain, this@HelpCommand.page)
                 else -> buildHelpProcedure(config, publishers.plain, this@HelpCommand.page)
-            }()
+            }.bind()
         }
 
         CommandResult(io, this.writeActionLog(emittedTime, "sent", channel, user))

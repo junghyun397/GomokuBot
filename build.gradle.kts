@@ -6,7 +6,7 @@ plugins {
     idea
     kotlin("jvm") version "2.4.20"
     // id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
-    kotlin("plugin.serialization") version "2.4.20"
+    kotlin("plugin.serialization") version "2.4.20" apply false
 }
 
 allprojects {
@@ -45,7 +45,6 @@ allprojects {
 subprojects {
     apply {
         plugin("org.jetbrains.kotlin.jvm")
-        plugin("org.jetbrains.kotlin.plugin.serialization")
     }
 
     dependencies {
@@ -53,15 +52,7 @@ subprojects {
 
         implementation("io.arrow-kt:arrow-core:2.2.3")
 
-        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
-
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.11.0")
-        implementation("io.projectreactor.kotlin:reactor-kotlin-extensions:1.3.2")
-
-        implementation("com.google.guava:guava:33.7.2-jre")
-
-        implementation("org.slf4j:slf4j-api:2.0.20")
 
         testImplementation(kotlin("test"))
     }

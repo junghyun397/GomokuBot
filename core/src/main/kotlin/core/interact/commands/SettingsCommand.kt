@@ -34,7 +34,7 @@ class SettingsCommand : Command {
     ) = runCatching {
         val io = effect {
             val message = publishers.plain(AppMessage.Settings(config, 0))
-                .retrieve()()
+                .retrieve().bind()
 
             if (message != null) {
                 NavigationManager.addNavigation(
@@ -46,7 +46,7 @@ class SettingsCommand : Command {
                     )
                 )
 
-                service.attachBinaryNavigators(message)()
+                service.attachBinaryNavigators(message).bind()
             }
         }
 

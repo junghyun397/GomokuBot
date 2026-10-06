@@ -36,9 +36,9 @@ class LangCommand(private val language: Language) : Command {
 
         val io = effect {
             publishers.plain(AppMessage.Text(this@LangCommand.language.container.languageUpdated))
-                .launch()()
+                .launch().bind()
 
-            buildHelpProcedure(thenConfig, publishers.plain, 0)()
+            buildHelpProcedure(thenConfig, publishers.plain, 0).bind()
 
             service.upsertCommands(thenConfig.language.container)
 

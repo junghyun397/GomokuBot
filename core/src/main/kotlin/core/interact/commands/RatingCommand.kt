@@ -39,7 +39,7 @@ class RatingCommand(
 
         val io: Effect<Nothing, Unit> = effect {
             publishers.plain(AppMessage.Rating(target, rating, recentDelta))
-                .launch()()
+                .launch().bind()
         }
 
         CommandResult(io, this.writeActionLog(emittedTime, "target $target", channel, user))

@@ -1,6 +1,5 @@
 package core.interact.commands
 
-import arrow.core.raise.effect
 import core.assets.Channel
 import core.assets.User
 import core.database.DatabaseConnection
@@ -54,9 +53,7 @@ class RankCommand(private val scope: RankScope) : Command {
                 }
         }
 
-        val io = effect {
-            publishers.plain(AppMessage.Rankings(config.language.container, rankings)).launch()()
-        }
+        val io = publishers.plain(AppMessage.Rankings(config.language.container, rankings)).launch()
 
         CommandResult(io, this.writeActionLog(emittedTime, "$scope scope", channel, user))
     }

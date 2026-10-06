@@ -49,6 +49,7 @@ object DiscordMessageRenderer {
         is AppMessage.Announcement -> DiscordMessageData(embed = this.renderAnnouncement(message))
         is AppMessage.Rankings -> DiscordMessageData(embed = this.renderRankings(message))
         is AppMessage.Rating -> DiscordMessageData(embed = this.renderRating(message))
+        is AppMessage.GameStarted -> DiscordMessageData(embed = this.renderGameStarted(message))
         is AppMessage.GameFinished -> DiscordMessageData(embed = this.renderGameFinished(message))
         is AppMessage.Board -> this.renderBoard(message.view)
         is AppMessage.BoardArchive -> this.renderArchive(message.draw)
@@ -132,6 +133,36 @@ object DiscordMessageRenderer {
         }
     }
 
+    private fun renderGameStarted(message: AppMessage.GameStarted): MessageEmbed = Embed {
+        this.color = COLOR_GREEN_HEX
+        this.description = message.description
+        this.buildGameAuthor(message)
+        message.enginePlayer?.let { enginePlayer ->
+            val players = message.users.map { user ->
+                when (user) {
+                    is User.Human -> user.asMention()
+                    is User.GomokuBot -> enginePlayer
+                }
+            }
+
+            this.field {
+                this.name = message.container.gameStartBlack
+                this.value = players.black
+                this.inline = true
+            }
+            this.field {
+                this.name = message.container.gameStartWhite
+                this.value = players.white
+                this.inline = true
+            }
+        }
+        this.field {
+            this.name = message.container.gameStartRule
+            this.value = message.rule.display
+            this.inline = true
+        }
+    }
+
     private fun renderGameFinished(message: AppMessage.GameFinished): MessageEmbed = Embed {
         this.color = COLOR_NORMAL_HEX
         this.description = message.description
@@ -161,17 +192,19 @@ object DiscordMessageRenderer {
     private fun ActionRowChildComponent.liftToButtons() = listOf(ActionRow.of(this))
 
     private fun InlineEmbed.buildBoardAuthor(container: LanguageContainer, draw: GameDraw) =
-        this.author {
-            this.iconUrl = draw.users[draw.leaderColor].profileURL
-            this.name = buildString {
-                append(draw.users[draw.leaderColor].withColor(draw.leaderColor))
-                append(" vs ")
-                append(draw.users[!draw.leaderColor].withColor(!draw.leaderColor))
-                append(", ")
+        this.buildGameAuthor(draw, if (draw.result == null) container.boardInProgress else container.boardFinished)
 
-                when (draw.result) {
-                    null -> append(container.boardInProgress)
-                    else -> append(container.boardFinished)
+    private fun InlineEmbed.buildGameAuthor(participants: GameParticipants, status: String? = null) =
+        this.author {
+            this.iconUrl = participants.users[participants.leaderColor].profileURL
+            this.name = buildString {
+                append(participants.users[participants.leaderColor].withColor(participants.leaderColor))
+                append(" vs ")
+                append(participants.users[!participants.leaderColor].withColor(!participants.leaderColor))
+
+                status?.let {
+                    append(", ")
+                    append(it)
                 }
             }
         }
@@ -428,7 +461,7 @@ object DiscordMessageRenderer {
             .flatMapIndexed { h2Index, (h3Title, blocks) -> blocks
                 .mapIndexed { blockIndex, block ->
                     Embed {
-                        this.color = PageNavigationState.encodeToColor(COLOR_NORMAL_HEX, NavigationKind.ABOUT, page)
+                        this.color = PageNavigationState.encodeToColor(COLOR_NORMAL_HEX, NavigationKind.ABOUT, page + 1)
                         this.title = when {
                             h2Index == 0 && blockIndex == 0 -> h2Title.asBoldFormat()
                             blockIndex == 0 -> h3Title

@@ -8,11 +8,15 @@ import core.engine.MintakaServer
 import core.interact.message.AppMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
+import core.interact.message.gameStartedMessage
 import core.interact.reports.writeActionLog
 import core.session.PvpGameManager
 import core.session.SessionManager
 import core.session.SessionPool
-import core.session.entities.*
+import core.session.entities.ChannelConfig
+import core.session.entities.PvpGameSession
+import core.session.entities.RequestSession
+import core.session.entities.SessionId
 import kotlin.time.Instant
 
 class ResponseCommand(
@@ -43,25 +47,28 @@ class ResponseCommand(
                     val session = PvpGameManager.create(requestSession.requester, requestSession.recipient, requestSession.rule)
                     SessionManager.insertGameSession(channel, session)
                     SessionManager.finishRequestSession(request)
+
                     val board = SessionManager.retrieveGameSession(session.id).interact { runtime ->
                         buildBoardProcedure(config, publishers, runtime)
                     }
 
                     effect {
                         val guidePublisher = request.messageRef?.let { publishers.edit(it) } ?: publishers.plain
-                        val players = session.users.map { service.formatUser(it) }
-                        val notice = if (session is OpeningSession) config.language.container.beginOpening(players)
-                        else config.language.container.beginPvp(players)
-                        guidePublisher(AppMessage.Text(notice)).launch()()
-                        board()
+                        guidePublisher(gameStartedMessage(config.language.container, service, session)).launch().bind()
+                        board.bind()
                     }
                 } else {
                     SessionManager.finishRequestSession(request)
                     val invalidate = buildInvalidateRequestProcedure(config, publishers, request)
+
                     effect {
-                        invalidate()
-                        val notice = config.language.container.requestRejected(service.formatUser(requestSession.requester), service.formatUser(requestSession.recipient))
-                        publishers.plain(AppMessage.Text(notice)).launch()()
+                        invalidate.bind()
+                        val notice = config.language.container.requestRejected(
+                            service.formatUser(requestSession.requester),
+                            service.formatUser(requestSession.recipient)
+                        )
+
+                        publishers.plain(AppMessage.Text(notice)).launch().bind()
                     }
                 }
             }
@@ -70,6 +77,7 @@ class ResponseCommand(
                     val session = runtime.session
                     check(session is PvpGameSession && session.gameResult == null)
                     check(runtime.undoRequest === request)
+
                     val nextSession = if (this.accept) PvpGameManager.undo(session) else session
                     SessionManager.finishUndoRequest(runtime)
                     runtime.session = nextSession
@@ -78,15 +86,18 @@ class ResponseCommand(
                         val updateBoard = buildUpdateBoardProcedure(config, publishers, runtime)
                         effect {
                             val noticePublisher = request.messageRef?.let { publishers.edit(it) } ?: publishers.plain
-                            noticePublisher(AppMessage.Text(config.language.container.undoPvpCompleted)).launch()()
-                            updateBoard()
+                            noticePublisher(AppMessage.Text(config.language.container.undoPvpCompleted)).launch().bind()
+                            updateBoard.bind()
                         }
                     } else {
                         val invalidate = buildInvalidateRequestProcedure(config, publishers, request)
                         effect {
-                            invalidate()
-                            val notice = config.language.container.undoRequestRejected(service.formatUser(requestSession.requester), service.formatUser(requestSession.recipient))
-                            publishers.plain(AppMessage.Text(notice)).launch()()
+                            invalidate.bind()
+                            val notice = config.language.container.undoRequestRejected(
+                                service.formatUser(requestSession.requester),
+                                service.formatUser(requestSession.recipient)
+                            )
+                            publishers.plain(AppMessage.Text(notice)).launch().bind()
                         }
                     }
                 }

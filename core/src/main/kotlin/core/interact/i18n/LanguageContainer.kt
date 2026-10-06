@@ -234,6 +234,10 @@ sealed interface LanguageContainer {
     fun beginEngineWhite(player: String, gomokubot: String): String
     fun beginEngineBlack(player: String, gomokubot: String): String
 
+    val gameStartBlack: String
+    val gameStartWhite: String
+    val gameStartRule: String
+
     fun processNextEngine(lastMove: String): String
     fun processNextPvp(opponent: String, lastMove: String): String
     fun processNextOpening(lastMove: String): String

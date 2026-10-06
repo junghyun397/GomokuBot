@@ -35,7 +35,7 @@ class ExpireGameCommand(
                 is EngineGameSession -> EngineGameManager.resign(session, EngineGameManager.ResignCause.TIMEOUT)
             }
 
-            buildFinishProcedure(config, channel, publisher, runtime)()
+            buildFinishProcedure(config, channel, publisher, runtime).bind()
         }
 
         CommandResult(io, this.writeActionLog(emittedTime, "expired ${this.runtime.session.id}", channel))

@@ -40,9 +40,9 @@ fun buildBoardProcedure(
 
     return effect {
         val publicationId = runtime.reserveMessagePublication()
-        val message = publishers.plain(AppMessage.Board(view)).retrieve()() ?: return@effect
+        val message = publishers.plain(AppMessage.Board(view)).retrieve().bind() ?: return@effect
         if (runtime.recordPublishedMessage(publicationId, message.ref))
-            service.attachInputFieldNavigators(message)()
+            service.attachInputFieldNavigators(message).bind()
     }
 }
 
@@ -58,7 +58,7 @@ fun buildUpdateBoardProcedure(
     val messageRef = runtime.messageRef ?: return effect { }
 
     return effect {
-        val message = publishers.edit(messageRef)(AppMessage.Board(view)).retrieve()()
+        val message = publishers.edit(messageRef)(AppMessage.Board(view)).retrieve().bind()
         if (message != null && session.gameResult != null)
             service.reduceComponents(messageRef, reduceReactions = true, reduceComponents = true)
     }
@@ -76,7 +76,7 @@ fun buildFinishProcedure(
     val updateBoard = publishers?.let { buildUpdateBoardProcedure(config, it, runtime) }
 
     return effect {
-        invalidateUndo()
+        invalidateUndo.bind()
         StatsManager.uploadGameRecord(channel.id, session)
 
         if (publishers != null) {
@@ -86,8 +86,10 @@ fun buildFinishProcedure(
             } else null
 
             val result = ResultDraw(session.users, session.state.board.playerColor, session.gameResult!!, rating)
-            publishers.plain(gameFinishedMessage(config.language.container, service, result)).launch()()
-            updateBoard!!()
+            val container = config.language.container
+            val players = session.formatPlayers(container, service)
+            publishers.plain(gameFinishedMessage(container, players, result)).launch().bind()
+            updateBoard!!.bind()
             if (session.state.history.size >= 20 && config.archivePolicy != ArchivePolicy.PRIVACY) {
                 service.archive(AppMessage.BoardArchive(session.buildBoardDraw(config.archivePolicy == ArchivePolicy.BY_ANONYMOUS)))
             }

@@ -10,8 +10,6 @@ import core.interact.message.HelpPages
 import core.interact.message.SettingMapping
 import renju.notation.Pos
 import utils.Identifiable
-import utils.find
-import utils.toBytes
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -58,23 +56,26 @@ data class PageNavigationState(
     companion object {
 
         fun encodeToColor(base: Int, kind: NavigationKind, page: Int): Int {
-            val baseBytes = base.toBytes()
-                .drop(1)
-                .map { it.toUByte().toInt() }
+            require(page in 0..510)
 
             val headByte: Int = page shr 1
-            val tailByte: Int = headByte + (headByte and 0x1)
+            val tailByte: Int = headByte + (page and 0x1)
 
-            return ((baseBytes[0] + kind.id) shl 16) or ((baseBytes[1] + headByte) shl 8) or (baseBytes[2] + tailByte)
+            val red = ((base ushr 16) + kind.id) and 0xFF
+            val green = ((base ushr 8) + headByte) and 0xFF
+            val blue = (base + tailByte) and 0xFF
+
+            return (red shl 16) or (green shl 8) or blue
         }
 
         context(connection: DatabaseConnection)
         fun decodeFromColor(base: Int, code: Int): PageNavigationState? {
-            val (kindRaw, pageTop, pageBottom) = base.toBytes()
-                .zip(code.toBytes()) { a, b -> b - a }
-                .drop(1)
+            val kindRaw = ((code ushr 16) - (base ushr 16)) and 0xFF
+            val pageTop = ((code ushr 8) - (base ushr 8)) and 0xFF
+            val pageBottom = (code - base) and 0xFF
 
-            val kind = NavigationKind.entries.find(kindRaw.toShort())
+            val kind = NavigationKind.entries.find { it.id.toInt() == kindRaw }
+                ?: return null
             val page = pageTop + pageBottom
 
             return if (kind != NavigationKind.BOARD && page in kind.fetchRange())

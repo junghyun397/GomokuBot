@@ -10,11 +10,15 @@ import renju.notation.ColorContainer
 import renju.notation.GameResult
 import utils.replaceIf
 
-sealed interface GameDraw {
+sealed interface GameParticipants {
 
     val users: ColorContainer<User>
 
     val leaderColor: Color
+
+}
+
+sealed interface GameDraw : GameParticipants {
 
     val result: GameResult?
 

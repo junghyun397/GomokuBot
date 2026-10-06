@@ -7,9 +7,9 @@ import core.assets.User
 import core.database.DatabaseConnection
 import core.database.repositories.UserRatingRepository
 import core.engine.MintakaServer
-import core.interact.message.AppMessage
 import core.interact.message.PlatformService
 import core.interact.message.PublisherSet
+import core.interact.message.gameStartedMessage
 import core.interact.reports.writeActionLog
 import core.session.EngineGameManager
 import core.session.PvpGameManager
@@ -60,13 +60,9 @@ class StartCommand(
                     buildBoardProcedure(config, publishers, runtime)
                 }
                 val io = effect {
-                    val notice = if (session.users.black == user)
-                        config.language.container.beginEngineWhite(service.formatUser(user), service.formatUser(User.GomokuBot))
-                    else
-                        config.language.container.beginEngineBlack(service.formatUser(user), service.formatUser(User.GomokuBot))
-
-                    publishers.plain(AppMessage.Text(notice)).launch()()
-                    board()
+                    val container = config.language.container
+                    publishers.plain(gameStartedMessage(container, service, session)).launch().bind()
+                    board.bind()
                 }
 
                 CommandResult(io, this.writeActionLog(emittedTime, "$engineLevel", channel, user))

@@ -278,6 +278,10 @@ open class LanguagePRK : LanguageKOR() {
     override fun beginEngineWhite(player: String, gomokubot: String) =
         "$player 동지와 ${gomokubot}의 놀음이 시작되었소. $player 동지가 흑이오. 첫 번째 수를 놓으시오."
 
+    override val gameStartBlack = "흑"
+    override val gameStartWhite = "백"
+    override val gameStartRule = "규칙"
+
     override fun processNextEngine(lastMove: String) =
         "다음 수를 놓으시오. 전자계산기는 ${lastMove}에 놓았소."
 

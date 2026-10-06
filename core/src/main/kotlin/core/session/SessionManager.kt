@@ -61,7 +61,7 @@ object SessionManager {
     }
 
     context(pool: SessionPool)
-    fun insertGameSession(
+    internal fun insertGameSession(
         channel: Channel,
         session: GameSession,
     ) {
@@ -76,7 +76,7 @@ object SessionManager {
     }
 
     context(pool: SessionPool)
-    fun createRequestSession(
+    internal fun createRequestSession(
         channel: Channel,
         participants: Set<UserUid>,
         session: RequestSession,
@@ -105,19 +105,19 @@ object SessionManager {
     }
 
     context(pool: SessionPool)
-    fun finishGameSession(runtime: SessionRuntime<GameSession>) {
+    internal fun finishGameSession(runtime: SessionRuntime<GameSession>) {
         runtime.close()
         this.removeSession(pool.gameSessions, pool.gameSessionIndex, runtime.session.id)
     }
 
     context(pool: SessionPool)
-    fun finishRequestSession(runtime: SessionRuntime<RequestSession>) {
+    internal fun finishRequestSession(runtime: SessionRuntime<RequestSession>) {
         runtime.close()
         this.removeSession(pool.requestSessions, pool.requestSessionIndex, runtime.session.id)
     }
 
     context(pool: SessionPool)
-    fun finishUndoRequest(runtime: SessionRuntime<GameSession>): SessionRuntime<RequestSession>? {
+    internal fun finishUndoRequest(runtime: SessionRuntime<GameSession>): SessionRuntime<RequestSession>? {
         val request = runtime.undoRequest ?: return null
         runtime.undoRequest = null
         this.finishRequestSession(request)

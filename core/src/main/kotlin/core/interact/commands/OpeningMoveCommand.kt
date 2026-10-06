@@ -40,10 +40,10 @@ abstract class OpeningMoveCommand<T : OpeningSession>(
             val updateBoard = buildUpdateBoardProcedure(config, publishers, runtime)
 
             effect {
-                updateBoard()
+                updateBoard.bind()
                 if ((this@OpeningMoveCommand.responseFlag as? ResponseFlag.Defer)?.edit != true) {
                     val notice = config.language.container.processNextOpening(service.formatHighlight(this@OpeningMoveCommand.move.toString()))
-                    publishers.windowed(AppMessage.Text(notice)).launch()()
+                    publishers.windowed(AppMessage.Text(notice)).launch().bind()
                 }
             }
         }

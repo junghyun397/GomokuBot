@@ -37,9 +37,10 @@ enum class EngineLevel(
         config = BASE_CONFIG.copy(
             workers = 1U,
             tt_size = 1024 * 1024 * 8,
+            max_depth = 6,
             max_quiescence_depth = 4,
             initial_timer = BASE_TIMER.copy(
-                turn = "100"
+                turn = "10"
             ),
         ),
         rating = EloRating(600.0F),
@@ -51,6 +52,7 @@ enum class EngineLevel(
         config = BASE_CONFIG.copy(
             workers = 1U,
             tt_size = 1024 * 1024 * 16,
+            max_depth = 12,
             max_quiescence_depth = 12,
             initial_timer = BASE_TIMER.copy(
                 turn = "400"

@@ -73,7 +73,7 @@ class NavigationCommand(
                     publishers.edit(this@NavigationCommand.messageRef)(content)
                 }
                 NavigationKind.BOARD -> throw Exception()
-            }.launch()()
+            }.launch().bind()
         }
 
         CommandResult(io, this.writeActionLog(emittedTime, "navigate ${newState.kind} as ${newState.page}", channel, user))

@@ -41,21 +41,21 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
     private fun buildOrderFailure(context: UserInteractionContext<*>, player: User): ParseFailure =
         this.asParseFailure("try move but now $player's turn", context.channel, context.user) { messagingService, publisher, container ->
             effect {
-                publisher(AppMessage.Text(container.processErrorOrder(messagingService.formatUser(player)))).retrieve()()
+                publisher(AppMessage.Text(container.processErrorOrder(messagingService.formatUser(player)))).retrieve().bind()
             }
         }
 
     private fun buildMissMatchFailure(context: UserInteractionContext<*>): ParseFailure =
         this.asParseFailure("try move but argument mismatch", context.channel, context.user) { messagingService, publisher, container ->
             effect {
-                publisher(AppMessage.Text(container.setErrorIllegalArgument)).retrieve()()
+                publisher(AppMessage.Text(container.setErrorIllegalArgument)).retrieve().bind()
             }
         }
 
     private fun buildExistFailure(context: UserInteractionContext<*>, pos: Pos): ParseFailure =
         this.asParseFailure("make move but already exist", context.channel, context.user) { messagingService, publisher, container ->
             effect {
-                publisher(AppMessage.Text(container.setErrorExist(messagingService.formatHighlight(pos.toString())))).retrieve()()
+                publisher(AppMessage.Text(container.setErrorExist(messagingService.formatHighlight(pos.toString())))).retrieve().bind()
             }
         }
 
@@ -66,7 +66,7 @@ object SetCommandParser : SessionSideParser(), ParsableCommand, EmbeddableComman
                     messagingService.formatHighlight(pos.toString()),
                     messagingService.formatHighlight(forbiddenKindToText(forbiddenKind)),
                 )
-                publisher(AppMessage.Text(notice)).retrieve()()
+                publisher(AppMessage.Text(notice)).retrieve().bind()
             }
         }
 

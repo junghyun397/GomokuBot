@@ -6,6 +6,9 @@ import core.engine.EloRating
 import core.interact.i18n.LanguageContainer
 import core.session.entities.ChannelConfig
 import core.session.entities.RequestSession
+import core.session.entities.Rule
+import renju.notation.Color
+import renju.notation.ColorContainer
 
 sealed interface AppMessage {
 
@@ -24,6 +27,15 @@ sealed interface AppMessage {
     data class Rankings(val container: LanguageContainer, val entries: List<Pair<User, UserStats>>) : AppMessage
 
     data class Rating(val user: User, val rating: EloRating, val recentDelta: EloRating.Delta) : AppMessage
+
+    data class GameStarted(
+        val container: LanguageContainer,
+        override val users: ColorContainer<User>,
+        override val leaderColor: Color,
+        val description: String,
+        val rule: Rule,
+        val enginePlayer: String? = null,
+    ) : AppMessage, GameParticipants
 
     data class GameFinished(val container: LanguageContainer, val description: String, val draw: ResultDraw) : AppMessage
 

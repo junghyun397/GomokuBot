@@ -278,6 +278,10 @@ class LanguageJPN : LanguageENG() {
     override fun beginEngineWhite(player: String, gomokubot: String) =
         "$player さんと${gomokubot}のゲームが始まりました。$player さんが黒です。最初の手を打ってください。"
 
+    override val gameStartBlack = "黒"
+    override val gameStartWhite = "白"
+    override val gameStartRule = "ルール"
+
     override fun processNextEngine(lastMove: String) =
         "次の手を打ってください。AIは ${lastMove}に打ちました。"
 

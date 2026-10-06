@@ -80,7 +80,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                     this.asParseFailure("already sent request session", context.channel, requester) { messagingService, publisher, container ->
                         effect {
                             publisher(AppMessage.Text(container.startErrorRequestAlreadySent(messagingService.formatUser(session.recipient))))
-                                .launch()()
+                                .launch().bind()
                         }
                     }
                 }
@@ -92,7 +92,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                     this.asParseFailure("already has request session", context.channel, requester) { messagingService, publisher, container ->
                         effect {
                             publisher(AppMessage.Text(container.startErrorRequestAlready(messagingService.formatUser(session.requester))))
-                                .launch()()
+                                .launch().bind()
                         }
                     }
                 }
@@ -104,7 +104,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                     this.asParseFailure("try to send request session but $opponent already has request session", context.channel, requester) { messagingService, publisher, container ->
                         effect {
                             publisher(AppMessage.Text(container.startErrorOpponentRequestAlready(messagingService.formatUser(opponent))))
-                                .launch()()
+                                .launch().bind()
                         }
                     }
                 }
@@ -116,7 +116,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                 this.asParseFailure("already has game session", context.channel, user) { messagingService, publisher, container ->
                     effect {
                         publisher(AppMessage.Text(container.startErrorSessionAlready))
-                            .launch()()
+                            .launch().bind()
                     }
                 }
             }
@@ -128,7 +128,7 @@ object StartCommandParser : CommandParser, ParsableCommand, BuildableCommand {
                     this.asParseFailure("try to send request session but $opponent already has game session", context.channel, user) { messagingService, publisher, container ->
                         effect {
                             publisher(AppMessage.Text(container.startErrorOpponentSessionAlready(messagingService.formatUser(opponent))))
-                                .launch()()
+                                .launch().bind()
                         }
                     }
                 }

@@ -2,7 +2,6 @@ package core.interact.message.graphics
 
 import arrow.core.Either
 import renju.GameState
-import renju.native.RustyRenjuImage
 import renju.native.RustyRenjuImageApi
 import renju.notation.Pos
 import java.io.ByteArrayInputStream
@@ -25,7 +24,7 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
         offers: Set<Pos>?,
         blinds: Set<Pos>?
     ) = runCatching {
-        Either.Right(renderInputStream(state, historyRenderType, offers, blinds))
+        Either.Right(this.renderInputStream(state, historyRenderType, offers, blinds))
     }.getOrElse {
         Either.Left("```\n${state.board.toString().replace(".", " ")} ```")
     }
@@ -56,13 +55,13 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
         enableForbiddenPoints: Boolean,
     ): ByteArray {
         val actions = state.history.toMaybePosBuffer()
-        val offerBuffer = asPosBuffer(offers)
-        val blindBuffer = asPosBuffer(blinds)
+        val offerBuffer = this.asPosBuffer(offers)
+        val blindBuffer = this.asPosBuffer(blinds)
 
         val rendered = RustyRenjuImageApi.lib.rusty_renju_image_render(
             RustyRenjuImageApi.constants.formatPng,
             1.0f,
-            historyRenderOption(historyRenderType),
+            this.historyRenderOption(historyRenderType),
             enableForbiddenPoints,
             state.board.nativeHandle(),
             actions,
@@ -78,21 +77,15 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
             throw IllegalStateException("Native renderer returned null pointer")
         }
 
-        if (rendered.len <= 0 || rendered.len > Int.MAX_VALUE.toLong()) {
-            throw IllegalStateException("Native renderer returned empty payload")
+        return try {
+            if (rendered.len <= 0 || rendered.len > Int.MAX_VALUE.toLong()) {
+                throw IllegalStateException("Native renderer returned empty payload")
+            }
+
+            pointer.reinterpret(rendered.len).toArray(ValueLayout.JAVA_BYTE)
+        } finally {
+            RustyRenjuImageApi.lib.rusty_renju_image_free_byte_buffer(rendered)
         }
-        val length = rendered.len.toInt()
-
-        val bytes = pointer.reinterpret(length.toLong()).toArray(ValueLayout.JAVA_BYTE)
-
-        RustyRenjuImageApi.lib.rusty_renju_image_free_byte_buffer(
-            RustyRenjuImage.ByteBuffer(
-                ptr = pointer,
-                len = rendered.len,
-            )
-        )
-
-        return bytes
     }
 
     fun renderInputStream(
@@ -103,7 +96,7 @@ object ImageBoardRenderer : BoardRenderer, BoardRendererSample {
         enableForbiddenPoints: Boolean = true
     ): InputStream =
         ByteArrayInputStream(
-            renderBytes(state, historyRenderType, offers, blinds, enableForbiddenPoints)
+            this.renderBytes(state, historyRenderType, offers, blinds, enableForbiddenPoints)
         )
 
 }

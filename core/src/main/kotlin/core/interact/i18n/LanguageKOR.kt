@@ -43,7 +43,7 @@ open class LanguageKOR : LanguageENG() {
     override val helpAboutEmbedTitle = "GomokuBot / 도움말"
     override fun helpAboutEmbedDescription(platform: String) =
         "이제 **$platform**에서도 **오목**을 즐겨 보세요. **GomokuBot**이 함께 하겠습니다." +
-                " ― GomokuBot은 ${platform}에서 오목([렌주](https://www.renju.net/rules/)) 기능을 제공하는 오픈소스 인공지능 오목 봇입니다."
+                " ― GomokuBot은 ${platform}에서 오목([렌주](https://www.renju.net/rules/)) 기능을 제공하는 오픈소스 컴퓨터 오목 봇입니다."
     override val helpAboutEmbedDeveloper = "개발자"
     override val helpAboutEmbedRepository = "Git 저장소"
     override val helpAboutEmbedVersion = "버전"
@@ -64,7 +64,7 @@ open class LanguageKOR : LanguageENG() {
     override val commandUsageStyle =
         "이 서버에서 쓰이는 오목판 모양을 바꿉니다. Ex) `/스타일` `A`"
 
-    override val commandUsageStartEngine = "인공지능과 함께 새 게임을 시작합니다."
+    override val commandUsageStartEngine = "GokomuBot과 함께 새 게임을 시작합니다."
     override val commandUsageStartPvp =
         "멘션 된 유저에게 새 게임을 제안합니다. Ex) `/시작` `@유저`"
     override val commandUsageResign = "진행 중인 게임을 포기합니다."
@@ -273,10 +273,14 @@ open class LanguageKOR : LanguageENG() {
         "${players.black} 님과 ${players.white} 님의 오프닝 게임이 시작되었습니다. ${players.black} 님이 흑입니다. ${players.white} 님은 흑으로 스왑할지, 그대로 플레이 할지 정해주세요."
 
     override fun beginEngineBlack(player: String, gomokubot: String) =
-        "$player 님과 ${gomokubot}의 게임이 시작되었습니다. $player 님은 백입니다. 인공지능은 `h8`에 두었습니다. 두 번째 수를 놓아주세요."
+        "$player 님과 ${gomokubot}의 게임이 시작되었습니다. $player 님은 백입니다. GomokuBot은 `h8`에 두었습니다. 두 번째 수를 놓아주세요."
 
     override fun beginEngineWhite(player: String, gomokubot: String) =
         "$player 님과 ${gomokubot}의 게임이 시작되었습니다. $player 님이 흑입니다. 첫 번째 수를 놓아주세요."
+
+    override val gameStartBlack = "흑"
+    override val gameStartWhite = "백"
+    override val gameStartRule = "규칙"
 
     override fun processNextEngine(lastMove: String) =
         "다음 수를 놓아주세요. AI는 ${lastMove}에 놓았습니다."
@@ -477,7 +481,7 @@ A. 오목은 매우 단순합니다. 하지만 그만큼 한계 역시 명확합
 
 더 공평한 오목의 세계에 도착하신 것을 정말 환영합니다! 여기까지 따라왔다면 기본적인 렌주 규칙들을 모두 아셨습니다. 이제는 금수가 등장하더라도, 당황하지 않은 채 금수를 풀거나 다른 전략을 사용해 게임을 이어나갈 수 있을 것입니다.
 
-이제 `/시작 @멘션` 명령어로 친구들과 게임을 시작해 보세요. 만약 친구가 없더라도 GomokuBot 인공지능이 언제나 함께 할 것입니다. `/설정` 명령어로 입맛에 맞게 GomokuBot의 행동을 바꾸는 것 역시 잊지 말아 주세요.
+이제 `/시작 @멘션` 명령어로 친구들과 게임을 시작해 보세요. 만약 친구가 없더라도 GomokuBot이 언제나 함께 할 것입니다. `/설정` 명령어로 입맛에 맞게 GomokuBot의 행동을 바꾸는 것 역시 잊지 말아 주세요.
 
 다음 장부터는 매우 복잡한 상황에서 금수를 정확히 판단하는 방법과 금수를 이용한 공격과 방어에 대해 알아봅니다. 모두 렌주에서만 가능한, 렌주를 위한 전략들입니다. 초심자에게는 조금 어려울 수 있습니다.
 

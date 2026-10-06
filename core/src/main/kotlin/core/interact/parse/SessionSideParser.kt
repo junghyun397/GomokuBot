@@ -18,7 +18,7 @@ abstract class SessionSideParser : CommandParser {
             ?: Either.Left(ParseFailure(this.name, "$user session not found", channel, user) { messagingService, publisher, container ->
                 effect {
                     publisher(AppMessage.Text(container.sessionNotFound))
-                        .launch()()
+                        .launch().bind()
                 }
             })
 

@@ -2,9 +2,12 @@ package core.session.entities
 
 import core.assets.MessageRef
 
-class SessionRuntime<T : Expirable>(
-    var session: T,
+class SessionRuntime<T : Expirable> internal constructor(
+    session: T,
 ) {
+
+    var session: T = session
+        internal set
 
     @Volatile
     var messageRef: MessageRef? = null
@@ -15,18 +18,20 @@ class SessionRuntime<T : Expirable>(
     private var latestPublicationId = 0L
 
     var boardNavigation: BoardNavigationState? = null
+        internal set
 
     var undoRequest: SessionRuntime<RequestSession>? = null
+        internal set
 
     @Volatile
     var closed: Boolean = false
         private set
 
-    fun reserveMessagePublication(): Long = synchronized(this) {
+    internal fun reserveMessagePublication(): Long = synchronized(this) {
         ++this.nextPublicationId
     }
 
-    fun recordPublishedMessage(publicationId: Long, messageRef: MessageRef): Boolean = synchronized(this) {
+    internal fun recordPublishedMessage(publicationId: Long, messageRef: MessageRef): Boolean = synchronized(this) {
         if (this.closed || publicationId <= this.latestPublicationId) return@synchronized false
 
         this.latestPublicationId = publicationId
@@ -34,7 +39,7 @@ class SessionRuntime<T : Expirable>(
         true
     }
 
-    fun close() = synchronized(this) {
+    internal fun close() = synchronized(this) {
         this.closed = true
         this.boardNavigation = null
     }

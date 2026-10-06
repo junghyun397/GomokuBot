@@ -46,7 +46,7 @@ class UndoCommand(
 
             if (forbidden != null) {
                 effect {
-                    publishers.windowed(AppMessage.Text(forbidden)).launch()()
+                    publishers.windowed(AppMessage.Text(forbidden)).launch().bind()
                 }
             } else if (session is PvpGameSession) {
                 val invalidatePrevious = buildInvalidateUndoProcedure(config, publishers, runtime)
@@ -58,8 +58,8 @@ class UndoCommand(
                 }
 
                 effect {
-                    invalidatePrevious()
-                    sendRequest()
+                    invalidatePrevious.bind()
+                    sendRequest.bind()
                 }
             } else {
                 check(session is EngineGameSession)
@@ -68,9 +68,9 @@ class UndoCommand(
                 val updateBoard = buildUpdateBoardProcedure(config, publishers, runtime)
 
                 effect {
-                    updateBoard()
+                    updateBoard.bind()
                     val notice = config.language.container.undoCompleted(nextSession.remainingUndos)
-                    publishers.windowed(AppMessage.Text(notice)).launch()()
+                    publishers.windowed(AppMessage.Text(notice)).launch().bind()
                 }
             }
         }

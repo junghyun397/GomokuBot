@@ -40,7 +40,7 @@ class ReplayCommand(
             val record = this@ReplayCommand.record
             val state = GameState(Board.fromHistory(record.history), record.history)
             publishers.edit(this@ReplayCommand.messageRef)(AppMessage.Replay(record.buildBoardDraw(state)))
-                .launch()()
+                .launch().bind()
         }
 
         CommandResult(io, this.writeActionLog(emittedTime, "view record", channel, user))

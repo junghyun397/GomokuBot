@@ -8,7 +8,7 @@ class SessionLockedException(
     val sessionId: SessionId,
 ) : IllegalStateException("session ${sessionId.uuid} is locked")
 
-class SessionSlot<T : Expirable>(
+class SessionSlot<T : Expirable> internal constructor(
     session: T,
     val channelId: ChannelUid,
     private val sessionId: SessionId,
@@ -29,7 +29,7 @@ class SessionSlot<T : Expirable>(
         }
     }
 
-    suspend fun <A> interact(block: suspend (SessionRuntime<T>) -> A): A {
+    internal suspend fun <A> interact(block: suspend (SessionRuntime<T>) -> A): A {
         if (!this.mutex.tryLock()) throw SessionLockedException(this.sessionId)
 
         return try {
@@ -40,7 +40,7 @@ class SessionSlot<T : Expirable>(
         }
     }
 
-    fun closeIfExpired(referenceTime: Instant): SessionRuntime<T>? {
+    internal fun closeIfExpired(referenceTime: Instant): SessionRuntime<T>? {
         if (!this.mutex.tryLock()) return null
 
         return try {

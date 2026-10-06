@@ -58,7 +58,7 @@ class PlayCommand(
                 val updateBoard = buildUpdateBoardProcedure(config, publishers, runtime)
 
                 effect {
-                    updateBoard()
+                    updateBoard.bind()
                     if ((this@PlayCommand.responseFlag as? ResponseFlag.Defer)?.edit != true) {
                         val notice = when (session) {
                             is PvpGameSession -> config.language.container.processNextPvp(
@@ -69,14 +69,14 @@ class PlayCommand(
                                 service.formatHighlight(session.state.history.lastOrNull().toString())
                             )
                         }
-                        publishers.windowed(AppMessage.Text(notice)).launch()()
+                        publishers.windowed(AppMessage.Text(notice)).launch().bind()
                     }
                 }
             }
 
             effect {
-                invalidateUndo()
-                updateGame()
+                invalidateUndo.bind()
+                updateGame.bind()
             }
         }
 

@@ -1,5 +1,6 @@
 plugins {
     idea
+    kotlin("plugin.serialization")
     id("org.jooq.jooq-codegen-gradle") version "3.21.9"
 }
 
@@ -9,13 +10,16 @@ val jooqGeneratedDir = layout.buildDirectory.dir("generated-src/jooq/main")
 dependencies {
     implementation(project(":utils"))
 
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.11.0")
+    implementation("com.google.guava:guava:33.7.2-jre")
+
     implementation("org.jooq:jooq:$jooqVersion")
     implementation("org.postgresql:r2dbc-postgresql:1.1.3.RELEASE")
 
     val ktorVersion = "3.6.0"
 
     implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-cio:$ktorVersion")
     implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
     implementation("io.ktor:ktor-sse:$ktorVersion")
@@ -23,8 +27,6 @@ dependencies {
 
     runtimeOnly("io.netty:netty-all:4.2.18.Final")
     runtimeOnly("io.netty:netty-tcnative-boringssl-static:2.0.84.Final")
-
-    implementation("com.sksamuel.scrimage:scrimage-core:4.6.8")
 
     jooqCodegen("org.jooq:jooq-meta-extensions:$jooqVersion")
 }

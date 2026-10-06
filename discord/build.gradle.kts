@@ -16,6 +16,7 @@ dependencies {
     implementation("net.dv8tion:JDA:6.7.0")
     implementation("club.minnced:jda-ktx:0.15.0")
 
+    implementation("org.slf4j:slf4j-api:2.0.20")
     implementation("ch.qos.logback:logback-classic:1.6.5")
 }
 

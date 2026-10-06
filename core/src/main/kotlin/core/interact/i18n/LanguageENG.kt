@@ -278,6 +278,10 @@ open class LanguageENG : LanguageContainer {
     override fun beginEngineWhite(player: String, gomokubot: String) =
         "The game of $player vs $gomokubot has started. $player is Black. Please make the first move."
 
+    override val gameStartBlack = "Black"
+    override val gameStartWhite = "White"
+    override val gameStartRule = "Rule"
+
     override fun processNextEngine(lastMove: String) =
         "Please make the next move. GomokuBot made a move at $lastMove."
 
@@ -479,7 +483,7 @@ Here's the good news (only black, unfortunately). Even if the forbidden move is 
 
 Welcome to the much fairer Gomoku! If you've followed this guide far, you know all the basic Renju rules. Now, even if forbidden moves appear, you will be able to unlock that or use other strategies to continue the game without panicking.
 
-Now start a game with your friends with the `/start @mention` command. Even if you don't have friends, the GomokuBot AI will always be with you. Don't forget to customize GomokuBot with the `/setting` command as well.
+Now start a game with your friends with the `/start @mention` command. Even if you don't have friends, GomokuBot will always be with you. Don't forget to customize GomokuBot with the `/setting` command as well.
 
 In the next chapter, we'll learn how to figure out forbidden moves in very complex situations and how to attack and defend using forbidden moves. These are strategies for Renju, all possible only in Renju. It can be a little difficult for beginners.
 

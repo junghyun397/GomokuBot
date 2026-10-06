@@ -44,8 +44,8 @@ object LangCommandParser : CommandParser, ParsableCommand, BuildableCommand {
     private fun composeMissMatchFailure(channel: Channel, user: User.Human): Either<ParseFailure, Command> =
         Either.Left(this.asParseFailure("option mismatch", channel, user) { messagingService, publisher, _ ->
             effect {
-                publisher(AppMessage.Text("There is an error in the Language Code. Please select from the list below.")).launch()()
-                publisher(AppMessage.LanguageGuide).launch()()
+                publisher(AppMessage.Text("There is an error in the Language Code. Please select from the list below.")).launch().bind()
+                publisher(AppMessage.LanguageGuide).launch().bind()
             }
         })
 
