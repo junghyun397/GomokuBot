@@ -88,6 +88,6 @@ data class PageNavigationState(
 }
 
 data class BoardNavigationState(
-    val initialFocus: FocusSolver.FocusInfo,
+    val initialFocus: FocusSolver.BoardFocus,
     val focus: Pos = initialFocus.focus,
 )

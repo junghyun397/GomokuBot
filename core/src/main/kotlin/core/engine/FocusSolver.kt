@@ -1,169 +1,228 @@
 package core.engine
 
+import renju.Board
 import renju.GameState
 import renju.native.RustyRenju
+import renju.notation.Color
 import renju.notation.Pos
+import renju.notation.asList
 import kotlin.math.max
 import kotlin.math.min
 
 object FocusSolver {
 
-    data class FocusInfo(val focus: Pos, val highlights: List<Pos>?)
+    data class BoardFocus(val focus: Pos, val hints: List<Pos>?)
 
-    private fun isLegalEmptyMove(state: GameState, pos: Pos): Boolean =
-        state.board.validateMove(pos) == null
-
-    private fun evaluateBoard(state: GameState): MutableList<MutableList<Int>> {
-        val nextColor = state.board.playerColor
+    private fun evaluateBoard(state: GameState): List<Int> {
         val opponentColor = !state.board.playerColor
 
         fun Int.count(mask: Int): Int = (this and mask).countOneBits()
         fun Int.openFours(): Int = count(RustyRenju.openFourMask)
-        fun Int.closeThrees(): Int = count(RustyRenju.closeThreeMask)
-        fun Int.threes(): Int = count(RustyRenju.openThreeMask) + closeThrees()
-        fun Int.fours(): Int = count(RustyRenju.closedFourMask) + openFours()
+        fun Int.closedFours(): Int = count(RustyRenju.closedFourMask)
+        fun Int.threes(): Int = count(RustyRenju.openThreeMask)
 
-        fun Int.forkScore(): Int = when {
-            fours() > 1 -> FocusWeights.DOUBLE_FOUR_FORK
-            threes() > 0 && fours() > 0 -> FocusWeights.THREE_FOUR_FORK
-            threes() > 1 -> FocusWeights.DOUBLE_THREE_FORK
+        fun Int.forkScore(weights: FocusWeights): Int = when {
+            closedFours() > 1 -> weights.forkFour                       // double-four
+            threes() > 0 && closedFours() > 0 -> weights.threeFourFork  // three-four
+            threes() > 1 -> weights.doubleThreeFork                     // double-three
             else -> 0
         }
 
-        fun Int.baseScore(): Int = forkScore() +
-                threes() * FocusWeights.OPEN_THREE +
-                count(RustyRenju.closedFourMask) * FocusWeights.CLOSED_FOUR +
-                count(RustyRenju.fiveMask) * FocusWeights.FIVE +
-                count(RustyRenju.potentialMask) * FocusWeights.POTENTIAL
-
-        fun Int.blockScore(other: Int): Int = when {
-            closeThrees() == 0 -> 0
-            other.threes() > 0 || other.fours() > 0 -> FocusWeights.TREAT_BLOCK_THREE_FORK
-            else -> FocusWeights.BLOCK_THREE + openFours() * FocusWeights.BLOCK_FOUR_EXTRA
-        }
+        fun Int.score(weights: FocusWeights): Int = forkScore(weights) +
+                threes() * weights.openThree +
+                openFours() * weights.forkFour +
+                closedFours() * weights.closedFour +
+                count(RustyRenju.closeThreeMask) * weights.closeThree +
+                count(RustyRenju.potentialFourMask) * weights.potentialFour +
+                count(RustyRenju.potentialThreeMask) * weights.potentialThree
 
         return (0 until Pos.BOARD_SIZE)
             .map(Pos::fromIdx)
             .map { pos ->
-                if (!this.isLegalEmptyMove(state, pos)) {
-                    0
-                } else {
-                    val self = state.board.pattern(pos, nextColor)
-                    val opponent = state.board.pattern(pos, opponentColor)
-
-                    self.baseScore() +
-                            self.openFours() * FocusWeights.OPEN_FOUR +
-                            opponent.baseScore() +
-                            opponent.blockScore(self)
+                when (state.board.stoneKind(pos)) {
+                    null -> {
+                        state.board.pattern(pos, state.board.playerColor).score(PlayerFocusWeights) +
+                                state.board.pattern(pos, opponentColor).score(OpponentFocusWeights)
+                    }
+                    state.board.playerColor -> PlayerFocusWeights.stone
+                    else -> OpponentFocusWeights.stone
                 }
             }
-            .chunked(Pos.BOARD_WIDTH) { row -> row.toMutableList() }
-            .toMutableList()
     }
 
-    // Prefix Sum Algorithm, O(N)
-    fun resolveFocus(state: GameState, windowWidth: Int, buildHighlights: Boolean): FocusInfo =
-        state.history.lastOrNull()?.let { lastPos ->
-            val boardWidth = Pos.BOARD_WIDTH
-            val boardMaxIdx = Pos.BOARD_BOUND
-            val clampedWindowWidth = windowWidth.coerceIn(1, boardWidth)
-            val windowHalf = clampedWindowWidth / 2
-            val windowQuarter = clampedWindowWidth / 4
+    private fun findFiveComponents(board: Board, fivePos: Pos): List<Pos> {
+        val color = Color.entries.firstOrNull { fivePos in board.fivePos[it] } ?: return emptyList()
 
-            val evaluated = this.evaluateBoard(state)
-            val highlights = if (buildHighlights) state.board.winningSequence() else null
+        for ((dr, dc) in listOf(0 to 1, 1 to 0, 1 to 1, 1 to -1)) {
+            var stones = 1 shl 4
+            for (step in -4 .. 4) {
+                val row = fivePos.row + dr * step
+                val col = fivePos.col + dc * step
 
-            evaluated[lastPos.row][lastPos.col] += FocusWeights.LAST_MOVE
-
-            for (row in max(0, lastPos.row - windowHalf)..min(boardMaxIdx, lastPos.row + windowHalf)) {
-                for (col in max(0, lastPos.col - windowHalf)..min(boardMaxIdx, lastPos.col + windowHalf)) {
-                    evaluated[row][col] += FocusWeights.CENTER_EXTRA
+                if (row in 0 .. Pos.BOARD_BOUND && col in 0 .. Pos.BOARD_BOUND && board.stoneKind(Pos(row, col)) == color) {
+                    stones = stones or (1 shl (step + 4))
                 }
             }
 
-            if (state.history.size < 5) {
-                for (row in max(0, lastPos.row - windowQuarter)..min(boardMaxIdx, lastPos.row + windowQuarter)) {
-                    for (col in max(0, lastPos.col - windowQuarter)..min(boardMaxIdx, lastPos.col + windowQuarter)) {
-                        evaluated[row][col] += FocusWeights.CENTER_EXTRA
-                    }
+            val five = stones and
+                    (stones ushr 1) and
+                    (stones ushr 2) and
+                    (stones ushr 3) and
+                    (stones ushr 4)
+
+            if (five == 0) continue
+
+            val start = five.countTrailingZeroBits() - 4
+            return (start..start + 4).map { step -> Pos(fivePos.row + dr * step, fivePos.col + dc * step) }
+        }
+
+        return emptyList()
+    }
+
+    // Prefix Sum, O(N)
+    fun resolveFocus(state: GameState, windowWidth: Int, hints: Boolean): BoardFocus {
+        val lastPos = state.history.lastOrNull() ?: return BoardFocus(Pos.CENTER, listOf(Pos.CENTER))
+
+        val clampedWindowWidth = windowWidth.coerceIn(1, Pos.BOARD_WIDTH)
+        val windowHalf = clampedWindowWidth / 2
+
+        val scores = this.evaluateBoard(state).toMutableList()
+
+        scores[lastPos.idx] = PlayerFocusWeights.lastMove
+
+        state.history.getOrNull(state.history.lastIndex - 1)?.let { opponentPos ->
+            scores[opponentPos.idx] += OpponentFocusWeights.lastMove
+        }
+
+        if (hints) {
+            state.board.fivePos.asList().flatten()
+                .filterNotNull()
+                .firstOrNull()
+                ?.let { this.findFiveComponents(state.board, it) }
+                ?.forEach { scores[it.idx] += SharedFocusWeight.FIVE_COMPONENTS }
+        }
+
+        val hintPos = scores.mapIndexedNotNull { index, score -> if (score > 1000) Pos.fromIdx(index) else null }
+
+        fun applyCentering(halfWindowSize: Int) {
+            for (row in max(0, lastPos.row - halfWindowSize) .. min(Pos.BOARD_BOUND, lastPos.row + halfWindowSize)) {
+                for (col in max(0, lastPos.col - halfWindowSize) .. min(Pos.BOARD_BOUND, lastPos.col + halfWindowSize)) {
+                    scores[Pos.rowColToIdx(row, col)] += SharedFocusWeight.CENTERING
                 }
             }
+        }
 
-            val prefix = Array(boardWidth + 1) { IntArray(boardWidth + 1) }
+        applyCentering(windowHalf)
+        applyCentering(clampedWindowWidth / 4)
 
-            for (row in 1..boardWidth) {
-                for (col in 1..boardWidth) {
-                    prefix[row][col] = evaluated[row - 1][col - 1] +
-                            prefix[row - 1][col] +
-                            prefix[row][col - 1] -
-                            prefix[row - 1][col - 1]
+        val chunkedScores = scores
+            .chunked(Pos.BOARD_WIDTH)
+
+        val prefix = Array(Pos.BOARD_WIDTH + 1 ) { IntArray(Pos.BOARD_WIDTH + 1) }
+
+        for (row in 1 .. Pos.BOARD_WIDTH) {
+            for (col in 1 .. Pos.BOARD_WIDTH) {
+                prefix[row][col] = chunkedScores[row - 1][col - 1] +
+                        prefix[row - 1][col] +
+                        prefix[row][col - 1] -
+                        prefix[row - 1][col - 1]
+            }
+        }
+
+        val step = Pos.BOARD_WIDTH - clampedWindowWidth
+
+        var maxScore = Int.MIN_VALUE
+        var maxRow = lastPos.row.coerceIn(0, step)
+        var maxCol = lastPos.col.coerceIn(0, step)
+
+        for (row in 0..step) {
+            for (col in 0..step) {
+                val collected = prefix[row + clampedWindowWidth][col + clampedWindowWidth] -
+                        prefix[row][col + clampedWindowWidth] -
+                        prefix[row + clampedWindowWidth][col] +
+                        prefix[row][col]
+
+                if (collected > maxScore) {
+                    maxScore = collected
+                    maxRow = row
+                    maxCol = col
                 }
             }
+        }
 
-            val step = boardWidth - clampedWindowWidth
+        val maxCenter = Pos.BOARD_BOUND - windowHalf
+        val focus = Pos(
+            (maxRow + windowHalf).coerceIn(windowHalf, maxCenter),
+            (maxCol + windowHalf).coerceIn(windowHalf, maxCenter),
+        )
 
-            var maxScore = Int.MIN_VALUE
-            var maxRow = lastPos.row.coerceIn(0, step)
-            var maxCol = lastPos.col.coerceIn(0, step)
+        return BoardFocus(focus, hintPos)
+    }
 
-            for (row in 0..step) {
-                for (col in 0..step) {
-                    val collected = prefix[row + clampedWindowWidth][col + clampedWindowWidth] -
-                            prefix[row][col + clampedWindowWidth] -
-                            prefix[row + clampedWindowWidth][col] +
-                            prefix[row][col]
-
-                    if (collected > maxScore) {
-                        maxScore = collected
-                        maxRow = row
-                        maxCol = col
-                    }
-                }
-            }
-
-            val maxCenter = boardMaxIdx - windowHalf
-            val focus = Pos(
-                (maxRow + windowHalf).coerceIn(windowHalf, maxCenter),
-                (maxCol + windowHalf).coerceIn(windowHalf, maxCenter),
-            )
-
-            FocusInfo(focus, highlights)
-        } ?: FocusInfo(Pos.CENTER, listOf(Pos.CENTER))
-
-    fun resolveCenter(state: GameState, range: IntRange): FocusInfo {
+    fun resolveCenter(state: GameState, range: IntRange): BoardFocus {
         val lastPos = state.history.lastOrNull()
 
         return if (lastPos == null) {
-            FocusInfo(Pos.CENTER, listOf(Pos.CENTER))
+            BoardFocus(Pos.CENTER, listOf(Pos.CENTER))
         } else {
-            FocusInfo(
+            BoardFocus(
                 Pos(lastPos.row.coerceIn(range), lastPos.col.coerceIn(range)),
                 emptyList(),
             )
         }
     }
 
-    object FocusWeights {
+    object SharedFocusWeight {
+        const val CENTERING: Int = 1
+        const val FIVE_COMPONENTS: Int = 5000
+    }
 
-        const val LAST_MOVE: Int = 1000
-        const val CENTER_EXTRA: Int = 1
+    interface FocusWeights {
+        val lastMove: Int
 
-        const val POTENTIAL: Int = 2
+        val stone: Int
 
-        const val CLOSED_FOUR: Int = 2
-        const val OPEN_THREE: Int = 3
+        val closedFour: Int
+        val openThree: Int
+        val closeThree: Int
+        val potentialThree: Int
+        val potentialFour: Int
 
-        const val BLOCK_THREE: Int = 10
-        const val OPEN_FOUR: Int = 1000
-        const val FIVE: Int = 1000
+        val doubleThreeFork: Int
+        val threeFourFork: Int
+        val forkFour: Int
+    }
 
-        const val BLOCK_FOUR_EXTRA: Int = 8
-        const val TREAT_BLOCK_THREE_FORK: Int = BLOCK_THREE
+    object PlayerFocusWeights : FocusWeights {
+        override val lastMove: Int = 1000
 
-        const val DOUBLE_THREE_FORK: Int = 30
-        const val THREE_FOUR_FORK: Int = 50
-        const val DOUBLE_FOUR_FORK: Int = 50
+        override val stone: Int = 1
 
+        override val closedFour: Int = 2
+        override val openThree: Int = 10
+        override val closeThree: Int = 0
+        override val potentialThree: Int = 5
+        override val potentialFour: Int = 1
+
+        override val doubleThreeFork: Int = 200
+        override val threeFourFork: Int = 500
+        override val forkFour: Int = 1500
+    }
+
+    object OpponentFocusWeights : FocusWeights {
+        override val lastMove: Int = 300
+
+        override val stone: Int = 0
+
+        override val closedFour: Int = 1
+        override val openThree: Int = 7
+        override val closeThree: Int = 300
+        override val potentialThree: Int = 2
+        override val potentialFour: Int = 1
+
+        override val doubleThreeFork: Int = 100
+        override val threeFourFork: Int = 300
+        override val forkFour: Int = 1000
     }
 
 }

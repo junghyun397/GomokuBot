@@ -15,14 +15,6 @@ data class ColorContainer<out T>(val black: T, val white: T) {
             else -> null
         }
 
-    inline fun<R> map(transform: (T) -> R): ColorContainer<R> =
-        ColorContainer(transform(this.black), transform(this.white))
-
-    inline fun forEach(action: (T) -> Unit) {
-        action(this.black)
-        action(this.white)
-    }
-
     fun swap(): ColorContainer<T> = ColorContainer(this.white, this.black)
 
     companion object {
@@ -39,3 +31,14 @@ fun<T> ColorContainer<T>.setColor(key: Color, value: T): ColorContainer<T> =
         Color.BLACK -> this.copy(black = value)
         Color.WHITE -> this.copy(white = value)
     }
+
+fun<T> ColorContainer<T>.asList(): List<T> =
+    listOf(this.black, this.white)
+
+inline fun<T, R> ColorContainer<T>.map(transform: (T) -> R): ColorContainer<R> =
+    ColorContainer(transform(this.black), transform(this.white))
+
+inline fun<T> ColorContainer<T>.forEach(action: (T) -> Unit) {
+    action(this.black)
+    action(this.white)
+}

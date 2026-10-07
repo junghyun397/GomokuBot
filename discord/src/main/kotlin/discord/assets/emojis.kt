@@ -5,6 +5,7 @@ package discord.assets
 import core.assets.*
 import core.session.entities.NavigationKind
 import net.dv8tion.jda.api.entities.emoji.Emoji
+import renju.notation.map
 
 val NAVIGATION_EMOJIS: List<Emoji> = NavigationKind.navigators.map { Emoji.fromUnicode(it) }
 

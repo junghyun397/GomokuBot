@@ -10,6 +10,7 @@ import core.session.entities.*
 import renju.notation.Color
 import renju.notation.ColorContainer
 import renju.notation.GameResult
+import renju.notation.map
 import java.time.format.DateTimeFormatter
 
 fun announcementMessage(container: LanguageContainer, announce: Announce) = AppMessage.Announcement(

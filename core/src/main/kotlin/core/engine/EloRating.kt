@@ -14,7 +14,7 @@ import kotlin.math.pow
 
     }
 
-    fun delta(opponent: EloRating, result: MatchResult, kFactor: Float = 16f): Delta {
+    fun delta(opponent: EloRating, result: MatchResult, kFactor: Float = 32f): Delta {
         val expectedWld = 1.0f / (1.0f + 10.0f.pow((opponent.rating - this.rating) / 400.0f))
 
         return Delta(kFactor * (result.wld - expectedWld))

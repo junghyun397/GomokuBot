@@ -13,17 +13,19 @@ class Board private constructor (
     private val nativePointer: MemorySegment,
 ) {
 
-    private val description = RustyRenju.describe(this.nativePointer)
+    private val describe = RustyRenju.describe(this.nativePointer)
 
     private val patterns by lazy {
         RustyRenju.patterns(this.nativePointer)
     }
 
-    val playerColor: Color get() = this.description.playerColor
+    val playerColor: Color get() = this.describe.playerColor
 
-    val stones: Int get() = this.description.cells.count { it.stone != null }
+    val stones: Int get() = this.describe.cells.count { it.stone != null }
 
-    val hashKey: HashKey get() = this.description.hashKey
+    val hashKey: HashKey get() = this.describe.hashKey
+
+    val fivePos: ColorContainer<List<Pos?>> get() = this.describe.fivePos
 
     fun pattern(pos: Pos, color: Color): Int =
         this.patterns[color][pos.idx]
@@ -32,16 +34,16 @@ class Board private constructor (
         this.stoneKind(pos) == null
 
     fun isLegalMove(pos: Pos): Boolean {
-        val cell = this.description.cells[pos.idx]
+        val cell = this.describe.cells[pos.idx]
 
         return cell.stone == null && (this.playerColor != Color.BLACK || cell.forbidden == null)
     }
 
     fun stoneKind(pos: Pos): Color? =
-        this.description.cells[pos.idx].stone
+        this.describe.cells[pos.idx].stone
 
     fun forbiddenKind(pos: Pos): ForbiddenKind? =
-        this.description.cells[pos.idx].forbidden
+        this.describe.cells[pos.idx].forbidden
 
     fun set(pos: Pos?): Board {
         val pointer = RustyRenju.set(this.nativePointer, pos) ?: return this
@@ -68,7 +70,7 @@ class Board private constructor (
     }
 
     fun winner(): GameResult? {
-        val winner = this.description.winner
+        val winner = this.describe.winner
 
         if (winner != null) {
             return GameResult.Win(GameResult.WinCause.FIVE_IN_A_ROW, winner.color)
@@ -79,7 +81,7 @@ class Board private constructor (
     }
 
     fun winningSequence(): List<Pos>? =
-        this.description.winner?.sequence?.toList()
+        this.describe.winner?.sequence?.toList()
 
     internal fun nativeHandle(): MemorySegment = this.nativePointer
 

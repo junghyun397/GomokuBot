@@ -33,6 +33,7 @@ import net.dv8tion.jda.api.utils.FileUpload
 import renju.notation.Color
 import renju.notation.GameResult
 import renju.notation.Pos
+import renju.notation.map
 import utils.memoize
 import utils.tuple
 import utils.unreachable
@@ -351,7 +352,7 @@ object DiscordMessageRenderer {
         return when {
             input.state.board.playerColor == Color.BLACK && input.state.board.forbiddenKind(pos) != null ->
                 Button.of(ButtonStyle.DANGER, id, "", EMOJI_DARK_X).asDisabled()
-            input.focus.highlights?.contains(pos) == true -> Button.of(ButtonStyle.PRIMARY, id, pos.toString())
+            input.focus.hints?.contains(pos) == true -> Button.of(ButtonStyle.PRIMARY, id, pos.toString())
             pos !in input.legalMoves -> Button.of(ButtonStyle.SECONDARY, id, pos.toString()).asDisabled()
             pos in input.choices -> Button.of(ButtonStyle.PRIMARY, id, pos.toString())
             else -> Button.of(ButtonStyle.SECONDARY, id, pos.toString())

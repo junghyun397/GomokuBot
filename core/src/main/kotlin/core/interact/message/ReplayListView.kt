@@ -6,6 +6,7 @@ import core.database.entities.GameRecordId
 import core.interact.i18n.LanguageContainer
 import core.session.entities.Rule
 import renju.notation.Color
+import renju.notation.map
 import kotlin.time.Instant
 
 data class ReplayListView(

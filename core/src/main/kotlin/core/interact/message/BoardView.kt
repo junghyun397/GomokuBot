@@ -39,26 +39,26 @@ sealed interface BoardInteraction {
 
 data class BoardInput(
     val state: GameState,
-    val focus: FocusSolver.FocusInfo,
+    val focus: FocusSolver.BoardFocus,
     val legalMoves: Set<Pos>,
     val choices: Set<Pos>,
 )
 
-fun GameSession.buildBoardInput(focusInfo: FocusSolver.FocusInfo) = BoardInput(
+fun GameSession.buildBoardInput(boardFocus: FocusSolver.BoardFocus) = BoardInput(
     state = this.state,
-    focus = focusInfo,
+    focus = boardFocus,
     legalMoves = (0 until Pos.BOARD_SIZE).map(Pos::fromIdx).filter { this.isLegalMove(it) }.toSet(),
     choices = if (this is SelectStageOpeningSession) this.moveCandidates.toSet() else emptySet(),
 )
 
-fun GameSession.buildBoardView(config: ChannelConfig, focusInfo: FocusSolver.FocusInfo?): BoardView {
+fun GameSession.buildBoardView(config: ChannelConfig, boardFocus: FocusSolver.BoardFocus?): BoardView {
     val interaction = when {
         this.gameResult != null -> BoardInteraction.Finished
         this is SwapStageOpeningSession -> BoardInteraction.Swap(this.offerCount)
         this is BranchingStageOpeningSession -> BoardInteraction.Branch
         this is DeclareStageOpeningSession -> BoardInteraction.Declare(this.maxOfferCount)
         else -> {
-            val input = this.buildBoardInput(requireNotNull(focusInfo))
+            val input = this.buildBoardInput(requireNotNull(boardFocus))
             when (this) {
                 is OfferStageOpeningSession -> BoardInteraction.Offer(input, this.remainingMoves)
                 is SelectStageOpeningSession -> BoardInteraction.Select(input)

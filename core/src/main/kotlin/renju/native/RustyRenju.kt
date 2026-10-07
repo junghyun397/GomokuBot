@@ -24,14 +24,26 @@ internal object RustyRenju {
     val openFourMask = this.symbols.int("open_four_mask")
     val openThreeMask = this.symbols.int("open_three_mask")
     val closeThreeMask = this.symbols.int("close_three_mask")
-    val fiveMask = this.repeat4x(0b0000_0001)
-    val potentialMask = this.repeat4x(0b0000_0110)
+    val potentialThreeMask = this.symbols.int("potential_three_mask")
+    val potentialFourMask = this.symbols.int("potential_four_mask")
 
     private val ruleRenju = this.symbols.byte("rule_renju")
     private val boardSize = this.symbols.long("board_size")
     private val boardAlignment = this.symbols.long("board_align")
     private val patternLayout = MemoryLayout.sequenceLayout(256, JAVA_INT)
     private val patternsLayout = MemoryLayout.sequenceLayout(2, this.patternLayout)
+
+    init {
+        check(BoardDescribe.layout.byteSize() == this.symbols.long("board_describe_size") &&
+                BoardDescribe.layout.byteAlignment() == this.symbols.long("board_describe_align")) {
+            "Native board description layout mismatch"
+        }
+
+        check(this.patternsLayout.byteSize() == this.symbols.long("board_patterns_size") &&
+                this.patternsLayout.byteAlignment() == this.symbols.long("board_patterns_align")) {
+            "Native board pattern layout mismatch"
+        }
+    }
 
     private val emptyBoardCall = this.symbols.function("empty_board", JAVA_BOOLEAN, JAVA_BYTE, ADDRESS)
     private val fromHistoryCall = this.symbols.function("board_from_history", JAVA_BOOLEAN, JAVA_BYTE, ADDRESS, JAVA_LONG, ADDRESS)
@@ -65,12 +77,12 @@ internal object RustyRenju {
             this.unsetCall.invokeWithArguments(board, pos?.idx ?: this.posNone, out) as Boolean
         }
 
-    fun describe(board: MemorySegment): BoardDescription =
+    fun describe(board: MemorySegment): BoardDescribe =
         Arena.ofConfined().use { arena ->
-            val out = arena.allocate(BoardDescription.layout)
+            val out = arena.allocate(BoardDescribe.layout)
             check(this.describeCall.invokeWithArguments(board, out) as Boolean) { "Native board description failed" }
 
-            BoardDescription(out)
+            BoardDescribe(out)
         }
 
     fun patterns(board: MemorySegment): ColorContainer<IntArray> =
@@ -100,8 +112,5 @@ internal object RustyRenju {
 
     private fun createBoard(initialize: (MemorySegment) -> Boolean): MemorySegment? =
         Arena.ofAuto().allocate(this.boardSize, this.boardAlignment).takeIf(initialize)
-
-    private fun repeat4x(value: Int): Int =
-        value or (value shl 8) or (value shl 16) or (value shl 24)
 
 }

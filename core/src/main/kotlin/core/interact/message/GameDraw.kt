@@ -8,6 +8,7 @@ import renju.GameState
 import renju.notation.Color
 import renju.notation.ColorContainer
 import renju.notation.GameResult
+import renju.notation.map
 import utils.replaceIf
 
 sealed interface GameParticipants {
