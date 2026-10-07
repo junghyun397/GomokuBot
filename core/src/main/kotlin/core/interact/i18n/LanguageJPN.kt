@@ -1,6 +1,8 @@
 package core.interact.i18n
 
+import core.assets.UNICODE_INFORMATION
 import core.assets.UNICODE_RIGHT
+import core.assets.UNICODE_WHITE_FLAG
 import core.engine.EngineLevel
 import renju.notation.ColorContainer
 
@@ -237,7 +239,7 @@ class LanguageJPN : LanguageENG() {
     override val undoCommandDescription = "直前の一手の待ったを申し込みます。"
     override val undoErrorOpening = "オープニング中は待ったを使えません。"
     override val undoErrorNoMoves = "まだ戻せる着手がありません。"
-    override val undoErrorLimit = "この対局では待ったをすでに2回使っています。"
+    override val undoErrorLimit = "この対局では待ったをすでに5回使っています。"
     override fun undoCompleted(remainingUndos: Int) = "待ったを使いました。残りの待った: ${remainingUndos}回。"
     override val undoPvpCompleted = "直前の1手を戻しました。"
     override val undoRequestEmbedTitle = "1手戻しませんか？"
@@ -324,6 +326,14 @@ class LanguageJPN : LanguageENG() {
 
     override val boardCommandGuide =
         ":mag: ボタンを押すか `/s` `座標` コマンドを入力して次の手を打ってください。"
+    override val boardUndoGuide =
+        "$UNICODE_INFORMATION `/${this.undoCommand}` コマンドで待ったを申し込めます。"
+    override val boardUndoInitialGuide get() =
+        "${this.boardUndoGuide}1局につき5回使えます。"
+    override fun boardUndoRemainingGuide(remainingUndos: Int) =
+        "${this.boardUndoGuide}この対局ではあと${remainingUndos}回使えます。"
+    override val boardResignGuide =
+        "$UNICODE_WHITE_FLAG `/${this.resignCommand}` コマンドで投了できます。"
     override val boardSwapGuide =
         ":arrows_counterclockwise: ボタンを押して、黒と白をスワップするか選んでください。"
     override fun boardStatefulSwapGuide(offerCount: Int) =

@@ -16,5 +16,5 @@ val ASCII_SPLASH = """
         / /_/ / /_/ / /  / / /_/ / /| / /_/ / /_/ / /_/ / / /
         \____/\____/_/  /_/\____/_/ |_\____/_____/\____/ /_/
         
-        Powered by [Kotlin, Rust, PostgreSQL, JDA and mintaka]
+        Powered by [Kotlin, Rust, JDA and mintaka]
 """.trimIndent()

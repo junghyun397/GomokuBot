@@ -277,7 +277,17 @@ object DiscordMessageRenderer {
     private fun renderBoardGuide(view: BoardView): MessageEmbed? {
         val container = view.container
         val text = when (val interaction = view.interaction) {
-            is BoardInteraction.Place -> container.boardCommandGuide
+            is BoardInteraction.Place -> {
+                val remainingUndos = interaction.remainingUndos
+
+                when {
+                    view.draw.state.history.size < 3 || view.openingPlayer != null -> container.boardCommandGuide
+                    remainingUndos == null -> container.boardUndoGuide
+                    remainingUndos == 0 -> container.boardResignGuide
+                    remainingUndos == 5 -> container.boardUndoInitialGuide
+                    else -> container.boardUndoRemainingGuide(remainingUndos)
+                }
+            }
             is BoardInteraction.Offer -> container.boardOfferGuide(interaction.remaining)
             is BoardInteraction.Select -> container.boardSelectGuide
             is BoardInteraction.Swap -> interaction.offerCount?.let { container.boardStatefulSwapGuide(it) } ?: container.boardSwapGuide
@@ -285,6 +295,7 @@ object DiscordMessageRenderer {
             is BoardInteraction.Declare -> container.boardDeclareGuide
             BoardInteraction.Finished -> return null
         }
+
         return Embed {
             this.color = COLOR_GREEN_HEX
             this.description = text
@@ -426,7 +437,7 @@ object DiscordMessageRenderer {
             }
 
             this.footer {
-                this.name = "$UNICODE_ZAP Powered by Kotlin, Rust, PostgreSQL, JDA and mintaka"
+                this.name = "$UNICODE_ZAP Powered by Kotlin, Rust, JDA and mintaka. Since 2018 GomokuBot."
             }
         }
     }

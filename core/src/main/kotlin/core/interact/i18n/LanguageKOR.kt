@@ -1,6 +1,8 @@
 package core.interact.i18n
 
+import core.assets.UNICODE_INFORMATION
 import core.assets.UNICODE_RIGHT
+import core.assets.UNICODE_WHITE_FLAG
 import core.engine.EngineLevel
 import renju.notation.ColorContainer
 
@@ -237,7 +239,7 @@ open class LanguageKOR : LanguageENG() {
     override val undoCommandDescription = "마지막 수에 대한 무르기를 요청합니다."
     override val undoErrorOpening = "오프닝 진행 중에는 무르기를 사용할 수 없습니다."
     override val undoErrorNoMoves = "아직 무를 수 있는 착수가 없습니다."
-    override val undoErrorLimit = "이 게임의 무르기 횟수 두 번을 모두 사용했습니다."
+    override val undoErrorLimit = "이 게임의 무르기 횟수 다섯 번을 모두 사용했습니다."
     override fun undoCompleted(remainingUndos: Int) = "무르기를 사용했습니다. 남은 무르기 횟수: ${remainingUndos}회."
     override val undoPvpCompleted = "마지막 한 수를 무렀습니다."
     override val undoRequestEmbedTitle = "한 수 무르시겠습니까?"
@@ -324,6 +326,14 @@ open class LanguageKOR : LanguageENG() {
 
     override val boardCommandGuide =
         ":mag: 버튼을 누르거나 `/s` `좌표` 명령어를 입력해 다음 수를 놓아주세요."
+    override val boardUndoGuide =
+        "$UNICODE_INFORMATION `/${this.undoCommand}` 명령어로 무르기를 신청할 수 있습니다."
+    override val boardUndoInitialGuide get() =
+        "${this.boardUndoGuide} 한 게임당 5번 사용할 수 있습니다."
+    override fun boardUndoRemainingGuide(remainingUndos: Int) =
+        "${this.boardUndoGuide} 이번 게임에서 ${remainingUndos}번 더 사용할 수 있습니다."
+    override val boardResignGuide =
+        "$UNICODE_WHITE_FLAG `/${this.resignCommand}` 명령어로 기권할 수 있습니다."
     override val boardSwapGuide =
         ":arrows_counterclockwise: 버튼을 눌러 흑과 백을 바꿀지 선택해주세요."
     override fun boardStatefulSwapGuide(offerCount: Int) =

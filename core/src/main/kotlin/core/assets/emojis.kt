@@ -32,6 +32,7 @@ const val UNICODE_T = "\ud83c\uddf9" // 🇹
 const val UNICODE_GEM = "\ud83d\udc8e" // 💎
 
 const val UNICODE_LIGHT = "\ud83d\udca1" // 💡
+const val UNICODE_INFORMATION = "\u2139\ufe0f" // ℹ️
 const val UNICODE_NOTEBOOK = "\ud83d\udcd3" // 📓
 
 const val UNICODE_LINK = "\ud83d\udd17" // 🔗

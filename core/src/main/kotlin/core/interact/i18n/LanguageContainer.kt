@@ -265,6 +265,10 @@ sealed interface LanguageContainer {
     val boardTieDescription: String
 
     val boardCommandGuide: String
+    val boardUndoGuide: String
+    val boardUndoInitialGuide: String
+    fun boardUndoRemainingGuide(remainingUndos: Int): String
+    val boardResignGuide: String
     val boardSwapGuide: String
     fun boardStatefulSwapGuide(offerCount: Int): String
     val boardBranchGuide: String

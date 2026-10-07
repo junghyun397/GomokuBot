@@ -17,7 +17,7 @@ data class EngineGameSession(
     val engineLevel: EngineLevel,
     val userRating: EloRating,
     override val recording: Boolean,
-    val remainingUndos: Int = 2,
+    val remainingUndos: Int = 5,
 ) : PlayGameSession {
 
     val mintakaSession: MintakaSession? get() = this.engineState.getOrNull()

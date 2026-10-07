@@ -21,7 +21,7 @@ data class BoardView(
 
 sealed interface BoardInteraction {
 
-    data class Place(val input: BoardInput) : BoardInteraction
+    data class Place(val input: BoardInput, val remainingUndos: Int?) : BoardInteraction
 
     data class Offer(val input: BoardInput, val remaining: Int) : BoardInteraction
 
@@ -62,7 +62,7 @@ fun GameSession.buildBoardView(config: ChannelConfig, boardFocus: FocusSolver.Bo
             when (this) {
                 is OfferStageOpeningSession -> BoardInteraction.Offer(input, this.remainingMoves)
                 is SelectStageOpeningSession -> BoardInteraction.Select(input)
-                else -> BoardInteraction.Place(input)
+                else -> BoardInteraction.Place(input, (this as? EngineGameSession)?.remainingUndos)
             }
         }
     }

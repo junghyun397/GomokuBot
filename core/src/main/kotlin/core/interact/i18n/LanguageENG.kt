@@ -1,6 +1,8 @@
 package core.interact.i18n
 
+import core.assets.UNICODE_INFORMATION
 import core.assets.UNICODE_RIGHT
+import core.assets.UNICODE_WHITE_FLAG
 import core.engine.EngineLevel
 import renju.notation.ColorContainer
 
@@ -237,7 +239,7 @@ open class LanguageENG : LanguageContainer {
     override val undoCommandDescription = "Requests an undo of the last move."
     override val undoErrorOpening = "Undo is unavailable during openings."
     override val undoErrorNoMoves = "There is no move to take back yet."
-    override val undoErrorLimit = "You have already used both undos in this game."
+    override val undoErrorLimit = "You have already used all 5 undos in this game."
     override fun undoCompleted(remainingUndos: Int) = "Undo used. Undos remaining: $remainingUndos."
     override val undoPvpCompleted = "The last move has been taken back."
     override val undoRequestEmbedTitle = "Take back one move?"
@@ -324,6 +326,14 @@ open class LanguageENG : LanguageContainer {
 
     override val boardCommandGuide =
         ":mag: Press the button or use `/s` `position` command to make the next move."
+    override val boardUndoGuide =
+        "$UNICODE_INFORMATION Use `/${this.undoCommand}` to request an undo."
+    override val boardUndoInitialGuide get() =
+        "${this.boardUndoGuide} You can use it 5 times per game."
+    override fun boardUndoRemainingGuide(remainingUndos: Int) =
+        "${this.boardUndoGuide} You can use it $remainingUndos more times in this game."
+    override val boardResignGuide =
+        "$UNICODE_WHITE_FLAG Use `/${this.resignCommand}` to resign."
     override val boardSwapGuide =
         ":arrows_counterclockwise: Press the button to select whether to switch between black and white."
     override fun boardStatefulSwapGuide(offerCount: Int) =
